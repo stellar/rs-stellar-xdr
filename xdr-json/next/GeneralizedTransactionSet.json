@@ -376,7 +376,7 @@
       }
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -391,7 +391,7 @@
         "contract_data_entry_size_bytes",
         "state_archival",
         "contract_execution_lanes",
-        "bucketlist_size_window",
+        "live_soroban_state_size_window",
         "eviction_iterator",
         "contract_parallel_compute_v0",
         "contract_ledger_cost_ext_v0"
@@ -2842,24 +2842,24 @@
       ]
     },
     "SorobanResources": {
-      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from ledger uint32 readBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
+      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from disk backed entries uint32 diskReadBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
       "type": "object",
       "required": [
+        "disk_read_bytes",
         "footprint",
         "instructions",
-        "read_bytes",
         "write_bytes"
       ],
       "properties": {
-        "footprint": {
-          "$ref": "#/definitions/LedgerFootprint"
-        },
-        "instructions": {
+        "disk_read_bytes": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "read_bytes": {
+        "footprint": {
+          "$ref": "#/definitions/LedgerFootprint"
+        },
+        "instructions": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

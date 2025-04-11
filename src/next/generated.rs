@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "56b9548877088a1c7bc6c49089cb1cc1813bfb498ee096c10d5891177ce2ef87",
+        "70f69edb53cfa7c388c0f91b1b6b6b3889cbe1f5765326d618e1ea64d253069f",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -46,11 +46,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "23390e4fab61886a9a76117d0fb3e48796e10a1002117088ee9a4bb5ccd98660",
+        "5157cad76b008b3606fe5bc2cfe87596827d8e02d16cbec3cedc297bb571aa54",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "d117a2ee99031127b3de30b91ce6207d678fde9a24c1d9ed862bede34bbae608",
+        "7b7d3cf8798b3fa23d9cf04f28470366712463e845923adfc43e9fa5fdde47fb",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "a53ded6539fbc47ffecb3f3320411ac7d6a5fe98fc80dbc0a48f54d96715d1ce",
+        "e42172ff33faaa7ca0f67de826c516890cc0f7fce1f9f79e6ae79134528d2a92",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3808,38 +3808,38 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
 /// ```text
 /// struct ConfigSettingContractLedgerCostV0
 /// {
-///     // Maximum number of ledger entry read operations per ledger
-///     uint32 ledgerMaxReadLedgerEntries;
-///     // Maximum number of bytes that can be read per ledger
-///     uint32 ledgerMaxReadBytes;
+///     // Maximum number of disk entry read operations per ledger
+///     uint32 ledgerMaxDiskReadEntries;
+///     // Maximum number of bytes of disk reads that can be performed per ledger
+///     uint32 ledgerMaxDiskReadBytes;
 ///     // Maximum number of ledger entry write operations per ledger
 ///     uint32 ledgerMaxWriteLedgerEntries;
 ///     // Maximum number of bytes that can be written per ledger
 ///     uint32 ledgerMaxWriteBytes;
 ///
-///     // Maximum number of ledger entry read operations per transaction
-///     uint32 txMaxReadLedgerEntries;
-///     // Maximum number of bytes that can be read per transaction
-///     uint32 txMaxReadBytes;
+///     // Maximum number of disk entry read operations per transaction
+///     uint32 txMaxDiskReadEntries;
+///     // Maximum number of bytes of disk reads that can be performed per transaction
+///     uint32 txMaxDiskReadBytes;
 ///     // Maximum number of ledger entry write operations per transaction
 ///     uint32 txMaxWriteLedgerEntries;
 ///     // Maximum number of bytes that can be written per transaction
 ///     uint32 txMaxWriteBytes;
 ///
-///     int64 feeReadLedgerEntry;  // Fee per ledger entry read
-///     int64 feeWriteLedgerEntry; // Fee per ledger entry write
+///     int64 feeDiskReadLedgerEntry;  // Fee per disk ledger entry read
+///     int64 feeWriteLedgerEntry;     // Fee per ledger entry write
 ///
-///     int64 feeRead1KB;  // Fee for reading 1KB
+///     int64 feeDiskRead1KB;          // Fee for reading 1KB disk
 ///
 ///     // The following parameters determine the write fee per 1KB.
-///     // Write fee grows linearly until bucket list reaches this size
-///     int64 bucketListTargetSizeBytes;
-///     // Fee per 1KB write when the bucket list is empty
-///     int64 writeFee1KBBucketListLow;
-///     // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes`
-///     int64 writeFee1KBBucketListHigh;
-///     // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes`
-///     uint32 bucketListWriteFeeGrowthFactor;
+///     // Rent fee grows linearly until soroban state reaches this size
+///     int64 sorobanStateTargetSizeBytes;
+///     // Fee per 1KB rent when the soroban state is empty
+///     int64 rentFee1KBSorobanStateSizeLow;
+///     // Fee per 1KB rent when the soroban state has reached `sorobanStateTargetSizeBytes`
+///     int64 rentFee1KBSorobanStateSizeHigh;
+///     // Rent fee multiplier for any additional data past the first `sorobanStateTargetSizeBytes`
+///     uint32 sorobanStateRentFeeGrowthFactor;
 /// };
 /// ```
 ///
@@ -3852,21 +3852,21 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractLedgerCostV0 {
-    pub ledger_max_read_ledger_entries: u32,
-    pub ledger_max_read_bytes: u32,
+    pub ledger_max_disk_read_entries: u32,
+    pub ledger_max_disk_read_bytes: u32,
     pub ledger_max_write_ledger_entries: u32,
     pub ledger_max_write_bytes: u32,
-    pub tx_max_read_ledger_entries: u32,
-    pub tx_max_read_bytes: u32,
+    pub tx_max_disk_read_entries: u32,
+    pub tx_max_disk_read_bytes: u32,
     pub tx_max_write_ledger_entries: u32,
     pub tx_max_write_bytes: u32,
-    pub fee_read_ledger_entry: i64,
+    pub fee_disk_read_ledger_entry: i64,
     pub fee_write_ledger_entry: i64,
-    pub fee_read1_kb: i64,
-    pub bucket_list_target_size_bytes: i64,
-    pub write_fee1_kb_bucket_list_low: i64,
-    pub write_fee1_kb_bucket_list_high: i64,
-    pub bucket_list_write_fee_growth_factor: u32,
+    pub fee_disk_read1_kb: i64,
+    pub soroban_state_target_size_bytes: i64,
+    pub rent_fee1_kb_soroban_state_size_low: i64,
+    pub rent_fee1_kb_soroban_state_size_high: i64,
+    pub soroban_state_rent_fee_growth_factor: u32,
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
@@ -3874,21 +3874,21 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ledger_max_read_ledger_entries: u32::read_xdr(r)?,
-                ledger_max_read_bytes: u32::read_xdr(r)?,
+                ledger_max_disk_read_entries: u32::read_xdr(r)?,
+                ledger_max_disk_read_bytes: u32::read_xdr(r)?,
                 ledger_max_write_ledger_entries: u32::read_xdr(r)?,
                 ledger_max_write_bytes: u32::read_xdr(r)?,
-                tx_max_read_ledger_entries: u32::read_xdr(r)?,
-                tx_max_read_bytes: u32::read_xdr(r)?,
+                tx_max_disk_read_entries: u32::read_xdr(r)?,
+                tx_max_disk_read_bytes: u32::read_xdr(r)?,
                 tx_max_write_ledger_entries: u32::read_xdr(r)?,
                 tx_max_write_bytes: u32::read_xdr(r)?,
-                fee_read_ledger_entry: i64::read_xdr(r)?,
+                fee_disk_read_ledger_entry: i64::read_xdr(r)?,
                 fee_write_ledger_entry: i64::read_xdr(r)?,
-                fee_read1_kb: i64::read_xdr(r)?,
-                bucket_list_target_size_bytes: i64::read_xdr(r)?,
-                write_fee1_kb_bucket_list_low: i64::read_xdr(r)?,
-                write_fee1_kb_bucket_list_high: i64::read_xdr(r)?,
-                bucket_list_write_fee_growth_factor: u32::read_xdr(r)?,
+                fee_disk_read1_kb: i64::read_xdr(r)?,
+                soroban_state_target_size_bytes: i64::read_xdr(r)?,
+                rent_fee1_kb_soroban_state_size_low: i64::read_xdr(r)?,
+                rent_fee1_kb_soroban_state_size_high: i64::read_xdr(r)?,
+                soroban_state_rent_fee_growth_factor: u32::read_xdr(r)?,
             })
         })
     }
@@ -3898,21 +3898,21 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
-            self.ledger_max_read_ledger_entries.write_xdr(w)?;
-            self.ledger_max_read_bytes.write_xdr(w)?;
+            self.ledger_max_disk_read_entries.write_xdr(w)?;
+            self.ledger_max_disk_read_bytes.write_xdr(w)?;
             self.ledger_max_write_ledger_entries.write_xdr(w)?;
             self.ledger_max_write_bytes.write_xdr(w)?;
-            self.tx_max_read_ledger_entries.write_xdr(w)?;
-            self.tx_max_read_bytes.write_xdr(w)?;
+            self.tx_max_disk_read_entries.write_xdr(w)?;
+            self.tx_max_disk_read_bytes.write_xdr(w)?;
             self.tx_max_write_ledger_entries.write_xdr(w)?;
             self.tx_max_write_bytes.write_xdr(w)?;
-            self.fee_read_ledger_entry.write_xdr(w)?;
+            self.fee_disk_read_ledger_entry.write_xdr(w)?;
             self.fee_write_ledger_entry.write_xdr(w)?;
-            self.fee_read1_kb.write_xdr(w)?;
-            self.bucket_list_target_size_bytes.write_xdr(w)?;
-            self.write_fee1_kb_bucket_list_low.write_xdr(w)?;
-            self.write_fee1_kb_bucket_list_high.write_xdr(w)?;
-            self.bucket_list_write_fee_growth_factor.write_xdr(w)?;
+            self.fee_disk_read1_kb.write_xdr(w)?;
+            self.soroban_state_target_size_bytes.write_xdr(w)?;
+            self.rent_fee1_kb_soroban_state_size_low.write_xdr(w)?;
+            self.rent_fee1_kb_soroban_state_size_high.write_xdr(w)?;
+            self.soroban_state_rent_fee_growth_factor.write_xdr(w)?;
             Ok(())
         })
     }
@@ -4777,11 +4777,11 @@ impl WriteXdr for ContractCostParamEntry {
 ///     // max number of entries that emit archival meta in a single ledger
 ///     uint32 maxEntriesToArchive;
 ///
-///     // Number of snapshots to use when calculating average BucketList size
-///     uint32 bucketListSizeWindowSampleSize;
+///     // Number of snapshots to use when calculating average live Soroban State size
+///     uint32 liveSorobanStateSizeWindowSampleSize;
 ///
-///     // How often to sample the BucketList size for the average, in ledgers
-///     uint32 bucketListWindowSamplePeriod;
+///     // How often to sample the live Soroban State size for the average, in ledgers
+///     uint32 liveSorobanStateSizeWindowSamplePeriod;
 ///
 ///     // Maximum number of bytes that we scan for eviction per ledger
 ///     uint32 evictionScanSize;
@@ -4806,8 +4806,8 @@ pub struct StateArchivalSettings {
     pub persistent_rent_rate_denominator: i64,
     pub temp_rent_rate_denominator: i64,
     pub max_entries_to_archive: u32,
-    pub bucket_list_size_window_sample_size: u32,
-    pub bucket_list_window_sample_period: u32,
+    pub live_soroban_state_size_window_sample_size: u32,
+    pub live_soroban_state_size_window_sample_period: u32,
     pub eviction_scan_size: u32,
     pub starting_eviction_scan_level: u32,
 }
@@ -4823,8 +4823,8 @@ impl ReadXdr for StateArchivalSettings {
                 persistent_rent_rate_denominator: i64::read_xdr(r)?,
                 temp_rent_rate_denominator: i64::read_xdr(r)?,
                 max_entries_to_archive: u32::read_xdr(r)?,
-                bucket_list_size_window_sample_size: u32::read_xdr(r)?,
-                bucket_list_window_sample_period: u32::read_xdr(r)?,
+                live_soroban_state_size_window_sample_size: u32::read_xdr(r)?,
+                live_soroban_state_size_window_sample_period: u32::read_xdr(r)?,
                 eviction_scan_size: u32::read_xdr(r)?,
                 starting_eviction_scan_level: u32::read_xdr(r)?,
             })
@@ -4842,8 +4842,10 @@ impl WriteXdr for StateArchivalSettings {
             self.persistent_rent_rate_denominator.write_xdr(w)?;
             self.temp_rent_rate_denominator.write_xdr(w)?;
             self.max_entries_to_archive.write_xdr(w)?;
-            self.bucket_list_size_window_sample_size.write_xdr(w)?;
-            self.bucket_list_window_sample_period.write_xdr(w)?;
+            self.live_soroban_state_size_window_sample_size
+                .write_xdr(w)?;
+            self.live_soroban_state_size_window_sample_period
+                .write_xdr(w)?;
             self.eviction_scan_size.write_xdr(w)?;
             self.starting_eviction_scan_level.write_xdr(w)?;
             Ok(())
@@ -5031,7 +5033,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,
 ///     CONFIG_SETTING_STATE_ARCHIVAL = 10,
 ///     CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
-///     CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
+///     CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12,
 ///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
 ///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
 ///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15
@@ -5061,7 +5063,7 @@ pub enum ConfigSettingId {
     ContractDataEntrySizeBytes = 9,
     StateArchival = 10,
     ContractExecutionLanes = 11,
-    BucketlistSizeWindow = 12,
+    LiveSorobanStateSizeWindow = 12,
     EvictionIterator = 13,
     ContractParallelComputeV0 = 14,
     ContractLedgerCostExtV0 = 15,
@@ -5081,7 +5083,7 @@ impl ConfigSettingId {
         ConfigSettingId::ContractDataEntrySizeBytes,
         ConfigSettingId::StateArchival,
         ConfigSettingId::ContractExecutionLanes,
-        ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::LiveSorobanStateSizeWindow,
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
@@ -5099,7 +5101,7 @@ impl ConfigSettingId {
         "ContractDataEntrySizeBytes",
         "StateArchival",
         "ContractExecutionLanes",
-        "BucketlistSizeWindow",
+        "LiveSorobanStateSizeWindow",
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
@@ -5120,7 +5122,7 @@ impl ConfigSettingId {
             Self::ContractDataEntrySizeBytes => "ContractDataEntrySizeBytes",
             Self::StateArchival => "StateArchival",
             Self::ContractExecutionLanes => "ContractExecutionLanes",
-            Self::BucketlistSizeWindow => "BucketlistSizeWindow",
+            Self::LiveSorobanStateSizeWindow => "LiveSorobanStateSizeWindow",
             Self::EvictionIterator => "EvictionIterator",
             Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
@@ -5171,7 +5173,7 @@ impl TryFrom<i32> for ConfigSettingId {
             9 => ConfigSettingId::ContractDataEntrySizeBytes,
             10 => ConfigSettingId::StateArchival,
             11 => ConfigSettingId::ContractExecutionLanes,
-            12 => ConfigSettingId::BucketlistSizeWindow,
+            12 => ConfigSettingId::LiveSorobanStateSizeWindow,
             13 => ConfigSettingId::EvictionIterator,
             14 => ConfigSettingId::ContractParallelComputeV0,
             15 => ConfigSettingId::ContractLedgerCostExtV0,
@@ -5239,8 +5241,8 @@ impl WriteXdr for ConfigSettingId {
 ///     StateArchivalSettings stateArchivalSettings;
 /// case CONFIG_SETTING_CONTRACT_EXECUTION_LANES:
 ///     ConfigSettingContractExecutionLanesV0 contractExecutionLanes;
-/// case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW:
-///     uint64 bucketListSizeWindow<>;
+/// case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW:
+///     uint64 liveSorobanStateSizeWindow<>;
 /// case CONFIG_SETTING_EVICTION_ITERATOR:
 ///     EvictionIterator evictionIterator;
 /// case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0:
@@ -5273,7 +5275,7 @@ pub enum ConfigSettingEntry {
     ContractDataEntrySizeBytes(u32),
     StateArchival(StateArchivalSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
-    BucketlistSizeWindow(VecM<u64>),
+    LiveSorobanStateSizeWindow(VecM<u64>),
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
@@ -5293,7 +5295,7 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractDataEntrySizeBytes,
         ConfigSettingId::StateArchival,
         ConfigSettingId::ContractExecutionLanes,
-        ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::LiveSorobanStateSizeWindow,
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
@@ -5311,7 +5313,7 @@ impl ConfigSettingEntry {
         "ContractDataEntrySizeBytes",
         "StateArchival",
         "ContractExecutionLanes",
-        "BucketlistSizeWindow",
+        "LiveSorobanStateSizeWindow",
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
@@ -5332,7 +5334,7 @@ impl ConfigSettingEntry {
             Self::ContractDataEntrySizeBytes(_) => "ContractDataEntrySizeBytes",
             Self::StateArchival(_) => "StateArchival",
             Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
-            Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
+            Self::LiveSorobanStateSizeWindow(_) => "LiveSorobanStateSizeWindow",
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
@@ -5359,7 +5361,7 @@ impl ConfigSettingEntry {
             Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
             Self::StateArchival(_) => ConfigSettingId::StateArchival,
             Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
-            Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
+            Self::LiveSorobanStateSizeWindow(_) => ConfigSettingId::LiveSorobanStateSizeWindow,
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
             Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
             Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
@@ -5437,8 +5439,8 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractExecutionLanes => Self::ContractExecutionLanes(
                     ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
                 ),
-                ConfigSettingId::BucketlistSizeWindow => {
-                    Self::BucketlistSizeWindow(VecM::<u64>::read_xdr(r)?)
+                ConfigSettingId::LiveSorobanStateSizeWindow => {
+                    Self::LiveSorobanStateSizeWindow(VecM::<u64>::read_xdr(r)?)
                 }
                 ConfigSettingId::EvictionIterator => {
                     Self::EvictionIterator(EvictionIterator::read_xdr(r)?)
@@ -5476,7 +5478,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
                 Self::StateArchival(v) => v.write_xdr(w)?,
                 Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
-                Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
+                Self::LiveSorobanStateSizeWindow(v) => v.write_xdr(w)?,
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
                 Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
                 Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
@@ -17910,10 +17912,9 @@ impl WriteXdr for BucketEntryType {
 /// {
 ///     HOT_ARCHIVE_METAENTRY = -1, // Bucket metadata, should come first.
 ///     HOT_ARCHIVE_ARCHIVED = 0,   // Entry is Archived
-///     HOT_ARCHIVE_LIVE = 1,       // Entry was previously HOT_ARCHIVE_ARCHIVED, or HOT_ARCHIVE_DELETED, but
+///     HOT_ARCHIVE_LIVE = 1        // Entry was previously HOT_ARCHIVE_ARCHIVED, but
 ///                                 // has been added back to the live BucketList.
 ///                                 // Does not need to be persisted.
-///     HOT_ARCHIVE_DELETED = 2     // Entry deleted (Note: must be persisted in archive)
 /// };
 /// ```
 ///
@@ -17931,17 +17932,15 @@ pub enum HotArchiveBucketEntryType {
     Metaentry = -1,
     Archived = 0,
     Live = 1,
-    Deleted = 2,
 }
 
 impl HotArchiveBucketEntryType {
-    pub const VARIANTS: [HotArchiveBucketEntryType; 4] = [
+    pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
         HotArchiveBucketEntryType::Metaentry,
         HotArchiveBucketEntryType::Archived,
         HotArchiveBucketEntryType::Live,
-        HotArchiveBucketEntryType::Deleted,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Metaentry", "Archived", "Live", "Deleted"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Metaentry", "Archived", "Live"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -17949,12 +17948,11 @@ impl HotArchiveBucketEntryType {
             Self::Metaentry => "Metaentry",
             Self::Archived => "Archived",
             Self::Live => "Live",
-            Self::Deleted => "Deleted",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HotArchiveBucketEntryType; 4] {
+    pub const fn variants() -> [HotArchiveBucketEntryType; 3] {
         Self::VARIANTS
     }
 }
@@ -17988,7 +17986,6 @@ impl TryFrom<i32> for HotArchiveBucketEntryType {
             -1 => HotArchiveBucketEntryType::Metaentry,
             0 => HotArchiveBucketEntryType::Archived,
             1 => HotArchiveBucketEntryType::Live,
-            2 => HotArchiveBucketEntryType::Deleted,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -18015,136 +18012,6 @@ impl ReadXdr for HotArchiveBucketEntryType {
 }
 
 impl WriteXdr for HotArchiveBucketEntryType {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ColdArchiveBucketEntryType is an XDR Enum defines as:
-///
-/// ```text
-/// enum ColdArchiveBucketEntryType
-/// {
-///     COLD_ARCHIVE_METAENTRY     = -1,  // Bucket metadata, should come first.
-///     COLD_ARCHIVE_ARCHIVED_LEAF = 0,   // Full LedgerEntry that was archived during the epoch
-///     COLD_ARCHIVE_DELETED_LEAF  = 1,   // LedgerKey that was deleted during the epoch
-///     COLD_ARCHIVE_BOUNDARY_LEAF = 2,   // Dummy leaf representing low/high bound
-///     COLD_ARCHIVE_HASH          = 3    // Intermediary Merkle hash entry
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ColdArchiveBucketEntryType {
-    Metaentry = -1,
-    ArchivedLeaf = 0,
-    DeletedLeaf = 1,
-    BoundaryLeaf = 2,
-    Hash = 3,
-}
-
-impl ColdArchiveBucketEntryType {
-    pub const VARIANTS: [ColdArchiveBucketEntryType; 5] = [
-        ColdArchiveBucketEntryType::Metaentry,
-        ColdArchiveBucketEntryType::ArchivedLeaf,
-        ColdArchiveBucketEntryType::DeletedLeaf,
-        ColdArchiveBucketEntryType::BoundaryLeaf,
-        ColdArchiveBucketEntryType::Hash,
-    ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
-        "Metaentry",
-        "ArchivedLeaf",
-        "DeletedLeaf",
-        "BoundaryLeaf",
-        "Hash",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Metaentry => "Metaentry",
-            Self::ArchivedLeaf => "ArchivedLeaf",
-            Self::DeletedLeaf => "DeletedLeaf",
-            Self::BoundaryLeaf => "BoundaryLeaf",
-            Self::Hash => "Hash",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ColdArchiveBucketEntryType; 5] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ColdArchiveBucketEntryType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ColdArchiveBucketEntryType> for ColdArchiveBucketEntryType {
-    fn variants() -> slice::Iter<'static, ColdArchiveBucketEntryType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ColdArchiveBucketEntryType {}
-
-impl fmt::Display for ColdArchiveBucketEntryType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ColdArchiveBucketEntryType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            -1 => ColdArchiveBucketEntryType::Metaentry,
-            0 => ColdArchiveBucketEntryType::ArchivedLeaf,
-            1 => ColdArchiveBucketEntryType::DeletedLeaf,
-            2 => ColdArchiveBucketEntryType::BoundaryLeaf,
-            3 => ColdArchiveBucketEntryType::Hash,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ColdArchiveBucketEntryType> for i32 {
-    #[must_use]
-    fn from(e: ColdArchiveBucketEntryType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ColdArchiveBucketEntryType {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveBucketEntryType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -18455,7 +18322,6 @@ impl WriteXdr for BucketEntry {
 ///     LedgerEntry archivedEntry;
 ///
 /// case HOT_ARCHIVE_LIVE:
-/// case HOT_ARCHIVE_DELETED:
 ///     LedgerKey key;
 /// case HOT_ARCHIVE_METAENTRY:
 ///     BucketMetadata metaEntry;
@@ -18475,25 +18341,22 @@ impl WriteXdr for BucketEntry {
 pub enum HotArchiveBucketEntry {
     Archived(LedgerEntry),
     Live(LedgerKey),
-    Deleted(LedgerKey),
     Metaentry(BucketMetadata),
 }
 
 impl HotArchiveBucketEntry {
-    pub const VARIANTS: [HotArchiveBucketEntryType; 4] = [
+    pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
         HotArchiveBucketEntryType::Archived,
         HotArchiveBucketEntryType::Live,
-        HotArchiveBucketEntryType::Deleted,
         HotArchiveBucketEntryType::Metaentry,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Archived", "Live", "Deleted", "Metaentry"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Archived", "Live", "Metaentry"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Archived(_) => "Archived",
             Self::Live(_) => "Live",
-            Self::Deleted(_) => "Deleted",
             Self::Metaentry(_) => "Metaentry",
         }
     }
@@ -18504,13 +18367,12 @@ impl HotArchiveBucketEntry {
         match self {
             Self::Archived(_) => HotArchiveBucketEntryType::Archived,
             Self::Live(_) => HotArchiveBucketEntryType::Live,
-            Self::Deleted(_) => HotArchiveBucketEntryType::Deleted,
             Self::Metaentry(_) => HotArchiveBucketEntryType::Metaentry,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HotArchiveBucketEntryType; 4] {
+    pub const fn variants() -> [HotArchiveBucketEntryType; 3] {
         Self::VARIANTS
     }
 }
@@ -18547,7 +18409,6 @@ impl ReadXdr for HotArchiveBucketEntry {
             let v = match dv {
                 HotArchiveBucketEntryType::Archived => Self::Archived(LedgerEntry::read_xdr(r)?),
                 HotArchiveBucketEntryType::Live => Self::Live(LedgerKey::read_xdr(r)?),
-                HotArchiveBucketEntryType::Deleted => Self::Deleted(LedgerKey::read_xdr(r)?),
                 HotArchiveBucketEntryType::Metaentry => {
                     Self::Metaentry(BucketMetadata::read_xdr(r)?)
                 }
@@ -18568,346 +18429,7 @@ impl WriteXdr for HotArchiveBucketEntry {
             match self {
                 Self::Archived(v) => v.write_xdr(w)?,
                 Self::Live(v) => v.write_xdr(w)?,
-                Self::Deleted(v) => v.write_xdr(w)?,
                 Self::Metaentry(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveArchivedLeaf is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveArchivedLeaf
-/// {
-///     uint32 index;
-///     LedgerEntry archivedEntry;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveArchivedLeaf {
-    pub index: u32,
-    pub archived_entry: LedgerEntry,
-}
-
-impl ReadXdr for ColdArchiveArchivedLeaf {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                archived_entry: LedgerEntry::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveArchivedLeaf {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.archived_entry.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveDeletedLeaf is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveDeletedLeaf
-/// {
-///     uint32 index;
-///     LedgerKey deletedKey;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveDeletedLeaf {
-    pub index: u32,
-    pub deleted_key: LedgerKey,
-}
-
-impl ReadXdr for ColdArchiveDeletedLeaf {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                deleted_key: LedgerKey::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveDeletedLeaf {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.deleted_key.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveBoundaryLeaf is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveBoundaryLeaf
-/// {
-///     uint32 index;
-///     bool isLowerBound;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveBoundaryLeaf {
-    pub index: u32,
-    pub is_lower_bound: bool,
-}
-
-impl ReadXdr for ColdArchiveBoundaryLeaf {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                is_lower_bound: bool::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveBoundaryLeaf {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.is_lower_bound.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveHashEntry is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveHashEntry
-/// {
-///     uint32 index;
-///     uint32 level;
-///     Hash hash;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveHashEntry {
-    pub index: u32,
-    pub level: u32,
-    pub hash: Hash,
-}
-
-impl ReadXdr for ColdArchiveHashEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                level: u32::read_xdr(r)?,
-                hash: Hash::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveHashEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.level.write_xdr(w)?;
-            self.hash.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveBucketEntry is an XDR Union defines as:
-///
-/// ```text
-/// union ColdArchiveBucketEntry switch (ColdArchiveBucketEntryType type)
-/// {
-/// case COLD_ARCHIVE_METAENTRY:
-///     BucketMetadata metaEntry;
-/// case COLD_ARCHIVE_ARCHIVED_LEAF:
-///     ColdArchiveArchivedLeaf archivedLeaf;
-/// case COLD_ARCHIVE_DELETED_LEAF:
-///     ColdArchiveDeletedLeaf deletedLeaf;
-/// case COLD_ARCHIVE_BOUNDARY_LEAF:
-///     ColdArchiveBoundaryLeaf boundaryLeaf;
-/// case COLD_ARCHIVE_HASH:
-///     ColdArchiveHashEntry hashEntry;
-/// };
-/// ```
-///
-// union with discriminant ColdArchiveBucketEntryType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum ColdArchiveBucketEntry {
-    Metaentry(BucketMetadata),
-    ArchivedLeaf(ColdArchiveArchivedLeaf),
-    DeletedLeaf(ColdArchiveDeletedLeaf),
-    BoundaryLeaf(ColdArchiveBoundaryLeaf),
-    Hash(ColdArchiveHashEntry),
-}
-
-impl ColdArchiveBucketEntry {
-    pub const VARIANTS: [ColdArchiveBucketEntryType; 5] = [
-        ColdArchiveBucketEntryType::Metaentry,
-        ColdArchiveBucketEntryType::ArchivedLeaf,
-        ColdArchiveBucketEntryType::DeletedLeaf,
-        ColdArchiveBucketEntryType::BoundaryLeaf,
-        ColdArchiveBucketEntryType::Hash,
-    ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
-        "Metaentry",
-        "ArchivedLeaf",
-        "DeletedLeaf",
-        "BoundaryLeaf",
-        "Hash",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Metaentry(_) => "Metaentry",
-            Self::ArchivedLeaf(_) => "ArchivedLeaf",
-            Self::DeletedLeaf(_) => "DeletedLeaf",
-            Self::BoundaryLeaf(_) => "BoundaryLeaf",
-            Self::Hash(_) => "Hash",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ColdArchiveBucketEntryType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Metaentry(_) => ColdArchiveBucketEntryType::Metaentry,
-            Self::ArchivedLeaf(_) => ColdArchiveBucketEntryType::ArchivedLeaf,
-            Self::DeletedLeaf(_) => ColdArchiveBucketEntryType::DeletedLeaf,
-            Self::BoundaryLeaf(_) => ColdArchiveBucketEntryType::BoundaryLeaf,
-            Self::Hash(_) => ColdArchiveBucketEntryType::Hash,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ColdArchiveBucketEntryType; 5] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ColdArchiveBucketEntry {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {
-    #[must_use]
-    fn discriminant(&self) -> ColdArchiveBucketEntryType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {
-    fn variants() -> slice::Iter<'static, ColdArchiveBucketEntryType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {}
-
-impl ReadXdr for ColdArchiveBucketEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ColdArchiveBucketEntryType =
-                <ColdArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ColdArchiveBucketEntryType::Metaentry => {
-                    Self::Metaentry(BucketMetadata::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::ArchivedLeaf => {
-                    Self::ArchivedLeaf(ColdArchiveArchivedLeaf::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::DeletedLeaf => {
-                    Self::DeletedLeaf(ColdArchiveDeletedLeaf::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::BoundaryLeaf => {
-                    Self::BoundaryLeaf(ColdArchiveBoundaryLeaf::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::Hash => Self::Hash(ColdArchiveHashEntry::read_xdr(r)?),
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveBucketEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Metaentry(v) => v.write_xdr(w)?,
-                Self::ArchivedLeaf(v) => v.write_xdr(w)?,
-                Self::DeletedLeaf(v) => v.write_xdr(w)?,
-                Self::BoundaryLeaf(v) => v.write_xdr(w)?,
-                Self::Hash(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -23713,18 +23235,15 @@ impl WriteXdr for LedgerCloseMetaExt {
 ///     // other misc information attached to the ledger close
 ///     SCPHistoryEntry scpInfo<>;
 ///
-///     // Size in bytes of BucketList, to support downstream
+///     // Size in bytes of live Soroban state, to support downstream
 ///     // systems calculating storage fees correctly.
-///     uint64 totalByteSizeOfBucketList;
+///     uint64 totalByteSizeOfLiveSorobanState;
 ///
-///     // Temp keys and all TTL keys that are being evicted at this ledger.
-///     // Note that this can contain TTL keys for both persistent and temporary
-///     // entries, but the name is kept for legacy reasons.
-///     LedgerKey evictedTemporaryLedgerKeys<>;
+///     // TTL and data/code keys that have been evicted at this ledger.
+///     LedgerKey evictedKeys<>;
 ///
-///     // Archived persistent ledger entries that are being
-///     // evicted at this ledger.
-///     LedgerEntry evictedPersistentLedgerEntries<>;
+///     // Maintained for backwards compatibility, should never be populated.
+///     LedgerEntry unused<>;
 /// };
 /// ```
 ///
@@ -23743,9 +23262,9 @@ pub struct LedgerCloseMetaV1 {
     pub tx_processing: VecM<TransactionResultMeta>,
     pub upgrades_processing: VecM<UpgradeEntryMeta>,
     pub scp_info: VecM<ScpHistoryEntry>,
-    pub total_byte_size_of_bucket_list: u64,
-    pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
-    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
+    pub total_byte_size_of_live_soroban_state: u64,
+    pub evicted_keys: VecM<LedgerKey>,
+    pub unused: VecM<LedgerEntry>,
 }
 
 impl ReadXdr for LedgerCloseMetaV1 {
@@ -23759,9 +23278,9 @@ impl ReadXdr for LedgerCloseMetaV1 {
                 tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
                 upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
                 scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
-                total_byte_size_of_bucket_list: u64::read_xdr(r)?,
-                evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
-                evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
+                total_byte_size_of_live_soroban_state: u64::read_xdr(r)?,
+                evicted_keys: VecM::<LedgerKey>::read_xdr(r)?,
+                unused: VecM::<LedgerEntry>::read_xdr(r)?,
             })
         })
     }
@@ -23777,9 +23296,9 @@ impl WriteXdr for LedgerCloseMetaV1 {
             self.tx_processing.write_xdr(w)?;
             self.upgrades_processing.write_xdr(w)?;
             self.scp_info.write_xdr(w)?;
-            self.total_byte_size_of_bucket_list.write_xdr(w)?;
-            self.evicted_temporary_ledger_keys.write_xdr(w)?;
-            self.evicted_persistent_ledger_entries.write_xdr(w)?;
+            self.total_byte_size_of_live_soroban_state.write_xdr(w)?;
+            self.evicted_keys.write_xdr(w)?;
+            self.unused.write_xdr(w)?;
             Ok(())
         })
     }
@@ -32043,8 +31562,8 @@ impl WriteXdr for LedgerFootprint {
 ///     // The maximum number of instructions this transaction can use
 ///     uint32 instructions;
 ///
-///     // The maximum number of bytes this transaction can read from ledger
-///     uint32 readBytes;
+///     // The maximum number of bytes this transaction can read from disk backed entries
+///     uint32 diskReadBytes;
 ///     // The maximum number of bytes this transaction can write to ledger
 ///     uint32 writeBytes;
 /// };
@@ -32061,7 +31580,7 @@ impl WriteXdr for LedgerFootprint {
 pub struct SorobanResources {
     pub footprint: LedgerFootprint,
     pub instructions: u32,
-    pub read_bytes: u32,
+    pub disk_read_bytes: u32,
     pub write_bytes: u32,
 }
 
@@ -32072,7 +31591,7 @@ impl ReadXdr for SorobanResources {
             Ok(Self {
                 footprint: LedgerFootprint::read_xdr(r)?,
                 instructions: u32::read_xdr(r)?,
-                read_bytes: u32::read_xdr(r)?,
+                disk_read_bytes: u32::read_xdr(r)?,
                 write_bytes: u32::read_xdr(r)?,
             })
         })
@@ -32085,7 +31604,7 @@ impl WriteXdr for SorobanResources {
         w.with_limited_depth(|w| {
             self.footprint.write_xdr(w)?;
             self.instructions.write_xdr(w)?;
-            self.read_bytes.write_xdr(w)?;
+            self.disk_read_bytes.write_xdr(w)?;
             self.write_bytes.write_xdr(w)?;
             Ok(())
         })
@@ -41245,8 +40764,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 ///     INVOKE_HOST_FUNCTION_TRAPPED = -2,
 ///     INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
 ///     INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED = -4,
-///     INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5,
-///     INVOKE_HOST_FUNCTION_INVALID_CREATION_PROOF = -6
+///     INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5
 /// };
 /// ```
 ///
@@ -41267,27 +40785,24 @@ pub enum InvokeHostFunctionResultCode {
     ResourceLimitExceeded = -3,
     EntryArchived = -4,
     InsufficientRefundableFee = -5,
-    InvalidCreationProof = -6,
 }
 
 impl InvokeHostFunctionResultCode {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 7] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
         InvokeHostFunctionResultCode::EntryArchived,
         InvokeHostFunctionResultCode::InsufficientRefundableFee,
-        InvokeHostFunctionResultCode::InvalidCreationProof,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "Success",
         "Malformed",
         "Trapped",
         "ResourceLimitExceeded",
         "EntryArchived",
         "InsufficientRefundableFee",
-        "InvalidCreationProof",
     ];
 
     #[must_use]
@@ -41299,12 +40814,11 @@ impl InvokeHostFunctionResultCode {
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
             Self::EntryArchived => "EntryArchived",
             Self::InsufficientRefundableFee => "InsufficientRefundableFee",
-            Self::InvalidCreationProof => "InvalidCreationProof",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 7] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
         Self::VARIANTS
     }
 }
@@ -41341,7 +40855,6 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
             -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
             -4 => InvokeHostFunctionResultCode::EntryArchived,
             -5 => InvokeHostFunctionResultCode::InsufficientRefundableFee,
-            -6 => InvokeHostFunctionResultCode::InvalidCreationProof,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -41801,8 +41314,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
 ///     // codes considered as "failure" for the operation
 ///     RESTORE_FOOTPRINT_MALFORMED = -1,
 ///     RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2,
-///     RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3,
-///     RESTORE_FOOTPRINT_INVALID_PROOF = -4
+///     RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3
 /// };
 /// ```
 ///
@@ -41821,23 +41333,20 @@ pub enum RestoreFootprintResultCode {
     Malformed = -1,
     ResourceLimitExceeded = -2,
     InsufficientRefundableFee = -3,
-    InvalidProof = -4,
 }
 
 impl RestoreFootprintResultCode {
-    pub const VARIANTS: [RestoreFootprintResultCode; 5] = [
+    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
         RestoreFootprintResultCode::Success,
         RestoreFootprintResultCode::Malformed,
         RestoreFootprintResultCode::ResourceLimitExceeded,
         RestoreFootprintResultCode::InsufficientRefundableFee,
-        RestoreFootprintResultCode::InvalidProof,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 4] = [
         "Success",
         "Malformed",
         "ResourceLimitExceeded",
         "InsufficientRefundableFee",
-        "InvalidProof",
     ];
 
     #[must_use]
@@ -41847,12 +41356,11 @@ impl RestoreFootprintResultCode {
             Self::Malformed => "Malformed",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
             Self::InsufficientRefundableFee => "InsufficientRefundableFee",
-            Self::InvalidProof => "InvalidProof",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [RestoreFootprintResultCode; 5] {
+    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
         Self::VARIANTS
     }
 }
@@ -41887,7 +41395,6 @@ impl TryFrom<i32> for RestoreFootprintResultCode {
             -1 => RestoreFootprintResultCode::Malformed,
             -2 => RestoreFootprintResultCode::ResourceLimitExceeded,
             -3 => RestoreFootprintResultCode::InsufficientRefundableFee,
-            -4 => RestoreFootprintResultCode::InvalidProof,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -46360,16 +45867,10 @@ pub enum TypeVariant {
     BucketListType,
     BucketEntryType,
     HotArchiveBucketEntryType,
-    ColdArchiveBucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
     BucketEntry,
     HotArchiveBucketEntry,
-    ColdArchiveArchivedLeaf,
-    ColdArchiveDeletedLeaf,
-    ColdArchiveBoundaryLeaf,
-    ColdArchiveHashEntry,
-    ColdArchiveBucketEntry,
     UpgradeType,
     StellarValueType,
     LedgerCloseValueSignature,
@@ -46657,7 +46158,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 458] = [
+    pub const VARIANTS: [TypeVariant; 452] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46822,16 +46323,10 @@ impl TypeVariant {
         TypeVariant::BucketListType,
         TypeVariant::BucketEntryType,
         TypeVariant::HotArchiveBucketEntryType,
-        TypeVariant::ColdArchiveBucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
         TypeVariant::HotArchiveBucketEntry,
-        TypeVariant::ColdArchiveArchivedLeaf,
-        TypeVariant::ColdArchiveDeletedLeaf,
-        TypeVariant::ColdArchiveBoundaryLeaf,
-        TypeVariant::ColdArchiveHashEntry,
-        TypeVariant::ColdArchiveBucketEntry,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
         TypeVariant::LedgerCloseValueSignature,
@@ -47117,7 +46612,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 458] = [
+    pub const VARIANTS_STR: [&'static str; 452] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47282,16 +46777,10 @@ impl TypeVariant {
         "BucketListType",
         "BucketEntryType",
         "HotArchiveBucketEntryType",
-        "ColdArchiveBucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
         "BucketEntry",
         "HotArchiveBucketEntry",
-        "ColdArchiveArchivedLeaf",
-        "ColdArchiveDeletedLeaf",
-        "ColdArchiveBoundaryLeaf",
-        "ColdArchiveHashEntry",
-        "ColdArchiveBucketEntry",
         "UpgradeType",
         "StellarValueType",
         "LedgerCloseValueSignature",
@@ -47750,16 +47239,10 @@ impl TypeVariant {
             Self::BucketListType => "BucketListType",
             Self::BucketEntryType => "BucketEntryType",
             Self::HotArchiveBucketEntryType => "HotArchiveBucketEntryType",
-            Self::ColdArchiveBucketEntryType => "ColdArchiveBucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
             Self::BucketEntry => "BucketEntry",
             Self::HotArchiveBucketEntry => "HotArchiveBucketEntry",
-            Self::ColdArchiveArchivedLeaf => "ColdArchiveArchivedLeaf",
-            Self::ColdArchiveDeletedLeaf => "ColdArchiveDeletedLeaf",
-            Self::ColdArchiveBoundaryLeaf => "ColdArchiveBoundaryLeaf",
-            Self::ColdArchiveHashEntry => "ColdArchiveHashEntry",
-            Self::ColdArchiveBucketEntry => "ColdArchiveBucketEntry",
             Self::UpgradeType => "UpgradeType",
             Self::StellarValueType => "StellarValueType",
             Self::LedgerCloseValueSignature => "LedgerCloseValueSignature",
@@ -48059,7 +47542,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 458] {
+    pub const fn variants() -> [TypeVariant; 452] {
         Self::VARIANTS
     }
 
@@ -48284,18 +47767,10 @@ impl TypeVariant {
             Self::HotArchiveBucketEntryType => {
                 gen.into_root_schema_for::<HotArchiveBucketEntryType>()
             }
-            Self::ColdArchiveBucketEntryType => {
-                gen.into_root_schema_for::<ColdArchiveBucketEntryType>()
-            }
             Self::BucketMetadata => gen.into_root_schema_for::<BucketMetadata>(),
             Self::BucketMetadataExt => gen.into_root_schema_for::<BucketMetadataExt>(),
             Self::BucketEntry => gen.into_root_schema_for::<BucketEntry>(),
             Self::HotArchiveBucketEntry => gen.into_root_schema_for::<HotArchiveBucketEntry>(),
-            Self::ColdArchiveArchivedLeaf => gen.into_root_schema_for::<ColdArchiveArchivedLeaf>(),
-            Self::ColdArchiveDeletedLeaf => gen.into_root_schema_for::<ColdArchiveDeletedLeaf>(),
-            Self::ColdArchiveBoundaryLeaf => gen.into_root_schema_for::<ColdArchiveBoundaryLeaf>(),
-            Self::ColdArchiveHashEntry => gen.into_root_schema_for::<ColdArchiveHashEntry>(),
-            Self::ColdArchiveBucketEntry => gen.into_root_schema_for::<ColdArchiveBucketEntry>(),
             Self::UpgradeType => gen.into_root_schema_for::<UpgradeType>(),
             Self::StellarValueType => gen.into_root_schema_for::<StellarValueType>(),
             Self::LedgerCloseValueSignature => {
@@ -48936,16 +48411,10 @@ impl core::str::FromStr for TypeVariant {
             "BucketListType" => Ok(Self::BucketListType),
             "BucketEntryType" => Ok(Self::BucketEntryType),
             "HotArchiveBucketEntryType" => Ok(Self::HotArchiveBucketEntryType),
-            "ColdArchiveBucketEntryType" => Ok(Self::ColdArchiveBucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
             "BucketEntry" => Ok(Self::BucketEntry),
             "HotArchiveBucketEntry" => Ok(Self::HotArchiveBucketEntry),
-            "ColdArchiveArchivedLeaf" => Ok(Self::ColdArchiveArchivedLeaf),
-            "ColdArchiveDeletedLeaf" => Ok(Self::ColdArchiveDeletedLeaf),
-            "ColdArchiveBoundaryLeaf" => Ok(Self::ColdArchiveBoundaryLeaf),
-            "ColdArchiveHashEntry" => Ok(Self::ColdArchiveHashEntry),
-            "ColdArchiveBucketEntry" => Ok(Self::ColdArchiveBucketEntry),
             "UpgradeType" => Ok(Self::UpgradeType),
             "StellarValueType" => Ok(Self::StellarValueType),
             "LedgerCloseValueSignature" => Ok(Self::LedgerCloseValueSignature),
@@ -49428,16 +48897,10 @@ pub enum Type {
     BucketListType(Box<BucketListType>),
     BucketEntryType(Box<BucketEntryType>),
     HotArchiveBucketEntryType(Box<HotArchiveBucketEntryType>),
-    ColdArchiveBucketEntryType(Box<ColdArchiveBucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
     BucketEntry(Box<BucketEntry>),
     HotArchiveBucketEntry(Box<HotArchiveBucketEntry>),
-    ColdArchiveArchivedLeaf(Box<ColdArchiveArchivedLeaf>),
-    ColdArchiveDeletedLeaf(Box<ColdArchiveDeletedLeaf>),
-    ColdArchiveBoundaryLeaf(Box<ColdArchiveBoundaryLeaf>),
-    ColdArchiveHashEntry(Box<ColdArchiveHashEntry>),
-    ColdArchiveBucketEntry(Box<ColdArchiveBucketEntry>),
     UpgradeType(Box<UpgradeType>),
     StellarValueType(Box<StellarValueType>),
     LedgerCloseValueSignature(Box<LedgerCloseValueSignature>),
@@ -49725,7 +49188,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 458] = [
+    pub const VARIANTS: [TypeVariant; 452] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49890,16 +49353,10 @@ impl Type {
         TypeVariant::BucketListType,
         TypeVariant::BucketEntryType,
         TypeVariant::HotArchiveBucketEntryType,
-        TypeVariant::ColdArchiveBucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
         TypeVariant::HotArchiveBucketEntry,
-        TypeVariant::ColdArchiveArchivedLeaf,
-        TypeVariant::ColdArchiveDeletedLeaf,
-        TypeVariant::ColdArchiveBoundaryLeaf,
-        TypeVariant::ColdArchiveHashEntry,
-        TypeVariant::ColdArchiveBucketEntry,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
         TypeVariant::LedgerCloseValueSignature,
@@ -50185,7 +49642,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 458] = [
+    pub const VARIANTS_STR: [&'static str; 452] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50350,16 +49807,10 @@ impl Type {
         "BucketListType",
         "BucketEntryType",
         "HotArchiveBucketEntryType",
-        "ColdArchiveBucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
         "BucketEntry",
         "HotArchiveBucketEntry",
-        "ColdArchiveArchivedLeaf",
-        "ColdArchiveDeletedLeaf",
-        "ColdArchiveBoundaryLeaf",
-        "ColdArchiveHashEntry",
-        "ColdArchiveBucketEntry",
         "UpgradeType",
         "StellarValueType",
         "LedgerCloseValueSignature",
@@ -51326,11 +50777,6 @@ impl Type {
                     HotArchiveBucketEntryType::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ColdArchiveBucketEntryType => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveBucketEntryType(Box::new(
-                    ColdArchiveBucketEntryType::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::BucketMetadata => r.with_limited_depth(|r| {
                 Ok(Self::BucketMetadata(Box::new(BucketMetadata::read_xdr(r)?)))
             }),
@@ -51345,31 +50791,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => r.with_limited_depth(|r| {
                 Ok(Self::HotArchiveBucketEntry(Box::new(
                     HotArchiveBucketEntry::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveArchivedLeaf => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveArchivedLeaf(Box::new(
-                    ColdArchiveArchivedLeaf::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveDeletedLeaf => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveDeletedLeaf(Box::new(
-                    ColdArchiveDeletedLeaf::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveBoundaryLeaf => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveBoundaryLeaf(Box::new(
-                    ColdArchiveBoundaryLeaf::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveHashEntry => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveHashEntry(Box::new(
-                    ColdArchiveHashEntry::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveBucketEntry => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveBucketEntry(Box::new(
-                    ColdArchiveBucketEntry::read_xdr(r)?,
                 )))
             }),
             TypeVariant::UpgradeType => {
@@ -53383,10 +52804,6 @@ impl Type {
                 ReadXdrIter::<_, HotArchiveBucketEntryType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))),
             ),
-            TypeVariant::ColdArchiveBucketEntryType => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntryType>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntryType(Box::new(t)))),
-            ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, BucketMetadata>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
@@ -53402,26 +52819,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => Box::new(
                 ReadXdrIter::<_, HotArchiveBucketEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveArchivedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveArchivedLeaf>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveArchivedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveDeletedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveDeletedLeaf>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveDeletedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBoundaryLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveBoundaryLeaf>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBoundaryLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveHashEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveHashEntry>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveHashEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBucketEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntry>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntry(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
                 ReadXdrIter::<_, UpgradeType>::new(&mut r.inner, r.limits.clone())
@@ -55448,13 +54845,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t.0)))),
             ),
-            TypeVariant::ColdArchiveBucketEntryType => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveBucketEntryType>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveBucketEntryType(Box::new(t.0)))),
-            ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, Frame<BucketMetadata>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t.0)))),
@@ -55470,38 +54860,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => Box::new(
                 ReadXdrIter::<_, Frame<HotArchiveBucketEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveArchivedLeaf => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveArchivedLeaf>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveArchivedLeaf(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveDeletedLeaf => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveDeletedLeaf>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveDeletedLeaf(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveBoundaryLeaf => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveBoundaryLeaf>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveBoundaryLeaf(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveHashEntry => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveHashEntry>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveHashEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveBucketEntry => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveBucketEntry>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveBucketEntry(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeType => Box::new(
                 ReadXdrIter::<_, Frame<UpgradeType>>::new(&mut r.inner, r.limits.clone())
@@ -57630,10 +56988,6 @@ impl Type {
                 ReadXdrIter::<_, HotArchiveBucketEntryType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))),
             ),
-            TypeVariant::ColdArchiveBucketEntryType => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntryType>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntryType(Box::new(t)))),
-            ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, BucketMetadata>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
@@ -57649,26 +57003,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => Box::new(
                 ReadXdrIter::<_, HotArchiveBucketEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveArchivedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveArchivedLeaf>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveArchivedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveDeletedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveDeletedLeaf>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveDeletedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBoundaryLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveBoundaryLeaf>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBoundaryLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveHashEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveHashEntry>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveHashEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBucketEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntry>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntry(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
                 ReadXdrIter::<_, UpgradeType>::new(dec, r.limits.clone())
@@ -59280,9 +58614,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
                 Box::new(serde_json::from_reader(r)?),
             )),
-            TypeVariant::ColdArchiveBucketEntryType => Ok(Self::ColdArchiveBucketEntryType(
-                Box::new(serde_json::from_reader(r)?),
-            )),
             TypeVariant::BucketMetadata => {
                 Ok(Self::BucketMetadata(Box::new(serde_json::from_reader(r)?)))
             }
@@ -59293,21 +58624,6 @@ impl Type {
                 Ok(Self::BucketEntry(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveArchivedLeaf => Ok(Self::ColdArchiveArchivedLeaf(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveDeletedLeaf => Ok(Self::ColdArchiveDeletedLeaf(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveBoundaryLeaf => Ok(Self::ColdArchiveBoundaryLeaf(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveHashEntry => Ok(Self::ColdArchiveHashEntry(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveBucketEntry => Ok(Self::ColdArchiveBucketEntry(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::UpgradeType => {
@@ -60634,9 +59950,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
-            TypeVariant::ColdArchiveBucketEntryType => Ok(Self::ColdArchiveBucketEntryType(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
             TypeVariant::BucketMetadata => Ok(Self::BucketMetadata(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -60647,21 +59960,6 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveArchivedLeaf => Ok(Self::ColdArchiveArchivedLeaf(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveDeletedLeaf => Ok(Self::ColdArchiveDeletedLeaf(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveBoundaryLeaf => Ok(Self::ColdArchiveBoundaryLeaf(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveHashEntry => Ok(Self::ColdArchiveHashEntry(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveBucketEntry => Ok(Self::ColdArchiveBucketEntry(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::UpgradeType => Ok(Self::UpgradeType(Box::new(
@@ -61747,16 +61045,10 @@ impl Type {
             Self::BucketListType(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
             Self::HotArchiveBucketEntryType(ref v) => v.as_ref(),
-            Self::ColdArchiveBucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
             Self::BucketEntry(ref v) => v.as_ref(),
             Self::HotArchiveBucketEntry(ref v) => v.as_ref(),
-            Self::ColdArchiveArchivedLeaf(ref v) => v.as_ref(),
-            Self::ColdArchiveDeletedLeaf(ref v) => v.as_ref(),
-            Self::ColdArchiveBoundaryLeaf(ref v) => v.as_ref(),
-            Self::ColdArchiveHashEntry(ref v) => v.as_ref(),
-            Self::ColdArchiveBucketEntry(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
             Self::StellarValueType(ref v) => v.as_ref(),
             Self::LedgerCloseValueSignature(ref v) => v.as_ref(),
@@ -62220,16 +61512,10 @@ impl Type {
             Self::BucketListType(_) => "BucketListType",
             Self::BucketEntryType(_) => "BucketEntryType",
             Self::HotArchiveBucketEntryType(_) => "HotArchiveBucketEntryType",
-            Self::ColdArchiveBucketEntryType(_) => "ColdArchiveBucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
             Self::BucketEntry(_) => "BucketEntry",
             Self::HotArchiveBucketEntry(_) => "HotArchiveBucketEntry",
-            Self::ColdArchiveArchivedLeaf(_) => "ColdArchiveArchivedLeaf",
-            Self::ColdArchiveDeletedLeaf(_) => "ColdArchiveDeletedLeaf",
-            Self::ColdArchiveBoundaryLeaf(_) => "ColdArchiveBoundaryLeaf",
-            Self::ColdArchiveHashEntry(_) => "ColdArchiveHashEntry",
-            Self::ColdArchiveBucketEntry(_) => "ColdArchiveBucketEntry",
             Self::UpgradeType(_) => "UpgradeType",
             Self::StellarValueType(_) => "StellarValueType",
             Self::LedgerCloseValueSignature(_) => "LedgerCloseValueSignature",
@@ -62537,7 +61823,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 458] {
+    pub const fn variants() -> [TypeVariant; 452] {
         Self::VARIANTS
     }
 
@@ -62729,16 +62015,10 @@ impl Type {
             Self::BucketListType(_) => TypeVariant::BucketListType,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
             Self::HotArchiveBucketEntryType(_) => TypeVariant::HotArchiveBucketEntryType,
-            Self::ColdArchiveBucketEntryType(_) => TypeVariant::ColdArchiveBucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
             Self::BucketEntry(_) => TypeVariant::BucketEntry,
             Self::HotArchiveBucketEntry(_) => TypeVariant::HotArchiveBucketEntry,
-            Self::ColdArchiveArchivedLeaf(_) => TypeVariant::ColdArchiveArchivedLeaf,
-            Self::ColdArchiveDeletedLeaf(_) => TypeVariant::ColdArchiveDeletedLeaf,
-            Self::ColdArchiveBoundaryLeaf(_) => TypeVariant::ColdArchiveBoundaryLeaf,
-            Self::ColdArchiveHashEntry(_) => TypeVariant::ColdArchiveHashEntry,
-            Self::ColdArchiveBucketEntry(_) => TypeVariant::ColdArchiveBucketEntry,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
             Self::StellarValueType(_) => TypeVariant::StellarValueType,
             Self::LedgerCloseValueSignature(_) => TypeVariant::LedgerCloseValueSignature,
@@ -63259,16 +62539,10 @@ impl WriteXdr for Type {
             Self::BucketListType(v) => v.write_xdr(w),
             Self::BucketEntryType(v) => v.write_xdr(w),
             Self::HotArchiveBucketEntryType(v) => v.write_xdr(w),
-            Self::ColdArchiveBucketEntryType(v) => v.write_xdr(w),
             Self::BucketMetadata(v) => v.write_xdr(w),
             Self::BucketMetadataExt(v) => v.write_xdr(w),
             Self::BucketEntry(v) => v.write_xdr(w),
             Self::HotArchiveBucketEntry(v) => v.write_xdr(w),
-            Self::ColdArchiveArchivedLeaf(v) => v.write_xdr(w),
-            Self::ColdArchiveDeletedLeaf(v) => v.write_xdr(w),
-            Self::ColdArchiveBoundaryLeaf(v) => v.write_xdr(w),
-            Self::ColdArchiveHashEntry(v) => v.write_xdr(w),
-            Self::ColdArchiveBucketEntry(v) => v.write_xdr(w),
             Self::UpgradeType(v) => v.write_xdr(w),
             Self::StellarValueType(v) => v.write_xdr(w),
             Self::LedgerCloseValueSignature(v) => v.write_xdr(w),

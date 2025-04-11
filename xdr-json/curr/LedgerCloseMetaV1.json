@@ -1,28 +1,21 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "LedgerCloseMetaV1",
-  "description": "LedgerCloseMetaV1 is an XDR Struct defines as:\n\n```text struct LedgerCloseMetaV1 { LedgerCloseMetaExt ext;\n\nLedgerHeaderHistoryEntry ledgerHeader;\n\nGeneralizedTransactionSet txSet;\n\n// NB: transactions are sorted in apply order here // fees for all transactions are processed first // followed by applying transactions TransactionResultMeta txProcessing<>;\n\n// upgrades are applied last UpgradeEntryMeta upgradesProcessing<>;\n\n// other misc information attached to the ledger close SCPHistoryEntry scpInfo<>;\n\n// Size in bytes of BucketList, to support downstream // systems calculating storage fees correctly. uint64 totalByteSizeOfBucketList;\n\n// Temp keys that are being evicted at this ledger. LedgerKey evictedTemporaryLedgerKeys<>;\n\n// Archived restorable ledger entries that are being // evicted at this ledger. LedgerEntry evictedPersistentLedgerEntries<>; }; ```",
+  "description": "LedgerCloseMetaV1 is an XDR Struct defines as:\n\n```text struct LedgerCloseMetaV1 { LedgerCloseMetaExt ext;\n\nLedgerHeaderHistoryEntry ledgerHeader;\n\nGeneralizedTransactionSet txSet;\n\n// NB: transactions are sorted in apply order here // fees for all transactions are processed first // followed by applying transactions TransactionResultMeta txProcessing<>;\n\n// upgrades are applied last UpgradeEntryMeta upgradesProcessing<>;\n\n// other misc information attached to the ledger close SCPHistoryEntry scpInfo<>;\n\n// Size in bytes of live Soroban state, to support downstream // systems calculating storage fees correctly. uint64 totalByteSizeOfLiveSorobanState;\n\n// TTL and data/code keys that have been evicted at this ledger. LedgerKey evictedKeys<>;\n\n// Maintained for backwards compatibility, should never be populated. LedgerEntry unused<>; }; ```",
   "type": "object",
   "required": [
-    "evicted_persistent_ledger_entries",
-    "evicted_temporary_ledger_keys",
+    "evicted_keys",
     "ext",
     "ledger_header",
     "scp_info",
-    "total_byte_size_of_bucket_list",
+    "total_byte_size_of_live_soroban_state",
     "tx_processing",
     "tx_set",
+    "unused",
     "upgrades_processing"
   ],
   "properties": {
-    "evicted_persistent_ledger_entries": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/LedgerEntry"
-      },
-      "maxItems": 4294967295
-    },
-    "evicted_temporary_ledger_keys": {
+    "evicted_keys": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/LedgerKey"
@@ -42,7 +35,7 @@
       },
       "maxItems": 4294967295
     },
-    "total_byte_size_of_bucket_list": {
+    "total_byte_size_of_live_soroban_state": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
@@ -56,6 +49,13 @@
     },
     "tx_set": {
       "$ref": "#/definitions/GeneralizedTransactionSet"
+    },
+    "unused": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/LedgerEntry"
+      },
+      "maxItems": 4294967295
     },
     "upgrades_processing": {
       "type": "array",
@@ -1065,41 +1065,51 @@
         }
       }
     },
-    "ConfigSettingContractLedgerCostV0": {
-      "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of ledger entry read operations per ledger uint32 ledgerMaxReadLedgerEntries; // Maximum number of bytes that can be read per ledger uint32 ledgerMaxReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of ledger entry read operations per transaction uint32 txMaxReadLedgerEntries; // Maximum number of bytes that can be read per transaction uint32 txMaxReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeReadLedgerEntry;  // Fee per ledger entry read int64 feeWriteLedgerEntry; // Fee per ledger entry write\n\nint64 feeRead1KB;  // Fee for reading 1KB\n\n// The following parameters determine the write fee per 1KB. // Write fee grows linearly until bucket list reaches this size int64 bucketListTargetSizeBytes; // Fee per 1KB write when the bucket list is empty int64 writeFee1KBBucketListLow; // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes` int64 writeFee1KBBucketListHigh; // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes` uint32 bucketListWriteFeeGrowthFactor; }; ```",
+    "ConfigSettingContractLedgerCostExtV0": {
+      "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of in-memory ledger entry read operations per transaction uint32 txMaxInMemoryReadEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
       "type": "object",
       "required": [
-        "bucket_list_target_size_bytes",
-        "bucket_list_write_fee_growth_factor",
-        "fee_read1_kb",
-        "fee_read_ledger_entry",
-        "fee_write_ledger_entry",
-        "ledger_max_read_bytes",
-        "ledger_max_read_ledger_entries",
-        "ledger_max_write_bytes",
-        "ledger_max_write_ledger_entries",
-        "tx_max_read_bytes",
-        "tx_max_read_ledger_entries",
-        "tx_max_write_bytes",
-        "tx_max_write_ledger_entries",
-        "write_fee1_kb_bucket_list_high",
-        "write_fee1_kb_bucket_list_low"
+        "fee_write1_kb",
+        "tx_max_in_memory_read_entries"
       ],
       "properties": {
-        "bucket_list_target_size_bytes": {
+        "fee_write1_kb": {
           "type": "integer",
           "format": "int64"
         },
-        "bucket_list_write_fee_growth_factor": {
+        "tx_max_in_memory_read_entries": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
-        },
-        "fee_read1_kb": {
+        }
+      }
+    },
+    "ConfigSettingContractLedgerCostV0": {
+      "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of disk entry read operations per ledger uint32 ledgerMaxDiskReadEntries; // Maximum number of bytes of disk reads that can be performed per ledger uint32 ledgerMaxDiskReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of disk entry read operations per transaction uint32 txMaxDiskReadEntries; // Maximum number of bytes of disk reads that can be performed per transaction uint32 txMaxDiskReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeDiskReadLedgerEntry;  // Fee per disk ledger entry read int64 feeWriteLedgerEntry;     // Fee per ledger entry write\n\nint64 feeDiskRead1KB;          // Fee for reading 1KB disk\n\n// The following parameters determine the write fee per 1KB. // Rent fee grows linearly until soroban state reaches this size int64 sorobanStateTargetSizeBytes; // Fee per 1KB rent when the soroban state is empty int64 rentFee1KBSorobanStateSizeLow; // Fee per 1KB rent when the soroban state has reached `sorobanStateTargetSizeBytes` int64 rentFee1KBSorobanStateSizeHigh; // Rent fee multiplier for any additional data past the first `sorobanStateTargetSizeBytes` uint32 sorobanStateRentFeeGrowthFactor; }; ```",
+      "type": "object",
+      "required": [
+        "fee_disk_read1_kb",
+        "fee_disk_read_ledger_entry",
+        "fee_write_ledger_entry",
+        "ledger_max_disk_read_bytes",
+        "ledger_max_disk_read_entries",
+        "ledger_max_write_bytes",
+        "ledger_max_write_ledger_entries",
+        "rent_fee1_kb_soroban_state_size_high",
+        "rent_fee1_kb_soroban_state_size_low",
+        "soroban_state_rent_fee_growth_factor",
+        "soroban_state_target_size_bytes",
+        "tx_max_disk_read_bytes",
+        "tx_max_disk_read_entries",
+        "tx_max_write_bytes",
+        "tx_max_write_ledger_entries"
+      ],
+      "properties": {
+        "fee_disk_read1_kb": {
           "type": "integer",
           "format": "int64"
         },
-        "fee_read_ledger_entry": {
+        "fee_disk_read_ledger_entry": {
           "type": "integer",
           "format": "int64"
         },
@@ -1107,12 +1117,12 @@
           "type": "integer",
           "format": "int64"
         },
-        "ledger_max_read_bytes": {
+        "ledger_max_disk_read_bytes": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "ledger_max_read_ledger_entries": {
+        "ledger_max_disk_read_entries": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -1127,12 +1137,29 @@
           "format": "uint32",
           "minimum": 0.0
         },
-        "tx_max_read_bytes": {
+        "rent_fee1_kb_soroban_state_size_high": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rent_fee1_kb_soroban_state_size_low": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "soroban_state_rent_fee_growth_factor": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "tx_max_read_ledger_entries": {
+        "soroban_state_target_size_bytes": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tx_max_disk_read_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_disk_read_entries": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -1146,19 +1173,25 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
-        },
-        "write_fee1_kb_bucket_list_high": {
+        }
+      }
+    },
+    "ConfigSettingContractParallelComputeV0": {
+      "description": "ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractParallelComputeV0 { // Maximum number of clusters with dependent transactions allowed in a // stage of parallel tx set component. // This effectively sets the lower bound on the number of physical threads // necessary to effectively apply transaction sets in parallel. uint32 ledgerMaxDependentTxClusters; }; ```",
+      "type": "object",
+      "required": [
+        "ledger_max_dependent_tx_clusters"
+      ],
+      "properties": {
+        "ledger_max_dependent_tx_clusters": {
           "type": "integer",
-          "format": "int64"
-        },
-        "write_fee1_kb_bucket_list_low": {
-          "type": "integer",
-          "format": "int64"
+          "format": "uint32",
+          "minimum": 0.0
         }
       }
     },
     "ConfigSettingEntry": {
-      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW: uint64 bucketListSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; }; ```",
+      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -1313,10 +1346,10 @@
         {
           "type": "object",
           "required": [
-            "bucketlist_size_window"
+            "live_soroban_state_size_window"
           ],
           "properties": {
-            "bucketlist_size_window": {
+            "live_soroban_state_size_window": {
               "type": "array",
               "items": {
                 "type": "integer",
@@ -1339,11 +1372,35 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_parallel_compute_v0"
+          ],
+          "properties": {
+            "contract_parallel_compute_v0": {
+              "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_ledger_cost_ext_v0"
+          ],
+          "properties": {
+            "contract_ledger_cost_ext_v0": {
+              "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -1358,8 +1415,10 @@
         "contract_data_entry_size_bytes",
         "state_archival",
         "contract_execution_lanes",
-        "bucketlist_size_window",
-        "eviction_iterator"
+        "live_soroban_state_size_window",
+        "eviction_iterator",
+        "contract_parallel_compute_v0",
+        "contract_ledger_cost_ext_v0"
       ]
     },
     "ConfigUpgradeSetKey": {
@@ -1942,6 +2001,14 @@
           "$ref": "#/definitions/Signature"
         }
       }
+    },
+    "DependentTxCluster": {
+      "description": "DependentTxCluster is an XDR Typedef defines as:\n\n```text typedef TransactionEnvelope DependentTxCluster<>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TransactionEnvelope"
+      },
+      "maxItems": 4294967295
     },
     "DiagnosticEvent": {
       "description": "DiagnosticEvent is an XDR Struct defines as:\n\n```text struct DiagnosticEvent { bool inSuccessfulContractCall; ContractEvent event; }; ```",
@@ -2546,7 +2613,7 @@
       }
     },
     "LedgerEntryChange": {
-      "description": "LedgerEntryChange is an XDR Union defines as:\n\n```text union LedgerEntryChange switch (LedgerEntryChangeType type) { case LEDGER_ENTRY_CREATED: LedgerEntry created; case LEDGER_ENTRY_UPDATED: LedgerEntry updated; case LEDGER_ENTRY_REMOVED: LedgerKey removed; case LEDGER_ENTRY_STATE: LedgerEntry state; }; ```",
+      "description": "LedgerEntryChange is an XDR Union defines as:\n\n```text union LedgerEntryChange switch (LedgerEntryChangeType type) { case LEDGER_ENTRY_CREATED: LedgerEntry created; case LEDGER_ENTRY_UPDATED: LedgerEntry updated; case LEDGER_ENTRY_REMOVED: LedgerKey removed; case LEDGER_ENTRY_STATE: LedgerEntry state; case LEDGER_ENTRY_RESTORED: LedgerEntry restored; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -2591,6 +2658,18 @@
           ],
           "properties": {
             "state": {
+              "$ref": "#/definitions/LedgerEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "restored"
+          ],
+          "properties": {
+            "restored": {
               "$ref": "#/definitions/LedgerEntry"
             }
           },
@@ -4655,6 +4734,37 @@
         }
       ]
     },
+    "ParallelTxExecutionStage": {
+      "description": "ParallelTxExecutionStage is an XDR Typedef defines as:\n\n```text typedef DependentTxCluster ParallelTxExecutionStage<>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DependentTxCluster"
+      },
+      "maxItems": 4294967295
+    },
+    "ParallelTxsComponent": {
+      "description": "ParallelTxsComponent is an XDR Struct defines as:\n\n```text struct ParallelTxsComponent { int64* baseFee; // A sequence of stages that *may* have arbitrary data dependencies between // each other, i.e. in a general case the stage execution order may not be // arbitrarily shuffled without affecting the end result. ParallelTxExecutionStage executionStages<>; }; ```",
+      "type": "object",
+      "required": [
+        "execution_stages"
+      ],
+      "properties": {
+        "base_fee": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        },
+        "execution_stages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ParallelTxExecutionStage"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
     "PathPaymentStrictReceiveOp": {
       "description": "PathPaymentStrictReceiveOp is an XDR Struct defines as:\n\n```text struct PathPaymentStrictReceiveOp { Asset sendAsset; // asset we pay with int64 sendMax;   // the maximum amount of sendAsset to // send (excluding fees). // The operation will fail if can't be met\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destAmount;         // amount they end up with\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
       "type": "object",
@@ -6235,24 +6345,24 @@
       ]
     },
     "SorobanResources": {
-      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from ledger uint32 readBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
+      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from disk backed entries uint32 diskReadBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
       "type": "object",
       "required": [
+        "disk_read_bytes",
         "footprint",
         "instructions",
-        "read_bytes",
         "write_bytes"
       ],
       "properties": {
-        "footprint": {
-          "$ref": "#/definitions/LedgerFootprint"
-        },
-        "instructions": {
+        "disk_read_bytes": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "read_bytes": {
+        "footprint": {
+          "$ref": "#/definitions/LedgerFootprint"
+        },
+        "instructions": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -6264,8 +6374,26 @@
         }
       }
     },
+    "SorobanResourcesExtV0": {
+      "description": "SorobanResourcesExtV0 is an XDR Struct defines as:\n\n```text struct SorobanResourcesExtV0 { // Vector of indices representing what Soroban // entries in the footprint are archived, based on the // order of keys provided in the readWrite footprint. uint32 archivedSorobanEntries<>; }; ```",
+      "type": "object",
+      "required": [
+        "archived_soroban_entries"
+      ],
+      "properties": {
+        "archived_soroban_entries": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
     "SorobanTransactionData": {
-      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { ExtensionPoint ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
+      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -6274,7 +6402,7 @@
       ],
       "properties": {
         "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
+          "$ref": "#/definitions/SorobanTransactionDataExt"
         },
         "resource_fee": {
           "type": "integer",
@@ -6284,6 +6412,29 @@
           "$ref": "#/definitions/SorobanResources"
         }
       }
+    },
+    "SorobanTransactionDataExt": {
+      "description": "SorobanTransactionDataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/SorobanResourcesExtV0"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "SorobanTransactionMeta": {
       "description": "SorobanTransactionMeta is an XDR Struct defines as:\n\n```text struct SorobanTransactionMeta { SorobanTransactionMetaExt ext;\n\nContractEvent events<>;             // custom events populated by the // contracts themselves. SCVal returnValue;                  // return value of the host fn invocation\n\n// Diagnostics events that are not hashed. // This will contain all contract and diagnostic events. Even ones // that were emitted in a failed contract call. DiagnosticEvent diagnosticEvents<>; }; ```",
@@ -6395,12 +6546,12 @@
       ]
     },
     "StateArchivalSettings": {
-      "description": "StateArchivalSettings is an XDR Struct defines as:\n\n```text struct StateArchivalSettings { uint32 maxEntryTTL; uint32 minTemporaryTTL; uint32 minPersistentTTL;\n\n// rent_fee = wfee_rate_average / rent_rate_denominator_for_type int64 persistentRentRateDenominator; int64 tempRentRateDenominator;\n\n// max number of entries that emit archival meta in a single ledger uint32 maxEntriesToArchive;\n\n// Number of snapshots to use when calculating average BucketList size uint32 bucketListSizeWindowSampleSize;\n\n// How often to sample the BucketList size for the average, in ledgers uint32 bucketListWindowSamplePeriod;\n\n// Maximum number of bytes that we scan for eviction per ledger uint32 evictionScanSize;\n\n// Lowest BucketList level to be scanned to evict entries uint32 startingEvictionScanLevel; }; ```",
+      "description": "StateArchivalSettings is an XDR Struct defines as:\n\n```text struct StateArchivalSettings { uint32 maxEntryTTL; uint32 minTemporaryTTL; uint32 minPersistentTTL;\n\n// rent_fee = wfee_rate_average / rent_rate_denominator_for_type int64 persistentRentRateDenominator; int64 tempRentRateDenominator;\n\n// max number of entries that emit archival meta in a single ledger uint32 maxEntriesToArchive;\n\n// Number of snapshots to use when calculating average live Soroban State size uint32 liveSorobanStateSizeWindowSampleSize;\n\n// How often to sample the live Soroban State size for the average, in ledgers uint32 liveSorobanStateSizeWindowSamplePeriod;\n\n// Maximum number of bytes that we scan for eviction per ledger uint32 evictionScanSize;\n\n// Lowest BucketList level to be scanned to evict entries uint32 startingEvictionScanLevel; }; ```",
       "type": "object",
       "required": [
-        "bucket_list_size_window_sample_size",
-        "bucket_list_window_sample_period",
         "eviction_scan_size",
+        "live_soroban_state_size_window_sample_period",
+        "live_soroban_state_size_window_sample_size",
         "max_entries_to_archive",
         "max_entry_ttl",
         "min_persistent_ttl",
@@ -6410,17 +6561,17 @@
         "temp_rent_rate_denominator"
       ],
       "properties": {
-        "bucket_list_size_window_sample_size": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "bucket_list_window_sample_period": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
         "eviction_scan_size": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "live_soroban_state_size_window_sample_period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "live_soroban_state_size_window_sample_size": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -6562,7 +6713,7 @@
       "minimum": 0.0
     },
     "Transaction": {
-      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
+      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
       "type": "object",
       "required": [
         "cond",
@@ -6873,7 +7024,7 @@
       }
     },
     "TransactionPhase": {
-      "description": "TransactionPhase is an XDR Union defines as:\n\n```text union TransactionPhase switch (int v) { case 0: TxSetComponent v0Components<>; }; ```",
+      "description": "TransactionPhase is an XDR Union defines as:\n\n```text union TransactionPhase switch (int v) { case 0: TxSetComponent v0Components<>; case 1: ParallelTxsComponent parallelTxsComponent; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -6887,6 +7038,18 @@
                 "$ref": "#/definitions/TxSetComponent"
               },
               "maxItems": 4294967295
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/ParallelTxsComponent"
             }
           },
           "additionalProperties": false

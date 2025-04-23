@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "d3882be6ab5591d110f8984159d8f873fe196651d015a9f2a4acd09880b0feb2",
+        "4d4294cd890854db8bb252dcd1a28e046c4f010d2d2ad629045ba8a5512f79bd",
     ),
     (
         "xdr/curr/Stellar-contract.x",
@@ -7520,10 +7520,10 @@ impl WriteXdr for ScSpecFunctionV0 {
     }
 }
 
-/// ScSpecEventTopicV0 is an XDR Struct defines as:
+/// ScSpecEventFieldV0 is an XDR Struct defines as:
 ///
 /// ```text
-/// struct SCSpecEventTopicV0
+/// struct SCSpecEventFieldV0
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string name<30>;
@@ -7539,13 +7539,13 @@ impl WriteXdr for ScSpecFunctionV0 {
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecEventTopicV0 {
+pub struct ScSpecEventFieldV0 {
     pub doc: StringM<1024>,
     pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
 
-impl ReadXdr for ScSpecEventTopicV0 {
+impl ReadXdr for ScSpecEventFieldV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -7558,57 +7558,7 @@ impl ReadXdr for ScSpecEventTopicV0 {
     }
 }
 
-impl WriteXdr for ScSpecEventTopicV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ScSpecEventDataValueV0 is an XDR Struct defines as:
-///
-/// ```text
-/// struct SCSpecEventDataValueV0
-/// {
-///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string name<30>;
-///     SCSpecTypeDef type;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecEventDataValueV0 {
-    pub doc: StringM<1024>,
-    pub name: StringM<30>,
-    pub type_: ScSpecTypeDef,
-}
-
-impl ReadXdr for ScSpecEventDataValueV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
-                name: StringM::<30>::read_xdr(r)?,
-                type_: ScSpecTypeDef::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ScSpecEventDataValueV0 {
+impl WriteXdr for ScSpecEventFieldV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -7734,131 +7684,6 @@ impl WriteXdr for ScSpecEventDataFormatV0 {
     }
 }
 
-/// ScSpecEventDataV0 is an XDR Union defines as:
-///
-/// ```text
-/// union SCSpecEventDataV0 switch (SCSpecEventDataFormatV0 type)
-/// {
-/// case SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE_V0:
-///     SCSpecEventDataValueV0 singleValue;
-/// case SC_SPEC_EVENT_DATA_FORMAT_VEC_V0:
-///     SCSpecEventDataValueV0 vec<30>;
-/// case SC_SPEC_EVENT_DATA_FORMAT_MAP_V0:
-///     SCSpecEventDataValueV0 map<30>;
-/// };
-/// ```
-///
-// union with discriminant ScSpecEventDataFormatV0
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum ScSpecEventDataV0 {
-    SingleValueV0(ScSpecEventDataValueV0),
-    VecV0(VecM<ScSpecEventDataValueV0, 30>),
-    MapV0(VecM<ScSpecEventDataValueV0, 30>),
-}
-
-impl ScSpecEventDataV0 {
-    pub const VARIANTS: [ScSpecEventDataFormatV0; 3] = [
-        ScSpecEventDataFormatV0::SingleValueV0,
-        ScSpecEventDataFormatV0::VecV0,
-        ScSpecEventDataFormatV0::MapV0,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValueV0", "VecV0", "MapV0"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SingleValueV0(_) => "SingleValueV0",
-            Self::VecV0(_) => "VecV0",
-            Self::MapV0(_) => "MapV0",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ScSpecEventDataFormatV0 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::SingleValueV0(_) => ScSpecEventDataFormatV0::SingleValueV0,
-            Self::VecV0(_) => ScSpecEventDataFormatV0::VecV0,
-            Self::MapV0(_) => ScSpecEventDataFormatV0::MapV0,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScSpecEventDataFormatV0; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScSpecEventDataV0 {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ScSpecEventDataFormatV0> for ScSpecEventDataV0 {
-    #[must_use]
-    fn discriminant(&self) -> ScSpecEventDataFormatV0 {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ScSpecEventDataFormatV0> for ScSpecEventDataV0 {
-    fn variants() -> slice::Iter<'static, ScSpecEventDataFormatV0> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ScSpecEventDataFormatV0> for ScSpecEventDataV0 {}
-
-impl ReadXdr for ScSpecEventDataV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ScSpecEventDataFormatV0 = <ScSpecEventDataFormatV0 as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ScSpecEventDataFormatV0::SingleValueV0 => {
-                    Self::SingleValueV0(ScSpecEventDataValueV0::read_xdr(r)?)
-                }
-                ScSpecEventDataFormatV0::VecV0 => {
-                    Self::VecV0(VecM::<ScSpecEventDataValueV0, 30>::read_xdr(r)?)
-                }
-                ScSpecEventDataFormatV0::MapV0 => {
-                    Self::MapV0(VecM::<ScSpecEventDataValueV0, 30>::read_xdr(r)?)
-                }
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ScSpecEventDataV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::SingleValueV0(v) => v.write_xdr(w)?,
-                Self::VecV0(v) => v.write_xdr(w)?,
-                Self::MapV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 /// ScSpecEventV0 is an XDR Struct defines as:
 ///
 /// ```text
@@ -7866,8 +7691,9 @@ impl WriteXdr for ScSpecEventDataV0 {
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     SCSymbol name;
-///     SCSpecEventTopicV0 topics<4>;
-///     SCSpecEventDataV0 data;
+///     SCSpecEventFieldV0 topics<4>;
+///     SCSpecEventDataFormatV0 dataFormat;
+///     SCSpecEventFieldV0 data<30>;
 /// };
 /// ```
 ///
@@ -7882,8 +7708,9 @@ impl WriteXdr for ScSpecEventDataV0 {
 pub struct ScSpecEventV0 {
     pub doc: StringM<1024>,
     pub name: ScSymbol,
-    pub topics: VecM<ScSpecEventTopicV0, 4>,
-    pub data: ScSpecEventDataV0,
+    pub topics: VecM<ScSpecEventFieldV0, 4>,
+    pub data_format: ScSpecEventDataFormatV0,
+    pub data: VecM<ScSpecEventFieldV0, 30>,
 }
 
 impl ReadXdr for ScSpecEventV0 {
@@ -7893,8 +7720,9 @@ impl ReadXdr for ScSpecEventV0 {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
-                topics: VecM::<ScSpecEventTopicV0, 4>::read_xdr(r)?,
-                data: ScSpecEventDataV0::read_xdr(r)?,
+                topics: VecM::<ScSpecEventFieldV0, 4>::read_xdr(r)?,
+                data_format: ScSpecEventDataFormatV0::read_xdr(r)?,
+                data: VecM::<ScSpecEventFieldV0, 30>::read_xdr(r)?,
             })
         })
     }
@@ -7907,6 +7735,7 @@ impl WriteXdr for ScSpecEventV0 {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.topics.write_xdr(w)?;
+            self.data_format.write_xdr(w)?;
             self.data.write_xdr(w)?;
             Ok(())
         })
@@ -46770,10 +46599,8 @@ pub enum TypeVariant {
     ScSpecUdtErrorEnumV0,
     ScSpecFunctionInputV0,
     ScSpecFunctionV0,
-    ScSpecEventTopicV0,
-    ScSpecEventDataValueV0,
+    ScSpecEventFieldV0,
     ScSpecEventDataFormatV0,
-    ScSpecEventDataV0,
     ScSpecEventV0,
     ScSpecEntryKind,
     ScSpecEntry,
@@ -47185,7 +47012,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 464] = [
+    pub const VARIANTS: [TypeVariant; 462] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47238,10 +47065,8 @@ impl TypeVariant {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
-        TypeVariant::ScSpecEventTopicV0,
-        TypeVariant::ScSpecEventDataValueV0,
+        TypeVariant::ScSpecEventFieldV0,
         TypeVariant::ScSpecEventDataFormatV0,
-        TypeVariant::ScSpecEventDataV0,
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
@@ -47651,7 +47476,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 464] = [
+    pub const VARIANTS_STR: [&'static str; 462] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47704,10 +47529,8 @@ impl TypeVariant {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
-        "ScSpecEventTopicV0",
-        "ScSpecEventDataValueV0",
+        "ScSpecEventFieldV0",
         "ScSpecEventDataFormatV0",
-        "ScSpecEventDataV0",
         "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
@@ -48174,10 +47997,8 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
-            Self::ScSpecEventTopicV0 => "ScSpecEventTopicV0",
-            Self::ScSpecEventDataValueV0 => "ScSpecEventDataValueV0",
+            Self::ScSpecEventFieldV0 => "ScSpecEventFieldV0",
             Self::ScSpecEventDataFormatV0 => "ScSpecEventDataFormatV0",
-            Self::ScSpecEventDataV0 => "ScSpecEventDataV0",
             Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
@@ -48603,7 +48424,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 464] {
+    pub const fn variants() -> [TypeVariant; 462] {
         Self::VARIANTS
     }
 
@@ -48686,10 +48507,8 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => gen.into_root_schema_for::<ScSpecUdtErrorEnumV0>(),
             Self::ScSpecFunctionInputV0 => gen.into_root_schema_for::<ScSpecFunctionInputV0>(),
             Self::ScSpecFunctionV0 => gen.into_root_schema_for::<ScSpecFunctionV0>(),
-            Self::ScSpecEventTopicV0 => gen.into_root_schema_for::<ScSpecEventTopicV0>(),
-            Self::ScSpecEventDataValueV0 => gen.into_root_schema_for::<ScSpecEventDataValueV0>(),
+            Self::ScSpecEventFieldV0 => gen.into_root_schema_for::<ScSpecEventFieldV0>(),
             Self::ScSpecEventDataFormatV0 => gen.into_root_schema_for::<ScSpecEventDataFormatV0>(),
-            Self::ScSpecEventDataV0 => gen.into_root_schema_for::<ScSpecEventDataV0>(),
             Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
@@ -49362,10 +49181,8 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
             "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
             "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
-            "ScSpecEventTopicV0" => Ok(Self::ScSpecEventTopicV0),
-            "ScSpecEventDataValueV0" => Ok(Self::ScSpecEventDataValueV0),
+            "ScSpecEventFieldV0" => Ok(Self::ScSpecEventFieldV0),
             "ScSpecEventDataFormatV0" => Ok(Self::ScSpecEventDataFormatV0),
-            "ScSpecEventDataV0" => Ok(Self::ScSpecEventDataV0),
             "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
@@ -49862,10 +49679,8 @@ pub enum Type {
     ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
     ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
     ScSpecFunctionV0(Box<ScSpecFunctionV0>),
-    ScSpecEventTopicV0(Box<ScSpecEventTopicV0>),
-    ScSpecEventDataValueV0(Box<ScSpecEventDataValueV0>),
+    ScSpecEventFieldV0(Box<ScSpecEventFieldV0>),
     ScSpecEventDataFormatV0(Box<ScSpecEventDataFormatV0>),
-    ScSpecEventDataV0(Box<ScSpecEventDataV0>),
     ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
@@ -50277,7 +50092,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 464] = [
+    pub const VARIANTS: [TypeVariant; 462] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50330,10 +50145,8 @@ impl Type {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
-        TypeVariant::ScSpecEventTopicV0,
-        TypeVariant::ScSpecEventDataValueV0,
+        TypeVariant::ScSpecEventFieldV0,
         TypeVariant::ScSpecEventDataFormatV0,
-        TypeVariant::ScSpecEventDataV0,
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
@@ -50743,7 +50556,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 464] = [
+    pub const VARIANTS_STR: [&'static str; 462] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50796,10 +50609,8 @@ impl Type {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
-        "ScSpecEventTopicV0",
-        "ScSpecEventDataValueV0",
+        "ScSpecEventFieldV0",
         "ScSpecEventDataFormatV0",
-        "ScSpecEventDataV0",
         "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
@@ -51442,24 +51253,14 @@ impl Type {
                     ScSpecFunctionV0::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ScSpecEventTopicV0 => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventTopicV0(Box::new(
-                    ScSpecEventTopicV0::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ScSpecEventDataValueV0 => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventDataValueV0(Box::new(
-                    ScSpecEventDataValueV0::read_xdr(r)?,
+            TypeVariant::ScSpecEventFieldV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventFieldV0(Box::new(
+                    ScSpecEventFieldV0::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ScSpecEventDataFormatV0 => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecEventDataFormatV0(Box::new(
                     ScSpecEventDataFormatV0::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ScSpecEventDataV0 => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventDataV0(Box::new(
-                    ScSpecEventDataV0::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ScSpecEventV0 => r.with_limited_depth(|r| {
@@ -53505,21 +53306,13 @@ impl Type {
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
-            TypeVariant::ScSpecEventTopicV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventTopicV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventTopicV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventDataValueV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventDataValueV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataValueV0(Box::new(t)))),
+            TypeVariant::ScSpecEventFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventFieldV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEventDataFormatV0 => Box::new(
                 ReadXdrIter::<_, ScSpecEventDataFormatV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEventDataFormatV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventDataV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventDataV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEventV0 => Box::new(
                 ReadXdrIter::<_, ScSpecEventV0>::new(&mut r.inner, r.limits.clone())
@@ -55531,16 +55324,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
             ),
-            TypeVariant::ScSpecEventTopicV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventTopicV0>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventTopicV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSpecEventDataValueV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventDataValueV0>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ScSpecEventDataValueV0(Box::new(t.0)))),
+            TypeVariant::ScSpecEventFieldV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventFieldV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecEventDataFormatV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEventDataFormatV0>>::new(
@@ -55548,10 +55334,6 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScSpecEventDataFormatV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSpecEventDataV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventDataV0>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecEventV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEventV0>>::new(&mut r.inner, r.limits.clone())
@@ -57809,21 +57591,13 @@ impl Type {
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
-            TypeVariant::ScSpecEventTopicV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventTopicV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventTopicV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventDataValueV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventDataValueV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataValueV0(Box::new(t)))),
+            TypeVariant::ScSpecEventFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventFieldV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEventDataFormatV0 => Box::new(
                 ReadXdrIter::<_, ScSpecEventDataFormatV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEventDataFormatV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventDataV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventDataV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEventV0 => Box::new(
                 ReadXdrIter::<_, ScSpecEventV0>::new(dec, r.limits.clone())
@@ -59656,16 +59430,10 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::ScSpecEventTopicV0 => Ok(Self::ScSpecEventTopicV0(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ScSpecEventDataValueV0 => Ok(Self::ScSpecEventDataValueV0(Box::new(
+            TypeVariant::ScSpecEventFieldV0 => Ok(Self::ScSpecEventFieldV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ScSpecEventDataFormatV0 => Ok(Self::ScSpecEventDataFormatV0(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ScSpecEventDataV0 => Ok(Self::ScSpecEventDataV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ScSpecEventV0 => {
@@ -60958,16 +60726,10 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ScSpecEventTopicV0 => Ok(Self::ScSpecEventTopicV0(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScSpecEventDataValueV0 => Ok(Self::ScSpecEventDataValueV0(Box::new(
+            TypeVariant::ScSpecEventFieldV0 => Ok(Self::ScSpecEventFieldV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecEventDataFormatV0 => Ok(Self::ScSpecEventDataFormatV0(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScSpecEventDataV0 => Ok(Self::ScSpecEventDataV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecEventV0 => Ok(Self::ScSpecEventV0(Box::new(
@@ -62321,10 +62083,8 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionV0(ref v) => v.as_ref(),
-            Self::ScSpecEventTopicV0(ref v) => v.as_ref(),
-            Self::ScSpecEventDataValueV0(ref v) => v.as_ref(),
+            Self::ScSpecEventFieldV0(ref v) => v.as_ref(),
             Self::ScSpecEventDataFormatV0(ref v) => v.as_ref(),
-            Self::ScSpecEventDataV0(ref v) => v.as_ref(),
             Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
@@ -62796,10 +62556,8 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
-            Self::ScSpecEventTopicV0(_) => "ScSpecEventTopicV0",
-            Self::ScSpecEventDataValueV0(_) => "ScSpecEventDataValueV0",
+            Self::ScSpecEventFieldV0(_) => "ScSpecEventFieldV0",
             Self::ScSpecEventDataFormatV0(_) => "ScSpecEventDataFormatV0",
-            Self::ScSpecEventDataV0(_) => "ScSpecEventDataV0",
             Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
@@ -63233,7 +62991,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 464] {
+    pub const fn variants() -> [TypeVariant; 462] {
         Self::VARIANTS
     }
 
@@ -63301,10 +63059,8 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
             Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
             Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
-            Self::ScSpecEventTopicV0(_) => TypeVariant::ScSpecEventTopicV0,
-            Self::ScSpecEventDataValueV0(_) => TypeVariant::ScSpecEventDataValueV0,
+            Self::ScSpecEventFieldV0(_) => TypeVariant::ScSpecEventFieldV0,
             Self::ScSpecEventDataFormatV0(_) => TypeVariant::ScSpecEventDataFormatV0,
-            Self::ScSpecEventDataV0(_) => TypeVariant::ScSpecEventDataV0,
             Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
@@ -63845,10 +63601,8 @@ impl WriteXdr for Type {
             Self::ScSpecUdtErrorEnumV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionInputV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionV0(v) => v.write_xdr(w),
-            Self::ScSpecEventTopicV0(v) => v.write_xdr(w),
-            Self::ScSpecEventDataValueV0(v) => v.write_xdr(w),
+            Self::ScSpecEventFieldV0(v) => v.write_xdr(w),
             Self::ScSpecEventDataFormatV0(v) => v.write_xdr(w),
-            Self::ScSpecEventDataV0(v) => v.write_xdr(w),
             Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),

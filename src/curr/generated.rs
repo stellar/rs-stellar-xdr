@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "7b17d51cf8e12a1501430c9548b4c6e947e8a47e396ae06776ffdd96cfe774de",
+        "fc26637c3912d500b048b28820cd3dbccbfed3affb09929bf57859be5b14a07c",
     ),
     (
         "xdr/curr/Stellar-contract.x",
@@ -7800,11 +7800,11 @@ impl WriteXdr for ScSpecEventDataFormat {
 /// ```text
 /// struct SCSpecEventV0
 /// {
+///     SCSpecEventDataFormat dataFormat;
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     SCSymbol name;
 ///     SCSpecEventFieldV0 fields<50>;
-///     SCSpecEventDataFormat dataFormat;
 /// };
 /// ```
 ///
@@ -7817,11 +7817,11 @@ impl WriteXdr for ScSpecEventDataFormat {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecEventV0 {
+    pub data_format: ScSpecEventDataFormat,
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: ScSymbol,
     pub fields: VecM<ScSpecEventFieldV0, 50>,
-    pub data_format: ScSpecEventDataFormat,
 }
 
 impl ReadXdr for ScSpecEventV0 {
@@ -7829,11 +7829,11 @@ impl ReadXdr for ScSpecEventV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
+                data_format: ScSpecEventDataFormat::read_xdr(r)?,
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
                 fields: VecM::<ScSpecEventFieldV0, 50>::read_xdr(r)?,
-                data_format: ScSpecEventDataFormat::read_xdr(r)?,
             })
         })
     }
@@ -7843,11 +7843,11 @@ impl WriteXdr for ScSpecEventV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            self.data_format.write_xdr(w)?;
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.fields.write_xdr(w)?;
-            self.data_format.write_xdr(w)?;
             Ok(())
         })
     }

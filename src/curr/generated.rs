@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "5dd3cc9cc407a3f34571541bd38727265520b2fa66318ad12108dd65dd3ba09f",
+        "aa3173d8a2623539685056b1b08736a3b3ce4664676337c95ec28eaab7b5c1c7",
     ),
     (
         "xdr/curr/Stellar-contract.x",
@@ -7575,9 +7575,9 @@ impl WriteXdr for ScSpecEventFieldV0 {
 /// ```text
 /// enum SCSpecEventDataFormatV0
 /// {
-///     SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE_V0 = 0,
-///     SC_SPEC_EVENT_DATA_FORMAT_VEC_V0 = 1,
-///     SC_SPEC_EVENT_DATA_FORMAT_MAP_V0 = 2
+///     SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE = 0,
+///     SC_SPEC_EVENT_DATA_FORMAT_VEC = 1,
+///     SC_SPEC_EVENT_DATA_FORMAT_MAP = 2
 /// };
 /// ```
 ///
@@ -7592,25 +7592,25 @@ impl WriteXdr for ScSpecEventFieldV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEventDataFormatV0 {
-    SingleValueV0 = 0,
-    VecV0 = 1,
-    MapV0 = 2,
+    SingleValue = 0,
+    Vec = 1,
+    Map = 2,
 }
 
 impl ScSpecEventDataFormatV0 {
     pub const VARIANTS: [ScSpecEventDataFormatV0; 3] = [
-        ScSpecEventDataFormatV0::SingleValueV0,
-        ScSpecEventDataFormatV0::VecV0,
-        ScSpecEventDataFormatV0::MapV0,
+        ScSpecEventDataFormatV0::SingleValue,
+        ScSpecEventDataFormatV0::Vec,
+        ScSpecEventDataFormatV0::Map,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValueV0", "VecV0", "MapV0"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValue", "Vec", "Map"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::SingleValueV0 => "SingleValueV0",
-            Self::VecV0 => "VecV0",
-            Self::MapV0 => "MapV0",
+            Self::SingleValue => "SingleValue",
+            Self::Vec => "Vec",
+            Self::Map => "Map",
         }
     }
 
@@ -7646,9 +7646,9 @@ impl TryFrom<i32> for ScSpecEventDataFormatV0 {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScSpecEventDataFormatV0::SingleValueV0,
-            1 => ScSpecEventDataFormatV0::VecV0,
-            2 => ScSpecEventDataFormatV0::MapV0,
+            0 => ScSpecEventDataFormatV0::SingleValue,
+            1 => ScSpecEventDataFormatV0::Vec,
+            2 => ScSpecEventDataFormatV0::Map,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

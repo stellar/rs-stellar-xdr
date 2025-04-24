@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "4d4294cd890854db8bb252dcd1a28e046c4f010d2d2ad629045ba8a5512f79bd",
+        "5dd3cc9cc407a3f34571541bd38727265520b2fa66318ad12108dd65dd3ba09f",
     ),
     (
         "xdr/curr/Stellar-contract.x",
@@ -7690,6 +7690,7 @@ impl WriteXdr for ScSpecEventDataFormatV0 {
 /// struct SCSpecEventV0
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
+///     string lib<80>;
 ///     SCSymbol name;
 ///     SCSpecEventFieldV0 topics<4>;
 ///     SCSpecEventDataFormatV0 dataFormat;
@@ -7707,6 +7708,7 @@ impl WriteXdr for ScSpecEventDataFormatV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecEventV0 {
     pub doc: StringM<1024>,
+    pub lib: StringM<80>,
     pub name: ScSymbol,
     pub topics: VecM<ScSpecEventFieldV0, 4>,
     pub data_format: ScSpecEventDataFormatV0,
@@ -7719,6 +7721,7 @@ impl ReadXdr for ScSpecEventV0 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
                 topics: VecM::<ScSpecEventFieldV0, 4>::read_xdr(r)?,
                 data_format: ScSpecEventDataFormatV0::read_xdr(r)?,
@@ -7733,6 +7736,7 @@ impl WriteXdr for ScSpecEventV0 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.topics.write_xdr(w)?;
             self.data_format.write_xdr(w)?;

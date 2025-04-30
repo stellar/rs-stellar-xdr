@@ -4,7 +4,7 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=b7bc57ecdd277c9575930d3e17c12dfaa76655fc
+XDRGEN_VERSION=db6306eff29100a7c0105cbdd282a759aa66a8ef
 # XDRGEN_LOCAL=1
 XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId
 XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId

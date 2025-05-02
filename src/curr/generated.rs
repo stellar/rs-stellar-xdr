@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "2e240e191f0b5ecedeecab75e7e936b3dc3dbe159aa2a9547efb15871d683c7c",
+        "b791c27a56ee9423c8afaa9d41a373a73501c69096bdf337393ddf32030c8271",
     ),
     (
         "xdr/curr/Stellar-contract.x",
@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "7b7d3cf8798b3fa23d9cf04f28470366712463e845923adfc43e9fa5fdde47fb",
+        "000c529961a8f76f79685c572321f75fd27523357dd2af5d4080959dfff9b401",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "e42172ff33faaa7ca0f67de826c516890cc0f7fce1f9f79e6ae79134528d2a92",
+        "7c4c951f233ad7cdabedd740abd9697626ec5bc03ce97bf60cbaeee1481a48d1",
     ),
     (
         "xdr/curr/Stellar-types.x",
@@ -7682,6 +7682,341 @@ impl WriteXdr for ScSpecFunctionV0 {
     }
 }
 
+/// ScSpecEventFieldLocationV0 is an XDR Enum defines as:
+///
+/// ```text
+/// enum SCSpecEventFieldLocationV0
+/// {
+///     SC_SPEC_EVENT_FIELD_LOCATION_DATA = 0,
+///     SC_SPEC_EVENT_FIELD_LOCATION_TOPIC_LIST = 1
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ScSpecEventFieldLocationV0 {
+    Data = 0,
+    TopicList = 1,
+}
+
+impl ScSpecEventFieldLocationV0 {
+    pub const VARIANTS: [ScSpecEventFieldLocationV0; 2] = [
+        ScSpecEventFieldLocationV0::Data,
+        ScSpecEventFieldLocationV0::TopicList,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Data", "TopicList"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Data => "Data",
+            Self::TopicList => "TopicList",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEventFieldLocationV0; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEventFieldLocationV0 {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEventFieldLocationV0> for ScSpecEventFieldLocationV0 {
+    fn variants() -> slice::Iter<'static, ScSpecEventFieldLocationV0> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecEventFieldLocationV0 {}
+
+impl fmt::Display for ScSpecEventFieldLocationV0 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecEventFieldLocationV0 {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecEventFieldLocationV0::Data,
+            1 => ScSpecEventFieldLocationV0::TopicList,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecEventFieldLocationV0> for i32 {
+    #[must_use]
+    fn from(e: ScSpecEventFieldLocationV0) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecEventFieldLocationV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventFieldLocationV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ScSpecEventFieldV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SCSpecEventFieldV0
+/// {
+///     string doc<SC_SPEC_DOC_LIMIT>;
+///     string name<30>;
+///     SCSpecTypeDef type;
+///     SCSpecEventFieldLocationV0 location;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ScSpecEventFieldV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<30>,
+    pub type_: ScSpecTypeDef,
+    pub location: ScSpecEventFieldLocationV0,
+}
+
+impl ReadXdr for ScSpecEventFieldV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<30>::read_xdr(r)?,
+                type_: ScSpecTypeDef::read_xdr(r)?,
+                location: ScSpecEventFieldLocationV0::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventFieldV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            self.location.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ScSpecEventDataFormat is an XDR Enum defines as:
+///
+/// ```text
+/// enum SCSpecEventDataFormat
+/// {
+///     SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE = 0,
+///     SC_SPEC_EVENT_DATA_FORMAT_VEC = 1,
+///     SC_SPEC_EVENT_DATA_FORMAT_MAP = 2
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ScSpecEventDataFormat {
+    SingleValue = 0,
+    Vec = 1,
+    Map = 2,
+}
+
+impl ScSpecEventDataFormat {
+    pub const VARIANTS: [ScSpecEventDataFormat; 3] = [
+        ScSpecEventDataFormat::SingleValue,
+        ScSpecEventDataFormat::Vec,
+        ScSpecEventDataFormat::Map,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValue", "Vec", "Map"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SingleValue => "SingleValue",
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEventDataFormat; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEventDataFormat {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEventDataFormat> for ScSpecEventDataFormat {
+    fn variants() -> slice::Iter<'static, ScSpecEventDataFormat> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecEventDataFormat {}
+
+impl fmt::Display for ScSpecEventDataFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecEventDataFormat {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecEventDataFormat::SingleValue,
+            1 => ScSpecEventDataFormat::Vec,
+            2 => ScSpecEventDataFormat::Map,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecEventDataFormat> for i32 {
+    #[must_use]
+    fn from(e: ScSpecEventDataFormat) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecEventDataFormat {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventDataFormat {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ScSpecEventV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SCSpecEventV0
+/// {
+///     string doc<SC_SPEC_DOC_LIMIT>;
+///     string lib<80>;
+///     SCSymbol name;
+///     SCSpecEventFieldV0 fields<50>;
+///     SCSpecEventDataFormat dataFormat;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ScSpecEventV0 {
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: ScSymbol,
+    pub fields: VecM<ScSpecEventFieldV0, 50>,
+    pub data_format: ScSpecEventDataFormat,
+}
+
+impl ReadXdr for ScSpecEventV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
+                name: ScSymbol::read_xdr(r)?,
+                fields: VecM::<ScSpecEventFieldV0, 50>::read_xdr(r)?,
+                data_format: ScSpecEventDataFormat::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.fields.write_xdr(w)?;
+            self.data_format.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecEntryKind is an XDR Enum defines as:
 ///
 /// ```text
@@ -7691,7 +8026,8 @@ impl WriteXdr for ScSpecFunctionV0 {
 ///     SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,
 ///     SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
 ///     SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,
-///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4
+///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,
+///     SC_SPEC_ENTRY_EVENT_V0 = 5
 /// };
 /// ```
 ///
@@ -7711,22 +8047,25 @@ pub enum ScSpecEntryKind {
     UdtUnionV0 = 2,
     UdtEnumV0 = 3,
     UdtErrorEnumV0 = 4,
+    EventV0 = 5,
 }
 
 impl ScSpecEntryKind {
-    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+    pub const VARIANTS: [ScSpecEntryKind; 6] = [
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
+        ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
         "UdtEnumV0",
         "UdtErrorEnumV0",
+        "EventV0",
     ];
 
     #[must_use]
@@ -7737,11 +8076,12 @@ impl ScSpecEntryKind {
             Self::UdtUnionV0 => "UdtUnionV0",
             Self::UdtEnumV0 => "UdtEnumV0",
             Self::UdtErrorEnumV0 => "UdtErrorEnumV0",
+            Self::EventV0 => "EventV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 5] {
+    pub const fn variants() -> [ScSpecEntryKind; 6] {
         Self::VARIANTS
     }
 }
@@ -7777,6 +8117,7 @@ impl TryFrom<i32> for ScSpecEntryKind {
             2 => ScSpecEntryKind::UdtUnionV0,
             3 => ScSpecEntryKind::UdtEnumV0,
             4 => ScSpecEntryKind::UdtErrorEnumV0,
+            5 => ScSpecEntryKind::EventV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7827,6 +8168,8 @@ impl WriteXdr for ScSpecEntryKind {
 ///     SCSpecUDTEnumV0 udtEnumV0;
 /// case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
 ///     SCSpecUDTErrorEnumV0 udtErrorEnumV0;
+/// case SC_SPEC_ENTRY_EVENT_V0:
+///     SCSpecEventV0 eventV0;
 /// };
 /// ```
 ///
@@ -7846,22 +8189,25 @@ pub enum ScSpecEntry {
     UdtUnionV0(ScSpecUdtUnionV0),
     UdtEnumV0(ScSpecUdtEnumV0),
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
+    EventV0(ScSpecEventV0),
 }
 
 impl ScSpecEntry {
-    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+    pub const VARIANTS: [ScSpecEntryKind; 6] = [
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
+        ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
         "UdtEnumV0",
         "UdtErrorEnumV0",
+        "EventV0",
     ];
 
     #[must_use]
@@ -7872,6 +8218,7 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => "UdtUnionV0",
             Self::UdtEnumV0(_) => "UdtEnumV0",
             Self::UdtErrorEnumV0(_) => "UdtErrorEnumV0",
+            Self::EventV0(_) => "EventV0",
         }
     }
 
@@ -7884,11 +8231,12 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
             Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
             Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
+            Self::EventV0(_) => ScSpecEntryKind::EventV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 5] {
+    pub const fn variants() -> [ScSpecEntryKind; 6] {
         Self::VARIANTS
     }
 }
@@ -7929,6 +8277,7 @@ impl ReadXdr for ScSpecEntry {
                 ScSpecEntryKind::UdtErrorEnumV0 => {
                     Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
                 }
+                ScSpecEntryKind::EventV0 => Self::EventV0(ScSpecEventV0::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -7949,6 +8298,7 @@ impl WriteXdr for ScSpecEntry {
                 Self::UdtUnionV0(v) => v.write_xdr(w)?,
                 Self::UdtEnumV0(v) => v.write_xdr(w)?,
                 Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
+                Self::EventV0(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -22626,7 +22976,7 @@ impl WriteXdr for OperationMetaV2 {
 /// {
 ///     SorobanTransactionMetaExt ext;
 ///
-///     SCVal returnValue;
+///     SCVal* returnValue;
 /// };
 /// ```
 ///
@@ -22640,7 +22990,7 @@ impl WriteXdr for OperationMetaV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionMetaV2 {
     pub ext: SorobanTransactionMetaExt,
-    pub return_value: ScVal,
+    pub return_value: Option<ScVal>,
 }
 
 impl ReadXdr for SorobanTransactionMetaV2 {
@@ -22649,7 +22999,7 @@ impl ReadXdr for SorobanTransactionMetaV2 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: SorobanTransactionMetaExt::read_xdr(r)?,
-                return_value: ScVal::read_xdr(r)?,
+                return_value: Option::<ScVal>::read_xdr(r)?,
             })
         })
     }
@@ -29866,6 +30216,112 @@ impl WriteXdr for SorobanAuthorizationEntry {
             self.root_invocation.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+
+/// SorobanAuthorizationEntries is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct SorobanAuthorizationEntries(pub VecM<SorobanAuthorizationEntry>);
+
+impl From<SorobanAuthorizationEntries> for VecM<SorobanAuthorizationEntry> {
+    #[must_use]
+    fn from(x: SorobanAuthorizationEntries) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn from(x: VecM<SorobanAuthorizationEntry>) -> Self {
+        SorobanAuthorizationEntries(x)
+    }
+}
+
+impl AsRef<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<SorobanAuthorizationEntry> {
+        &self.0
+    }
+}
+
+impl ReadXdr for SorobanAuthorizationEntries {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<SorobanAuthorizationEntry>::read_xdr(r)?;
+            let v = SorobanAuthorizationEntries(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizationEntries {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for SorobanAuthorizationEntries {
+    type Target = VecM<SorobanAuthorizationEntry>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<SorobanAuthorizationEntries> for Vec<SorobanAuthorizationEntry> {
+    #[must_use]
+    fn from(x: SorobanAuthorizationEntries) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    type Error = Error;
+    fn try_from(x: Vec<SorobanAuthorizationEntry>) -> Result<Self> {
+        Ok(SorobanAuthorizationEntries(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    type Error = Error;
+    fn try_from(x: &Vec<SorobanAuthorizationEntry>) -> Result<Self> {
+        Ok(SorobanAuthorizationEntries(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<SorobanAuthorizationEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[SorobanAuthorizationEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[SorobanAuthorizationEntry] {
+        self.0 .0
     }
 }
 
@@ -45773,6 +46229,10 @@ pub enum TypeVariant {
     ScSpecUdtErrorEnumV0,
     ScSpecFunctionInputV0,
     ScSpecFunctionV0,
+    ScSpecEventFieldLocationV0,
+    ScSpecEventFieldV0,
+    ScSpecEventDataFormat,
+    ScSpecEventV0,
     ScSpecEntryKind,
     ScSpecEntry,
     ScValType,
@@ -46031,6 +46491,7 @@ pub enum TypeVariant {
     SorobanCredentialsType,
     SorobanCredentials,
     SorobanAuthorizationEntry,
+    SorobanAuthorizationEntries,
     InvokeHostFunctionOp,
     ExtendFootprintTtlOp,
     RestoreFootprintOp,
@@ -46174,7 +46635,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 452] = [
+    pub const VARIANTS: [TypeVariant; 457] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46229,6 +46690,10 @@ impl TypeVariant {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEventFieldLocationV0,
+        TypeVariant::ScSpecEventFieldV0,
+        TypeVariant::ScSpecEventDataFormat,
+        TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScValType,
@@ -46487,6 +46952,7 @@ impl TypeVariant {
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
+        TypeVariant::SorobanAuthorizationEntries,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::ExtendFootprintTtlOp,
         TypeVariant::RestoreFootprintOp,
@@ -46628,7 +47094,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 452] = [
+    pub const VARIANTS_STR: [&'static str; 457] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -46683,6 +47149,10 @@ impl TypeVariant {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
+        "ScSpecEventFieldLocationV0",
+        "ScSpecEventFieldV0",
+        "ScSpecEventDataFormat",
+        "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
         "ScValType",
@@ -46941,6 +47411,7 @@ impl TypeVariant {
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
+        "SorobanAuthorizationEntries",
         "InvokeHostFunctionOp",
         "ExtendFootprintTtlOp",
         "RestoreFootprintOp",
@@ -47143,6 +47614,10 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
+            Self::ScSpecEventFieldLocationV0 => "ScSpecEventFieldLocationV0",
+            Self::ScSpecEventFieldV0 => "ScSpecEventFieldV0",
+            Self::ScSpecEventDataFormat => "ScSpecEventDataFormat",
+            Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
             Self::ScValType => "ScValType",
@@ -47409,6 +47884,7 @@ impl TypeVariant {
             Self::SorobanCredentialsType => "SorobanCredentialsType",
             Self::SorobanCredentials => "SorobanCredentials",
             Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
+            Self::SorobanAuthorizationEntries => "SorobanAuthorizationEntries",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
             Self::ExtendFootprintTtlOp => "ExtendFootprintTtlOp",
             Self::RestoreFootprintOp => "RestoreFootprintOp",
@@ -47558,7 +48034,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 452] {
+    pub const fn variants() -> [TypeVariant; 457] {
         Self::VARIANTS
     }
 
@@ -47647,6 +48123,12 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => gen.into_root_schema_for::<ScSpecUdtErrorEnumV0>(),
             Self::ScSpecFunctionInputV0 => gen.into_root_schema_for::<ScSpecFunctionInputV0>(),
             Self::ScSpecFunctionV0 => gen.into_root_schema_for::<ScSpecFunctionV0>(),
+            Self::ScSpecEventFieldLocationV0 => {
+                gen.into_root_schema_for::<ScSpecEventFieldLocationV0>()
+            }
+            Self::ScSpecEventFieldV0 => gen.into_root_schema_for::<ScSpecEventFieldV0>(),
+            Self::ScSpecEventDataFormat => gen.into_root_schema_for::<ScSpecEventDataFormat>(),
+            Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
             Self::ScValType => gen.into_root_schema_for::<ScValType>(),
@@ -48003,6 +48485,9 @@ impl TypeVariant {
             Self::SorobanAuthorizationEntry => {
                 gen.into_root_schema_for::<SorobanAuthorizationEntry>()
             }
+            Self::SorobanAuthorizationEntries => {
+                gen.into_root_schema_for::<SorobanAuthorizationEntries>()
+            }
             Self::InvokeHostFunctionOp => gen.into_root_schema_for::<InvokeHostFunctionOp>(),
             Self::ExtendFootprintTtlOp => gen.into_root_schema_for::<ExtendFootprintTtlOp>(),
             Self::RestoreFootprintOp => gen.into_root_schema_for::<RestoreFootprintOp>(),
@@ -48315,6 +48800,10 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
             "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
             "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
+            "ScSpecEventFieldLocationV0" => Ok(Self::ScSpecEventFieldLocationV0),
+            "ScSpecEventFieldV0" => Ok(Self::ScSpecEventFieldV0),
+            "ScSpecEventDataFormat" => Ok(Self::ScSpecEventDataFormat),
+            "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
             "ScValType" => Ok(Self::ScValType),
@@ -48587,6 +49076,7 @@ impl core::str::FromStr for TypeVariant {
             "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
             "SorobanCredentials" => Ok(Self::SorobanCredentials),
             "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
+            "SorobanAuthorizationEntries" => Ok(Self::SorobanAuthorizationEntries),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
             "ExtendFootprintTtlOp" => Ok(Self::ExtendFootprintTtlOp),
             "RestoreFootprintOp" => Ok(Self::RestoreFootprintOp),
@@ -48803,6 +49293,10 @@ pub enum Type {
     ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
     ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
     ScSpecFunctionV0(Box<ScSpecFunctionV0>),
+    ScSpecEventFieldLocationV0(Box<ScSpecEventFieldLocationV0>),
+    ScSpecEventFieldV0(Box<ScSpecEventFieldV0>),
+    ScSpecEventDataFormat(Box<ScSpecEventDataFormat>),
+    ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
     ScValType(Box<ScValType>),
@@ -49061,6 +49555,7 @@ pub enum Type {
     SorobanCredentialsType(Box<SorobanCredentialsType>),
     SorobanCredentials(Box<SorobanCredentials>),
     SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
+    SorobanAuthorizationEntries(Box<SorobanAuthorizationEntries>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
     ExtendFootprintTtlOp(Box<ExtendFootprintTtlOp>),
     RestoreFootprintOp(Box<RestoreFootprintOp>),
@@ -49204,7 +49699,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 452] = [
+    pub const VARIANTS: [TypeVariant; 457] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49259,6 +49754,10 @@ impl Type {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEventFieldLocationV0,
+        TypeVariant::ScSpecEventFieldV0,
+        TypeVariant::ScSpecEventDataFormat,
+        TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScValType,
@@ -49517,6 +50016,7 @@ impl Type {
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
+        TypeVariant::SorobanAuthorizationEntries,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::ExtendFootprintTtlOp,
         TypeVariant::RestoreFootprintOp,
@@ -49658,7 +50158,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 452] = [
+    pub const VARIANTS_STR: [&'static str; 457] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -49713,6 +50213,10 @@ impl Type {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
+        "ScSpecEventFieldLocationV0",
+        "ScSpecEventFieldV0",
+        "ScSpecEventDataFormat",
+        "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
         "ScValType",
@@ -49971,6 +50475,7 @@ impl Type {
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
+        "SorobanAuthorizationEntries",
         "InvokeHostFunctionOp",
         "ExtendFootprintTtlOp",
         "RestoreFootprintOp",
@@ -50354,6 +50859,24 @@ impl Type {
                 Ok(Self::ScSpecFunctionV0(Box::new(
                     ScSpecFunctionV0::read_xdr(r)?,
                 )))
+            }),
+            TypeVariant::ScSpecEventFieldLocationV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventFieldLocationV0(Box::new(
+                    ScSpecEventFieldLocationV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEventFieldV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventFieldV0(Box::new(
+                    ScSpecEventFieldV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEventDataFormat => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventDataFormat(Box::new(
+                    ScSpecEventDataFormat::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEventV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventV0(Box::new(ScSpecEventV0::read_xdr(r)?)))
             }),
             TypeVariant::ScSpecEntryKind => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::read_xdr(
@@ -51459,6 +51982,11 @@ impl Type {
                     SorobanAuthorizationEntry::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::SorobanAuthorizationEntries => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAuthorizationEntries(Box::new(
+                    SorobanAuthorizationEntries::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::InvokeHostFunctionOp => r.with_limited_depth(|r| {
                 Ok(Self::InvokeHostFunctionOp(Box::new(
                     InvokeHostFunctionOp::read_xdr(r)?,
@@ -52367,6 +52895,22 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Box::new(
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventFieldLocationV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventFieldLocationV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldLocationV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventFieldV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventDataFormat => Box::new(
+                ReadXdrIter::<_, ScSpecEventDataFormat>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.limits.clone())
@@ -53459,6 +54003,10 @@ impl Type {
                 ReadXdrIter::<_, SorobanAuthorizationEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
             ),
+            TypeVariant::SorobanAuthorizationEntries => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntries>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntries(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
@@ -54351,6 +54899,25 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventFieldLocationV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventFieldLocationV0>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ScSpecEventFieldLocationV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventFieldV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventFieldV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventDataFormat => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventDataFormat>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.limits.clone())
@@ -55604,6 +56171,13 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t.0)))),
             ),
+            TypeVariant::SorobanAuthorizationEntries => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizationEntries>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizationEntries(Box::new(t.0)))),
+            ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t.0)))),
@@ -56560,6 +57134,22 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Box::new(
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventFieldLocationV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventFieldLocationV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldLocationV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventFieldV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventFieldV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventDataFormat => Box::new(
+                ReadXdrIter::<_, ScSpecEventDataFormat>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.limits.clone())
@@ -57607,6 +58197,10 @@ impl Type {
                 ReadXdrIter::<_, SorobanAuthorizationEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
             ),
+            TypeVariant::SorobanAuthorizationEntries => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntries>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntries(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
@@ -58358,6 +58952,18 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::ScSpecEventFieldLocationV0 => Ok(Self::ScSpecEventFieldLocationV0(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ScSpecEventFieldV0 => Ok(Self::ScSpecEventFieldV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecEventV0 => {
+                Ok(Self::ScSpecEventV0(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ScSpecEntryKind => {
                 Ok(Self::ScSpecEntryKind(Box::new(serde_json::from_reader(r)?)))
             }
@@ -59056,6 +59662,9 @@ impl Type {
             TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            TypeVariant::SorobanAuthorizationEntries => Ok(Self::SorobanAuthorizationEntries(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59626,6 +60235,18 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEventFieldLocationV0 => Ok(Self::ScSpecEventFieldLocationV0(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::ScSpecEventFieldV0 => Ok(Self::ScSpecEventFieldV0(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEventV0 => Ok(Self::ScSpecEventV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
@@ -60434,6 +61055,9 @@ impl Type {
             TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
+            TypeVariant::SorobanAuthorizationEntries => Ok(Self::SorobanAuthorizationEntries(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
             TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -60951,6 +61575,10 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionV0(ref v) => v.as_ref(),
+            Self::ScSpecEventFieldLocationV0(ref v) => v.as_ref(),
+            Self::ScSpecEventFieldV0(ref v) => v.as_ref(),
+            Self::ScSpecEventDataFormat(ref v) => v.as_ref(),
+            Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
             Self::ScValType(ref v) => v.as_ref(),
@@ -61209,6 +61837,7 @@ impl Type {
             Self::SorobanCredentialsType(ref v) => v.as_ref(),
             Self::SorobanCredentials(ref v) => v.as_ref(),
             Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
+            Self::SorobanAuthorizationEntries(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
             Self::ExtendFootprintTtlOp(ref v) => v.as_ref(),
             Self::RestoreFootprintOp(ref v) => v.as_ref(),
@@ -61416,6 +62045,10 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
+            Self::ScSpecEventFieldLocationV0(_) => "ScSpecEventFieldLocationV0",
+            Self::ScSpecEventFieldV0(_) => "ScSpecEventFieldV0",
+            Self::ScSpecEventDataFormat(_) => "ScSpecEventDataFormat",
+            Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
             Self::ScValType(_) => "ScValType",
@@ -61686,6 +62319,7 @@ impl Type {
             Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
             Self::SorobanCredentials(_) => "SorobanCredentials",
             Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
+            Self::SorobanAuthorizationEntries(_) => "SorobanAuthorizationEntries",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
             Self::ExtendFootprintTtlOp(_) => "ExtendFootprintTtlOp",
             Self::RestoreFootprintOp(_) => "RestoreFootprintOp",
@@ -61839,7 +62473,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 452] {
+    pub const fn variants() -> [TypeVariant; 457] {
         Self::VARIANTS
     }
 
@@ -61913,6 +62547,10 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
             Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
             Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
+            Self::ScSpecEventFieldLocationV0(_) => TypeVariant::ScSpecEventFieldLocationV0,
+            Self::ScSpecEventFieldV0(_) => TypeVariant::ScSpecEventFieldV0,
+            Self::ScSpecEventDataFormat(_) => TypeVariant::ScSpecEventDataFormat,
+            Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
             Self::ScValType(_) => TypeVariant::ScValType,
@@ -62201,6 +62839,7 @@ impl Type {
             Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
             Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
             Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
+            Self::SorobanAuthorizationEntries(_) => TypeVariant::SorobanAuthorizationEntries,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
             Self::ExtendFootprintTtlOp(_) => TypeVariant::ExtendFootprintTtlOp,
             Self::RestoreFootprintOp(_) => TypeVariant::RestoreFootprintOp,
@@ -62445,6 +63084,10 @@ impl WriteXdr for Type {
             Self::ScSpecUdtErrorEnumV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionInputV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionV0(v) => v.write_xdr(w),
+            Self::ScSpecEventFieldLocationV0(v) => v.write_xdr(w),
+            Self::ScSpecEventFieldV0(v) => v.write_xdr(w),
+            Self::ScSpecEventDataFormat(v) => v.write_xdr(w),
+            Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),
             Self::ScValType(v) => v.write_xdr(w),
@@ -62703,6 +63346,7 @@ impl WriteXdr for Type {
             Self::SorobanCredentialsType(v) => v.write_xdr(w),
             Self::SorobanCredentials(v) => v.write_xdr(w),
             Self::SorobanAuthorizationEntry(v) => v.write_xdr(w),
+            Self::SorobanAuthorizationEntries(v) => v.write_xdr(w),
             Self::InvokeHostFunctionOp(v) => v.write_xdr(w),
             Self::ExtendFootprintTtlOp(v) => v.write_xdr(w),
             Self::RestoreFootprintOp(v) => v.write_xdr(w),

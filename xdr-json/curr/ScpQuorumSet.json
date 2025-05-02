@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScpQuorumSet",
+  "description": "ScpQuorumSet is an XDR Struct defines as:\n\n```text struct SCPQuorumSet { uint32 threshold; NodeID validators<>; SCPQuorumSet innerSets<>; }; ```",
+  "type": "object",
+  "required": [
+    "inner_sets",
+    "threshold",
+    "validators"
+  ],
+  "properties": {
+    "inner_sets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScpQuorumSet"
+      },
+      "maxItems": 4294967295
+    },
+    "threshold": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "validators": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NodeId"
+      },
+      "maxItems": 4294967295
+    }
+  },
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    },
+    "ScpQuorumSet": {
+      "description": "ScpQuorumSet is an XDR Struct defines as:\n\n```text struct SCPQuorumSet { uint32 threshold; NodeID validators<>; SCPQuorumSet innerSets<>; }; ```",
+      "type": "object",
+      "required": [
+        "inner_sets",
+        "threshold",
+        "validators"
+      ],
+      "properties": {
+        "inner_sets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScpQuorumSet"
+          },
+          "maxItems": 4294967295
+        },
+        "threshold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "validators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NodeId"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    }
+  }
+}

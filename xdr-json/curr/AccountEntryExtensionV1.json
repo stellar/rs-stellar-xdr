@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "AccountEntryExtensionV1",
+  "description": "AccountEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV1 { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "liabilities"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/AccountEntryExtensionV1Ext"
+    },
+    "liabilities": {
+      "$ref": "#/definitions/Liabilities"
+    }
+  },
+  "definitions": {
+    "AccountEntryExtensionV1Ext": {
+      "description": "AccountEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v2"
+          ],
+          "properties": {
+            "v2": {
+              "$ref": "#/definitions/AccountEntryExtensionV2"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AccountEntryExtensionV2": {
+      "description": "AccountEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV2 { uint32 numSponsored; uint32 numSponsoring; SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;\n\nunion switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "num_sponsored",
+        "num_sponsoring",
+        "signer_sponsoring_i_ds"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/AccountEntryExtensionV2Ext"
+        },
+        "num_sponsored": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "num_sponsoring": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "signer_sponsoring_i_ds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SponsorshipDescriptor"
+          },
+          "maxItems": 20
+        }
+      }
+    },
+    "AccountEntryExtensionV2Ext": {
+      "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v3"
+          ],
+          "properties": {
+            "v3": {
+              "$ref": "#/definitions/AccountEntryExtensionV3"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AccountEntryExtensionV3": {
+      "description": "AccountEntryExtensionV3 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "seq_ledger",
+        "seq_time"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "seq_ledger": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "seq_time": {
+          "$ref": "#/definitions/TimePoint"
+        }
+      }
+    },
+    "AccountId": {
+      "type": "string"
+    },
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "Liabilities": {
+      "description": "Liabilities is an XDR Struct defines as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
+      "type": "object",
+      "required": [
+        "buying",
+        "selling"
+      ],
+      "properties": {
+        "buying": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "selling": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SponsorshipDescriptor": {
+      "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AccountId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  }
+}

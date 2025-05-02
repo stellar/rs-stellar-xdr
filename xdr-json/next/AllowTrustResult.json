@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "AllowTrustResult",
+  "description": "AllowTrustResult is an XDR Union defines as:\n\n```text union AllowTrustResult switch (AllowTrustResultCode code) { case ALLOW_TRUST_SUCCESS: void; case ALLOW_TRUST_MALFORMED: case ALLOW_TRUST_NO_TRUST_LINE: case ALLOW_TRUST_TRUST_NOT_REQUIRED: case ALLOW_TRUST_CANT_REVOKE: case ALLOW_TRUST_SELF_NOT_ALLOWED: case ALLOW_TRUST_LOW_RESERVE: void; }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "no_trust_line",
+    "trust_not_required",
+    "cant_revoke",
+    "self_not_allowed",
+    "low_reserve"
+  ]
+}

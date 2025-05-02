@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ConfigSettingContractHistoricalDataV0",
+  "description": "ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractHistoricalDataV0 { int64 feeHistorical1KB; // Fee for storing 1KB in archives }; ```",
+  "type": "object",
+  "required": [
+    "fee_historical1_kb"
+  ],
+  "properties": {
+    "fee_historical1_kb": {
+      "type": "integer",
+      "format": "int64"
+    }
+  }
+}

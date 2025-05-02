@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "Memo",
+  "description": "Memo is an XDR Union defines as:\n\n```text union Memo switch (MemoType type) { case MEMO_NONE: void; case MEMO_TEXT: string text<28>; case MEMO_ID: uint64 id; case MEMO_HASH: Hash hash; // the hash of what to pull from the content server case MEMO_RETURN: Hash retHash; // the hash of the tx you are rejecting }; ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "none"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "$ref": "#/definitions/StringM<28>"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "hash"
+      ],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "return"
+      ],
+      "properties": {
+        "return": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "StringM<28>": {
+      "type": "string",
+      "maxLength": 28
+    }
+  }
+}

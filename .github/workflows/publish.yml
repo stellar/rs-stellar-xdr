@@ -51,7 +51,7 @@ jobs:
         tar xvfz stellar-xdr-$VERSION.crate
         cd stellar-xdr-$VERSION
         cargo build --target-dir=../.. --release --target ${{ matrix.target }} --features cli
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: ${{ env.NAME }}
         path: 'target/${{ matrix.target }}/release/stellar-xdr${{ matrix.ext }}'

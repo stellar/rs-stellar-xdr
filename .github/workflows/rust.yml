@@ -56,7 +56,7 @@ jobs:
         rust: [msrv, latest]
         sys:
         - os: ubuntu-latest
-          target: wasm32-unknown-unknown
+          target: wasm32v1-none
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
         # TODO: Address GitHub Actions concurrency limits and re-enable.
@@ -89,7 +89,12 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - name: Run minimal clippy checks on wasm32v1-none
+      if: matrix.sys.target == 'wasm32v1-none'
+      run: cargo clippy --target ${{ matrix.sys.target }} --no-default-features --features curr,next
+    - name: Run full clippy checks on other targets
+      if: matrix.sys.target != 'wasm32v1-none'
+      run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
     strategy:

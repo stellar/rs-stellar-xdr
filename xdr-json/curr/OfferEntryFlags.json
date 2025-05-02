@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "OfferEntryFlags",
+  "description": "OfferEntryFlags is an XDR Enum defines as:\n\n```text enum OfferEntryFlags { // an offer with this flag will not act on and take a reverse offer of equal // price PASSIVE_FLAG = 1 }; ```",
+  "type": "string",
+  "enum": [
+    "passive_flag"
+  ]
+}

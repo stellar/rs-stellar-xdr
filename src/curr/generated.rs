@@ -997,6 +997,22 @@ impl<T, const MAX: u32> VecM<T, MAX> {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl<T, const MAX: u32> VecM<T, MAX> {
+    pub fn iter_mut(&mut self) -> core::slice::IterMut<'_, T> {
+        self.0.iter_mut()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<'a, T, const MAX: u32> core::iter::IntoIterator for &'a mut VecM<T, MAX> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 impl<T: Clone, const MAX: u32> VecM<T, MAX> {
     #[must_use]
     #[cfg(feature = "alloc")]
@@ -9592,10 +9608,8 @@ impl WriteXdr for ScAddressType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct MuxedEd25519Account {
     pub id: u64,
     pub ed25519: Uint256,
@@ -45446,10 +45460,8 @@ impl WriteXdr for AccountId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ContractId(pub Hash);
 
@@ -45906,10 +45918,8 @@ impl WriteXdr for SerializedBinaryFuseFilter {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct PoolId(pub Hash);
 

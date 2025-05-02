@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerBounds",
+  "description": "LedgerBounds is an XDR Struct defines as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
+  "type": "object",
+  "required": [
+    "max_ledger",
+    "min_ledger"
+  ],
+  "properties": {
+    "max_ledger": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "min_ledger": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

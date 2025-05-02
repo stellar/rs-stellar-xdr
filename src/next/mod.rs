@@ -1,4 +1,6 @@
+#[allow(clippy::empty_line_after_doc_comments)]
 mod generated;
+mod ledgerkey;
 pub use generated::*;
 
 mod jsonschema;

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerCloseValueSignature",
+  "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
+  "type": "object",
+  "required": [
+    "node_id",
+    "signature"
+  ],
+  "properties": {
+    "node_id": {
+      "$ref": "#/definitions/NodeId"
+    },
+    "signature": {
+      "$ref": "#/definitions/Signature"
+    }
+  },
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

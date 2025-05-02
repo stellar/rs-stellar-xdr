@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SendMoreExtended",
+  "description": "SendMoreExtended is an XDR Struct defines as:\n\n```text struct SendMoreExtended { uint32 numMessages; uint32 numBytes; }; ```",
+  "type": "object",
+  "required": [
+    "num_bytes",
+    "num_messages"
+  ],
+  "properties": {
+    "num_bytes": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "num_messages": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

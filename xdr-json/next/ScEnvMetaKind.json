@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScEnvMetaKind",
+  "description": "ScEnvMetaKind is an XDR Enum defines as:\n\n```text enum SCEnvMetaKind { SC_ENV_META_KIND_INTERFACE_VERSION = 0 }; ```",
+  "type": "string",
+  "enum": [
+    "sc_env_meta_kind_interface_version"
+  ]
+}

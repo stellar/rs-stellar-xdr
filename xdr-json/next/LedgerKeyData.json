@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerKeyData",
+  "description": "LedgerKeyData is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; string64 dataName; } ```",
+  "type": "object",
+  "required": [
+    "account_id",
+    "data_name"
+  ],
+  "properties": {
+    "account_id": {
+      "$ref": "#/definitions/AccountId"
+    },
+    "data_name": {
+      "$ref": "#/definitions/String64"
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "String64": {
+      "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
+      "$ref": "#/definitions/StringM<64>"
+    },
+    "StringM<64>": {
+      "type": "string",
+      "maxLength": 64
+    }
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerHeader",
+  "description": "LedgerHeader is an XDR Struct defines as:\n\n```text struct LedgerHeader { uint32 ledgerVersion;    // the protocol version of the ledger Hash previousLedgerHash; // hash of the previous ledger header StellarValue scpValue;   // what consensus agreed to Hash txSetResultHash;    // the TransactionResultSet that led to this ledger Hash bucketListHash;     // hash of the ledger state\n\nuint32 ledgerSeq; // sequence number of this ledger\n\nint64 totalCoins; // total number of stroops in existence. // 10,000,000 stroops in 1 XLM\n\nint64 feePool;       // fees burned since last inflation run uint32 inflationSeq; // inflation sequence number\n\nuint64 idPool; // last used global ID, used for generating objects\n\nuint32 baseFee;     // base fee per operation in stroops uint32 baseReserve; // account base reserve in stroops\n\nuint32 maxTxSetSize; // maximum size a transaction set can be\n\nHash skipList[4]; // hashes of ledgers in the past. allows you to jump back // in time without walking the chain back ledger by ledger // each slot contains the oldest ledger that is mod of // either 50  5000  50000 or 500000 depending on index // skipList[0] mod(50), skipList[1] mod(5000), etc\n\n// reserved for future use union switch (int v) { case 0: void; case 1: LedgerHeaderExtensionV1 v1; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "base_fee",
+    "base_reserve",
+    "bucket_list_hash",
+    "ext",
+    "fee_pool",
+    "id_pool",
+    "inflation_seq",
+    "ledger_seq",
+    "ledger_version",
+    "max_tx_set_size",
+    "previous_ledger_hash",
+    "scp_value",
+    "skip_list",
+    "total_coins",
+    "tx_set_result_hash"
+  ],
+  "properties": {
+    "base_fee": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "base_reserve": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "bucket_list_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "ext": {
+      "$ref": "#/definitions/LedgerHeaderExt"
+    },
+    "fee_pool": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "id_pool": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "inflation_seq": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "ledger_seq": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "ledger_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "max_tx_set_size": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "previous_ledger_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "scp_value": {
+      "$ref": "#/definitions/StellarValue"
+    },
+    "skip_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64,
+        "contentEncoding": "hex",
+        "contentMediaType": "application/binary"
+      },
+      "maxItems": 4,
+      "minItems": 4
+    },
+    "total_coins": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "tx_set_result_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  },
+  "definitions": {
+    "LedgerCloseValueSignature": {
+      "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
+      "type": "object",
+      "required": [
+        "node_id",
+        "signature"
+      ],
+      "properties": {
+        "node_id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "signature": {
+          "$ref": "#/definitions/Signature"
+        }
+      }
+    },
+    "LedgerHeaderExt": {
+      "description": "LedgerHeaderExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: LedgerHeaderExtensionV1 v1; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/LedgerHeaderExtensionV1"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LedgerHeaderExtensionV1": {
+      "description": "LedgerHeaderExtensionV1 is an XDR Struct defines as:\n\n```text struct LedgerHeaderExtensionV1 { uint32 flags; // LedgerHeaderFlags\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "flags"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/LedgerHeaderExtensionV1Ext"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "LedgerHeaderExtensionV1Ext": {
+      "description": "LedgerHeaderExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "StellarValue": {
+      "description": "StellarValue is an XDR Struct defines as:\n\n```text struct StellarValue { Hash txSetHash;      // transaction set to apply to previous ledger TimePoint closeTime; // network close time\n\n// upgrades to apply to the previous ledger (usually empty) // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop // unknown steps during consensus if needed. // see notes below on 'LedgerUpgrade' for more detail // max size is dictated by number of upgrade types (+ room for future) UpgradeType upgrades<6>;\n\n// reserved for future use union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "close_time",
+        "ext",
+        "tx_set_hash",
+        "upgrades"
+      ],
+      "properties": {
+        "close_time": {
+          "$ref": "#/definitions/TimePoint"
+        },
+        "ext": {
+          "$ref": "#/definitions/StellarValueExt"
+        },
+        "tx_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "upgrades": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UpgradeType"
+          },
+          "maxItems": 6
+        }
+      }
+    },
+    "StellarValueExt": {
+      "description": "StellarValueExt is an XDR NestedUnion defines as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "basic"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "signed"
+          ],
+          "properties": {
+            "signed": {
+              "$ref": "#/definitions/LedgerCloseValueSignature"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "UpgradeType": {
+      "description": "UpgradeType is an XDR Typedef defines as:\n\n```text typedef opaque UpgradeType<128>; ```",
+      "type": "string",
+      "maxLength": 256,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

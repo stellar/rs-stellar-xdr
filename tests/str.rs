@@ -4,9 +4,9 @@
 use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
-    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
-    Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
+    MuxedAccount, MuxedAccountMed25519, MuxedEd25519Account, NodeId, PoolId, PublicKey, ScAddress,
+    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 use std::str::FromStr;
@@ -41,6 +41,33 @@ fn account_id_to_string() {
     assert_eq!(
         s,
         "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
+    );
+}
+
+#[test]
+fn contract_id_from_str() {
+    let v = ContractId::from_str("CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA");
+    assert_eq!(
+        v,
+        Ok(ContractId(Hash([
+            0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+            0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+            0xfc, 0x7f, 0xe8, 0x9a,
+        ]))),
+    );
+}
+
+#[test]
+fn contract_id_to_string() {
+    let s = ContractId(Hash([
+        0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x05,
+        0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03, 0xfc, 0x7f,
+        0xe8, 0x9a,
+    ]))
+    .to_string();
+    assert_eq!(
+        s,
+        "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
     );
 }
 
@@ -367,11 +394,11 @@ fn sc_address_from_str_with_account() {
 
 #[test]
 fn sc_address_to_string_with_contract() {
-    let s = ScAddress::Contract(Hash([
+    let s = ScAddress::Contract(ContractId(Hash([
         0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x05,
         0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03, 0xfc, 0x7f,
         0xe8, 0x9a,
-    ]))
+    ])))
     .to_string();
     assert_eq!(
         s,
@@ -384,19 +411,143 @@ fn sc_address_from_str_with_contract() {
     let v = ScAddress::from_str("CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA");
     assert_eq!(
         v,
-        Ok(ScAddress::Contract(Hash([
+        Ok(ScAddress::Contract(ContractId(Hash([
             0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
             0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
             0xfc, 0x7f, 0xe8, 0x9a,
-        ]))),
+        ])))),
+    );
+}
+
+#[test]
+fn sc_address_to_string_with_muxed_account() {
+    let s = ScAddress::MuxedAccount(MuxedEd25519Account {
+        id: 123_456,
+        ed25519: Uint256([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ]),
+    })
+    .to_string();
+    assert_eq!(
+        s,
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU"
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_muxed_account() {
+    let v = ScAddress::from_str(
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU",
+    );
+    assert_eq!(
+        v,
+        Ok(ScAddress::MuxedAccount(MuxedEd25519Account {
+            id: 123_456,
+            ed25519: Uint256([
+                0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+                0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+                0x05, 0xc7, 0xb1, 0x03,
+            ]),
+        })),
+    );
+}
+
+#[test]
+fn sc_address_to_string_with_liquidity_pool() {
+    let s = ScAddress::LiquidityPool(PoolId(Hash([
+        0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
+        0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
+        0xb1, 0x03,
+    ])))
+    .to_string();
+    assert_eq!(
+        s,
+        "LA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGZ5J"
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_liquidity_pool() {
+    let v = ScAddress::from_str("LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJN");
+    assert_eq!(
+        v,
+        Ok(ScAddress::LiquidityPool(PoolId(Hash([
+            0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+            0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+            0xfc, 0x7f, 0xe8, 0x9a,
+        ]))))
+    );
+}
+
+#[test]
+fn sc_address_to_string_with_claimable_balance() {
+    let s = ScAddress::ClaimableBalance(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([
+        0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
+        0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
+        0xb1, 0x03,
+    ])))
+    .to_string();
+    assert_eq!(
+        s,
+        "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE"
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_claimable_balance() {
+    let v = ScAddress::from_str("BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TU");
+    assert_eq!(
+        v,
+        Ok(ScAddress::ClaimableBalance(
+            ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([
+                0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+                0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+                0xfc, 0x7f, 0xe8, 0x9a,
+            ]))
+        ))
+    );
+}
+
+#[test]
+fn muxed_ed25519_account_to_string_with_muxed_account() {
+    let s = MuxedEd25519Account {
+        id: 123_456,
+        ed25519: Uint256([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ]),
+    }
+    .to_string();
+    assert_eq!(
+        s,
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU"
+    );
+}
+
+#[test]
+fn muxed_ed25519_account_from_str_with_muxed_account() {
+    let v = MuxedEd25519Account::from_str(
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU",
+    );
+    assert_eq!(
+        v,
+        Ok(MuxedEd25519Account {
+            id: 123_456,
+            ed25519: Uint256([
+                0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+                0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+                0x05, 0xc7, 0xb1, 0x03,
+            ])
+        }),
     );
 }
 
 #[test]
 fn sc_address_from_str_with_invalid() {
-    let v = ScAddress::from_str(
-        "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK",
-    );
+    let v = ScAddress::from_str("XBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG");
     assert_eq!(v, Err(Error::Invalid));
 }
 
@@ -544,22 +695,57 @@ fn asset_code_from_str_to_string_roundtrip_unicode() {
 }
 
 #[test]
-#[rustfmt::skip]
 fn claimable_balance_id() {
+    // To string
     assert_eq!(
-        ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([1u8; 32])).to_string(),
-        "000000000101010101010101010101010101010101010101010101010101010101010101",
+        ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ]))
+        .to_string(),
+        "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE",
     );
-    // Valid
-    assert_eq!(ClaimableBalanceId::from_str("000000000101010101010101010101010101010101010101010101010101010101010101"), Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([1u8; 32]))));
-    // Half byte short.
-    assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010"), Err(Error::InvalidHex));
-    // Full byte short.
-    assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101"), Err(Error::LengthMismatch));
-    // Half byte too long.
-    assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101011"), Err(Error::InvalidHex));
-    // Full byte too long.
-    assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::LengthMismatch));
-    // Unrecognized discriminant value.
-    assert_eq!(ClaimableBalanceId::from_str("000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::Invalid));
+    // From string - valid
+    assert_eq!(
+        ClaimableBalanceId::from_str("BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE"),
+        Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ])))
+    );
+    // From string - invalid
+    assert_eq!(
+        ClaimableBalanceId::from_str("BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEA"),
+        Err(Error::Invalid)
+    );
+}
+
+#[test]
+fn liquidity_pool_id() {
+    // To string
+    assert_eq!(
+        PoolId(Hash([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ]))
+        .to_string(),
+        "LA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGZ5J",
+    );
+    // From string - valid
+    assert_eq!(
+        PoolId::from_str("LA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGZ5J"),
+        Ok(PoolId(Hash([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ])))
+    );
+    // From string - invalid
+    assert_eq!(
+        ClaimableBalanceId::from_str("LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAGPZA"),
+        Err(Error::Invalid)
+    );
 }

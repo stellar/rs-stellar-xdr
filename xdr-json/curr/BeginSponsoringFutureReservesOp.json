@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "BeginSponsoringFutureReservesOp",
+  "description": "BeginSponsoringFutureReservesOp is an XDR Struct defines as:\n\n```text struct BeginSponsoringFutureReservesOp { AccountID sponsoredID; }; ```",
+  "type": "object",
+  "required": [
+    "sponsored_id"
+  ],
+  "properties": {
+    "sponsored_id": {
+      "$ref": "#/definitions/AccountId"
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    }
+  }
+}

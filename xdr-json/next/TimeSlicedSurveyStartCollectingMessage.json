@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TimeSlicedSurveyStartCollectingMessage",
+  "description": "TimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:\n\n```text struct TimeSlicedSurveyStartCollectingMessage { NodeID surveyorID; uint32 nonce; uint32 ledgerNum; }; ```",
+  "type": "object",
+  "required": [
+    "ledger_num",
+    "nonce",
+    "surveyor_id"
+  ],
+  "properties": {
+    "ledger_num": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "nonce": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "surveyor_id": {
+      "$ref": "#/definitions/NodeId"
+    }
+  },
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    }
+  }
+}

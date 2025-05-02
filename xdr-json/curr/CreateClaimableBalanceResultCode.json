@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "CreateClaimableBalanceResultCode",
+  "description": "CreateClaimableBalanceResultCode is an XDR Enum defines as:\n\n```text enum CreateClaimableBalanceResultCode { CREATE_CLAIMABLE_BALANCE_SUCCESS = 0, CREATE_CLAIMABLE_BALANCE_MALFORMED = -1, CREATE_CLAIMABLE_BALANCE_LOW_RESERVE = -2, CREATE_CLAIMABLE_BALANCE_NO_TRUST = -3, CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -4, CREATE_CLAIMABLE_BALANCE_UNDERFUNDED = -5 }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "low_reserve",
+    "no_trust",
+    "not_authorized",
+    "underfunded"
+  ]
+}

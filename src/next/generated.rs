@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "7b7d3cf8798b3fa23d9cf04f28470366712463e845923adfc43e9fa5fdde47fb",
+        "0a10b9194fb0431e8953a8b95b2411dcba660a8dae2907a55cd6fd3d523477eb",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "e42172ff33faaa7ca0f67de826c516890cc0f7fce1f9f79e6ae79134528d2a92",
+        "7c4c951f233ad7cdabedd740abd9697626ec5bc03ce97bf60cbaeee1481a48d1",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -22626,7 +22626,7 @@ impl WriteXdr for OperationMetaV2 {
 /// {
 ///     SorobanTransactionMetaExt ext;
 ///
-///     SCVal returnValue;
+///     SCVal* returnValue;
 /// };
 /// ```
 ///
@@ -22640,7 +22640,7 @@ impl WriteXdr for OperationMetaV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionMetaV2 {
     pub ext: SorobanTransactionMetaExt,
-    pub return_value: ScVal,
+    pub return_value: Option<ScVal>,
 }
 
 impl ReadXdr for SorobanTransactionMetaV2 {
@@ -22649,7 +22649,7 @@ impl ReadXdr for SorobanTransactionMetaV2 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: SorobanTransactionMetaExt::read_xdr(r)?,
-                return_value: ScVal::read_xdr(r)?,
+                return_value: Option::<ScVal>::read_xdr(r)?,
             })
         })
     }
@@ -22661,6 +22661,170 @@ impl WriteXdr for SorobanTransactionMetaV2 {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.return_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// TransactionEventStage is an XDR Enum defines as:
+///
+/// ```text
+/// enum TransactionEventStage {
+///     // The event has happened before any one of the transactions has its
+///     // operations applied.
+///     TRANSACTION_EVENT_STAGE_BEFORE_ALL_TXS = 0,
+///     // The event has happened immediately after operations of the transaction
+///     // have been applied.
+///     TRANSACTION_EVENT_STAGE_AFTER_TX = 1,
+///     // The event has happened after every transaction had its operations
+///     // applied.
+///     TRANSACTION_EVENT_STAGE_AFTER_ALL_TXS = 2
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum TransactionEventStage {
+    BeforeAllTxs = 0,
+    AfterTx = 1,
+    AfterAllTxs = 2,
+}
+
+impl TransactionEventStage {
+    pub const VARIANTS: [TransactionEventStage; 3] = [
+        TransactionEventStage::BeforeAllTxs,
+        TransactionEventStage::AfterTx,
+        TransactionEventStage::AfterAllTxs,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["BeforeAllTxs", "AfterTx", "AfterAllTxs"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::BeforeAllTxs => "BeforeAllTxs",
+            Self::AfterTx => "AfterTx",
+            Self::AfterAllTxs => "AfterAllTxs",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [TransactionEventStage; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for TransactionEventStage {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<TransactionEventStage> for TransactionEventStage {
+    fn variants() -> slice::Iter<'static, TransactionEventStage> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for TransactionEventStage {}
+
+impl fmt::Display for TransactionEventStage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for TransactionEventStage {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => TransactionEventStage::BeforeAllTxs,
+            1 => TransactionEventStage::AfterTx,
+            2 => TransactionEventStage::AfterAllTxs,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<TransactionEventStage> for i32 {
+    #[must_use]
+    fn from(e: TransactionEventStage) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for TransactionEventStage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for TransactionEventStage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// TransactionEvent is an XDR Struct defines as:
+///
+/// ```text
+/// struct TransactionEvent {    
+///     TransactionEventStage stage;  // Stage at which an event has occurred.
+///     ContractEvent event;  // The contract event that has occurred.
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TransactionEvent {
+    pub stage: TransactionEventStage,
+    pub event: ContractEvent,
+}
+
+impl ReadXdr for TransactionEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                stage: TransactionEventStage::read_xdr(r)?,
+                event: ContractEvent::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TransactionEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.stage.write_xdr(w)?;
+            self.event.write_xdr(w)?;
             Ok(())
         })
     }
@@ -22681,7 +22845,7 @@ impl WriteXdr for SorobanTransactionMetaV2 {
 ///     SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for
 ///                                            // Soroban transactions).
 ///
-///     ContractEvent events<>; // Used for transaction-level events (like fee payment)
+///     TransactionEvent events<>; // Used for transaction-level events (like fee payment)
 ///     DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information
 /// };
 /// ```
@@ -22700,7 +22864,7 @@ pub struct TransactionMetaV4 {
     pub operations: VecM<OperationMetaV2>,
     pub tx_changes_after: LedgerEntryChanges,
     pub soroban_meta: Option<SorobanTransactionMetaV2>,
-    pub events: VecM<ContractEvent>,
+    pub events: VecM<TransactionEvent>,
     pub diagnostic_events: VecM<DiagnosticEvent>,
 }
 
@@ -22714,7 +22878,7 @@ impl ReadXdr for TransactionMetaV4 {
                 operations: VecM::<OperationMetaV2>::read_xdr(r)?,
                 tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
                 soroban_meta: Option::<SorobanTransactionMetaV2>::read_xdr(r)?,
-                events: VecM::<ContractEvent>::read_xdr(r)?,
+                events: VecM::<TransactionEvent>::read_xdr(r)?,
                 diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
             })
         })
@@ -29866,6 +30030,112 @@ impl WriteXdr for SorobanAuthorizationEntry {
             self.root_invocation.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+
+/// SorobanAuthorizationEntries is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct SorobanAuthorizationEntries(pub VecM<SorobanAuthorizationEntry>);
+
+impl From<SorobanAuthorizationEntries> for VecM<SorobanAuthorizationEntry> {
+    #[must_use]
+    fn from(x: SorobanAuthorizationEntries) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn from(x: VecM<SorobanAuthorizationEntry>) -> Self {
+        SorobanAuthorizationEntries(x)
+    }
+}
+
+impl AsRef<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<SorobanAuthorizationEntry> {
+        &self.0
+    }
+}
+
+impl ReadXdr for SorobanAuthorizationEntries {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<SorobanAuthorizationEntry>::read_xdr(r)?;
+            let v = SorobanAuthorizationEntries(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizationEntries {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for SorobanAuthorizationEntries {
+    type Target = VecM<SorobanAuthorizationEntry>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<SorobanAuthorizationEntries> for Vec<SorobanAuthorizationEntry> {
+    #[must_use]
+    fn from(x: SorobanAuthorizationEntries) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    type Error = Error;
+    fn try_from(x: Vec<SorobanAuthorizationEntry>) -> Result<Self> {
+        Ok(SorobanAuthorizationEntries(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    type Error = Error;
+    fn try_from(x: &Vec<SorobanAuthorizationEntry>) -> Result<Self> {
+        Ok(SorobanAuthorizationEntries(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<SorobanAuthorizationEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[SorobanAuthorizationEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[SorobanAuthorizationEntry] {
+        self.0 .0
     }
 }
 
@@ -45939,6 +46209,8 @@ pub enum TypeVariant {
     TransactionMetaV3,
     OperationMetaV2,
     SorobanTransactionMetaV2,
+    TransactionEventStage,
+    TransactionEvent,
     TransactionMetaV4,
     InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
@@ -46031,6 +46303,7 @@ pub enum TypeVariant {
     SorobanCredentialsType,
     SorobanCredentials,
     SorobanAuthorizationEntry,
+    SorobanAuthorizationEntries,
     InvokeHostFunctionOp,
     ExtendFootprintTtlOp,
     RestoreFootprintOp,
@@ -46174,7 +46447,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 452] = [
+    pub const VARIANTS: [TypeVariant; 455] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46395,6 +46668,8 @@ impl TypeVariant {
         TypeVariant::TransactionMetaV3,
         TypeVariant::OperationMetaV2,
         TypeVariant::SorobanTransactionMetaV2,
+        TypeVariant::TransactionEventStage,
+        TypeVariant::TransactionEvent,
         TypeVariant::TransactionMetaV4,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
@@ -46487,6 +46762,7 @@ impl TypeVariant {
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
+        TypeVariant::SorobanAuthorizationEntries,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::ExtendFootprintTtlOp,
         TypeVariant::RestoreFootprintOp,
@@ -46628,7 +46904,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 452] = [
+    pub const VARIANTS_STR: [&'static str; 455] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -46849,6 +47125,8 @@ impl TypeVariant {
         "TransactionMetaV3",
         "OperationMetaV2",
         "SorobanTransactionMetaV2",
+        "TransactionEventStage",
+        "TransactionEvent",
         "TransactionMetaV4",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
@@ -46941,6 +47219,7 @@ impl TypeVariant {
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
+        "SorobanAuthorizationEntries",
         "InvokeHostFunctionOp",
         "ExtendFootprintTtlOp",
         "RestoreFootprintOp",
@@ -47311,6 +47590,8 @@ impl TypeVariant {
             Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::OperationMetaV2 => "OperationMetaV2",
             Self::SorobanTransactionMetaV2 => "SorobanTransactionMetaV2",
+            Self::TransactionEventStage => "TransactionEventStage",
+            Self::TransactionEvent => "TransactionEvent",
             Self::TransactionMetaV4 => "TransactionMetaV4",
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
@@ -47409,6 +47690,7 @@ impl TypeVariant {
             Self::SorobanCredentialsType => "SorobanCredentialsType",
             Self::SorobanCredentials => "SorobanCredentials",
             Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
+            Self::SorobanAuthorizationEntries => "SorobanAuthorizationEntries",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
             Self::ExtendFootprintTtlOp => "ExtendFootprintTtlOp",
             Self::RestoreFootprintOp => "RestoreFootprintOp",
@@ -47558,7 +47840,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 452] {
+    pub const fn variants() -> [TypeVariant; 455] {
         Self::VARIANTS
     }
 
@@ -47865,6 +48147,8 @@ impl TypeVariant {
             Self::SorobanTransactionMetaV2 => {
                 gen.into_root_schema_for::<SorobanTransactionMetaV2>()
             }
+            Self::TransactionEventStage => gen.into_root_schema_for::<TransactionEventStage>(),
+            Self::TransactionEvent => gen.into_root_schema_for::<TransactionEvent>(),
             Self::TransactionMetaV4 => gen.into_root_schema_for::<TransactionMetaV4>(),
             Self::InvokeHostFunctionSuccessPreImage => {
                 gen.into_root_schema_for::<InvokeHostFunctionSuccessPreImage>()
@@ -48002,6 +48286,9 @@ impl TypeVariant {
             Self::SorobanCredentials => gen.into_root_schema_for::<SorobanCredentials>(),
             Self::SorobanAuthorizationEntry => {
                 gen.into_root_schema_for::<SorobanAuthorizationEntry>()
+            }
+            Self::SorobanAuthorizationEntries => {
+                gen.into_root_schema_for::<SorobanAuthorizationEntries>()
             }
             Self::InvokeHostFunctionOp => gen.into_root_schema_for::<InvokeHostFunctionOp>(),
             Self::ExtendFootprintTtlOp => gen.into_root_schema_for::<ExtendFootprintTtlOp>(),
@@ -48483,6 +48770,8 @@ impl core::str::FromStr for TypeVariant {
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "OperationMetaV2" => Ok(Self::OperationMetaV2),
             "SorobanTransactionMetaV2" => Ok(Self::SorobanTransactionMetaV2),
+            "TransactionEventStage" => Ok(Self::TransactionEventStage),
+            "TransactionEvent" => Ok(Self::TransactionEvent),
             "TransactionMetaV4" => Ok(Self::TransactionMetaV4),
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
@@ -48587,6 +48876,7 @@ impl core::str::FromStr for TypeVariant {
             "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
             "SorobanCredentials" => Ok(Self::SorobanCredentials),
             "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
+            "SorobanAuthorizationEntries" => Ok(Self::SorobanAuthorizationEntries),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
             "ExtendFootprintTtlOp" => Ok(Self::ExtendFootprintTtlOp),
             "RestoreFootprintOp" => Ok(Self::RestoreFootprintOp),
@@ -48969,6 +49259,8 @@ pub enum Type {
     TransactionMetaV3(Box<TransactionMetaV3>),
     OperationMetaV2(Box<OperationMetaV2>),
     SorobanTransactionMetaV2(Box<SorobanTransactionMetaV2>),
+    TransactionEventStage(Box<TransactionEventStage>),
+    TransactionEvent(Box<TransactionEvent>),
     TransactionMetaV4(Box<TransactionMetaV4>),
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
@@ -49061,6 +49353,7 @@ pub enum Type {
     SorobanCredentialsType(Box<SorobanCredentialsType>),
     SorobanCredentials(Box<SorobanCredentials>),
     SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
+    SorobanAuthorizationEntries(Box<SorobanAuthorizationEntries>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
     ExtendFootprintTtlOp(Box<ExtendFootprintTtlOp>),
     RestoreFootprintOp(Box<RestoreFootprintOp>),
@@ -49204,7 +49497,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 452] = [
+    pub const VARIANTS: [TypeVariant; 455] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49425,6 +49718,8 @@ impl Type {
         TypeVariant::TransactionMetaV3,
         TypeVariant::OperationMetaV2,
         TypeVariant::SorobanTransactionMetaV2,
+        TypeVariant::TransactionEventStage,
+        TypeVariant::TransactionEvent,
         TypeVariant::TransactionMetaV4,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
@@ -49517,6 +49812,7 @@ impl Type {
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
+        TypeVariant::SorobanAuthorizationEntries,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::ExtendFootprintTtlOp,
         TypeVariant::RestoreFootprintOp,
@@ -49658,7 +49954,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 452] = [
+    pub const VARIANTS_STR: [&'static str; 455] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -49879,6 +50175,8 @@ impl Type {
         "TransactionMetaV3",
         "OperationMetaV2",
         "SorobanTransactionMetaV2",
+        "TransactionEventStage",
+        "TransactionEvent",
         "TransactionMetaV4",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
@@ -49971,6 +50269,7 @@ impl Type {
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
+        "SorobanAuthorizationEntries",
         "InvokeHostFunctionOp",
         "ExtendFootprintTtlOp",
         "RestoreFootprintOp",
@@ -51053,6 +51352,16 @@ impl Type {
                     SorobanTransactionMetaV2::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::TransactionEventStage => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEventStage(Box::new(
+                    TransactionEventStage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionEvent => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEvent(Box::new(
+                    TransactionEvent::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::TransactionMetaV4 => r.with_limited_depth(|r| {
                 Ok(Self::TransactionMetaV4(Box::new(
                     TransactionMetaV4::read_xdr(r)?,
@@ -51457,6 +51766,11 @@ impl Type {
             TypeVariant::SorobanAuthorizationEntry => r.with_limited_depth(|r| {
                 Ok(Self::SorobanAuthorizationEntry(Box::new(
                     SorobanAuthorizationEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanAuthorizationEntries => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAuthorizationEntries(Box::new(
+                    SorobanAuthorizationEntries::read_xdr(r)?,
                 )))
             }),
             TypeVariant::InvokeHostFunctionOp => r.with_limited_depth(|r| {
@@ -53053,6 +53367,14 @@ impl Type {
                 ReadXdrIter::<_, SorobanTransactionMetaV2>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMetaV2(Box::new(t)))),
             ),
+            TypeVariant::TransactionEventStage => Box::new(
+                ReadXdrIter::<_, TransactionEventStage>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEventStage(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEvent => Box::new(
+                ReadXdrIter::<_, TransactionEvent>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEvent(Box::new(t)))),
+            ),
             TypeVariant::TransactionMetaV4 => Box::new(
                 ReadXdrIter::<_, TransactionMetaV4>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t)))),
@@ -53458,6 +53780,10 @@ impl Type {
             TypeVariant::SorobanAuthorizationEntry => Box::new(
                 ReadXdrIter::<_, SorobanAuthorizationEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntries => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntries>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntries(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(&mut r.inner, r.limits.clone())
@@ -55133,6 +55459,14 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SorobanTransactionMetaV2(Box::new(t.0)))),
             ),
+            TypeVariant::TransactionEventStage => Box::new(
+                ReadXdrIter::<_, Frame<TransactionEventStage>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEventStage(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionEvent => Box::new(
+                ReadXdrIter::<_, Frame<TransactionEvent>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEvent(Box::new(t.0)))),
+            ),
             TypeVariant::TransactionMetaV4 => Box::new(
                 ReadXdrIter::<_, Frame<TransactionMetaV4>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t.0)))),
@@ -55603,6 +55937,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntries => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizationEntries>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizationEntries(Box::new(t.0)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(&mut r.inner, r.limits.clone())
@@ -57228,6 +57569,14 @@ impl Type {
                 ReadXdrIter::<_, SorobanTransactionMetaV2>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMetaV2(Box::new(t)))),
             ),
+            TypeVariant::TransactionEventStage => Box::new(
+                ReadXdrIter::<_, TransactionEventStage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEventStage(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEvent => Box::new(
+                ReadXdrIter::<_, TransactionEvent>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEvent(Box::new(t)))),
+            ),
             TypeVariant::TransactionMetaV4 => Box::new(
                 ReadXdrIter::<_, TransactionMetaV4>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t)))),
@@ -57606,6 +57955,10 @@ impl Type {
             TypeVariant::SorobanAuthorizationEntry => Box::new(
                 ReadXdrIter::<_, SorobanAuthorizationEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntries => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntries>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntries(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec, r.limits.clone())
@@ -58798,6 +59151,12 @@ impl Type {
             TypeVariant::SorobanTransactionMetaV2 => Ok(Self::SorobanTransactionMetaV2(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::TransactionEventStage => Ok(Self::TransactionEventStage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionEvent => Ok(Self::TransactionEvent(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59054,6 +59413,9 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SorobanAuthorizationEntries => Ok(Self::SorobanAuthorizationEntries(
                 Box::new(serde_json::from_reader(r)?),
             )),
             TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
@@ -60138,6 +60500,12 @@ impl Type {
             TypeVariant::SorobanTransactionMetaV2 => Ok(Self::SorobanTransactionMetaV2(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::TransactionEventStage => Ok(Self::TransactionEventStage(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::TransactionEvent => Ok(Self::TransactionEvent(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -60432,6 +60800,9 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::SorobanAuthorizationEntries => Ok(Self::SorobanAuthorizationEntries(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
             TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
@@ -61117,6 +61488,8 @@ impl Type {
             Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::OperationMetaV2(ref v) => v.as_ref(),
             Self::SorobanTransactionMetaV2(ref v) => v.as_ref(),
+            Self::TransactionEventStage(ref v) => v.as_ref(),
+            Self::TransactionEvent(ref v) => v.as_ref(),
             Self::TransactionMetaV4(ref v) => v.as_ref(),
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
@@ -61209,6 +61582,7 @@ impl Type {
             Self::SorobanCredentialsType(ref v) => v.as_ref(),
             Self::SorobanCredentials(ref v) => v.as_ref(),
             Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
+            Self::SorobanAuthorizationEntries(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
             Self::ExtendFootprintTtlOp(ref v) => v.as_ref(),
             Self::RestoreFootprintOp(ref v) => v.as_ref(),
@@ -61584,6 +61958,8 @@ impl Type {
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::OperationMetaV2(_) => "OperationMetaV2",
             Self::SorobanTransactionMetaV2(_) => "SorobanTransactionMetaV2",
+            Self::TransactionEventStage(_) => "TransactionEventStage",
+            Self::TransactionEvent(_) => "TransactionEvent",
             Self::TransactionMetaV4(_) => "TransactionMetaV4",
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
@@ -61686,6 +62062,7 @@ impl Type {
             Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
             Self::SorobanCredentials(_) => "SorobanCredentials",
             Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
+            Self::SorobanAuthorizationEntries(_) => "SorobanAuthorizationEntries",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
             Self::ExtendFootprintTtlOp(_) => "ExtendFootprintTtlOp",
             Self::RestoreFootprintOp(_) => "RestoreFootprintOp",
@@ -61839,7 +62216,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 452] {
+    pub const fn variants() -> [TypeVariant; 455] {
         Self::VARIANTS
     }
 
@@ -62091,6 +62468,8 @@ impl Type {
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::OperationMetaV2(_) => TypeVariant::OperationMetaV2,
             Self::SorobanTransactionMetaV2(_) => TypeVariant::SorobanTransactionMetaV2,
+            Self::TransactionEventStage(_) => TypeVariant::TransactionEventStage,
+            Self::TransactionEvent(_) => TypeVariant::TransactionEvent,
             Self::TransactionMetaV4(_) => TypeVariant::TransactionMetaV4,
             Self::InvokeHostFunctionSuccessPreImage(_) => {
                 TypeVariant::InvokeHostFunctionSuccessPreImage
@@ -62201,6 +62580,7 @@ impl Type {
             Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
             Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
             Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
+            Self::SorobanAuthorizationEntries(_) => TypeVariant::SorobanAuthorizationEntries,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
             Self::ExtendFootprintTtlOp(_) => TypeVariant::ExtendFootprintTtlOp,
             Self::RestoreFootprintOp(_) => TypeVariant::RestoreFootprintOp,
@@ -62611,6 +62991,8 @@ impl WriteXdr for Type {
             Self::TransactionMetaV3(v) => v.write_xdr(w),
             Self::OperationMetaV2(v) => v.write_xdr(w),
             Self::SorobanTransactionMetaV2(v) => v.write_xdr(w),
+            Self::TransactionEventStage(v) => v.write_xdr(w),
+            Self::TransactionEvent(v) => v.write_xdr(w),
             Self::TransactionMetaV4(v) => v.write_xdr(w),
             Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),
             Self::TransactionMeta(v) => v.write_xdr(w),
@@ -62703,6 +63085,7 @@ impl WriteXdr for Type {
             Self::SorobanCredentialsType(v) => v.write_xdr(w),
             Self::SorobanCredentials(v) => v.write_xdr(w),
             Self::SorobanAuthorizationEntry(v) => v.write_xdr(w),
+            Self::SorobanAuthorizationEntries(v) => v.write_xdr(w),
             Self::InvokeHostFunctionOp(v) => v.write_xdr(w),
             Self::ExtendFootprintTtlOp(v) => v.write_xdr(w),
             Self::RestoreFootprintOp(v) => v.write_xdr(w),

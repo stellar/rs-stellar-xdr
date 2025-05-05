@@ -2822,18 +2822,24 @@
       }
     },
     "SorobanTransactionMetaV2": {
-      "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal returnValue; }; ```",
+      "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal* returnValue; }; ```",
       "type": "object",
       "required": [
-        "ext",
-        "return_value"
+        "ext"
       ],
       "properties": {
         "ext": {
           "$ref": "#/definitions/SorobanTransactionMetaExt"
         },
         "return_value": {
-          "$ref": "#/definitions/ScVal"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScVal"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -2940,6 +2946,31 @@
       "format": "uint64",
       "minimum": 0.0
     },
+    "TransactionEvent": {
+      "description": "TransactionEvent is an XDR Struct defines as:\n\n```text struct TransactionEvent { TransactionEventStage stage;  // Stage at which an event has occurred. ContractEvent event;  // The contract event that has occurred. }; ```",
+      "type": "object",
+      "required": [
+        "event",
+        "stage"
+      ],
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/ContractEvent"
+        },
+        "stage": {
+          "$ref": "#/definitions/TransactionEventStage"
+        }
+      }
+    },
+    "TransactionEventStage": {
+      "description": "TransactionEventStage is an XDR Enum defines as:\n\n```text enum TransactionEventStage { // The event has happened before any one of the transactions has its // operations applied. TRANSACTION_EVENT_STAGE_BEFORE_ALL_TXS = 0, // The event has happened immediately after operations of the transaction // have been applied. TRANSACTION_EVENT_STAGE_AFTER_TX = 1, // The event has happened after every transaction had its operations // applied. TRANSACTION_EVENT_STAGE_AFTER_ALL_TXS = 2 }; ```",
+      "type": "string",
+      "enum": [
+        "before_all_txs",
+        "after_tx",
+        "after_all_txs"
+      ]
+    },
     "TransactionMetaV1": {
       "description": "TransactionMetaV1 is an XDR Struct defines as:\n\n```text struct TransactionMetaV1 { LedgerEntryChanges txChanges; // tx level changes if any OperationMeta operations<>;   // meta for each operation }; ```",
       "type": "object",
@@ -3023,7 +3054,7 @@
       }
     },
     "TransactionMetaV4": {
-      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information }; ```",
+      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nTransactionEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information }; ```",
       "type": "object",
       "required": [
         "diagnostic_events",
@@ -3044,7 +3075,7 @@
         "events": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ContractEvent"
+            "$ref": "#/definitions/TransactionEvent"
           },
           "maxItems": 4294967295
         },

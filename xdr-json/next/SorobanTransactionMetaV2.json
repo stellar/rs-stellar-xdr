@@ -1,18 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SorobanTransactionMetaV2",
-  "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal returnValue; }; ```",
+  "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal* returnValue; }; ```",
   "type": "object",
   "required": [
-    "ext",
-    "return_value"
+    "ext"
   ],
   "properties": {
     "ext": {
       "$ref": "#/definitions/SorobanTransactionMetaExt"
     },
     "return_value": {
-      "$ref": "#/definitions/ScVal"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ScVal"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "definitions": {

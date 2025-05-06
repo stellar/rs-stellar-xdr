@@ -2,7 +2,7 @@ use std::{fmt::Debug, fs::File, path::PathBuf, str::FromStr};
 
 use clap::{Args, ValueEnum};
 
-use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
+use crate::cli::Channel;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -76,13 +76,11 @@ macro_rules! run_x {
                 }
                 InputFormat::SingleBase64 => {
                     let t1 = {
-                        let sw = SkipWhitespace::new(f1);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let mut l = crate::$m::Limited::new(f1, crate::$m::Limits::none());
                         crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?
                     };
                     let t2 = {
-                        let sw = SkipWhitespace::new(f2);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let mut l = crate::$m::Limited::new(f2, crate::$m::Limits::none());
                         crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?
                     };
                     (t1, t2)

@@ -31,7 +31,7 @@
 #![cfg(feature = "alloc")]
 
 use super::{
-    super::num::{
+    super::num256::{
         i256_str_from_pieces, i256_str_into_pieces, u256_str_from_pieces, u256_str_into_pieces,
     },
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
@@ -446,19 +446,9 @@ impl core::fmt::Display for ClaimableBalanceId {
     }
 }
 
-impl core::str::FromStr for Int128Parts {
-    type Err = Error;
-    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        let v = s.parse::<i128>().map_err(|_| Error::Invalid)?;
-        let hi = (v >> 64) as i64;
-        let lo = v as u64;
-        Ok(Self { hi, lo })
-    }
-}
-
-impl core::fmt::Display for Int128Parts {
+impl core::fmt::Display for UInt128Parts {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = ((self.hi as i128) << 64) | (self.lo as i128);
+        let v = u128_str_from_pieces(self.hi, self.lo);
         write!(f, "{v}")
     }
 }
@@ -466,37 +456,30 @@ impl core::fmt::Display for Int128Parts {
 impl core::str::FromStr for UInt128Parts {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        let v = s.parse::<u128>().map_err(|_| Error::Invalid)?;
-        let hi = (v >> 64) as u64;
-        let lo = v as u64;
+        let (hi, lo) = u128_str_into_pieces(s).map_err(|_| Error::Invalid)?;
         Ok(Self { hi, lo })
     }
 }
 
-impl core::fmt::Display for UInt128Parts {
+impl core::fmt::Display for Int128Parts {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = ((self.hi as u128) << 64) | (self.lo as u128);
+        let v = i128_str_from_pieces(self.hi, self.lo);
         write!(f, "{v}")
     }
 }
 
-impl core::str::FromStr for Int256Parts {
+impl core::str::FromStr for Int128Parts {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        let (hi_hi, hi_lo, lo_hi, lo_lo) = i256_str_into_pieces(s).map_err(|_| Error::Invalid)?;
-        Ok(Self {
-            hi_hi,
-            hi_lo,
-            lo_hi,
-            lo_lo,
-        })
+        let (hi, lo) = i128_str_into_pieces(s).map_err(|_| Error::Invalid)?;
+        Ok(Self { hi, lo })
     }
 }
 
-impl core::fmt::Display for Int256Parts {
+impl core::fmt::Display for UInt256Parts {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let i256 = i256_str_from_pieces(self.hi_hi, self.hi_lo, self.lo_hi, self.lo_lo);
-        write!(f, "{i256}")
+        let u256 = u256_str_from_pieces(self.hi_hi, self.hi_lo, self.lo_hi, self.lo_lo);
+        write!(f, "{u256}")
     }
 }
 
@@ -513,9 +496,22 @@ impl core::str::FromStr for UInt256Parts {
     }
 }
 
-impl core::fmt::Display for UInt256Parts {
+impl core::fmt::Display for Int256Parts {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let u256 = u256_str_from_pieces(self.hi_hi, self.hi_lo, self.lo_hi, self.lo_lo);
-        write!(f, "{u256}")
+        let i256 = i256_str_from_pieces(self.hi_hi, self.hi_lo, self.lo_hi, self.lo_lo);
+        write!(f, "{i256}")
+    }
+}
+
+impl core::str::FromStr for Int256Parts {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let (hi_hi, hi_lo, lo_hi, lo_lo) = i256_str_into_pieces(s).map_err(|_| Error::Invalid)?;
+        Ok(Self {
+            hi_hi,
+            hi_lo,
+            lo_hi,
+            lo_lo,
+        })
     }
 }

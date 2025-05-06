@@ -44,6 +44,7 @@ fn i256_from_pieces(hi_hi: i64, hi_lo: u64, lo_hi: u64, lo_lo: u64) -> I256 {
 }
 
 #[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_sign_loss)]
 fn i256_into_pieces(i: I256) -> (i64, u64, u64, u64) {
     let (high, low) = i.into_words();
     let (hi_hi, hi_lo) = ((high >> 64) as i64, high as u64);

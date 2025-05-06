@@ -36,6 +36,8 @@ fn u256_into_pieces(u: U256) -> (u64, u64, u64, u64) {
     (hi_hi, hi_lo, lo_hi, lo_lo)
 }
 
+#[allow(clippy::cast_possible_wrap)]
+#[allow(clippy::cast_sign_loss)]
 fn i256_from_pieces(hi_hi: i64, hi_lo: u64, lo_hi: u64, lo_lo: u64) -> I256 {
     let high = ((u128::from(hi_hi as u64) << 64) | u128::from(hi_lo)) as i128;
     let low = ((u128::from(lo_hi) << 64) | u128::from(lo_lo)) as i128;

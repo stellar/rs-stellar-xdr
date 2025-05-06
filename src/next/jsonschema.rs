@@ -30,3 +30,7 @@ impl_json_schema_string!(AssetCode4);
 impl_json_schema_string!(AssetCode12);
 impl_json_schema_string!(ClaimableBalanceId);
 impl_json_schema_string!(PoolId);
+impl_json_schema_string!(Int128Parts);
+impl_json_schema_string!(UInt128Parts);
+impl_json_schema_string!(Int256Parts);
+impl_json_schema_string!(UInt256Parts);

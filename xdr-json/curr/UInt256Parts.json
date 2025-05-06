@@ -1,34 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "UInt256Parts",
-  "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-  "type": "object",
-  "required": [
-    "hi_hi",
-    "hi_lo",
-    "lo_hi",
-    "lo_lo"
-  ],
-  "properties": {
-    "hi_hi": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "hi_lo": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "lo_hi": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "lo_lo": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    }
-  }
+  "type": "string"
 }

@@ -753,33 +753,22 @@ fn liquidity_pool_id() {
 
 #[test]
 #[rustfmt::skip]
-fn i128() {
-    assert_roundtrip(Int128Parts { hi: 0, lo: 0 } .to_string(), "0");
-    assert_roundtrip(Int128Parts { hi: 0, lo: 1 } .to_string(), "1");
-    assert_roundtrip(Int128Parts { hi: -1,lo: 0xffffffffffffffff } .to_string(), "-1");
-    assert_roundtrip(Int128Parts { hi: 0x7fffffffffffffff, lo: 0xffffffffffffffff } .to_string(), "170141183460469231731687303715884105727");
-    assert_roundtrip(Int128Parts { hi: -0x8000000000000000,lo: 0x0000000000000000 } .to_string(), "-170141183460469231731687303715884105728");
-    assert_eq!(Int128Parts::from_str("x"), Err(Error::Invalid));
-}
-
-#[test]
-#[rustfmt::skip]
 fn u128() {
     assert_roundtrip(UInt128Parts { hi: 0, lo: 0 } .to_string(), "0");
     assert_roundtrip(UInt128Parts { hi: 0, lo: 1 } .to_string(), "1");
-    assert_roundtrip(UInt128Parts { hi: 0xffffffffffffffff, lo: 0xffffffffffffffff } .to_string(), "340282366920938463463374607431768211455");
+    assert_roundtrip(UInt128Parts { hi: 0xffff_ffff_ffff_ffff, lo: 0xffff_ffff_ffff_ffff } .to_string(), "340282366920938463463374607431768211455");
     assert_eq!(UInt128Parts::from_str("x"), Err(Error::Invalid));
 }
 
 #[test]
 #[rustfmt::skip]
-fn i256() {
-    assert_roundtrip(Int256Parts { hi_hi: 0, hi_lo: 0, lo_hi: 0, lo_lo: 0 } .to_string(), "0");
-    assert_roundtrip(Int256Parts { hi_hi: 0, hi_lo: 0, lo_hi: 0, lo_lo: 1 } .to_string(), "1");
-    assert_roundtrip(Int256Parts { hi_hi: -1, hi_lo: 0xffffffffffffffff, lo_hi: 0xffffffffffffffff, lo_lo: 0xffffffffffffffff } .to_string(), "-1");
-    assert_roundtrip(Int256Parts { hi_hi: 0x7fffffffffffffff, hi_lo: 0xffffffffffffffff, lo_hi: 0xffffffffffffffff, lo_lo: 0xffffffffffffffff } .to_string(), "57896044618658097711785492504343953926634992332820282019728792003956564819967");
-    assert_roundtrip(Int256Parts { hi_hi: -0x8000000000000000, hi_lo: 0x0000000000000000, lo_hi: 0x0000000000000000, lo_lo: 0x0000000000000000 } .to_string(), "-57896044618658097711785492504343953926634992332820282019728792003956564819968");
-    assert_eq!(Int256Parts::from_str("x"), Err(Error::Invalid));
+fn i128() {
+    assert_roundtrip(Int128Parts { hi: 0, lo: 0 } .to_string(), "0");
+    assert_roundtrip(Int128Parts { hi: 0, lo: 1 } .to_string(), "1");
+    assert_roundtrip(Int128Parts { hi: -1,lo: 0xffff_ffff_ffff_ffff } .to_string(), "-1");
+    assert_roundtrip(Int128Parts { hi: 0x7fff_ffff_ffff_ffff, lo: 0xffff_ffff_ffff_ffff } .to_string(), "170141183460469231731687303715884105727");
+    assert_roundtrip(Int128Parts { hi: -0x8000_0000_0000_0000,lo: 0x0000_0000_0000_0000 } .to_string(), "-170141183460469231731687303715884105728");
+    assert_eq!(Int128Parts::from_str("x"), Err(Error::Invalid));
 }
 
 #[test]
@@ -787,8 +776,19 @@ fn i256() {
 fn u256() {
     assert_roundtrip(UInt256Parts { hi_hi: 0, hi_lo: 0, lo_hi: 0, lo_lo: 0 } .to_string(), "0");
     assert_roundtrip(UInt256Parts { hi_hi: 0, hi_lo: 0, lo_hi: 0, lo_lo: 1 } .to_string(), "1");
-    assert_roundtrip(UInt256Parts { hi_hi: 0xffffffffffffffff, hi_lo: 0xffffffffffffffff, lo_hi: 0xffffffffffffffff, lo_lo: 0xffffffffffffffff } .to_string(), "115792089237316195423570985008687907853269984665640564039457584007913129639935");
+    assert_roundtrip(UInt256Parts { hi_hi: 0xffff_ffff_ffff_ffff, hi_lo: 0xffff_ffff_ffff_ffff, lo_hi: 0xffff_ffff_ffff_ffff, lo_lo: 0xffff_ffff_ffff_ffff } .to_string(), "115792089237316195423570985008687907853269984665640564039457584007913129639935");
     assert_eq!(UInt256Parts::from_str("x"), Err(Error::Invalid));
+}
+
+#[test]
+#[rustfmt::skip]
+fn i256() {
+    assert_roundtrip(Int256Parts { hi_hi: 0, hi_lo: 0, lo_hi: 0, lo_lo: 0 } .to_string(), "0");
+    assert_roundtrip(Int256Parts { hi_hi: 0, hi_lo: 0, lo_hi: 0, lo_lo: 1 } .to_string(), "1");
+    assert_roundtrip(Int256Parts { hi_hi: -1, hi_lo: 0xffff_ffff_ffff_ffff, lo_hi: 0xffff_ffff_ffff_ffff, lo_lo: 0xffff_ffff_ffff_ffff } .to_string(), "-1");
+    assert_roundtrip(Int256Parts { hi_hi: 0x7fff_ffff_ffff_ffff, hi_lo: 0xffff_ffff_ffff_ffff, lo_hi: 0xffff_ffff_ffff_ffff, lo_lo: 0xffff_ffff_ffff_ffff } .to_string(), "57896044618658097711785492504343953926634992332820282019728792003956564819967");
+    assert_roundtrip(Int256Parts { hi_hi: -0x8000_0000_0000_0000, hi_lo: 0x0000_0000_0000_0000, lo_hi: 0x0000_0000_0000_0000, lo_lo: 0x0000_0000_0000_0000 } .to_string(), "-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    assert_eq!(Int256Parts::from_str("x"), Err(Error::Invalid));
 }
 
 fn assert_roundtrip<V>(v: V, s: &str)

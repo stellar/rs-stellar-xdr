@@ -50,18 +50,9 @@ fn test_skip_whitespace() -> Result<(), Error> {
     {
         let mut r = Limited::new(Cursor::new(&v_base64), Limits::none());
         let mut iter = u32::read_xdr_base64_iter(&mut r);
-        assert_eq!(
-            iter.next(),
-            Some(Ok(1)),
-        );
-        assert_eq!(
-            iter.next(),
-            Some(Ok(2)),
-        );
-        assert_eq!(
-            iter.next(),
-            None,
-        );
+        assert_eq!(iter.next(), Some(Ok(1)),);
+        assert_eq!(iter.next(), Some(Ok(2)),);
+        assert_eq!(iter.next(), None,);
     }
 
     Ok(())

@@ -131,54 +131,10 @@
       "minimum": 0.0
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "LedgerFootprint": {
       "description": "LedgerFootprint is an XDR Struct defines as:\n\n```text struct LedgerFootprint { LedgerKey readOnly<>; LedgerKey readWrite<>; }; ```",
@@ -1142,56 +1098,10 @@
       ]
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     }
   }
 }

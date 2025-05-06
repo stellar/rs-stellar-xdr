@@ -57,7 +57,8 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
     // from_xdr_base64 should require that the buffer completely fill into the type
     // being read.
     {
-        let v_base64 = base64::encode(v_bytes);
+        use base64::Engine;
+        let v_base64 = base64::engine::general_purpose::STANDARD.encode(v_bytes);
         assert_eq!(
             u32::from_xdr_base64(&v_base64, Limits::none()),
             Err(Error::Invalid)

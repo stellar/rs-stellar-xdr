@@ -31,7 +31,9 @@
 #![cfg(feature = "alloc")]
 
 use super::{
-    super::num128::{i128_str_from_pieces, i128_str_into_pieces, u128_str_from_pieces, u128_str_into_pieces},
+    super::num128::{
+        i128_str_from_pieces, i128_str_into_pieces, u128_str_from_pieces, u128_str_into_pieces,
+    },
     super::num256::{
         i256_str_from_pieces, i256_str_into_pieces, u256_str_from_pieces, u256_str_into_pieces,
     },

@@ -1,4 +1,3 @@
-#![cfg(feature = "alloc")]
 
 use core::{fmt::Display, num::ParseIntError, str::FromStr};
 use ethnum::{I256, U256};

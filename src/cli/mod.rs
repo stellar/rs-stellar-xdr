@@ -2,7 +2,6 @@ pub mod compare;
 pub mod decode;
 pub mod encode;
 pub mod guess;
-pub mod skip_whitespace;
 pub mod types;
 mod util;
 mod version;

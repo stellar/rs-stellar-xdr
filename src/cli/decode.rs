@@ -4,7 +4,7 @@ use std::{fmt::Debug, str::FromStr};
 use clap::{Args, ValueEnum};
 use serde::Serialize;
 
-use crate::cli::{skip_whitespace::SkipWhitespace, util, Channel};
+use crate::cli::{util, Channel};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -84,8 +84,7 @@ macro_rules! run_x {
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let sw = SkipWhitespace::new(f);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         let t = crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
@@ -96,8 +95,7 @@ macro_rules! run_x {
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        let sw = SkipWhitespace::new(f);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         for t in crate::$m::Type::read_xdr_base64_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }

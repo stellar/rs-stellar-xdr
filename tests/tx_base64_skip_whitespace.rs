@@ -38,11 +38,11 @@ fn test_skip_whitespace() -> Result<(), Error> {
 
     {
         assert_eq!(
-            u32::from_xdr_base64(&v_base64, Limits::none()),
+            u32::from_xdr_base64(v_base64, Limits::none()),
             Err(Error::Invalid)
         );
         assert_eq!(
-            u64::from_xdr_base64(&v_base64, Limits::none()),
+            u64::from_xdr_base64(v_base64, Limits::none()),
             Ok((1u64 << 32) | 2u64)
         );
     }

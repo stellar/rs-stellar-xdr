@@ -10,10 +10,7 @@ use stellar_xdr::{
     UInt256Parts, Uint256,
 };
 
-use std::{
-    fmt::Debug,
-    str::FromStr,
-};
+use std::{fmt::Debug, str::FromStr};
 
 #[test]
 fn public_key_from_str() {

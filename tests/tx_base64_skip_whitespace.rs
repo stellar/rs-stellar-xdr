@@ -11,7 +11,7 @@ use stellar_xdr::next as stellar_xdr;
 
 use base64::Engine;
 use std::assert_eq;
-use std::io::{self, Cursor};
+use std::io::Cursor;
 use stellar_xdr::Error;
 use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};
 

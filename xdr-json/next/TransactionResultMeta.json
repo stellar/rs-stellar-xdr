@@ -39,8 +39,7 @@
           "$ref": "#/definitions/AccountId"
         },
         "balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/AccountEntryExt"
@@ -251,8 +250,7 @@
           ],
           "properties": {
             "success": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -443,12 +441,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -474,12 +470,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -488,8 +482,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -509,12 +502,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -523,8 +514,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_ed25519": {
           "type": "string",
@@ -602,8 +592,7 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -615,8 +604,7 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -635,8 +623,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -771,8 +758,7 @@
       ],
       "properties": {
         "fee_tx_size1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_txs_size_bytes": {
           "type": "integer",
@@ -797,16 +783,13 @@
       ],
       "properties": {
         "fee_rate_per_instructions_increment": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_memory_limit": {
           "type": "integer",
@@ -824,8 +807,7 @@
       ],
       "properties": {
         "fee_contract_events1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_contract_events_size_bytes": {
           "type": "integer",
@@ -856,8 +838,7 @@
       ],
       "properties": {
         "fee_historical1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -870,8 +851,7 @@
       ],
       "properties": {
         "fee_write1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_in_memory_read_entries": {
           "type": "integer",
@@ -902,16 +882,13 @@
       ],
       "properties": {
         "fee_disk_read1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_disk_read_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_write_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_disk_read_bytes": {
           "type": "integer",
@@ -934,12 +911,10 @@
           "minimum": 0.0
         },
         "rent_fee1_kb_soroban_state_size_high": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "rent_fee1_kb_soroban_state_size_low": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "soroban_state_rent_fee_growth_factor": {
           "type": "integer",
@@ -947,8 +922,7 @@
           "minimum": 0.0
         },
         "soroban_state_target_size_bytes": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_disk_read_bytes": {
           "type": "integer",
@@ -1148,9 +1122,7 @@
             "live_soroban_state_size_window": {
               "type": "array",
               "items": {
-                "type": "integer",
-                "format": "uint64",
-                "minimum": 0.0
+                "type": "string"
               },
               "maxItems": 4294967295
             }
@@ -1364,15 +1336,13 @@
       ],
       "properties": {
         "const_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
         },
         "linear_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1620,9 +1590,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "EndSponsoringFutureReservesResult": {
       "description": "EndSponsoringFutureReservesResult is an XDR Union defines as:\n\n```text union EndSponsoringFutureReservesResult switch ( EndSponsoringFutureReservesResultCode code) { case END_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED: void; }; ```",
@@ -1642,9 +1610,7 @@
       ],
       "properties": {
         "bucket_file_offset": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "bucket_list_level": {
           "type": "integer",
@@ -1682,8 +1648,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "destination": {
           "$ref": "#/definitions/AccountId"
@@ -1730,8 +1695,7 @@
           "$ref": "#/definitions/InnerTransactionResultExt"
         },
         "fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "result": {
           "$ref": "#/definitions/InnerTransactionResultResult"
@@ -1831,13 +1795,10 @@
       ],
       "properties": {
         "hi": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -1852,23 +1813,16 @@
       ],
       "properties": {
         "hi_hi": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -2403,8 +2357,7 @@
       ],
       "properties": {
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -2452,12 +2405,10 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2544,20 +2495,16 @@
           "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
         },
         "pool_shares_trust_line_count": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_pool_shares": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2722,8 +2669,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -2737,8 +2683,7 @@
           "minimum": 0.0
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -3546,8 +3491,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -3627,9 +3571,7 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -3641,8 +3583,7 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -3841,8 +3782,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "SetOptionsResult": {
       "description": "SetOptionsResult is an XDR Union defines as:\n\n```text union SetOptionsResult switch (SetOptionsResultCode code) { case SET_OPTIONS_SUCCESS: void; case SET_OPTIONS_LOW_RESERVE: case SET_OPTIONS_TOO_MANY_SIGNERS: case SET_OPTIONS_BAD_FLAGS: case SET_OPTIONS_INVALID_INFLATION: case SET_OPTIONS_CANT_CHANGE: case SET_OPTIONS_UNKNOWN_FLAG: case SET_OPTIONS_THRESHOLD_OUT_OF_RANGE: case SET_OPTIONS_BAD_SIGNER: case SET_OPTIONS_INVALID_HOME_DOMAIN: case SET_OPTIONS_AUTH_REVOCABLE_REQUIRED: void; }; ```",
@@ -3904,8 +3844,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -3984,16 +3923,13 @@
           "$ref": "#/definitions/ExtensionPoint"
         },
         "rent_fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_non_refundable_resource_fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_refundable_resource_fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -4082,8 +4018,7 @@
           "minimum": 0.0
         },
         "persistent_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "starting_eviction_scan_level": {
           "type": "integer",
@@ -4091,8 +4026,7 @@
           "minimum": 0.0
         },
         "temp_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -4118,9 +4052,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "TransactionEvent": {
       "description": "TransactionEvent is an XDR Struct defines as:\n\n```text struct TransactionEvent { TransactionEventStage stage;  // Stage at which an event has occurred. ContractEvent event;  // The contract event that has occurred. }; ```",
@@ -4365,8 +4297,7 @@
           "$ref": "#/definitions/TransactionResultExt"
         },
         "fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "result": {
           "$ref": "#/definitions/TransactionResultResult"
@@ -4547,8 +4478,7 @@
           "$ref": "#/definitions/TrustLineAsset"
         },
         "balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/TrustLineEntryExt"
@@ -4559,8 +4489,7 @@
           "minimum": 0.0
         },
         "limit": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -4681,14 +4610,10 @@
       ],
       "properties": {
         "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -4703,24 +4628,16 @@
       ],
       "properties": {
         "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     }

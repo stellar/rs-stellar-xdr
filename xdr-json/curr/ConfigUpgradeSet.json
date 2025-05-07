@@ -26,8 +26,7 @@
       ],
       "properties": {
         "fee_tx_size1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_txs_size_bytes": {
           "type": "integer",
@@ -52,16 +51,13 @@
       ],
       "properties": {
         "fee_rate_per_instructions_increment": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_memory_limit": {
           "type": "integer",
@@ -79,8 +75,7 @@
       ],
       "properties": {
         "fee_contract_events1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_contract_events_size_bytes": {
           "type": "integer",
@@ -111,8 +106,7 @@
       ],
       "properties": {
         "fee_historical1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -125,8 +119,7 @@
       ],
       "properties": {
         "fee_write1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_in_memory_read_entries": {
           "type": "integer",
@@ -157,16 +150,13 @@
       ],
       "properties": {
         "fee_disk_read1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_disk_read_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_write_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_disk_read_bytes": {
           "type": "integer",
@@ -189,12 +179,10 @@
           "minimum": 0.0
         },
         "rent_fee1_kb_soroban_state_size_high": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "rent_fee1_kb_soroban_state_size_low": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "soroban_state_rent_fee_growth_factor": {
           "type": "integer",
@@ -202,8 +190,7 @@
           "minimum": 0.0
         },
         "soroban_state_target_size_bytes": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_disk_read_bytes": {
           "type": "integer",
@@ -403,9 +390,7 @@
             "live_soroban_state_size_window": {
               "type": "array",
               "items": {
-                "type": "integer",
-                "format": "uint64",
-                "minimum": 0.0
+                "type": "string"
               },
               "maxItems": 4294967295
             }
@@ -460,15 +445,13 @@
       ],
       "properties": {
         "const_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
         },
         "linear_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -490,9 +473,7 @@
       ],
       "properties": {
         "bucket_file_offset": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "bucket_list_level": {
           "type": "integer",
@@ -563,8 +544,7 @@
           "minimum": 0.0
         },
         "persistent_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "starting_eviction_scan_level": {
           "type": "integer",
@@ -572,8 +552,7 @@
           "minimum": 0.0
         },
         "temp_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     }

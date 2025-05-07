@@ -13,8 +13,7 @@
   ],
   "properties": {
     "dest_amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "dest_asset": {
       "$ref": "#/definitions/Asset"
@@ -33,8 +32,7 @@
       "$ref": "#/definitions/Asset"
     },
     "send_max": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
   "definitions": {

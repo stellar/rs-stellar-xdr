@@ -67,8 +67,7 @@
       ],
       "properties": {
         "before_absolute_time": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -80,8 +79,7 @@
       ],
       "properties": {
         "before_relative_time": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -155,8 +153,7 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -168,8 +165,7 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false

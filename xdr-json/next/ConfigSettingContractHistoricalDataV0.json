@@ -8,8 +8,7 @@
   ],
   "properties": {
     "fee_historical1_kb": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   }
 }

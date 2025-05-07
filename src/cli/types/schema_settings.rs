@@ -19,6 +19,7 @@ use schemars::{
 // as long as they're evaluated somewhere in the schema. Use this visitor to remove
 // additionalProperties in subschemas and then to get back essentially the same behavior, add
 // evaluatedProperties to the root document.
+#[must_use]
 pub fn draft201909() -> SchemaSettings {
     SchemaSettings::draft2019_09()
         .with_visitor(RemoveAdditionalPropertiesFalseVisitor)

@@ -11,6 +11,9 @@
     "surveyor_peer_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "command_type": {
       "$ref": "#/definitions/SurveyMessageCommandType"
     },
@@ -29,6 +32,7 @@
       "$ref": "#/definitions/NodeId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "Curve25519Public": {
       "description": "Curve25519Public is an XDR Struct defines as:\n\n```text struct Curve25519Public { opaque key[32]; }; ```",

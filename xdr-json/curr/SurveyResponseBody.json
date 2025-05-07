@@ -12,10 +12,15 @@
         "survey_topology_response_v2": {
           "$ref": "#/definitions/TopologyResponseBodyV2"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

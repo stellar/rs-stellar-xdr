@@ -7,6 +7,9 @@
     "key"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "key": {
       "type": "array",
       "items": {
@@ -17,5 +20,6 @@
       "maxItems": 32,
       "minItems": 32
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

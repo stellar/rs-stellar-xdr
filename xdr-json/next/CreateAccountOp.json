@@ -8,6 +8,9 @@
     "starting_balance"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "destination": {
       "$ref": "#/definitions/AccountId"
     },
@@ -16,6 +19,7 @@
       "format": "int64"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

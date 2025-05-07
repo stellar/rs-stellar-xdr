@@ -8,6 +8,9 @@
     "ext"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "cost_inputs": {
       "$ref": "#/definitions/ContractCodeCostInputs"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/ExtensionPoint"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ContractCodeCostInputs": {
       "description": "ContractCodeCostInputs is an XDR Struct defines as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",

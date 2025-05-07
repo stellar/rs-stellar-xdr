@@ -18,10 +18,15 @@
         "v2": {
           "$ref": "#/definitions/TrustLineEntryExtensionV2"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "TrustLineEntryExtensionV2": {
       "description": "TrustLineEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct TrustLineEntryExtensionV2 { int32 liquidityPoolUseCount;\n\nunion switch (int v) { case 0: void; } ext; }; ```",

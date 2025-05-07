@@ -18,10 +18,15 @@
         "v1": {
           "$ref": "#/definitions/AccountEntryExtensionV1"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExtensionV1": {
       "description": "AccountEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV1 { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ext; }; ```",
@@ -57,8 +62,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -112,8 +116,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

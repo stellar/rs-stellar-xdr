@@ -8,6 +8,9 @@
     "sponsoring_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/LedgerEntryExtensionV1Ext"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/SponsorshipDescriptor"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

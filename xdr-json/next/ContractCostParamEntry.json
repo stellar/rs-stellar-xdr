@@ -9,6 +9,9 @@
     "linear_term"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "const_term": {
       "type": "integer",
       "format": "int64"
@@ -21,6 +24,7 @@
       "format": "int64"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ExtensionPoint": {
       "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",

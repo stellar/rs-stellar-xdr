@@ -8,6 +8,9 @@
     "peer_stats"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "average_latency_ms": {
       "type": "integer",
       "format": "uint32",
@@ -17,6 +20,7 @@
       "$ref": "#/definitions/PeerStats"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

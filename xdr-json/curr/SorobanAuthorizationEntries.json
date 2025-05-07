@@ -61,8 +61,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -73,8 +72,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -106,8 +104,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -123,8 +120,7 @@
             "address": {
               "$ref": "#/definitions/ContractIdPreimageFromAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -135,8 +131,7 @@
             "asset": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -325,8 +320,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -337,8 +331,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -349,8 +342,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -361,8 +353,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -373,8 +364,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -385,8 +375,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -397,8 +386,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -409,8 +397,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -421,8 +408,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -433,8 +419,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -518,8 +503,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -530,8 +514,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -544,8 +527,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -557,8 +539,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -571,8 +552,7 @@
               "format": "uint64",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -584,8 +564,7 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -596,8 +575,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -608,8 +586,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -620,8 +597,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -632,8 +608,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -644,8 +619,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -656,8 +630,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -668,8 +641,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -680,8 +652,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -692,8 +663,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -711,8 +681,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -730,8 +699,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -742,8 +710,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -754,8 +721,7 @@
             "ledger_key_nonce": {
               "$ref": "#/definitions/ScNonceKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -766,8 +732,7 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -834,8 +799,7 @@
             "contract_fn": {
               "$ref": "#/definitions/InvokeContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -846,8 +810,7 @@
             "create_contract_host_fn": {
               "$ref": "#/definitions/CreateContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -858,8 +821,7 @@
             "create_contract_v2_host_fn": {
               "$ref": "#/definitions/CreateContractArgsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -901,8 +863,7 @@
             "address": {
               "$ref": "#/definitions/SorobanAddressCredentials"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

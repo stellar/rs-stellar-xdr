@@ -8,6 +8,9 @@
     "ledger_version"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/BucketMetadataExt"
     },
@@ -17,6 +20,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "BucketListType": {
       "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
@@ -44,8 +48,7 @@
             "v1": {
               "$ref": "#/definitions/BucketListType"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

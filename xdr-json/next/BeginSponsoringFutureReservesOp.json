@@ -7,10 +7,14 @@
     "sponsored_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "sponsored_id": {
       "$ref": "#/definitions/AccountId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

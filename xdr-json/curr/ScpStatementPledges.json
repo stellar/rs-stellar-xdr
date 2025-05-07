@@ -12,8 +12,7 @@
         "prepare": {
           "$ref": "#/definitions/ScpStatementPrepare"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -24,8 +23,7 @@
         "confirm": {
           "$ref": "#/definitions/ScpStatementConfirm"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -36,8 +34,7 @@
         "externalize": {
           "$ref": "#/definitions/ScpStatementExternalize"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -48,10 +45,15 @@
         "nominate": {
           "$ref": "#/definitions/ScpNomination"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScpBallot": {
       "description": "ScpBallot is an XDR Struct defines as:\n\n```text struct SCPBallot { uint32 counter; // n Value value;    // x }; ```",

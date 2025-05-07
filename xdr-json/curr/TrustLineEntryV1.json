@@ -8,6 +8,9 @@
     "liabilities"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/TrustLineEntryV1Ext"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/Liabilities"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "Liabilities": {
       "description": "Liabilities is an XDR Struct defines as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
@@ -76,8 +80,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

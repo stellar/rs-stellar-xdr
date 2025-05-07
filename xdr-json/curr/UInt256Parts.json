@@ -10,6 +10,9 @@
     "lo_lo"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "hi_hi": {
       "type": "integer",
       "format": "uint64",
@@ -30,5 +33,6 @@
       "format": "uint64",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

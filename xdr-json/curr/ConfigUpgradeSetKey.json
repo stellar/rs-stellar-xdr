@@ -8,6 +8,9 @@
     "contract_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "content_hash": {
       "type": "string",
       "maxLength": 64,
@@ -19,6 +22,7 @@
       "$ref": "#/definitions/ContractId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ContractId": {
       "type": "string"

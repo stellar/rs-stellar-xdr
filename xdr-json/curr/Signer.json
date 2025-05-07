@@ -8,6 +8,9 @@
     "weight"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "key": {
       "$ref": "#/definitions/SignerKey"
     },
@@ -17,6 +20,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "SignerKey": {
       "type": "string"

@@ -9,6 +9,9 @@
     "source_account"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "op_num": {
       "type": "integer",
       "format": "uint32",
@@ -21,6 +24,7 @@
       "$ref": "#/definitions/AccountId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

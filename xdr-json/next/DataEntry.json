@@ -10,6 +10,9 @@
     "ext"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "account_id": {
       "$ref": "#/definitions/AccountId"
     },
@@ -23,6 +26,7 @@
       "$ref": "#/definitions/DataEntryExt"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

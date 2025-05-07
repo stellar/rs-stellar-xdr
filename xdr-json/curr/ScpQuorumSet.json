@@ -9,6 +9,9 @@
     "validators"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "inner_sets": {
       "type": "array",
       "items": {
@@ -29,6 +32,7 @@
       "maxItems": 4294967295
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

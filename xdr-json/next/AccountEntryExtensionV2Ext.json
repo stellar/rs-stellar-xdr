@@ -18,10 +18,15 @@
         "v3": {
           "$ref": "#/definitions/AccountEntryExtensionV3"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExtensionV3": {
       "description": "AccountEntryExtensionV3 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",

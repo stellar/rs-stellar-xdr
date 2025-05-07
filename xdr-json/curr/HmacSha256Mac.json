@@ -7,6 +7,9 @@
     "mac"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "mac": {
       "type": "array",
       "items": {
@@ -17,5 +20,6 @@
       "maxItems": 32,
       "minItems": 32
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

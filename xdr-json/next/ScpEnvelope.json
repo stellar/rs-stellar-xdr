@@ -8,6 +8,9 @@
     "statement"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "signature": {
       "$ref": "#/definitions/Signature"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/ScpStatement"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"
@@ -167,8 +171,7 @@
             "prepare": {
               "$ref": "#/definitions/ScpStatementPrepare"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -179,8 +182,7 @@
             "confirm": {
               "$ref": "#/definitions/ScpStatementConfirm"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -191,8 +193,7 @@
             "externalize": {
               "$ref": "#/definitions/ScpStatementExternalize"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -203,8 +204,7 @@
             "nominate": {
               "$ref": "#/definitions/ScpNomination"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

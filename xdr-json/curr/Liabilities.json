@@ -8,6 +8,9 @@
     "selling"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "buying": {
       "type": "integer",
       "format": "int64"
@@ -16,5 +19,6 @@
       "type": "integer",
       "format": "int64"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

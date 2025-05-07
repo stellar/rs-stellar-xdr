@@ -18,8 +18,7 @@
         "text": {
           "$ref": "#/definitions/StringM<28>"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -32,8 +31,7 @@
           "format": "uint64",
           "minimum": 0.0
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -48,8 +46,7 @@
           "contentEncoding": "hex",
           "contentMediaType": "application/binary"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -64,10 +61,15 @@
           "contentEncoding": "hex",
           "contentMediaType": "application/binary"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "StringM<28>": {
       "type": "string",

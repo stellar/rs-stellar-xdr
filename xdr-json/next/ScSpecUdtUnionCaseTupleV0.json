@@ -9,6 +9,9 @@
     "type_"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "doc": {
       "$ref": "#/definitions/StringM<1024>"
     },
@@ -23,6 +26,7 @@
       "maxItems": 12
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScSpecTypeBytesN": {
       "description": "ScSpecTypeBytesN is an XDR Struct defines as:\n\n```text struct SCSpecTypeBytesN { uint32 n; }; ```",
@@ -74,8 +78,7 @@
             "option": {
               "$ref": "#/definitions/ScSpecTypeOption"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -86,8 +89,7 @@
             "result": {
               "$ref": "#/definitions/ScSpecTypeResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -98,8 +100,7 @@
             "vec": {
               "$ref": "#/definitions/ScSpecTypeVec"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -110,8 +111,7 @@
             "map": {
               "$ref": "#/definitions/ScSpecTypeMap"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -122,8 +122,7 @@
             "tuple": {
               "$ref": "#/definitions/ScSpecTypeTuple"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -134,8 +133,7 @@
             "bytes_n": {
               "$ref": "#/definitions/ScSpecTypeBytesN"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -146,8 +144,7 @@
             "udt": {
               "$ref": "#/definitions/ScSpecTypeUdt"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

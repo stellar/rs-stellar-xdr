@@ -9,6 +9,9 @@
     "value"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "doc": {
       "$ref": "#/definitions/StringM<1024>"
     },
@@ -21,6 +24,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "StringM<1024>": {
       "type": "string",

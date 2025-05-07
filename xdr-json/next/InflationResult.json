@@ -22,10 +22,15 @@
           },
           "maxItems": 4294967295
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

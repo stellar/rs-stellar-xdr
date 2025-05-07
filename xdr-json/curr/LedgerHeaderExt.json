@@ -18,10 +18,15 @@
         "v1": {
           "$ref": "#/definitions/LedgerHeaderExtensionV1"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerHeaderExtensionV1": {
       "description": "LedgerHeaderExtensionV1 is an XDR Struct defines as:\n\n```text struct LedgerHeaderExtensionV1 { uint32 flags; // LedgerHeaderFlags\n\nunion switch (int v) { case 0: void; } ext; }; ```",

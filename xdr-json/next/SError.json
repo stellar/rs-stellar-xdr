@@ -8,6 +8,9 @@
     "msg"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "code": {
       "$ref": "#/definitions/ErrorCode"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/StringM<100>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ErrorCode": {
       "description": "ErrorCode is an XDR Enum defines as:\n\n```text enum ErrorCode { ERR_MISC = 0, // Unspecific error ERR_DATA = 1, // Malformed data ERR_CONF = 2, // Misconfiguration error ERR_AUTH = 3, // Authentication failure ERR_LOAD = 4  // System overloaded }; ```",

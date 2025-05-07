@@ -7,10 +7,14 @@
     "name"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "name": {
       "$ref": "#/definitions/StringM<60>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "StringM<60>": {
       "type": "string",

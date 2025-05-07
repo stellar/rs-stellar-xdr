@@ -21,6 +21,9 @@
     "tx_set_result_hash"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "base_fee": {
       "type": "integer",
       "format": "uint32",
@@ -104,6 +107,7 @@
       "contentMediaType": "application/binary"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerCloseValueSignature": {
       "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
@@ -139,8 +143,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerHeaderExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -229,8 +232,7 @@
             "signed": {
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

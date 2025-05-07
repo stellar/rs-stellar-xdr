@@ -18,10 +18,15 @@
         "v1": {
           "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "ClaimableBalanceEntryExtensionV1": {
       "description": "ClaimableBalanceEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct ClaimableBalanceEntryExtensionV1 { union switch (int v) { case 0: void; } ext;\n\nuint32 flags; // see ClaimableBalanceFlags }; ```",

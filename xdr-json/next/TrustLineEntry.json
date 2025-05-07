@@ -12,6 +12,9 @@
     "limit"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "account_id": {
       "$ref": "#/definitions/AccountId"
     },
@@ -35,6 +38,7 @@
       "format": "int64"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -116,8 +120,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -128,8 +131,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -140,8 +142,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -163,8 +164,7 @@
             "v1": {
               "$ref": "#/definitions/TrustLineEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -226,8 +226,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

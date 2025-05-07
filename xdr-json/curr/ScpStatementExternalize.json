@@ -9,6 +9,9 @@
     "n_h"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "commit": {
       "$ref": "#/definitions/ScpBallot"
     },
@@ -25,6 +28,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScpBallot": {
       "description": "ScpBallot is an XDR Struct defines as:\n\n```text struct SCPBallot { uint32 counter; // n Value value;    // x }; ```",

@@ -9,6 +9,9 @@
     "port"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ip": {
       "$ref": "#/definitions/PeerAddressIp"
     },
@@ -23,6 +26,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "PeerAddressIp": {
       "description": "PeerAddressIp is an XDR NestedUnion defines as:\n\n```text union switch (IPAddrType type) { case IPv4: opaque ipv4[4]; case IPv6: opaque ipv6[16]; } ```",
@@ -43,8 +47,7 @@
               "maxItems": 4,
               "minItems": 4
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -62,8 +65,7 @@
               "maxItems": 16,
               "minItems": 16
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

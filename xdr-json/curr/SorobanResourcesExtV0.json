@@ -7,6 +7,9 @@
     "archived_soroban_entries"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "archived_soroban_entries": {
       "type": "array",
       "items": {
@@ -16,5 +19,6 @@
       },
       "maxItems": 4294967295
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

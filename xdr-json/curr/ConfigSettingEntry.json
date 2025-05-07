@@ -14,8 +14,7 @@
           "format": "uint32",
           "minimum": 0.0
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -26,8 +25,7 @@
         "contract_compute_v0": {
           "$ref": "#/definitions/ConfigSettingContractComputeV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -38,8 +36,7 @@
         "contract_ledger_cost_v0": {
           "$ref": "#/definitions/ConfigSettingContractLedgerCostV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -50,8 +47,7 @@
         "contract_historical_data_v0": {
           "$ref": "#/definitions/ConfigSettingContractHistoricalDataV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -62,8 +58,7 @@
         "contract_events_v0": {
           "$ref": "#/definitions/ConfigSettingContractEventsV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -74,8 +69,7 @@
         "contract_bandwidth_v0": {
           "$ref": "#/definitions/ConfigSettingContractBandwidthV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -86,8 +80,7 @@
         "contract_cost_params_cpu_instructions": {
           "$ref": "#/definitions/ContractCostParams"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -98,8 +91,7 @@
         "contract_cost_params_memory_bytes": {
           "$ref": "#/definitions/ContractCostParams"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -112,8 +104,7 @@
           "format": "uint32",
           "minimum": 0.0
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -126,8 +117,7 @@
           "format": "uint32",
           "minimum": 0.0
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -138,8 +128,7 @@
         "state_archival": {
           "$ref": "#/definitions/StateArchivalSettings"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -150,8 +139,7 @@
         "contract_execution_lanes": {
           "$ref": "#/definitions/ConfigSettingContractExecutionLanesV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -168,8 +156,7 @@
           },
           "maxItems": 4294967295
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -180,8 +167,7 @@
         "eviction_iterator": {
           "$ref": "#/definitions/EvictionIterator"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -192,8 +178,7 @@
         "contract_parallel_compute_v0": {
           "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -204,10 +189,15 @@
         "contract_ledger_cost_ext_v0": {
           "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "ConfigSettingContractBandwidthV0": {
       "description": "ConfigSettingContractBandwidthV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractBandwidthV0 { // Maximum sum of all transaction sizes in the ledger in bytes uint32 ledgerMaxTxsSizeBytes; // Maximum size in bytes for a transaction uint32 txMaxSizeBytes;\n\n// Fee for 1 KB of transaction size int64 feeTxSize1KB; }; ```",

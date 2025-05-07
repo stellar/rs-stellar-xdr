@@ -21,6 +21,9 @@
     "tx_max_write_ledger_entries"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "fee_disk_read1_kb": {
       "type": "integer",
       "format": "int64"
@@ -90,5 +93,6 @@
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

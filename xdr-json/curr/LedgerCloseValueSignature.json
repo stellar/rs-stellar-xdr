@@ -8,6 +8,9 @@
     "signature"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "node_id": {
       "$ref": "#/definitions/NodeId"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/Signature"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

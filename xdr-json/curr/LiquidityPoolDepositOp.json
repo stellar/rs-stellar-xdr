@@ -11,6 +11,9 @@
     "min_price"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "liquidity_pool_id": {
       "$ref": "#/definitions/PoolId"
     },
@@ -29,6 +32,7 @@
       "$ref": "#/definitions/Price"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "PoolId": {
       "type": "string"

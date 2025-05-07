@@ -9,6 +9,9 @@
     "outbound_peers"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "inbound_peers": {
       "$ref": "#/definitions/TimeSlicedPeerDataList"
     },
@@ -19,6 +22,7 @@
       "$ref": "#/definitions/TimeSlicedPeerDataList"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

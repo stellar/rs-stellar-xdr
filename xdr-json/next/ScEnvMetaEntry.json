@@ -12,10 +12,15 @@
         "sc_env_meta_kind_interface_version": {
           "$ref": "#/definitions/ScEnvMetaEntryInterfaceVersion"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScEnvMetaEntryInterfaceVersion": {
       "description": "ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defines as:\n\n```text struct { uint32 protocol; uint32 preRelease; } ```",

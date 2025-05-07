@@ -7,10 +7,14 @@
     "liquidity_pool_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "liquidity_pool_id": {
       "$ref": "#/definitions/PoolId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "PoolId": {
       "type": "string"

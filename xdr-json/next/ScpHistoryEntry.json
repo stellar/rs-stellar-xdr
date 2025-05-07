@@ -12,10 +12,15 @@
         "v0": {
           "$ref": "#/definitions/ScpHistoryEntryV0"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerScpMessages": {
       "description": "LedgerScpMessages is an XDR Struct defines as:\n\n```text struct LedgerSCPMessages { uint32 ledgerSeq; SCPEnvelope messages<>; }; ```",
@@ -256,8 +261,7 @@
             "prepare": {
               "$ref": "#/definitions/ScpStatementPrepare"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -268,8 +272,7 @@
             "confirm": {
               "$ref": "#/definitions/ScpStatementConfirm"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -280,8 +283,7 @@
             "externalize": {
               "$ref": "#/definitions/ScpStatementExternalize"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -292,8 +294,7 @@
             "nominate": {
               "$ref": "#/definitions/ScpNomination"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

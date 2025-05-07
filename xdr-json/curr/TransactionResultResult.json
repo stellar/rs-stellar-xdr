@@ -32,8 +32,7 @@
         "tx_fee_bump_inner_success": {
           "$ref": "#/definitions/InnerTransactionResultPair"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -44,8 +43,7 @@
         "tx_fee_bump_inner_failed": {
           "$ref": "#/definitions/InnerTransactionResultPair"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -60,8 +58,7 @@
           },
           "maxItems": 4294967295
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -76,10 +73,15 @@
           },
           "maxItems": 4294967295
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -109,8 +111,7 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -177,8 +178,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -189,8 +189,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -245,8 +244,7 @@
             "v0": {
               "$ref": "#/definitions/ClaimOfferAtomV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -257,8 +255,7 @@
             "order_book": {
               "$ref": "#/definitions/ClaimOfferAtom"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -269,8 +266,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/ClaimLiquidityAtom"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -447,8 +443,7 @@
             "success": {
               "$ref": "#/definitions/ClaimableBalanceId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -509,8 +504,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -598,8 +592,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -614,8 +607,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -645,8 +637,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -705,8 +696,7 @@
             "success": {
               "$ref": "#/definitions/ManageOfferSuccessResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -759,8 +749,7 @@
             "created": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -771,8 +760,7 @@
             "updated": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -805,8 +793,7 @@
             "success": {
               "$ref": "#/definitions/ManageOfferSuccessResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -884,8 +871,7 @@
             "op_inner": {
               "$ref": "#/definitions/OperationResultTr"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -901,8 +887,7 @@
             "create_account": {
               "$ref": "#/definitions/CreateAccountResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -913,8 +898,7 @@
             "payment": {
               "$ref": "#/definitions/PaymentResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -925,8 +909,7 @@
             "path_payment_strict_receive": {
               "$ref": "#/definitions/PathPaymentStrictReceiveResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -937,8 +920,7 @@
             "manage_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -949,8 +931,7 @@
             "create_passive_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -961,8 +942,7 @@
             "set_options": {
               "$ref": "#/definitions/SetOptionsResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -973,8 +953,7 @@
             "change_trust": {
               "$ref": "#/definitions/ChangeTrustResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -985,8 +964,7 @@
             "allow_trust": {
               "$ref": "#/definitions/AllowTrustResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -997,8 +975,7 @@
             "account_merge": {
               "$ref": "#/definitions/AccountMergeResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1009,8 +986,7 @@
             "inflation": {
               "$ref": "#/definitions/InflationResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1021,8 +997,7 @@
             "manage_data": {
               "$ref": "#/definitions/ManageDataResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1033,8 +1008,7 @@
             "bump_sequence": {
               "$ref": "#/definitions/BumpSequenceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1045,8 +1019,7 @@
             "manage_buy_offer": {
               "$ref": "#/definitions/ManageBuyOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1057,8 +1030,7 @@
             "path_payment_strict_send": {
               "$ref": "#/definitions/PathPaymentStrictSendResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1069,8 +1041,7 @@
             "create_claimable_balance": {
               "$ref": "#/definitions/CreateClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1081,8 +1052,7 @@
             "claim_claimable_balance": {
               "$ref": "#/definitions/ClaimClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1093,8 +1063,7 @@
             "begin_sponsoring_future_reserves": {
               "$ref": "#/definitions/BeginSponsoringFutureReservesResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1105,8 +1074,7 @@
             "end_sponsoring_future_reserves": {
               "$ref": "#/definitions/EndSponsoringFutureReservesResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1117,8 +1085,7 @@
             "revoke_sponsorship": {
               "$ref": "#/definitions/RevokeSponsorshipResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1129,8 +1096,7 @@
             "clawback": {
               "$ref": "#/definitions/ClawbackResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1141,8 +1107,7 @@
             "clawback_claimable_balance": {
               "$ref": "#/definitions/ClawbackClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1153,8 +1118,7 @@
             "set_trust_line_flags": {
               "$ref": "#/definitions/SetTrustLineFlagsResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1165,8 +1129,7 @@
             "liquidity_pool_deposit": {
               "$ref": "#/definitions/LiquidityPoolDepositResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1177,8 +1140,7 @@
             "liquidity_pool_withdraw": {
               "$ref": "#/definitions/LiquidityPoolWithdrawResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1189,8 +1151,7 @@
             "invoke_host_function": {
               "$ref": "#/definitions/InvokeHostFunctionResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1201,8 +1162,7 @@
             "extend_footprint_ttl": {
               "$ref": "#/definitions/ExtendFootprintTtlResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1213,8 +1173,7 @@
             "restore_footprint": {
               "$ref": "#/definitions/RestoreFootprintResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1246,8 +1205,7 @@
             "success": {
               "$ref": "#/definitions/PathPaymentStrictReceiveResultSuccess"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1258,8 +1216,7 @@
             "no_issuer": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1311,8 +1268,7 @@
             "success": {
               "$ref": "#/definitions/PathPaymentStrictSendResultSuccess"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1323,8 +1279,7 @@
             "no_issuer": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

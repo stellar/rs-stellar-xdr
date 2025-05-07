@@ -9,6 +9,9 @@
     "header"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/LedgerHeaderHistoryEntryExt"
     },
@@ -23,6 +26,7 @@
       "$ref": "#/definitions/LedgerHeader"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerCloseValueSignature": {
       "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
@@ -163,8 +167,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerHeaderExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -260,8 +263,7 @@
             "signed": {
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

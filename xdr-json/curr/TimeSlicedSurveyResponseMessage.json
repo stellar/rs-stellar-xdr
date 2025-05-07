@@ -8,6 +8,9 @@
     "response"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "nonce": {
       "type": "integer",
       "format": "uint32",
@@ -17,6 +20,7 @@
       "$ref": "#/definitions/SurveyResponseMessage"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "EncryptedBody": {
       "description": "EncryptedBody is an XDR Typedef defines as:\n\n```text typedef opaque EncryptedBody<64000>; ```",

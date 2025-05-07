@@ -12,8 +12,7 @@
         "v0": {
           "$ref": "#/definitions/LedgerCloseMetaV0"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -24,10 +23,15 @@
         "v1": {
           "$ref": "#/definitions/LedgerCloseMetaV1"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntry": {
       "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
@@ -114,8 +118,7 @@
             "v1": {
               "$ref": "#/definitions/AccountEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -153,8 +156,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -208,8 +210,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -263,8 +264,7 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -353,8 +353,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -365,8 +364,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -439,8 +437,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -451,8 +448,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -463,8 +459,7 @@
             "pool_share": {
               "$ref": "#/definitions/LiquidityPoolParameters"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -512,8 +507,7 @@
             "v0": {
               "$ref": "#/definitions/ClaimOfferAtomV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -524,8 +518,7 @@
             "order_book": {
               "$ref": "#/definitions/ClaimOfferAtom"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -536,8 +529,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/ClaimLiquidityAtom"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -691,8 +683,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -707,8 +698,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -726,8 +716,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -739,8 +728,7 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -752,8 +740,7 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -808,8 +795,7 @@
             "v1": {
               "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -853,8 +839,7 @@
             "claimant_type_v0": {
               "$ref": "#/definitions/ClaimantV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1167,8 +1152,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1179,8 +1163,7 @@
             "contract_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1191,8 +1174,7 @@
             "contract_ledger_cost_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1203,8 +1185,7 @@
             "contract_historical_data_v0": {
               "$ref": "#/definitions/ConfigSettingContractHistoricalDataV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1215,8 +1196,7 @@
             "contract_events_v0": {
               "$ref": "#/definitions/ConfigSettingContractEventsV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1227,8 +1207,7 @@
             "contract_bandwidth_v0": {
               "$ref": "#/definitions/ConfigSettingContractBandwidthV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1239,8 +1218,7 @@
             "contract_cost_params_cpu_instructions": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1251,8 +1229,7 @@
             "contract_cost_params_memory_bytes": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1265,8 +1242,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1279,8 +1255,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1291,8 +1266,7 @@
             "state_archival": {
               "$ref": "#/definitions/StateArchivalSettings"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1303,8 +1277,7 @@
             "contract_execution_lanes": {
               "$ref": "#/definitions/ConfigSettingContractExecutionLanesV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1321,8 +1294,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1333,8 +1305,7 @@
             "eviction_iterator": {
               "$ref": "#/definitions/EvictionIterator"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1345,8 +1316,7 @@
             "contract_parallel_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1357,8 +1327,7 @@
             "contract_ledger_cost_ext_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1520,8 +1489,7 @@
             "v1": {
               "$ref": "#/definitions/ContractCodeEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1649,8 +1617,7 @@
             "v0": {
               "$ref": "#/definitions/ContractEventV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1705,8 +1672,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1725,8 +1691,7 @@
             "address": {
               "$ref": "#/definitions/ContractIdPreimageFromAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1737,8 +1702,7 @@
             "asset": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1837,8 +1801,7 @@
             "success": {
               "$ref": "#/definitions/ClaimableBalanceId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2126,8 +2089,7 @@
             "tx": {
               "$ref": "#/definitions/TransactionV1Envelope"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2143,8 +2105,7 @@
             "v1": {
               "$ref": "#/definitions/TransactionSetV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2160,8 +2121,7 @@
             "invoke_contract": {
               "$ref": "#/definitions/InvokeContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2172,8 +2132,7 @@
             "create_contract": {
               "$ref": "#/definitions/CreateContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2186,8 +2145,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2198,8 +2156,7 @@
             "create_contract_v2": {
               "$ref": "#/definitions/CreateContractArgsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2242,8 +2199,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2331,8 +2287,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2347,8 +2302,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2472,8 +2426,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2515,8 +2468,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerCloseMetaExtV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2693,8 +2645,7 @@
             "created": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2705,8 +2656,7 @@
             "updated": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2717,8 +2667,7 @@
             "removed": {
               "$ref": "#/definitions/LedgerKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2729,8 +2678,7 @@
             "state": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2741,8 +2689,7 @@
             "restored": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2766,8 +2713,7 @@
             "account": {
               "$ref": "#/definitions/AccountEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2778,8 +2724,7 @@
             "trustline": {
               "$ref": "#/definitions/TrustLineEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2790,8 +2735,7 @@
             "offer": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2802,8 +2746,7 @@
             "data": {
               "$ref": "#/definitions/DataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2814,8 +2757,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/ClaimableBalanceEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2826,8 +2768,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LiquidityPoolEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2838,8 +2779,7 @@
             "contract_data": {
               "$ref": "#/definitions/ContractDataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2850,8 +2790,7 @@
             "contract_code": {
               "$ref": "#/definitions/ContractCodeEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2862,8 +2801,7 @@
             "config_setting": {
               "$ref": "#/definitions/ConfigSettingEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2874,8 +2812,7 @@
             "ttl": {
               "$ref": "#/definitions/TtlEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2897,8 +2834,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3072,8 +3008,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerHeaderExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3145,8 +3080,7 @@
             "account": {
               "$ref": "#/definitions/LedgerKeyAccount"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3157,8 +3091,7 @@
             "trustline": {
               "$ref": "#/definitions/LedgerKeyTrustLine"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3169,8 +3102,7 @@
             "offer": {
               "$ref": "#/definitions/LedgerKeyOffer"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3181,8 +3113,7 @@
             "data": {
               "$ref": "#/definitions/LedgerKeyData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3193,8 +3124,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/LedgerKeyClaimableBalance"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3205,8 +3135,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LedgerKeyLiquidityPool"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3217,8 +3146,7 @@
             "contract_data": {
               "$ref": "#/definitions/LedgerKeyContractData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3229,8 +3157,7 @@
             "contract_code": {
               "$ref": "#/definitions/LedgerKeyContractCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3241,8 +3168,7 @@
             "config_setting": {
               "$ref": "#/definitions/LedgerKeyConfigSetting"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3253,8 +3179,7 @@
             "ttl": {
               "$ref": "#/definitions/LedgerKeyTtl"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3443,8 +3368,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3457,8 +3381,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3471,8 +3394,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3485,8 +3407,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3499,8 +3420,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3511,8 +3431,7 @@
             "config": {
               "$ref": "#/definitions/ConfigUpgradeSetKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3525,8 +3444,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3641,8 +3559,7 @@
             "liquidity_pool_constant_product": {
               "$ref": "#/definitions/LiquidityPoolEntryConstantProduct"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3690,8 +3607,7 @@
             "liquidity_pool_constant_product": {
               "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3793,8 +3709,7 @@
             "success": {
               "$ref": "#/definitions/ManageOfferSuccessResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3869,8 +3784,7 @@
             "created": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3881,8 +3795,7 @@
             "updated": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3945,8 +3858,7 @@
             "success": {
               "$ref": "#/definitions/ManageOfferSuccessResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3968,8 +3880,7 @@
             "text": {
               "$ref": "#/definitions/StringM<28>"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3982,8 +3893,7 @@
               "format": "uint64",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3998,8 +3908,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4014,8 +3923,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4117,8 +4025,7 @@
             "create_account": {
               "$ref": "#/definitions/CreateAccountOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4129,8 +4036,7 @@
             "payment": {
               "$ref": "#/definitions/PaymentOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4141,8 +4047,7 @@
             "path_payment_strict_receive": {
               "$ref": "#/definitions/PathPaymentStrictReceiveOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4153,8 +4058,7 @@
             "manage_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4165,8 +4069,7 @@
             "create_passive_sell_offer": {
               "$ref": "#/definitions/CreatePassiveSellOfferOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4177,8 +4080,7 @@
             "set_options": {
               "$ref": "#/definitions/SetOptionsOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4189,8 +4091,7 @@
             "change_trust": {
               "$ref": "#/definitions/ChangeTrustOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4201,8 +4102,7 @@
             "allow_trust": {
               "$ref": "#/definitions/AllowTrustOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4213,8 +4113,7 @@
             "account_merge": {
               "$ref": "#/definitions/MuxedAccount"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4225,8 +4124,7 @@
             "manage_data": {
               "$ref": "#/definitions/ManageDataOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4237,8 +4135,7 @@
             "bump_sequence": {
               "$ref": "#/definitions/BumpSequenceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4249,8 +4146,7 @@
             "manage_buy_offer": {
               "$ref": "#/definitions/ManageBuyOfferOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4261,8 +4157,7 @@
             "path_payment_strict_send": {
               "$ref": "#/definitions/PathPaymentStrictSendOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4273,8 +4168,7 @@
             "create_claimable_balance": {
               "$ref": "#/definitions/CreateClaimableBalanceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4285,8 +4179,7 @@
             "claim_claimable_balance": {
               "$ref": "#/definitions/ClaimClaimableBalanceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4297,8 +4190,7 @@
             "begin_sponsoring_future_reserves": {
               "$ref": "#/definitions/BeginSponsoringFutureReservesOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4309,8 +4201,7 @@
             "revoke_sponsorship": {
               "$ref": "#/definitions/RevokeSponsorshipOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4321,8 +4212,7 @@
             "clawback": {
               "$ref": "#/definitions/ClawbackOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4333,8 +4223,7 @@
             "clawback_claimable_balance": {
               "$ref": "#/definitions/ClawbackClaimableBalanceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4345,8 +4234,7 @@
             "set_trust_line_flags": {
               "$ref": "#/definitions/SetTrustLineFlagsOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4357,8 +4245,7 @@
             "liquidity_pool_deposit": {
               "$ref": "#/definitions/LiquidityPoolDepositOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4369,8 +4256,7 @@
             "liquidity_pool_withdraw": {
               "$ref": "#/definitions/LiquidityPoolWithdrawOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4381,8 +4267,7 @@
             "invoke_host_function": {
               "$ref": "#/definitions/InvokeHostFunctionOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4393,8 +4278,7 @@
             "extend_footprint_ttl": {
               "$ref": "#/definitions/ExtendFootprintTtlOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4405,8 +4289,7 @@
             "restore_footprint": {
               "$ref": "#/definitions/RestoreFootprintOp"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4469,8 +4352,7 @@
             "op_inner": {
               "$ref": "#/definitions/OperationResultTr"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4486,8 +4368,7 @@
             "create_account": {
               "$ref": "#/definitions/CreateAccountResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4498,8 +4379,7 @@
             "payment": {
               "$ref": "#/definitions/PaymentResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4510,8 +4390,7 @@
             "path_payment_strict_receive": {
               "$ref": "#/definitions/PathPaymentStrictReceiveResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4522,8 +4401,7 @@
             "manage_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4534,8 +4412,7 @@
             "create_passive_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4546,8 +4423,7 @@
             "set_options": {
               "$ref": "#/definitions/SetOptionsResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4558,8 +4434,7 @@
             "change_trust": {
               "$ref": "#/definitions/ChangeTrustResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4570,8 +4445,7 @@
             "allow_trust": {
               "$ref": "#/definitions/AllowTrustResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4582,8 +4456,7 @@
             "account_merge": {
               "$ref": "#/definitions/AccountMergeResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4594,8 +4467,7 @@
             "inflation": {
               "$ref": "#/definitions/InflationResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4606,8 +4478,7 @@
             "manage_data": {
               "$ref": "#/definitions/ManageDataResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4618,8 +4489,7 @@
             "bump_sequence": {
               "$ref": "#/definitions/BumpSequenceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4630,8 +4500,7 @@
             "manage_buy_offer": {
               "$ref": "#/definitions/ManageBuyOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4642,8 +4511,7 @@
             "path_payment_strict_send": {
               "$ref": "#/definitions/PathPaymentStrictSendResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4654,8 +4522,7 @@
             "create_claimable_balance": {
               "$ref": "#/definitions/CreateClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4666,8 +4533,7 @@
             "claim_claimable_balance": {
               "$ref": "#/definitions/ClaimClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4678,8 +4544,7 @@
             "begin_sponsoring_future_reserves": {
               "$ref": "#/definitions/BeginSponsoringFutureReservesResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4690,8 +4555,7 @@
             "end_sponsoring_future_reserves": {
               "$ref": "#/definitions/EndSponsoringFutureReservesResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4702,8 +4566,7 @@
             "revoke_sponsorship": {
               "$ref": "#/definitions/RevokeSponsorshipResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4714,8 +4577,7 @@
             "clawback": {
               "$ref": "#/definitions/ClawbackResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4726,8 +4588,7 @@
             "clawback_claimable_balance": {
               "$ref": "#/definitions/ClawbackClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4738,8 +4599,7 @@
             "set_trust_line_flags": {
               "$ref": "#/definitions/SetTrustLineFlagsResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4750,8 +4610,7 @@
             "liquidity_pool_deposit": {
               "$ref": "#/definitions/LiquidityPoolDepositResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4762,8 +4621,7 @@
             "liquidity_pool_withdraw": {
               "$ref": "#/definitions/LiquidityPoolWithdrawResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4774,8 +4632,7 @@
             "invoke_host_function": {
               "$ref": "#/definitions/InvokeHostFunctionResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4786,8 +4643,7 @@
             "extend_footprint_ttl": {
               "$ref": "#/definitions/ExtendFootprintTtlResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4798,8 +4654,7 @@
             "restore_footprint": {
               "$ref": "#/definitions/RestoreFootprintResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4900,8 +4755,7 @@
             "success": {
               "$ref": "#/definitions/PathPaymentStrictReceiveResultSuccess"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4912,8 +4766,7 @@
             "no_issuer": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5003,8 +4856,7 @@
             "success": {
               "$ref": "#/definitions/PathPaymentStrictSendResultSuccess"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5015,8 +4867,7 @@
             "no_issuer": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5098,8 +4949,7 @@
             "time": {
               "$ref": "#/definitions/TimeBounds"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5110,8 +4960,7 @@
             "v2": {
               "$ref": "#/definitions/PreconditionsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5223,8 +5072,7 @@
             "ledger_entry": {
               "$ref": "#/definitions/LedgerKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5235,8 +5083,7 @@
             "signer": {
               "$ref": "#/definitions/RevokeSponsorshipOpSigner"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5313,8 +5160,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5325,8 +5171,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5337,8 +5182,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5349,8 +5193,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5361,8 +5204,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5373,8 +5215,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5385,8 +5226,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5397,8 +5237,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5409,8 +5248,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5421,8 +5259,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5506,8 +5343,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5518,8 +5354,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5532,8 +5367,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5545,8 +5379,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5559,8 +5392,7 @@
               "format": "uint64",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5572,8 +5404,7 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5584,8 +5415,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5596,8 +5426,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5608,8 +5437,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5620,8 +5448,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5632,8 +5459,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5644,8 +5470,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5656,8 +5481,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5668,8 +5492,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5680,8 +5503,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5699,8 +5521,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5718,8 +5539,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5730,8 +5550,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5742,8 +5561,7 @@
             "ledger_key_nonce": {
               "$ref": "#/definitions/ScNonceKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5754,8 +5572,7 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5813,8 +5630,7 @@
             "v0": {
               "$ref": "#/definitions/ScpHistoryEntryV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5998,8 +5814,7 @@
             "prepare": {
               "$ref": "#/definitions/ScpStatementPrepare"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6010,8 +5825,7 @@
             "confirm": {
               "$ref": "#/definitions/ScpStatementConfirm"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6022,8 +5836,7 @@
             "externalize": {
               "$ref": "#/definitions/ScpStatementExternalize"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6034,8 +5847,7 @@
             "nominate": {
               "$ref": "#/definitions/ScpNomination"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6341,8 +6153,7 @@
             "contract_fn": {
               "$ref": "#/definitions/InvokeContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6353,8 +6164,7 @@
             "create_contract_host_fn": {
               "$ref": "#/definitions/CreateContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6365,8 +6175,7 @@
             "create_contract_v2_host_fn": {
               "$ref": "#/definitions/CreateContractArgsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6408,8 +6217,7 @@
             "address": {
               "$ref": "#/definitions/SorobanAddressCredentials"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6500,8 +6308,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanResourcesExtV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6555,8 +6362,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanTransactionMetaExtV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6736,8 +6542,7 @@
             "signed": {
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6841,8 +6646,7 @@
             "tx_v0": {
               "$ref": "#/definitions/TransactionV0Envelope"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6853,8 +6657,7 @@
             "tx": {
               "$ref": "#/definitions/TransactionV1Envelope"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6865,8 +6668,7 @@
             "tx_fee_bump": {
               "$ref": "#/definitions/FeeBumpTransactionEnvelope"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6913,8 +6715,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanTransactionData"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6934,8 +6735,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6946,8 +6746,7 @@
             "v1": {
               "$ref": "#/definitions/TransactionMetaV1"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6958,8 +6757,7 @@
             "v2": {
               "$ref": "#/definitions/TransactionMetaV2"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6970,8 +6768,7 @@
             "v3": {
               "$ref": "#/definitions/TransactionMetaV3"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6982,8 +6779,7 @@
             "v4": {
               "$ref": "#/definitions/TransactionMetaV4"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7139,8 +6935,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7151,8 +6946,7 @@
             "v1": {
               "$ref": "#/definitions/ParallelTxsComponent"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7256,8 +7050,7 @@
             "tx_fee_bump_inner_success": {
               "$ref": "#/definitions/InnerTransactionResultPair"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7268,8 +7061,7 @@
             "tx_fee_bump_inner_failed": {
               "$ref": "#/definitions/InnerTransactionResultPair"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7284,8 +7076,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7300,8 +7091,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7470,8 +7260,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7482,8 +7271,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7494,8 +7282,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7553,8 +7340,7 @@
             "v1": {
               "$ref": "#/definitions/TrustLineEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7616,8 +7402,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7655,8 +7440,7 @@
             "txset_comp_txs_maybe_discounted_fee": {
               "$ref": "#/definitions/TxSetComponentTxsMaybeDiscountedFee"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

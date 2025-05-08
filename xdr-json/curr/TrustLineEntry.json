@@ -19,8 +19,7 @@
       "$ref": "#/definitions/TrustLineAsset"
     },
     "balance": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ext": {
       "$ref": "#/definitions/TrustLineEntryExt"
@@ -31,8 +30,7 @@
       "minimum": 0.0
     },
     "limit": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
   "definitions": {
@@ -86,12 +84,10 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },

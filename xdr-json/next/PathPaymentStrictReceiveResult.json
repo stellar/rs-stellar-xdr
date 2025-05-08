@@ -174,12 +174,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -205,12 +203,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -219,8 +215,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -240,12 +235,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -254,8 +247,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_ed25519": {
           "type": "string",
@@ -299,8 +291,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"

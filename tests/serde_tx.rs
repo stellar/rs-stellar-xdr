@@ -56,7 +56,7 @@ fn test_serde_tx() -> Result<(), Box<dyn std::error::Error>> {
     "tx": {
       "source_account": "GA6LGYNLMJFRA4CMNTHU7WY6IB45EPLI5QWNGIWCFA2MIGXB4ZF5GQGY",
       "fee": 0,
-      "seq_num": 1,
+      "seq_num": "1",
       "cond": "none",
       "memo": {
         "text": "Stellar"
@@ -72,7 +72,7 @@ fn test_serde_tx() -> Result<(), Box<dyn std::error::Error>> {
                   "issuer": "GBB5BH2JFIVOHKQK5WHM5XFSE2SPOUFJB3FU4CPZVR3EUVJXZLMHOLOM"
                 }
               },
-              "limit": 9223372036854775807
+              "limit": "9223372036854775807"
             }
           }
         }

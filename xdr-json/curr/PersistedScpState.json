@@ -210,8 +210,7 @@
       ],
       "properties": {
         "limit": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "line": {
           "$ref": "#/definitions/ChangeTrustAsset"
@@ -297,8 +296,7 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -310,8 +308,7 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -376,8 +373,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -505,8 +501,7 @@
           "$ref": "#/definitions/AccountId"
         },
         "starting_balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -520,8 +515,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -586,8 +580,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -637,9 +630,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "ExtendFootprintTtlOp": {
       "description": "ExtendFootprintTtlOp is an XDR Struct defines as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
@@ -680,8 +671,7 @@
           "$ref": "#/definitions/FeeBumpTransactionExt"
         },
         "fee": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_source": {
           "$ref": "#/definitions/MuxedAccount"
@@ -816,13 +806,10 @@
       ],
       "properties": {
         "hi": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -837,23 +824,16 @@
       ],
       "properties": {
         "hi_hi": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -1179,8 +1159,7 @@
       ],
       "properties": {
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -1255,12 +1234,10 @@
           "$ref": "#/definitions/PoolId"
         },
         "max_amount_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "max_amount_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "max_price": {
           "$ref": "#/definitions/Price"
@@ -1298,19 +1275,16 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "liquidity_pool_id": {
           "$ref": "#/definitions/PoolId"
         },
         "min_amount_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "min_amount_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1326,15 +1300,13 @@
       ],
       "properties": {
         "buy_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -1378,15 +1350,13 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -1424,9 +1394,7 @@
           ],
           "properties": {
             "id": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1821,11 +1789,11 @@
       ],
       "properties": {
         "base_fee": {
+          "default": null,
           "type": [
-            "integer",
+            "string",
             "null"
-          ],
-          "format": "int64"
+          ]
         },
         "execution_stages": {
           "type": "array",
@@ -1849,8 +1817,7 @@
       ],
       "properties": {
         "dest_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "dest_asset": {
           "$ref": "#/definitions/Asset"
@@ -1869,8 +1836,7 @@
           "$ref": "#/definitions/Asset"
         },
         "send_max": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1890,8 +1856,7 @@
           "$ref": "#/definitions/Asset"
         },
         "dest_min": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "destination": {
           "$ref": "#/definitions/MuxedAccount"
@@ -1904,8 +1869,7 @@
           "maxItems": 5
         },
         "send_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "send_asset": {
           "$ref": "#/definitions/Asset"
@@ -1922,8 +1886,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -2364,8 +2327,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2445,9 +2407,7 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -2459,8 +2419,7 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -2769,9 +2728,7 @@
           "$ref": "#/definitions/ScpStatementPledges"
         },
         "slot_index": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -2946,8 +2903,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "SetOptionsOp": {
       "description": "SetOptionsOp is an XDR Struct defines as:\n\n```text struct SetOptionsOp { AccountID* inflationDest; // sets the inflation destination\n\nuint32* clearFlags; // which flags to clear uint32* setFlags;   // which flags to set\n\n// account threshold manipulation uint32* masterWeight; // weight of the master account uint32* lowThreshold; uint32* medThreshold; uint32* highThreshold;\n\nstring32* homeDomain; // sets the home domain\n\n// Add, update or remove a signer for the account // signer is deleted if the weight is 0 Signer* signer; }; ```",
@@ -3103,8 +3059,7 @@
           "$ref": "#/definitions/ScAddress"
         },
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "signature": {
           "$ref": "#/definitions/ScVal"
@@ -3277,8 +3232,7 @@
           "$ref": "#/definitions/SorobanTransactionDataExt"
         },
         "resource_fee": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "resources": {
           "$ref": "#/definitions/SorobanResources"
@@ -3379,9 +3333,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "Transaction": {
       "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
@@ -3741,11 +3693,11 @@
       ],
       "properties": {
         "base_fee": {
+          "default": null,
           "type": [
-            "integer",
+            "string",
             "null"
-          ],
-          "format": "int64"
+          ]
         },
         "txs": {
           "type": "array",
@@ -3765,14 +3717,10 @@
       ],
       "properties": {
         "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -3787,24 +3735,16 @@
       ],
       "properties": {
         "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },

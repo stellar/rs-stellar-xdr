@@ -9,8 +9,7 @@
   ],
   "properties": {
     "offer_id": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "seller_id": {
       "$ref": "#/definitions/AccountId"

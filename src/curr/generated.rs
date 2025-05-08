@@ -101,9 +101,6 @@ use std::string::FromUtf8Error;
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
 
-#[cfg(feature = "serde")]
-use serde_with::DisplayFromStr;
-
 #[cfg(all(feature = "schemars", feature = "alloc", not(feature = "std")))]
 use alloc::borrow::Cow;
 #[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
@@ -2289,6 +2286,240 @@ where
     }
 }
 
+// NumberOrString ---------------------------------------------------------------
+
+/// NumberOrString is a serde_as serializer/deserializer.
+///
+/// It deserializers any integer that fits into a 64-bit value into an i64 or u64 field from either
+/// a JSON Number or JSON String value.
+///
+/// It serializes always to a string.
+///
+/// It has a JsonSchema implementation that only advertises that the allowed format is a String.
+/// This is because the type is intended to soften the changing of fields from JSON Number to JSON
+/// String by permitting deserialization, but discourage new uses of JSON Number.
+#[cfg(feature = "serde")]
+struct NumberOrString;
+
+#[cfg(feature = "serde")]
+impl<'de> serde_with::DeserializeAs<'de, i64> for NumberOrString {
+    fn deserialize_as<D>(deserializer: D) -> Result<i64, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Vis;
+        impl<'de> serde::de::Visitor<'de> for Vis {
+            type Value = i64;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                formatter.write_str("a number or number string")
+            }
+
+            fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_i16<E>(self, v: i16) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_i32<E>(self, v: i32) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v)
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.parse().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.parse().map_err(|e| serde::de::Error::custom(e))?)
+            }
+        }
+        deserializer.deserialize_any(Vis)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde_with::DeserializeAs<'de, u64> for NumberOrString {
+    fn deserialize_as<D>(deserializer: D) -> Result<u64, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Vis;
+        impl<'de> serde::de::Visitor<'de> for Vis {
+            type Value = u64;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                formatter.write_str("a number or number string")
+            }
+
+            fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_i16<E>(self, v: i16) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_i32<E>(self, v: i32) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.try_into().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v)
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.parse().map_err(|e| serde::de::Error::custom(e))?)
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(v.parse().map_err(|e| serde::de::Error::custom(e))?)
+            }
+        }
+        deserializer.deserialize_any(Vis)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde_with::SerializeAs<i64> for NumberOrString {
+    fn serialize_as<S>(source: &i64, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::Serialize;
+        source.to_string().serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde_with::SerializeAs<u64> for NumberOrString {
+    fn serialize_as<S>(source: &u64, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::Serialize;
+        source.to_string().serialize(serializer)
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl<T> serde_with::schemars_0_8::JsonSchemaAs<T> for NumberOrString {
+    fn schema_name() -> String {
+        <String as schemars::JsonSchema>::schema_name()
+    }
+
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        <String as schemars::JsonSchema>::schema_id()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        <String as schemars::JsonSchema>::json_schema(gen)
+    }
+
+    fn is_referenceable() -> bool {
+        <String as schemars::JsonSchema>::is_referenceable()
+    }
+}
+
+// Tests ------------------------------------------------------------------------
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use std::io::Cursor;
@@ -3625,7 +3856,7 @@ pub struct ScpStatement {
     pub node_id: NodeId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub slot_index: u64,
     pub pledges: ScpStatementPledges,
@@ -3832,17 +4063,17 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
 pub struct ConfigSettingContractComputeV0 {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub ledger_max_instructions: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub tx_max_instructions: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_rate_per_instructions_increment: i64,
     pub tx_memory_limit: u32,
@@ -3984,32 +4215,32 @@ pub struct ConfigSettingContractLedgerCostV0 {
     pub tx_max_write_bytes: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_disk_read_ledger_entry: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_write_ledger_entry: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_disk_read1_kb: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub soroban_state_target_size_bytes: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub rent_fee1_kb_soroban_state_size_low: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub rent_fee1_kb_soroban_state_size_high: i64,
     pub soroban_state_rent_fee_growth_factor: u32,
@@ -4092,7 +4323,7 @@ pub struct ConfigSettingContractLedgerCostExtV0 {
     pub tx_max_in_memory_read_entries: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_write1_kb: i64,
 }
@@ -4142,7 +4373,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
 pub struct ConfigSettingContractHistoricalDataV0 {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_historical1_kb: i64,
 }
@@ -4194,7 +4425,7 @@ pub struct ConfigSettingContractEventsV0 {
     pub tx_max_contract_events_size_bytes: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_contract_events1_kb: i64,
 }
@@ -4252,7 +4483,7 @@ pub struct ConfigSettingContractBandwidthV0 {
     pub tx_max_size_bytes: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_tx_size1_kb: i64,
 }
@@ -4907,12 +5138,12 @@ pub struct ContractCostParamEntry {
     pub ext: ExtensionPoint,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub const_term: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub linear_term: i64,
 }
@@ -4987,12 +5218,12 @@ pub struct StateArchivalSettings {
     pub min_persistent_ttl: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub persistent_rent_rate_denominator: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub temp_rent_rate_denominator: i64,
     pub max_entries_to_archive: u32,
@@ -5068,7 +5299,7 @@ pub struct EvictionIterator {
     pub is_curr_bucket: bool,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub bucket_file_offset: u64,
 }
@@ -5478,7 +5709,7 @@ pub enum ConfigSettingEntry {
     LiveSorobanStateSizeWindow(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "VecM<DisplayFromStr>")
+            serde_as(as = "VecM<NumberOrString>")
         )]
         VecM<u64>,
     ),
@@ -8962,12 +9193,12 @@ impl WriteXdr for ScError {
 pub struct UInt128Parts {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub hi: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub lo: u64,
 }
@@ -9017,12 +9248,12 @@ impl WriteXdr for UInt128Parts {
 pub struct Int128Parts {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub hi: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub lo: u64,
 }
@@ -9074,22 +9305,22 @@ impl WriteXdr for Int128Parts {
 pub struct UInt256Parts {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub hi_hi: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub hi_lo: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub lo_hi: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub lo_lo: u64,
 }
@@ -9145,22 +9376,22 @@ impl WriteXdr for UInt256Parts {
 pub struct Int256Parts {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub hi_hi: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub hi_lo: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub lo_hi: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub lo_lo: u64,
 }
@@ -10302,7 +10533,7 @@ impl AsRef<[u8]> for ScSymbol {
 pub struct ScNonceKey {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub nonce: i64,
 }
@@ -10462,14 +10693,14 @@ pub enum ScVal {
     U64(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "DisplayFromStr")
+            serde_as(as = "NumberOrString")
         )]
         u64,
     ),
     I64(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "DisplayFromStr")
+            serde_as(as = "NumberOrString")
         )]
         i64,
     ),
@@ -11508,7 +11739,7 @@ impl AsRef<[u8]> for String64 {
 pub struct SequenceNumber(
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub i64,
 );
@@ -12386,12 +12617,12 @@ impl WriteXdr for Price {
 pub struct Liabilities {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub buying: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub selling: i64,
 }
@@ -13517,7 +13748,7 @@ pub struct AccountEntry {
     pub account_id: AccountId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub balance: i64,
     pub seq_num: SequenceNumber,
@@ -14450,12 +14681,12 @@ pub struct TrustLineEntry {
     pub asset: TrustLineAsset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub balance: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub limit: i64,
     pub flags: u32,
@@ -14751,14 +14982,14 @@ pub struct OfferEntry {
     pub seller_id: AccountId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub offer_id: i64,
     pub selling: Asset,
     pub buying: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
     pub price: Price,
@@ -15144,14 +15375,14 @@ pub enum ClaimPredicate {
     BeforeAbsoluteTime(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "DisplayFromStr")
+            serde_as(as = "NumberOrString")
         )]
         i64,
     ),
     BeforeRelativeTime(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "DisplayFromStr")
+            serde_as(as = "NumberOrString")
         )]
         i64,
     ),
@@ -15954,7 +16185,7 @@ pub struct ClaimableBalanceEntry {
     pub asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
     pub ext: ClaimableBalanceEntryExt,
@@ -16070,22 +16301,22 @@ pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub reserve_a: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub reserve_b: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub total_pool_shares: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub pool_shares_trust_line_count: i64,
 }
@@ -17489,7 +17720,7 @@ pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub offer_id: i64,
 }
@@ -19899,18 +20130,18 @@ pub struct LedgerHeader {
     pub ledger_seq: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub total_coins: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_pool: i64,
     pub inflation_seq: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub id_pool: u64,
     pub base_fee: u32,
@@ -20714,7 +20945,7 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
 pub struct ParallelTxsComponent {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "Option<DisplayFromStr>")
+        serde_as(as = "Option<NumberOrString>")
     )]
     pub base_fee: Option<i64>,
     pub execution_stages: VecM<ParallelTxExecutionStage>,
@@ -20766,7 +20997,7 @@ impl WriteXdr for ParallelTxsComponent {
 pub struct TxSetComponentTxsMaybeDiscountedFee {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "Option<DisplayFromStr>")
+        serde_as(as = "Option<NumberOrString>")
     )]
     pub base_fee: Option<i64>,
     pub txs: VecM<TransactionEnvelope>,
@@ -22960,17 +23191,17 @@ pub struct SorobanTransactionMetaExtV1 {
     pub ext: ExtensionPoint,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub total_non_refundable_resource_fee_charged: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub total_refundable_resource_fee_charged: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub rent_fee_charged: i64,
 }
@@ -23953,7 +24184,7 @@ pub struct LedgerCloseMetaExtV1 {
     pub ext: ExtensionPoint,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub soroban_fee_write1_kb: i64,
 }
@@ -24144,7 +24375,7 @@ pub struct LedgerCloseMetaV1 {
     pub scp_info: VecM<ScpHistoryEntry>,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub total_byte_size_of_live_soroban_state: u64,
     pub evicted_keys: VecM<LedgerKey>,
@@ -24587,7 +24818,7 @@ pub struct AuthCert {
     pub pubkey: Curve25519Public,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub expiration: u64,
     pub sig: Signature,
@@ -26183,67 +26414,67 @@ pub struct PeerStats {
     pub version_str: StringM<100>,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub messages_read: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub messages_written: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub bytes_read: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub bytes_written: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub seconds_connected: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub unique_flood_bytes_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub duplicate_flood_bytes_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub unique_fetch_bytes_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub duplicate_fetch_bytes_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub unique_flood_message_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub duplicate_flood_message_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub unique_fetch_message_recv: u64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub duplicate_fetch_message_recv: u64,
 }
@@ -27360,7 +27591,7 @@ impl WriteXdr for StellarMessage {
 pub struct AuthenticatedMessageV0 {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub sequence: u64,
     pub message: StellarMessage,
@@ -28109,7 +28340,7 @@ pub struct CreateAccountOp {
     pub destination: AccountId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub starting_balance: i64,
 }
@@ -28163,7 +28394,7 @@ pub struct PaymentOp {
     pub asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
 }
@@ -28225,14 +28456,14 @@ pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub send_max: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub dest_amount: i64,
     pub path: VecM<Asset, 5>,
@@ -28301,14 +28532,14 @@ pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub send_amount: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub dest_min: i64,
     pub path: VecM<Asset, 5>,
@@ -28375,13 +28606,13 @@ pub struct ManageSellOfferOp {
     pub buying: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
     pub price: Price,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub offer_id: i64,
 }
@@ -28446,13 +28677,13 @@ pub struct ManageBuyOfferOp {
     pub buying: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub buy_amount: i64,
     pub price: Price,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub offer_id: i64,
 }
@@ -28513,7 +28744,7 @@ pub struct CreatePassiveSellOfferOp {
     pub buying: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
     pub price: Price,
@@ -28790,7 +29021,7 @@ pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub limit: i64,
 }
@@ -28989,7 +29220,7 @@ pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
     pub claimants: VecM<Claimant, 10>,
@@ -29410,7 +29641,7 @@ pub struct ClawbackOp {
     pub from: MuxedAccount,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
 }
@@ -29576,12 +29807,12 @@ pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub max_amount_a: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub max_amount_b: i64,
     pub min_price: Price,
@@ -29643,17 +29874,17 @@ pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub min_amount_a: i64,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub min_amount_b: i64,
 }
@@ -30713,7 +30944,7 @@ pub struct SorobanAddressCredentials {
     pub address: ScAddress,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
@@ -31939,7 +32170,7 @@ pub struct HashIdPreimageSorobanAuthorization {
     pub network_id: Hash,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
@@ -32295,7 +32526,7 @@ pub enum Memo {
     Id(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "DisplayFromStr")
+            serde_as(as = "NumberOrString")
         )]
         u64,
     ),
@@ -33127,7 +33358,7 @@ pub struct SorobanTransactionData {
     pub resources: SorobanResources,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub resource_fee: i64,
 }
@@ -33870,7 +34101,7 @@ pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee: i64,
     pub inner_tx: FeeBumpTransactionInnerTx,
@@ -34391,19 +34622,19 @@ pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub offer_id: i64,
     pub asset_sold: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount_sold: i64,
     pub asset_bought: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount_bought: i64,
 }
@@ -34472,19 +34703,19 @@ pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub offer_id: i64,
     pub asset_sold: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount_sold: i64,
     pub asset_bought: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount_bought: i64,
 }
@@ -34552,13 +34783,13 @@ pub struct ClaimLiquidityAtom {
     pub asset_sold: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount_sold: i64,
     pub asset_bought: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount_bought: i64,
 }
@@ -35548,7 +35779,7 @@ pub struct SimplePaymentResult {
     pub asset: Asset,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
 }
@@ -38546,7 +38777,7 @@ pub enum AccountMergeResult {
     Success(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
-            serde_as(as = "DisplayFromStr")
+            serde_as(as = "NumberOrString")
         )]
         i64,
     ),
@@ -38815,7 +39046,7 @@ pub struct InflationPayout {
     pub destination: AccountId,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub amount: i64,
 }
@@ -44396,7 +44627,7 @@ impl WriteXdr for InnerTransactionResultExt {
 pub struct InnerTransactionResult {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_charged: i64,
     pub result: InnerTransactionResultResult,
@@ -44899,7 +45130,7 @@ impl WriteXdr for TransactionResultExt {
 pub struct TransactionResult {
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub fee_charged: i64,
     pub result: TransactionResultResult,
@@ -45287,7 +45518,7 @@ pub type Int64 = i64;
 pub struct TimePoint(
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub u64,
 );
@@ -45351,7 +45582,7 @@ impl WriteXdr for TimePoint {
 pub struct Duration(
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
-        serde_as(as = "DisplayFromStr")
+        serde_as(as = "NumberOrString")
     )]
     pub u64,
 );

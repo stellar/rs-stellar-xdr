@@ -1,5 +1,7 @@
 use super::{
-    FeeBumpTransaction, FeeBumpTransactionEnvelope, FeeBumpTransactionInnerTx, InvokeHostFunctionOp, Operation, OperationBody, SorobanAuthorizationEntry, Transaction, TransactionEnvelope, TransactionV0, TransactionV0Envelope, TransactionV1Envelope, VecM
+    FeeBumpTransaction, FeeBumpTransactionEnvelope, FeeBumpTransactionInnerTx,
+    InvokeHostFunctionOp, Operation, OperationBody, SorobanAuthorizationEntry, Transaction,
+    TransactionEnvelope, TransactionV0, TransactionV0Envelope, TransactionV1Envelope, VecM,
 };
 
 impl TransactionEnvelope {

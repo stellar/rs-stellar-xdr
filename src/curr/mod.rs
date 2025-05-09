@@ -17,4 +17,4 @@ pub use scval_validations::*;
 #[cfg(feature = "alloc")]
 mod scmap;
 
-mod auths;
+mod tx_auths;

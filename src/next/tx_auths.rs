@@ -13,6 +13,7 @@ impl TransactionEnvelope {
         }
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         match self {
             TransactionEnvelope::TxV0(e) => e.auths_mut(),
@@ -27,6 +28,7 @@ impl FeeBumpTransactionEnvelope {
         self.tx.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.tx.auths_mut()
     }
@@ -37,6 +39,7 @@ impl FeeBumpTransaction {
         self.inner_tx.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.inner_tx.auths_mut()
     }
@@ -49,6 +52,7 @@ impl FeeBumpTransactionInnerTx {
         }
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         match self {
             FeeBumpTransactionInnerTx::Tx(e) => e.auths_mut(),
@@ -61,6 +65,7 @@ impl TransactionV1Envelope {
         self.tx.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.tx.auths_mut()
     }
@@ -71,6 +76,7 @@ impl TransactionV0Envelope {
         self.tx.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.tx.auths_mut()
     }
@@ -81,6 +87,7 @@ impl Transaction {
         self.operations.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.operations.auths_mut()
     }
@@ -91,6 +98,7 @@ impl TransactionV0 {
         self.operations.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.operations.auths_mut()
     }
@@ -102,6 +110,7 @@ type FlatMapOperationToSorobanAuthorizationEntryIter<'a> = core::iter::FlatMap<
     fn(&'a Operation) -> core::slice::Iter<'a, SorobanAuthorizationEntry>,
 >;
 
+#[cfg(feature = "alloc")]
 type FlatMapOperationToSorobanAuthorizationEntryIterMut<'a> = core::iter::FlatMap<
     core::slice::IterMut<'a, Operation>,
     core::slice::IterMut<'a, SorobanAuthorizationEntry>,
@@ -113,6 +122,7 @@ impl<const MAX: u32> VecM<Operation, MAX> {
         self.iter().flat_map(Operation::auths)
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> FlatMapOperationToSorobanAuthorizationEntryIterMut<'_> {
         self.iter_mut().flat_map(Operation::auths_mut)
     }
@@ -123,6 +133,7 @@ impl Operation {
         self.body.auths()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> core::slice::IterMut<'_, SorobanAuthorizationEntry> {
         self.body.auths_mut()
     }
@@ -136,6 +147,7 @@ impl OperationBody {
         }
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> core::slice::IterMut<'_, SorobanAuthorizationEntry> {
         match self {
             OperationBody::InvokeHostFunction(op) => op.auths_mut(),
@@ -149,6 +161,7 @@ impl InvokeHostFunctionOp {
         self.auth.iter()
     }
 
+    #[cfg(feature = "alloc")]
     pub fn auths_mut(&mut self) -> core::slice::IterMut<'_, SorobanAuthorizationEntry> {
         self.auth.iter_mut()
     }

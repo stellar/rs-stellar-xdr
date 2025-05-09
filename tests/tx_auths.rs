@@ -1,4 +1,5 @@
 #![cfg(all(
+    feature = "alloc",
     any(feature = "curr", feature = "next"),
     not(all(feature = "curr", feature = "next"))
 ))]

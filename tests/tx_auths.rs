@@ -10,14 +10,13 @@ use stellar_xdr::curr as stellar_xdr;
 use stellar_xdr::next as stellar_xdr;
 
 use stellar_xdr::{
-    ContractExecutable, ContractId, ContractIdPreimage, ContractIdPreimageFromAddress,
-    CreateContractArgs, Error, FeeBumpTransaction, FeeBumpTransactionEnvelope,
+    Asset, ContractId, Error, FeeBumpTransaction, FeeBumpTransactionEnvelope,
     FeeBumpTransactionExt, FeeBumpTransactionInnerTx, Hash, HostFunction, InvokeContractArgs,
-    InvokeHostFunctionOp, Memo, MuxedAccount, Operation, OperationBody, Preconditions, ScAddress,
-    ScSymbol, ScVal, SequenceNumber, SorobanAuthorizationEntry, SorobanAuthorizedFunction,
-    SorobanAuthorizedInvocation, SorobanCredentials, Transaction, TransactionEnvelope,
-    TransactionExt, TransactionV0, TransactionV0Envelope, TransactionV0Ext, TransactionV1Envelope,
-    Uint256,
+    InvokeHostFunctionOp, Memo, MuxedAccount, Operation, OperationBody, PaymentOp, Preconditions,
+    ScAddress, ScSymbol, ScVal, SequenceNumber, SorobanAuthorizationEntry,
+    SorobanAuthorizedFunction, SorobanAuthorizedInvocation, SorobanCredentials, Transaction,
+    TransactionEnvelope, TransactionExt, TransactionV0, TransactionV0Envelope, TransactionV0Ext,
+    TransactionV1Envelope, Uint256,
 };
 
 #[test]
@@ -48,13 +47,13 @@ fn txv0() -> Result<(), Error> {
     });
 
     // Check .auths()
-    let auths: Vec<_> = tx.auths().collect();
-    assert_eq!(auths, [&auth1, &auth2, &auth3]);
+    let tx_auths: Vec<_> = tx.auths().collect();
+    assert_eq!(tx_auths, [&auth1, &auth2, &auth3]);
 
     // Check .auths_mut()
     #[allow(unused_mut)]
-    let mut auths: Vec<_> = tx.auths_mut().collect();
-    assert_eq!(auths, [&auth1, &auth2, &auth3]);
+    let mut tx_auths: Vec<_> = tx.auths_mut().collect();
+    assert_eq!(tx_auths, [&auth1, &auth2, &auth3]);
 
     Ok(())
 }
@@ -87,13 +86,13 @@ fn txv1() -> Result<(), Error> {
     });
 
     // Check .auths()
-    let auths: Vec<_> = tx.auths().collect();
-    assert_eq!(auths, [&auth1, &auth2, &auth3]);
+    let tx_auths: Vec<_> = tx.auths().collect();
+    assert_eq!(tx_auths, [&auth1, &auth2, &auth3]);
 
     // Check .auths_mut()
     #[allow(unused_mut)]
-    let mut auths: Vec<_> = tx.auths_mut().collect();
-    assert_eq!(auths, [&auth1, &auth2, &auth3]);
+    let mut tx_auths: Vec<_> = tx.auths_mut().collect();
+    assert_eq!(tx_auths, [&auth1, &auth2, &auth3]);
 
     Ok(())
 }
@@ -134,23 +133,26 @@ fn txfeebump() -> Result<(), Error> {
     });
 
     // Check .auths()
-    let auths: Vec<_> = tx.auths().collect();
-    assert_eq!(auths, [&auth1, &auth2, &auth3]);
+    let tx_auths: Vec<_> = tx.auths().collect();
+    assert_eq!(tx_auths, [&auth1, &auth2, &auth3]);
 
     // Check .auths_mut()
     #[allow(unused_mut)]
-    let mut auths: Vec<_> = tx.auths_mut().collect();
-    assert_eq!(auths, [&auth1, &auth2, &auth3]);
+    let mut tx_auths: Vec<_> = tx.auths_mut().collect();
+    assert_eq!(tx_auths, [&auth1, &auth2, &auth3]);
 
     Ok(())
 }
 
+/// Create a SorobanAuthorizationEntry for use in tests.
+///
+/// The id is inserted into structure simply to make the structure returned unique.
 fn create_soroban_auth_entry(id: u64) -> SorobanAuthorizationEntry {
     SorobanAuthorizationEntry {
         credentials: SorobanCredentials::SourceAccount,
         root_invocation: SorobanAuthorizedInvocation {
             function: SorobanAuthorizedFunction::ContractFn(InvokeContractArgs {
-                contract_address: ScAddress::Contract(ContractId(Hash([id as u8; 32]))),
+                contract_address: ScAddress::Contract(ContractId(Hash([0; 32]))),
                 function_name: ScSymbol("test".try_into().unwrap()),
                 args: [ScVal::U64(id)].to_vec().try_into().unwrap(),
             }),
@@ -159,6 +161,7 @@ fn create_soroban_auth_entry(id: u64) -> SorobanAuthorizationEntry {
     }
 }
 
+/// Create an InvokeHostFunctionOp Operation containing the provided auth entries.
 fn create_invoke_host_op(auth_entries: &[SorobanAuthorizationEntry]) -> Operation {
     Operation {
         source_account: None,
@@ -173,18 +176,14 @@ fn create_invoke_host_op(auth_entries: &[SorobanAuthorizationEntry]) -> Operatio
     }
 }
 
+/// Create a PaymentOperation
 fn create_payment_op() -> Operation {
     Operation {
         source_account: None,
-        body: OperationBody::InvokeHostFunction(InvokeHostFunctionOp {
-            host_function: HostFunction::CreateContract(CreateContractArgs {
-                contract_id_preimage: ContractIdPreimage::Address(ContractIdPreimageFromAddress {
-                    address: ScAddress::Contract(ContractId(Hash([0; 32]))),
-                    salt: Uint256([0; 32]),
-                }),
-                executable: ContractExecutable::Wasm(Hash([0; 32].into())),
-            }),
-            auth: [].to_vec().try_into().unwrap(),
+        body: OperationBody::Payment(PaymentOp {
+            asset: Asset::Native,
+            destination: MuxedAccount::Ed25519(Uint256([0; 32])),
+            amount: 1,
         }),
     }
 }

@@ -144,9 +144,6 @@ fn txfeebump() -> Result<(), Error> {
     Ok(())
 }
 
-/// Create a SorobanAuthorizationEntry for use in tests.
-///
-/// The id is inserted into structure simply to make the structure returned unique.
 fn create_soroban_auth_entry(id: u64) -> SorobanAuthorizationEntry {
     SorobanAuthorizationEntry {
         credentials: SorobanCredentials::SourceAccount,
@@ -161,7 +158,6 @@ fn create_soroban_auth_entry(id: u64) -> SorobanAuthorizationEntry {
     }
 }
 
-/// Create an InvokeHostFunctionOp Operation containing the provided auth entries.
 fn create_invoke_host_op(auth_entries: &[SorobanAuthorizationEntry]) -> Operation {
     Operation {
         source_account: None,
@@ -176,7 +172,6 @@ fn create_invoke_host_op(auth_entries: &[SorobanAuthorizationEntry]) -> Operatio
     }
 }
 
-/// Create a PaymentOperation
 fn create_payment_op() -> Operation {
     Operation {
         source_account: None,

@@ -44,8 +44,6 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
         )?)?,
         "\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\""
     );
-    #[cfg(feature = "curr")]
-
     Ok(())
 }
 

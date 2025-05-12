@@ -9143,10 +9143,8 @@ impl WriteXdr for ScError {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UInt128Parts {
     pub hi: u64,
     pub lo: u64,
@@ -9174,6 +9172,34 @@ impl WriteXdr for UInt128Parts {
         })
     }
 }
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for UInt128Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct UInt128Parts {
+            hi: u64,
+            lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum UInt128PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            UInt128Parts(UInt128Parts),
+        }
+        match UInt128PartsOrString::deserialize(deserializer)? {
+            UInt128PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt128PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt128PartsOrString::UInt128Parts(UInt128Parts { hi, lo }) => {
+                Ok(self::UInt128Parts { hi, lo })
+            }
+        }
+    }
+}
 
 /// Int128Parts is an XDR Struct defines as:
 ///
@@ -9188,10 +9214,8 @@ impl WriteXdr for UInt128Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Int128Parts {
     pub hi: i64,
     pub lo: u64,
@@ -9219,6 +9243,34 @@ impl WriteXdr for Int128Parts {
         })
     }
 }
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for Int128Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct Int128Parts {
+            hi: i64,
+            lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Int128PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            Int128Parts(Int128Parts),
+        }
+        match Int128PartsOrString::deserialize(deserializer)? {
+            Int128PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            Int128PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            Int128PartsOrString::Int128Parts(Int128Parts { hi, lo }) => {
+                Ok(self::Int128Parts { hi, lo })
+            }
+        }
+    }
+}
 
 /// UInt256Parts is an XDR Struct defines as:
 ///
@@ -9235,10 +9287,8 @@ impl WriteXdr for Int128Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UInt256Parts {
     pub hi_hi: u64,
     pub hi_lo: u64,
@@ -9272,6 +9322,44 @@ impl WriteXdr for UInt256Parts {
         })
     }
 }
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for UInt256Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct UInt256Parts {
+            hi_hi: u64,
+            hi_lo: u64,
+            lo_hi: u64,
+            lo_lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum UInt256PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            UInt256Parts(UInt256Parts),
+        }
+        match UInt256PartsOrString::deserialize(deserializer)? {
+            UInt256PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt256PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt256PartsOrString::UInt256Parts(UInt256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }) => Ok(self::UInt256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }),
+        }
+    }
+}
 
 /// Int256Parts is an XDR Struct defines as:
 ///
@@ -9288,10 +9376,8 @@ impl WriteXdr for UInt256Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Int256Parts {
     pub hi_hi: i64,
     pub hi_lo: u64,
@@ -9323,6 +9409,44 @@ impl WriteXdr for Int256Parts {
             self.lo_lo.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for Int256Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct Int256Parts {
+            hi_hi: i64,
+            hi_lo: u64,
+            lo_hi: u64,
+            lo_lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Int256PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            Int256Parts(Int256Parts),
+        }
+        match Int256PartsOrString::deserialize(deserializer)? {
+            Int256PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            Int256PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            Int256PartsOrString::Int256Parts(Int256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }) => Ok(self::Int256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }),
+        }
     }
 }
 
@@ -9690,7 +9814,7 @@ impl WriteXdr for ScAddressType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(serde_with::SerializeDisplay)
 )]
 pub struct MuxedEd25519Account {
     pub id: u64,
@@ -9717,6 +9841,35 @@ impl WriteXdr for MuxedEd25519Account {
             self.ed25519.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for MuxedEd25519Account {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct MuxedEd25519Account {
+            id: u64,
+            ed25519: Uint256,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum MuxedEd25519AccountOrString<'a> {
+            Str(&'a str),
+            String(String),
+            MuxedEd25519Account(MuxedEd25519Account),
+        }
+        match MuxedEd25519AccountOrString::deserialize(deserializer)? {
+            MuxedEd25519AccountOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedEd25519AccountOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedEd25519AccountOrString::MuxedEd25519Account(MuxedEd25519Account {
+                id,
+                ed25519,
+            }) => Ok(self::MuxedEd25519Account { id, ed25519 }),
+        }
     }
 }
 
@@ -27444,7 +27597,7 @@ impl WriteXdr for LiquidityPoolParameters {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(serde_with::SerializeDisplay)
 )]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
@@ -27471,6 +27624,35 @@ impl WriteXdr for MuxedAccountMed25519 {
             self.ed25519.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct MuxedAccountMed25519 {
+            id: u64,
+            ed25519: Uint256,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum MuxedAccountMed25519OrString<'a> {
+            Str(&'a str),
+            String(String),
+            MuxedAccountMed25519(MuxedAccountMed25519),
+        }
+        match MuxedAccountMed25519OrString::deserialize(deserializer)? {
+            MuxedAccountMed25519OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedAccountMed25519OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedAccountMed25519OrString::MuxedAccountMed25519(MuxedAccountMed25519 {
+                id,
+                ed25519,
+            }) => Ok(self::MuxedAccountMed25519 { id, ed25519 }),
+        }
     }
 }
 
@@ -45380,7 +45562,7 @@ impl WriteXdr for PublicKey {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(serde_with::SerializeDisplay)
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
@@ -45407,6 +45589,38 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
             self.payload.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct SignerKeyEd25519SignedPayload {
+            ed25519: Uint256,
+            payload: BytesM<64>,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum SignerKeyEd25519SignedPayloadOrString<'a> {
+            Str(&'a str),
+            String(String),
+            SignerKeyEd25519SignedPayload(SignerKeyEd25519SignedPayload),
+        }
+        match SignerKeyEd25519SignedPayloadOrString::deserialize(deserializer)? {
+            SignerKeyEd25519SignedPayloadOrString::Str(s) => {
+                s.parse().map_err(serde::de::Error::custom)
+            }
+            SignerKeyEd25519SignedPayloadOrString::String(s) => {
+                s.parse().map_err(serde::de::Error::custom)
+            }
+            SignerKeyEd25519SignedPayloadOrString::SignerKeyEd25519SignedPayload(
+                SignerKeyEd25519SignedPayload { ed25519, payload },
+            ) => Ok(self::SignerKeyEd25519SignedPayload { ed25519, payload }),
+        }
     }
 }
 

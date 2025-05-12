@@ -1433,54 +1433,10 @@
       ]
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "LedgerEntry": {
       "description": "LedgerEntry is an XDR Struct defines as:\n\n```text struct LedgerEntry { uint32 lastModifiedLedgerSeq; // ledger the LedgerEntry was last changed\n\nunion switch (LedgerEntryType type) { case ACCOUNT: AccountEntry account; case TRUSTLINE: TrustLineEntry trustLine; case OFFER: OfferEntry offer; case DATA: DataEntry data; case CLAIMABLE_BALANCE: ClaimableBalanceEntry claimableBalance; case LIQUIDITY_POOL: LiquidityPoolEntry liquidityPool; case CONTRACT_DATA: ContractDataEntry contractData; case CONTRACT_CODE: ContractCodeEntry contractCode; case CONFIG_SETTING: ConfigSettingEntry configSetting; case TTL: TTLEntry ttl; } data;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: LedgerEntryExtensionV1 v1; } ext; }; ```",
@@ -3112,56 +3068,10 @@
       }
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     }
   }
 }

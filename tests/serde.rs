@@ -12,7 +12,7 @@ use stellar_xdr::next as stellar_xdr;
 use stellar_xdr::{BytesM, Hash, StringM, VecM};
 
 #[cfg(feature = "curr")]
-use stellar_xdr::AccountId;
+use stellar_xdr::{AccountId, Int128Parts};
 
 #[cfg(feature = "curr")]
 use std::str::FromStr;
@@ -44,6 +44,7 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
         )?)?,
         "\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\""
     );
+    #[cfg(feature = "curr")]
 
     Ok(())
 }
@@ -73,5 +74,22 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::from_str("\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\"")?,
     );
 
+    Ok(())
+}
+
+#[test]
+fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::error::Error>> {
+    assert_eq!(
+        serde_json::to_string(&Int128Parts { hi: 1, lo: 2 })?,
+        "\"18446744073709551618\"",
+    );
+    assert_eq!(
+        serde_json::from_str::<Int128Parts>("\"18446744073709551618\"")?,
+        Int128Parts { hi: 1, lo: 2 },
+    );
+    assert_eq!(
+        serde_json::from_str::<Int128Parts>(r#"{"hi":1,"lo":2}"#)?,
+        Int128Parts { hi: 1, lo: 2 },
+    );
     Ok(())
 }

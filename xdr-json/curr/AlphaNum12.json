@@ -8,6 +8,9 @@
     "issuer"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "asset_code": {
       "$ref": "#/definitions/AssetCode12"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/AccountId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

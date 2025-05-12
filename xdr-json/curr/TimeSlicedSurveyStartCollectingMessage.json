@@ -9,6 +9,9 @@
     "surveyor_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ledger_num": {
       "type": "integer",
       "format": "uint32",
@@ -23,6 +26,7 @@
       "$ref": "#/definitions/NodeId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

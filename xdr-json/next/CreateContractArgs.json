@@ -8,6 +8,9 @@
     "executable"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "contract_id_preimage": {
       "$ref": "#/definitions/ContractIdPreimage"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/ContractExecutable"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -69,8 +73,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -81,8 +84,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -114,8 +116,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -131,8 +132,7 @@
             "address": {
               "$ref": "#/definitions/ContractIdPreimageFromAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -143,8 +143,7 @@
             "asset": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

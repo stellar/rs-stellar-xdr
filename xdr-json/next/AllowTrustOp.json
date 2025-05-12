@@ -9,6 +9,9 @@
     "trustor"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "asset": {
       "$ref": "#/definitions/AssetCode"
     },
@@ -21,6 +24,7 @@
       "$ref": "#/definitions/AccountId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

@@ -18,8 +18,7 @@
         "time": {
           "$ref": "#/definitions/TimeBounds"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -30,16 +29,19 @@
         "v2": {
           "$ref": "#/definitions/PreconditionsV2"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "LedgerBounds": {
       "description": "LedgerBounds is an XDR Struct defines as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
@@ -119,8 +121,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "SignerKey": {
       "type": "string"
@@ -143,9 +144,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     }
   }
 }

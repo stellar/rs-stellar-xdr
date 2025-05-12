@@ -12,12 +12,14 @@
     "send_asset"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "dest_asset": {
       "$ref": "#/definitions/Asset"
     },
     "dest_min": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "destination": {
       "$ref": "#/definitions/MuxedAccount"
@@ -30,13 +32,13 @@
       "maxItems": 5
     },
     "send_amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "send_asset": {
       "$ref": "#/definitions/Asset"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -91,8 +93,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -103,8 +104,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

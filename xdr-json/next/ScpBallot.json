@@ -8,6 +8,9 @@
     "value"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "counter": {
       "type": "integer",
       "format": "uint32",
@@ -17,6 +20,7 @@
       "$ref": "#/definitions/Value"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "Value": {
       "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",

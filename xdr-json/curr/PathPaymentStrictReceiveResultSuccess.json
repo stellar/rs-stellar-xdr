@@ -8,6 +8,9 @@
     "offers"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "last": {
       "$ref": "#/definitions/SimplePaymentResult"
     },
@@ -19,6 +22,7 @@
       "maxItems": 4294967295
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -73,8 +77,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -85,8 +88,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -108,8 +110,7 @@
             "v0": {
               "$ref": "#/definitions/ClaimOfferAtomV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -120,8 +121,7 @@
             "order_book": {
               "$ref": "#/definitions/ClaimOfferAtom"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -132,8 +132,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/ClaimLiquidityAtom"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -149,12 +148,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -180,12 +177,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -194,8 +189,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -215,12 +209,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -229,8 +221,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_ed25519": {
           "type": "string",
@@ -254,8 +245,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"

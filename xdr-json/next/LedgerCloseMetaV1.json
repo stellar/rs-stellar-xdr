@@ -15,6 +15,9 @@
     "upgrades_processing"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "evicted_keys": {
       "type": "array",
       "items": {
@@ -36,9 +39,7 @@
       "maxItems": 4294967295
     },
     "total_byte_size_of_live_soroban_state": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "tx_processing": {
       "type": "array",
@@ -65,6 +66,7 @@
       "maxItems": 4294967295
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntry": {
       "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
@@ -85,8 +87,7 @@
           "$ref": "#/definitions/AccountId"
         },
         "balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/AccountEntryExt"
@@ -151,8 +152,7 @@
             "v1": {
               "$ref": "#/definitions/AccountEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -190,8 +190,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -245,8 +244,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -297,11 +295,9 @@
           ],
           "properties": {
             "success": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -390,8 +386,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -402,8 +397,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -476,8 +470,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -488,8 +481,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -500,8 +492,7 @@
             "pool_share": {
               "$ref": "#/definitions/LiquidityPoolParameters"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -514,8 +505,7 @@
       ],
       "properties": {
         "limit": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "line": {
           "$ref": "#/definitions/ChangeTrustAsset"
@@ -549,8 +539,7 @@
             "v0": {
               "$ref": "#/definitions/ClaimOfferAtomV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -561,8 +550,7 @@
             "order_book": {
               "$ref": "#/definitions/ClaimOfferAtom"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -573,8 +561,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/ClaimLiquidityAtom"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -614,12 +601,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -645,12 +630,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -659,8 +642,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -680,12 +662,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -694,8 +674,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_ed25519": {
           "type": "string",
@@ -728,8 +707,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -744,8 +722,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -763,8 +740,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -773,11 +749,9 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -786,11 +760,9 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -806,8 +778,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -845,8 +816,7 @@
             "v1": {
               "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -890,8 +860,7 @@
             "claimant_type_v0": {
               "$ref": "#/definitions/ClaimantV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -943,8 +912,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -975,8 +943,7 @@
       ],
       "properties": {
         "fee_tx_size1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_txs_size_bytes": {
           "type": "integer",
@@ -1001,16 +968,13 @@
       ],
       "properties": {
         "fee_rate_per_instructions_increment": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_memory_limit": {
           "type": "integer",
@@ -1028,8 +992,7 @@
       ],
       "properties": {
         "fee_contract_events1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_contract_events_size_bytes": {
           "type": "integer",
@@ -1060,8 +1023,7 @@
       ],
       "properties": {
         "fee_historical1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1074,8 +1036,7 @@
       ],
       "properties": {
         "fee_write1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_in_memory_read_entries": {
           "type": "integer",
@@ -1106,16 +1067,13 @@
       ],
       "properties": {
         "fee_disk_read1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_disk_read_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_write_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_disk_read_bytes": {
           "type": "integer",
@@ -1138,12 +1096,10 @@
           "minimum": 0.0
         },
         "rent_fee1_kb_soroban_state_size_high": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "rent_fee1_kb_soroban_state_size_low": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "soroban_state_rent_fee_growth_factor": {
           "type": "integer",
@@ -1151,8 +1107,7 @@
           "minimum": 0.0
         },
         "soroban_state_target_size_bytes": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_disk_read_bytes": {
           "type": "integer",
@@ -1191,7 +1146,7 @@
       }
     },
     "ConfigSettingEntry": {
-      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; }; ```",
+      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -1204,8 +1159,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1216,8 +1170,7 @@
             "contract_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1228,8 +1181,7 @@
             "contract_ledger_cost_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1240,8 +1192,7 @@
             "contract_historical_data_v0": {
               "$ref": "#/definitions/ConfigSettingContractHistoricalDataV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1252,8 +1203,7 @@
             "contract_events_v0": {
               "$ref": "#/definitions/ConfigSettingContractEventsV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1264,8 +1214,7 @@
             "contract_bandwidth_v0": {
               "$ref": "#/definitions/ConfigSettingContractBandwidthV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1276,8 +1225,7 @@
             "contract_cost_params_cpu_instructions": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1288,8 +1236,7 @@
             "contract_cost_params_memory_bytes": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1302,8 +1249,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1316,8 +1262,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1328,8 +1273,7 @@
             "state_archival": {
               "$ref": "#/definitions/StateArchivalSettings"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1340,8 +1284,7 @@
             "contract_execution_lanes": {
               "$ref": "#/definitions/ConfigSettingContractExecutionLanesV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1352,14 +1295,11 @@
             "live_soroban_state_size_window": {
               "type": "array",
               "items": {
-                "type": "integer",
-                "format": "uint64",
-                "minimum": 0.0
+                "type": "string"
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1370,8 +1310,7 @@
             "eviction_iterator": {
               "$ref": "#/definitions/EvictionIterator"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1382,8 +1321,7 @@
             "contract_parallel_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1394,13 +1332,23 @@
             "contract_ledger_cost_ext_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
             }
-          },
-          "additionalProperties": false
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "scp_timing"
+          ],
+          "properties": {
+            "scp_timing": {
+              "$ref": "#/definitions/ConfigSettingScpTiming"
+            }
+          }
         }
       ]
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -1418,8 +1366,47 @@
         "live_soroban_state_size_window",
         "eviction_iterator",
         "contract_parallel_compute_v0",
-        "contract_ledger_cost_ext_v0"
+        "contract_ledger_cost_ext_v0",
+        "scp_timing"
       ]
+    },
+    "ConfigSettingScpTiming": {
+      "description": "ConfigSettingScpTiming is an XDR Struct defines as:\n\n```text struct ConfigSettingSCPTiming { uint32 ledgerTargetCloseTimeMilliseconds; uint32 nominationTimeoutInitialMilliseconds; uint32 nominationTimeoutIncrementMilliseconds; uint32 ballotTimeoutInitialMilliseconds; uint32 ballotTimeoutIncrementMilliseconds; }; ```",
+      "type": "object",
+      "required": [
+        "ballot_timeout_increment_milliseconds",
+        "ballot_timeout_initial_milliseconds",
+        "ledger_target_close_time_milliseconds",
+        "nomination_timeout_increment_milliseconds",
+        "nomination_timeout_initial_milliseconds"
+      ],
+      "properties": {
+        "ballot_timeout_increment_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ballot_timeout_initial_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ledger_target_close_time_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "nomination_timeout_increment_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "nomination_timeout_initial_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
     },
     "ConfigUpgradeSetKey": {
       "description": "ConfigUpgradeSetKey is an XDR Struct defines as:\n\n```text struct ConfigUpgradeSetKey { ContractID contractID; Hash contentHash; }; ```",
@@ -1557,8 +1544,7 @@
             "v1": {
               "$ref": "#/definitions/ContractCodeEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1588,15 +1574,13 @@
       ],
       "properties": {
         "const_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
         },
         "linear_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1686,8 +1670,7 @@
             "v0": {
               "$ref": "#/definitions/ContractEventV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1742,8 +1725,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1762,8 +1744,7 @@
             "address": {
               "$ref": "#/definitions/ContractIdPreimageFromAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1774,8 +1755,7 @@
             "asset": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1811,8 +1791,7 @@
           "$ref": "#/definitions/AccountId"
         },
         "starting_balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1837,8 +1816,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -1874,8 +1852,7 @@
             "success": {
               "$ref": "#/definitions/ClaimableBalanceId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1930,8 +1907,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -2028,9 +2004,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "EndSponsoringFutureReservesResult": {
       "description": "EndSponsoringFutureReservesResult is an XDR Union defines as:\n\n```text union EndSponsoringFutureReservesResult switch ( EndSponsoringFutureReservesResultCode code) { case END_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED: void; }; ```",
@@ -2050,9 +2024,7 @@
       ],
       "properties": {
         "bucket_file_offset": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "bucket_list_level": {
           "type": "integer",
@@ -2113,8 +2085,7 @@
           "$ref": "#/definitions/FeeBumpTransactionExt"
         },
         "fee": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "fee_source": {
           "$ref": "#/definitions/MuxedAccount"
@@ -2163,8 +2134,7 @@
             "tx": {
               "$ref": "#/definitions/TransactionV1Envelope"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2180,8 +2150,7 @@
             "v1": {
               "$ref": "#/definitions/TransactionSetV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2197,8 +2166,7 @@
             "invoke_contract": {
               "$ref": "#/definitions/InvokeContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2209,8 +2177,7 @@
             "create_contract": {
               "$ref": "#/definitions/CreateContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2223,8 +2190,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2235,8 +2201,7 @@
             "create_contract_v2": {
               "$ref": "#/definitions/CreateContractArgsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2249,8 +2214,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "destination": {
           "$ref": "#/definitions/AccountId"
@@ -2279,8 +2243,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2297,8 +2260,7 @@
           "$ref": "#/definitions/InnerTransactionResultExt"
         },
         "fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "result": {
           "$ref": "#/definitions/InnerTransactionResultResult"
@@ -2368,8 +2330,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2384,60 +2345,15 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "InvokeContractArgs": {
       "description": "InvokeContractArgs is an XDR Struct defines as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
@@ -2509,8 +2425,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2552,8 +2467,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerCloseMetaExtV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2569,8 +2483,7 @@
           "$ref": "#/definitions/ExtensionPoint"
         },
         "soroban_fee_write1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2624,8 +2537,7 @@
             "created": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2636,8 +2548,7 @@
             "updated": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2648,8 +2559,7 @@
             "removed": {
               "$ref": "#/definitions/LedgerKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2660,8 +2570,7 @@
             "state": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2672,8 +2581,7 @@
             "restored": {
               "$ref": "#/definitions/LedgerEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2697,8 +2605,7 @@
             "account": {
               "$ref": "#/definitions/AccountEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2709,8 +2616,7 @@
             "trustline": {
               "$ref": "#/definitions/TrustLineEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2721,8 +2627,7 @@
             "offer": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2733,8 +2638,7 @@
             "data": {
               "$ref": "#/definitions/DataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2745,8 +2649,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/ClaimableBalanceEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2757,8 +2660,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LiquidityPoolEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2769,8 +2671,7 @@
             "contract_data": {
               "$ref": "#/definitions/ContractDataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2781,8 +2682,7 @@
             "contract_code": {
               "$ref": "#/definitions/ContractCodeEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2793,8 +2693,7 @@
             "config_setting": {
               "$ref": "#/definitions/ConfigSettingEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2805,8 +2704,7 @@
             "ttl": {
               "$ref": "#/definitions/TtlEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2828,8 +2726,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2922,13 +2819,10 @@
           "$ref": "#/definitions/LedgerHeaderExt"
         },
         "fee_pool": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "id_pool": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "inflation_seq": {
           "type": "integer",
@@ -2973,8 +2867,7 @@
           "minItems": 4
         },
         "total_coins": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_set_result_hash": {
           "type": "string",
@@ -3003,8 +2896,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerHeaderExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3076,8 +2968,7 @@
             "account": {
               "$ref": "#/definitions/LedgerKeyAccount"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3088,8 +2979,7 @@
             "trustline": {
               "$ref": "#/definitions/LedgerKeyTrustLine"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3100,8 +2990,7 @@
             "offer": {
               "$ref": "#/definitions/LedgerKeyOffer"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3112,8 +3001,7 @@
             "data": {
               "$ref": "#/definitions/LedgerKeyData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3124,8 +3012,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/LedgerKeyClaimableBalance"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3136,8 +3023,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LedgerKeyLiquidityPool"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3148,8 +3034,7 @@
             "contract_data": {
               "$ref": "#/definitions/LedgerKeyContractData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3160,8 +3045,7 @@
             "contract_code": {
               "$ref": "#/definitions/LedgerKeyContractCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3172,8 +3056,7 @@
             "config_setting": {
               "$ref": "#/definitions/LedgerKeyConfigSetting"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3184,8 +3067,7 @@
             "ttl": {
               "$ref": "#/definitions/LedgerKeyTtl"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3298,8 +3180,7 @@
       ],
       "properties": {
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -3374,8 +3255,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3388,8 +3268,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3402,8 +3281,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3416,8 +3294,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3430,8 +3307,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3442,8 +3318,7 @@
             "config": {
               "$ref": "#/definitions/ConfigUpgradeSetKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3456,8 +3331,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3470,12 +3344,10 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -3515,12 +3387,10 @@
           "$ref": "#/definitions/PoolId"
         },
         "max_amount_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "max_amount_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "max_price": {
           "$ref": "#/definitions/Price"
@@ -3572,8 +3442,7 @@
             "liquidity_pool_constant_product": {
               "$ref": "#/definitions/LiquidityPoolEntryConstantProduct"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3592,20 +3461,16 @@
           "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
         },
         "pool_shares_trust_line_count": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_pool_shares": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -3621,8 +3486,7 @@
             "liquidity_pool_constant_product": {
               "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3637,19 +3501,16 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "liquidity_pool_id": {
           "$ref": "#/definitions/PoolId"
         },
         "min_amount_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "min_amount_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -3677,15 +3538,13 @@
       ],
       "properties": {
         "buy_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -3724,8 +3583,7 @@
             "success": {
               "$ref": "#/definitions/ManageOfferSuccessResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3800,8 +3658,7 @@
             "created": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3812,8 +3669,7 @@
             "updated": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3829,15 +3685,13 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -3876,8 +3730,7 @@
             "success": {
               "$ref": "#/definitions/ManageOfferSuccessResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3899,8 +3752,7 @@
             "text": {
               "$ref": "#/definitions/StringM<28>"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3909,12 +3761,9 @@
           ],
           "properties": {
             "id": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3929,8 +3778,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -3945,8 +3793,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -3971,8 +3818,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -3986,8 +3832,7 @@
           "minimum": 0.0
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -4048,8 +3893,7 @@
             "create_account": {
               "$ref": "#/definitions/CreateAccountOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4060,8 +3904,7 @@
             "payment": {
               "$ref": "#/definitions/PaymentOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4072,8 +3915,7 @@
             "path_payment_strict_receive": {
               "$ref": "#/definitions/PathPaymentStrictReceiveOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4084,8 +3926,7 @@
             "manage_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4096,8 +3937,7 @@
             "create_passive_sell_offer": {
               "$ref": "#/definitions/CreatePassiveSellOfferOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4108,8 +3948,7 @@
             "set_options": {
               "$ref": "#/definitions/SetOptionsOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4120,8 +3959,7 @@
             "change_trust": {
               "$ref": "#/definitions/ChangeTrustOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4132,8 +3970,7 @@
             "allow_trust": {
               "$ref": "#/definitions/AllowTrustOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4144,8 +3981,7 @@
             "account_merge": {
               "$ref": "#/definitions/MuxedAccount"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4156,8 +3992,7 @@
             "manage_data": {
               "$ref": "#/definitions/ManageDataOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4168,8 +4003,7 @@
             "bump_sequence": {
               "$ref": "#/definitions/BumpSequenceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4180,8 +4014,7 @@
             "manage_buy_offer": {
               "$ref": "#/definitions/ManageBuyOfferOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4192,8 +4025,7 @@
             "path_payment_strict_send": {
               "$ref": "#/definitions/PathPaymentStrictSendOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4204,8 +4036,7 @@
             "create_claimable_balance": {
               "$ref": "#/definitions/CreateClaimableBalanceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4216,8 +4047,7 @@
             "claim_claimable_balance": {
               "$ref": "#/definitions/ClaimClaimableBalanceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4228,8 +4058,7 @@
             "begin_sponsoring_future_reserves": {
               "$ref": "#/definitions/BeginSponsoringFutureReservesOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4240,8 +4069,7 @@
             "revoke_sponsorship": {
               "$ref": "#/definitions/RevokeSponsorshipOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4252,8 +4080,7 @@
             "clawback": {
               "$ref": "#/definitions/ClawbackOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4264,8 +4091,7 @@
             "clawback_claimable_balance": {
               "$ref": "#/definitions/ClawbackClaimableBalanceOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4276,8 +4102,7 @@
             "set_trust_line_flags": {
               "$ref": "#/definitions/SetTrustLineFlagsOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4288,8 +4113,7 @@
             "liquidity_pool_deposit": {
               "$ref": "#/definitions/LiquidityPoolDepositOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4300,8 +4124,7 @@
             "liquidity_pool_withdraw": {
               "$ref": "#/definitions/LiquidityPoolWithdrawOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4312,8 +4135,7 @@
             "invoke_host_function": {
               "$ref": "#/definitions/InvokeHostFunctionOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4324,8 +4146,7 @@
             "extend_footprint_ttl": {
               "$ref": "#/definitions/ExtendFootprintTtlOp"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4336,8 +4157,7 @@
             "restore_footprint": {
               "$ref": "#/definitions/RestoreFootprintOp"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4400,8 +4220,7 @@
             "op_inner": {
               "$ref": "#/definitions/OperationResultTr"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4417,8 +4236,7 @@
             "create_account": {
               "$ref": "#/definitions/CreateAccountResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4429,8 +4247,7 @@
             "payment": {
               "$ref": "#/definitions/PaymentResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4441,8 +4258,7 @@
             "path_payment_strict_receive": {
               "$ref": "#/definitions/PathPaymentStrictReceiveResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4453,8 +4269,7 @@
             "manage_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4465,8 +4280,7 @@
             "create_passive_sell_offer": {
               "$ref": "#/definitions/ManageSellOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4477,8 +4291,7 @@
             "set_options": {
               "$ref": "#/definitions/SetOptionsResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4489,8 +4302,7 @@
             "change_trust": {
               "$ref": "#/definitions/ChangeTrustResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4501,8 +4313,7 @@
             "allow_trust": {
               "$ref": "#/definitions/AllowTrustResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4513,8 +4324,7 @@
             "account_merge": {
               "$ref": "#/definitions/AccountMergeResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4525,8 +4335,7 @@
             "inflation": {
               "$ref": "#/definitions/InflationResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4537,8 +4346,7 @@
             "manage_data": {
               "$ref": "#/definitions/ManageDataResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4549,8 +4357,7 @@
             "bump_sequence": {
               "$ref": "#/definitions/BumpSequenceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4561,8 +4368,7 @@
             "manage_buy_offer": {
               "$ref": "#/definitions/ManageBuyOfferResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4573,8 +4379,7 @@
             "path_payment_strict_send": {
               "$ref": "#/definitions/PathPaymentStrictSendResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4585,8 +4390,7 @@
             "create_claimable_balance": {
               "$ref": "#/definitions/CreateClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4597,8 +4401,7 @@
             "claim_claimable_balance": {
               "$ref": "#/definitions/ClaimClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4609,8 +4412,7 @@
             "begin_sponsoring_future_reserves": {
               "$ref": "#/definitions/BeginSponsoringFutureReservesResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4621,8 +4423,7 @@
             "end_sponsoring_future_reserves": {
               "$ref": "#/definitions/EndSponsoringFutureReservesResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4633,8 +4434,7 @@
             "revoke_sponsorship": {
               "$ref": "#/definitions/RevokeSponsorshipResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4645,8 +4445,7 @@
             "clawback": {
               "$ref": "#/definitions/ClawbackResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4657,8 +4456,7 @@
             "clawback_claimable_balance": {
               "$ref": "#/definitions/ClawbackClaimableBalanceResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4669,8 +4467,7 @@
             "set_trust_line_flags": {
               "$ref": "#/definitions/SetTrustLineFlagsResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4681,8 +4478,7 @@
             "liquidity_pool_deposit": {
               "$ref": "#/definitions/LiquidityPoolDepositResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4693,8 +4489,7 @@
             "liquidity_pool_withdraw": {
               "$ref": "#/definitions/LiquidityPoolWithdrawResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4705,8 +4500,7 @@
             "invoke_host_function": {
               "$ref": "#/definitions/InvokeHostFunctionResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4717,8 +4511,7 @@
             "extend_footprint_ttl": {
               "$ref": "#/definitions/ExtendFootprintTtlResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4729,8 +4522,7 @@
             "restore_footprint": {
               "$ref": "#/definitions/RestoreFootprintResult"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4750,11 +4542,11 @@
       ],
       "properties": {
         "base_fee": {
+          "default": null,
           "type": [
-            "integer",
+            "string",
             "null"
-          ],
-          "format": "int64"
+          ]
         },
         "execution_stages": {
           "type": "array",
@@ -4778,8 +4570,7 @@
       ],
       "properties": {
         "dest_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "dest_asset": {
           "$ref": "#/definitions/Asset"
@@ -4798,8 +4589,7 @@
           "$ref": "#/definitions/Asset"
         },
         "send_max": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -4831,8 +4621,7 @@
             "success": {
               "$ref": "#/definitions/PathPaymentStrictReceiveResultSuccess"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4843,8 +4632,7 @@
             "no_issuer": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4884,8 +4672,7 @@
           "$ref": "#/definitions/Asset"
         },
         "dest_min": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "destination": {
           "$ref": "#/definitions/MuxedAccount"
@@ -4898,8 +4685,7 @@
           "maxItems": 5
         },
         "send_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "send_asset": {
           "$ref": "#/definitions/Asset"
@@ -4934,8 +4720,7 @@
             "success": {
               "$ref": "#/definitions/PathPaymentStrictSendResultSuccess"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -4946,8 +4731,7 @@
             "no_issuer": {
               "$ref": "#/definitions/Asset"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -4981,8 +4765,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -5029,8 +4812,7 @@
             "time": {
               "$ref": "#/definitions/TimeBounds"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5041,8 +4823,7 @@
             "v2": {
               "$ref": "#/definitions/PreconditionsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5154,8 +4935,7 @@
             "ledger_entry": {
               "$ref": "#/definitions/LedgerKey"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5166,8 +4946,7 @@
             "signer": {
               "$ref": "#/definitions/RevokeSponsorshipOpSigner"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5244,8 +5023,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5256,8 +5034,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5268,8 +5045,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5280,8 +5056,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5292,8 +5067,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5304,8 +5078,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5316,8 +5089,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5328,8 +5100,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5340,8 +5111,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5352,8 +5122,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5405,8 +5174,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -5419,7 +5187,7 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -5437,8 +5205,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5449,8 +5216,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5463,8 +5229,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5476,8 +5241,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5486,12 +5250,9 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5500,11 +5261,9 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5515,8 +5274,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5527,8 +5285,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5539,8 +5296,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5551,8 +5307,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5563,8 +5318,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5575,8 +5329,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5587,8 +5340,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5599,8 +5351,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5611,8 +5362,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5630,8 +5380,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5649,8 +5398,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5661,20 +5409,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "ledger_key_nonce"
-          ],
-          "properties": {
-            "ledger_key_nonce": {
-              "$ref": "#/definitions/ScNonceKey"
-            }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5685,8 +5420,18 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ledger_key_nonce"
+          ],
+          "properties": {
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
+            }
+          }
         }
       ]
     },
@@ -5744,8 +5489,7 @@
             "v0": {
               "$ref": "#/definitions/ScpHistoryEntryV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -5847,9 +5591,7 @@
           "$ref": "#/definitions/ScpStatementPledges"
         },
         "slot_index": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },
@@ -5929,8 +5671,7 @@
             "prepare": {
               "$ref": "#/definitions/ScpStatementPrepare"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5941,8 +5682,7 @@
             "confirm": {
               "$ref": "#/definitions/ScpStatementConfirm"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5953,8 +5693,7 @@
             "externalize": {
               "$ref": "#/definitions/ScpStatementExternalize"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -5965,8 +5704,7 @@
             "nominate": {
               "$ref": "#/definitions/ScpNomination"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6024,8 +5762,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "SetOptionsOp": {
       "description": "SetOptionsOp is an XDR Struct defines as:\n\n```text struct SetOptionsOp { AccountID* inflationDest; // sets the inflation destination\n\nuint32* clearFlags; // which flags to clear uint32* setFlags;   // which flags to set\n\n// account threshold manipulation uint32* masterWeight; // weight of the master account uint32* lowThreshold; uint32* medThreshold; uint32* highThreshold;\n\nstring32* homeDomain; // sets the home domain\n\n// Add, update or remove a signer for the account // signer is deleted if the weight is 0 Signer* signer; }; ```",
@@ -6206,8 +5943,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -6231,8 +5967,7 @@
           "$ref": "#/definitions/ScAddress"
         },
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "signature": {
           "$ref": "#/definitions/ScVal"
@@ -6272,8 +6007,7 @@
             "contract_fn": {
               "$ref": "#/definitions/InvokeContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6284,8 +6018,7 @@
             "create_contract_host_fn": {
               "$ref": "#/definitions/CreateContractArgs"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6296,8 +6029,7 @@
             "create_contract_v2_host_fn": {
               "$ref": "#/definitions/CreateContractArgsV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6339,8 +6071,7 @@
             "address": {
               "$ref": "#/definitions/SorobanAddressCredentials"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6405,8 +6136,7 @@
           "$ref": "#/definitions/SorobanTransactionDataExt"
         },
         "resource_fee": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "resources": {
           "$ref": "#/definitions/SorobanResources"
@@ -6431,8 +6161,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanResourcesExtV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6486,8 +6215,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanTransactionMetaExtV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6505,16 +6233,13 @@
           "$ref": "#/definitions/ExtensionPoint"
         },
         "rent_fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_non_refundable_resource_fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_refundable_resource_fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -6603,8 +6328,7 @@
           "minimum": 0.0
         },
         "persistent_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "starting_eviction_scan_level": {
           "type": "integer",
@@ -6612,8 +6336,7 @@
           "minimum": 0.0
         },
         "temp_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -6667,8 +6390,7 @@
             "signed": {
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6714,9 +6436,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "Transaction": {
       "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
@@ -6772,8 +6492,7 @@
             "tx_v0": {
               "$ref": "#/definitions/TransactionV0Envelope"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6784,8 +6503,7 @@
             "tx": {
               "$ref": "#/definitions/TransactionV1Envelope"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6796,8 +6514,7 @@
             "tx_fee_bump": {
               "$ref": "#/definitions/FeeBumpTransactionEnvelope"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6844,8 +6561,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanTransactionData"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -6865,8 +6581,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6877,8 +6592,7 @@
             "v1": {
               "$ref": "#/definitions/TransactionMetaV1"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6889,8 +6603,7 @@
             "v2": {
               "$ref": "#/definitions/TransactionMetaV2"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6901,8 +6614,7 @@
             "v3": {
               "$ref": "#/definitions/TransactionMetaV3"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -6913,8 +6625,7 @@
             "v4": {
               "$ref": "#/definitions/TransactionMetaV4"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7070,8 +6781,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7082,8 +6792,7 @@
             "v1": {
               "$ref": "#/definitions/ParallelTxsComponent"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7100,8 +6809,7 @@
           "$ref": "#/definitions/TransactionResultExt"
         },
         "fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "result": {
           "$ref": "#/definitions/TransactionResultResult"
@@ -7187,8 +6895,7 @@
             "tx_fee_bump_inner_success": {
               "$ref": "#/definitions/InnerTransactionResultPair"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7199,8 +6906,7 @@
             "tx_fee_bump_inner_failed": {
               "$ref": "#/definitions/InnerTransactionResultPair"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7215,8 +6921,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7231,8 +6936,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7377,8 +7081,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7389,8 +7092,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -7401,8 +7103,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7425,8 +7126,7 @@
           "$ref": "#/definitions/TrustLineAsset"
         },
         "balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/TrustLineEntryExt"
@@ -7437,8 +7137,7 @@
           "minimum": 0.0
         },
         "limit": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -7460,8 +7159,7 @@
             "v1": {
               "$ref": "#/definitions/TrustLineEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7523,8 +7221,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7562,8 +7259,7 @@
             "txset_comp_txs_maybe_discounted_fee": {
               "$ref": "#/definitions/TxSetComponentTxsMaybeDiscountedFee"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -7575,11 +7271,11 @@
       ],
       "properties": {
         "base_fee": {
+          "default": null,
           "type": [
-            "integer",
+            "string",
             "null"
-          ],
-          "format": "int64"
+          ]
         },
         "txs": {
           "type": "array",
@@ -7591,56 +7287,10 @@
       }
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UpgradeEntryMeta": {
       "description": "UpgradeEntryMeta is an XDR Struct defines as:\n\n```text struct UpgradeEntryMeta { LedgerUpgrade upgrade; LedgerEntryChanges changes; }; ```",

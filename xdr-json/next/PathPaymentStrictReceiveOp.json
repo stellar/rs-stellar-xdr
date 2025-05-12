@@ -12,9 +12,11 @@
     "send_max"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "dest_amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "dest_asset": {
       "$ref": "#/definitions/Asset"
@@ -33,10 +35,10 @@
       "$ref": "#/definitions/Asset"
     },
     "send_max": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -91,8 +93,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -103,8 +104,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

@@ -11,26 +11,26 @@
     "total_pool_shares"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "params": {
       "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
     },
     "pool_shares_trust_line_count": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "reserve_a": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "reserve_b": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "total_pool_shares": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -85,8 +85,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -97,8 +96,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

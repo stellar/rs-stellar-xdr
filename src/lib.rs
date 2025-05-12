@@ -136,3 +136,9 @@ pub mod next;
 
 #[cfg(feature = "cli")]
 pub mod cli;
+
+#[cfg(all(any(feature = "curr", feature = "next"), feature = "alloc"))]
+pub(crate) mod num256;
+
+#[cfg(all(any(feature = "curr", feature = "next"), feature = "alloc"))]
+pub(crate) mod num128;

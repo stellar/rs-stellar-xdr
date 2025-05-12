@@ -1,26 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "Int256Parts",
-  "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-  "type": "object",
-  "required": [
-    "hi_hi",
-    "hi_lo",
-    "lo_hi",
-    "lo_lo"
-  ],
-  "properties": {
-    "hi_hi": {
-      "type": "string"
-    },
-    "hi_lo": {
-      "type": "string"
-    },
-    "lo_hi": {
-      "type": "string"
-    },
-    "lo_lo": {
-      "type": "string"
-    }
-  }
+  "type": "string"
 }

@@ -13,9 +13,7 @@
       "type": "string"
     },
     "expiration": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "pubkey": {
       "$ref": "#/definitions/Curve25519Public"

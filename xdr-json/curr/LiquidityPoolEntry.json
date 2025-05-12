@@ -146,20 +146,16 @@
           "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
         },
         "pool_shares_trust_line_count": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_pool_shares": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },

@@ -113,8 +113,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   }
 }

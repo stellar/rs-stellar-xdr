@@ -17,8 +17,7 @@
       "$ref": "#/definitions/FeeBumpTransactionExt"
     },
     "fee": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "fee_source": {
       "$ref": "#/definitions/MuxedAccount"
@@ -205,8 +204,7 @@
       ],
       "properties": {
         "limit": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "line": {
           "$ref": "#/definitions/ChangeTrustAsset"
@@ -289,8 +287,7 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         },
@@ -301,8 +298,7 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         }
@@ -365,8 +361,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -377,7 +372,7 @@
       }
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -395,7 +390,8 @@
         "live_soroban_state_size_window",
         "eviction_iterator",
         "contract_parallel_compute_v0",
-        "contract_ledger_cost_ext_v0"
+        "contract_ledger_cost_ext_v0",
+        "scp_timing"
       ]
     },
     "ContractDataDurability": {
@@ -491,8 +487,7 @@
           "$ref": "#/definitions/AccountId"
         },
         "starting_balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -506,8 +501,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -572,8 +566,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -615,9 +608,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "ExtendFootprintTtlOp": {
       "description": "ExtendFootprintTtlOp is an XDR Struct defines as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
@@ -719,54 +710,10 @@
       ]
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "InvokeContractArgs": {
       "description": "InvokeContractArgs is an XDR Struct defines as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
@@ -1080,8 +1027,7 @@
       ],
       "properties": {
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -1156,12 +1102,10 @@
           "$ref": "#/definitions/PoolId"
         },
         "max_amount_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "max_amount_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "max_price": {
           "$ref": "#/definitions/Price"
@@ -1198,19 +1142,16 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "liquidity_pool_id": {
           "$ref": "#/definitions/PoolId"
         },
         "min_amount_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "min_amount_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1226,15 +1167,13 @@
       ],
       "properties": {
         "buy_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -1278,15 +1217,13 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -1323,9 +1260,7 @@
           ],
           "properties": {
             "id": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           }
         },
@@ -1686,8 +1621,7 @@
       ],
       "properties": {
         "dest_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "dest_asset": {
           "$ref": "#/definitions/Asset"
@@ -1706,8 +1640,7 @@
           "$ref": "#/definitions/Asset"
         },
         "send_max": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1727,8 +1660,7 @@
           "$ref": "#/definitions/Asset"
         },
         "dest_min": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "destination": {
           "$ref": "#/definitions/MuxedAccount"
@@ -1741,8 +1673,7 @@
           "maxItems": 5
         },
         "send_amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "send_asset": {
           "$ref": "#/definitions/Asset"
@@ -1759,8 +1690,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -2131,8 +2061,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2145,7 +2074,7 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -2208,9 +2137,7 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           }
         },
@@ -2221,8 +2148,7 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         },
@@ -2375,22 +2301,22 @@
         {
           "type": "object",
           "required": [
-            "ledger_key_nonce"
+            "contract_instance"
           ],
           "properties": {
-            "ledger_key_nonce": {
-              "$ref": "#/definitions/ScNonceKey"
+            "contract_instance": {
+              "$ref": "#/definitions/ScContractInstance"
             }
           }
         },
         {
           "type": "object",
           "required": [
-            "contract_instance"
+            "ledger_key_nonce"
           ],
           "properties": {
-            "contract_instance": {
-              "$ref": "#/definitions/ScContractInstance"
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
             }
           }
         }
@@ -2406,8 +2332,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "SetOptionsOp": {
       "description": "SetOptionsOp is an XDR Struct defines as:\n\n```text struct SetOptionsOp { AccountID* inflationDest; // sets the inflation destination\n\nuint32* clearFlags; // which flags to clear uint32* setFlags;   // which flags to set\n\n// account threshold manipulation uint32* masterWeight; // weight of the master account uint32* lowThreshold; uint32* medThreshold; uint32* highThreshold;\n\nstring32* homeDomain; // sets the home domain\n\n// Add, update or remove a signer for the account // signer is deleted if the weight is 0 Signer* signer; }; ```",
@@ -2563,8 +2488,7 @@
           "$ref": "#/definitions/ScAddress"
         },
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "signature": {
           "$ref": "#/definitions/ScVal"
@@ -2733,8 +2657,7 @@
           "$ref": "#/definitions/SorobanTransactionDataExt"
         },
         "resource_fee": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "resources": {
           "$ref": "#/definitions/SorobanResources"
@@ -2805,9 +2728,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "Transaction": {
       "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
@@ -2938,56 +2859,10 @@
       ]
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     }
   }
 }

@@ -15,8 +15,7 @@
       "$ref": "#/definitions/AccountId"
     },
     "starting_balance": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
   "unevaluatedProperties": false,

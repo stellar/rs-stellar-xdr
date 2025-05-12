@@ -45,13 +45,10 @@
       "$ref": "#/definitions/LedgerHeaderExt"
     },
     "fee_pool": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "id_pool": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "inflation_seq": {
       "type": "integer",
@@ -96,8 +93,7 @@
       "minItems": 4
     },
     "total_coins": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "tx_set_result_hash": {
       "type": "string",
@@ -238,9 +234,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "UpgradeType": {
       "description": "UpgradeType is an XDR Typedef defines as:\n\n```text typedef opaque UpgradeType<128>; ```",

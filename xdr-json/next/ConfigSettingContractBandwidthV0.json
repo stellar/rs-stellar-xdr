@@ -13,8 +13,7 @@
       "type": "string"
     },
     "fee_tx_size1_kb": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ledger_max_txs_size_bytes": {
       "type": "integer",

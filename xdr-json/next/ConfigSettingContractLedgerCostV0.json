@@ -25,16 +25,13 @@
       "type": "string"
     },
     "fee_disk_read1_kb": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "fee_disk_read_ledger_entry": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "fee_write_ledger_entry": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ledger_max_disk_read_bytes": {
       "type": "integer",
@@ -57,12 +54,10 @@
       "minimum": 0.0
     },
     "rent_fee1_kb_soroban_state_size_high": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "rent_fee1_kb_soroban_state_size_low": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "soroban_state_rent_fee_growth_factor": {
       "type": "integer",
@@ -70,8 +65,7 @@
       "minimum": 0.0
     },
     "soroban_state_target_size_bytes": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "tx_max_disk_read_bytes": {
       "type": "integer",

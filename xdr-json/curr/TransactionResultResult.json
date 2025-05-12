@@ -108,8 +108,7 @@
           ],
           "properties": {
             "success": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         }
@@ -294,12 +293,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -325,12 +322,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -339,8 +334,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -360,12 +354,10 @@
       ],
       "properties": {
         "amount_bought": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "amount_sold": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset_bought": {
           "$ref": "#/definitions/Asset"
@@ -374,8 +366,7 @@
           "$ref": "#/definitions/Asset"
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_ed25519": {
           "type": "string",
@@ -474,8 +465,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "destination": {
           "$ref": "#/definitions/AccountId"
@@ -521,8 +511,7 @@
           "$ref": "#/definitions/InnerTransactionResultExt"
         },
         "fee_charged": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "result": {
           "$ref": "#/definitions/InnerTransactionResultResult"
@@ -812,8 +801,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -827,8 +815,7 @@
           "minimum": 0.0
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -1401,8 +1388,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"

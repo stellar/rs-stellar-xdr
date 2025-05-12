@@ -15,15 +15,13 @@
       "type": "string"
     },
     "buy_amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "buying": {
       "$ref": "#/definitions/Asset"
     },
     "offer_id": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "price": {
       "$ref": "#/definitions/Price"

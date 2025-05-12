@@ -12,8 +12,7 @@
       "type": "string"
     },
     "limit": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "line": {
       "$ref": "#/definitions/ChangeTrustAsset"

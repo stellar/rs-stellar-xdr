@@ -12,8 +12,7 @@
       "type": "string"
     },
     "fee_contract_events1_kb": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "tx_max_contract_events_size_bytes": {
       "type": "integer",

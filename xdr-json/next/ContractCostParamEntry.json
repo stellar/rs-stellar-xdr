@@ -13,15 +13,13 @@
       "type": "string"
     },
     "const_term": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ext": {
       "$ref": "#/definitions/ExtensionPoint"
     },
     "linear_term": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
   "unevaluatedProperties": false,

@@ -18,8 +18,7 @@
       "type": "string"
     },
     "amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "buying": {
       "$ref": "#/definitions/Asset"
@@ -33,8 +32,7 @@
       "minimum": 0.0
     },
     "offer_id": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "price": {
       "$ref": "#/definitions/Price"

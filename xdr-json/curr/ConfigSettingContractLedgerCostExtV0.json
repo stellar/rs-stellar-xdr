@@ -12,8 +12,7 @@
       "type": "string"
     },
     "fee_write1_kb": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "tx_max_in_memory_read_entries": {
       "type": "integer",

@@ -22,8 +22,7 @@
       "$ref": "#/definitions/AccountId"
     },
     "balance": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ext": {
       "$ref": "#/definitions/AccountEntryExt"
@@ -226,19 +225,16 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "Signer": {
       "description": "Signer is an XDR Struct defines as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
@@ -282,9 +278,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     }
   }
 }

@@ -14,8 +14,7 @@
       "type": "string"
     },
     "amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "buying": {
       "$ref": "#/definitions/Asset"

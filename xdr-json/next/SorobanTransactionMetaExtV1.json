@@ -17,16 +17,13 @@
       "$ref": "#/definitions/ExtensionPoint"
     },
     "rent_fee_charged": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "total_non_refundable_resource_fee_charged": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "total_refundable_resource_fee_charged": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
   "unevaluatedProperties": false,

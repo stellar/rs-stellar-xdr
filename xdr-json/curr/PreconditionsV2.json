@@ -9,6 +9,9 @@
     "min_seq_ledger_gap"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "extra_signers": {
       "type": "array",
       "items": {
@@ -55,6 +58,7 @@
       ]
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",

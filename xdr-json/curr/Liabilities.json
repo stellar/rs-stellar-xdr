@@ -8,11 +8,15 @@
     "selling"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "buying": {
       "type": "string"
     },
     "selling": {
       "type": "string"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

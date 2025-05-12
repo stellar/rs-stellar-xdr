@@ -15,6 +15,9 @@
     "thresholds"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "account_id": {
       "$ref": "#/definitions/AccountId"
     },
@@ -65,6 +68,7 @@
       "contentMediaType": "application/binary"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExt": {
       "description": "AccountEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ```",
@@ -84,8 +88,7 @@
             "v1": {
               "$ref": "#/definitions/AccountEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -123,8 +126,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -178,8 +180,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

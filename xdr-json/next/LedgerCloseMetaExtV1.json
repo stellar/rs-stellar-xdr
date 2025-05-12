@@ -8,6 +8,9 @@
     "soroban_fee_write1_kb"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/ExtensionPoint"
     },
@@ -15,6 +18,7 @@
       "type": "string"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ExtensionPoint": {
       "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",

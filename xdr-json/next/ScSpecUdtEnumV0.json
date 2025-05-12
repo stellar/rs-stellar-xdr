@@ -10,6 +10,9 @@
     "name"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "cases": {
       "type": "array",
       "items": {
@@ -27,6 +30,7 @@
       "$ref": "#/definitions/StringM<60>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScSpecUdtEnumCaseV0": {
       "description": "ScSpecUdtEnumCaseV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTEnumCaseV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; uint32 value; }; ```",

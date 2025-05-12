@@ -9,6 +9,9 @@
     "claimants"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "amount": {
       "type": "string"
     },
@@ -23,6 +26,7 @@
       "maxItems": 10
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -77,8 +81,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -89,8 +92,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -122,8 +124,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -138,8 +139,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -157,8 +157,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -169,8 +168,7 @@
             "before_absolute_time": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -181,8 +179,7 @@
             "before_relative_time": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -198,8 +195,7 @@
             "claimant_type_v0": {
               "$ref": "#/definitions/ClaimantV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

@@ -7,8 +7,12 @@
     "nonce"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "nonce": {
       "type": "string"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

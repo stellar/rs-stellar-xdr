@@ -11,6 +11,9 @@
     "liquidity_pool_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "amount_bought": {
       "type": "string"
     },
@@ -27,6 +30,7 @@
       "$ref": "#/definitions/PoolId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -81,8 +85,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -93,8 +96,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

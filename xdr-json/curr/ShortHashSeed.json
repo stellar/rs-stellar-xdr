@@ -7,6 +7,9 @@
     "seed"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "seed": {
       "type": "array",
       "items": {
@@ -17,5 +20,6 @@
       "maxItems": 16,
       "minItems": 16
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

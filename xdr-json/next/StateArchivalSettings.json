@@ -16,6 +16,9 @@
     "temp_rent_rate_denominator"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "eviction_scan_size": {
       "type": "integer",
       "format": "uint32",
@@ -62,5 +65,6 @@
     "temp_rent_rate_denominator": {
       "type": "string"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

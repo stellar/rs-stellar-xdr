@@ -8,6 +8,9 @@
     "val"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "key": {
       "$ref": "#/definitions/StringM<4294967295>"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/StringM<4294967295>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "StringM<4294967295>": {
       "type": "string",

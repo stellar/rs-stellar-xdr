@@ -12,6 +12,9 @@
     "prefix_topics"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "data_format": {
       "$ref": "#/definitions/ScSpecEventDataFormat"
     },
@@ -39,6 +42,7 @@
       "maxItems": 2
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScSpecEventDataFormat": {
       "description": "ScSpecEventDataFormat is an XDR Enum defines as:\n\n```text enum SCSpecEventDataFormat { SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE = 0, SC_SPEC_EVENT_DATA_FORMAT_VEC = 1, SC_SPEC_EVENT_DATA_FORMAT_MAP = 2 }; ```",
@@ -131,8 +135,7 @@
             "option": {
               "$ref": "#/definitions/ScSpecTypeOption"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -143,8 +146,7 @@
             "result": {
               "$ref": "#/definitions/ScSpecTypeResult"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -155,8 +157,7 @@
             "vec": {
               "$ref": "#/definitions/ScSpecTypeVec"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -167,8 +168,7 @@
             "map": {
               "$ref": "#/definitions/ScSpecTypeMap"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -179,8 +179,7 @@
             "tuple": {
               "$ref": "#/definitions/ScSpecTypeTuple"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -191,8 +190,7 @@
             "bytes_n": {
               "$ref": "#/definitions/ScSpecTypeBytesN"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -203,8 +201,7 @@
             "udt": {
               "$ref": "#/definitions/ScSpecTypeUdt"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

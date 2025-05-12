@@ -8,6 +8,9 @@
     "name"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "doc": {
       "$ref": "#/definitions/StringM<1024>"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/StringM<60>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "StringM<1024>": {
       "type": "string",

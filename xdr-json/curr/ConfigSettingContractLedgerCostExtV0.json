@@ -8,6 +8,9 @@
     "tx_max_in_memory_read_entries"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "fee_write1_kb": {
       "type": "string"
     },
@@ -16,5 +19,6 @@
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

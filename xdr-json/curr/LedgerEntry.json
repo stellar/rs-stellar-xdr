@@ -9,6 +9,9 @@
     "last_modified_ledger_seq"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "data": {
       "$ref": "#/definitions/LedgerEntryData"
     },
@@ -21,6 +24,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntry": {
       "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
@@ -106,8 +110,7 @@
             "v1": {
               "$ref": "#/definitions/AccountEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -145,8 +148,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -200,8 +202,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -280,8 +281,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -292,8 +292,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -325,8 +324,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -341,8 +339,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -360,8 +357,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -372,8 +368,7 @@
             "before_absolute_time": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -384,8 +379,7 @@
             "before_relative_time": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -439,8 +433,7 @@
             "v1": {
               "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -484,8 +477,7 @@
             "claimant_type_v0": {
               "$ref": "#/definitions/ClaimantV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -731,8 +723,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -743,8 +734,7 @@
             "contract_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -755,8 +745,7 @@
             "contract_ledger_cost_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -767,8 +756,7 @@
             "contract_historical_data_v0": {
               "$ref": "#/definitions/ConfigSettingContractHistoricalDataV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -779,8 +767,7 @@
             "contract_events_v0": {
               "$ref": "#/definitions/ConfigSettingContractEventsV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -791,8 +778,7 @@
             "contract_bandwidth_v0": {
               "$ref": "#/definitions/ConfigSettingContractBandwidthV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -803,8 +789,7 @@
             "contract_cost_params_cpu_instructions": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -815,8 +800,7 @@
             "contract_cost_params_memory_bytes": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -829,8 +813,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -843,8 +826,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -855,8 +837,7 @@
             "state_archival": {
               "$ref": "#/definitions/StateArchivalSettings"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -867,8 +848,7 @@
             "contract_execution_lanes": {
               "$ref": "#/definitions/ConfigSettingContractExecutionLanesV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -883,8 +863,7 @@
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -895,8 +874,7 @@
             "eviction_iterator": {
               "$ref": "#/definitions/EvictionIterator"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -907,8 +885,7 @@
             "contract_parallel_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -919,8 +896,7 @@
             "contract_ledger_cost_ext_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -931,8 +907,7 @@
             "scp_timing": {
               "$ref": "#/definitions/ConfigSettingScpTiming"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1090,8 +1065,7 @@
             "v1": {
               "$ref": "#/definitions/ContractCodeEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1197,8 +1171,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1291,8 +1264,7 @@
             "account": {
               "$ref": "#/definitions/AccountEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1303,8 +1275,7 @@
             "trustline": {
               "$ref": "#/definitions/TrustLineEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1315,8 +1286,7 @@
             "offer": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1327,8 +1297,7 @@
             "data": {
               "$ref": "#/definitions/DataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1339,8 +1308,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/ClaimableBalanceEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1351,8 +1319,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LiquidityPoolEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1363,8 +1330,7 @@
             "contract_data": {
               "$ref": "#/definitions/ContractDataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1375,8 +1341,7 @@
             "contract_code": {
               "$ref": "#/definitions/ContractCodeEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1387,8 +1352,7 @@
             "config_setting": {
               "$ref": "#/definitions/ConfigSettingEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1399,8 +1363,7 @@
             "ttl": {
               "$ref": "#/definitions/TtlEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1422,8 +1385,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1515,8 +1477,7 @@
             "liquidity_pool_constant_product": {
               "$ref": "#/definitions/LiquidityPoolEntryConstantProduct"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1663,8 +1624,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1675,8 +1635,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1687,8 +1646,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1699,8 +1657,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1711,8 +1668,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1723,8 +1679,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1735,8 +1690,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1747,8 +1701,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1759,8 +1712,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1771,8 +1723,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1855,8 +1806,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1867,8 +1817,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1881,8 +1830,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1894,8 +1842,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1906,8 +1853,7 @@
             "u64": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1918,8 +1864,7 @@
             "i64": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1930,8 +1875,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1942,8 +1886,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1954,8 +1897,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1966,8 +1908,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1978,8 +1919,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1990,8 +1930,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2002,8 +1941,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2014,8 +1952,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2026,8 +1963,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2045,8 +1981,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2064,8 +1999,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2076,8 +2010,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2088,8 +2021,7 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2100,8 +2032,7 @@
             "ledger_key_nonce": {
               "$ref": "#/definitions/ScNonceKey"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2255,8 +2186,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2267,8 +2197,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2279,8 +2208,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2336,8 +2264,7 @@
             "v1": {
               "$ref": "#/definitions/TrustLineEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2399,8 +2326,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

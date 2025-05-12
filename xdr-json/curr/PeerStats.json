@@ -21,6 +21,9 @@
     "version_str"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "bytes_read": {
       "type": "string"
     },
@@ -67,6 +70,7 @@
       "$ref": "#/definitions/StringM<100>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

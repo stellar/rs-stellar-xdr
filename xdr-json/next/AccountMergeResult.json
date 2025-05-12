@@ -24,8 +24,13 @@
         "success": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
-  ]
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false
 }

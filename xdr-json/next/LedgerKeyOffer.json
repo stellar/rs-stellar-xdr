@@ -8,6 +8,9 @@
     "seller_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "offer_id": {
       "type": "string"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/AccountId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

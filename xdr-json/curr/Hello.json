@@ -15,6 +15,9 @@
     "version_str"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "cert": {
       "$ref": "#/definitions/AuthCert"
     },
@@ -58,6 +61,7 @@
       "$ref": "#/definitions/StringM<100>"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AuthCert": {
       "description": "AuthCert is an XDR Struct defines as:\n\n```text struct AuthCert { Curve25519Public pubkey; uint64 expiration; Signature sig; }; ```",

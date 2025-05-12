@@ -8,6 +8,9 @@
     "tx_max_contract_events_size_bytes"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "fee_contract_events1_kb": {
       "type": "string"
     },
@@ -16,5 +19,6 @@
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

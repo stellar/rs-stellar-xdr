@@ -18,8 +18,7 @@
         "time": {
           "$ref": "#/definitions/TimeBounds"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -30,10 +29,15 @@
         "v2": {
           "$ref": "#/definitions/PreconditionsV2"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",

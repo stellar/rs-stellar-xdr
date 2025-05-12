@@ -11,6 +11,9 @@
     "nomination_timeout_initial_milliseconds"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ballot_timeout_increment_milliseconds": {
       "type": "integer",
       "format": "uint32",
@@ -36,5 +39,6 @@
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

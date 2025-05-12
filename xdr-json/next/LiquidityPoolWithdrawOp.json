@@ -10,6 +10,9 @@
     "min_amount_b"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "amount": {
       "type": "string"
     },
@@ -23,6 +26,7 @@
       "type": "string"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "PoolId": {
       "type": "string"

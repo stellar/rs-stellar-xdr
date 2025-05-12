@@ -5,6 +5,7 @@
 //  xdr/curr/Stellar-contract-meta.x
 //  xdr/curr/Stellar-contract-spec.x
 //  xdr/curr/Stellar-contract.x
+//  xdr/curr/Stellar-exporter.x
 //  xdr/curr/Stellar-internal.x
 //  xdr/curr/Stellar-ledger-entries.x
 //  xdr/curr/Stellar-ledger.x
@@ -15,7 +16,7 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     (
         "xdr/curr/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
@@ -39,6 +40,10 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/curr/Stellar-contract.x",
         "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982",
+    ),
+    (
+        "xdr/curr/Stellar-exporter.x",
+        "a00c83d02e8c8382e06f79a191f1fb5abd097a4bbcab8481c67467e3270e0529",
     ),
     (
         "xdr/curr/Stellar-internal.x",
@@ -10832,6 +10837,61 @@ impl WriteXdr for ScMapEntry {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// LedgerCloseMetaBatch is an XDR Struct defines as:
+///
+/// ```text
+/// struct LedgerCloseMetaBatch
+/// {
+///     // starting ledger sequence number in the batch
+///     uint32 startSequence;
+///
+///     // ending ledger sequence number in the batch
+///     uint32 endSequence;
+///
+///     // Ledger close meta for each ledger within the batch
+///     LedgerCloseMeta ledgerCloseMetas<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct LedgerCloseMetaBatch {
+    pub start_sequence: u32,
+    pub end_sequence: u32,
+    pub ledger_close_metas: VecM<LedgerCloseMeta>,
+}
+
+impl ReadXdr for LedgerCloseMetaBatch {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                start_sequence: u32::read_xdr(r)?,
+                end_sequence: u32::read_xdr(r)?,
+                ledger_close_metas: VecM::<LedgerCloseMeta>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaBatch {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.start_sequence.write_xdr(w)?;
+            self.end_sequence.write_xdr(w)?;
+            self.ledger_close_metas.write_xdr(w)?;
             Ok(())
         })
     }
@@ -46659,6 +46719,7 @@ pub enum TypeVariant {
     ScContractInstance,
     ScVal,
     ScMapEntry,
+    LedgerCloseMetaBatch,
     StoredTransactionSet,
     StoredDebugTransactionSet,
     PersistedScpStateV0,
@@ -47041,7 +47102,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 462] = [
+    pub const VARIANTS: [TypeVariant; 463] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47125,6 +47186,7 @@ impl TypeVariant {
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
+        TypeVariant::LedgerCloseMetaBatch,
         TypeVariant::StoredTransactionSet,
         TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -47505,7 +47567,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 462] = [
+    pub const VARIANTS_STR: [&'static str; 463] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47589,6 +47651,7 @@ impl TypeVariant {
         "ScContractInstance",
         "ScVal",
         "ScMapEntry",
+        "LedgerCloseMetaBatch",
         "StoredTransactionSet",
         "StoredDebugTransactionSet",
         "PersistedScpStateV0",
@@ -48059,6 +48122,7 @@ impl TypeVariant {
             Self::ScContractInstance => "ScContractInstance",
             Self::ScVal => "ScVal",
             Self::ScMapEntry => "ScMapEntry",
+            Self::LedgerCloseMetaBatch => "LedgerCloseMetaBatch",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::StoredDebugTransactionSet => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
@@ -48455,7 +48519,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 462] {
+    pub const fn variants() -> [TypeVariant; 463] {
         Self::VARIANTS
     }
 
@@ -48575,6 +48639,7 @@ impl TypeVariant {
             Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
             Self::ScVal => gen.into_root_schema_for::<ScVal>(),
             Self::ScMapEntry => gen.into_root_schema_for::<ScMapEntry>(),
+            Self::LedgerCloseMetaBatch => gen.into_root_schema_for::<LedgerCloseMetaBatch>(),
             Self::StoredTransactionSet => gen.into_root_schema_for::<StoredTransactionSet>(),
             Self::StoredDebugTransactionSet => {
                 gen.into_root_schema_for::<StoredDebugTransactionSet>()
@@ -49255,6 +49320,7 @@ impl core::str::FromStr for TypeVariant {
             "ScContractInstance" => Ok(Self::ScContractInstance),
             "ScVal" => Ok(Self::ScVal),
             "ScMapEntry" => Ok(Self::ScMapEntry),
+            "LedgerCloseMetaBatch" => Ok(Self::LedgerCloseMetaBatch),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "StoredDebugTransactionSet" => Ok(Self::StoredDebugTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
@@ -49753,6 +49819,7 @@ pub enum Type {
     ScContractInstance(Box<ScContractInstance>),
     ScVal(Box<ScVal>),
     ScMapEntry(Box<ScMapEntry>),
+    LedgerCloseMetaBatch(Box<LedgerCloseMetaBatch>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     StoredDebugTransactionSet(Box<StoredDebugTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
@@ -50135,7 +50202,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 462] = [
+    pub const VARIANTS: [TypeVariant; 463] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50219,6 +50286,7 @@ impl Type {
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
+        TypeVariant::LedgerCloseMetaBatch,
         TypeVariant::StoredTransactionSet,
         TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -50599,7 +50667,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 462] = [
+    pub const VARIANTS_STR: [&'static str; 463] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50683,6 +50751,7 @@ impl Type {
         "ScContractInstance",
         "ScVal",
         "ScMapEntry",
+        "LedgerCloseMetaBatch",
         "StoredTransactionSet",
         "StoredDebugTransactionSet",
         "PersistedScpStateV0",
@@ -51411,6 +51480,11 @@ impl Type {
             TypeVariant::ScMapEntry => {
                 r.with_limited_depth(|r| Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))))
             }
+            TypeVariant::LedgerCloseMetaBatch => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaBatch(Box::new(
+                    LedgerCloseMetaBatch::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::StoredTransactionSet => r.with_limited_depth(|r| {
                 Ok(Self::StoredTransactionSet(Box::new(
                     StoredTransactionSet::read_xdr(r)?,
@@ -53483,6 +53557,10 @@ impl Type {
                 ReadXdrIter::<_, ScMapEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaBatch => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaBatch>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
@@ -55515,6 +55593,10 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, Frame<ScMapEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMetaBatch => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaBatch>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t.0)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.limits.clone())
@@ -57768,6 +57850,10 @@ impl Type {
                 ReadXdrIter::<_, ScMapEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaBatch => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaBatch>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
@@ -59554,6 +59640,9 @@ impl Type {
             ))),
             TypeVariant::ScVal => Ok(Self::ScVal(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60876,6 +60965,9 @@ impl Type {
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -62171,6 +62263,7 @@ impl Type {
             Self::ScContractInstance(ref v) => v.as_ref(),
             Self::ScVal(ref v) => v.as_ref(),
             Self::ScMapEntry(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaBatch(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::StoredDebugTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
@@ -62646,6 +62739,7 @@ impl Type {
             Self::ScContractInstance(_) => "ScContractInstance",
             Self::ScVal(_) => "ScVal",
             Self::ScMapEntry(_) => "ScMapEntry",
+            Self::LedgerCloseMetaBatch(_) => "LedgerCloseMetaBatch",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::StoredDebugTransactionSet(_) => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
@@ -63050,7 +63144,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 462] {
+    pub const fn variants() -> [TypeVariant; 463] {
         Self::VARIANTS
     }
 
@@ -63153,6 +63247,7 @@ impl Type {
             Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
             Self::ScVal(_) => TypeVariant::ScVal,
             Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
+            Self::LedgerCloseMetaBatch(_) => TypeVariant::LedgerCloseMetaBatch,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::StoredDebugTransactionSet(_) => TypeVariant::StoredDebugTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
@@ -63695,6 +63790,7 @@ impl WriteXdr for Type {
             Self::ScContractInstance(v) => v.write_xdr(w),
             Self::ScVal(v) => v.write_xdr(w),
             Self::ScMapEntry(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaBatch(v) => v.write_xdr(w),
             Self::StoredTransactionSet(v) => v.write_xdr(w),
             Self::StoredDebugTransactionSet(v) => v.write_xdr(w),
             Self::PersistedScpStateV0(v) => v.write_xdr(w),

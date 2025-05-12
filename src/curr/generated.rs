@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "70f69edb53cfa7c388c0f91b1b6b6b3889cbe1f5765326d618e1ea64d253069f",
+        "880f56f0a367f8f0e1b155a8f755fe4a9f909bdd22b0d4615aabc75a81ecff7d",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -4918,6 +4918,64 @@ impl WriteXdr for EvictionIterator {
     }
 }
 
+/// ConfigSettingScpTiming is an XDR Struct defines as:
+///
+/// ```text
+/// struct ConfigSettingSCPTiming {
+///     uint32 ledgerTargetCloseTimeMilliseconds;
+///     uint32 nominationTimeoutInitialMilliseconds;
+///     uint32 nominationTimeoutIncrementMilliseconds;
+///     uint32 ballotTimeoutInitialMilliseconds;
+///     uint32 ballotTimeoutIncrementMilliseconds;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ConfigSettingScpTiming {
+    pub ledger_target_close_time_milliseconds: u32,
+    pub nomination_timeout_initial_milliseconds: u32,
+    pub nomination_timeout_increment_milliseconds: u32,
+    pub ballot_timeout_initial_milliseconds: u32,
+    pub ballot_timeout_increment_milliseconds: u32,
+}
+
+impl ReadXdr for ConfigSettingScpTiming {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_target_close_time_milliseconds: u32::read_xdr(r)?,
+                nomination_timeout_initial_milliseconds: u32::read_xdr(r)?,
+                nomination_timeout_increment_milliseconds: u32::read_xdr(r)?,
+                ballot_timeout_initial_milliseconds: u32::read_xdr(r)?,
+                ballot_timeout_increment_milliseconds: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingScpTiming {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_target_close_time_milliseconds.write_xdr(w)?;
+            self.nomination_timeout_initial_milliseconds.write_xdr(w)?;
+            self.nomination_timeout_increment_milliseconds
+                .write_xdr(w)?;
+            self.ballot_timeout_initial_milliseconds.write_xdr(w)?;
+            self.ballot_timeout_increment_milliseconds.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ContractCostCountLimit is an XDR Const defines as:
 ///
 /// ```text
@@ -5052,7 +5110,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12,
 ///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
 ///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
-///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15
+///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15,
+///     CONFIG_SETTING_SCP_TIMING = 16
 /// };
 /// ```
 ///
@@ -5083,10 +5142,11 @@ pub enum ConfigSettingId {
     EvictionIterator = 13,
     ContractParallelComputeV0 = 14,
     ContractLedgerCostExtV0 = 15,
+    ScpTiming = 16,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 16] = [
+    pub const VARIANTS: [ConfigSettingId; 17] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5103,8 +5163,9 @@ impl ConfigSettingId {
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
+        ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5121,6 +5182,7 @@ impl ConfigSettingId {
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
+        "ScpTiming",
     ];
 
     #[must_use]
@@ -5142,11 +5204,12 @@ impl ConfigSettingId {
             Self::EvictionIterator => "EvictionIterator",
             Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
+            Self::ScpTiming => "ScpTiming",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 16] {
+    pub const fn variants() -> [ConfigSettingId; 17] {
         Self::VARIANTS
     }
 }
@@ -5193,6 +5256,7 @@ impl TryFrom<i32> for ConfigSettingId {
             13 => ConfigSettingId::EvictionIterator,
             14 => ConfigSettingId::ContractParallelComputeV0,
             15 => ConfigSettingId::ContractLedgerCostExtV0,
+            16 => ConfigSettingId::ScpTiming,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5265,6 +5329,8 @@ impl WriteXdr for ConfigSettingId {
 ///     ConfigSettingContractParallelComputeV0 contractParallelCompute;
 /// case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0:
 ///     ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt;
+/// case CONFIG_SETTING_SCP_TIMING:
+///     ConfigSettingSCPTiming contractSCPTiming;
 /// };
 /// ```
 ///
@@ -5295,10 +5361,11 @@ pub enum ConfigSettingEntry {
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
+    ScpTiming(ConfigSettingScpTiming),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 16] = [
+    pub const VARIANTS: [ConfigSettingId; 17] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5315,8 +5382,9 @@ impl ConfigSettingEntry {
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
+        ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5333,6 +5401,7 @@ impl ConfigSettingEntry {
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
+        "ScpTiming",
     ];
 
     #[must_use]
@@ -5354,6 +5423,7 @@ impl ConfigSettingEntry {
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
+            Self::ScpTiming(_) => "ScpTiming",
         }
     }
 
@@ -5381,11 +5451,12 @@ impl ConfigSettingEntry {
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
             Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
             Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
+            Self::ScpTiming(_) => ConfigSettingId::ScpTiming,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 16] {
+    pub const fn variants() -> [ConfigSettingId; 17] {
         Self::VARIANTS
     }
 }
@@ -5467,6 +5538,7 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(
                     ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
                 ),
+                ConfigSettingId::ScpTiming => Self::ScpTiming(ConfigSettingScpTiming::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -5498,6 +5570,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
                 Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
                 Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
+                Self::ScpTiming(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -46526,6 +46599,7 @@ pub enum TypeVariant {
     ContractCostParamEntry,
     StateArchivalSettings,
     EvictionIterator,
+    ConfigSettingScpTiming,
     ContractCostParams,
     ConfigSettingId,
     ConfigSettingEntry,
@@ -46967,7 +47041,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 461] = [
+    pub const VARIANTS: [TypeVariant; 462] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46991,6 +47065,7 @@ impl TypeVariant {
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
+        TypeVariant::ConfigSettingScpTiming,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -47430,7 +47505,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 461] = [
+    pub const VARIANTS_STR: [&'static str; 462] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47454,6 +47529,7 @@ impl TypeVariant {
         "ContractCostParamEntry",
         "StateArchivalSettings",
         "EvictionIterator",
+        "ConfigSettingScpTiming",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -47923,6 +47999,7 @@ impl TypeVariant {
             Self::ContractCostParamEntry => "ContractCostParamEntry",
             Self::StateArchivalSettings => "StateArchivalSettings",
             Self::EvictionIterator => "EvictionIterator",
+            Self::ConfigSettingScpTiming => "ConfigSettingScpTiming",
             Self::ContractCostParams => "ContractCostParams",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
@@ -48378,7 +48455,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 461] {
+    pub const fn variants() -> [TypeVariant; 462] {
         Self::VARIANTS
     }
 
@@ -48426,6 +48503,7 @@ impl TypeVariant {
             Self::ContractCostParamEntry => gen.into_root_schema_for::<ContractCostParamEntry>(),
             Self::StateArchivalSettings => gen.into_root_schema_for::<StateArchivalSettings>(),
             Self::EvictionIterator => gen.into_root_schema_for::<EvictionIterator>(),
+            Self::ConfigSettingScpTiming => gen.into_root_schema_for::<ConfigSettingScpTiming>(),
             Self::ContractCostParams => gen.into_root_schema_for::<ContractCostParams>(),
             Self::ConfigSettingId => gen.into_root_schema_for::<ConfigSettingId>(),
             Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
@@ -49117,6 +49195,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
             "StateArchivalSettings" => Ok(Self::StateArchivalSettings),
             "EvictionIterator" => Ok(Self::EvictionIterator),
+            "ConfigSettingScpTiming" => Ok(Self::ConfigSettingScpTiming),
             "ContractCostParams" => Ok(Self::ContractCostParams),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
@@ -49614,6 +49693,7 @@ pub enum Type {
     ContractCostParamEntry(Box<ContractCostParamEntry>),
     StateArchivalSettings(Box<StateArchivalSettings>),
     EvictionIterator(Box<EvictionIterator>),
+    ConfigSettingScpTiming(Box<ConfigSettingScpTiming>),
     ContractCostParams(Box<ContractCostParams>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
@@ -50055,7 +50135,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 461] = [
+    pub const VARIANTS: [TypeVariant; 462] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50079,6 +50159,7 @@ impl Type {
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
+        TypeVariant::ConfigSettingScpTiming,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -50518,7 +50599,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 461] = [
+    pub const VARIANTS_STR: [&'static str; 462] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50542,6 +50623,7 @@ impl Type {
         "ContractCostParamEntry",
         "StateArchivalSettings",
         "EvictionIterator",
+        "ConfigSettingScpTiming",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -51087,6 +51169,11 @@ impl Type {
             TypeVariant::EvictionIterator => r.with_limited_depth(|r| {
                 Ok(Self::EvictionIterator(Box::new(
                     EvictionIterator::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingScpTiming => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingScpTiming(Box::new(
+                    ConfigSettingScpTiming::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ContractCostParams => r.with_limited_depth(|r| {
@@ -53153,6 +53240,10 @@ impl Type {
                 ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingScpTiming => Box::new(
+                ReadXdrIter::<_, ConfigSettingScpTiming>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
+            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
@@ -55157,6 +55248,13 @@ impl Type {
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingScpTiming => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingScpTiming>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.limits.clone())
@@ -57430,6 +57528,10 @@ impl Type {
                 ReadXdrIter::<_, EvictionIterator>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingScpTiming => Box::new(
+                ReadXdrIter::<_, ConfigSettingScpTiming>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
+            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
@@ -59300,6 +59402,9 @@ impl Type {
             TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60587,6 +60692,9 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
@@ -62003,6 +62111,7 @@ impl Type {
             Self::ContractCostParamEntry(ref v) => v.as_ref(),
             Self::StateArchivalSettings(ref v) => v.as_ref(),
             Self::EvictionIterator(ref v) => v.as_ref(),
+            Self::ConfigSettingScpTiming(ref v) => v.as_ref(),
             Self::ContractCostParams(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
@@ -62477,6 +62586,7 @@ impl Type {
             Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
             Self::StateArchivalSettings(_) => "StateArchivalSettings",
             Self::EvictionIterator(_) => "EvictionIterator",
+            Self::ConfigSettingScpTiming(_) => "ConfigSettingScpTiming",
             Self::ContractCostParams(_) => "ContractCostParams",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
@@ -62940,7 +63050,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 461] {
+    pub const fn variants() -> [TypeVariant; 462] {
         Self::VARIANTS
     }
 
@@ -62983,6 +63093,7 @@ impl Type {
             Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
             Self::StateArchivalSettings(_) => TypeVariant::StateArchivalSettings,
             Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
+            Self::ConfigSettingScpTiming(_) => TypeVariant::ConfigSettingScpTiming,
             Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
@@ -63524,6 +63635,7 @@ impl WriteXdr for Type {
             Self::ContractCostParamEntry(v) => v.write_xdr(w),
             Self::StateArchivalSettings(v) => v.write_xdr(w),
             Self::EvictionIterator(v) => v.write_xdr(w),
+            Self::ConfigSettingScpTiming(v) => v.write_xdr(w),
             Self::ContractCostParams(v) => v.write_xdr(w),
             Self::ConfigSettingId(v) => v.write_xdr(w),
             Self::ConfigSettingEntry(v) => v.write_xdr(w),

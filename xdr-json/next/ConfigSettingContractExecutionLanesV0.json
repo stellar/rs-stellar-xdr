@@ -7,10 +7,14 @@
     "ledger_max_tx_count"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ledger_max_tx_count": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

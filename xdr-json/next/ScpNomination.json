@@ -9,6 +9,9 @@
     "votes"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "accepted": {
       "type": "array",
       "items": {
@@ -31,6 +34,7 @@
       "maxItems": 4294967295
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "Value": {
       "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",

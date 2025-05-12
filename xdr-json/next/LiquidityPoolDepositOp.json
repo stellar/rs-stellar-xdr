@@ -11,16 +11,17 @@
     "min_price"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "liquidity_pool_id": {
       "$ref": "#/definitions/PoolId"
     },
     "max_amount_a": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "max_amount_b": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "max_price": {
       "$ref": "#/definitions/Price"
@@ -29,6 +30,7 @@
       "$ref": "#/definitions/Price"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "PoolId": {
       "type": "string"

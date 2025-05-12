@@ -8,6 +8,9 @@
     "live_until_ledger_seq"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "key_hash": {
       "type": "string",
       "maxLength": 64,
@@ -20,5 +23,6 @@
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

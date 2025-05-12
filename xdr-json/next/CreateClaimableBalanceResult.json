@@ -22,10 +22,15 @@
         "success": {
           "$ref": "#/definitions/ClaimableBalanceId"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "ClaimableBalanceId": {
       "type": "string"

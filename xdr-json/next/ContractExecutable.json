@@ -22,8 +22,13 @@
           "contentEncoding": "hex",
           "contentMediaType": "application/binary"
         }
-      },
-      "additionalProperties": false
+      }
     }
-  ]
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false
 }

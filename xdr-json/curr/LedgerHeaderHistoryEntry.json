@@ -9,6 +9,9 @@
     "header"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/LedgerHeaderHistoryEntryExt"
     },
@@ -23,6 +26,7 @@
       "$ref": "#/definitions/LedgerHeader"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerCloseValueSignature": {
       "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
@@ -82,13 +86,10 @@
           "$ref": "#/definitions/LedgerHeaderExt"
         },
         "fee_pool": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "id_pool": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "inflation_seq": {
           "type": "integer",
@@ -133,8 +134,7 @@
           "minItems": 4
         },
         "total_coins": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_set_result_hash": {
           "type": "string",
@@ -163,8 +163,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerHeaderExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -260,16 +259,13 @@
             "signed": {
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "UpgradeType": {
       "description": "UpgradeType is an XDR Typedef defines as:\n\n```text typedef opaque UpgradeType<128>; ```",

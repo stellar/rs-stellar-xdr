@@ -7,10 +7,14 @@
     "balance_id"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "balance_id": {
       "$ref": "#/definitions/ClaimableBalanceId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "ClaimableBalanceId": {
       "type": "string"

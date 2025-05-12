@@ -10,22 +10,23 @@
     "min_amount_b"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "liquidity_pool_id": {
       "$ref": "#/definitions/PoolId"
     },
     "min_amount_a": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "min_amount_b": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "PoolId": {
       "type": "string"

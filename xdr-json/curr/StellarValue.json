@@ -10,6 +10,9 @@
     "upgrades"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "close_time": {
       "$ref": "#/definitions/TimePoint"
     },
@@ -31,6 +34,7 @@
       "maxItems": 6
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerCloseValueSignature": {
       "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
@@ -76,16 +80,13 @@
             "signed": {
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "UpgradeType": {
       "description": "UpgradeType is an XDR Typedef defines as:\n\n```text typedef opaque UpgradeType<128>; ```",

@@ -9,10 +9,11 @@
     "sig"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "expiration": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "pubkey": {
       "$ref": "#/definitions/Curve25519Public"
@@ -21,6 +22,7 @@
       "$ref": "#/definitions/Signature"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "Curve25519Public": {
       "description": "Curve25519Public is an XDR Struct defines as:\n\n```text struct Curve25519Public { opaque key[32]; }; ```",

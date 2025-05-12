@@ -8,6 +8,9 @@
     "asset"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "account_id": {
       "$ref": "#/definitions/AccountId"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/TrustLineAsset"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -78,8 +82,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -90,8 +93,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -102,8 +104,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

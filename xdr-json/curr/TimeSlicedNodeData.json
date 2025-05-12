@@ -16,6 +16,9 @@
     "total_outbound_peer_count"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "added_authenticated_peers": {
       "type": "integer",
       "format": "uint32",
@@ -64,5 +67,6 @@
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

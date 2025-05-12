@@ -18,10 +18,15 @@
         "v1": {
           "$ref": "#/definitions/SorobanTransactionData"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -68,7 +73,7 @@
       "type": "string"
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -86,7 +91,8 @@
         "live_soroban_state_size_window",
         "eviction_iterator",
         "contract_parallel_compute_v0",
-        "contract_ledger_cost_ext_v0"
+        "contract_ledger_cost_ext_v0",
+        "scp_timing"
       ]
     },
     "ContractDataDurability": {
@@ -119,66 +125,19 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "LedgerFootprint": {
       "description": "LedgerFootprint is an XDR Struct defines as:\n\n```text struct LedgerFootprint { LedgerKey readOnly<>; LedgerKey readWrite<>; }; ```",
@@ -216,8 +175,7 @@
             "account": {
               "$ref": "#/definitions/LedgerKeyAccount"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -228,8 +186,7 @@
             "trustline": {
               "$ref": "#/definitions/LedgerKeyTrustLine"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -240,8 +197,7 @@
             "offer": {
               "$ref": "#/definitions/LedgerKeyOffer"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -252,8 +208,7 @@
             "data": {
               "$ref": "#/definitions/LedgerKeyData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -264,8 +219,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/LedgerKeyClaimableBalance"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -276,8 +230,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LedgerKeyLiquidityPool"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -288,8 +241,7 @@
             "contract_data": {
               "$ref": "#/definitions/LedgerKeyContractData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -300,8 +252,7 @@
             "contract_code": {
               "$ref": "#/definitions/LedgerKeyContractCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -312,8 +263,7 @@
             "config_setting": {
               "$ref": "#/definitions/LedgerKeyConfigSetting"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -324,8 +274,7 @@
             "ttl": {
               "$ref": "#/definitions/LedgerKeyTtl"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -438,8 +387,7 @@
       ],
       "properties": {
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -526,8 +474,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -538,8 +485,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -550,8 +496,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -562,8 +507,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -574,8 +518,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -586,8 +529,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -598,8 +540,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -610,8 +551,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -622,8 +562,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -634,8 +573,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -687,8 +625,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -701,7 +638,7 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -719,8 +656,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -731,8 +667,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -745,8 +680,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -758,8 +692,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -768,12 +701,9 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -782,11 +712,9 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -797,8 +725,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -809,8 +736,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -821,8 +747,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -833,8 +758,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -845,8 +769,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -857,8 +780,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -869,8 +791,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -881,8 +802,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -893,8 +813,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -912,8 +831,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -931,8 +849,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -943,20 +860,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "ledger_key_nonce"
-          ],
-          "properties": {
-            "ledger_key_nonce": {
-              "$ref": "#/definitions/ScNonceKey"
-            }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -967,8 +871,18 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ledger_key_nonce"
+          ],
+          "properties": {
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
+            }
+          }
         }
       ]
     },
@@ -1041,8 +955,7 @@
           "$ref": "#/definitions/SorobanTransactionDataExt"
         },
         "resource_fee": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "resources": {
           "$ref": "#/definitions/SorobanResources"
@@ -1067,8 +980,7 @@
             "v1": {
               "$ref": "#/definitions/SorobanResourcesExtV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1090,9 +1002,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "TrustLineAsset": {
       "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
@@ -1112,8 +1022,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1124,8 +1033,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1136,62 +1044,15 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     }
   }
 }

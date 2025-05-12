@@ -12,6 +12,9 @@
     "limit"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "account_id": {
       "$ref": "#/definitions/AccountId"
     },
@@ -19,8 +22,7 @@
       "$ref": "#/definitions/TrustLineAsset"
     },
     "balance": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ext": {
       "$ref": "#/definitions/TrustLineEntryExt"
@@ -31,10 +33,10 @@
       "minimum": 0.0
     },
     "limit": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -86,12 +88,10 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -116,8 +116,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -128,8 +127,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -140,8 +138,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -163,8 +160,7 @@
             "v1": {
               "$ref": "#/definitions/TrustLineEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -226,8 +222,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     }

@@ -8,6 +8,9 @@
     "liabilities"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/AccountEntryExtensionV1Ext"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/Liabilities"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExtensionV1Ext": {
       "description": "AccountEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ```",
@@ -34,8 +38,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -89,8 +92,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -135,12 +137,10 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -157,9 +157,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     }
   }
 }

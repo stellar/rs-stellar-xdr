@@ -8,14 +8,17 @@
     "destination"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "destination": {
       "$ref": "#/definitions/AccountId"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

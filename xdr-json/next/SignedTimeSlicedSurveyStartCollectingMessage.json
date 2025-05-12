@@ -8,6 +8,9 @@
     "start_collecting"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "signature": {
       "$ref": "#/definitions/Signature"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/TimeSlicedSurveyStartCollectingMessage"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"

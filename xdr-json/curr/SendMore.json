@@ -7,10 +7,14 @@
     "num_messages"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "num_messages": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

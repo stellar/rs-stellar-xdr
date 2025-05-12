@@ -7,6 +7,9 @@
     "hash"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "hash": {
       "type": "string",
       "maxLength": 64,
@@ -14,5 +17,6 @@
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

@@ -9,6 +9,9 @@
     "fee"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "asset_a": {
       "$ref": "#/definitions/Asset"
     },
@@ -20,6 +23,7 @@
       "format": "int32"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -74,8 +78,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -86,8 +89,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

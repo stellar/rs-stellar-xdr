@@ -8,6 +8,9 @@
     "flags"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/LedgerHeaderExtensionV1Ext"
     },
@@ -17,6 +20,7 @@
       "minimum": 0.0
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "LedgerHeaderExtensionV1Ext": {
       "description": "LedgerHeaderExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",

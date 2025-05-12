@@ -2,7 +2,5 @@
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TimePoint",
   "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-  "type": "integer",
-  "format": "uint64",
-  "minimum": 0.0
+  "type": "string"
 }

@@ -5,6 +5,7 @@
 //  xdr/curr/Stellar-contract-meta.x
 //  xdr/curr/Stellar-contract-spec.x
 //  xdr/curr/Stellar-contract.x
+//  xdr/curr/Stellar-exporter.x
 //  xdr/curr/Stellar-internal.x
 //  xdr/curr/Stellar-ledger-entries.x
 //  xdr/curr/Stellar-ledger.x
@@ -15,14 +16,14 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     (
         "xdr/curr/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "70f69edb53cfa7c388c0f91b1b6b6b3889cbe1f5765326d618e1ea64d253069f",
+        "880f56f0a367f8f0e1b155a8f755fe4a9f909bdd22b0d4615aabc75a81ecff7d",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -34,11 +35,15 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "2e240e191f0b5ecedeecab75e7e936b3dc3dbe159aa2a9547efb15871d683c7c",
+        "7bd048e1b008c274f667a4f9b8fcf5ae848e301aca0073cdc8b266ecd2c5f2f9",
     ),
     (
         "xdr/curr/Stellar-contract.x",
-        "f7cefcd1d38c3b2d56769bd0489221d31cc27101834e93d802f1fa6bb01ae653",
+        "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982",
+    ),
+    (
+        "xdr/curr/Stellar-exporter.x",
+        "a00c83d02e8c8382e06f79a191f1fb5abd097a4bbcab8481c67467e3270e0529",
     ),
     (
         "xdr/curr/Stellar-internal.x",
@@ -50,7 +55,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "0a10b9194fb0431e8953a8b95b2411dcba660a8dae2907a55cd6fd3d523477eb",
+        "6353fb11b577c17a8a96d4330f95a5d56815b846737654d59d8d6451f27e94fa",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
@@ -100,6 +105,11 @@ use std::string::FromUtf8Error;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
+
+#[cfg(all(feature = "schemars", feature = "alloc", not(feature = "std")))]
+use alloc::borrow::Cow;
+#[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
+use std::borrow::Cow;
 
 // TODO: Add support for read/write xdr fns when std not available.
 
@@ -222,9 +232,6 @@ impl From<Error> for () {
     fn from(_: Error) {}
 }
 
-#[allow(dead_code)]
-type Result<T> = core::result::Result<T, Error>;
-
 /// Name defines types that assign a static name to their value, such as the
 /// name given to an identifier in an XDR enum, or the name given to the case in
 /// a union.
@@ -328,7 +335,7 @@ impl<L> Limited<L> {
     ///
     /// If the length would consume more length than the remaining length limit
     /// allows.
-    pub(crate) fn consume_len(&mut self, len: usize) -> Result<()> {
+    pub(crate) fn consume_len(&mut self, len: usize) -> Result<(), Error> {
         if let Some(len) = self.limits.len.checked_sub(len) {
             self.limits.len = len;
             Ok(())
@@ -342,9 +349,9 @@ impl<L> Limited<L> {
     /// ### Errors
     ///
     /// If the depth limit is already exhausted.
-    pub(crate) fn with_limited_depth<T, F>(&mut self, f: F) -> Result<T>
+    pub(crate) fn with_limited_depth<T, F>(&mut self, f: F) -> Result<T, Error>
     where
-        F: FnOnce(&mut Self) -> Result<T>,
+        F: FnOnce(&mut Self) -> Result<T, Error>,
     {
         if let Some(depth) = self.limits.depth.checked_sub(1) {
             self.limits.depth = depth;
@@ -412,7 +419,7 @@ impl<R: Read, S: ReadXdr> ReadXdrIter<R, S> {
 
 #[cfg(feature = "std")]
 impl<R: Read, S: ReadXdr> Iterator for ReadXdrIter<R, S> {
-    type Item = Result<S>;
+    type Item = Result<S, Error>;
 
     // Next reads the internal reader and XDR decodes it into the Self type. If
     // the EOF is reached without reading any new bytes `None` is returned. If
@@ -465,14 +472,14 @@ where
     /// Use [`ReadXdR: Read_xdr_to_end`] when the intent is for all bytes in the
     /// read implementation to be consumed by the read.
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self>;
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error>;
 
     /// Construct the type from the XDR bytes base64 encoded.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr_base64<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut dec = Limited::new(
             base64::read::DecoderReader::new(
                 SkipWhitespace::new(&mut r.inner),
@@ -503,7 +510,7 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let s = Self::read_xdr(r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -519,7 +526,7 @@ where
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr_base64_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut dec = Limited::new(
             base64::read::DecoderReader::new(
                 SkipWhitespace::new(&mut r.inner),
@@ -546,7 +553,7 @@ where
     /// Use [`ReadXdR: Read_xdr_into_to_end`] when the intent is for all bytes
     /// in the read implementation to be consumed by the read.
     #[cfg(feature = "std")]
-    fn read_xdr_into<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
+    fn read_xdr_into<R: Read>(&mut self, r: &mut Limited<R>) -> Result<(), Error> {
         *self = Self::read_xdr(r)?;
         Ok(())
     }
@@ -570,7 +577,7 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
+    fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut Limited<R>) -> Result<(), Error> {
         Self::read_xdr_into(self, r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -628,7 +635,7 @@ where
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "std")]
-    fn from_xdr(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
+    fn from_xdr(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self, Error> {
         let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(&mut cursor)?;
         Ok(t)
@@ -639,7 +646,7 @@ where
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn from_xdr_base64(b64: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
+    fn from_xdr_base64(b64: impl AsRef<[u8]>, limits: Limits) -> Result<Self, Error> {
         let b64_reader = Cursor::new(b64);
         let mut dec = Limited::new(
             base64::read::DecoderReader::new(
@@ -655,10 +662,10 @@ where
 
 pub trait WriteXdr {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()>;
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error>;
 
     #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>> {
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
         let mut cursor = Limited::new(Cursor::new(vec![]), limits);
         self.write_xdr(&mut cursor)?;
         let bytes = cursor.inner.into_inner();
@@ -666,7 +673,7 @@ pub trait WriteXdr {
     }
 
     #[cfg(feature = "base64")]
-    fn to_xdr_base64(&self, limits: Limits) -> Result<String> {
+    fn to_xdr_base64(&self, limits: Limits) -> Result<String, Error> {
         let mut enc = Limited::new(
             base64::write::EncoderStringWriter::new(&base64::engine::general_purpose::STANDARD),
             limits,
@@ -686,7 +693,7 @@ fn pad_len(len: usize) -> usize {
 
 impl ReadXdr for i32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
             r.consume_len(b.len())?;
@@ -698,7 +705,7 @@ impl ReadXdr for i32 {
 
 impl WriteXdr for i32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
             w.consume_len(b.len())?;
@@ -709,7 +716,7 @@ impl WriteXdr for i32 {
 
 impl ReadXdr for u32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
             r.consume_len(b.len())?;
@@ -721,7 +728,7 @@ impl ReadXdr for u32 {
 
 impl WriteXdr for u32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
             w.consume_len(b.len())?;
@@ -732,7 +739,7 @@ impl WriteXdr for u32 {
 
 impl ReadXdr for i64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
             r.consume_len(b.len())?;
@@ -744,7 +751,7 @@ impl ReadXdr for i64 {
 
 impl WriteXdr for i64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
             w.consume_len(b.len())?;
@@ -755,7 +762,7 @@ impl WriteXdr for i64 {
 
 impl ReadXdr for u64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
             r.consume_len(b.len())?;
@@ -767,7 +774,7 @@ impl ReadXdr for u64 {
 
 impl WriteXdr for u64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
             w.consume_len(b.len())?;
@@ -778,35 +785,35 @@ impl WriteXdr for u64 {
 
 impl ReadXdr for f32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
         todo!()
     }
 }
 
 impl WriteXdr for f32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
         todo!()
     }
 }
 
 impl ReadXdr for f64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
         todo!()
     }
 }
 
 impl WriteXdr for f64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
         todo!()
     }
 }
 
 impl ReadXdr for bool {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
             let b = i == 1;
@@ -817,7 +824,7 @@ impl ReadXdr for bool {
 
 impl WriteXdr for bool {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i = u32::from(*self); // true = 1, false = 0
             i.write_xdr(w)
@@ -827,7 +834,7 @@ impl WriteXdr for bool {
 
 impl<T: ReadXdr> ReadXdr for Option<T> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
             match i {
@@ -844,7 +851,7 @@ impl<T: ReadXdr> ReadXdr for Option<T> {
 
 impl<T: WriteXdr> WriteXdr for Option<T> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             if let Some(t) = self {
                 1u32.write_xdr(w)?;
@@ -859,35 +866,35 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
 
 impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| Ok(Box::new(T::read_xdr(r)?)))
     }
 }
 
 impl<T: WriteXdr> WriteXdr for Box<T> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| T::write_xdr(self, w))
     }
 }
 
 impl ReadXdr for () {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
         Ok(())
     }
 }
 
 impl WriteXdr for () {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
         Ok(())
     }
 }
 
 impl<const N: usize> ReadXdr for [u8; N] {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             r.consume_len(N)?;
             let padding = pad_len(N);
@@ -906,7 +913,7 @@ impl<const N: usize> ReadXdr for [u8; N] {
 
 impl<const N: usize> WriteXdr for [u8; N] {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             w.consume_len(N)?;
             let padding = pad_len(N);
@@ -920,7 +927,7 @@ impl<const N: usize> WriteXdr for [u8; N] {
 
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let mut vec = Vec::with_capacity(N);
             for _ in 0..N {
@@ -935,7 +942,7 @@ impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
 
 impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             for t in self {
                 t.write_xdr(w)?;
@@ -949,7 +956,11 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
 
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize)
+)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 
@@ -1000,6 +1011,59 @@ impl<T: schemars::JsonSchema, const MAX: u32> schemars::JsonSchema for VecM<T, M
     }
 }
 
+#[cfg(feature = "schemars")]
+impl<T, TA, const MAX: u32> serde_with::schemars_0_8::JsonSchemaAs<VecM<T, MAX>> for VecM<TA, MAX>
+where
+    TA: serde_with::schemars_0_8::JsonSchemaAs<T>,
+{
+    fn schema_name() -> String {
+        <VecM<serde_with::Schema<T, TA>, MAX> as schemars::JsonSchema>::schema_name()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        <VecM<serde_with::Schema<T, TA>, MAX> as schemars::JsonSchema>::schema_id()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        <VecM<serde_with::Schema<T, TA>, MAX> as schemars::JsonSchema>::json_schema(gen)
+    }
+
+    fn is_referenceable() -> bool {
+        <VecM<serde_with::Schema<T, TA>, MAX> as schemars::JsonSchema>::is_referenceable()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T, U, const MAX: u32> serde_with::SerializeAs<VecM<T, MAX>> for VecM<U, MAX>
+where
+    U: serde_with::SerializeAs<T>,
+{
+    fn serialize_as<S>(source: &VecM<T, MAX>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.collect_seq(
+            source
+                .iter()
+                .map(|item| serde_with::ser::SerializeAsWrap::<T, U>::new(item)),
+        )
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T, U, const MAX: u32> serde_with::DeserializeAs<'de, VecM<T, MAX>> for VecM<U, MAX>
+where
+    U: serde_with::DeserializeAs<'de, T>,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<VecM<T, MAX>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let vec = <Vec<U> as serde_with::DeserializeAs<Vec<T>>>::deserialize_as(deserializer)?;
+        vec.try_into().map_err(serde::de::Error::custom)
+    }
+}
+
 impl<T, const MAX: u32> VecM<T, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
@@ -1046,12 +1110,12 @@ impl<T: Clone, const MAX: u32> VecM<T, MAX> {
 
 impl<const MAX: u32> VecM<u8, MAX> {
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> Result<String> {
+    pub fn to_string(&self) -> Result<String, Error> {
         self.try_into()
     }
 
     #[cfg(feature = "alloc")]
-    pub fn into_string(self) -> Result<String> {
+    pub fn into_string(self) -> Result<String, Error> {
         self.try_into()
     }
 
@@ -1106,7 +1170,7 @@ impl<T> From<VecM<T, 1>> for Option<T> {
 impl<T, const MAX: u32> TryFrom<Vec<T>> for VecM<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: Vec<T>) -> Result<Self> {
+    fn try_from(v: Vec<T>) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v))
@@ -1142,7 +1206,7 @@ impl<T, const MAX: u32> AsRef<Vec<T>> for VecM<T, MAX> {
 impl<T: Clone, const MAX: u32> TryFrom<&Vec<T>> for VecM<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: &Vec<T>) -> Result<Self> {
+    fn try_from(v: &Vec<T>) -> Result<Self, Error> {
         v.as_slice().try_into()
     }
 }
@@ -1151,7 +1215,7 @@ impl<T: Clone, const MAX: u32> TryFrom<&Vec<T>> for VecM<T, MAX> {
 impl<T: Clone, const MAX: u32> TryFrom<&[T]> for VecM<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: &[T]) -> Result<Self> {
+    fn try_from(v: &[T]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.to_vec()))
@@ -1178,7 +1242,7 @@ impl<T, const MAX: u32> AsRef<[T]> for VecM<T, MAX> {
 impl<T: Clone, const N: usize, const MAX: u32> TryFrom<[T; N]> for VecM<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: [T; N]) -> Result<Self> {
+    fn try_from(v: [T; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.to_vec()))
@@ -1202,7 +1266,7 @@ impl<T: Clone, const N: usize, const MAX: u32> TryFrom<VecM<T, MAX>> for [T; N] 
 impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&[T; N]> for VecM<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: &[T; N]) -> Result<Self> {
+    fn try_from(v: &[T; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.to_vec()))
@@ -1216,7 +1280,7 @@ impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&[T; N]> for VecM<T, MAX>
 impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&'static [T; N]> for VecM<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: &'static [T; N]) -> Result<Self> {
+    fn try_from(v: &'static [T; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v))
@@ -1230,7 +1294,7 @@ impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&'static [T; N]> for VecM
 impl<const MAX: u32> TryFrom<&String> for VecM<u8, MAX> {
     type Error = Error;
 
-    fn try_from(v: &String) -> Result<Self> {
+    fn try_from(v: &String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.as_bytes().to_vec()))
@@ -1244,7 +1308,7 @@ impl<const MAX: u32> TryFrom<&String> for VecM<u8, MAX> {
 impl<const MAX: u32> TryFrom<String> for VecM<u8, MAX> {
     type Error = Error;
 
-    fn try_from(v: String) -> Result<Self> {
+    fn try_from(v: String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.into()))
@@ -1258,7 +1322,7 @@ impl<const MAX: u32> TryFrom<String> for VecM<u8, MAX> {
 impl<const MAX: u32> TryFrom<VecM<u8, MAX>> for String {
     type Error = Error;
 
-    fn try_from(v: VecM<u8, MAX>) -> Result<Self> {
+    fn try_from(v: VecM<u8, MAX>) -> Result<Self, Error> {
         Ok(String::from_utf8(v.0)?)
     }
 }
@@ -1267,7 +1331,7 @@ impl<const MAX: u32> TryFrom<VecM<u8, MAX>> for String {
 impl<const MAX: u32> TryFrom<&VecM<u8, MAX>> for String {
     type Error = Error;
 
-    fn try_from(v: &VecM<u8, MAX>) -> Result<Self> {
+    fn try_from(v: &VecM<u8, MAX>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?.to_owned())
     }
 }
@@ -1276,7 +1340,7 @@ impl<const MAX: u32> TryFrom<&VecM<u8, MAX>> for String {
 impl<const MAX: u32> TryFrom<&str> for VecM<u8, MAX> {
     type Error = Error;
 
-    fn try_from(v: &str) -> Result<Self> {
+    fn try_from(v: &str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.into()))
@@ -1290,7 +1354,7 @@ impl<const MAX: u32> TryFrom<&str> for VecM<u8, MAX> {
 impl<const MAX: u32> TryFrom<&'static str> for VecM<u8, MAX> {
     type Error = Error;
 
-    fn try_from(v: &'static str) -> Result<Self> {
+    fn try_from(v: &'static str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(VecM(v.as_bytes()))
@@ -1303,14 +1367,14 @@ impl<const MAX: u32> TryFrom<&'static str> for VecM<u8, MAX> {
 impl<'a, const MAX: u32> TryFrom<&'a VecM<u8, MAX>> for &'a str {
     type Error = Error;
 
-    fn try_from(v: &'a VecM<u8, MAX>) -> Result<Self> {
+    fn try_from(v: &'a VecM<u8, MAX>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?)
     }
 }
 
 impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
@@ -1337,7 +1401,7 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
 
 impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
@@ -1357,7 +1421,7 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
 
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let len = u32::read_xdr(r)?;
             if len > MAX {
@@ -1377,7 +1441,7 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
 
 impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
@@ -1521,12 +1585,12 @@ impl<const MAX: u32> BytesM<MAX> {
 
 impl<const MAX: u32> BytesM<MAX> {
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> Result<String> {
+    pub fn to_string(&self) -> Result<String, Error> {
         self.try_into()
     }
 
     #[cfg(feature = "alloc")]
-    pub fn into_string(self) -> Result<String> {
+    pub fn into_string(self) -> Result<String, Error> {
         self.try_into()
     }
 
@@ -1546,7 +1610,7 @@ impl<const MAX: u32> BytesM<MAX> {
 impl<const MAX: u32> TryFrom<Vec<u8>> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: Vec<u8>) -> Result<Self> {
+    fn try_from(v: Vec<u8>) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v))
@@ -1582,7 +1646,7 @@ impl<const MAX: u32> AsRef<Vec<u8>> for BytesM<MAX> {
 impl<const MAX: u32> TryFrom<&Vec<u8>> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &Vec<u8>) -> Result<Self> {
+    fn try_from(v: &Vec<u8>) -> Result<Self, Error> {
         v.as_slice().try_into()
     }
 }
@@ -1591,7 +1655,7 @@ impl<const MAX: u32> TryFrom<&Vec<u8>> for BytesM<MAX> {
 impl<const MAX: u32> TryFrom<&[u8]> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &[u8]) -> Result<Self> {
+    fn try_from(v: &[u8]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.to_vec()))
@@ -1618,7 +1682,7 @@ impl<const MAX: u32> AsRef<[u8]> for BytesM<MAX> {
 impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: [u8; N]) -> Result<Self> {
+    fn try_from(v: [u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.to_vec()))
@@ -1642,7 +1706,7 @@ impl<const N: usize, const MAX: u32> TryFrom<BytesM<MAX>> for [u8; N] {
 impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &[u8; N]) -> Result<Self> {
+    fn try_from(v: &[u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.to_vec()))
@@ -1656,7 +1720,7 @@ impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for BytesM<MAX> {
 impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &'static [u8; N]) -> Result<Self> {
+    fn try_from(v: &'static [u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v))
@@ -1670,7 +1734,7 @@ impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for BytesM<MAX> {
 impl<const MAX: u32> TryFrom<&String> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &String) -> Result<Self> {
+    fn try_from(v: &String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.as_bytes().to_vec()))
@@ -1684,7 +1748,7 @@ impl<const MAX: u32> TryFrom<&String> for BytesM<MAX> {
 impl<const MAX: u32> TryFrom<String> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: String) -> Result<Self> {
+    fn try_from(v: String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.into()))
@@ -1698,7 +1762,7 @@ impl<const MAX: u32> TryFrom<String> for BytesM<MAX> {
 impl<const MAX: u32> TryFrom<BytesM<MAX>> for String {
     type Error = Error;
 
-    fn try_from(v: BytesM<MAX>) -> Result<Self> {
+    fn try_from(v: BytesM<MAX>) -> Result<Self, Error> {
         Ok(String::from_utf8(v.0)?)
     }
 }
@@ -1707,7 +1771,7 @@ impl<const MAX: u32> TryFrom<BytesM<MAX>> for String {
 impl<const MAX: u32> TryFrom<&BytesM<MAX>> for String {
     type Error = Error;
 
-    fn try_from(v: &BytesM<MAX>) -> Result<Self> {
+    fn try_from(v: &BytesM<MAX>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?.to_owned())
     }
 }
@@ -1716,7 +1780,7 @@ impl<const MAX: u32> TryFrom<&BytesM<MAX>> for String {
 impl<const MAX: u32> TryFrom<&str> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &str) -> Result<Self> {
+    fn try_from(v: &str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.into()))
@@ -1730,7 +1794,7 @@ impl<const MAX: u32> TryFrom<&str> for BytesM<MAX> {
 impl<const MAX: u32> TryFrom<&'static str> for BytesM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &'static str) -> Result<Self> {
+    fn try_from(v: &'static str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(BytesM(v.as_bytes()))
@@ -1743,14 +1807,14 @@ impl<const MAX: u32> TryFrom<&'static str> for BytesM<MAX> {
 impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
     type Error = Error;
 
-    fn try_from(v: &'a BytesM<MAX>) -> Result<Self> {
+    fn try_from(v: &'a BytesM<MAX>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?)
     }
 }
 
 impl<const MAX: u32> ReadXdr for BytesM<MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
@@ -1777,7 +1841,7 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
 
 impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
@@ -1924,12 +1988,12 @@ impl<const MAX: u32> StringM<MAX> {
 
 impl<const MAX: u32> StringM<MAX> {
     #[cfg(feature = "alloc")]
-    pub fn to_utf8_string(&self) -> Result<String> {
+    pub fn to_utf8_string(&self) -> Result<String, Error> {
         self.try_into()
     }
 
     #[cfg(feature = "alloc")]
-    pub fn into_utf8_string(self) -> Result<String> {
+    pub fn into_utf8_string(self) -> Result<String, Error> {
         self.try_into()
     }
 
@@ -1949,7 +2013,7 @@ impl<const MAX: u32> StringM<MAX> {
 impl<const MAX: u32> TryFrom<Vec<u8>> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: Vec<u8>) -> Result<Self> {
+    fn try_from(v: Vec<u8>) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v))
@@ -1985,7 +2049,7 @@ impl<const MAX: u32> AsRef<Vec<u8>> for StringM<MAX> {
 impl<const MAX: u32> TryFrom<&Vec<u8>> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &Vec<u8>) -> Result<Self> {
+    fn try_from(v: &Vec<u8>) -> Result<Self, Error> {
         v.as_slice().try_into()
     }
 }
@@ -1994,7 +2058,7 @@ impl<const MAX: u32> TryFrom<&Vec<u8>> for StringM<MAX> {
 impl<const MAX: u32> TryFrom<&[u8]> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &[u8]) -> Result<Self> {
+    fn try_from(v: &[u8]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.to_vec()))
@@ -2021,7 +2085,7 @@ impl<const MAX: u32> AsRef<[u8]> for StringM<MAX> {
 impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: [u8; N]) -> Result<Self> {
+    fn try_from(v: [u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.to_vec()))
@@ -2045,7 +2109,7 @@ impl<const N: usize, const MAX: u32> TryFrom<StringM<MAX>> for [u8; N] {
 impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &[u8; N]) -> Result<Self> {
+    fn try_from(v: &[u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.to_vec()))
@@ -2059,7 +2123,7 @@ impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for StringM<MAX> {
 impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &'static [u8; N]) -> Result<Self> {
+    fn try_from(v: &'static [u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v))
@@ -2073,7 +2137,7 @@ impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for StringM<MAX> 
 impl<const MAX: u32> TryFrom<&String> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &String) -> Result<Self> {
+    fn try_from(v: &String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.as_bytes().to_vec()))
@@ -2087,7 +2151,7 @@ impl<const MAX: u32> TryFrom<&String> for StringM<MAX> {
 impl<const MAX: u32> TryFrom<String> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: String) -> Result<Self> {
+    fn try_from(v: String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.into()))
@@ -2101,7 +2165,7 @@ impl<const MAX: u32> TryFrom<String> for StringM<MAX> {
 impl<const MAX: u32> TryFrom<StringM<MAX>> for String {
     type Error = Error;
 
-    fn try_from(v: StringM<MAX>) -> Result<Self> {
+    fn try_from(v: StringM<MAX>) -> Result<Self, Error> {
         Ok(String::from_utf8(v.0)?)
     }
 }
@@ -2110,7 +2174,7 @@ impl<const MAX: u32> TryFrom<StringM<MAX>> for String {
 impl<const MAX: u32> TryFrom<&StringM<MAX>> for String {
     type Error = Error;
 
-    fn try_from(v: &StringM<MAX>) -> Result<Self> {
+    fn try_from(v: &StringM<MAX>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?.to_owned())
     }
 }
@@ -2119,7 +2183,7 @@ impl<const MAX: u32> TryFrom<&StringM<MAX>> for String {
 impl<const MAX: u32> TryFrom<&str> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &str) -> Result<Self> {
+    fn try_from(v: &str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.into()))
@@ -2133,7 +2197,7 @@ impl<const MAX: u32> TryFrom<&str> for StringM<MAX> {
 impl<const MAX: u32> TryFrom<&'static str> for StringM<MAX> {
     type Error = Error;
 
-    fn try_from(v: &'static str) -> Result<Self> {
+    fn try_from(v: &'static str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
             Ok(StringM(v.as_bytes()))
@@ -2146,14 +2210,14 @@ impl<const MAX: u32> TryFrom<&'static str> for StringM<MAX> {
 impl<'a, const MAX: u32> TryFrom<&'a StringM<MAX>> for &'a str {
     type Error = Error;
 
-    fn try_from(v: &'a StringM<MAX>) -> Result<Self> {
+    fn try_from(v: &'a StringM<MAX>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?)
     }
 }
 
 impl<const MAX: u32> ReadXdr for StringM<MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
@@ -2180,7 +2244,7 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
 
 impl<const MAX: u32> WriteXdr for StringM<MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
@@ -2226,7 +2290,7 @@ where
     T: ReadXdr,
 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         // Read the frame header value that contains 1 flag-bit and a 33-bit length.
         //  - The 1 flag bit is 0 when there are more frames for the same record.
         //  - The 31-bit length is the length of the bytes within the frame that
@@ -2316,6 +2380,102 @@ mod test_skip_whitespace {
         }
     }
 }
+
+// NumberOrString ---------------------------------------------------------------
+
+/// NumberOrString is a serde_as serializer/deserializer.
+///
+/// It deserializers any integer that fits into a 64-bit value into an i64 or u64 field from either
+/// a JSON Number or JSON String value.
+///
+/// It serializes always to a string.
+///
+/// It has a JsonSchema implementation that only advertises that the allowed format is a String.
+/// This is because the type is intended to soften the changing of fields from JSON Number to JSON
+/// String by permitting deserialization, but discourage new uses of JSON Number.
+#[cfg(feature = "serde")]
+struct NumberOrString;
+
+#[cfg(feature = "serde")]
+impl<'de> serde_with::DeserializeAs<'de, i64> for NumberOrString {
+    fn deserialize_as<D>(deserializer: D) -> Result<i64, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum I64OrString<'a> {
+            String(&'a str),
+            I64(i64),
+        }
+        match I64OrString::deserialize(deserializer)? {
+            I64OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            I64OrString::I64(v) => Ok(v),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde_with::DeserializeAs<'de, u64> for NumberOrString {
+    fn deserialize_as<D>(deserializer: D) -> Result<u64, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum U64OrString<'a> {
+            String(&'a str),
+            U64(u64),
+        }
+        match U64OrString::deserialize(deserializer)? {
+            U64OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            U64OrString::U64(v) => Ok(v),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde_with::SerializeAs<i64> for NumberOrString {
+    fn serialize_as<S>(source: &i64, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.collect_str(source)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde_with::SerializeAs<u64> for NumberOrString {
+    fn serialize_as<S>(source: &u64, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.collect_str(source)
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl<T> serde_with::schemars_0_8::JsonSchemaAs<T> for NumberOrString {
+    fn schema_name() -> String {
+        <String as schemars::JsonSchema>::schema_name()
+    }
+
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        <String as schemars::JsonSchema>::schema_id()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        <String as schemars::JsonSchema>::json_schema(gen)
+    }
+
+    fn is_referenceable() -> bool {
+        <String as schemars::JsonSchema>::is_referenceable()
+    }
+}
+
+// Tests ------------------------------------------------------------------------
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
@@ -2488,7 +2648,7 @@ mod test {
         a.write_xdr(&mut buf).unwrap();
 
         let mut dlr = Limited::new(Cursor::new(buf.inner.as_slice()), read_limits);
-        let res: Result<Option<Option<Option<u32>>>> = ReadXdr::read_xdr(&mut dlr);
+        let res: Result<Option<Option<Option<u32>>>, _> = ReadXdr::read_xdr(&mut dlr);
         match res {
             Err(Error::DepthLimitExceeded) => (),
             _ => panic!("expected DepthLimitExceeded got {res:?}"),
@@ -2942,17 +3102,918 @@ mod test {
     }
 }
 
+#[cfg(all(test, feature = "serde"))]
+mod tests_for_number_or_string {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serde_json;
+    use serde_with::serde_as;
+
+    // --- Helper Structs ---
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    struct TestI64 {
+        #[serde_as(as = "NumberOrString")]
+        val: i64,
+    }
+
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    struct TestU64 {
+        #[serde_as(as = "NumberOrString")]
+        val: u64,
+    }
+
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    struct TestOptionI64 {
+        #[serde_as(as = "Option<NumberOrString>")]
+        val: Option<i64>,
+    }
+
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    struct TestOptionU64 {
+        #[serde_as(as = "Option<NumberOrString>")]
+        val: Option<u64>,
+    }
+
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    struct TestVecI64 {
+        #[serde_as(as = "Vec<NumberOrString>")]
+        val: Vec<i64>,
+    }
+
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    struct TestVecU64 {
+        #[serde_as(as = "Vec<NumberOrString>")]
+        val: Vec<u64>,
+    }
+
+    // Helper Enum for testing field access within variants
+    #[serde_as]
+    #[derive(Debug, PartialEq, Deserialize, Serialize)]
+    #[serde(rename_all = "camelCase")] // Added to make JSON keys distinct for variants
+    enum TestEnum {
+        VariantA {
+            #[serde(rename = "numVal")]
+            #[serde_as(as = "NumberOrString")]
+            num_val: i64,
+            #[serde(rename = "otherData")]
+            other_data: String,
+        },
+        VariantB {
+            #[serde_as(as = "NumberOrString")]
+            count: u64,
+        },
+        SimpleVariant,
+    }
+
+    // --- i64 Deserialization Tests ---
+    #[test]
+    fn deserialize_i64_from_json_number_positive() {
+        let json = r#"{"val": 123}"#;
+        let expected = TestI64 { val: 123 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_number_negative() {
+        let json = r#"{"val": -456}"#;
+        let expected = TestI64 { val: -456 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_number_zero() {
+        let json = r#"{"val": 0}"#;
+        let expected = TestI64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_number_max() {
+        let json = format!(r#"{{"val": {}}}"#, i64::MAX);
+        let expected = TestI64 { val: i64::MAX };
+        assert_eq!(serde_json::from_str::<TestI64>(&json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_number_min() {
+        let json = format!(r#"{{"val": {}}}"#, i64::MIN);
+        let expected = TestI64 { val: i64::MIN };
+        assert_eq!(serde_json::from_str::<TestI64>(&json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_positive() {
+        let json = r#"{"val": "789"}"#;
+        let expected = TestI64 { val: 789 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_negative() {
+        let json = r#"{"val": "-101"}"#;
+        let expected = TestI64 { val: -101 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_zero() {
+        let json = r#"{"val": "0"}"#;
+        let expected = TestI64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_max() {
+        let json = format!(r#"{{"val": "{}"}}"#, i64::MAX);
+        let expected = TestI64 { val: i64::MAX };
+        assert_eq!(serde_json::from_str::<TestI64>(&json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_min() {
+        let json = format!(r#"{{"val": "{}"}}"#, i64::MIN);
+        let expected = TestI64 { val: i64::MIN };
+        assert_eq!(serde_json::from_str::<TestI64>(&json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_with_plus_prefix() {
+        let json = r#"{"val": "+123"}"#;
+        let expected = TestI64 { val: 123 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_with_plus_zero() {
+        let json = r#"{"val": "+0"}"#;
+        let expected = TestI64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_from_json_string_with_minus_zero() {
+        let json = r#"{"val": "-0"}"#;
+        let expected = TestI64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_string_with_leading_whitespace() {
+        let json = r#"{"val": " 123"}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_string_with_trailing_whitespace() {
+        let json = r#"{"val": "123 "}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_string_with_both_whitespace() {
+        let json = r#"{"val": " 123 "}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_string_with_invalid_plus_prefix() {
+        let json = r#"{"val": "++123"}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_string_with_invalid_minus_prefix() {
+        let json = r#"{"val": "--123"}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_string_with_invalid_mixed_prefix() {
+        let json = r#"{"val": "+-123"}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_not_a_number() {
+        let json = r#"{"val": "abc"}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_float() {
+        let json = r#"{"val": "123.45"}"#; // Not an integer
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_empty() {
+        let json = r#"{"val": ""}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_overflow() {
+        let overflow_val = i128::from(i64::MAX) + 1;
+        let json = format!(r#"{{"val": "{overflow_val}"}}"#);
+        assert!(serde_json::from_str::<TestI64>(&json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_underflow() {
+        let underflow_val = i128::from(i64::MIN) - 1;
+        let json = format!(r#"{{"val": "{underflow_val}"}}"#);
+        assert!(serde_json::from_str::<TestI64>(&json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_float_number() {
+        let json = r#"{"val": 123.45}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_bool_true() {
+        let json = r#"{"val": true}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_array() {
+        let json = r#"{"val": []}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_object() {
+        let json = r#"{"val": {}}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_json_null() {
+        let json = r#"{"val": null}"#;
+        assert!(serde_json::from_str::<TestI64>(json).is_err());
+    }
+
+    // -- Additional i64 String Format Tests --
+    #[test]
+    fn deserialize_i64_error_from_hex_string() {
+        let json = r#"{"val": "0x1A"}"#; // Hex "26"
+                                         // std::primitive::i64.from_str() does not support "0x"
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "Hex string should fail parsing to i64"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_octal_string() {
+        let json = r#"{"val": "0o77"}"#; // Octal "63"
+                                         // std::primitive::i64.from_str() does not support "0o"
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "Octal string should fail parsing to i64"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_scientific_notation_string() {
+        let json = r#"{"val": "1e3"}"#; // "1000" in scientific
+                                        // std::primitive::i64.from_str() does not support scientific notation
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "Scientific notation string should fail parsing to i64"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_invalid_scientific_notation_string() {
+        let json = r#"{"val": "1e"}"#;
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "Invalid scientific notation string should fail"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_with_underscores() {
+        let json = r#"{"val": "1_000_000"}"#;
+        // std::primitive::i64.from_str() does not support underscores
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "String with underscores should fail parsing to i64"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_from_string_with_leading_zeros() {
+        let json = r#"{"val": "000123"}"#;
+        let expected = TestI64 { val: 123 };
+        // std::primitive::i64.from_str() supports leading zeros
+        assert_eq!(
+            serde_json::from_str::<TestI64>(json).unwrap(),
+            expected,
+            "String with leading zeros should parse"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_from_string_with_leading_zeros_negative() {
+        let json = r#"{"val": "-000123"}"#;
+        let expected = TestI64 { val: -123 };
+        assert_eq!(
+            serde_json::from_str::<TestI64>(json).unwrap(),
+            expected,
+            "Negative string with leading zeros should parse"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_with_decimal_zeros() {
+        let json = r#"{"val": "123.000"}"#;
+        // std::primitive::i64.from_str() does not support decimals
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "String with decimal part should fail parsing to i64"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_string_with_internal_decimal() {
+        let json = r#"{"val": "12.345"}"#;
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "String with internal decimal point should fail"
+        );
+    }
+
+    #[test]
+    fn deserialize_i64_error_from_localized_string_commas() {
+        let json = r#"{"val": "1,234"}"#;
+        // std::primitive::i64.from_str() does not support commas
+        assert!(
+            serde_json::from_str::<TestI64>(json).is_err(),
+            "Localized string with commas should fail parsing to i64"
+        );
+    }
+
+    // --- u64 Deserialization Tests ---
+    #[test]
+    fn deserialize_u64_from_json_number() {
+        let json = r#"{"val": 123}"#;
+        let expected = TestU64 { val: 123 };
+        assert_eq!(serde_json::from_str::<TestU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_number_zero() {
+        let json = r#"{"val": 0}"#;
+        let expected = TestU64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_number_max() {
+        let json = format!(r#"{{"val": {}}}"#, u64::MAX);
+        let expected = TestU64 { val: u64::MAX };
+        assert_eq!(serde_json::from_str::<TestU64>(&json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_string() {
+        let json = r#"{"val": "789"}"#;
+        let expected = TestU64 { val: 789 };
+        assert_eq!(serde_json::from_str::<TestU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_string_zero() {
+        let json = r#"{"val": "0"}"#;
+        let expected = TestU64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_string_max() {
+        let json = format!(r#"{{"val": "{}"}}"#, u64::MAX);
+        let expected = TestU64 { val: u64::MAX };
+        assert_eq!(serde_json::from_str::<TestU64>(&json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_string_with_plus_prefix() {
+        let json = r#"{"val": "+123"}"#;
+        let expected = TestU64 { val: 123 };
+        assert_eq!(serde_json::from_str::<TestU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_from_json_string_with_plus_zero() {
+        let json = r#"{"val": "+0"}"#;
+        let expected = TestU64 { val: 0 };
+        assert_eq!(serde_json::from_str::<TestU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_string_with_leading_whitespace() {
+        let json = r#"{"val": " 123"}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_string_with_trailing_whitespace() {
+        let json = r#"{"val": "123 "}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_string_with_invalid_plus_prefix() {
+        let json = r#"{"val": "++123"}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_negative() {
+        let json = r#"{"val": "-123"}"#; // Negative not allowed for u64 string parse
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_number_negative() {
+        let json = r#"{"val": -1}"#; // Negative not allowed for u64
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_not_a_number() {
+        let json = r#"{"val": "abc"}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_float() {
+        let json = r#"{"val": "123.45"}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_empty() {
+        let json = r#"{"val": ""}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_overflow() {
+        let overflow_val = u128::from(u64::MAX) + 1;
+        let json = format!(r#"{{"val": "{overflow_val}"}}"#);
+        assert!(serde_json::from_str::<TestU64>(&json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_float_number() {
+        let json = r#"{"val": 123.45}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_bool_true() {
+        let json = r#"{"val": true}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_array() {
+        let json = r#"{"val": []}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_object() {
+        let json = r#"{"val": {}}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_json_null() {
+        let json = r#"{"val": null}"#;
+        assert!(serde_json::from_str::<TestU64>(json).is_err());
+    }
+
+    // -- Additional u64 String Format Tests --
+    #[test]
+    fn deserialize_u64_error_from_hex_string() {
+        let json = r#"{"val": "0x1A"}"#; // Hex "26"
+        assert!(
+            serde_json::from_str::<TestU64>(json).is_err(),
+            "Hex string should fail parsing to u64"
+        );
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_octal_string() {
+        let json = r#"{"val": "0o77"}"#; // Octal "63"
+        assert!(
+            serde_json::from_str::<TestU64>(json).is_err(),
+            "Octal string should fail parsing to u64"
+        );
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_scientific_notation_string() {
+        let json = r#"{"val": "1e3"}"#;
+        assert!(
+            serde_json::from_str::<TestU64>(json).is_err(),
+            "Scientific notation string should fail parsing to u64"
+        );
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_with_underscores() {
+        let json = r#"{"val": "1_000_000"}"#;
+        assert!(
+            serde_json::from_str::<TestU64>(json).is_err(),
+            "String with underscores should fail parsing to u64"
+        );
+    }
+
+    #[test]
+    fn deserialize_u64_from_string_with_leading_zeros() {
+        let json = r#"{"val": "000123"}"#;
+        let expected = TestU64 { val: 123 };
+        assert_eq!(
+            serde_json::from_str::<TestU64>(json).unwrap(),
+            expected,
+            "String with leading zeros should parse to u64"
+        );
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_string_with_decimal_zeros() {
+        let json = r#"{"val": "123.000"}"#;
+        assert!(
+            serde_json::from_str::<TestU64>(json).is_err(),
+            "String with decimal part should fail parsing to u64"
+        );
+    }
+
+    #[test]
+    fn deserialize_u64_error_from_localized_string_commas() {
+        let json = r#"{"val": "1,234"}"#;
+        assert!(
+            serde_json::from_str::<TestU64>(json).is_err(),
+            "Localized string with commas should fail parsing to u64"
+        );
+    }
+
+    // --- i64 Serialization Tests ---
+    #[test]
+    fn serialize_i64_positive() {
+        let data = TestI64 { val: 123 };
+        let expected_json = r#"{"val":"123"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_i64_negative() {
+        let data = TestI64 { val: -456 };
+        let expected_json = r#"{"val":"-456"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_i64_zero() {
+        let data = TestI64 { val: 0 };
+        let expected_json = r#"{"val":"0"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_i64_max() {
+        let data = TestI64 { val: i64::MAX };
+        let expected_json = format!(r#"{{"val":"{}"}}"#, i64::MAX);
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_i64_min() {
+        let data = TestI64 { val: i64::MIN };
+        let expected_json = format!(r#"{{"val":"{}"}}"#, i64::MIN);
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    // --- u64 Serialization Tests ---
+    #[test]
+    fn serialize_u64_positive() {
+        let data = TestU64 { val: 789 };
+        let expected_json = r#"{"val":"789"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_u64_zero() {
+        let data = TestU64 { val: 0 };
+        let expected_json = r#"{"val":"0"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_u64_max() {
+        let data = TestU64 { val: u64::MAX };
+        let expected_json = format!(r#"{{"val":"{}"}}"#, u64::MAX);
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    // --- Option<i64> Tests ---
+    #[test]
+    fn deserialize_option_i64_some_from_json_number() {
+        let json = r#"{"val": 123}"#;
+        let expected = TestOptionI64 { val: Some(123) };
+        assert_eq!(
+            serde_json::from_str::<TestOptionI64>(json).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn deserialize_option_i64_some_from_json_string() {
+        let json = r#"{"val": "456"}"#;
+        let expected = TestOptionI64 { val: Some(456) };
+        assert_eq!(
+            serde_json::from_str::<TestOptionI64>(json).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn deserialize_option_i64_none_from_json_null() {
+        let json = r#"{"val": null}"#;
+        let expected = TestOptionI64 { val: None };
+        assert_eq!(
+            serde_json::from_str::<TestOptionI64>(json).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn deserialize_option_i64_error_from_invalid_string() {
+        let json = r#"{"val": "abc"}"#;
+        assert!(serde_json::from_str::<TestOptionI64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_option_i64_error_from_invalid_type() {
+        let json = r#"{"val": true}"#;
+        assert!(serde_json::from_str::<TestOptionI64>(json).is_err());
+    }
+
+    #[test]
+    fn serialize_option_i64_some() {
+        let data = TestOptionI64 { val: Some(123) };
+        let expected_json = r#"{"val":"123"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_option_i64_none() {
+        let data = TestOptionI64 { val: None };
+        let expected_json = r#"{"val":null}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    // --- Option<u64> Tests ---
+    #[test]
+    fn deserialize_option_u64_some_from_json_number() {
+        let json = r#"{"val": 123}"#;
+        let expected = TestOptionU64 { val: Some(123) };
+        assert_eq!(
+            serde_json::from_str::<TestOptionU64>(json).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn deserialize_option_u64_some_from_json_string() {
+        let json = r#"{"val": "456"}"#;
+        let expected = TestOptionU64 { val: Some(456) };
+        assert_eq!(
+            serde_json::from_str::<TestOptionU64>(json).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn deserialize_option_u64_none_from_json_null() {
+        let json = r#"{"val": null}"#;
+        let expected = TestOptionU64 { val: None };
+        assert_eq!(
+            serde_json::from_str::<TestOptionU64>(json).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn deserialize_option_u64_error_from_invalid_string() {
+        let json = r#"{"val": "abc"}"#;
+        assert!(serde_json::from_str::<TestOptionU64>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_option_u64_error_from_negative_string() {
+        let json = r#"{"val": "-1"}"#; // Invalid for u64
+        assert!(serde_json::from_str::<TestOptionU64>(json).is_err());
+    }
+
+    #[test]
+    fn serialize_option_u64_some() {
+        let data = TestOptionU64 { val: Some(123) };
+        let expected_json = r#"{"val":"123"}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_option_u64_none() {
+        let data = TestOptionU64 { val: None };
+        let expected_json = r#"{"val":null}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    // --- Vec<i64> Tests ---
+    #[test]
+    fn deserialize_vec_i64_empty() {
+        let json = r#"{"val": []}"#;
+        let expected = TestVecI64 { val: vec![] };
+        assert_eq!(serde_json::from_str::<TestVecI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_vec_i64_from_numbers_and_strings() {
+        let json = r#"{"val": [1, "2", -3, "-4"]}"#;
+        let expected = TestVecI64 {
+            val: vec![1, 2, -3, -4],
+        };
+        assert_eq!(serde_json::from_str::<TestVecI64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_vec_i64_error_if_item_is_invalid_string() {
+        let json = r#"{"val": [1, "abc", 3]}"#;
+        let err = serde_json::from_str::<TestVecI64>(json).unwrap_err();
+        // The error will point to the specific failing element
+        assert!(err.to_string().contains("invalid digit found in string")); // From parse error
+    }
+
+    #[test]
+    fn deserialize_vec_i64_error_if_item_is_invalid_type() {
+        let json = r#"{"val": [1, true, 3]}"#;
+        assert!(serde_json::from_str::<TestVecI64>(json).is_err());
+    }
+
+    #[test]
+    fn serialize_vec_i64_empty() {
+        let data = TestVecI64 { val: vec![] };
+        let expected_json = r#"{"val":[]}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_vec_i64_with_values() {
+        let data = TestVecI64 {
+            val: vec![1, -2, 0],
+        };
+        let expected_json = r#"{"val":["1","-2","0"]}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    // --- Vec<u64> Tests ---
+    #[test]
+    fn deserialize_vec_u64_empty() {
+        let json = r#"{"val": []}"#;
+        let expected = TestVecU64 { val: vec![] };
+        assert_eq!(serde_json::from_str::<TestVecU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_vec_u64_from_numbers_and_strings() {
+        let json = r#"{"val": [1, "2", 3, "4"]}"#;
+        let expected = TestVecU64 {
+            val: vec![1, 2, 3, 4],
+        };
+        assert_eq!(serde_json::from_str::<TestVecU64>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_vec_u64_error_if_item_is_invalid_string() {
+        let json = r#"{"val": [1, "abc", 3]}"#;
+        let err = serde_json::from_str::<TestVecU64>(json).unwrap_err();
+        assert!(err.to_string().contains("invalid digit found in string"));
+    }
+
+    #[test]
+    fn deserialize_vec_u64_error_if_item_is_negative_string() {
+        let json = r#"{"val": [1, "-2", 3]}"#;
+        let err = serde_json::from_str::<TestVecU64>(json).unwrap_err();
+        assert!(err.to_string().contains("invalid digit found in string")); // u64 parse error
+    }
+
+    #[test]
+    fn deserialize_vec_u64_error_if_item_is_negative_number() {
+        let json = r#"{"val": [1, -2, 3]}"#;
+        assert!(serde_json::from_str::<TestVecU64>(json).is_err());
+    }
+
+    #[test]
+    fn serialize_vec_u64_empty() {
+        let data = TestVecU64 { val: vec![] };
+        let expected_json = r#"{"val":[]}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_vec_u64_with_values() {
+        let data = TestVecU64 { val: vec![1, 2, 0] };
+        let expected_json = r#"{"val":["1","2","0"]}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    // --- Enum with NumberOrString field Tests ---
+    #[test]
+    fn deserialize_enum_variant_a_with_number() {
+        let json = r#"{"variantA": {"numVal": 123, "otherData": "test"}}"#;
+        let expected = TestEnum::VariantA {
+            num_val: 123,
+            other_data: "test".to_string(),
+        };
+        assert_eq!(serde_json::from_str::<TestEnum>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_enum_variant_a_with_string_number() {
+        let json = r#"{"variantA": {"numVal": "-45", "otherData": "data"}}"#;
+        let expected = TestEnum::VariantA {
+            num_val: -45,
+            other_data: "data".to_string(),
+        };
+        assert_eq!(serde_json::from_str::<TestEnum>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_enum_variant_b_with_number() {
+        let json = r#"{"variantB": {"count": 7890}}"#;
+        let expected = TestEnum::VariantB { count: 7890 };
+        assert_eq!(serde_json::from_str::<TestEnum>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_enum_variant_b_with_string_number() {
+        let json = r#"{"variantB": {"count": "1234567890"}}"#;
+        let expected = TestEnum::VariantB { count: 1234567890 };
+        assert_eq!(serde_json::from_str::<TestEnum>(json).unwrap(), expected);
+    }
+
+    #[test]
+    fn deserialize_enum_variant_a_error_invalid_num_string() {
+        let json = r#"{"variantA": {"numVal": "abc", "otherData": "test"}}"#;
+        assert!(serde_json::from_str::<TestEnum>(json).is_err());
+    }
+
+    #[test]
+    fn serialize_enum_variant_a() {
+        let data = TestEnum::VariantA {
+            num_val: 123,
+            other_data: "test".to_string(),
+        };
+        // Note: num_val will be serialized as a string by NumberOrString
+        let expected_json = r#"{"variantA":{"numVal":"123","otherData":"test"}}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+
+    #[test]
+    fn serialize_enum_variant_b() {
+        let data = TestEnum::VariantB { count: 7890 };
+        let expected_json = r#"{"variantB":{"count":"7890"}}"#;
+        assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
+    }
+}
+
 /// Value is an XDR Typedef defines as:
 ///
 /// ```text
 /// typedef opaque Value<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -2983,7 +4044,7 @@ impl AsRef<BytesM> for Value {
 
 impl ReadXdr for Value {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = BytesM::read_xdr(r)?;
             let v = Value(i);
@@ -2994,7 +4055,7 @@ impl ReadXdr for Value {
 
 impl WriteXdr for Value {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -3015,7 +4076,7 @@ impl From<Value> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for Value {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(Value(x.try_into()?))
     }
 }
@@ -3023,7 +4084,7 @@ impl TryFrom<Vec<u8>> for Value {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Value {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(Value(x.try_into()?))
     }
 }
@@ -3059,9 +4120,11 @@ impl AsRef<[u8]> for Value {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3073,7 +4136,7 @@ pub struct ScpBallot {
 
 impl ReadXdr for ScpBallot {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 counter: u32::read_xdr(r)?,
@@ -3085,7 +4148,7 @@ impl ReadXdr for ScpBallot {
 
 impl WriteXdr for ScpBallot {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.counter.write_xdr(w)?;
             self.value.write_xdr(w)?;
@@ -3172,7 +4235,7 @@ impl fmt::Display for ScpStatementType {
 impl TryFrom<i32> for ScpStatementType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScpStatementType::Prepare,
             1 => ScpStatementType::Confirm,
@@ -3194,7 +4257,7 @@ impl From<ScpStatementType> for i32 {
 
 impl ReadXdr for ScpStatementType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -3205,7 +4268,7 @@ impl ReadXdr for ScpStatementType {
 
 impl WriteXdr for ScpStatementType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -3225,9 +4288,11 @@ impl WriteXdr for ScpStatementType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3240,7 +4305,7 @@ pub struct ScpNomination {
 
 impl ReadXdr for ScpNomination {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 quorum_set_hash: Hash::read_xdr(r)?,
@@ -3253,7 +4318,7 @@ impl ReadXdr for ScpNomination {
 
 impl WriteXdr for ScpNomination {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.quorum_set_hash.write_xdr(w)?;
             self.votes.write_xdr(w)?;
@@ -3278,9 +4343,11 @@ impl WriteXdr for ScpNomination {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3296,7 +4363,7 @@ pub struct ScpStatementPrepare {
 
 impl ReadXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 quorum_set_hash: Hash::read_xdr(r)?,
@@ -3312,7 +4379,7 @@ impl ReadXdr for ScpStatementPrepare {
 
 impl WriteXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.quorum_set_hash.write_xdr(w)?;
             self.ballot.write_xdr(w)?;
@@ -3339,9 +4406,11 @@ impl WriteXdr for ScpStatementPrepare {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3356,7 +4425,7 @@ pub struct ScpStatementConfirm {
 
 impl ReadXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ballot: ScpBallot::read_xdr(r)?,
@@ -3371,7 +4440,7 @@ impl ReadXdr for ScpStatementConfirm {
 
 impl WriteXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ballot.write_xdr(w)?;
             self.n_prepared.write_xdr(w)?;
@@ -3395,9 +4464,11 @@ impl WriteXdr for ScpStatementConfirm {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3410,7 +4481,7 @@ pub struct ScpStatementExternalize {
 
 impl ReadXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 commit: ScpBallot::read_xdr(r)?,
@@ -3423,7 +4494,7 @@ impl ReadXdr for ScpStatementExternalize {
 
 impl WriteXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.commit.write_xdr(w)?;
             self.n_h.write_xdr(w)?;
@@ -3470,10 +4541,12 @@ impl WriteXdr for ScpStatementExternalize {
 /// ```
 ///
 // union with discriminant ScpStatementType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3546,7 +4619,7 @@ impl Union<ScpStatementType> for ScpStatementPledges {}
 
 impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -3567,7 +4640,7 @@ impl ReadXdr for ScpStatementPledges {
 
 impl WriteXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -3626,22 +4699,28 @@ impl WriteXdr for ScpStatementPledges {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpStatement {
     pub node_id: NodeId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub slot_index: u64,
     pub pledges: ScpStatementPledges,
 }
 
 impl ReadXdr for ScpStatement {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 node_id: NodeId::read_xdr(r)?,
@@ -3654,7 +4733,7 @@ impl ReadXdr for ScpStatement {
 
 impl WriteXdr for ScpStatement {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
             self.slot_index.write_xdr(w)?;
@@ -3675,9 +4754,11 @@ impl WriteXdr for ScpStatement {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3689,7 +4770,7 @@ pub struct ScpEnvelope {
 
 impl ReadXdr for ScpEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 statement: ScpStatement::read_xdr(r)?,
@@ -3701,7 +4782,7 @@ impl ReadXdr for ScpEnvelope {
 
 impl WriteXdr for ScpEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.statement.write_xdr(w)?;
             self.signature.write_xdr(w)?;
@@ -3722,9 +4803,11 @@ impl WriteXdr for ScpEnvelope {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3737,7 +4820,7 @@ pub struct ScpQuorumSet {
 
 impl ReadXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 threshold: u32::read_xdr(r)?,
@@ -3750,7 +4833,7 @@ impl ReadXdr for ScpQuorumSet {
 
 impl WriteXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.threshold.write_xdr(w)?;
             self.validators.write_xdr(w)?;
@@ -3771,9 +4854,11 @@ impl WriteXdr for ScpQuorumSet {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3784,7 +4869,7 @@ pub struct ConfigSettingContractExecutionLanesV0 {
 
 impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_tx_count: u32::read_xdr(r)?,
@@ -3795,7 +4880,7 @@ impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
 
 impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_tx_count.write_xdr(w)?;
             Ok(())
@@ -3822,23 +4907,37 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractComputeV0 {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub ledger_max_instructions: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub tx_max_instructions: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_rate_per_instructions_increment: i64,
     pub tx_memory_limit: u32,
 }
 
 impl ReadXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_instructions: i64::read_xdr(r)?,
@@ -3852,7 +4951,7 @@ impl ReadXdr for ConfigSettingContractComputeV0 {
 
 impl WriteXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_instructions.write_xdr(w)?;
             self.tx_max_instructions.write_xdr(w)?;
@@ -3877,9 +4976,11 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3890,7 +4991,7 @@ pub struct ConfigSettingContractParallelComputeV0 {
 
 impl ReadXdr for ConfigSettingContractParallelComputeV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_dependent_tx_clusters: u32::read_xdr(r)?,
@@ -3901,7 +5002,7 @@ impl ReadXdr for ConfigSettingContractParallelComputeV0 {
 
 impl WriteXdr for ConfigSettingContractParallelComputeV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_dependent_tx_clusters.write_xdr(w)?;
             Ok(())
@@ -3950,9 +5051,11 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -3966,18 +5069,42 @@ pub struct ConfigSettingContractLedgerCostV0 {
     pub tx_max_disk_read_bytes: u32,
     pub tx_max_write_ledger_entries: u32,
     pub tx_max_write_bytes: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_disk_read_ledger_entry: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_write_ledger_entry: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_disk_read1_kb: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub soroban_state_target_size_bytes: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub rent_fee1_kb_soroban_state_size_low: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub rent_fee1_kb_soroban_state_size_high: i64,
     pub soroban_state_rent_fee_growth_factor: u32,
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_disk_read_entries: u32::read_xdr(r)?,
@@ -4002,7 +5129,7 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
 
 impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_disk_read_entries.write_xdr(w)?;
             self.ledger_max_disk_read_bytes.write_xdr(w)?;
@@ -4039,21 +5166,27 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractLedgerCostExtV0 {
     pub tx_max_in_memory_read_entries: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_write1_kb: i64,
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_max_in_memory_read_entries: u32::read_xdr(r)?,
@@ -4065,7 +5198,7 @@ impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
 
 impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_max_in_memory_read_entries.write_xdr(w)?;
             self.fee_write1_kb.write_xdr(w)?;
@@ -4084,20 +5217,26 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractHistoricalDataV0 {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_historical1_kb: i64,
 }
 
 impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_historical1_kb: i64::read_xdr(r)?,
@@ -4108,7 +5247,7 @@ impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
 
 impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.fee_historical1_kb.write_xdr(w)?;
             Ok(())
@@ -4129,21 +5268,27 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractEventsV0 {
     pub tx_max_contract_events_size_bytes: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_contract_events1_kb: i64,
 }
 
 impl ReadXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_max_contract_events_size_bytes: u32::read_xdr(r)?,
@@ -4155,7 +5300,7 @@ impl ReadXdr for ConfigSettingContractEventsV0 {
 
 impl WriteXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_max_contract_events_size_bytes.write_xdr(w)?;
             self.fee_contract_events1_kb.write_xdr(w)?;
@@ -4180,9 +5325,11 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -4190,12 +5337,16 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
 pub struct ConfigSettingContractBandwidthV0 {
     pub ledger_max_txs_size_bytes: u32,
     pub tx_max_size_bytes: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_tx_size1_kb: i64,
 }
 
 impl ReadXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_txs_size_bytes: u32::read_xdr(r)?,
@@ -4208,7 +5359,7 @@ impl ReadXdr for ConfigSettingContractBandwidthV0 {
 
 impl WriteXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_txs_size_bytes.write_xdr(w)?;
             self.tx_max_size_bytes.write_xdr(w)?;
@@ -4710,7 +5861,7 @@ impl fmt::Display for ContractCostType {
 impl TryFrom<i32> for ContractCostType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractCostType::WasmInsnExec,
             1 => ContractCostType::MemAlloc,
@@ -4798,7 +5949,7 @@ impl From<ContractCostType> for i32 {
 
 impl ReadXdr for ContractCostType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -4809,7 +5960,7 @@ impl ReadXdr for ContractCostType {
 
 impl WriteXdr for ContractCostType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -4830,22 +5981,32 @@ impl WriteXdr for ContractCostType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractCostParamEntry {
     pub ext: ExtensionPoint,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub const_term: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub linear_term: i64,
 }
 
 impl ReadXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -4858,7 +6019,7 @@ impl ReadXdr for ContractCostParamEntry {
 
 impl WriteXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.const_term.write_xdr(w)?;
@@ -4898,9 +6059,11 @@ impl WriteXdr for ContractCostParamEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -4909,7 +6072,15 @@ pub struct StateArchivalSettings {
     pub max_entry_ttl: u32,
     pub min_temporary_ttl: u32,
     pub min_persistent_ttl: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub persistent_rent_rate_denominator: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub temp_rent_rate_denominator: i64,
     pub max_entries_to_archive: u32,
     pub live_soroban_state_size_window_sample_size: u32,
@@ -4920,7 +6091,7 @@ pub struct StateArchivalSettings {
 
 impl ReadXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 max_entry_ttl: u32::read_xdr(r)?,
@@ -4940,7 +6111,7 @@ impl ReadXdr for StateArchivalSettings {
 
 impl WriteXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.max_entry_ttl.write_xdr(w)?;
             self.min_temporary_ttl.write_xdr(w)?;
@@ -4970,9 +6141,11 @@ impl WriteXdr for StateArchivalSettings {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -4980,12 +6153,16 @@ impl WriteXdr for StateArchivalSettings {
 pub struct EvictionIterator {
     pub bucket_list_level: u32,
     pub is_curr_bucket: bool,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub bucket_file_offset: u64,
 }
 
 impl ReadXdr for EvictionIterator {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 bucket_list_level: u32::read_xdr(r)?,
@@ -4998,11 +6175,71 @@ impl ReadXdr for EvictionIterator {
 
 impl WriteXdr for EvictionIterator {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.bucket_list_level.write_xdr(w)?;
             self.is_curr_bucket.write_xdr(w)?;
             self.bucket_file_offset.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ConfigSettingScpTiming is an XDR Struct defines as:
+///
+/// ```text
+/// struct ConfigSettingSCPTiming {
+///     uint32 ledgerTargetCloseTimeMilliseconds;
+///     uint32 nominationTimeoutInitialMilliseconds;
+///     uint32 nominationTimeoutIncrementMilliseconds;
+///     uint32 ballotTimeoutInitialMilliseconds;
+///     uint32 ballotTimeoutIncrementMilliseconds;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ConfigSettingScpTiming {
+    pub ledger_target_close_time_milliseconds: u32,
+    pub nomination_timeout_initial_milliseconds: u32,
+    pub nomination_timeout_increment_milliseconds: u32,
+    pub ballot_timeout_initial_milliseconds: u32,
+    pub ballot_timeout_increment_milliseconds: u32,
+}
+
+impl ReadXdr for ConfigSettingScpTiming {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_target_close_time_milliseconds: u32::read_xdr(r)?,
+                nomination_timeout_initial_milliseconds: u32::read_xdr(r)?,
+                nomination_timeout_increment_milliseconds: u32::read_xdr(r)?,
+                ballot_timeout_initial_milliseconds: u32::read_xdr(r)?,
+                ballot_timeout_increment_milliseconds: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingScpTiming {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ledger_target_close_time_milliseconds.write_xdr(w)?;
+            self.nomination_timeout_initial_milliseconds.write_xdr(w)?;
+            self.nomination_timeout_increment_milliseconds
+                .write_xdr(w)?;
+            self.ballot_timeout_initial_milliseconds.write_xdr(w)?;
+            self.ballot_timeout_increment_milliseconds.write_xdr(w)?;
             Ok(())
         })
     }
@@ -5022,11 +6259,13 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 /// typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -5057,7 +6296,7 @@ impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
 
 impl ReadXdr for ContractCostParams {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<ContractCostParamEntry, 1024>::read_xdr(r)?;
             let v = ContractCostParams(i);
@@ -5068,7 +6307,7 @@ impl ReadXdr for ContractCostParams {
 
 impl WriteXdr for ContractCostParams {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -5089,7 +6328,7 @@ impl From<ContractCostParams> for Vec<ContractCostParamEntry> {
 
 impl TryFrom<Vec<ContractCostParamEntry>> for ContractCostParams {
     type Error = Error;
-    fn try_from(x: Vec<ContractCostParamEntry>) -> Result<Self> {
+    fn try_from(x: Vec<ContractCostParamEntry>) -> Result<Self, Error> {
         Ok(ContractCostParams(x.try_into()?))
     }
 }
@@ -5097,7 +6336,7 @@ impl TryFrom<Vec<ContractCostParamEntry>> for ContractCostParams {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
     type Error = Error;
-    fn try_from(x: &Vec<ContractCostParamEntry>) -> Result<Self> {
+    fn try_from(x: &Vec<ContractCostParamEntry>) -> Result<Self, Error> {
         Ok(ContractCostParams(x.try_into()?))
     }
 }
@@ -5142,7 +6381,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12,
 ///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
 ///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
-///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15
+///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15,
+///     CONFIG_SETTING_SCP_TIMING = 16
 /// };
 /// ```
 ///
@@ -5173,10 +6413,11 @@ pub enum ConfigSettingId {
     EvictionIterator = 13,
     ContractParallelComputeV0 = 14,
     ContractLedgerCostExtV0 = 15,
+    ScpTiming = 16,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 16] = [
+    pub const VARIANTS: [ConfigSettingId; 17] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5193,8 +6434,9 @@ impl ConfigSettingId {
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
+        ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5211,6 +6453,7 @@ impl ConfigSettingId {
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
+        "ScpTiming",
     ];
 
     #[must_use]
@@ -5232,11 +6475,12 @@ impl ConfigSettingId {
             Self::EvictionIterator => "EvictionIterator",
             Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
+            Self::ScpTiming => "ScpTiming",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 16] {
+    pub const fn variants() -> [ConfigSettingId; 17] {
         Self::VARIANTS
     }
 }
@@ -5265,7 +6509,7 @@ impl fmt::Display for ConfigSettingId {
 impl TryFrom<i32> for ConfigSettingId {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ConfigSettingId::ContractMaxSizeBytes,
             1 => ConfigSettingId::ContractComputeV0,
@@ -5283,6 +6527,7 @@ impl TryFrom<i32> for ConfigSettingId {
             13 => ConfigSettingId::EvictionIterator,
             14 => ConfigSettingId::ContractParallelComputeV0,
             15 => ConfigSettingId::ContractLedgerCostExtV0,
+            16 => ConfigSettingId::ScpTiming,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5299,7 +6544,7 @@ impl From<ConfigSettingId> for i32 {
 
 impl ReadXdr for ConfigSettingId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -5310,7 +6555,7 @@ impl ReadXdr for ConfigSettingId {
 
 impl WriteXdr for ConfigSettingId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -5355,14 +6600,18 @@ impl WriteXdr for ConfigSettingId {
 ///     ConfigSettingContractParallelComputeV0 contractParallelCompute;
 /// case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0:
 ///     ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt;
+/// case CONFIG_SETTING_SCP_TIMING:
+///     ConfigSettingSCPTiming contractSCPTiming;
 /// };
 /// ```
 ///
 // union with discriminant ConfigSettingId
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -5381,14 +6630,21 @@ pub enum ConfigSettingEntry {
     ContractDataEntrySizeBytes(u32),
     StateArchival(StateArchivalSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
-    LiveSorobanStateSizeWindow(VecM<u64>),
+    LiveSorobanStateSizeWindow(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "VecM<NumberOrString>")
+        )]
+        VecM<u64>,
+    ),
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
+    ScpTiming(ConfigSettingScpTiming),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 16] = [
+    pub const VARIANTS: [ConfigSettingId; 17] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5405,8 +6661,9 @@ impl ConfigSettingEntry {
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
+        ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5423,6 +6680,7 @@ impl ConfigSettingEntry {
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
+        "ScpTiming",
     ];
 
     #[must_use]
@@ -5444,6 +6702,7 @@ impl ConfigSettingEntry {
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
+            Self::ScpTiming(_) => "ScpTiming",
         }
     }
 
@@ -5471,11 +6730,12 @@ impl ConfigSettingEntry {
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
             Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
             Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
+            Self::ScpTiming(_) => ConfigSettingId::ScpTiming,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 16] {
+    pub const fn variants() -> [ConfigSettingId; 17] {
         Self::VARIANTS
     }
 }
@@ -5504,7 +6764,7 @@ impl Union<ConfigSettingId> for ConfigSettingEntry {}
 
 impl ReadXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -5557,6 +6817,7 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(
                     ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
                 ),
+                ConfigSettingId::ScpTiming => Self::ScpTiming(ConfigSettingScpTiming::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -5567,7 +6828,7 @@ impl ReadXdr for ConfigSettingEntry {
 
 impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -5588,6 +6849,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
                 Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
                 Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
+                Self::ScpTiming(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -5658,7 +6920,7 @@ impl fmt::Display for ScEnvMetaKind {
 impl TryFrom<i32> for ScEnvMetaKind {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
             #[allow(unreachable_patterns)]
@@ -5677,7 +6939,7 @@ impl From<ScEnvMetaKind> for i32 {
 
 impl ReadXdr for ScEnvMetaKind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -5688,7 +6950,7 @@ impl ReadXdr for ScEnvMetaKind {
 
 impl WriteXdr for ScEnvMetaKind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -5706,9 +6968,11 @@ impl WriteXdr for ScEnvMetaKind {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -5720,7 +6984,7 @@ pub struct ScEnvMetaEntryInterfaceVersion {
 
 impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 protocol: u32::read_xdr(r)?,
@@ -5732,7 +6996,7 @@ impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
 
 impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.protocol.write_xdr(w)?;
             self.pre_release.write_xdr(w)?;
@@ -5755,10 +7019,12 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
 /// ```
 ///
 // union with discriminant ScEnvMetaKind
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -5817,7 +7083,7 @@ impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
 
 impl ReadXdr for ScEnvMetaEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -5837,7 +7103,7 @@ impl ReadXdr for ScEnvMetaEntry {
 
 impl WriteXdr for ScEnvMetaEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -5860,9 +7126,11 @@ impl WriteXdr for ScEnvMetaEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -5874,7 +7142,7 @@ pub struct ScMetaV0 {
 
 impl ReadXdr for ScMetaV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: StringM::read_xdr(r)?,
@@ -5886,7 +7154,7 @@ impl ReadXdr for ScMetaV0 {
 
 impl WriteXdr for ScMetaV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
@@ -5959,7 +7227,7 @@ impl fmt::Display for ScMetaKind {
 impl TryFrom<i32> for ScMetaKind {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScMetaKind::ScMetaV0,
             #[allow(unreachable_patterns)]
@@ -5978,7 +7246,7 @@ impl From<ScMetaKind> for i32 {
 
 impl ReadXdr for ScMetaKind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -5989,7 +7257,7 @@ impl ReadXdr for ScMetaKind {
 
 impl WriteXdr for ScMetaKind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -6008,10 +7276,12 @@ impl WriteXdr for ScMetaKind {
 /// ```
 ///
 // union with discriminant ScMetaKind
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6070,7 +7340,7 @@ impl Union<ScMetaKind> for ScMetaEntry {}
 
 impl ReadXdr for ScMetaEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -6086,7 +7356,7 @@ impl ReadXdr for ScMetaEntry {
 
 impl WriteXdr for ScMetaEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -6305,7 +7575,7 @@ impl fmt::Display for ScSpecType {
 impl TryFrom<i32> for ScSpecType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScSpecType::Val,
             1 => ScSpecType::Bool,
@@ -6349,7 +7619,7 @@ impl From<ScSpecType> for i32 {
 
 impl ReadXdr for ScSpecType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -6360,7 +7630,7 @@ impl ReadXdr for ScSpecType {
 
 impl WriteXdr for ScSpecType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -6378,9 +7648,11 @@ impl WriteXdr for ScSpecType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6391,7 +7663,7 @@ pub struct ScSpecTypeOption {
 
 impl ReadXdr for ScSpecTypeOption {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 value_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -6402,7 +7674,7 @@ impl ReadXdr for ScSpecTypeOption {
 
 impl WriteXdr for ScSpecTypeOption {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.value_type.write_xdr(w)?;
             Ok(())
@@ -6421,9 +7693,11 @@ impl WriteXdr for ScSpecTypeOption {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6435,7 +7709,7 @@ pub struct ScSpecTypeResult {
 
 impl ReadXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ok_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -6447,7 +7721,7 @@ impl ReadXdr for ScSpecTypeResult {
 
 impl WriteXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ok_type.write_xdr(w)?;
             self.error_type.write_xdr(w)?;
@@ -6466,9 +7740,11 @@ impl WriteXdr for ScSpecTypeResult {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6479,7 +7755,7 @@ pub struct ScSpecTypeVec {
 
 impl ReadXdr for ScSpecTypeVec {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 element_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -6490,7 +7766,7 @@ impl ReadXdr for ScSpecTypeVec {
 
 impl WriteXdr for ScSpecTypeVec {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.element_type.write_xdr(w)?;
             Ok(())
@@ -6509,9 +7785,11 @@ impl WriteXdr for ScSpecTypeVec {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6523,7 +7801,7 @@ pub struct ScSpecTypeMap {
 
 impl ReadXdr for ScSpecTypeMap {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -6535,7 +7813,7 @@ impl ReadXdr for ScSpecTypeMap {
 
 impl WriteXdr for ScSpecTypeMap {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key_type.write_xdr(w)?;
             self.value_type.write_xdr(w)?;
@@ -6554,9 +7832,11 @@ impl WriteXdr for ScSpecTypeMap {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6567,7 +7847,7 @@ pub struct ScSpecTypeTuple {
 
 impl ReadXdr for ScSpecTypeTuple {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 value_types: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
@@ -6578,7 +7858,7 @@ impl ReadXdr for ScSpecTypeTuple {
 
 impl WriteXdr for ScSpecTypeTuple {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.value_types.write_xdr(w)?;
             Ok(())
@@ -6596,9 +7876,11 @@ impl WriteXdr for ScSpecTypeTuple {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6609,7 +7891,7 @@ pub struct ScSpecTypeBytesN {
 
 impl ReadXdr for ScSpecTypeBytesN {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 n: u32::read_xdr(r)?,
@@ -6620,7 +7902,7 @@ impl ReadXdr for ScSpecTypeBytesN {
 
 impl WriteXdr for ScSpecTypeBytesN {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
             Ok(())
@@ -6638,9 +7920,11 @@ impl WriteXdr for ScSpecTypeBytesN {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6651,7 +7935,7 @@ pub struct ScSpecTypeUdt {
 
 impl ReadXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 name: StringM::<60>::read_xdr(r)?,
@@ -6662,7 +7946,7 @@ impl ReadXdr for ScSpecTypeUdt {
 
 impl WriteXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.name.write_xdr(w)?;
             Ok(())
@@ -6713,10 +7997,12 @@ impl WriteXdr for ScSpecTypeUdt {
 /// ```
 ///
 // union with discriminant ScSpecType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -6904,7 +8190,7 @@ impl Union<ScSpecType> for ScSpecTypeDef {}
 
 impl ReadXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -6945,7 +8231,7 @@ impl ReadXdr for ScSpecTypeDef {
 
 impl WriteXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -6994,9 +8280,11 @@ impl WriteXdr for ScSpecTypeDef {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7009,7 +8297,7 @@ pub struct ScSpecUdtStructFieldV0 {
 
 impl ReadXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7022,7 +8310,7 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
 
 impl WriteXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -7045,9 +8333,11 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7061,7 +8351,7 @@ pub struct ScSpecUdtStructV0 {
 
 impl ReadXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7075,7 +8365,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
 
 impl WriteXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -7097,9 +8387,11 @@ impl WriteXdr for ScSpecUdtStructV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7111,7 +8403,7 @@ pub struct ScSpecUdtUnionCaseVoidV0 {
 
 impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7123,7 +8415,7 @@ impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
 
 impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -7144,9 +8436,11 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7159,7 +8453,7 @@ pub struct ScSpecUdtUnionCaseTupleV0 {
 
 impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7172,7 +8466,7 @@ impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
 
 impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -7252,7 +8546,7 @@ impl fmt::Display for ScSpecUdtUnionCaseV0Kind {
 impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScSpecUdtUnionCaseV0Kind::VoidV0,
             1 => ScSpecUdtUnionCaseV0Kind::TupleV0,
@@ -7272,7 +8566,7 @@ impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
 
 impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -7283,7 +8577,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
 
 impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -7304,10 +8598,12 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
 /// ```
 ///
 // union with discriminant ScSpecUdtUnionCaseV0Kind
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7372,7 +8668,7 @@ impl Union<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {}
 
 impl ReadXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -7393,7 +8689,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
 
 impl WriteXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -7419,9 +8715,11 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7435,7 +8733,7 @@ pub struct ScSpecUdtUnionV0 {
 
 impl ReadXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7449,7 +8747,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
 
 impl WriteXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -7472,9 +8770,11 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7487,7 +8787,7 @@ pub struct ScSpecUdtEnumCaseV0 {
 
 impl ReadXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7500,7 +8800,7 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
 
 impl WriteXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -7523,9 +8823,11 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7539,7 +8841,7 @@ pub struct ScSpecUdtEnumV0 {
 
 impl ReadXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7553,7 +8855,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
 
 impl WriteXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -7576,9 +8878,11 @@ impl WriteXdr for ScSpecUdtEnumV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7591,7 +8895,7 @@ pub struct ScSpecUdtErrorEnumCaseV0 {
 
 impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7604,7 +8908,7 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
 
 impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -7627,9 +8931,11 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7643,7 +8949,7 @@ pub struct ScSpecUdtErrorEnumV0 {
 
 impl ReadXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7657,7 +8963,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
 
 impl WriteXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -7680,9 +8986,11 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7695,7 +9003,7 @@ pub struct ScSpecFunctionInputV0 {
 
 impl ReadXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7708,7 +9016,7 @@ impl ReadXdr for ScSpecFunctionInputV0 {
 
 impl WriteXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -7731,9 +9039,11 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7747,7 +9057,7 @@ pub struct ScSpecFunctionV0 {
 
 impl ReadXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -7761,12 +9071,355 @@ impl ReadXdr for ScSpecFunctionV0 {
 
 impl WriteXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.inputs.write_xdr(w)?;
             self.outputs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ScSpecEventParamLocationV0 is an XDR Enum defines as:
+///
+/// ```text
+/// enum SCSpecEventParamLocationV0
+/// {
+///     SC_SPEC_EVENT_PARAM_LOCATION_DATA = 0,
+///     SC_SPEC_EVENT_PARAM_LOCATION_TOPIC_LIST = 1
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ScSpecEventParamLocationV0 {
+    Data = 0,
+    TopicList = 1,
+}
+
+impl ScSpecEventParamLocationV0 {
+    pub const VARIANTS: [ScSpecEventParamLocationV0; 2] = [
+        ScSpecEventParamLocationV0::Data,
+        ScSpecEventParamLocationV0::TopicList,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Data", "TopicList"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Data => "Data",
+            Self::TopicList => "TopicList",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEventParamLocationV0; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEventParamLocationV0 {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEventParamLocationV0> for ScSpecEventParamLocationV0 {
+    fn variants() -> slice::Iter<'static, ScSpecEventParamLocationV0> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecEventParamLocationV0 {}
+
+impl fmt::Display for ScSpecEventParamLocationV0 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecEventParamLocationV0 {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self, Error> {
+        let e = match i {
+            0 => ScSpecEventParamLocationV0::Data,
+            1 => ScSpecEventParamLocationV0::TopicList,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecEventParamLocationV0> for i32 {
+    #[must_use]
+    fn from(e: ScSpecEventParamLocationV0) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecEventParamLocationV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventParamLocationV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ScSpecEventParamV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SCSpecEventParamV0
+/// {
+///     string doc<SC_SPEC_DOC_LIMIT>;
+///     string name<30>;
+///     SCSpecTypeDef type;
+///     SCSpecEventParamLocationV0 location;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ScSpecEventParamV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<30>,
+    pub type_: ScSpecTypeDef,
+    pub location: ScSpecEventParamLocationV0,
+}
+
+impl ReadXdr for ScSpecEventParamV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<30>::read_xdr(r)?,
+                type_: ScSpecTypeDef::read_xdr(r)?,
+                location: ScSpecEventParamLocationV0::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventParamV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            self.location.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ScSpecEventDataFormat is an XDR Enum defines as:
+///
+/// ```text
+/// enum SCSpecEventDataFormat
+/// {
+///     SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE = 0,
+///     SC_SPEC_EVENT_DATA_FORMAT_VEC = 1,
+///     SC_SPEC_EVENT_DATA_FORMAT_MAP = 2
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ScSpecEventDataFormat {
+    SingleValue = 0,
+    Vec = 1,
+    Map = 2,
+}
+
+impl ScSpecEventDataFormat {
+    pub const VARIANTS: [ScSpecEventDataFormat; 3] = [
+        ScSpecEventDataFormat::SingleValue,
+        ScSpecEventDataFormat::Vec,
+        ScSpecEventDataFormat::Map,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValue", "Vec", "Map"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SingleValue => "SingleValue",
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEventDataFormat; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEventDataFormat {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEventDataFormat> for ScSpecEventDataFormat {
+    fn variants() -> slice::Iter<'static, ScSpecEventDataFormat> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecEventDataFormat {}
+
+impl fmt::Display for ScSpecEventDataFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecEventDataFormat {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self, Error> {
+        let e = match i {
+            0 => ScSpecEventDataFormat::SingleValue,
+            1 => ScSpecEventDataFormat::Vec,
+            2 => ScSpecEventDataFormat::Map,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecEventDataFormat> for i32 {
+    #[must_use]
+    fn from(e: ScSpecEventDataFormat) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecEventDataFormat {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventDataFormat {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ScSpecEventV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SCSpecEventV0
+/// {
+///     string doc<SC_SPEC_DOC_LIMIT>;
+///     string lib<80>;
+///     SCSymbol name;
+///     SCSymbol prefixTopics<2>;
+///     SCSpecEventParamV0 params<50>;
+///     SCSpecEventDataFormat dataFormat;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ScSpecEventV0 {
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: ScSymbol,
+    pub prefix_topics: VecM<ScSymbol, 2>,
+    pub params: VecM<ScSpecEventParamV0, 50>,
+    pub data_format: ScSpecEventDataFormat,
+}
+
+impl ReadXdr for ScSpecEventV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
+                name: ScSymbol::read_xdr(r)?,
+                prefix_topics: VecM::<ScSymbol, 2>::read_xdr(r)?,
+                params: VecM::<ScSpecEventParamV0, 50>::read_xdr(r)?,
+                data_format: ScSpecEventDataFormat::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEventV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.prefix_topics.write_xdr(w)?;
+            self.params.write_xdr(w)?;
+            self.data_format.write_xdr(w)?;
             Ok(())
         })
     }
@@ -7781,7 +9434,8 @@ impl WriteXdr for ScSpecFunctionV0 {
 ///     SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,
 ///     SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
 ///     SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,
-///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4
+///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,
+///     SC_SPEC_ENTRY_EVENT_V0 = 5
 /// };
 /// ```
 ///
@@ -7801,22 +9455,25 @@ pub enum ScSpecEntryKind {
     UdtUnionV0 = 2,
     UdtEnumV0 = 3,
     UdtErrorEnumV0 = 4,
+    EventV0 = 5,
 }
 
 impl ScSpecEntryKind {
-    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+    pub const VARIANTS: [ScSpecEntryKind; 6] = [
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
+        ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
         "UdtEnumV0",
         "UdtErrorEnumV0",
+        "EventV0",
     ];
 
     #[must_use]
@@ -7827,11 +9484,12 @@ impl ScSpecEntryKind {
             Self::UdtUnionV0 => "UdtUnionV0",
             Self::UdtEnumV0 => "UdtEnumV0",
             Self::UdtErrorEnumV0 => "UdtErrorEnumV0",
+            Self::EventV0 => "EventV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 5] {
+    pub const fn variants() -> [ScSpecEntryKind; 6] {
         Self::VARIANTS
     }
 }
@@ -7860,13 +9518,14 @@ impl fmt::Display for ScSpecEntryKind {
 impl TryFrom<i32> for ScSpecEntryKind {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScSpecEntryKind::FunctionV0,
             1 => ScSpecEntryKind::UdtStructV0,
             2 => ScSpecEntryKind::UdtUnionV0,
             3 => ScSpecEntryKind::UdtEnumV0,
             4 => ScSpecEntryKind::UdtErrorEnumV0,
+            5 => ScSpecEntryKind::EventV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7883,7 +9542,7 @@ impl From<ScSpecEntryKind> for i32 {
 
 impl ReadXdr for ScSpecEntryKind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -7894,7 +9553,7 @@ impl ReadXdr for ScSpecEntryKind {
 
 impl WriteXdr for ScSpecEntryKind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -7917,14 +9576,18 @@ impl WriteXdr for ScSpecEntryKind {
 ///     SCSpecUDTEnumV0 udtEnumV0;
 /// case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
 ///     SCSpecUDTErrorEnumV0 udtErrorEnumV0;
+/// case SC_SPEC_ENTRY_EVENT_V0:
+///     SCSpecEventV0 eventV0;
 /// };
 /// ```
 ///
 // union with discriminant ScSpecEntryKind
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -7936,22 +9599,25 @@ pub enum ScSpecEntry {
     UdtUnionV0(ScSpecUdtUnionV0),
     UdtEnumV0(ScSpecUdtEnumV0),
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
+    EventV0(ScSpecEventV0),
 }
 
 impl ScSpecEntry {
-    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+    pub const VARIANTS: [ScSpecEntryKind; 6] = [
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
+        ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
         "UdtEnumV0",
         "UdtErrorEnumV0",
+        "EventV0",
     ];
 
     #[must_use]
@@ -7962,6 +9628,7 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => "UdtUnionV0",
             Self::UdtEnumV0(_) => "UdtEnumV0",
             Self::UdtErrorEnumV0(_) => "UdtErrorEnumV0",
+            Self::EventV0(_) => "EventV0",
         }
     }
 
@@ -7974,11 +9641,12 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
             Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
             Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
+            Self::EventV0(_) => ScSpecEntryKind::EventV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 5] {
+    pub const fn variants() -> [ScSpecEntryKind; 6] {
         Self::VARIANTS
     }
 }
@@ -8007,7 +9675,7 @@ impl Union<ScSpecEntryKind> for ScSpecEntry {}
 
 impl ReadXdr for ScSpecEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -8019,6 +9687,7 @@ impl ReadXdr for ScSpecEntry {
                 ScSpecEntryKind::UdtErrorEnumV0 => {
                     Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
                 }
+                ScSpecEntryKind::EventV0 => Self::EventV0(ScSpecEventV0::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -8029,7 +9698,7 @@ impl ReadXdr for ScSpecEntry {
 
 impl WriteXdr for ScSpecEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -8039,6 +9708,7 @@ impl WriteXdr for ScSpecEntry {
                 Self::UdtUnionV0(v) => v.write_xdr(w)?,
                 Self::UdtEnumV0(v) => v.write_xdr(w)?,
                 Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
+                Self::EventV0(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -8247,7 +9917,7 @@ impl fmt::Display for ScValType {
 impl TryFrom<i32> for ScValType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScValType::Bool,
             1 => ScValType::Void,
@@ -8287,7 +9957,7 @@ impl From<ScValType> for i32 {
 
 impl ReadXdr for ScValType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -8298,7 +9968,7 @@ impl ReadXdr for ScValType {
 
 impl WriteXdr for ScValType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -8411,7 +10081,7 @@ impl fmt::Display for ScErrorType {
 impl TryFrom<i32> for ScErrorType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScErrorType::Contract,
             1 => ScErrorType::WasmVm,
@@ -8439,7 +10109,7 @@ impl From<ScErrorType> for i32 {
 
 impl ReadXdr for ScErrorType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -8450,7 +10120,7 @@ impl ReadXdr for ScErrorType {
 
 impl WriteXdr for ScErrorType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -8571,7 +10241,7 @@ impl fmt::Display for ScErrorCode {
 impl TryFrom<i32> for ScErrorCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScErrorCode::ArithDomain,
             1 => ScErrorCode::IndexBounds,
@@ -8599,7 +10269,7 @@ impl From<ScErrorCode> for i32 {
 
 impl ReadXdr for ScErrorCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -8610,7 +10280,7 @@ impl ReadXdr for ScErrorCode {
 
 impl WriteXdr for ScErrorCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -8639,10 +10309,12 @@ impl WriteXdr for ScErrorCode {
 /// ```
 ///
 // union with discriminant ScErrorType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -8742,7 +10414,7 @@ impl Union<ScErrorType> for ScError {}
 
 impl ReadXdr for ScError {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScErrorType = <ScErrorType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -8767,7 +10439,7 @@ impl ReadXdr for ScError {
 
 impl WriteXdr for ScError {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -8798,13 +10470,12 @@ impl WriteXdr for ScError {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UInt128Parts {
     pub hi: u64,
     pub lo: u64,
@@ -8812,7 +10483,7 @@ pub struct UInt128Parts {
 
 impl ReadXdr for UInt128Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi: u64::read_xdr(r)?,
@@ -8824,12 +10495,40 @@ impl ReadXdr for UInt128Parts {
 
 impl WriteXdr for UInt128Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
             self.lo.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for UInt128Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct UInt128Parts {
+            hi: u64,
+            lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum UInt128PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            UInt128Parts(UInt128Parts),
+        }
+        match UInt128PartsOrString::deserialize(deserializer)? {
+            UInt128PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt128PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt128PartsOrString::UInt128Parts(UInt128Parts { hi, lo }) => {
+                Ok(self::UInt128Parts { hi, lo })
+            }
+        }
     }
 }
 
@@ -8843,13 +10542,12 @@ impl WriteXdr for UInt128Parts {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Int128Parts {
     pub hi: i64,
     pub lo: u64,
@@ -8857,7 +10555,7 @@ pub struct Int128Parts {
 
 impl ReadXdr for Int128Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi: i64::read_xdr(r)?,
@@ -8869,12 +10567,40 @@ impl ReadXdr for Int128Parts {
 
 impl WriteXdr for Int128Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
             self.lo.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for Int128Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct Int128Parts {
+            hi: i64,
+            lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Int128PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            Int128Parts(Int128Parts),
+        }
+        match Int128PartsOrString::deserialize(deserializer)? {
+            Int128PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            Int128PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            Int128PartsOrString::Int128Parts(Int128Parts { hi, lo }) => {
+                Ok(self::Int128Parts { hi, lo })
+            }
+        }
     }
 }
 
@@ -8890,13 +10616,12 @@ impl WriteXdr for Int128Parts {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UInt256Parts {
     pub hi_hi: u64,
     pub hi_lo: u64,
@@ -8906,7 +10631,7 @@ pub struct UInt256Parts {
 
 impl ReadXdr for UInt256Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi_hi: u64::read_xdr(r)?,
@@ -8920,7 +10645,7 @@ impl ReadXdr for UInt256Parts {
 
 impl WriteXdr for UInt256Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hi_hi.write_xdr(w)?;
             self.hi_lo.write_xdr(w)?;
@@ -8928,6 +10653,44 @@ impl WriteXdr for UInt256Parts {
             self.lo_lo.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for UInt256Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct UInt256Parts {
+            hi_hi: u64,
+            hi_lo: u64,
+            lo_hi: u64,
+            lo_lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum UInt256PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            UInt256Parts(UInt256Parts),
+        }
+        match UInt256PartsOrString::deserialize(deserializer)? {
+            UInt256PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt256PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            UInt256PartsOrString::UInt256Parts(UInt256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }) => Ok(self::UInt256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }),
+        }
     }
 }
 
@@ -8943,13 +10706,12 @@ impl WriteXdr for UInt256Parts {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Int256Parts {
     pub hi_hi: i64,
     pub hi_lo: u64,
@@ -8959,7 +10721,7 @@ pub struct Int256Parts {
 
 impl ReadXdr for Int256Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi_hi: i64::read_xdr(r)?,
@@ -8973,7 +10735,7 @@ impl ReadXdr for Int256Parts {
 
 impl WriteXdr for Int256Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hi_hi.write_xdr(w)?;
             self.hi_lo.write_xdr(w)?;
@@ -8981,6 +10743,44 @@ impl WriteXdr for Int256Parts {
             self.lo_lo.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for Int256Parts {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct Int256Parts {
+            hi_hi: i64,
+            hi_lo: u64,
+            lo_hi: u64,
+            lo_lo: u64,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Int256PartsOrString<'a> {
+            Str(&'a str),
+            String(String),
+            Int256Parts(Int256Parts),
+        }
+        match Int256PartsOrString::deserialize(deserializer)? {
+            Int256PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            Int256PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            Int256PartsOrString::Int256Parts(Int256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }) => Ok(self::Int256Parts {
+                hi_hi,
+                hi_lo,
+                lo_hi,
+                lo_lo,
+            }),
+        }
     }
 }
 
@@ -9054,7 +10854,7 @@ impl fmt::Display for ContractExecutableType {
 impl TryFrom<i32> for ContractExecutableType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractExecutableType::Wasm,
             1 => ContractExecutableType::StellarAsset,
@@ -9074,7 +10874,7 @@ impl From<ContractExecutableType> for i32 {
 
 impl ReadXdr for ContractExecutableType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -9085,7 +10885,7 @@ impl ReadXdr for ContractExecutableType {
 
 impl WriteXdr for ContractExecutableType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -9106,10 +10906,12 @@ impl WriteXdr for ContractExecutableType {
 /// ```
 ///
 // union with discriminant ContractExecutableType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -9174,7 +10976,7 @@ impl Union<ContractExecutableType> for ContractExecutable {}
 
 impl ReadXdr for ContractExecutable {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -9191,7 +10993,7 @@ impl ReadXdr for ContractExecutable {
 
 impl WriteXdr for ContractExecutable {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -9292,7 +11094,7 @@ impl fmt::Display for ScAddressType {
 impl TryFrom<i32> for ScAddressType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScAddressType::Account,
             1 => ScAddressType::Contract,
@@ -9315,7 +11117,7 @@ impl From<ScAddressType> for i32 {
 
 impl ReadXdr for ScAddressType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -9326,7 +11128,7 @@ impl ReadXdr for ScAddressType {
 
 impl WriteXdr for ScAddressType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -9345,10 +11147,11 @@ impl WriteXdr for ScAddressType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(serde_with::SerializeDisplay)
 )]
 pub struct MuxedEd25519Account {
     pub id: u64,
@@ -9357,7 +11160,7 @@ pub struct MuxedEd25519Account {
 
 impl ReadXdr for MuxedEd25519Account {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 id: u64::read_xdr(r)?,
@@ -9369,12 +11172,41 @@ impl ReadXdr for MuxedEd25519Account {
 
 impl WriteXdr for MuxedEd25519Account {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.ed25519.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for MuxedEd25519Account {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct MuxedEd25519Account {
+            id: u64,
+            ed25519: Uint256,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum MuxedEd25519AccountOrString<'a> {
+            Str(&'a str),
+            String(String),
+            MuxedEd25519Account(MuxedEd25519Account),
+        }
+        match MuxedEd25519AccountOrString::deserialize(deserializer)? {
+            MuxedEd25519AccountOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedEd25519AccountOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedEd25519AccountOrString::MuxedEd25519Account(MuxedEd25519Account {
+                id,
+                ed25519,
+            }) => Ok(self::MuxedEd25519Account { id, ed25519 }),
+        }
     }
 }
 
@@ -9397,6 +11229,7 @@ impl WriteXdr for MuxedEd25519Account {
 /// ```
 ///
 // union with discriminant ScAddressType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9481,7 +11314,7 @@ impl Union<ScAddressType> for ScAddress {}
 
 impl ReadXdr for ScAddress {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -9505,7 +11338,7 @@ impl ReadXdr for ScAddress {
 
 impl WriteXdr for ScAddress {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -9535,11 +11368,13 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 /// typedef SCVal SCVec<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -9570,7 +11405,7 @@ impl AsRef<VecM<ScVal>> for ScVec {
 
 impl ReadXdr for ScVec {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<ScVal>::read_xdr(r)?;
             let v = ScVec(i);
@@ -9581,7 +11416,7 @@ impl ReadXdr for ScVec {
 
 impl WriteXdr for ScVec {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9602,7 +11437,7 @@ impl From<ScVec> for Vec<ScVal> {
 
 impl TryFrom<Vec<ScVal>> for ScVec {
     type Error = Error;
-    fn try_from(x: Vec<ScVal>) -> Result<Self> {
+    fn try_from(x: Vec<ScVal>) -> Result<Self, Error> {
         Ok(ScVec(x.try_into()?))
     }
 }
@@ -9610,7 +11445,7 @@ impl TryFrom<Vec<ScVal>> for ScVec {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<ScVal>> for ScVec {
     type Error = Error;
-    fn try_from(x: &Vec<ScVal>) -> Result<Self> {
+    fn try_from(x: &Vec<ScVal>) -> Result<Self, Error> {
         Ok(ScVec(x.try_into()?))
     }
 }
@@ -9641,11 +11476,13 @@ impl AsRef<[ScVal]> for ScVec {
 /// typedef SCMapEntry SCMap<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -9676,7 +11513,7 @@ impl AsRef<VecM<ScMapEntry>> for ScMap {
 
 impl ReadXdr for ScMap {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<ScMapEntry>::read_xdr(r)?;
             let v = ScMap(i);
@@ -9687,7 +11524,7 @@ impl ReadXdr for ScMap {
 
 impl WriteXdr for ScMap {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9708,7 +11545,7 @@ impl From<ScMap> for Vec<ScMapEntry> {
 
 impl TryFrom<Vec<ScMapEntry>> for ScMap {
     type Error = Error;
-    fn try_from(x: Vec<ScMapEntry>) -> Result<Self> {
+    fn try_from(x: Vec<ScMapEntry>) -> Result<Self, Error> {
         Ok(ScMap(x.try_into()?))
     }
 }
@@ -9716,7 +11553,7 @@ impl TryFrom<Vec<ScMapEntry>> for ScMap {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<ScMapEntry>> for ScMap {
     type Error = Error;
-    fn try_from(x: &Vec<ScMapEntry>) -> Result<Self> {
+    fn try_from(x: &Vec<ScMapEntry>) -> Result<Self, Error> {
         Ok(ScMap(x.try_into()?))
     }
 }
@@ -9747,11 +11584,13 @@ impl AsRef<[ScMapEntry]> for ScMap {
 /// typedef opaque SCBytes<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -9782,7 +11621,7 @@ impl AsRef<BytesM> for ScBytes {
 
 impl ReadXdr for ScBytes {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = BytesM::read_xdr(r)?;
             let v = ScBytes(i);
@@ -9793,7 +11632,7 @@ impl ReadXdr for ScBytes {
 
 impl WriteXdr for ScBytes {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9814,7 +11653,7 @@ impl From<ScBytes> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for ScBytes {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(ScBytes(x.try_into()?))
     }
 }
@@ -9822,7 +11661,7 @@ impl TryFrom<Vec<u8>> for ScBytes {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScBytes {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(ScBytes(x.try_into()?))
     }
 }
@@ -9853,11 +11692,13 @@ impl AsRef<[u8]> for ScBytes {
 /// typedef string SCString<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -9888,7 +11729,7 @@ impl AsRef<StringM> for ScString {
 
 impl ReadXdr for ScString {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = StringM::read_xdr(r)?;
             let v = ScString(i);
@@ -9899,7 +11740,7 @@ impl ReadXdr for ScString {
 
 impl WriteXdr for ScString {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9920,7 +11761,7 @@ impl From<ScString> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for ScString {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(ScString(x.try_into()?))
     }
 }
@@ -9928,7 +11769,7 @@ impl TryFrom<Vec<u8>> for ScString {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScString {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(ScString(x.try_into()?))
     }
 }
@@ -9959,11 +11800,13 @@ impl AsRef<[u8]> for ScString {
 /// typedef string SCSymbol<SCSYMBOL_LIMIT>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -9994,7 +11837,7 @@ impl AsRef<StringM<32>> for ScSymbol {
 
 impl ReadXdr for ScSymbol {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = StringM::<32>::read_xdr(r)?;
             let v = ScSymbol(i);
@@ -10005,7 +11848,7 @@ impl ReadXdr for ScSymbol {
 
 impl WriteXdr for ScSymbol {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -10026,7 +11869,7 @@ impl From<ScSymbol> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for ScSymbol {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(ScSymbol(x.try_into()?))
     }
 }
@@ -10034,7 +11877,7 @@ impl TryFrom<Vec<u8>> for ScSymbol {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScSymbol {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(ScSymbol(x.try_into()?))
     }
 }
@@ -10068,20 +11911,26 @@ impl AsRef<[u8]> for ScSymbol {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScNonceKey {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub nonce: i64,
 }
 
 impl ReadXdr for ScNonceKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 nonce: i64::read_xdr(r)?,
@@ -10092,7 +11941,7 @@ impl ReadXdr for ScNonceKey {
 
 impl WriteXdr for ScNonceKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.nonce.write_xdr(w)?;
             Ok(())
@@ -10110,9 +11959,11 @@ impl WriteXdr for ScNonceKey {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10124,7 +11975,7 @@ pub struct ScContractInstance {
 
 impl ReadXdr for ScContractInstance {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 executable: ContractExecutable::read_xdr(r)?,
@@ -10136,7 +11987,7 @@ impl ReadXdr for ScContractInstance {
 
 impl WriteXdr for ScContractInstance {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.executable.write_xdr(w)?;
             self.storage.write_xdr(w)?;
@@ -10201,21 +12052,22 @@ impl WriteXdr for ScContractInstance {
 ///
 /// // Special SCVals reserved for system-constructed contract-data
 /// // ledger keys, not generally usable elsewhere.
+/// case SCV_CONTRACT_INSTANCE:
+///     SCContractInstance instance;
 /// case SCV_LEDGER_KEY_CONTRACT_INSTANCE:
 ///     void;
 /// case SCV_LEDGER_KEY_NONCE:
 ///     SCNonceKey nonce_key;
-///
-/// case SCV_CONTRACT_INSTANCE:
-///     SCContractInstance instance;
 /// };
 /// ```
 ///
 // union with discriminant ScValType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10227,8 +12079,20 @@ pub enum ScVal {
     Error(ScError),
     U32(u32),
     I32(i32),
-    U64(u64),
-    I64(i64),
+    U64(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "NumberOrString")
+        )]
+        u64,
+    ),
+    I64(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "NumberOrString")
+        )]
+        i64,
+    ),
     Timepoint(TimePoint),
     Duration(Duration),
     U128(UInt128Parts),
@@ -10241,9 +12105,9 @@ pub enum ScVal {
     Vec(Option<ScVec>),
     Map(Option<ScMap>),
     Address(ScAddress),
+    ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    ContractInstance(ScContractInstance),
 }
 
 impl ScVal {
@@ -10267,9 +12131,9 @@ impl ScVal {
         ScValType::Vec,
         ScValType::Map,
         ScValType::Address,
+        ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
-        ScValType::ContractInstance,
     ];
     pub const VARIANTS_STR: [&'static str; 22] = [
         "Bool",
@@ -10291,9 +12155,9 @@ impl ScVal {
         "Vec",
         "Map",
         "Address",
+        "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
-        "ContractInstance",
     ];
 
     #[must_use]
@@ -10318,9 +12182,9 @@ impl ScVal {
             Self::Vec(_) => "Vec",
             Self::Map(_) => "Map",
             Self::Address(_) => "Address",
+            Self::ContractInstance(_) => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
-            Self::ContractInstance(_) => "ContractInstance",
         }
     }
 
@@ -10347,9 +12211,9 @@ impl ScVal {
             Self::Vec(_) => ScValType::Vec,
             Self::Map(_) => ScValType::Map,
             Self::Address(_) => ScValType::Address,
+            Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
-            Self::ContractInstance(_) => ScValType::ContractInstance,
         }
     }
 
@@ -10383,7 +12247,7 @@ impl Union<ScValType> for ScVal {}
 
 impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -10407,11 +12271,11 @@ impl ReadXdr for ScVal {
                 ScValType::Vec => Self::Vec(Option::<ScVec>::read_xdr(r)?),
                 ScValType::Map => Self::Map(Option::<ScMap>::read_xdr(r)?),
                 ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
-                ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
-                ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
                 ScValType::ContractInstance => {
                     Self::ContractInstance(ScContractInstance::read_xdr(r)?)
                 }
+                ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
+                ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -10422,7 +12286,7 @@ impl ReadXdr for ScVal {
 
 impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -10446,9 +12310,9 @@ impl WriteXdr for ScVal {
                 Self::Vec(v) => v.write_xdr(w)?,
                 Self::Map(v) => v.write_xdr(w)?,
                 Self::Address(v) => v.write_xdr(w)?,
+                Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                Self::ContractInstance(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -10466,9 +12330,11 @@ impl WriteXdr for ScVal {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10480,7 +12346,7 @@ pub struct ScMapEntry {
 
 impl ReadXdr for ScMapEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: ScVal::read_xdr(r)?,
@@ -10492,10 +12358,67 @@ impl ReadXdr for ScMapEntry {
 
 impl WriteXdr for ScMapEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// LedgerCloseMetaBatch is an XDR Struct defines as:
+///
+/// ```text
+/// struct LedgerCloseMetaBatch
+/// {
+///     // starting ledger sequence number in the batch
+///     uint32 startSequence;
+///
+///     // ending ledger sequence number in the batch
+///     uint32 endSequence;
+///
+///     // Ledger close meta for each ledger within the batch
+///     LedgerCloseMeta ledgerCloseMetas<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct LedgerCloseMetaBatch {
+    pub start_sequence: u32,
+    pub end_sequence: u32,
+    pub ledger_close_metas: VecM<LedgerCloseMeta>,
+}
+
+impl ReadXdr for LedgerCloseMetaBatch {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                start_sequence: u32::read_xdr(r)?,
+                end_sequence: u32::read_xdr(r)?,
+                ledger_close_metas: VecM::<LedgerCloseMeta>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaBatch {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.start_sequence.write_xdr(w)?;
+            self.end_sequence.write_xdr(w)?;
+            self.ledger_close_metas.write_xdr(w)?;
             Ok(())
         })
     }
@@ -10514,10 +12437,12 @@ impl WriteXdr for ScMapEntry {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10579,7 +12504,7 @@ impl Union<i32> for StoredTransactionSet {}
 
 impl ReadXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -10596,7 +12521,7 @@ impl ReadXdr for StoredTransactionSet {
 
 impl WriteXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -10621,9 +12546,11 @@ impl WriteXdr for StoredTransactionSet {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10636,7 +12563,7 @@ pub struct StoredDebugTransactionSet {
 
 impl ReadXdr for StoredDebugTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_set: StoredTransactionSet::read_xdr(r)?,
@@ -10649,7 +12576,7 @@ impl ReadXdr for StoredDebugTransactionSet {
 
 impl WriteXdr for StoredDebugTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_set.write_xdr(w)?;
             self.ledger_seq.write_xdr(w)?;
@@ -10671,9 +12598,11 @@ impl WriteXdr for StoredDebugTransactionSet {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10686,7 +12615,7 @@ pub struct PersistedScpStateV0 {
 
 impl ReadXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
@@ -10699,7 +12628,7 @@ impl ReadXdr for PersistedScpStateV0 {
 
 impl WriteXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
             self.quorum_sets.write_xdr(w)?;
@@ -10721,9 +12650,11 @@ impl WriteXdr for PersistedScpStateV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10735,7 +12666,7 @@ pub struct PersistedScpStateV1 {
 
 impl ReadXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
@@ -10747,7 +12678,7 @@ impl ReadXdr for PersistedScpStateV1 {
 
 impl WriteXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
             self.quorum_sets.write_xdr(w)?;
@@ -10769,10 +12700,12 @@ impl WriteXdr for PersistedScpStateV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -10834,7 +12767,7 @@ impl Union<i32> for PersistedScpState {}
 
 impl ReadXdr for PersistedScpState {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -10851,7 +12784,7 @@ impl ReadXdr for PersistedScpState {
 
 impl WriteXdr for PersistedScpState {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -10870,6 +12803,7 @@ impl WriteXdr for PersistedScpState {
 /// typedef opaque Thresholds[4];
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10962,7 +12896,7 @@ impl AsRef<[u8; 4]> for Thresholds {
 
 impl ReadXdr for Thresholds {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
             let v = Thresholds(i);
@@ -10973,7 +12907,7 @@ impl ReadXdr for Thresholds {
 
 impl WriteXdr for Thresholds {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -10988,7 +12922,7 @@ impl Thresholds {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Thresholds {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
@@ -10996,14 +12930,14 @@ impl TryFrom<Vec<u8>> for Thresholds {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Thresholds {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
 
 impl TryFrom<&[u8]> for Thresholds {
     type Error = Error;
-    fn try_from(x: &[u8]) -> Result<Self> {
+    fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(Thresholds(x.try_into()?))
     }
 }
@@ -11021,11 +12955,13 @@ impl AsRef<[u8]> for Thresholds {
 /// typedef string string32<32>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -11056,7 +12992,7 @@ impl AsRef<StringM<32>> for String32 {
 
 impl ReadXdr for String32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = StringM::<32>::read_xdr(r)?;
             let v = String32(i);
@@ -11067,7 +13003,7 @@ impl ReadXdr for String32 {
 
 impl WriteXdr for String32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11088,7 +13024,7 @@ impl From<String32> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for String32 {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(String32(x.try_into()?))
     }
 }
@@ -11096,7 +13032,7 @@ impl TryFrom<Vec<u8>> for String32 {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for String32 {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(String32(x.try_into()?))
     }
 }
@@ -11127,11 +13063,13 @@ impl AsRef<[u8]> for String32 {
 /// typedef string string64<64>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -11162,7 +13100,7 @@ impl AsRef<StringM<64>> for String64 {
 
 impl ReadXdr for String64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = StringM::<64>::read_xdr(r)?;
             let v = String64(i);
@@ -11173,7 +13111,7 @@ impl ReadXdr for String64 {
 
 impl WriteXdr for String64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11194,7 +13132,7 @@ impl From<String64> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for String64 {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(String64(x.try_into()?))
     }
 }
@@ -11202,7 +13140,7 @@ impl TryFrom<Vec<u8>> for String64 {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for String64 {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(String64(x.try_into()?))
     }
 }
@@ -11233,16 +13171,24 @@ impl AsRef<[u8]> for String64 {
 /// typedef int64 SequenceNumber;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct SequenceNumber(pub i64);
+pub struct SequenceNumber(
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
+    pub i64,
+);
 
 impl From<SequenceNumber> for i64 {
     #[must_use]
@@ -11267,7 +13213,7 @@ impl AsRef<i64> for SequenceNumber {
 
 impl ReadXdr for SequenceNumber {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = i64::read_xdr(r)?;
             let v = SequenceNumber(i);
@@ -11278,7 +13224,7 @@ impl ReadXdr for SequenceNumber {
 
 impl WriteXdr for SequenceNumber {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11289,11 +13235,13 @@ impl WriteXdr for SequenceNumber {
 /// typedef opaque DataValue<64>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -11324,7 +13272,7 @@ impl AsRef<BytesM<64>> for DataValue {
 
 impl ReadXdr for DataValue {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64>::read_xdr(r)?;
             let v = DataValue(i);
@@ -11335,7 +13283,7 @@ impl ReadXdr for DataValue {
 
 impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11356,7 +13304,7 @@ impl From<DataValue> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for DataValue {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(DataValue(x.try_into()?))
     }
 }
@@ -11364,7 +13312,7 @@ impl TryFrom<Vec<u8>> for DataValue {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for DataValue {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(DataValue(x.try_into()?))
     }
 }
@@ -11395,6 +13343,7 @@ impl AsRef<[u8]> for DataValue {
 /// typedef opaque AssetCode4[4];
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -11437,7 +13386,7 @@ impl AsRef<[u8; 4]> for AssetCode4 {
 
 impl ReadXdr for AssetCode4 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
             let v = AssetCode4(i);
@@ -11448,7 +13397,7 @@ impl ReadXdr for AssetCode4 {
 
 impl WriteXdr for AssetCode4 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11463,7 +13412,7 @@ impl AssetCode4 {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for AssetCode4 {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
@@ -11471,14 +13420,14 @@ impl TryFrom<Vec<u8>> for AssetCode4 {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for AssetCode4 {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
 
 impl TryFrom<&[u8]> for AssetCode4 {
     type Error = Error;
-    fn try_from(x: &[u8]) -> Result<Self> {
+    fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(AssetCode4(x.try_into()?))
     }
 }
@@ -11496,6 +13445,7 @@ impl AsRef<[u8]> for AssetCode4 {
 /// typedef opaque AssetCode12[12];
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -11538,7 +13488,7 @@ impl AsRef<[u8; 12]> for AssetCode12 {
 
 impl ReadXdr for AssetCode12 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = <[u8; 12]>::read_xdr(r)?;
             let v = AssetCode12(i);
@@ -11549,7 +13499,7 @@ impl ReadXdr for AssetCode12 {
 
 impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11564,7 +13514,7 @@ impl AssetCode12 {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for AssetCode12 {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
@@ -11572,14 +13522,14 @@ impl TryFrom<Vec<u8>> for AssetCode12 {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for AssetCode12 {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
 
 impl TryFrom<&[u8]> for AssetCode12 {
     type Error = Error;
-    fn try_from(x: &[u8]) -> Result<Self> {
+    fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(AssetCode12(x.try_into()?))
     }
 }
@@ -11670,7 +13620,7 @@ impl fmt::Display for AssetType {
 impl TryFrom<i32> for AssetType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => AssetType::Native,
             1 => AssetType::CreditAlphanum4,
@@ -11692,7 +13642,7 @@ impl From<AssetType> for i32 {
 
 impl ReadXdr for AssetType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -11703,7 +13653,7 @@ impl ReadXdr for AssetType {
 
 impl WriteXdr for AssetType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -11727,6 +13677,7 @@ impl WriteXdr for AssetType {
 /// ```
 ///
 // union with discriminant AssetType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -11790,7 +13741,7 @@ impl Union<AssetType> for AssetCode {}
 
 impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -11807,7 +13758,7 @@ impl ReadXdr for AssetCode {
 
 impl WriteXdr for AssetCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -11831,9 +13782,11 @@ impl WriteXdr for AssetCode {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -11845,7 +13798,7 @@ pub struct AlphaNum4 {
 
 impl ReadXdr for AlphaNum4 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset_code: AssetCode4::read_xdr(r)?,
@@ -11857,7 +13810,7 @@ impl ReadXdr for AlphaNum4 {
 
 impl WriteXdr for AlphaNum4 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
             self.issuer.write_xdr(w)?;
@@ -11877,9 +13830,11 @@ impl WriteXdr for AlphaNum4 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -11891,7 +13846,7 @@ pub struct AlphaNum12 {
 
 impl ReadXdr for AlphaNum12 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset_code: AssetCode12::read_xdr(r)?,
@@ -11903,7 +13858,7 @@ impl ReadXdr for AlphaNum12 {
 
 impl WriteXdr for AlphaNum12 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
             self.issuer.write_xdr(w)?;
@@ -11931,10 +13886,12 @@ impl WriteXdr for AlphaNum12 {
 /// ```
 ///
 // union with discriminant AssetType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12003,7 +13960,7 @@ impl Union<AssetType> for Asset {}
 
 impl ReadXdr for Asset {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12021,7 +13978,7 @@ impl ReadXdr for Asset {
 
 impl WriteXdr for Asset {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12046,9 +14003,11 @@ impl WriteXdr for Asset {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12060,7 +14019,7 @@ pub struct Price {
 
 impl ReadXdr for Price {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 n: i32::read_xdr(r)?,
@@ -12072,7 +14031,7 @@ impl ReadXdr for Price {
 
 impl WriteXdr for Price {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
             self.d.write_xdr(w)?;
@@ -12092,21 +14051,31 @@ impl WriteXdr for Price {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Liabilities {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub buying: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub selling: i64,
 }
 
 impl ReadXdr for Liabilities {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 buying: i64::read_xdr(r)?,
@@ -12118,7 +14087,7 @@ impl ReadXdr for Liabilities {
 
 impl WriteXdr for Liabilities {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.buying.write_xdr(w)?;
             self.selling.write_xdr(w)?;
@@ -12205,7 +14174,7 @@ impl fmt::Display for ThresholdIndexes {
 impl TryFrom<i32> for ThresholdIndexes {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ThresholdIndexes::MasterWeight,
             1 => ThresholdIndexes::Low,
@@ -12227,7 +14196,7 @@ impl From<ThresholdIndexes> for i32 {
 
 impl ReadXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -12238,7 +14207,7 @@ impl ReadXdr for ThresholdIndexes {
 
 impl WriteXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -12359,7 +14328,7 @@ impl fmt::Display for LedgerEntryType {
 impl TryFrom<i32> for LedgerEntryType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => LedgerEntryType::Account,
             1 => LedgerEntryType::Trustline,
@@ -12387,7 +14356,7 @@ impl From<LedgerEntryType> for i32 {
 
 impl ReadXdr for LedgerEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -12398,7 +14367,7 @@ impl ReadXdr for LedgerEntryType {
 
 impl WriteXdr for LedgerEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -12417,9 +14386,11 @@ impl WriteXdr for LedgerEntryType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12431,7 +14402,7 @@ pub struct Signer {
 
 impl ReadXdr for Signer {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: SignerKey::read_xdr(r)?,
@@ -12443,7 +14414,7 @@ impl ReadXdr for Signer {
 
 impl WriteXdr for Signer {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.weight.write_xdr(w)?;
@@ -12545,7 +14516,7 @@ impl fmt::Display for AccountFlags {
 impl TryFrom<i32> for AccountFlags {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => AccountFlags::RequiredFlag,
             2 => AccountFlags::RevocableFlag,
@@ -12567,7 +14538,7 @@ impl From<AccountFlags> for i32 {
 
 impl ReadXdr for AccountFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -12578,7 +14549,7 @@ impl ReadXdr for AccountFlags {
 
 impl WriteXdr for AccountFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -12616,10 +14587,12 @@ pub const MAX_SIGNERS: u64 = 20;
 /// typedef AccountID* SponsorshipDescriptor;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12650,7 +14623,7 @@ impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
 
 impl ReadXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = Option::<AccountId>::read_xdr(r)?;
             let v = SponsorshipDescriptor(i);
@@ -12661,7 +14634,7 @@ impl ReadXdr for SponsorshipDescriptor {
 
 impl WriteXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -12684,9 +14657,11 @@ impl WriteXdr for SponsorshipDescriptor {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12699,7 +14674,7 @@ pub struct AccountEntryExtensionV3 {
 
 impl ReadXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -12712,7 +14687,7 @@ impl ReadXdr for AccountEntryExtensionV3 {
 
 impl WriteXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.seq_ledger.write_xdr(w)?;
@@ -12735,10 +14710,12 @@ impl WriteXdr for AccountEntryExtensionV3 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12800,7 +14777,7 @@ impl Union<i32> for AccountEntryExtensionV2Ext {}
 
 impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12817,7 +14794,7 @@ impl ReadXdr for AccountEntryExtensionV2Ext {
 
 impl WriteXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12851,9 +14828,11 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12867,7 +14846,7 @@ pub struct AccountEntryExtensionV2 {
 
 impl ReadXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 num_sponsored: u32::read_xdr(r)?,
@@ -12881,7 +14860,7 @@ impl ReadXdr for AccountEntryExtensionV2 {
 
 impl WriteXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.num_sponsored.write_xdr(w)?;
             self.num_sponsoring.write_xdr(w)?;
@@ -12905,10 +14884,12 @@ impl WriteXdr for AccountEntryExtensionV2 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -12970,7 +14951,7 @@ impl Union<i32> for AccountEntryExtensionV1Ext {}
 
 impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12987,7 +14968,7 @@ impl ReadXdr for AccountEntryExtensionV1Ext {
 
 impl WriteXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13019,9 +15000,11 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13033,7 +15016,7 @@ pub struct AccountEntryExtensionV1 {
 
 impl ReadXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liabilities: Liabilities::read_xdr(r)?,
@@ -13045,7 +15028,7 @@ impl ReadXdr for AccountEntryExtensionV1 {
 
 impl WriteXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -13067,10 +15050,12 @@ impl WriteXdr for AccountEntryExtensionV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13132,7 +15117,7 @@ impl Union<i32> for AccountEntryExt {}
 
 impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13149,7 +15134,7 @@ impl ReadXdr for AccountEntryExt {
 
 impl WriteXdr for AccountEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13196,15 +15181,21 @@ impl WriteXdr for AccountEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AccountEntry {
     pub account_id: AccountId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub balance: i64,
     pub seq_num: SequenceNumber,
     pub num_sub_entries: u32,
@@ -13218,7 +15209,7 @@ pub struct AccountEntry {
 
 impl ReadXdr for AccountEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -13238,7 +15229,7 @@ impl ReadXdr for AccountEntry {
 
 impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.balance.write_xdr(w)?;
@@ -13338,7 +15329,7 @@ impl fmt::Display for TrustLineFlags {
 impl TryFrom<i32> for TrustLineFlags {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => TrustLineFlags::AuthorizedFlag,
             2 => TrustLineFlags::AuthorizedToMaintainLiabilitiesFlag,
@@ -13359,7 +15350,7 @@ impl From<TrustLineFlags> for i32 {
 
 impl ReadXdr for TrustLineFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -13370,7 +15361,7 @@ impl ReadXdr for TrustLineFlags {
 
 impl WriteXdr for TrustLineFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -13466,7 +15457,7 @@ impl fmt::Display for LiquidityPoolType {
 impl TryFrom<i32> for LiquidityPoolType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => LiquidityPoolType::LiquidityPoolConstantProduct,
             #[allow(unreachable_patterns)]
@@ -13485,7 +15476,7 @@ impl From<LiquidityPoolType> for i32 {
 
 impl ReadXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -13496,7 +15487,7 @@ impl ReadXdr for LiquidityPoolType {
 
 impl WriteXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -13526,10 +15517,12 @@ impl WriteXdr for LiquidityPoolType {
 /// ```
 ///
 // union with discriminant AssetType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13603,7 +15596,7 @@ impl Union<AssetType> for TrustLineAsset {}
 
 impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13622,7 +15615,7 @@ impl ReadXdr for TrustLineAsset {
 
 impl WriteXdr for TrustLineAsset {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13648,10 +15641,12 @@ impl WriteXdr for TrustLineAsset {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13710,7 +15705,7 @@ impl Union<i32> for TrustLineEntryExtensionV2Ext {}
 
 impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13726,7 +15721,7 @@ impl ReadXdr for TrustLineEntryExtensionV2Ext {
 
 impl WriteXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13755,9 +15750,11 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13769,7 +15766,7 @@ pub struct TrustLineEntryExtensionV2 {
 
 impl ReadXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_use_count: i32::read_xdr(r)?,
@@ -13781,7 +15778,7 @@ impl ReadXdr for TrustLineEntryExtensionV2 {
 
 impl WriteXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_use_count.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -13803,10 +15800,12 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13868,7 +15867,7 @@ impl Union<i32> for TrustLineEntryV1Ext {}
 
 impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13885,7 +15884,7 @@ impl ReadXdr for TrustLineEntryV1Ext {
 
 impl WriteXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13917,9 +15916,11 @@ impl WriteXdr for TrustLineEntryV1Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -13931,7 +15932,7 @@ pub struct TrustLineEntryV1 {
 
 impl ReadXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liabilities: Liabilities::read_xdr(r)?,
@@ -13943,7 +15944,7 @@ impl ReadXdr for TrustLineEntryV1 {
 
 impl WriteXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -13977,10 +15978,12 @@ impl WriteXdr for TrustLineEntryV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -14042,7 +16045,7 @@ impl Union<i32> for TrustLineEntryExt {}
 
 impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14059,7 +16062,7 @@ impl ReadXdr for TrustLineEntryExt {
 
 impl WriteXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14110,9 +16113,11 @@ impl WriteXdr for TrustLineEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -14120,7 +16125,15 @@ impl WriteXdr for TrustLineEntryExt {
 pub struct TrustLineEntry {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub balance: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub limit: i64,
     pub flags: u32,
     pub ext: TrustLineEntryExt,
@@ -14128,7 +16141,7 @@ pub struct TrustLineEntry {
 
 impl ReadXdr for TrustLineEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -14144,7 +16157,7 @@ impl ReadXdr for TrustLineEntry {
 
 impl WriteXdr for TrustLineEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -14223,7 +16236,7 @@ impl fmt::Display for OfferEntryFlags {
 impl TryFrom<i32> for OfferEntryFlags {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => OfferEntryFlags::PassiveFlag,
             #[allow(unreachable_patterns)]
@@ -14242,7 +16255,7 @@ impl From<OfferEntryFlags> for i32 {
 
 impl ReadXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -14253,7 +16266,7 @@ impl ReadXdr for OfferEntryFlags {
 
 impl WriteXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -14280,10 +16293,12 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -14342,7 +16357,7 @@ impl Union<i32> for OfferEntryExt {}
 
 impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14358,7 +16373,7 @@ impl ReadXdr for OfferEntryExt {
 
 impl WriteXdr for OfferEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14400,18 +16415,28 @@ impl WriteXdr for OfferEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct OfferEntry {
     pub seller_id: AccountId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub offer_id: i64,
     pub selling: Asset,
     pub buying: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
     pub price: Price,
     pub flags: u32,
@@ -14420,7 +16445,7 @@ pub struct OfferEntry {
 
 impl ReadXdr for OfferEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_id: AccountId::read_xdr(r)?,
@@ -14438,7 +16463,7 @@ impl ReadXdr for OfferEntry {
 
 impl WriteXdr for OfferEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -14464,10 +16489,12 @@ impl WriteXdr for OfferEntry {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -14526,7 +16553,7 @@ impl Union<i32> for DataEntryExt {}
 
 impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14542,7 +16569,7 @@ impl ReadXdr for DataEntryExt {
 
 impl WriteXdr for DataEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14574,9 +16601,11 @@ impl WriteXdr for DataEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -14590,7 +16619,7 @@ pub struct DataEntry {
 
 impl ReadXdr for DataEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -14604,7 +16633,7 @@ impl ReadXdr for DataEntry {
 
 impl WriteXdr for DataEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.data_name.write_xdr(w)?;
@@ -14708,7 +16737,7 @@ impl fmt::Display for ClaimPredicateType {
 impl TryFrom<i32> for ClaimPredicateType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimPredicateType::Unconditional,
             1 => ClaimPredicateType::And,
@@ -14732,7 +16761,7 @@ impl From<ClaimPredicateType> for i32 {
 
 impl ReadXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -14743,7 +16772,7 @@ impl ReadXdr for ClaimPredicateType {
 
 impl WriteXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -14773,10 +16802,12 @@ impl WriteXdr for ClaimPredicateType {
 /// ```
 ///
 // union with discriminant ClaimPredicateType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -14787,8 +16818,20 @@ pub enum ClaimPredicate {
     And(VecM<ClaimPredicate, 2>),
     Or(VecM<ClaimPredicate, 2>),
     Not(Option<Box<ClaimPredicate>>),
-    BeforeAbsoluteTime(i64),
-    BeforeRelativeTime(i64),
+    BeforeAbsoluteTime(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "NumberOrString")
+        )]
+        i64,
+    ),
+    BeforeRelativeTime(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "NumberOrString")
+        )]
+        i64,
+    ),
 }
 
 impl ClaimPredicate {
@@ -14864,7 +16907,7 @@ impl Union<ClaimPredicateType> for ClaimPredicate {}
 
 impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14889,7 +16932,7 @@ impl ReadXdr for ClaimPredicate {
 
 impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14970,7 +17013,7 @@ impl fmt::Display for ClaimantType {
 impl TryFrom<i32> for ClaimantType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimantType::ClaimantTypeV0,
             #[allow(unreachable_patterns)]
@@ -14989,7 +17032,7 @@ impl From<ClaimantType> for i32 {
 
 impl ReadXdr for ClaimantType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -15000,7 +17043,7 @@ impl ReadXdr for ClaimantType {
 
 impl WriteXdr for ClaimantType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -15019,9 +17062,11 @@ impl WriteXdr for ClaimantType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15033,7 +17078,7 @@ pub struct ClaimantV0 {
 
 impl ReadXdr for ClaimantV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -15045,7 +17090,7 @@ impl ReadXdr for ClaimantV0 {
 
 impl WriteXdr for ClaimantV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.predicate.write_xdr(w)?;
@@ -15069,10 +17114,12 @@ impl WriteXdr for ClaimantV0 {
 /// ```
 ///
 // union with discriminant ClaimantType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15131,7 +17178,7 @@ impl Union<ClaimantType> for Claimant {}
 
 impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15147,7 +17194,7 @@ impl ReadXdr for Claimant {
 
 impl WriteXdr for Claimant {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -15226,7 +17273,7 @@ impl fmt::Display for ClaimableBalanceFlags {
 impl TryFrom<i32> for ClaimableBalanceFlags {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => ClaimableBalanceFlags::ClaimableBalanceClawbackEnabledFlag,
             #[allow(unreachable_patterns)]
@@ -15245,7 +17292,7 @@ impl From<ClaimableBalanceFlags> for i32 {
 
 impl ReadXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -15256,7 +17303,7 @@ impl ReadXdr for ClaimableBalanceFlags {
 
 impl WriteXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -15283,10 +17330,12 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15345,7 +17394,7 @@ impl Union<i32> for ClaimableBalanceEntryExtensionV1Ext {}
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15361,7 +17410,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -15390,9 +17439,11 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15404,7 +17455,7 @@ pub struct ClaimableBalanceEntryExtensionV1 {
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ClaimableBalanceEntryExtensionV1Ext::read_xdr(r)?,
@@ -15416,7 +17467,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.flags.write_xdr(w)?;
@@ -15438,10 +17489,12 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15503,7 +17556,7 @@ impl Union<i32> for ClaimableBalanceEntryExt {}
 
 impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15520,7 +17573,7 @@ impl ReadXdr for ClaimableBalanceEntryExt {
 
 impl WriteXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -15563,9 +17616,11 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15574,13 +17629,17 @@ pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
     pub claimants: VecM<Claimant, 10>,
     pub asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
     pub ext: ClaimableBalanceEntryExt,
 }
 
 impl ReadXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -15595,7 +17654,7 @@ impl ReadXdr for ClaimableBalanceEntry {
 
 impl WriteXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             self.claimants.write_xdr(w)?;
@@ -15619,9 +17678,11 @@ impl WriteXdr for ClaimableBalanceEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15634,7 +17695,7 @@ pub struct LiquidityPoolConstantProductParameters {
 
 impl ReadXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset_a: Asset::read_xdr(r)?,
@@ -15647,7 +17708,7 @@ impl ReadXdr for LiquidityPoolConstantProductParameters {
 
 impl WriteXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.asset_a.write_xdr(w)?;
             self.asset_b.write_xdr(w)?;
@@ -15673,24 +17734,42 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub reserve_a: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub reserve_b: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub total_pool_shares: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub pool_shares_trust_line_count: i64,
 }
 
 impl ReadXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 params: LiquidityPoolConstantProductParameters::read_xdr(r)?,
@@ -15705,7 +17784,7 @@ impl ReadXdr for LiquidityPoolEntryConstantProduct {
 
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.params.write_xdr(w)?;
             self.reserve_a.write_xdr(w)?;
@@ -15737,10 +17816,12 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 /// ```
 ///
 // union with discriminant LiquidityPoolType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15801,7 +17882,7 @@ impl Union<LiquidityPoolType> for LiquidityPoolEntryBody {}
 
 impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15821,7 +17902,7 @@ impl ReadXdr for LiquidityPoolEntryBody {
 
 impl WriteXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -15859,9 +17940,11 @@ impl WriteXdr for LiquidityPoolEntryBody {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -15873,7 +17956,7 @@ pub struct LiquidityPoolEntry {
 
 impl ReadXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -15885,7 +17968,7 @@ impl ReadXdr for LiquidityPoolEntry {
 
 impl WriteXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.body.write_xdr(w)?;
@@ -15963,7 +18046,7 @@ impl fmt::Display for ContractDataDurability {
 impl TryFrom<i32> for ContractDataDurability {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractDataDurability::Temporary,
             1 => ContractDataDurability::Persistent,
@@ -15983,7 +18066,7 @@ impl From<ContractDataDurability> for i32 {
 
 impl ReadXdr for ContractDataDurability {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -15994,7 +18077,7 @@ impl ReadXdr for ContractDataDurability {
 
 impl WriteXdr for ContractDataDurability {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -16016,9 +18099,11 @@ impl WriteXdr for ContractDataDurability {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16033,7 +18118,7 @@ pub struct ContractDataEntry {
 
 impl ReadXdr for ContractDataEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -16048,7 +18133,7 @@ impl ReadXdr for ContractDataEntry {
 
 impl WriteXdr for ContractDataEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.contract.write_xdr(w)?;
@@ -16079,9 +18164,11 @@ impl WriteXdr for ContractDataEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16102,7 +18189,7 @@ pub struct ContractCodeCostInputs {
 
 impl ReadXdr for ContractCodeCostInputs {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -16123,7 +18210,7 @@ impl ReadXdr for ContractCodeCostInputs {
 
 impl WriteXdr for ContractCodeCostInputs {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.n_instructions.write_xdr(w)?;
@@ -16152,9 +18239,11 @@ impl WriteXdr for ContractCodeCostInputs {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16166,7 +18255,7 @@ pub struct ContractCodeEntryV1 {
 
 impl ReadXdr for ContractCodeEntryV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -16178,7 +18267,7 @@ impl ReadXdr for ContractCodeEntryV1 {
 
 impl WriteXdr for ContractCodeEntryV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.cost_inputs.write_xdr(w)?;
@@ -16204,10 +18293,12 @@ impl WriteXdr for ContractCodeEntryV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16269,7 +18360,7 @@ impl Union<i32> for ContractCodeEntryExt {}
 
 impl ReadXdr for ContractCodeEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16286,7 +18377,7 @@ impl ReadXdr for ContractCodeEntryExt {
 
 impl WriteXdr for ContractCodeEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16321,9 +18412,11 @@ impl WriteXdr for ContractCodeEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16336,7 +18429,7 @@ pub struct ContractCodeEntry {
 
 impl ReadXdr for ContractCodeEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ContractCodeEntryExt::read_xdr(r)?,
@@ -16349,7 +18442,7 @@ impl ReadXdr for ContractCodeEntry {
 
 impl WriteXdr for ContractCodeEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.hash.write_xdr(w)?;
@@ -16370,9 +18463,11 @@ impl WriteXdr for ContractCodeEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16384,7 +18479,7 @@ pub struct TtlEntry {
 
 impl ReadXdr for TtlEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_hash: Hash::read_xdr(r)?,
@@ -16396,7 +18491,7 @@ impl ReadXdr for TtlEntry {
 
 impl WriteXdr for TtlEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
             self.live_until_ledger_seq.write_xdr(w)?;
@@ -16416,10 +18511,12 @@ impl WriteXdr for TtlEntry {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16478,7 +18575,7 @@ impl Union<i32> for LedgerEntryExtensionV1Ext {}
 
 impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16494,7 +18591,7 @@ impl ReadXdr for LedgerEntryExtensionV1Ext {
 
 impl WriteXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16523,9 +18620,11 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16537,7 +18636,7 @@ pub struct LedgerEntryExtensionV1 {
 
 impl ReadXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 sponsoring_id: SponsorshipDescriptor::read_xdr(r)?,
@@ -16549,7 +18648,7 @@ impl ReadXdr for LedgerEntryExtensionV1 {
 
 impl WriteXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.sponsoring_id.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -16587,10 +18686,12 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 /// ```
 ///
 // union with discriminant LedgerEntryType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16698,7 +18799,7 @@ impl Union<LedgerEntryType> for LedgerEntryData {}
 
 impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16733,7 +18834,7 @@ impl ReadXdr for LedgerEntryData {
 
 impl WriteXdr for LedgerEntryData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16767,10 +18868,12 @@ impl WriteXdr for LedgerEntryData {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16832,7 +18935,7 @@ impl Union<i32> for LedgerEntryExt {}
 
 impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16849,7 +18952,7 @@ impl ReadXdr for LedgerEntryExt {
 
 impl WriteXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16907,9 +19010,11 @@ impl WriteXdr for LedgerEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16922,7 +19027,7 @@ pub struct LedgerEntry {
 
 impl ReadXdr for LedgerEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 last_modified_ledger_seq: u32::read_xdr(r)?,
@@ -16935,7 +19040,7 @@ impl ReadXdr for LedgerEntry {
 
 impl WriteXdr for LedgerEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.last_modified_ledger_seq.write_xdr(w)?;
             self.data.write_xdr(w)?;
@@ -16955,9 +19060,11 @@ impl WriteXdr for LedgerEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -16968,7 +19075,7 @@ pub struct LedgerKeyAccount {
 
 impl ReadXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -16979,7 +19086,7 @@ impl ReadXdr for LedgerKeyAccount {
 
 impl WriteXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             Ok(())
@@ -16998,9 +19105,11 @@ impl WriteXdr for LedgerKeyAccount {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17012,7 +19121,7 @@ pub struct LedgerKeyTrustLine {
 
 impl ReadXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -17024,7 +19133,7 @@ impl ReadXdr for LedgerKeyTrustLine {
 
 impl WriteXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -17044,21 +19153,27 @@ impl WriteXdr for LedgerKeyTrustLine {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub offer_id: i64,
 }
 
 impl ReadXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_id: AccountId::read_xdr(r)?,
@@ -17070,7 +19185,7 @@ impl ReadXdr for LedgerKeyOffer {
 
 impl WriteXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -17090,9 +19205,11 @@ impl WriteXdr for LedgerKeyOffer {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17104,7 +19221,7 @@ pub struct LedgerKeyData {
 
 impl ReadXdr for LedgerKeyData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -17116,7 +19233,7 @@ impl ReadXdr for LedgerKeyData {
 
 impl WriteXdr for LedgerKeyData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.data_name.write_xdr(w)?;
@@ -17135,9 +19252,11 @@ impl WriteXdr for LedgerKeyData {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17148,7 +19267,7 @@ pub struct LedgerKeyClaimableBalance {
 
 impl ReadXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -17159,7 +19278,7 @@ impl ReadXdr for LedgerKeyClaimableBalance {
 
 impl WriteXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             Ok(())
@@ -17177,9 +19296,11 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17190,7 +19311,7 @@ pub struct LedgerKeyLiquidityPool {
 
 impl ReadXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -17201,7 +19322,7 @@ impl ReadXdr for LedgerKeyLiquidityPool {
 
 impl WriteXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             Ok(())
@@ -17221,9 +19342,11 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17236,7 +19359,7 @@ pub struct LedgerKeyContractData {
 
 impl ReadXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract: ScAddress::read_xdr(r)?,
@@ -17249,7 +19372,7 @@ impl ReadXdr for LedgerKeyContractData {
 
 impl WriteXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.contract.write_xdr(w)?;
             self.key.write_xdr(w)?;
@@ -17269,9 +19392,11 @@ impl WriteXdr for LedgerKeyContractData {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17282,7 +19407,7 @@ pub struct LedgerKeyContractCode {
 
 impl ReadXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hash: Hash::read_xdr(r)?,
@@ -17293,7 +19418,7 @@ impl ReadXdr for LedgerKeyContractCode {
 
 impl WriteXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
             Ok(())
@@ -17311,9 +19436,11 @@ impl WriteXdr for LedgerKeyContractCode {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17324,7 +19451,7 @@ pub struct LedgerKeyConfigSetting {
 
 impl ReadXdr for LedgerKeyConfigSetting {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 config_setting_id: ConfigSettingId::read_xdr(r)?,
@@ -17335,7 +19462,7 @@ impl ReadXdr for LedgerKeyConfigSetting {
 
 impl WriteXdr for LedgerKeyConfigSetting {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.config_setting_id.write_xdr(w)?;
             Ok(())
@@ -17354,9 +19481,11 @@ impl WriteXdr for LedgerKeyConfigSetting {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17367,7 +19496,7 @@ pub struct LedgerKeyTtl {
 
 impl ReadXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_hash: Hash::read_xdr(r)?,
@@ -17378,7 +19507,7 @@ impl ReadXdr for LedgerKeyTtl {
 
 impl WriteXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
             Ok(())
@@ -17456,10 +19585,12 @@ impl WriteXdr for LedgerKeyTtl {
 /// ```
 ///
 // union with discriminant LedgerEntryType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -17567,7 +19698,7 @@ impl Union<LedgerEntryType> for LedgerKey {}
 
 impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -17602,7 +19733,7 @@ impl ReadXdr for LedgerKey {
 
 impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -17736,7 +19867,7 @@ impl fmt::Display for EnvelopeType {
 impl TryFrom<i32> for EnvelopeType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => EnvelopeType::TxV0,
             1 => EnvelopeType::Scp,
@@ -17764,7 +19895,7 @@ impl From<EnvelopeType> for i32 {
 
 impl ReadXdr for EnvelopeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -17775,7 +19906,7 @@ impl ReadXdr for EnvelopeType {
 
 impl WriteXdr for EnvelopeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -17850,7 +19981,7 @@ impl fmt::Display for BucketListType {
 impl TryFrom<i32> for BucketListType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => BucketListType::Live,
             1 => BucketListType::HotArchive,
@@ -17870,7 +20001,7 @@ impl From<BucketListType> for i32 {
 
 impl ReadXdr for BucketListType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -17881,7 +20012,7 @@ impl ReadXdr for BucketListType {
 
 impl WriteXdr for BucketListType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -17970,7 +20101,7 @@ impl fmt::Display for BucketEntryType {
 impl TryFrom<i32> for BucketEntryType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             -1 => BucketEntryType::Metaentry,
             0 => BucketEntryType::Liveentry,
@@ -17992,7 +20123,7 @@ impl From<BucketEntryType> for i32 {
 
 impl ReadXdr for BucketEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -18003,7 +20134,7 @@ impl ReadXdr for BucketEntryType {
 
 impl WriteXdr for BucketEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -18087,7 +20218,7 @@ impl fmt::Display for HotArchiveBucketEntryType {
 impl TryFrom<i32> for HotArchiveBucketEntryType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             -1 => HotArchiveBucketEntryType::Metaentry,
             0 => HotArchiveBucketEntryType::Archived,
@@ -18108,7 +20239,7 @@ impl From<HotArchiveBucketEntryType> for i32 {
 
 impl ReadXdr for HotArchiveBucketEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -18119,7 +20250,7 @@ impl ReadXdr for HotArchiveBucketEntryType {
 
 impl WriteXdr for HotArchiveBucketEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -18140,10 +20271,12 @@ impl WriteXdr for HotArchiveBucketEntryType {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18205,7 +20338,7 @@ impl Union<i32> for BucketMetadataExt {}
 
 impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18222,7 +20355,7 @@ impl ReadXdr for BucketMetadataExt {
 
 impl WriteXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18256,9 +20389,11 @@ impl WriteXdr for BucketMetadataExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18270,7 +20405,7 @@ pub struct BucketMetadata {
 
 impl ReadXdr for BucketMetadata {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_version: u32::read_xdr(r)?,
@@ -18282,7 +20417,7 @@ impl ReadXdr for BucketMetadata {
 
 impl WriteXdr for BucketMetadata {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -18308,10 +20443,12 @@ impl WriteXdr for BucketMetadata {
 /// ```
 ///
 // union with discriminant BucketEntryType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18385,7 +20522,7 @@ impl Union<BucketEntryType> for BucketEntry {}
 
 impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18404,7 +20541,7 @@ impl ReadXdr for BucketEntry {
 
 impl WriteXdr for BucketEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18435,10 +20572,12 @@ impl WriteXdr for BucketEntry {
 /// ```
 ///
 // union with discriminant HotArchiveBucketEntryType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18507,7 +20646,7 @@ impl Union<HotArchiveBucketEntryType> for HotArchiveBucketEntry {}
 
 impl ReadXdr for HotArchiveBucketEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: HotArchiveBucketEntryType =
                 <HotArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
@@ -18528,7 +20667,7 @@ impl ReadXdr for HotArchiveBucketEntry {
 
 impl WriteXdr for HotArchiveBucketEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18548,11 +20687,13 @@ impl WriteXdr for HotArchiveBucketEntry {
 /// typedef opaque UpgradeType<128>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18583,7 +20724,7 @@ impl AsRef<BytesM<128>> for UpgradeType {
 
 impl ReadXdr for UpgradeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = BytesM::<128>::read_xdr(r)?;
             let v = UpgradeType(i);
@@ -18594,7 +20735,7 @@ impl ReadXdr for UpgradeType {
 
 impl WriteXdr for UpgradeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -18615,7 +20756,7 @@ impl From<UpgradeType> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for UpgradeType {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(UpgradeType(x.try_into()?))
     }
 }
@@ -18623,7 +20764,7 @@ impl TryFrom<Vec<u8>> for UpgradeType {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for UpgradeType {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(UpgradeType(x.try_into()?))
     }
 }
@@ -18715,7 +20856,7 @@ impl fmt::Display for StellarValueType {
 impl TryFrom<i32> for StellarValueType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => StellarValueType::Basic,
             1 => StellarValueType::Signed,
@@ -18735,7 +20876,7 @@ impl From<StellarValueType> for i32 {
 
 impl ReadXdr for StellarValueType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -18746,7 +20887,7 @@ impl ReadXdr for StellarValueType {
 
 impl WriteXdr for StellarValueType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -18765,9 +20906,11 @@ impl WriteXdr for StellarValueType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18779,7 +20922,7 @@ pub struct LedgerCloseValueSignature {
 
 impl ReadXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 node_id: NodeId::read_xdr(r)?,
@@ -18791,7 +20934,7 @@ impl ReadXdr for LedgerCloseValueSignature {
 
 impl WriteXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
             self.signature.write_xdr(w)?;
@@ -18813,10 +20956,12 @@ impl WriteXdr for LedgerCloseValueSignature {
 /// ```
 ///
 // union with discriminant StellarValueType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18878,7 +21023,7 @@ impl Union<StellarValueType> for StellarValueExt {}
 
 impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18895,7 +21040,7 @@ impl ReadXdr for StellarValueExt {
 
 impl WriteXdr for StellarValueExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18936,9 +21081,11 @@ impl WriteXdr for StellarValueExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -18952,7 +21099,7 @@ pub struct StellarValue {
 
 impl ReadXdr for StellarValue {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_set_hash: Hash::read_xdr(r)?,
@@ -18966,7 +21113,7 @@ impl ReadXdr for StellarValue {
 
 impl WriteXdr for StellarValue {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_set_hash.write_xdr(w)?;
             self.close_time.write_xdr(w)?;
@@ -19059,7 +21206,7 @@ impl fmt::Display for LedgerHeaderFlags {
 impl TryFrom<i32> for LedgerHeaderFlags {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => LedgerHeaderFlags::TradingFlag,
             2 => LedgerHeaderFlags::DepositFlag,
@@ -19080,7 +21227,7 @@ impl From<LedgerHeaderFlags> for i32 {
 
 impl ReadXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -19091,7 +21238,7 @@ impl ReadXdr for LedgerHeaderFlags {
 
 impl WriteXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -19110,10 +21257,12 @@ impl WriteXdr for LedgerHeaderFlags {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19172,7 +21321,7 @@ impl Union<i32> for LedgerHeaderExtensionV1Ext {}
 
 impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -19188,7 +21337,7 @@ impl ReadXdr for LedgerHeaderExtensionV1Ext {
 
 impl WriteXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -19217,9 +21366,11 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19231,7 +21382,7 @@ pub struct LedgerHeaderExtensionV1 {
 
 impl ReadXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 flags: u32::read_xdr(r)?,
@@ -19243,7 +21394,7 @@ impl ReadXdr for LedgerHeaderExtensionV1 {
 
 impl WriteXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -19265,10 +21416,12 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19330,7 +21483,7 @@ impl Union<i32> for LedgerHeaderExt {}
 
 impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -19347,7 +21500,7 @@ impl ReadXdr for LedgerHeaderExt {
 
 impl WriteXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -19405,9 +21558,11 @@ impl WriteXdr for LedgerHeaderExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19419,9 +21574,21 @@ pub struct LedgerHeader {
     pub tx_set_result_hash: Hash,
     pub bucket_list_hash: Hash,
     pub ledger_seq: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub total_coins: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_pool: i64,
     pub inflation_seq: u32,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub id_pool: u64,
     pub base_fee: u32,
     pub base_reserve: u32,
@@ -19432,7 +21599,7 @@ pub struct LedgerHeader {
 
 impl ReadXdr for LedgerHeader {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_version: u32::read_xdr(r)?,
@@ -19457,7 +21624,7 @@ impl ReadXdr for LedgerHeader {
 
 impl WriteXdr for LedgerHeader {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.previous_ledger_hash.write_xdr(w)?;
@@ -19577,7 +21744,7 @@ impl fmt::Display for LedgerUpgradeType {
 impl TryFrom<i32> for LedgerUpgradeType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => LedgerUpgradeType::Version,
             2 => LedgerUpgradeType::BaseFee,
@@ -19602,7 +21769,7 @@ impl From<LedgerUpgradeType> for i32 {
 
 impl ReadXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -19613,7 +21780,7 @@ impl ReadXdr for LedgerUpgradeType {
 
 impl WriteXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -19631,9 +21798,11 @@ impl WriteXdr for LedgerUpgradeType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19645,7 +21814,7 @@ pub struct ConfigUpgradeSetKey {
 
 impl ReadXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_id: ContractId::read_xdr(r)?,
@@ -19657,7 +21826,7 @@ impl ReadXdr for ConfigUpgradeSetKey {
 
 impl WriteXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.contract_id.write_xdr(w)?;
             self.content_hash.write_xdr(w)?;
@@ -19692,10 +21861,12 @@ impl WriteXdr for ConfigUpgradeSetKey {
 /// ```
 ///
 // union with discriminant LedgerUpgradeType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19788,7 +21959,7 @@ impl Union<LedgerUpgradeType> for LedgerUpgrade {}
 
 impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -19812,7 +21983,7 @@ impl ReadXdr for LedgerUpgrade {
 
 impl WriteXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -19839,9 +22010,11 @@ impl WriteXdr for LedgerUpgrade {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -19852,7 +22025,7 @@ pub struct ConfigUpgradeSet {
 
 impl ReadXdr for ConfigUpgradeSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 updated_entry: VecM::<ConfigSettingEntry>::read_xdr(r)?,
@@ -19863,7 +22036,7 @@ impl ReadXdr for ConfigUpgradeSet {
 
 impl WriteXdr for ConfigUpgradeSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.updated_entry.write_xdr(w)?;
             Ok(())
@@ -19938,7 +22111,7 @@ impl fmt::Display for TxSetComponentType {
 impl TryFrom<i32> for TxSetComponentType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => TxSetComponentType::TxsetCompTxsMaybeDiscountedFee,
             #[allow(unreachable_patterns)]
@@ -19957,7 +22130,7 @@ impl From<TxSetComponentType> for i32 {
 
 impl ReadXdr for TxSetComponentType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -19968,7 +22141,7 @@ impl ReadXdr for TxSetComponentType {
 
 impl WriteXdr for TxSetComponentType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -19982,11 +22155,13 @@ impl WriteXdr for TxSetComponentType {
 /// typedef TransactionEnvelope DependentTxCluster<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20017,7 +22192,7 @@ impl AsRef<VecM<TransactionEnvelope>> for DependentTxCluster {
 
 impl ReadXdr for DependentTxCluster {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<TransactionEnvelope>::read_xdr(r)?;
             let v = DependentTxCluster(i);
@@ -20028,7 +22203,7 @@ impl ReadXdr for DependentTxCluster {
 
 impl WriteXdr for DependentTxCluster {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -20049,7 +22224,7 @@ impl From<DependentTxCluster> for Vec<TransactionEnvelope> {
 
 impl TryFrom<Vec<TransactionEnvelope>> for DependentTxCluster {
     type Error = Error;
-    fn try_from(x: Vec<TransactionEnvelope>) -> Result<Self> {
+    fn try_from(x: Vec<TransactionEnvelope>) -> Result<Self, Error> {
         Ok(DependentTxCluster(x.try_into()?))
     }
 }
@@ -20057,7 +22232,7 @@ impl TryFrom<Vec<TransactionEnvelope>> for DependentTxCluster {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
     type Error = Error;
-    fn try_from(x: &Vec<TransactionEnvelope>) -> Result<Self> {
+    fn try_from(x: &Vec<TransactionEnvelope>) -> Result<Self, Error> {
         Ok(DependentTxCluster(x.try_into()?))
     }
 }
@@ -20088,11 +22263,13 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
 /// typedef DependentTxCluster ParallelTxExecutionStage<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20123,7 +22300,7 @@ impl AsRef<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
 
 impl ReadXdr for ParallelTxExecutionStage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<DependentTxCluster>::read_xdr(r)?;
             let v = ParallelTxExecutionStage(i);
@@ -20134,7 +22311,7 @@ impl ReadXdr for ParallelTxExecutionStage {
 
 impl WriteXdr for ParallelTxExecutionStage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -20155,7 +22332,7 @@ impl From<ParallelTxExecutionStage> for Vec<DependentTxCluster> {
 
 impl TryFrom<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     type Error = Error;
-    fn try_from(x: Vec<DependentTxCluster>) -> Result<Self> {
+    fn try_from(x: Vec<DependentTxCluster>) -> Result<Self, Error> {
         Ok(ParallelTxExecutionStage(x.try_into()?))
     }
 }
@@ -20163,7 +22340,7 @@ impl TryFrom<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     type Error = Error;
-    fn try_from(x: &Vec<DependentTxCluster>) -> Result<Self> {
+    fn try_from(x: &Vec<DependentTxCluster>) -> Result<Self, Error> {
         Ok(ParallelTxExecutionStage(x.try_into()?))
     }
 }
@@ -20202,21 +22379,27 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ParallelTxsComponent {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "Option<NumberOrString>")
+    )]
     pub base_fee: Option<i64>,
     pub execution_stages: VecM<ParallelTxExecutionStage>,
 }
 
 impl ReadXdr for ParallelTxsComponent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 base_fee: Option::<i64>::read_xdr(r)?,
@@ -20228,7 +22411,7 @@ impl ReadXdr for ParallelTxsComponent {
 
 impl WriteXdr for ParallelTxsComponent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.base_fee.write_xdr(w)?;
             self.execution_stages.write_xdr(w)?;
@@ -20248,21 +22431,27 @@ impl WriteXdr for ParallelTxsComponent {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "Option<NumberOrString>")
+    )]
     pub base_fee: Option<i64>,
     pub txs: VecM<TransactionEnvelope>,
 }
 
 impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 base_fee: Option::<i64>::read_xdr(r)?,
@@ -20274,7 +22463,7 @@ impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
 
 impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.base_fee.write_xdr(w)?;
             self.txs.write_xdr(w)?;
@@ -20298,10 +22487,12 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 /// ```
 ///
 // union with discriminant TxSetComponentType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20363,7 +22554,7 @@ impl Union<TxSetComponentType> for TxSetComponent {}
 
 impl ReadXdr for TxSetComponent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -20383,7 +22574,7 @@ impl ReadXdr for TxSetComponent {
 
 impl WriteXdr for TxSetComponent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -20408,10 +22599,12 @@ impl WriteXdr for TxSetComponent {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20473,7 +22666,7 @@ impl Union<i32> for TransactionPhase {}
 
 impl ReadXdr for TransactionPhase {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -20490,7 +22683,7 @@ impl ReadXdr for TransactionPhase {
 
 impl WriteXdr for TransactionPhase {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -20514,9 +22707,11 @@ impl WriteXdr for TransactionPhase {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20528,7 +22723,7 @@ pub struct TransactionSet {
 
 impl ReadXdr for TransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 previous_ledger_hash: Hash::read_xdr(r)?,
@@ -20540,7 +22735,7 @@ impl ReadXdr for TransactionSet {
 
 impl WriteXdr for TransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
             self.txs.write_xdr(w)?;
@@ -20560,9 +22755,11 @@ impl WriteXdr for TransactionSet {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20574,7 +22771,7 @@ pub struct TransactionSetV1 {
 
 impl ReadXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 previous_ledger_hash: Hash::read_xdr(r)?,
@@ -20586,7 +22783,7 @@ impl ReadXdr for TransactionSetV1 {
 
 impl WriteXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
             self.phases.write_xdr(w)?;
@@ -20607,10 +22804,12 @@ impl WriteXdr for TransactionSetV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20669,7 +22868,7 @@ impl Union<i32> for GeneralizedTransactionSet {}
 
 impl ReadXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -20685,7 +22884,7 @@ impl ReadXdr for GeneralizedTransactionSet {
 
 impl WriteXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -20708,9 +22907,11 @@ impl WriteXdr for GeneralizedTransactionSet {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20722,7 +22923,7 @@ pub struct TransactionResultPair {
 
 impl ReadXdr for TransactionResultPair {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 transaction_hash: Hash::read_xdr(r)?,
@@ -20734,7 +22935,7 @@ impl ReadXdr for TransactionResultPair {
 
 impl WriteXdr for TransactionResultPair {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -20753,9 +22954,11 @@ impl WriteXdr for TransactionResultPair {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20766,7 +22969,7 @@ pub struct TransactionResultSet {
 
 impl ReadXdr for TransactionResultSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 results: VecM::<TransactionResultPair>::read_xdr(r)?,
@@ -20777,7 +22980,7 @@ impl ReadXdr for TransactionResultSet {
 
 impl WriteXdr for TransactionResultSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.results.write_xdr(w)?;
             Ok(())
@@ -20798,10 +23001,12 @@ impl WriteXdr for TransactionResultSet {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20863,7 +23068,7 @@ impl Union<i32> for TransactionHistoryEntryExt {}
 
 impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -20880,7 +23085,7 @@ impl ReadXdr for TransactionHistoryEntryExt {
 
 impl WriteXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -20914,9 +23119,11 @@ impl WriteXdr for TransactionHistoryEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -20929,7 +23136,7 @@ pub struct TransactionHistoryEntry {
 
 impl ReadXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_seq: u32::read_xdr(r)?,
@@ -20942,7 +23149,7 @@ impl ReadXdr for TransactionHistoryEntry {
 
 impl WriteXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
             self.tx_set.write_xdr(w)?;
@@ -20963,10 +23170,12 @@ impl WriteXdr for TransactionHistoryEntry {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21025,7 +23234,7 @@ impl Union<i32> for TransactionHistoryResultEntryExt {}
 
 impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -21041,7 +23250,7 @@ impl ReadXdr for TransactionHistoryResultEntryExt {
 
 impl WriteXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -21072,9 +23281,11 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21087,7 +23298,7 @@ pub struct TransactionHistoryResultEntry {
 
 impl ReadXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_seq: u32::read_xdr(r)?,
@@ -21100,7 +23311,7 @@ impl ReadXdr for TransactionHistoryResultEntry {
 
 impl WriteXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
             self.tx_result_set.write_xdr(w)?;
@@ -21121,10 +23332,12 @@ impl WriteXdr for TransactionHistoryResultEntry {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21183,7 +23396,7 @@ impl Union<i32> for LedgerHeaderHistoryEntryExt {}
 
 impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -21199,7 +23412,7 @@ impl ReadXdr for LedgerHeaderHistoryEntryExt {
 
 impl WriteXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -21230,9 +23443,11 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21245,7 +23460,7 @@ pub struct LedgerHeaderHistoryEntry {
 
 impl ReadXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hash: Hash::read_xdr(r)?,
@@ -21258,7 +23473,7 @@ impl ReadXdr for LedgerHeaderHistoryEntry {
 
 impl WriteXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
             self.header.write_xdr(w)?;
@@ -21279,9 +23494,11 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21293,7 +23510,7 @@ pub struct LedgerScpMessages {
 
 impl ReadXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_seq: u32::read_xdr(r)?,
@@ -21305,7 +23522,7 @@ impl ReadXdr for LedgerScpMessages {
 
 impl WriteXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
             self.messages.write_xdr(w)?;
@@ -21325,9 +23542,11 @@ impl WriteXdr for LedgerScpMessages {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21339,7 +23558,7 @@ pub struct ScpHistoryEntryV0 {
 
 impl ReadXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
@@ -21351,7 +23570,7 @@ impl ReadXdr for ScpHistoryEntryV0 {
 
 impl WriteXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.quorum_sets.write_xdr(w)?;
             self.ledger_messages.write_xdr(w)?;
@@ -21371,10 +23590,12 @@ impl WriteXdr for ScpHistoryEntryV0 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21433,7 +23654,7 @@ impl Union<i32> for ScpHistoryEntry {}
 
 impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -21449,7 +23670,7 @@ impl ReadXdr for ScpHistoryEntry {
 
 impl WriteXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -21544,7 +23765,7 @@ impl fmt::Display for LedgerEntryChangeType {
 impl TryFrom<i32> for LedgerEntryChangeType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => LedgerEntryChangeType::Created,
             1 => LedgerEntryChangeType::Updated,
@@ -21567,7 +23788,7 @@ impl From<LedgerEntryChangeType> for i32 {
 
 impl ReadXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -21578,7 +23799,7 @@ impl ReadXdr for LedgerEntryChangeType {
 
 impl WriteXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -21605,10 +23826,12 @@ impl WriteXdr for LedgerEntryChangeType {
 /// ```
 ///
 // union with discriminant LedgerEntryChangeType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21686,7 +23909,7 @@ impl Union<LedgerEntryChangeType> for LedgerEntryChange {}
 
 impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -21706,7 +23929,7 @@ impl ReadXdr for LedgerEntryChange {
 
 impl WriteXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -21728,11 +23951,13 @@ impl WriteXdr for LedgerEntryChange {
 /// typedef LedgerEntryChange LedgerEntryChanges<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21763,7 +23988,7 @@ impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
 
 impl ReadXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
             let v = LedgerEntryChanges(i);
@@ -21774,7 +23999,7 @@ impl ReadXdr for LedgerEntryChanges {
 
 impl WriteXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -21795,7 +24020,7 @@ impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
 
 impl TryFrom<Vec<LedgerEntryChange>> for LedgerEntryChanges {
     type Error = Error;
-    fn try_from(x: Vec<LedgerEntryChange>) -> Result<Self> {
+    fn try_from(x: Vec<LedgerEntryChange>) -> Result<Self, Error> {
         Ok(LedgerEntryChanges(x.try_into()?))
     }
 }
@@ -21803,7 +24028,7 @@ impl TryFrom<Vec<LedgerEntryChange>> for LedgerEntryChanges {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<LedgerEntryChange>> for LedgerEntryChanges {
     type Error = Error;
-    fn try_from(x: &Vec<LedgerEntryChange>) -> Result<Self> {
+    fn try_from(x: &Vec<LedgerEntryChange>) -> Result<Self, Error> {
         Ok(LedgerEntryChanges(x.try_into()?))
     }
 }
@@ -21838,9 +24063,11 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21851,7 +24078,7 @@ pub struct OperationMeta {
 
 impl ReadXdr for OperationMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 changes: LedgerEntryChanges::read_xdr(r)?,
@@ -21862,7 +24089,7 @@ impl ReadXdr for OperationMeta {
 
 impl WriteXdr for OperationMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.changes.write_xdr(w)?;
             Ok(())
@@ -21881,9 +24108,11 @@ impl WriteXdr for OperationMeta {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21895,7 +24124,7 @@ pub struct TransactionMetaV1 {
 
 impl ReadXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_changes: LedgerEntryChanges::read_xdr(r)?,
@@ -21907,7 +24136,7 @@ impl ReadXdr for TransactionMetaV1 {
 
 impl WriteXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_changes.write_xdr(w)?;
             self.operations.write_xdr(w)?;
@@ -21930,9 +24159,11 @@ impl WriteXdr for TransactionMetaV1 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -21945,7 +24176,7 @@ pub struct TransactionMetaV2 {
 
 impl ReadXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
@@ -21958,7 +24189,7 @@ impl ReadXdr for TransactionMetaV2 {
 
 impl WriteXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_changes_before.write_xdr(w)?;
             self.operations.write_xdr(w)?;
@@ -22042,7 +24273,7 @@ impl fmt::Display for ContractEventType {
 impl TryFrom<i32> for ContractEventType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractEventType::System,
             1 => ContractEventType::Contract,
@@ -22063,7 +24294,7 @@ impl From<ContractEventType> for i32 {
 
 impl ReadXdr for ContractEventType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -22074,7 +24305,7 @@ impl ReadXdr for ContractEventType {
 
 impl WriteXdr for ContractEventType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -22093,9 +24324,11 @@ impl WriteXdr for ContractEventType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22107,7 +24340,7 @@ pub struct ContractEventV0 {
 
 impl ReadXdr for ContractEventV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 topics: VecM::<ScVal>::read_xdr(r)?,
@@ -22119,7 +24352,7 @@ impl ReadXdr for ContractEventV0 {
 
 impl WriteXdr for ContractEventV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.topics.write_xdr(w)?;
             self.data.write_xdr(w)?;
@@ -22143,10 +24376,12 @@ impl WriteXdr for ContractEventV0 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22205,7 +24440,7 @@ impl Union<i32> for ContractEventBody {}
 
 impl ReadXdr for ContractEventBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -22221,7 +24456,7 @@ impl ReadXdr for ContractEventBody {
 
 impl WriteXdr for ContractEventBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -22259,9 +24494,11 @@ impl WriteXdr for ContractEventBody {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22275,7 +24512,7 @@ pub struct ContractEvent {
 
 impl ReadXdr for ContractEvent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -22289,7 +24526,7 @@ impl ReadXdr for ContractEvent {
 
 impl WriteXdr for ContractEvent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.contract_id.write_xdr(w)?;
@@ -22311,9 +24548,11 @@ impl WriteXdr for ContractEvent {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22325,7 +24564,7 @@ pub struct DiagnosticEvent {
 
 impl ReadXdr for DiagnosticEvent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 in_successful_contract_call: bool::read_xdr(r)?,
@@ -22337,7 +24576,7 @@ impl ReadXdr for DiagnosticEvent {
 
 impl WriteXdr for DiagnosticEvent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.in_successful_contract_call.write_xdr(w)?;
             self.event.write_xdr(w)?;
@@ -22385,23 +24624,37 @@ impl WriteXdr for DiagnosticEvent {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionMetaExtV1 {
     pub ext: ExtensionPoint,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub total_non_refundable_resource_fee_charged: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub total_refundable_resource_fee_charged: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub rent_fee_charged: i64,
 }
 
 impl ReadXdr for SorobanTransactionMetaExtV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -22415,7 +24668,7 @@ impl ReadXdr for SorobanTransactionMetaExtV1 {
 
 impl WriteXdr for SorobanTransactionMetaExtV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.total_non_refundable_resource_fee_charged
@@ -22440,10 +24693,12 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22505,7 +24760,7 @@ impl Union<i32> for SorobanTransactionMetaExt {}
 
 impl ReadXdr for SorobanTransactionMetaExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -22522,7 +24777,7 @@ impl ReadXdr for SorobanTransactionMetaExt {
 
 impl WriteXdr for SorobanTransactionMetaExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -22554,9 +24809,11 @@ impl WriteXdr for SorobanTransactionMetaExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22570,7 +24827,7 @@ pub struct SorobanTransactionMeta {
 
 impl ReadXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: SorobanTransactionMetaExt::read_xdr(r)?,
@@ -22584,7 +24841,7 @@ impl ReadXdr for SorobanTransactionMeta {
 
 impl WriteXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.events.write_xdr(w)?;
@@ -22613,9 +24870,11 @@ impl WriteXdr for SorobanTransactionMeta {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22630,7 +24889,7 @@ pub struct TransactionMetaV3 {
 
 impl ReadXdr for TransactionMetaV3 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -22645,7 +24904,7 @@ impl ReadXdr for TransactionMetaV3 {
 
 impl WriteXdr for TransactionMetaV3 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.tx_changes_before.write_xdr(w)?;
@@ -22671,9 +24930,11 @@ impl WriteXdr for TransactionMetaV3 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22686,7 +24947,7 @@ pub struct OperationMetaV2 {
 
 impl ReadXdr for OperationMetaV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -22699,7 +24960,7 @@ impl ReadXdr for OperationMetaV2 {
 
 impl WriteXdr for OperationMetaV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.changes.write_xdr(w)?;
@@ -22721,9 +24982,11 @@ impl WriteXdr for OperationMetaV2 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22735,7 +24998,7 @@ pub struct SorobanTransactionMetaV2 {
 
 impl ReadXdr for SorobanTransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: SorobanTransactionMetaExt::read_xdr(r)?,
@@ -22747,7 +25010,7 @@ impl ReadXdr for SorobanTransactionMetaV2 {
 
 impl WriteXdr for SorobanTransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.return_value.write_xdr(w)?;
@@ -22835,7 +25098,7 @@ impl fmt::Display for TransactionEventStage {
 impl TryFrom<i32> for TransactionEventStage {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => TransactionEventStage::BeforeAllTxs,
             1 => TransactionEventStage::AfterTx,
@@ -22856,7 +25119,7 @@ impl From<TransactionEventStage> for i32 {
 
 impl ReadXdr for TransactionEventStage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -22867,7 +25130,7 @@ impl ReadXdr for TransactionEventStage {
 
 impl WriteXdr for TransactionEventStage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -22885,9 +25148,11 @@ impl WriteXdr for TransactionEventStage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22899,7 +25164,7 @@ pub struct TransactionEvent {
 
 impl ReadXdr for TransactionEvent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 stage: TransactionEventStage::read_xdr(r)?,
@@ -22911,7 +25176,7 @@ impl ReadXdr for TransactionEvent {
 
 impl WriteXdr for TransactionEvent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.stage.write_xdr(w)?;
             self.event.write_xdr(w)?;
@@ -22941,9 +25206,11 @@ impl WriteXdr for TransactionEvent {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -22960,7 +25227,7 @@ pub struct TransactionMetaV4 {
 
 impl ReadXdr for TransactionMetaV4 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -22977,7 +25244,7 @@ impl ReadXdr for TransactionMetaV4 {
 
 impl WriteXdr for TransactionMetaV4 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.tx_changes_before.write_xdr(w)?;
@@ -23002,9 +25269,11 @@ impl WriteXdr for TransactionMetaV4 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23016,7 +25285,7 @@ pub struct InvokeHostFunctionSuccessPreImage {
 
 impl ReadXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 return_value: ScVal::read_xdr(r)?,
@@ -23028,7 +25297,7 @@ impl ReadXdr for InvokeHostFunctionSuccessPreImage {
 
 impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.return_value.write_xdr(w)?;
             self.events.write_xdr(w)?;
@@ -23056,10 +25325,12 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23130,7 +25401,7 @@ impl Union<i32> for TransactionMeta {}
 
 impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -23150,7 +25421,7 @@ impl ReadXdr for TransactionMeta {
 
 impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -23178,9 +25449,11 @@ impl WriteXdr for TransactionMeta {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23193,7 +25466,7 @@ pub struct TransactionResultMeta {
 
 impl ReadXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 result: TransactionResultPair::read_xdr(r)?,
@@ -23206,11 +25479,73 @@ impl ReadXdr for TransactionResultMeta {
 
 impl WriteXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.result.write_xdr(w)?;
             self.fee_processing.write_xdr(w)?;
             self.tx_apply_processing.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// TransactionResultMetaV1 is an XDR Struct defines as:
+///
+/// ```text
+/// struct TransactionResultMetaV1
+/// {
+///     ExtensionPoint ext;
+///
+///     TransactionResultPair result;
+///     LedgerEntryChanges feeProcessing;
+///     TransactionMeta txApplyProcessing;
+///
+///     LedgerEntryChanges postTxApplyFeeProcessing;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TransactionResultMetaV1 {
+    pub ext: ExtensionPoint,
+    pub result: TransactionResultPair,
+    pub fee_processing: LedgerEntryChanges,
+    pub tx_apply_processing: TransactionMeta,
+    pub post_tx_apply_fee_processing: LedgerEntryChanges,
+}
+
+impl ReadXdr for TransactionResultMetaV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                result: TransactionResultPair::read_xdr(r)?,
+                fee_processing: LedgerEntryChanges::read_xdr(r)?,
+                tx_apply_processing: TransactionMeta::read_xdr(r)?,
+                post_tx_apply_fee_processing: LedgerEntryChanges::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultMetaV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            self.fee_processing.write_xdr(w)?;
+            self.tx_apply_processing.write_xdr(w)?;
+            self.post_tx_apply_fee_processing.write_xdr(w)?;
             Ok(())
         })
     }
@@ -23227,9 +25562,11 @@ impl WriteXdr for TransactionResultMeta {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23241,7 +25578,7 @@ pub struct UpgradeEntryMeta {
 
 impl ReadXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 upgrade: LedgerUpgrade::read_xdr(r)?,
@@ -23253,7 +25590,7 @@ impl ReadXdr for UpgradeEntryMeta {
 
 impl WriteXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.upgrade.write_xdr(w)?;
             self.changes.write_xdr(w)?;
@@ -23285,9 +25622,11 @@ impl WriteXdr for UpgradeEntryMeta {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23302,7 +25641,7 @@ pub struct LedgerCloseMetaV0 {
 
 impl ReadXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
@@ -23317,7 +25656,7 @@ impl ReadXdr for LedgerCloseMetaV0 {
 
 impl WriteXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_header.write_xdr(w)?;
             self.tx_set.write_xdr(w)?;
@@ -23340,21 +25679,27 @@ impl WriteXdr for LedgerCloseMetaV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaExtV1 {
     pub ext: ExtensionPoint,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub soroban_fee_write1_kb: i64,
 }
 
 impl ReadXdr for LedgerCloseMetaExtV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -23366,7 +25711,7 @@ impl ReadXdr for LedgerCloseMetaExtV1 {
 
 impl WriteXdr for LedgerCloseMetaExtV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.soroban_fee_write1_kb.write_xdr(w)?;
@@ -23388,10 +25733,12 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23453,7 +25800,7 @@ impl Union<i32> for LedgerCloseMetaExt {}
 
 impl ReadXdr for LedgerCloseMetaExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -23470,7 +25817,7 @@ impl ReadXdr for LedgerCloseMetaExt {
 
 impl WriteXdr for LedgerCloseMetaExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -23518,9 +25865,11 @@ impl WriteXdr for LedgerCloseMetaExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23532,6 +25881,10 @@ pub struct LedgerCloseMetaV1 {
     pub tx_processing: VecM<TransactionResultMeta>,
     pub upgrades_processing: VecM<UpgradeEntryMeta>,
     pub scp_info: VecM<ScpHistoryEntry>,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub total_byte_size_of_live_soroban_state: u64,
     pub evicted_keys: VecM<LedgerKey>,
     pub unused: VecM<LedgerEntry>,
@@ -23539,7 +25892,7 @@ pub struct LedgerCloseMetaV1 {
 
 impl ReadXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: LedgerCloseMetaExt::read_xdr(r)?,
@@ -23558,7 +25911,7 @@ impl ReadXdr for LedgerCloseMetaV1 {
 
 impl WriteXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.ledger_header.write_xdr(w)?;
@@ -23574,6 +25927,106 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
+/// LedgerCloseMetaV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct LedgerCloseMetaV2
+/// {
+///     LedgerCloseMetaExt ext;
+///
+///     LedgerHeaderHistoryEntry ledgerHeader;
+///
+///     GeneralizedTransactionSet txSet;
+///
+///     // NB: transactions are sorted in apply order here
+///     // fees for all transactions are processed first
+///     // followed by applying transactions
+///     TransactionResultMetaV1 txProcessing<>;
+///
+///     // upgrades are applied last
+///     UpgradeEntryMeta upgradesProcessing<>;
+///
+///     // other misc information attached to the ledger close
+///     SCPHistoryEntry scpInfo<>;
+///
+///     // Size in bytes of BucketList, to support downstream
+///     // systems calculating storage fees correctly.
+///     uint64 totalByteSizeOfBucketList;
+///
+///     // Temp keys and all TTL keys that are being evicted at this ledger.
+///     // Note that this can contain TTL keys for both persistent and temporary
+///     // entries, but the name is kept for legacy reasons.
+///     LedgerKey evictedTemporaryLedgerKeys<>;
+///
+///     // Archived persistent ledger entries that are being
+///     // evicted at this ledger.
+///     LedgerEntry evictedPersistentLedgerEntries<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct LedgerCloseMetaV2 {
+    pub ext: LedgerCloseMetaExt,
+    pub ledger_header: LedgerHeaderHistoryEntry,
+    pub tx_set: GeneralizedTransactionSet,
+    pub tx_processing: VecM<TransactionResultMetaV1>,
+    pub upgrades_processing: VecM<UpgradeEntryMeta>,
+    pub scp_info: VecM<ScpHistoryEntry>,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
+    pub total_byte_size_of_bucket_list: u64,
+    pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
+    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
+}
+
+impl ReadXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: LedgerCloseMetaExt::read_xdr(r)?,
+                ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+                tx_set: GeneralizedTransactionSet::read_xdr(r)?,
+                tx_processing: VecM::<TransactionResultMetaV1>::read_xdr(r)?,
+                upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+                scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+                total_byte_size_of_bucket_list: u64::read_xdr(r)?,
+                evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
+                evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.ledger_header.write_xdr(w)?;
+            self.tx_set.write_xdr(w)?;
+            self.tx_processing.write_xdr(w)?;
+            self.upgrades_processing.write_xdr(w)?;
+            self.scp_info.write_xdr(w)?;
+            self.total_byte_size_of_bucket_list.write_xdr(w)?;
+            self.evicted_temporary_ledger_keys.write_xdr(w)?;
+            self.evicted_persistent_ledger_entries.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerCloseMeta is an XDR Union defines as:
 ///
 /// ```text
@@ -23583,14 +26036,18 @@ impl WriteXdr for LedgerCloseMetaV1 {
 ///     LedgerCloseMetaV0 v0;
 /// case 1:
 ///     LedgerCloseMetaV1 v1;
+/// case 2:
+///     LedgerCloseMetaV2 v2;
 /// };
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23599,17 +26056,19 @@ impl WriteXdr for LedgerCloseMetaV1 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
+    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [i32; 3] = [0, 1, 2];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -23619,11 +26078,12 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
+            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> [i32; 3] {
         Self::VARIANTS
     }
 }
@@ -23652,13 +26112,14 @@ impl Union<i32> for LedgerCloseMeta {}
 
 impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
                 1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
+                2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -23669,13 +26130,14 @@ impl ReadXdr for LedgerCloseMeta {
 
 impl WriteXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -23764,7 +26226,7 @@ impl fmt::Display for ErrorCode {
 impl TryFrom<i32> for ErrorCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ErrorCode::Misc,
             1 => ErrorCode::Data,
@@ -23787,7 +26249,7 @@ impl From<ErrorCode> for i32 {
 
 impl ReadXdr for ErrorCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -23798,7 +26260,7 @@ impl ReadXdr for ErrorCode {
 
 impl WriteXdr for ErrorCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -23817,9 +26279,11 @@ impl WriteXdr for ErrorCode {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23831,7 +26295,7 @@ pub struct SError {
 
 impl ReadXdr for SError {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 code: ErrorCode::read_xdr(r)?,
@@ -23843,7 +26307,7 @@ impl ReadXdr for SError {
 
 impl WriteXdr for SError {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.code.write_xdr(w)?;
             self.msg.write_xdr(w)?;
@@ -23862,9 +26326,11 @@ impl WriteXdr for SError {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23875,7 +26341,7 @@ pub struct SendMore {
 
 impl ReadXdr for SendMore {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 num_messages: u32::read_xdr(r)?,
@@ -23886,7 +26352,7 @@ impl ReadXdr for SendMore {
 
 impl WriteXdr for SendMore {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
             Ok(())
@@ -23905,9 +26371,11 @@ impl WriteXdr for SendMore {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -23919,7 +26387,7 @@ pub struct SendMoreExtended {
 
 impl ReadXdr for SendMoreExtended {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 num_messages: u32::read_xdr(r)?,
@@ -23931,7 +26399,7 @@ impl ReadXdr for SendMoreExtended {
 
 impl WriteXdr for SendMoreExtended {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
             self.num_bytes.write_xdr(w)?;
@@ -23952,22 +26420,28 @@ impl WriteXdr for SendMoreExtended {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub expiration: u64,
     pub sig: Signature,
 }
 
 impl ReadXdr for AuthCert {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 pubkey: Curve25519Public::read_xdr(r)?,
@@ -23980,7 +26454,7 @@ impl ReadXdr for AuthCert {
 
 impl WriteXdr for AuthCert {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.pubkey.write_xdr(w)?;
             self.expiration.write_xdr(w)?;
@@ -24008,9 +26482,11 @@ impl WriteXdr for AuthCert {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24029,7 +26505,7 @@ pub struct Hello {
 
 impl ReadXdr for Hello {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_version: u32::read_xdr(r)?,
@@ -24048,7 +26524,7 @@ impl ReadXdr for Hello {
 
 impl WriteXdr for Hello {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.overlay_version.write_xdr(w)?;
@@ -24082,9 +26558,11 @@ pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24095,7 +26573,7 @@ pub struct Auth {
 
 impl ReadXdr for Auth {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 flags: i32::read_xdr(r)?,
@@ -24106,7 +26584,7 @@ impl ReadXdr for Auth {
 
 impl WriteXdr for Auth {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
             Ok(())
@@ -24181,7 +26659,7 @@ impl fmt::Display for IpAddrType {
 impl TryFrom<i32> for IpAddrType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => IpAddrType::IPv4,
             1 => IpAddrType::IPv6,
@@ -24201,7 +26679,7 @@ impl From<IpAddrType> for i32 {
 
 impl ReadXdr for IpAddrType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -24212,7 +26690,7 @@ impl ReadXdr for IpAddrType {
 
 impl WriteXdr for IpAddrType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -24233,10 +26711,12 @@ impl WriteXdr for IpAddrType {
 /// ```
 ///
 // union with discriminant IpAddrType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24298,7 +26778,7 @@ impl Union<IpAddrType> for PeerAddressIp {}
 
 impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -24315,7 +26795,7 @@ impl ReadXdr for PeerAddressIp {
 
 impl WriteXdr for PeerAddressIp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -24347,9 +26827,11 @@ impl WriteXdr for PeerAddressIp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24362,7 +26844,7 @@ pub struct PeerAddress {
 
 impl ReadXdr for PeerAddress {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ip: PeerAddressIp::read_xdr(r)?,
@@ -24375,7 +26857,7 @@ impl ReadXdr for PeerAddress {
 
 impl WriteXdr for PeerAddress {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ip.write_xdr(w)?;
             self.port.write_xdr(w)?;
@@ -24567,7 +27049,7 @@ impl fmt::Display for MessageType {
 impl TryFrom<i32> for MessageType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => MessageType::ErrorMsg,
             2 => MessageType::Auth,
@@ -24606,7 +27088,7 @@ impl From<MessageType> for i32 {
 
 impl ReadXdr for MessageType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -24617,7 +27099,7 @@ impl ReadXdr for MessageType {
 
 impl WriteXdr for MessageType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -24636,9 +27118,11 @@ impl WriteXdr for MessageType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24650,7 +27134,7 @@ pub struct DontHave {
 
 impl ReadXdr for DontHave {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 type_: MessageType::read_xdr(r)?,
@@ -24662,7 +27146,7 @@ impl ReadXdr for DontHave {
 
 impl WriteXdr for DontHave {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.type_.write_xdr(w)?;
             self.req_hash.write_xdr(w)?;
@@ -24736,7 +27220,7 @@ impl fmt::Display for SurveyMessageCommandType {
 impl TryFrom<i32> for SurveyMessageCommandType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => SurveyMessageCommandType::TimeSlicedSurveyTopology,
             #[allow(unreachable_patterns)]
@@ -24755,7 +27239,7 @@ impl From<SurveyMessageCommandType> for i32 {
 
 impl ReadXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -24766,7 +27250,7 @@ impl ReadXdr for SurveyMessageCommandType {
 
 impl WriteXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -24839,7 +27323,7 @@ impl fmt::Display for SurveyMessageResponseType {
 impl TryFrom<i32> for SurveyMessageResponseType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             2 => SurveyMessageResponseType::SurveyTopologyResponseV2,
             #[allow(unreachable_patterns)]
@@ -24858,7 +27342,7 @@ impl From<SurveyMessageResponseType> for i32 {
 
 impl ReadXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -24869,7 +27353,7 @@ impl ReadXdr for SurveyMessageResponseType {
 
 impl WriteXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -24889,9 +27373,11 @@ impl WriteXdr for SurveyMessageResponseType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24904,7 +27390,7 @@ pub struct TimeSlicedSurveyStartCollectingMessage {
 
 impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 surveyor_id: NodeId::read_xdr(r)?,
@@ -24917,7 +27403,7 @@ impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
 
 impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.surveyor_id.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -24938,9 +27424,11 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -24952,7 +27440,7 @@ pub struct SignedTimeSlicedSurveyStartCollectingMessage {
 
 impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 signature: Signature::read_xdr(r)?,
@@ -24964,7 +27452,7 @@ impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
 
 impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.signature.write_xdr(w)?;
             self.start_collecting.write_xdr(w)?;
@@ -24985,9 +27473,11 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25000,7 +27490,7 @@ pub struct TimeSlicedSurveyStopCollectingMessage {
 
 impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 surveyor_id: NodeId::read_xdr(r)?,
@@ -25013,7 +27503,7 @@ impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
 
 impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.surveyor_id.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -25034,9 +27524,11 @@ impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25048,7 +27540,7 @@ pub struct SignedTimeSlicedSurveyStopCollectingMessage {
 
 impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 signature: Signature::read_xdr(r)?,
@@ -25060,7 +27552,7 @@ impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
 
 impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.signature.write_xdr(w)?;
             self.stop_collecting.write_xdr(w)?;
@@ -25083,9 +27575,11 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25100,7 +27594,7 @@ pub struct SurveyRequestMessage {
 
 impl ReadXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 surveyor_peer_id: NodeId::read_xdr(r)?,
@@ -25115,7 +27609,7 @@ impl ReadXdr for SurveyRequestMessage {
 
 impl WriteXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.surveyor_peer_id.write_xdr(w)?;
             self.surveyed_peer_id.write_xdr(w)?;
@@ -25140,9 +27634,11 @@ impl WriteXdr for SurveyRequestMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25156,7 +27652,7 @@ pub struct TimeSlicedSurveyRequestMessage {
 
 impl ReadXdr for TimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 request: SurveyRequestMessage::read_xdr(r)?,
@@ -25170,7 +27666,7 @@ impl ReadXdr for TimeSlicedSurveyRequestMessage {
 
 impl WriteXdr for TimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.request.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -25192,9 +27688,11 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25206,7 +27704,7 @@ pub struct SignedTimeSlicedSurveyRequestMessage {
 
 impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 request_signature: Signature::read_xdr(r)?,
@@ -25218,7 +27716,7 @@ impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
 
 impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.request_signature.write_xdr(w)?;
             self.request.write_xdr(w)?;
@@ -25233,11 +27731,13 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
 /// typedef opaque EncryptedBody<64000>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25268,7 +27768,7 @@ impl AsRef<BytesM<64000>> for EncryptedBody {
 
 impl ReadXdr for EncryptedBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64000>::read_xdr(r)?;
             let v = EncryptedBody(i);
@@ -25279,7 +27779,7 @@ impl ReadXdr for EncryptedBody {
 
 impl WriteXdr for EncryptedBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -25300,7 +27800,7 @@ impl From<EncryptedBody> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for EncryptedBody {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(EncryptedBody(x.try_into()?))
     }
 }
@@ -25308,7 +27808,7 @@ impl TryFrom<Vec<u8>> for EncryptedBody {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for EncryptedBody {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(EncryptedBody(x.try_into()?))
     }
 }
@@ -25347,9 +27847,11 @@ impl AsRef<[u8]> for EncryptedBody {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25364,7 +27866,7 @@ pub struct SurveyResponseMessage {
 
 impl ReadXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 surveyor_peer_id: NodeId::read_xdr(r)?,
@@ -25379,7 +27881,7 @@ impl ReadXdr for SurveyResponseMessage {
 
 impl WriteXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.surveyor_peer_id.write_xdr(w)?;
             self.surveyed_peer_id.write_xdr(w)?;
@@ -25402,9 +27904,11 @@ impl WriteXdr for SurveyResponseMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25416,7 +27920,7 @@ pub struct TimeSlicedSurveyResponseMessage {
 
 impl ReadXdr for TimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 response: SurveyResponseMessage::read_xdr(r)?,
@@ -25428,7 +27932,7 @@ impl ReadXdr for TimeSlicedSurveyResponseMessage {
 
 impl WriteXdr for TimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.response.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -25448,9 +27952,11 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25462,7 +27968,7 @@ pub struct SignedTimeSlicedSurveyResponseMessage {
 
 impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 response_signature: Signature::read_xdr(r)?,
@@ -25474,7 +27980,7 @@ impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
 
 impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.response_signature.write_xdr(w)?;
             self.response.write_xdr(w)?;
@@ -25509,9 +28015,11 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25519,24 +28027,76 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
 pub struct PeerStats {
     pub id: NodeId,
     pub version_str: StringM<100>,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub messages_read: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub messages_written: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub bytes_read: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub bytes_written: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub seconds_connected: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub unique_flood_bytes_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub duplicate_flood_bytes_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub unique_fetch_bytes_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub duplicate_fetch_bytes_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub unique_flood_message_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub duplicate_flood_message_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub unique_fetch_message_recv: u64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub duplicate_fetch_message_recv: u64,
 }
 
 impl ReadXdr for PeerStats {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 id: NodeId::read_xdr(r)?,
@@ -25561,7 +28121,7 @@ impl ReadXdr for PeerStats {
 
 impl WriteXdr for PeerStats {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.version_str.write_xdr(w)?;
@@ -25608,9 +28168,11 @@ impl WriteXdr for PeerStats {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25630,7 +28192,7 @@ pub struct TimeSlicedNodeData {
 
 impl ReadXdr for TimeSlicedNodeData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 added_authenticated_peers: u32::read_xdr(r)?,
@@ -25650,7 +28212,7 @@ impl ReadXdr for TimeSlicedNodeData {
 
 impl WriteXdr for TimeSlicedNodeData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.added_authenticated_peers.write_xdr(w)?;
             self.dropped_authenticated_peers.write_xdr(w)?;
@@ -25678,9 +28240,11 @@ impl WriteXdr for TimeSlicedNodeData {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25692,7 +28256,7 @@ pub struct TimeSlicedPeerData {
 
 impl ReadXdr for TimeSlicedPeerData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 peer_stats: PeerStats::read_xdr(r)?,
@@ -25704,7 +28268,7 @@ impl ReadXdr for TimeSlicedPeerData {
 
 impl WriteXdr for TimeSlicedPeerData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.peer_stats.write_xdr(w)?;
             self.average_latency_ms.write_xdr(w)?;
@@ -25719,11 +28283,13 @@ impl WriteXdr for TimeSlicedPeerData {
 /// typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25754,7 +28320,7 @@ impl AsRef<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
 
 impl ReadXdr for TimeSlicedPeerDataList {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<TimeSlicedPeerData, 25>::read_xdr(r)?;
             let v = TimeSlicedPeerDataList(i);
@@ -25765,7 +28331,7 @@ impl ReadXdr for TimeSlicedPeerDataList {
 
 impl WriteXdr for TimeSlicedPeerDataList {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -25786,7 +28352,7 @@ impl From<TimeSlicedPeerDataList> for Vec<TimeSlicedPeerData> {
 
 impl TryFrom<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
     type Error = Error;
-    fn try_from(x: Vec<TimeSlicedPeerData>) -> Result<Self> {
+    fn try_from(x: Vec<TimeSlicedPeerData>) -> Result<Self, Error> {
         Ok(TimeSlicedPeerDataList(x.try_into()?))
     }
 }
@@ -25794,7 +28360,7 @@ impl TryFrom<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
     type Error = Error;
-    fn try_from(x: &Vec<TimeSlicedPeerData>) -> Result<Self> {
+    fn try_from(x: &Vec<TimeSlicedPeerData>) -> Result<Self, Error> {
         Ok(TimeSlicedPeerDataList(x.try_into()?))
     }
 }
@@ -25831,9 +28397,11 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25846,7 +28414,7 @@ pub struct TopologyResponseBodyV2 {
 
 impl ReadXdr for TopologyResponseBodyV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 inbound_peers: TimeSlicedPeerDataList::read_xdr(r)?,
@@ -25859,7 +28427,7 @@ impl ReadXdr for TopologyResponseBodyV2 {
 
 impl WriteXdr for TopologyResponseBodyV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.inbound_peers.write_xdr(w)?;
             self.outbound_peers.write_xdr(w)?;
@@ -25880,10 +28448,12 @@ impl WriteXdr for TopologyResponseBodyV2 {
 /// ```
 ///
 // union with discriminant SurveyMessageResponseType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -25945,7 +28515,7 @@ impl Union<SurveyMessageResponseType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: SurveyMessageResponseType =
                 <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
@@ -25964,7 +28534,7 @@ impl ReadXdr for SurveyResponseBody {
 
 impl WriteXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -25990,11 +28560,13 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 /// typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26025,7 +28597,7 @@ impl AsRef<VecM<Hash, 1000>> for TxAdvertVector {
 
 impl ReadXdr for TxAdvertVector {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<Hash, 1000>::read_xdr(r)?;
             let v = TxAdvertVector(i);
@@ -26036,7 +28608,7 @@ impl ReadXdr for TxAdvertVector {
 
 impl WriteXdr for TxAdvertVector {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -26057,7 +28629,7 @@ impl From<TxAdvertVector> for Vec<Hash> {
 
 impl TryFrom<Vec<Hash>> for TxAdvertVector {
     type Error = Error;
-    fn try_from(x: Vec<Hash>) -> Result<Self> {
+    fn try_from(x: Vec<Hash>) -> Result<Self, Error> {
         Ok(TxAdvertVector(x.try_into()?))
     }
 }
@@ -26065,7 +28637,7 @@ impl TryFrom<Vec<Hash>> for TxAdvertVector {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<Hash>> for TxAdvertVector {
     type Error = Error;
-    fn try_from(x: &Vec<Hash>) -> Result<Self> {
+    fn try_from(x: &Vec<Hash>) -> Result<Self, Error> {
         Ok(TxAdvertVector(x.try_into()?))
     }
 }
@@ -26100,9 +28672,11 @@ impl AsRef<[Hash]> for TxAdvertVector {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26113,7 +28687,7 @@ pub struct FloodAdvert {
 
 impl ReadXdr for FloodAdvert {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_hashes: TxAdvertVector::read_xdr(r)?,
@@ -26124,7 +28698,7 @@ impl ReadXdr for FloodAdvert {
 
 impl WriteXdr for FloodAdvert {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
             Ok(())
@@ -26146,11 +28720,13 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 /// typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26181,7 +28757,7 @@ impl AsRef<VecM<Hash, 1000>> for TxDemandVector {
 
 impl ReadXdr for TxDemandVector {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<Hash, 1000>::read_xdr(r)?;
             let v = TxDemandVector(i);
@@ -26192,7 +28768,7 @@ impl ReadXdr for TxDemandVector {
 
 impl WriteXdr for TxDemandVector {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -26213,7 +28789,7 @@ impl From<TxDemandVector> for Vec<Hash> {
 
 impl TryFrom<Vec<Hash>> for TxDemandVector {
     type Error = Error;
-    fn try_from(x: Vec<Hash>) -> Result<Self> {
+    fn try_from(x: Vec<Hash>) -> Result<Self, Error> {
         Ok(TxDemandVector(x.try_into()?))
     }
 }
@@ -26221,7 +28797,7 @@ impl TryFrom<Vec<Hash>> for TxDemandVector {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<Hash>> for TxDemandVector {
     type Error = Error;
-    fn try_from(x: &Vec<Hash>) -> Result<Self> {
+    fn try_from(x: &Vec<Hash>) -> Result<Self, Error> {
         Ok(TxDemandVector(x.try_into()?))
     }
 }
@@ -26256,9 +28832,11 @@ impl AsRef<[Hash]> for TxDemandVector {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26269,7 +28847,7 @@ pub struct FloodDemand {
 
 impl ReadXdr for FloodDemand {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_hashes: TxDemandVector::read_xdr(r)?,
@@ -26280,7 +28858,7 @@ impl ReadXdr for FloodDemand {
 
 impl WriteXdr for FloodDemand {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
             Ok(())
@@ -26350,10 +28928,12 @@ impl WriteXdr for FloodDemand {
 /// ```
 ///
 // union with discriminant MessageType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26518,7 +29098,7 @@ impl Union<MessageType> for StellarMessage {}
 
 impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -26570,7 +29150,7 @@ impl ReadXdr for StellarMessage {
 
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -26614,14 +29194,20 @@ impl WriteXdr for StellarMessage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AuthenticatedMessageV0 {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub sequence: u64,
     pub message: StellarMessage,
     pub mac: HmacSha256Mac,
@@ -26629,7 +29215,7 @@ pub struct AuthenticatedMessageV0 {
 
 impl ReadXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 sequence: u64::read_xdr(r)?,
@@ -26642,7 +29228,7 @@ impl ReadXdr for AuthenticatedMessageV0 {
 
 impl WriteXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.sequence.write_xdr(w)?;
             self.message.write_xdr(w)?;
@@ -26668,10 +29254,12 @@ impl WriteXdr for AuthenticatedMessageV0 {
 /// ```
 ///
 // union with discriminant u32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26730,7 +29318,7 @@ impl Union<u32> for AuthenticatedMessage {}
 
 impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -26746,7 +29334,7 @@ impl ReadXdr for AuthenticatedMessage {
 
 impl WriteXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -26777,10 +29365,12 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 /// ```
 ///
 // union with discriminant LiquidityPoolType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -26841,7 +29431,7 @@ impl Union<LiquidityPoolType> for LiquidityPoolParameters {}
 
 impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -26861,7 +29451,7 @@ impl ReadXdr for LiquidityPoolParameters {
 
 impl WriteXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -26884,10 +29474,11 @@ impl WriteXdr for LiquidityPoolParameters {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(serde_with::SerializeDisplay)
 )]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
@@ -26896,7 +29487,7 @@ pub struct MuxedAccountMed25519 {
 
 impl ReadXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 id: u64::read_xdr(r)?,
@@ -26908,12 +29499,41 @@ impl ReadXdr for MuxedAccountMed25519 {
 
 impl WriteXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.ed25519.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct MuxedAccountMed25519 {
+            id: u64,
+            ed25519: Uint256,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum MuxedAccountMed25519OrString<'a> {
+            Str(&'a str),
+            String(String),
+            MuxedAccountMed25519(MuxedAccountMed25519),
+        }
+        match MuxedAccountMed25519OrString::deserialize(deserializer)? {
+            MuxedAccountMed25519OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedAccountMed25519OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedAccountMed25519OrString::MuxedAccountMed25519(MuxedAccountMed25519 {
+                id,
+                ed25519,
+            }) => Ok(self::MuxedAccountMed25519 { id, ed25519 }),
+        }
     }
 }
 
@@ -26934,6 +29554,7 @@ impl WriteXdr for MuxedAccountMed25519 {
 /// ```
 ///
 // union with discriminant CryptoKeyType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26997,7 +29618,7 @@ impl Union<CryptoKeyType> for MuxedAccount {}
 
 impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -27016,7 +29637,7 @@ impl ReadXdr for MuxedAccount {
 
 impl WriteXdr for MuxedAccount {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -27040,9 +29661,11 @@ impl WriteXdr for MuxedAccount {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27054,7 +29677,7 @@ pub struct DecoratedSignature {
 
 impl ReadXdr for DecoratedSignature {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hint: SignatureHint::read_xdr(r)?,
@@ -27066,7 +29689,7 @@ impl ReadXdr for DecoratedSignature {
 
 impl WriteXdr for DecoratedSignature {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hint.write_xdr(w)?;
             self.signature.write_xdr(w)?;
@@ -27273,7 +29896,7 @@ impl fmt::Display for OperationType {
 impl TryFrom<i32> for OperationType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => OperationType::CreateAccount,
             1 => OperationType::Payment,
@@ -27318,7 +29941,7 @@ impl From<OperationType> for i32 {
 
 impl ReadXdr for OperationType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -27329,7 +29952,7 @@ impl ReadXdr for OperationType {
 
 impl WriteXdr for OperationType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -27348,21 +29971,27 @@ impl WriteXdr for OperationType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CreateAccountOp {
     pub destination: AccountId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub starting_balance: i64,
 }
 
 impl ReadXdr for CreateAccountOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -27374,7 +30003,7 @@ impl ReadXdr for CreateAccountOp {
 
 impl WriteXdr for CreateAccountOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.starting_balance.write_xdr(w)?;
@@ -27395,9 +30024,11 @@ impl WriteXdr for CreateAccountOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27405,12 +30036,16 @@ impl WriteXdr for CreateAccountOp {
 pub struct PaymentOp {
     pub destination: MuxedAccount,
     pub asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
 }
 
 impl ReadXdr for PaymentOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: MuxedAccount::read_xdr(r)?,
@@ -27423,7 +30058,7 @@ impl ReadXdr for PaymentOp {
 
 impl WriteXdr for PaymentOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -27452,25 +30087,35 @@ impl WriteXdr for PaymentOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub send_max: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub dest_amount: i64,
     pub path: VecM<Asset, 5>,
 }
 
 impl ReadXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 send_asset: Asset::read_xdr(r)?,
@@ -27486,7 +30131,7 @@ impl ReadXdr for PathPaymentStrictReceiveOp {
 
 impl WriteXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.send_asset.write_xdr(w)?;
             self.send_max.write_xdr(w)?;
@@ -27518,25 +30163,35 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub send_amount: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub dest_min: i64,
     pub path: VecM<Asset, 5>,
 }
 
 impl ReadXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 send_asset: Asset::read_xdr(r)?,
@@ -27552,7 +30207,7 @@ impl ReadXdr for PathPaymentStrictSendOp {
 
 impl WriteXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.send_asset.write_xdr(w)?;
             self.send_amount.write_xdr(w)?;
@@ -27581,9 +30236,11 @@ impl WriteXdr for PathPaymentStrictSendOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27591,14 +30248,22 @@ impl WriteXdr for PathPaymentStrictSendOp {
 pub struct ManageSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
     pub price: Price,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub offer_id: i64,
 }
 
 impl ReadXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 selling: Asset::read_xdr(r)?,
@@ -27613,7 +30278,7 @@ impl ReadXdr for ManageSellOfferOp {
 
 impl WriteXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
             self.buying.write_xdr(w)?;
@@ -27642,9 +30307,11 @@ impl WriteXdr for ManageSellOfferOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27652,14 +30319,22 @@ impl WriteXdr for ManageSellOfferOp {
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
     pub buying: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub buy_amount: i64,
     pub price: Price,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub offer_id: i64,
 }
 
 impl ReadXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 selling: Asset::read_xdr(r)?,
@@ -27674,7 +30349,7 @@ impl ReadXdr for ManageBuyOfferOp {
 
 impl WriteXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
             self.buying.write_xdr(w)?;
@@ -27699,9 +30374,11 @@ impl WriteXdr for ManageBuyOfferOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27709,13 +30386,17 @@ impl WriteXdr for ManageBuyOfferOp {
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
     pub price: Price,
 }
 
 impl ReadXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 selling: Asset::read_xdr(r)?,
@@ -27729,7 +30410,7 @@ impl ReadXdr for CreatePassiveSellOfferOp {
 
 impl WriteXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
             self.buying.write_xdr(w)?;
@@ -27765,9 +30446,11 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27786,7 +30469,7 @@ pub struct SetOptionsOp {
 
 impl ReadXdr for SetOptionsOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 inflation_dest: Option::<AccountId>::read_xdr(r)?,
@@ -27805,7 +30488,7 @@ impl ReadXdr for SetOptionsOp {
 
 impl WriteXdr for SetOptionsOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.inflation_dest.write_xdr(w)?;
             self.clear_flags.write_xdr(w)?;
@@ -27843,10 +30526,12 @@ impl WriteXdr for SetOptionsOp {
 /// ```
 ///
 // union with discriminant AssetType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -27920,7 +30605,7 @@ impl Union<AssetType> for ChangeTrustAsset {}
 
 impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -27939,7 +30624,7 @@ impl ReadXdr for ChangeTrustAsset {
 
 impl WriteXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -27967,21 +30652,27 @@ impl WriteXdr for ChangeTrustAsset {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub limit: i64,
 }
 
 impl ReadXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 line: ChangeTrustAsset::read_xdr(r)?,
@@ -27993,7 +30684,7 @@ impl ReadXdr for ChangeTrustOp {
 
 impl WriteXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.line.write_xdr(w)?;
             self.limit.write_xdr(w)?;
@@ -28016,9 +30707,11 @@ impl WriteXdr for ChangeTrustOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28031,7 +30724,7 @@ pub struct AllowTrustOp {
 
 impl ReadXdr for AllowTrustOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 trustor: AccountId::read_xdr(r)?,
@@ -28044,7 +30737,7 @@ impl ReadXdr for AllowTrustOp {
 
 impl WriteXdr for AllowTrustOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.trustor.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -28065,9 +30758,11 @@ impl WriteXdr for AllowTrustOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28079,7 +30774,7 @@ pub struct ManageDataOp {
 
 impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 data_name: String64::read_xdr(r)?,
@@ -28091,7 +30786,7 @@ impl ReadXdr for ManageDataOp {
 
 impl WriteXdr for ManageDataOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.data_name.write_xdr(w)?;
             self.data_value.write_xdr(w)?;
@@ -28110,9 +30805,11 @@ impl WriteXdr for ManageDataOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28123,7 +30820,7 @@ pub struct BumpSequenceOp {
 
 impl ReadXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 bump_to: SequenceNumber::read_xdr(r)?,
@@ -28134,7 +30831,7 @@ impl ReadXdr for BumpSequenceOp {
 
 impl WriteXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.bump_to.write_xdr(w)?;
             Ok(())
@@ -28154,22 +30851,28 @@ impl WriteXdr for BumpSequenceOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
     pub claimants: VecM<Claimant, 10>,
 }
 
 impl ReadXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset: Asset::read_xdr(r)?,
@@ -28182,7 +30885,7 @@ impl ReadXdr for CreateClaimableBalanceOp {
 
 impl WriteXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.asset.write_xdr(w)?;
             self.amount.write_xdr(w)?;
@@ -28202,9 +30905,11 @@ impl WriteXdr for CreateClaimableBalanceOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28215,7 +30920,7 @@ pub struct ClaimClaimableBalanceOp {
 
 impl ReadXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -28226,7 +30931,7 @@ impl ReadXdr for ClaimClaimableBalanceOp {
 
 impl WriteXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             Ok(())
@@ -28244,9 +30949,11 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28257,7 +30964,7 @@ pub struct BeginSponsoringFutureReservesOp {
 
 impl ReadXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 sponsored_id: AccountId::read_xdr(r)?,
@@ -28268,7 +30975,7 @@ impl ReadXdr for BeginSponsoringFutureReservesOp {
 
 impl WriteXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.sponsored_id.write_xdr(w)?;
             Ok(())
@@ -28346,7 +31053,7 @@ impl fmt::Display for RevokeSponsorshipType {
 impl TryFrom<i32> for RevokeSponsorshipType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => RevokeSponsorshipType::LedgerEntry,
             1 => RevokeSponsorshipType::Signer,
@@ -28366,7 +31073,7 @@ impl From<RevokeSponsorshipType> for i32 {
 
 impl ReadXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -28377,7 +31084,7 @@ impl ReadXdr for RevokeSponsorshipType {
 
 impl WriteXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -28396,9 +31103,11 @@ impl WriteXdr for RevokeSponsorshipType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28410,7 +31119,7 @@ pub struct RevokeSponsorshipOpSigner {
 
 impl ReadXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -28422,7 +31131,7 @@ impl ReadXdr for RevokeSponsorshipOpSigner {
 
 impl WriteXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.signer_key.write_xdr(w)?;
@@ -28448,10 +31157,12 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 /// ```
 ///
 // union with discriminant RevokeSponsorshipType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28516,7 +31227,7 @@ impl Union<RevokeSponsorshipType> for RevokeSponsorshipOp {}
 
 impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28535,7 +31246,7 @@ impl ReadXdr for RevokeSponsorshipOp {
 
 impl WriteXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -28560,9 +31271,11 @@ impl WriteXdr for RevokeSponsorshipOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28570,12 +31283,16 @@ impl WriteXdr for RevokeSponsorshipOp {
 pub struct ClawbackOp {
     pub asset: Asset,
     pub from: MuxedAccount,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
 }
 
 impl ReadXdr for ClawbackOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset: Asset::read_xdr(r)?,
@@ -28588,7 +31305,7 @@ impl ReadXdr for ClawbackOp {
 
 impl WriteXdr for ClawbackOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.asset.write_xdr(w)?;
             self.from.write_xdr(w)?;
@@ -28608,9 +31325,11 @@ impl WriteXdr for ClawbackOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28621,7 +31340,7 @@ pub struct ClawbackClaimableBalanceOp {
 
 impl ReadXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -28632,7 +31351,7 @@ impl ReadXdr for ClawbackClaimableBalanceOp {
 
 impl WriteXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             Ok(())
@@ -28654,9 +31373,11 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -28670,7 +31391,7 @@ pub struct SetTrustLineFlagsOp {
 
 impl ReadXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 trustor: AccountId::read_xdr(r)?,
@@ -28684,7 +31405,7 @@ impl ReadXdr for SetTrustLineFlagsOp {
 
 impl WriteXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.trustor.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -28717,16 +31438,26 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub max_amount_a: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub max_amount_b: i64,
     pub min_price: Price,
     pub max_price: Price,
@@ -28734,7 +31465,7 @@ pub struct LiquidityPoolDepositOp {
 
 impl ReadXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -28749,7 +31480,7 @@ impl ReadXdr for LiquidityPoolDepositOp {
 
 impl WriteXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.max_amount_a.write_xdr(w)?;
@@ -28774,23 +31505,37 @@ impl WriteXdr for LiquidityPoolDepositOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub min_amount_a: i64,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub min_amount_b: i64,
 }
 
 impl ReadXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -28804,7 +31549,7 @@ impl ReadXdr for LiquidityPoolWithdrawOp {
 
 impl WriteXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.amount.write_xdr(w)?;
@@ -28898,7 +31643,7 @@ impl fmt::Display for HostFunctionType {
 impl TryFrom<i32> for HostFunctionType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => HostFunctionType::InvokeContract,
             1 => HostFunctionType::CreateContract,
@@ -28920,7 +31665,7 @@ impl From<HostFunctionType> for i32 {
 
 impl ReadXdr for HostFunctionType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -28931,7 +31676,7 @@ impl ReadXdr for HostFunctionType {
 
 impl WriteXdr for HostFunctionType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29009,7 +31754,7 @@ impl fmt::Display for ContractIdPreimageType {
 impl TryFrom<i32> for ContractIdPreimageType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractIdPreimageType::Address,
             1 => ContractIdPreimageType::Asset,
@@ -29029,7 +31774,7 @@ impl From<ContractIdPreimageType> for i32 {
 
 impl ReadXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -29040,7 +31785,7 @@ impl ReadXdr for ContractIdPreimageType {
 
 impl WriteXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29059,9 +31804,11 @@ impl WriteXdr for ContractIdPreimageType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29073,7 +31820,7 @@ pub struct ContractIdPreimageFromAddress {
 
 impl ReadXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 address: ScAddress::read_xdr(r)?,
@@ -29085,7 +31832,7 @@ impl ReadXdr for ContractIdPreimageFromAddress {
 
 impl WriteXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
             self.salt.write_xdr(w)?;
@@ -29111,10 +31858,12 @@ impl WriteXdr for ContractIdPreimageFromAddress {
 /// ```
 ///
 // union with discriminant ContractIdPreimageType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29179,7 +31928,7 @@ impl Union<ContractIdPreimageType> for ContractIdPreimage {}
 
 impl ReadXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -29198,7 +31947,7 @@ impl ReadXdr for ContractIdPreimage {
 
 impl WriteXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -29222,9 +31971,11 @@ impl WriteXdr for ContractIdPreimage {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29236,7 +31987,7 @@ pub struct CreateContractArgs {
 
 impl ReadXdr for CreateContractArgs {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
@@ -29248,7 +31999,7 @@ impl ReadXdr for CreateContractArgs {
 
 impl WriteXdr for CreateContractArgs {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.contract_id_preimage.write_xdr(w)?;
             self.executable.write_xdr(w)?;
@@ -29270,9 +32021,11 @@ impl WriteXdr for CreateContractArgs {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29285,7 +32038,7 @@ pub struct CreateContractArgsV2 {
 
 impl ReadXdr for CreateContractArgsV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
@@ -29298,7 +32051,7 @@ impl ReadXdr for CreateContractArgsV2 {
 
 impl WriteXdr for CreateContractArgsV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.contract_id_preimage.write_xdr(w)?;
             self.executable.write_xdr(w)?;
@@ -29319,9 +32072,11 @@ impl WriteXdr for CreateContractArgsV2 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29334,7 +32089,7 @@ pub struct InvokeContractArgs {
 
 impl ReadXdr for InvokeContractArgs {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_address: ScAddress::read_xdr(r)?,
@@ -29347,7 +32102,7 @@ impl ReadXdr for InvokeContractArgs {
 
 impl WriteXdr for InvokeContractArgs {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.contract_address.write_xdr(w)?;
             self.function_name.write_xdr(w)?;
@@ -29374,10 +32129,12 @@ impl WriteXdr for InvokeContractArgs {
 /// ```
 ///
 // union with discriminant HostFunctionType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29455,7 +32212,7 @@ impl Union<HostFunctionType> for HostFunction {}
 
 impl ReadXdr for HostFunction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -29482,7 +32239,7 @@ impl ReadXdr for HostFunction {
 
 impl WriteXdr for HostFunction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -29575,7 +32332,7 @@ impl fmt::Display for SorobanAuthorizedFunctionType {
 impl TryFrom<i32> for SorobanAuthorizedFunctionType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => SorobanAuthorizedFunctionType::ContractFn,
             1 => SorobanAuthorizedFunctionType::CreateContractHostFn,
@@ -29596,7 +32353,7 @@ impl From<SorobanAuthorizedFunctionType> for i32 {
 
 impl ReadXdr for SorobanAuthorizedFunctionType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -29607,7 +32364,7 @@ impl ReadXdr for SorobanAuthorizedFunctionType {
 
 impl WriteXdr for SorobanAuthorizedFunctionType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29638,10 +32395,12 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
 /// ```
 ///
 // union with discriminant SorobanAuthorizedFunctionType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29716,7 +32475,7 @@ impl Union<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {}
 
 impl ReadXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: SorobanAuthorizedFunctionType =
                 <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
@@ -29741,7 +32500,7 @@ impl ReadXdr for SorobanAuthorizedFunction {
 
 impl WriteXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -29766,9 +32525,11 @@ impl WriteXdr for SorobanAuthorizedFunction {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -29780,7 +32541,7 @@ pub struct SorobanAuthorizedInvocation {
 
 impl ReadXdr for SorobanAuthorizedInvocation {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 function: SorobanAuthorizedFunction::read_xdr(r)?,
@@ -29792,7 +32553,7 @@ impl ReadXdr for SorobanAuthorizedInvocation {
 
 impl WriteXdr for SorobanAuthorizedInvocation {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.function.write_xdr(w)?;
             self.sub_invocations.write_xdr(w)?;
@@ -29814,15 +32575,21 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanAddressCredentials {
     pub address: ScAddress,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
     pub signature: ScVal,
@@ -29830,7 +32597,7 @@ pub struct SorobanAddressCredentials {
 
 impl ReadXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 address: ScAddress::read_xdr(r)?,
@@ -29844,7 +32611,7 @@ impl ReadXdr for SorobanAddressCredentials {
 
 impl WriteXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -29925,7 +32692,7 @@ impl fmt::Display for SorobanCredentialsType {
 impl TryFrom<i32> for SorobanCredentialsType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => SorobanCredentialsType::SourceAccount,
             1 => SorobanCredentialsType::Address,
@@ -29945,7 +32712,7 @@ impl From<SorobanCredentialsType> for i32 {
 
 impl ReadXdr for SorobanCredentialsType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -29956,7 +32723,7 @@ impl ReadXdr for SorobanCredentialsType {
 
 impl WriteXdr for SorobanCredentialsType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29977,10 +32744,12 @@ impl WriteXdr for SorobanCredentialsType {
 /// ```
 ///
 // union with discriminant SorobanCredentialsType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30045,7 +32814,7 @@ impl Union<SorobanCredentialsType> for SorobanCredentials {}
 
 impl ReadXdr for SorobanCredentials {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -30064,7 +32833,7 @@ impl ReadXdr for SorobanCredentials {
 
 impl WriteXdr for SorobanCredentials {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -30088,9 +32857,11 @@ impl WriteXdr for SorobanCredentials {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30102,7 +32873,7 @@ pub struct SorobanAuthorizationEntry {
 
 impl ReadXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 credentials: SorobanCredentials::read_xdr(r)?,
@@ -30114,7 +32885,7 @@ impl ReadXdr for SorobanAuthorizationEntry {
 
 impl WriteXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.credentials.write_xdr(w)?;
             self.root_invocation.write_xdr(w)?;
@@ -30129,11 +32900,13 @@ impl WriteXdr for SorobanAuthorizationEntry {
 /// typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30164,7 +32937,7 @@ impl AsRef<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
 
 impl ReadXdr for SorobanAuthorizationEntries {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = VecM::<SorobanAuthorizationEntry>::read_xdr(r)?;
             let v = SorobanAuthorizationEntries(i);
@@ -30175,7 +32948,7 @@ impl ReadXdr for SorobanAuthorizationEntries {
 
 impl WriteXdr for SorobanAuthorizationEntries {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -30196,7 +32969,7 @@ impl From<SorobanAuthorizationEntries> for Vec<SorobanAuthorizationEntry> {
 
 impl TryFrom<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     type Error = Error;
-    fn try_from(x: Vec<SorobanAuthorizationEntry>) -> Result<Self> {
+    fn try_from(x: Vec<SorobanAuthorizationEntry>) -> Result<Self, Error> {
         Ok(SorobanAuthorizationEntries(x.try_into()?))
     }
 }
@@ -30204,7 +32977,7 @@ impl TryFrom<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     type Error = Error;
-    fn try_from(x: &Vec<SorobanAuthorizationEntry>) -> Result<Self> {
+    fn try_from(x: &Vec<SorobanAuthorizationEntry>) -> Result<Self, Error> {
         Ok(SorobanAuthorizationEntries(x.try_into()?))
     }
 }
@@ -30242,9 +33015,11 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30256,7 +33031,7 @@ pub struct InvokeHostFunctionOp {
 
 impl ReadXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 host_function: HostFunction::read_xdr(r)?,
@@ -30268,7 +33043,7 @@ impl ReadXdr for InvokeHostFunctionOp {
 
 impl WriteXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.host_function.write_xdr(w)?;
             self.auth.write_xdr(w)?;
@@ -30288,9 +33063,11 @@ impl WriteXdr for InvokeHostFunctionOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30302,7 +33079,7 @@ pub struct ExtendFootprintTtlOp {
 
 impl ReadXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -30314,7 +33091,7 @@ impl ReadXdr for ExtendFootprintTtlOp {
 
 impl WriteXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.extend_to.write_xdr(w)?;
@@ -30333,9 +33110,11 @@ impl WriteXdr for ExtendFootprintTtlOp {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30346,7 +33125,7 @@ pub struct RestoreFootprintOp {
 
 impl ReadXdr for RestoreFootprintOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -30357,7 +33136,7 @@ impl ReadXdr for RestoreFootprintOp {
 
 impl WriteXdr for RestoreFootprintOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             Ok(())
@@ -30428,10 +33207,12 @@ impl WriteXdr for RestoreFootprintOp {
 /// ```
 ///
 // union with discriminant OperationType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30624,7 +33405,7 @@ impl Union<OperationType> for OperationBody {}
 
 impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -30700,7 +33481,7 @@ impl ReadXdr for OperationBody {
 
 impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -30810,9 +33591,11 @@ impl WriteXdr for OperationBody {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30824,7 +33607,7 @@ pub struct Operation {
 
 impl ReadXdr for Operation {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: Option::<MuxedAccount>::read_xdr(r)?,
@@ -30836,7 +33619,7 @@ impl ReadXdr for Operation {
 
 impl WriteXdr for Operation {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.body.write_xdr(w)?;
@@ -30857,9 +33640,11 @@ impl WriteXdr for Operation {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30872,7 +33657,7 @@ pub struct HashIdPreimageOperationId {
 
 impl ReadXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: AccountId::read_xdr(r)?,
@@ -30885,7 +33670,7 @@ impl ReadXdr for HashIdPreimageOperationId {
 
 impl WriteXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.seq_num.write_xdr(w)?;
@@ -30909,9 +33694,11 @@ impl WriteXdr for HashIdPreimageOperationId {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30926,7 +33713,7 @@ pub struct HashIdPreimageRevokeId {
 
 impl ReadXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: AccountId::read_xdr(r)?,
@@ -30941,7 +33728,7 @@ impl ReadXdr for HashIdPreimageRevokeId {
 
 impl WriteXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.seq_num.write_xdr(w)?;
@@ -30964,9 +33751,11 @@ impl WriteXdr for HashIdPreimageRevokeId {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -30978,7 +33767,7 @@ pub struct HashIdPreimageContractId {
 
 impl ReadXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 network_id: Hash::read_xdr(r)?,
@@ -30990,7 +33779,7 @@ impl ReadXdr for HashIdPreimageContractId {
 
 impl WriteXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.contract_id_preimage.write_xdr(w)?;
@@ -31012,15 +33801,21 @@ impl WriteXdr for HashIdPreimageContractId {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HashIdPreimageSorobanAuthorization {
     pub network_id: Hash,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
     pub invocation: SorobanAuthorizedInvocation,
@@ -31028,7 +33823,7 @@ pub struct HashIdPreimageSorobanAuthorization {
 
 impl ReadXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 network_id: Hash::read_xdr(r)?,
@@ -31042,7 +33837,7 @@ impl ReadXdr for HashIdPreimageSorobanAuthorization {
 
 impl WriteXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -31092,10 +33887,12 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
 /// ```
 ///
 // union with discriminant EnvelopeType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31173,7 +33970,7 @@ impl Union<EnvelopeType> for HashIdPreimage {}
 
 impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -31198,7 +33995,7 @@ impl ReadXdr for HashIdPreimage {
 
 impl WriteXdr for HashIdPreimage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -31295,7 +34092,7 @@ impl fmt::Display for MemoType {
 impl TryFrom<i32> for MemoType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => MemoType::None,
             1 => MemoType::Text,
@@ -31318,7 +34115,7 @@ impl From<MemoType> for i32 {
 
 impl ReadXdr for MemoType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -31329,7 +34126,7 @@ impl ReadXdr for MemoType {
 
 impl WriteXdr for MemoType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -31356,10 +34153,12 @@ impl WriteXdr for MemoType {
 /// ```
 ///
 // union with discriminant MemoType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31368,7 +34167,13 @@ impl WriteXdr for MemoType {
 pub enum Memo {
     None,
     Text(StringM<28>),
-    Id(u64),
+    Id(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "NumberOrString")
+        )]
+        u64,
+    ),
     Hash(Hash),
     Return(Hash),
 }
@@ -31436,7 +34241,7 @@ impl Union<MemoType> for Memo {}
 
 impl ReadXdr for Memo {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -31456,7 +34261,7 @@ impl ReadXdr for Memo {
 
 impl WriteXdr for Memo {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -31483,9 +34288,11 @@ impl WriteXdr for Memo {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31497,7 +34304,7 @@ pub struct TimeBounds {
 
 impl ReadXdr for TimeBounds {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 min_time: TimePoint::read_xdr(r)?,
@@ -31509,7 +34316,7 @@ impl ReadXdr for TimeBounds {
 
 impl WriteXdr for TimeBounds {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.min_time.write_xdr(w)?;
             self.max_time.write_xdr(w)?;
@@ -31529,9 +34336,11 @@ impl WriteXdr for TimeBounds {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31543,7 +34352,7 @@ pub struct LedgerBounds {
 
 impl ReadXdr for LedgerBounds {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 min_ledger: u32::read_xdr(r)?,
@@ -31555,7 +34364,7 @@ impl ReadXdr for LedgerBounds {
 
 impl WriteXdr for LedgerBounds {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.min_ledger.write_xdr(w)?;
             self.max_ledger.write_xdr(w)?;
@@ -31602,9 +34411,11 @@ impl WriteXdr for LedgerBounds {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31620,7 +34431,7 @@ pub struct PreconditionsV2 {
 
 impl ReadXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 time_bounds: Option::<TimeBounds>::read_xdr(r)?,
@@ -31636,7 +34447,7 @@ impl ReadXdr for PreconditionsV2 {
 
 impl WriteXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.time_bounds.write_xdr(w)?;
             self.ledger_bounds.write_xdr(w)?;
@@ -31723,7 +34534,7 @@ impl fmt::Display for PreconditionType {
 impl TryFrom<i32> for PreconditionType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => PreconditionType::None,
             1 => PreconditionType::Time,
@@ -31744,7 +34555,7 @@ impl From<PreconditionType> for i32 {
 
 impl ReadXdr for PreconditionType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -31755,7 +34566,7 @@ impl ReadXdr for PreconditionType {
 
 impl WriteXdr for PreconditionType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -31778,10 +34589,12 @@ impl WriteXdr for PreconditionType {
 /// ```
 ///
 // union with discriminant PreconditionType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31850,7 +34663,7 @@ impl Union<PreconditionType> for Preconditions {}
 
 impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -31868,7 +34681,7 @@ impl ReadXdr for Preconditions {
 
 impl WriteXdr for Preconditions {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -31893,9 +34706,11 @@ impl WriteXdr for Preconditions {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31907,7 +34722,7 @@ pub struct LedgerFootprint {
 
 impl ReadXdr for LedgerFootprint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 read_only: VecM::<LedgerKey>::read_xdr(r)?,
@@ -31919,7 +34734,7 @@ impl ReadXdr for LedgerFootprint {
 
 impl WriteXdr for LedgerFootprint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.read_only.write_xdr(w)?;
             self.read_write.write_xdr(w)?;
@@ -31946,9 +34761,11 @@ impl WriteXdr for LedgerFootprint {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -31962,7 +34779,7 @@ pub struct SorobanResources {
 
 impl ReadXdr for SorobanResources {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 footprint: LedgerFootprint::read_xdr(r)?,
@@ -31976,7 +34793,7 @@ impl ReadXdr for SorobanResources {
 
 impl WriteXdr for SorobanResources {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.footprint.write_xdr(w)?;
             self.instructions.write_xdr(w)?;
@@ -32000,9 +34817,11 @@ impl WriteXdr for SorobanResources {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32013,7 +34832,7 @@ pub struct SorobanResourcesExtV0 {
 
 impl ReadXdr for SorobanResourcesExtV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 archived_soroban_entries: VecM::<u32>::read_xdr(r)?,
@@ -32024,7 +34843,7 @@ impl ReadXdr for SorobanResourcesExtV0 {
 
 impl WriteXdr for SorobanResourcesExtV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.archived_soroban_entries.write_xdr(w)?;
             Ok(())
@@ -32045,10 +34864,12 @@ impl WriteXdr for SorobanResourcesExtV0 {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32110,7 +34931,7 @@ impl Union<i32> for SorobanTransactionDataExt {}
 
 impl ReadXdr for SorobanTransactionDataExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32127,7 +34948,7 @@ impl ReadXdr for SorobanTransactionDataExt {
 
 impl WriteXdr for SorobanTransactionDataExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32167,9 +34988,11 @@ impl WriteXdr for SorobanTransactionDataExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32177,12 +35000,16 @@ impl WriteXdr for SorobanTransactionDataExt {
 pub struct SorobanTransactionData {
     pub ext: SorobanTransactionDataExt,
     pub resources: SorobanResources,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub resource_fee: i64,
 }
 
 impl ReadXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: SorobanTransactionDataExt::read_xdr(r)?,
@@ -32195,7 +35022,7 @@ impl ReadXdr for SorobanTransactionData {
 
 impl WriteXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.resources.write_xdr(w)?;
@@ -32216,10 +35043,12 @@ impl WriteXdr for SorobanTransactionData {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32278,7 +35107,7 @@ impl Union<i32> for TransactionV0Ext {}
 
 impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32294,7 +35123,7 @@ impl ReadXdr for TransactionV0Ext {
 
 impl WriteXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32327,9 +35156,11 @@ impl WriteXdr for TransactionV0Ext {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32346,7 +35177,7 @@ pub struct TransactionV0 {
 
 impl ReadXdr for TransactionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account_ed25519: Uint256::read_xdr(r)?,
@@ -32363,7 +35194,7 @@ impl ReadXdr for TransactionV0 {
 
 impl WriteXdr for TransactionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.source_account_ed25519.write_xdr(w)?;
             self.fee.write_xdr(w)?;
@@ -32390,9 +35221,11 @@ impl WriteXdr for TransactionV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32404,7 +35237,7 @@ pub struct TransactionV0Envelope {
 
 impl ReadXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx: TransactionV0::read_xdr(r)?,
@@ -32416,7 +35249,7 @@ impl ReadXdr for TransactionV0Envelope {
 
 impl WriteXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
@@ -32438,10 +35271,12 @@ impl WriteXdr for TransactionV0Envelope {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32503,7 +35338,7 @@ impl Union<i32> for TransactionExt {}
 
 impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32520,7 +35355,7 @@ impl ReadXdr for TransactionExt {
 
 impl WriteXdr for TransactionExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32566,9 +35401,11 @@ impl WriteXdr for TransactionExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32585,7 +35422,7 @@ pub struct Transaction {
 
 impl ReadXdr for Transaction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: MuxedAccount::read_xdr(r)?,
@@ -32602,7 +35439,7 @@ impl ReadXdr for Transaction {
 
 impl WriteXdr for Transaction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.fee.write_xdr(w)?;
@@ -32629,9 +35466,11 @@ impl WriteXdr for Transaction {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32643,7 +35482,7 @@ pub struct TransactionV1Envelope {
 
 impl ReadXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx: Transaction::read_xdr(r)?,
@@ -32655,7 +35494,7 @@ impl ReadXdr for TransactionV1Envelope {
 
 impl WriteXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
@@ -32675,10 +35514,12 @@ impl WriteXdr for TransactionV1Envelope {
 /// ```
 ///
 // union with discriminant EnvelopeType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32737,7 +35578,7 @@ impl Union<EnvelopeType> for FeeBumpTransactionInnerTx {}
 
 impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32753,7 +35594,7 @@ impl ReadXdr for FeeBumpTransactionInnerTx {
 
 impl WriteXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32776,10 +35617,12 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32838,7 +35681,7 @@ impl Union<i32> for FeeBumpTransactionExt {}
 
 impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32854,7 +35697,7 @@ impl ReadXdr for FeeBumpTransactionExt {
 
 impl WriteXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32889,15 +35732,21 @@ impl WriteXdr for FeeBumpTransactionExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee: i64,
     pub inner_tx: FeeBumpTransactionInnerTx,
     pub ext: FeeBumpTransactionExt,
@@ -32905,7 +35754,7 @@ pub struct FeeBumpTransaction {
 
 impl ReadXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_source: MuxedAccount::read_xdr(r)?,
@@ -32919,7 +35768,7 @@ impl ReadXdr for FeeBumpTransaction {
 
 impl WriteXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.fee_source.write_xdr(w)?;
             self.fee.write_xdr(w)?;
@@ -32943,9 +35792,11 @@ impl WriteXdr for FeeBumpTransaction {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -32957,7 +35808,7 @@ pub struct FeeBumpTransactionEnvelope {
 
 impl ReadXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx: FeeBumpTransaction::read_xdr(r)?,
@@ -32969,7 +35820,7 @@ impl ReadXdr for FeeBumpTransactionEnvelope {
 
 impl WriteXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
@@ -32993,10 +35844,12 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 /// ```
 ///
 // union with discriminant EnvelopeType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -33065,7 +35918,7 @@ impl Union<EnvelopeType> for TransactionEnvelope {}
 
 impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33085,7 +35938,7 @@ impl ReadXdr for TransactionEnvelope {
 
 impl WriteXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33113,10 +35966,12 @@ impl WriteXdr for TransactionEnvelope {
 /// ```
 ///
 // union with discriminant EnvelopeType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -33178,7 +36033,7 @@ impl Union<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {}
 
 impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33195,7 +36050,7 @@ impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
 
 impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33227,9 +36082,11 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -33241,7 +36098,7 @@ pub struct TransactionSignaturePayload {
 
 impl ReadXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 network_id: Hash::read_xdr(r)?,
@@ -33253,7 +36110,7 @@ impl ReadXdr for TransactionSignaturePayload {
 
 impl WriteXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.tagged_transaction.write_xdr(w)?;
@@ -33336,7 +36193,7 @@ impl fmt::Display for ClaimAtomType {
 impl TryFrom<i32> for ClaimAtomType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimAtomType::V0,
             1 => ClaimAtomType::OrderBook,
@@ -33357,7 +36214,7 @@ impl From<ClaimAtomType> for i32 {
 
 impl ReadXdr for ClaimAtomType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -33368,7 +36225,7 @@ impl ReadXdr for ClaimAtomType {
 
 impl WriteXdr for ClaimAtomType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -33396,25 +36253,39 @@ impl WriteXdr for ClaimAtomType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub offer_id: i64,
     pub asset_sold: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount_sold: i64,
     pub asset_bought: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount_bought: i64,
 }
 
 impl ReadXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_ed25519: Uint256::read_xdr(r)?,
@@ -33430,7 +36301,7 @@ impl ReadXdr for ClaimOfferAtomV0 {
 
 impl WriteXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.seller_ed25519.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -33463,25 +36334,39 @@ impl WriteXdr for ClaimOfferAtomV0 {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub offer_id: i64,
     pub asset_sold: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount_sold: i64,
     pub asset_bought: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount_bought: i64,
 }
 
 impl ReadXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_id: AccountId::read_xdr(r)?,
@@ -33497,7 +36382,7 @@ impl ReadXdr for ClaimOfferAtom {
 
 impl WriteXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -33528,9 +36413,11 @@ impl WriteXdr for ClaimOfferAtom {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -33538,14 +36425,22 @@ impl WriteXdr for ClaimOfferAtom {
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
     pub asset_sold: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount_sold: i64,
     pub asset_bought: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount_bought: i64,
 }
 
 impl ReadXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -33560,7 +36455,7 @@ impl ReadXdr for ClaimLiquidityAtom {
 
 impl WriteXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.asset_sold.write_xdr(w)?;
@@ -33587,10 +36482,12 @@ impl WriteXdr for ClaimLiquidityAtom {
 /// ```
 ///
 // union with discriminant ClaimAtomType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -33659,7 +36556,7 @@ impl Union<ClaimAtomType> for ClaimAtom {}
 
 impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33679,7 +36576,7 @@ impl ReadXdr for ClaimAtom {
 
 impl WriteXdr for ClaimAtom {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33785,7 +36682,7 @@ impl fmt::Display for CreateAccountResultCode {
 impl TryFrom<i32> for CreateAccountResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => CreateAccountResultCode::Success,
             -1 => CreateAccountResultCode::Malformed,
@@ -33808,7 +36705,7 @@ impl From<CreateAccountResultCode> for i32 {
 
 impl ReadXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -33819,7 +36716,7 @@ impl ReadXdr for CreateAccountResultCode {
 
 impl WriteXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -33843,10 +36740,12 @@ impl WriteXdr for CreateAccountResultCode {
 /// ```
 ///
 // union with discriminant CreateAccountResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -33929,7 +36828,7 @@ impl Union<CreateAccountResultCode> for CreateAccountResult {}
 
 impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33949,7 +36848,7 @@ impl ReadXdr for CreateAccountResult {
 
 impl WriteXdr for CreateAccountResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34081,7 +36980,7 @@ impl fmt::Display for PaymentResultCode {
 impl TryFrom<i32> for PaymentResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => PaymentResultCode::Success,
             -1 => PaymentResultCode::Malformed,
@@ -34109,7 +37008,7 @@ impl From<PaymentResultCode> for i32 {
 
 impl ReadXdr for PaymentResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34120,7 +37019,7 @@ impl ReadXdr for PaymentResultCode {
 
 impl WriteXdr for PaymentResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -34149,10 +37048,12 @@ impl WriteXdr for PaymentResultCode {
 /// ```
 ///
 // union with discriminant PaymentResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -34260,7 +37161,7 @@ impl Union<PaymentResultCode> for PaymentResult {}
 
 impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -34285,7 +37186,7 @@ impl ReadXdr for PaymentResult {
 
 impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34446,7 +37347,7 @@ impl fmt::Display for PathPaymentStrictReceiveResultCode {
 impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => PathPaymentStrictReceiveResultCode::Success,
             -1 => PathPaymentStrictReceiveResultCode::Malformed,
@@ -34477,7 +37378,7 @@ impl From<PathPaymentStrictReceiveResultCode> for i32 {
 
 impl ReadXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34488,7 +37389,7 @@ impl ReadXdr for PathPaymentStrictReceiveResultCode {
 
 impl WriteXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -34508,9 +37409,11 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -34518,12 +37421,16 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 pub struct SimplePaymentResult {
     pub destination: AccountId,
     pub asset: Asset,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
 }
 
 impl ReadXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -34536,7 +37443,7 @@ impl ReadXdr for SimplePaymentResult {
 
 impl WriteXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -34557,9 +37464,11 @@ impl WriteXdr for SimplePaymentResult {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -34571,7 +37480,7 @@ pub struct PathPaymentStrictReceiveResultSuccess {
 
 impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 offers: VecM::<ClaimAtom>::read_xdr(r)?,
@@ -34583,7 +37492,7 @@ impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
 
 impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
             self.last.write_xdr(w)?;
@@ -34623,10 +37532,12 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 /// ```
 ///
 // union with discriminant PathPaymentStrictReceiveResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -34749,7 +37660,7 @@ impl Union<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResul
 
 impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: PathPaymentStrictReceiveResultCode =
                 <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
@@ -34780,7 +37691,7 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
 
 impl WriteXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34943,7 +37854,7 @@ impl fmt::Display for PathPaymentStrictSendResultCode {
 impl TryFrom<i32> for PathPaymentStrictSendResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => PathPaymentStrictSendResultCode::Success,
             -1 => PathPaymentStrictSendResultCode::Malformed,
@@ -34974,7 +37885,7 @@ impl From<PathPaymentStrictSendResultCode> for i32 {
 
 impl ReadXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34985,7 +37896,7 @@ impl ReadXdr for PathPaymentStrictSendResultCode {
 
 impl WriteXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35004,9 +37915,11 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -35018,7 +37931,7 @@ pub struct PathPaymentStrictSendResultSuccess {
 
 impl ReadXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 offers: VecM::<ClaimAtom>::read_xdr(r)?,
@@ -35030,7 +37943,7 @@ impl ReadXdr for PathPaymentStrictSendResultSuccess {
 
 impl WriteXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
             self.last.write_xdr(w)?;
@@ -35069,10 +37982,12 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 /// ```
 ///
 // union with discriminant PathPaymentStrictSendResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -35195,7 +38110,7 @@ impl Union<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {}
 
 impl ReadXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: PathPaymentStrictSendResultCode =
                 <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
@@ -35226,7 +38141,7 @@ impl ReadXdr for PathPaymentStrictSendResult {
 
 impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -35388,7 +38303,7 @@ impl fmt::Display for ManageSellOfferResultCode {
 impl TryFrom<i32> for ManageSellOfferResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ManageSellOfferResultCode::Success,
             -1 => ManageSellOfferResultCode::Malformed,
@@ -35419,7 +38334,7 @@ impl From<ManageSellOfferResultCode> for i32 {
 
 impl ReadXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -35430,7 +38345,7 @@ impl ReadXdr for ManageSellOfferResultCode {
 
 impl WriteXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35512,7 +38427,7 @@ impl fmt::Display for ManageOfferEffect {
 impl TryFrom<i32> for ManageOfferEffect {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ManageOfferEffect::Created,
             1 => ManageOfferEffect::Updated,
@@ -35533,7 +38448,7 @@ impl From<ManageOfferEffect> for i32 {
 
 impl ReadXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -35544,7 +38459,7 @@ impl ReadXdr for ManageOfferEffect {
 
 impl WriteXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35566,10 +38481,12 @@ impl WriteXdr for ManageOfferEffect {
 /// ```
 ///
 // union with discriminant ManageOfferEffect
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -35638,7 +38555,7 @@ impl Union<ManageOfferEffect> for ManageOfferSuccessResultOffer {}
 
 impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -35656,7 +38573,7 @@ impl ReadXdr for ManageOfferSuccessResultOffer {
 
 impl WriteXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -35691,9 +38608,11 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -35705,7 +38624,7 @@ pub struct ManageOfferSuccessResult {
 
 impl ReadXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 offers_claimed: VecM::<ClaimAtom>::read_xdr(r)?,
@@ -35717,7 +38636,7 @@ impl ReadXdr for ManageOfferSuccessResult {
 
 impl WriteXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.offers_claimed.write_xdr(w)?;
             self.offer.write_xdr(w)?;
@@ -35750,10 +38669,12 @@ impl WriteXdr for ManageOfferSuccessResult {
 /// ```
 ///
 // union with discriminant ManageSellOfferResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -35876,7 +38797,7 @@ impl Union<ManageSellOfferResultCode> for ManageSellOfferResult {}
 
 impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ManageSellOfferResultCode =
                 <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
@@ -35907,7 +38828,7 @@ impl ReadXdr for ManageSellOfferResult {
 
 impl WriteXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -36066,7 +38987,7 @@ impl fmt::Display for ManageBuyOfferResultCode {
 impl TryFrom<i32> for ManageBuyOfferResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ManageBuyOfferResultCode::Success,
             -1 => ManageBuyOfferResultCode::Malformed,
@@ -36097,7 +39018,7 @@ impl From<ManageBuyOfferResultCode> for i32 {
 
 impl ReadXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -36108,7 +39029,7 @@ impl ReadXdr for ManageBuyOfferResultCode {
 
 impl WriteXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36140,10 +39061,12 @@ impl WriteXdr for ManageBuyOfferResultCode {
 /// ```
 ///
 // union with discriminant ManageBuyOfferResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -36266,7 +39189,7 @@ impl Union<ManageBuyOfferResultCode> for ManageBuyOfferResult {}
 
 impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -36296,7 +39219,7 @@ impl ReadXdr for ManageBuyOfferResult {
 
 impl WriteXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -36441,7 +39364,7 @@ impl fmt::Display for SetOptionsResultCode {
 impl TryFrom<i32> for SetOptionsResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => SetOptionsResultCode::Success,
             -1 => SetOptionsResultCode::LowReserve,
@@ -36470,7 +39393,7 @@ impl From<SetOptionsResultCode> for i32 {
 
 impl ReadXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -36481,7 +39404,7 @@ impl ReadXdr for SetOptionsResultCode {
 
 impl WriteXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36511,10 +39434,12 @@ impl WriteXdr for SetOptionsResultCode {
 /// ```
 ///
 // union with discriminant SetOptionsResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -36627,7 +39552,7 @@ impl Union<SetOptionsResultCode> for SetOptionsResult {}
 
 impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -36653,7 +39578,7 @@ impl ReadXdr for SetOptionsResult {
 
 impl WriteXdr for SetOptionsResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -36789,7 +39714,7 @@ impl fmt::Display for ChangeTrustResultCode {
 impl TryFrom<i32> for ChangeTrustResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ChangeTrustResultCode::Success,
             -1 => ChangeTrustResultCode::Malformed,
@@ -36816,7 +39741,7 @@ impl From<ChangeTrustResultCode> for i32 {
 
 impl ReadXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -36827,7 +39752,7 @@ impl ReadXdr for ChangeTrustResultCode {
 
 impl WriteXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36855,10 +39780,12 @@ impl WriteXdr for ChangeTrustResultCode {
 /// ```
 ///
 // union with discriminant ChangeTrustResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -36961,7 +39888,7 @@ impl Union<ChangeTrustResultCode> for ChangeTrustResult {}
 
 impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -36987,7 +39914,7 @@ impl ReadXdr for ChangeTrustResult {
 
 impl WriteXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37109,7 +40036,7 @@ impl fmt::Display for AllowTrustResultCode {
 impl TryFrom<i32> for AllowTrustResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => AllowTrustResultCode::Success,
             -1 => AllowTrustResultCode::Malformed,
@@ -37134,7 +40061,7 @@ impl From<AllowTrustResultCode> for i32 {
 
 impl ReadXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -37145,7 +40072,7 @@ impl ReadXdr for AllowTrustResultCode {
 
 impl WriteXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -37171,10 +40098,12 @@ impl WriteXdr for AllowTrustResultCode {
 /// ```
 ///
 // union with discriminant AllowTrustResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -37267,7 +40196,7 @@ impl Union<AllowTrustResultCode> for AllowTrustResult {}
 
 impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -37289,7 +40218,7 @@ impl ReadXdr for AllowTrustResult {
 
 impl WriteXdr for AllowTrustResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37413,7 +40342,7 @@ impl fmt::Display for AccountMergeResultCode {
 impl TryFrom<i32> for AccountMergeResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => AccountMergeResultCode::Success,
             -1 => AccountMergeResultCode::Malformed,
@@ -37439,7 +40368,7 @@ impl From<AccountMergeResultCode> for i32 {
 
 impl ReadXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -37450,7 +40379,7 @@ impl ReadXdr for AccountMergeResultCode {
 
 impl WriteXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -37477,17 +40406,25 @@ impl WriteXdr for AccountMergeResultCode {
 /// ```
 ///
 // union with discriminant AccountMergeResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountMergeResult {
-    Success(i64),
+    Success(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "NumberOrString")
+        )]
+        i64,
+    ),
     Malformed,
     NoAccount,
     ImmutableSet,
@@ -37578,7 +40515,7 @@ impl Union<AccountMergeResultCode> for AccountMergeResult {}
 
 impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -37601,7 +40538,7 @@ impl ReadXdr for AccountMergeResult {
 
 impl WriteXdr for AccountMergeResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37690,7 +40627,7 @@ impl fmt::Display for InflationResultCode {
 impl TryFrom<i32> for InflationResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => InflationResultCode::Success,
             -1 => InflationResultCode::NotTime,
@@ -37710,7 +40647,7 @@ impl From<InflationResultCode> for i32 {
 
 impl ReadXdr for InflationResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -37721,7 +40658,7 @@ impl ReadXdr for InflationResultCode {
 
 impl WriteXdr for InflationResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -37740,21 +40677,27 @@ impl WriteXdr for InflationResultCode {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InflationPayout {
     pub destination: AccountId,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub amount: i64,
 }
 
 impl ReadXdr for InflationPayout {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -37766,7 +40709,7 @@ impl ReadXdr for InflationPayout {
 
 impl WriteXdr for InflationPayout {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.amount.write_xdr(w)?;
@@ -37788,10 +40731,12 @@ impl WriteXdr for InflationPayout {
 /// ```
 ///
 // union with discriminant InflationResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -37854,7 +40799,7 @@ impl Union<InflationResultCode> for InflationResult {}
 
 impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -37873,7 +40818,7 @@ impl ReadXdr for InflationResult {
 
 impl WriteXdr for InflationResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37978,7 +40923,7 @@ impl fmt::Display for ManageDataResultCode {
 impl TryFrom<i32> for ManageDataResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ManageDataResultCode::Success,
             -1 => ManageDataResultCode::NotSupportedYet,
@@ -38001,7 +40946,7 @@ impl From<ManageDataResultCode> for i32 {
 
 impl ReadXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -38012,7 +40957,7 @@ impl ReadXdr for ManageDataResultCode {
 
 impl WriteXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -38036,10 +40981,12 @@ impl WriteXdr for ManageDataResultCode {
 /// ```
 ///
 // union with discriminant ManageDataResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -38122,7 +41069,7 @@ impl Union<ManageDataResultCode> for ManageDataResult {}
 
 impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -38142,7 +41089,7 @@ impl ReadXdr for ManageDataResult {
 
 impl WriteXdr for ManageDataResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38230,7 +41177,7 @@ impl fmt::Display for BumpSequenceResultCode {
 impl TryFrom<i32> for BumpSequenceResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => BumpSequenceResultCode::Success,
             -1 => BumpSequenceResultCode::BadSeq,
@@ -38250,7 +41197,7 @@ impl From<BumpSequenceResultCode> for i32 {
 
 impl ReadXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -38261,7 +41208,7 @@ impl ReadXdr for BumpSequenceResultCode {
 
 impl WriteXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -38282,10 +41229,12 @@ impl WriteXdr for BumpSequenceResultCode {
 /// ```
 ///
 // union with discriminant BumpSequenceResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -38350,7 +41299,7 @@ impl Union<BumpSequenceResultCode> for BumpSequenceResult {}
 
 impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -38367,7 +41316,7 @@ impl ReadXdr for BumpSequenceResult {
 
 impl WriteXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38473,7 +41422,7 @@ impl fmt::Display for CreateClaimableBalanceResultCode {
 impl TryFrom<i32> for CreateClaimableBalanceResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => CreateClaimableBalanceResultCode::Success,
             -1 => CreateClaimableBalanceResultCode::Malformed,
@@ -38497,7 +41446,7 @@ impl From<CreateClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -38508,7 +41457,7 @@ impl ReadXdr for CreateClaimableBalanceResultCode {
 
 impl WriteXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -38534,10 +41483,12 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 /// ```
 ///
 // union with discriminant CreateClaimableBalanceResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -38625,7 +41576,7 @@ impl Union<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {}
 
 impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: CreateClaimableBalanceResultCode =
                 <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
@@ -38649,7 +41600,7 @@ impl ReadXdr for CreateClaimableBalanceResult {
 
 impl WriteXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38759,7 +41710,7 @@ impl fmt::Display for ClaimClaimableBalanceResultCode {
 impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimClaimableBalanceResultCode::Success,
             -1 => ClaimClaimableBalanceResultCode::DoesNotExist,
@@ -38783,7 +41734,7 @@ impl From<ClaimClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -38794,7 +41745,7 @@ impl ReadXdr for ClaimClaimableBalanceResultCode {
 
 impl WriteXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -38819,10 +41770,12 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 /// ```
 ///
 // union with discriminant ClaimClaimableBalanceResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -38910,7 +41863,7 @@ impl Union<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {}
 
 impl ReadXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClaimClaimableBalanceResultCode =
                 <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
@@ -38932,7 +41885,7 @@ impl ReadXdr for ClaimClaimableBalanceResult {
 
 impl WriteXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39031,7 +41984,7 @@ impl fmt::Display for BeginSponsoringFutureReservesResultCode {
 impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => BeginSponsoringFutureReservesResultCode::Success,
             -1 => BeginSponsoringFutureReservesResultCode::Malformed,
@@ -39053,7 +42006,7 @@ impl From<BeginSponsoringFutureReservesResultCode> for i32 {
 
 impl ReadXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -39064,7 +42017,7 @@ impl ReadXdr for BeginSponsoringFutureReservesResultCode {
 
 impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -39088,10 +42041,12 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 /// ```
 ///
 // union with discriminant BeginSponsoringFutureReservesResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -39165,7 +42120,7 @@ impl Union<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureRes
 
 impl ReadXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: BeginSponsoringFutureReservesResultCode =
                 <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
@@ -39185,7 +42140,7 @@ impl ReadXdr for BeginSponsoringFutureReservesResult {
 
 impl WriteXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39273,7 +42228,7 @@ impl fmt::Display for EndSponsoringFutureReservesResultCode {
 impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => EndSponsoringFutureReservesResultCode::Success,
             -1 => EndSponsoringFutureReservesResultCode::NotSponsored,
@@ -39293,7 +42248,7 @@ impl From<EndSponsoringFutureReservesResultCode> for i32 {
 
 impl ReadXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -39304,7 +42259,7 @@ impl ReadXdr for EndSponsoringFutureReservesResultCode {
 
 impl WriteXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -39326,10 +42281,12 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 /// ```
 ///
 // union with discriminant EndSponsoringFutureReservesResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -39394,7 +42351,7 @@ impl Union<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReserve
 
 impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: EndSponsoringFutureReservesResultCode =
                 <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
@@ -39412,7 +42369,7 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
 
 impl WriteXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39521,7 +42478,7 @@ impl fmt::Display for RevokeSponsorshipResultCode {
 impl TryFrom<i32> for RevokeSponsorshipResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => RevokeSponsorshipResultCode::Success,
             -1 => RevokeSponsorshipResultCode::DoesNotExist,
@@ -39545,7 +42502,7 @@ impl From<RevokeSponsorshipResultCode> for i32 {
 
 impl ReadXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -39556,7 +42513,7 @@ impl ReadXdr for RevokeSponsorshipResultCode {
 
 impl WriteXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -39581,10 +42538,12 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 /// ```
 ///
 // union with discriminant RevokeSponsorshipResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -39672,7 +42631,7 @@ impl Union<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {}
 
 impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: RevokeSponsorshipResultCode =
                 <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
@@ -39694,7 +42653,7 @@ impl ReadXdr for RevokeSponsorshipResult {
 
 impl WriteXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39802,7 +42761,7 @@ impl fmt::Display for ClawbackResultCode {
 impl TryFrom<i32> for ClawbackResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClawbackResultCode::Success,
             -1 => ClawbackResultCode::Malformed,
@@ -39825,7 +42784,7 @@ impl From<ClawbackResultCode> for i32 {
 
 impl ReadXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -39836,7 +42795,7 @@ impl ReadXdr for ClawbackResultCode {
 
 impl WriteXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -39860,10 +42819,12 @@ impl WriteXdr for ClawbackResultCode {
 /// ```
 ///
 // union with discriminant ClawbackResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -39946,7 +42907,7 @@ impl Union<ClawbackResultCode> for ClawbackResult {}
 
 impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -39966,7 +42927,7 @@ impl ReadXdr for ClawbackResult {
 
 impl WriteXdr for ClawbackResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -40064,7 +43025,7 @@ impl fmt::Display for ClawbackClaimableBalanceResultCode {
 impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClawbackClaimableBalanceResultCode::Success,
             -1 => ClawbackClaimableBalanceResultCode::DoesNotExist,
@@ -40086,7 +43047,7 @@ impl From<ClawbackClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -40097,7 +43058,7 @@ impl ReadXdr for ClawbackClaimableBalanceResultCode {
 
 impl WriteXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40121,10 +43082,12 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 /// ```
 ///
 // union with discriminant ClawbackClaimableBalanceResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -40198,7 +43161,7 @@ impl Union<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResul
 
 impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClawbackClaimableBalanceResultCode =
                 <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
@@ -40218,7 +43181,7 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
 
 impl WriteXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -40330,7 +43293,7 @@ impl fmt::Display for SetTrustLineFlagsResultCode {
 impl TryFrom<i32> for SetTrustLineFlagsResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => SetTrustLineFlagsResultCode::Success,
             -1 => SetTrustLineFlagsResultCode::Malformed,
@@ -40354,7 +43317,7 @@ impl From<SetTrustLineFlagsResultCode> for i32 {
 
 impl ReadXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -40365,7 +43328,7 @@ impl ReadXdr for SetTrustLineFlagsResultCode {
 
 impl WriteXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40390,10 +43353,12 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 /// ```
 ///
 // union with discriminant SetTrustLineFlagsResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -40481,7 +43446,7 @@ impl Union<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {}
 
 impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: SetTrustLineFlagsResultCode =
                 <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
@@ -40503,7 +43468,7 @@ impl ReadXdr for SetTrustLineFlagsResult {
 
 impl WriteXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -40630,7 +43595,7 @@ impl fmt::Display for LiquidityPoolDepositResultCode {
 impl TryFrom<i32> for LiquidityPoolDepositResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => LiquidityPoolDepositResultCode::Success,
             -1 => LiquidityPoolDepositResultCode::Malformed,
@@ -40656,7 +43621,7 @@ impl From<LiquidityPoolDepositResultCode> for i32 {
 
 impl ReadXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -40667,7 +43632,7 @@ impl ReadXdr for LiquidityPoolDepositResultCode {
 
 impl WriteXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40694,10 +43659,12 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 /// ```
 ///
 // union with discriminant LiquidityPoolDepositResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -40795,7 +43762,7 @@ impl Union<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {}
 
 impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolDepositResultCode =
                 <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
@@ -40819,7 +43786,7 @@ impl ReadXdr for LiquidityPoolDepositResult {
 
 impl WriteXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -40937,7 +43904,7 @@ impl fmt::Display for LiquidityPoolWithdrawResultCode {
 impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => LiquidityPoolWithdrawResultCode::Success,
             -1 => LiquidityPoolWithdrawResultCode::Malformed,
@@ -40961,7 +43928,7 @@ impl From<LiquidityPoolWithdrawResultCode> for i32 {
 
 impl ReadXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -40972,7 +43939,7 @@ impl ReadXdr for LiquidityPoolWithdrawResultCode {
 
 impl WriteXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40997,10 +43964,12 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 /// ```
 ///
 // union with discriminant LiquidityPoolWithdrawResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -41088,7 +44057,7 @@ impl Union<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {}
 
 impl ReadXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolWithdrawResultCode =
                 <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
@@ -41110,7 +44079,7 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
 
 impl WriteXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -41223,7 +44192,7 @@ impl fmt::Display for InvokeHostFunctionResultCode {
 impl TryFrom<i32> for InvokeHostFunctionResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => InvokeHostFunctionResultCode::Success,
             -1 => InvokeHostFunctionResultCode::Malformed,
@@ -41247,7 +44216,7 @@ impl From<InvokeHostFunctionResultCode> for i32 {
 
 impl ReadXdr for InvokeHostFunctionResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -41258,7 +44227,7 @@ impl ReadXdr for InvokeHostFunctionResultCode {
 
 impl WriteXdr for InvokeHostFunctionResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -41283,10 +44252,12 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 /// ```
 ///
 // union with discriminant InvokeHostFunctionResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -41376,7 +44347,7 @@ impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
 
 impl ReadXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: InvokeHostFunctionResultCode =
                 <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
@@ -41400,7 +44371,7 @@ impl ReadXdr for InvokeHostFunctionResult {
 
 impl WriteXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -41503,7 +44474,7 @@ impl fmt::Display for ExtendFootprintTtlResultCode {
 impl TryFrom<i32> for ExtendFootprintTtlResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ExtendFootprintTtlResultCode::Success,
             -1 => ExtendFootprintTtlResultCode::Malformed,
@@ -41525,7 +44496,7 @@ impl From<ExtendFootprintTtlResultCode> for i32 {
 
 impl ReadXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -41536,7 +44507,7 @@ impl ReadXdr for ExtendFootprintTtlResultCode {
 
 impl WriteXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -41559,10 +44530,12 @@ impl WriteXdr for ExtendFootprintTtlResultCode {
 /// ```
 ///
 // union with discriminant ExtendFootprintTtlResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -41642,7 +44615,7 @@ impl Union<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {}
 
 impl ReadXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ExtendFootprintTtlResultCode =
                 <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
@@ -41664,7 +44637,7 @@ impl ReadXdr for ExtendFootprintTtlResult {
 
 impl WriteXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -41765,7 +44738,7 @@ impl fmt::Display for RestoreFootprintResultCode {
 impl TryFrom<i32> for RestoreFootprintResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => RestoreFootprintResultCode::Success,
             -1 => RestoreFootprintResultCode::Malformed,
@@ -41787,7 +44760,7 @@ impl From<RestoreFootprintResultCode> for i32 {
 
 impl ReadXdr for RestoreFootprintResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -41798,7 +44771,7 @@ impl ReadXdr for RestoreFootprintResultCode {
 
 impl WriteXdr for RestoreFootprintResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -41821,10 +44794,12 @@ impl WriteXdr for RestoreFootprintResultCode {
 /// ```
 ///
 // union with discriminant RestoreFootprintResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -41904,7 +44879,7 @@ impl Union<RestoreFootprintResultCode> for RestoreFootprintResult {}
 
 impl ReadXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: RestoreFootprintResultCode =
                 <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
@@ -41926,7 +44901,7 @@ impl ReadXdr for RestoreFootprintResult {
 
 impl WriteXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -42040,7 +45015,7 @@ impl fmt::Display for OperationResultCode {
 impl TryFrom<i32> for OperationResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => OperationResultCode::OpInner,
             -1 => OperationResultCode::OpBadAuth,
@@ -42065,7 +45040,7 @@ impl From<OperationResultCode> for i32 {
 
 impl ReadXdr for OperationResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -42076,7 +45051,7 @@ impl ReadXdr for OperationResultCode {
 
 impl WriteXdr for OperationResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -42147,10 +45122,12 @@ impl WriteXdr for OperationResultCode {
 /// ```
 ///
 // union with discriminant OperationType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -42343,7 +45320,7 @@ impl Union<OperationType> for OperationResultTr {}
 
 impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -42423,7 +45400,7 @@ impl ReadXdr for OperationResultTr {
 
 impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -42536,10 +45513,12 @@ impl WriteXdr for OperationResultTr {
 /// ```
 ///
 // union with discriminant OperationResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -42632,7 +45611,7 @@ impl Union<OperationResultCode> for OperationResult {}
 
 impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -42654,7 +45633,7 @@ impl ReadXdr for OperationResult {
 
 impl WriteXdr for OperationResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -42834,7 +45813,7 @@ impl fmt::Display for TransactionResultCode {
 impl TryFrom<i32> for TransactionResultCode {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => TransactionResultCode::TxFeeBumpInnerSuccess,
             0 => TransactionResultCode::TxSuccess,
@@ -42871,7 +45850,7 @@ impl From<TransactionResultCode> for i32 {
 
 impl ReadXdr for TransactionResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -42882,7 +45861,7 @@ impl ReadXdr for TransactionResultCode {
 
 impl WriteXdr for TransactionResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -42920,10 +45899,12 @@ impl WriteXdr for TransactionResultCode {
 /// ```
 ///
 // union with discriminant TransactionResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -43066,7 +46047,7 @@ impl Union<TransactionResultCode> for InnerTransactionResultResult {}
 
 impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -43102,7 +46083,7 @@ impl ReadXdr for InnerTransactionResultResult {
 
 impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -43141,10 +46122,12 @@ impl WriteXdr for InnerTransactionResultResult {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -43203,7 +46186,7 @@ impl Union<i32> for InnerTransactionResultExt {}
 
 impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -43219,7 +46202,7 @@ impl ReadXdr for InnerTransactionResultExt {
 
 impl WriteXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -43276,14 +46259,20 @@ impl WriteXdr for InnerTransactionResultExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InnerTransactionResult {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_charged: i64,
     pub result: InnerTransactionResultResult,
     pub ext: InnerTransactionResultExt,
@@ -43291,7 +46280,7 @@ pub struct InnerTransactionResult {
 
 impl ReadXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_charged: i64::read_xdr(r)?,
@@ -43304,7 +46293,7 @@ impl ReadXdr for InnerTransactionResult {
 
 impl WriteXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.fee_charged.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -43325,9 +46314,11 @@ impl WriteXdr for InnerTransactionResult {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -43339,7 +46330,7 @@ pub struct InnerTransactionResultPair {
 
 impl ReadXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 transaction_hash: Hash::read_xdr(r)?,
@@ -43351,7 +46342,7 @@ impl ReadXdr for InnerTransactionResultPair {
 
 impl WriteXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -43392,10 +46383,12 @@ impl WriteXdr for InnerTransactionResultPair {
 /// ```
 ///
 // union with discriminant TransactionResultCode
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -43548,7 +46541,7 @@ impl Union<TransactionResultCode> for TransactionResultResult {}
 
 impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -43590,7 +46583,7 @@ impl ReadXdr for TransactionResultResult {
 
 impl WriteXdr for TransactionResultResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -43631,10 +46624,12 @@ impl WriteXdr for TransactionResultResult {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -43693,7 +46688,7 @@ impl Union<i32> for TransactionResultExt {}
 
 impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -43709,7 +46704,7 @@ impl ReadXdr for TransactionResultExt {
 
 impl WriteXdr for TransactionResultExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -43767,14 +46762,20 @@ impl WriteXdr for TransactionResultExt {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionResult {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
     pub fee_charged: i64,
     pub result: TransactionResultResult,
     pub ext: TransactionResultExt,
@@ -43782,7 +46783,7 @@ pub struct TransactionResult {
 
 impl ReadXdr for TransactionResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_charged: i64::read_xdr(r)?,
@@ -43795,7 +46796,7 @@ impl ReadXdr for TransactionResult {
 
 impl WriteXdr for TransactionResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.fee_charged.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -43811,6 +46812,7 @@ impl WriteXdr for TransactionResult {
 /// typedef opaque Hash[32];
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -43903,7 +46905,7 @@ impl AsRef<[u8; 32]> for Hash {
 
 impl ReadXdr for Hash {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = <[u8; 32]>::read_xdr(r)?;
             let v = Hash(i);
@@ -43914,7 +46916,7 @@ impl ReadXdr for Hash {
 
 impl WriteXdr for Hash {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -43929,7 +46931,7 @@ impl Hash {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Hash {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
@@ -43937,14 +46939,14 @@ impl TryFrom<Vec<u8>> for Hash {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Hash {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
 
 impl TryFrom<&[u8]> for Hash {
     type Error = Error;
-    fn try_from(x: &[u8]) -> Result<Self> {
+    fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(Hash(x.try_into()?))
     }
 }
@@ -43962,6 +46964,7 @@ impl AsRef<[u8]> for Hash {
 /// typedef opaque uint256[32];
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -44054,7 +47057,7 @@ impl AsRef<[u8; 32]> for Uint256 {
 
 impl ReadXdr for Uint256 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = <[u8; 32]>::read_xdr(r)?;
             let v = Uint256(i);
@@ -44065,7 +47068,7 @@ impl ReadXdr for Uint256 {
 
 impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -44080,7 +47083,7 @@ impl Uint256 {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Uint256 {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
@@ -44088,14 +47091,14 @@ impl TryFrom<Vec<u8>> for Uint256 {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Uint256 {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
 
 impl TryFrom<&[u8]> for Uint256 {
     type Error = Error;
-    fn try_from(x: &[u8]) -> Result<Self> {
+    fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(Uint256(x.try_into()?))
     }
 }
@@ -44145,16 +47148,24 @@ pub type Int64 = i64;
 /// typedef uint64 TimePoint;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct TimePoint(pub u64);
+pub struct TimePoint(
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
+    pub u64,
+);
 
 impl From<TimePoint> for u64 {
     #[must_use]
@@ -44179,7 +47190,7 @@ impl AsRef<u64> for TimePoint {
 
 impl ReadXdr for TimePoint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
             let v = TimePoint(i);
@@ -44190,7 +47201,7 @@ impl ReadXdr for TimePoint {
 
 impl WriteXdr for TimePoint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -44201,16 +47212,24 @@ impl WriteXdr for TimePoint {
 /// typedef uint64 Duration;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct Duration(pub u64);
+pub struct Duration(
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "NumberOrString")
+    )]
+    pub u64,
+);
 
 impl From<Duration> for u64 {
     #[must_use]
@@ -44235,7 +47254,7 @@ impl AsRef<u64> for Duration {
 
 impl ReadXdr for Duration {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
             let v = Duration(i);
@@ -44246,7 +47265,7 @@ impl ReadXdr for Duration {
 
 impl WriteXdr for Duration {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -44262,10 +47281,12 @@ impl WriteXdr for Duration {
 /// ```
 ///
 // union with discriminant i32
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -44324,7 +47345,7 @@ impl Union<i32> for ExtensionPoint {}
 
 impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -44340,7 +47361,7 @@ impl ReadXdr for ExtensionPoint {
 
 impl WriteXdr for ExtensionPoint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -44442,7 +47463,7 @@ impl fmt::Display for CryptoKeyType {
 impl TryFrom<i32> for CryptoKeyType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => CryptoKeyType::Ed25519,
             1 => CryptoKeyType::PreAuthTx,
@@ -44465,7 +47486,7 @@ impl From<CryptoKeyType> for i32 {
 
 impl ReadXdr for CryptoKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -44476,7 +47497,7 @@ impl ReadXdr for CryptoKeyType {
 
 impl WriteXdr for CryptoKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -44548,7 +47569,7 @@ impl fmt::Display for PublicKeyType {
 impl TryFrom<i32> for PublicKeyType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => PublicKeyType::PublicKeyTypeEd25519,
             #[allow(unreachable_patterns)]
@@ -44567,7 +47588,7 @@ impl From<PublicKeyType> for i32 {
 
 impl ReadXdr for PublicKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -44578,7 +47599,7 @@ impl ReadXdr for PublicKeyType {
 
 impl WriteXdr for PublicKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -44665,7 +47686,7 @@ impl fmt::Display for SignerKeyType {
 impl TryFrom<i32> for SignerKeyType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => SignerKeyType::Ed25519,
             1 => SignerKeyType::PreAuthTx,
@@ -44687,7 +47708,7 @@ impl From<SignerKeyType> for i32 {
 
 impl ReadXdr for SignerKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -44698,7 +47719,7 @@ impl ReadXdr for SignerKeyType {
 
 impl WriteXdr for SignerKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -44717,6 +47738,7 @@ impl WriteXdr for SignerKeyType {
 /// ```
 ///
 // union with discriminant PublicKeyType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -44777,7 +47799,7 @@ impl Union<PublicKeyType> for PublicKey {}
 
 impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -44795,7 +47817,7 @@ impl ReadXdr for PublicKey {
 
 impl WriteXdr for PublicKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -44820,10 +47842,11 @@ impl WriteXdr for PublicKey {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(serde_with::SerializeDisplay)
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
@@ -44832,7 +47855,7 @@ pub struct SignerKeyEd25519SignedPayload {
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ed25519: Uint256::read_xdr(r)?,
@@ -44844,12 +47867,44 @@ impl ReadXdr for SignerKeyEd25519SignedPayload {
 
 impl WriteXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ed25519.write_xdr(w)?;
             self.payload.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct SignerKeyEd25519SignedPayload {
+            ed25519: Uint256,
+            payload: BytesM<64>,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum SignerKeyEd25519SignedPayloadOrString<'a> {
+            Str(&'a str),
+            String(String),
+            SignerKeyEd25519SignedPayload(SignerKeyEd25519SignedPayload),
+        }
+        match SignerKeyEd25519SignedPayloadOrString::deserialize(deserializer)? {
+            SignerKeyEd25519SignedPayloadOrString::Str(s) => {
+                s.parse().map_err(serde::de::Error::custom)
+            }
+            SignerKeyEd25519SignedPayloadOrString::String(s) => {
+                s.parse().map_err(serde::de::Error::custom)
+            }
+            SignerKeyEd25519SignedPayloadOrString::SignerKeyEd25519SignedPayload(
+                SignerKeyEd25519SignedPayload { ed25519, payload },
+            ) => Ok(self::SignerKeyEd25519SignedPayload { ed25519, payload }),
+        }
     }
 }
 
@@ -44878,6 +47933,7 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 /// ```
 ///
 // union with discriminant SignerKeyType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -44953,7 +48009,7 @@ impl Union<SignerKeyType> for SignerKey {}
 
 impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -44974,7 +48030,7 @@ impl ReadXdr for SignerKey {
 
 impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -44995,11 +48051,13 @@ impl WriteXdr for SignerKey {
 /// typedef opaque Signature<64>;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45030,7 +48088,7 @@ impl AsRef<BytesM<64>> for Signature {
 
 impl ReadXdr for Signature {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64>::read_xdr(r)?;
             let v = Signature(i);
@@ -45041,7 +48099,7 @@ impl ReadXdr for Signature {
 
 impl WriteXdr for Signature {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -45062,7 +48120,7 @@ impl From<Signature> for Vec<u8> {
 
 impl TryFrom<Vec<u8>> for Signature {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(Signature(x.try_into()?))
     }
 }
@@ -45070,7 +48128,7 @@ impl TryFrom<Vec<u8>> for Signature {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Signature {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         Ok(Signature(x.try_into()?))
     }
 }
@@ -45101,6 +48159,7 @@ impl AsRef<[u8]> for Signature {
 /// typedef opaque SignatureHint[4];
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -45193,7 +48252,7 @@ impl AsRef<[u8; 4]> for SignatureHint {
 
 impl ReadXdr for SignatureHint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
             let v = SignatureHint(i);
@@ -45204,7 +48263,7 @@ impl ReadXdr for SignatureHint {
 
 impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -45219,7 +48278,7 @@ impl SignatureHint {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for SignatureHint {
     type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
@@ -45227,14 +48286,14 @@ impl TryFrom<Vec<u8>> for SignatureHint {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for SignatureHint {
     type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
         x.as_slice().try_into()
     }
 }
 
 impl TryFrom<&[u8]> for SignatureHint {
     type Error = Error;
-    fn try_from(x: &[u8]) -> Result<Self> {
+    fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(SignatureHint(x.try_into()?))
     }
 }
@@ -45252,6 +48311,7 @@ impl AsRef<[u8]> for SignatureHint {
 /// typedef PublicKey NodeID;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -45284,7 +48344,7 @@ impl AsRef<PublicKey> for NodeId {
 
 impl ReadXdr for NodeId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = PublicKey::read_xdr(r)?;
             let v = NodeId(i);
@@ -45295,7 +48355,7 @@ impl ReadXdr for NodeId {
 
 impl WriteXdr for NodeId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -45306,6 +48366,7 @@ impl WriteXdr for NodeId {
 /// typedef PublicKey AccountID;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -45338,7 +48399,7 @@ impl AsRef<PublicKey> for AccountId {
 
 impl ReadXdr for AccountId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = PublicKey::read_xdr(r)?;
             let v = AccountId(i);
@@ -45349,7 +48410,7 @@ impl ReadXdr for AccountId {
 
 impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -45360,6 +48421,7 @@ impl WriteXdr for AccountId {
 /// typedef Hash ContractID;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -45392,7 +48454,7 @@ impl AsRef<Hash> for ContractId {
 
 impl ReadXdr for ContractId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = Hash::read_xdr(r)?;
             let v = ContractId(i);
@@ -45403,7 +48465,7 @@ impl ReadXdr for ContractId {
 
 impl WriteXdr for ContractId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -45418,9 +48480,11 @@ impl WriteXdr for ContractId {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45431,7 +48495,7 @@ pub struct Curve25519Secret {
 
 impl ReadXdr for Curve25519Secret {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: <[u8; 32]>::read_xdr(r)?,
@@ -45442,7 +48506,7 @@ impl ReadXdr for Curve25519Secret {
 
 impl WriteXdr for Curve25519Secret {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             Ok(())
@@ -45460,9 +48524,11 @@ impl WriteXdr for Curve25519Secret {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45473,7 +48539,7 @@ pub struct Curve25519Public {
 
 impl ReadXdr for Curve25519Public {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: <[u8; 32]>::read_xdr(r)?,
@@ -45484,7 +48550,7 @@ impl ReadXdr for Curve25519Public {
 
 impl WriteXdr for Curve25519Public {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             Ok(())
@@ -45502,9 +48568,11 @@ impl WriteXdr for Curve25519Public {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45515,7 +48583,7 @@ pub struct HmacSha256Key {
 
 impl ReadXdr for HmacSha256Key {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: <[u8; 32]>::read_xdr(r)?,
@@ -45526,7 +48594,7 @@ impl ReadXdr for HmacSha256Key {
 
 impl WriteXdr for HmacSha256Key {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             Ok(())
@@ -45544,9 +48612,11 @@ impl WriteXdr for HmacSha256Key {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45557,7 +48627,7 @@ pub struct HmacSha256Mac {
 
 impl ReadXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 mac: <[u8; 32]>::read_xdr(r)?,
@@ -45568,7 +48638,7 @@ impl ReadXdr for HmacSha256Mac {
 
 impl WriteXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.mac.write_xdr(w)?;
             Ok(())
@@ -45586,9 +48656,11 @@ impl WriteXdr for HmacSha256Mac {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45599,7 +48671,7 @@ pub struct ShortHashSeed {
 
 impl ReadXdr for ShortHashSeed {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seed: <[u8; 16]>::read_xdr(r)?,
@@ -45610,7 +48682,7 @@ impl ReadXdr for ShortHashSeed {
 
 impl WriteXdr for ShortHashSeed {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.seed.write_xdr(w)?;
             Ok(())
@@ -45692,7 +48764,7 @@ impl fmt::Display for BinaryFuseFilterType {
 impl TryFrom<i32> for BinaryFuseFilterType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => BinaryFuseFilterType::B8Bit,
             1 => BinaryFuseFilterType::B16Bit,
@@ -45713,7 +48785,7 @@ impl From<BinaryFuseFilterType> for i32 {
 
 impl ReadXdr for BinaryFuseFilterType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -45724,7 +48796,7 @@ impl ReadXdr for BinaryFuseFilterType {
 
 impl WriteXdr for BinaryFuseFilterType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -45756,9 +48828,11 @@ impl WriteXdr for BinaryFuseFilterType {
 /// ```
 ///
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
@@ -45777,7 +48851,7 @@ pub struct SerializedBinaryFuseFilter {
 
 impl ReadXdr for SerializedBinaryFuseFilter {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 type_: BinaryFuseFilterType::read_xdr(r)?,
@@ -45796,7 +48870,7 @@ impl ReadXdr for SerializedBinaryFuseFilter {
 
 impl WriteXdr for SerializedBinaryFuseFilter {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.type_.write_xdr(w)?;
             self.input_hash_seed.write_xdr(w)?;
@@ -45818,6 +48892,7 @@ impl WriteXdr for SerializedBinaryFuseFilter {
 /// typedef Hash PoolID;
 /// ```
 ///
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -45850,7 +48925,7 @@ impl AsRef<Hash> for PoolId {
 
 impl ReadXdr for PoolId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = Hash::read_xdr(r)?;
             let v = PoolId(i);
@@ -45861,7 +48936,7 @@ impl ReadXdr for PoolId {
 
 impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -45931,7 +49006,7 @@ impl fmt::Display for ClaimableBalanceIdType {
 impl TryFrom<i32> for ClaimableBalanceIdType {
     type Error = Error;
 
-    fn try_from(i: i32) -> Result<Self> {
+    fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
             #[allow(unreachable_patterns)]
@@ -45950,7 +49025,7 @@ impl From<ClaimableBalanceIdType> for i32 {
 
 impl ReadXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -45961,7 +49036,7 @@ impl ReadXdr for ClaimableBalanceIdType {
 
 impl WriteXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -45980,6 +49055,7 @@ impl WriteXdr for ClaimableBalanceIdType {
 /// ```
 ///
 // union with discriminant ClaimableBalanceIdType
+#[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -46041,7 +49117,7 @@ impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
 
 impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -46059,7 +49135,7 @@ impl ReadXdr for ClaimableBalanceId {
 
 impl WriteXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -46102,6 +49178,7 @@ pub enum TypeVariant {
     ContractCostParamEntry,
     StateArchivalSettings,
     EvictionIterator,
+    ConfigSettingScpTiming,
     ContractCostParams,
     ConfigSettingId,
     ConfigSettingEntry,
@@ -46133,6 +49210,10 @@ pub enum TypeVariant {
     ScSpecUdtErrorEnumV0,
     ScSpecFunctionInputV0,
     ScSpecFunctionV0,
+    ScSpecEventParamLocationV0,
+    ScSpecEventParamV0,
+    ScSpecEventDataFormat,
+    ScSpecEventV0,
     ScSpecEntryKind,
     ScSpecEntry,
     ScValType,
@@ -46157,6 +49238,7 @@ pub enum TypeVariant {
     ScContractInstance,
     ScVal,
     ScMapEntry,
+    LedgerCloseMetaBatch,
     StoredTransactionSet,
     StoredDebugTransactionSet,
     PersistedScpStateV0,
@@ -46305,11 +49387,13 @@ pub enum TypeVariant {
     InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
     TransactionResultMeta,
+    TransactionResultMetaV1,
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaExtV1,
     LedgerCloseMetaExt,
     LedgerCloseMetaV1,
+    LedgerCloseMetaV2,
     LedgerCloseMeta,
     ErrorCode,
     SError,
@@ -46537,7 +49621,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 455] = [
+    pub const VARIANTS: [TypeVariant; 463] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46561,6 +49645,7 @@ impl TypeVariant {
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
+        TypeVariant::ConfigSettingScpTiming,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -46592,6 +49677,10 @@ impl TypeVariant {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEventParamLocationV0,
+        TypeVariant::ScSpecEventParamV0,
+        TypeVariant::ScSpecEventDataFormat,
+        TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScValType,
@@ -46616,6 +49705,7 @@ impl TypeVariant {
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
+        TypeVariant::LedgerCloseMetaBatch,
         TypeVariant::StoredTransactionSet,
         TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -46764,11 +49854,13 @@ impl TypeVariant {
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
+        TypeVariant::TransactionResultMetaV1,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
+        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -46994,7 +50086,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 455] = [
+    pub const VARIANTS_STR: [&'static str; 463] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47018,6 +50110,7 @@ impl TypeVariant {
         "ContractCostParamEntry",
         "StateArchivalSettings",
         "EvictionIterator",
+        "ConfigSettingScpTiming",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -47049,6 +50142,10 @@ impl TypeVariant {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
+        "ScSpecEventParamLocationV0",
+        "ScSpecEventParamV0",
+        "ScSpecEventDataFormat",
+        "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
         "ScValType",
@@ -47073,6 +50170,7 @@ impl TypeVariant {
         "ScContractInstance",
         "ScVal",
         "ScMapEntry",
+        "LedgerCloseMetaBatch",
         "StoredTransactionSet",
         "StoredDebugTransactionSet",
         "PersistedScpStateV0",
@@ -47221,11 +50319,13 @@ impl TypeVariant {
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
+        "TransactionResultMetaV1",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
+        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -47481,6 +50581,7 @@ impl TypeVariant {
             Self::ContractCostParamEntry => "ContractCostParamEntry",
             Self::StateArchivalSettings => "StateArchivalSettings",
             Self::EvictionIterator => "EvictionIterator",
+            Self::ConfigSettingScpTiming => "ConfigSettingScpTiming",
             Self::ContractCostParams => "ContractCostParams",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
@@ -47512,6 +50613,10 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
+            Self::ScSpecEventParamLocationV0 => "ScSpecEventParamLocationV0",
+            Self::ScSpecEventParamV0 => "ScSpecEventParamV0",
+            Self::ScSpecEventDataFormat => "ScSpecEventDataFormat",
+            Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
             Self::ScValType => "ScValType",
@@ -47536,6 +50641,7 @@ impl TypeVariant {
             Self::ScContractInstance => "ScContractInstance",
             Self::ScVal => "ScVal",
             Self::ScMapEntry => "ScMapEntry",
+            Self::LedgerCloseMetaBatch => "LedgerCloseMetaBatch",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::StoredDebugTransactionSet => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
@@ -47686,11 +50792,13 @@ impl TypeVariant {
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
+            Self::TransactionResultMetaV1 => "TransactionResultMetaV1",
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1 => "LedgerCloseMetaExtV1",
             Self::LedgerCloseMetaExt => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
+            Self::LedgerCloseMetaV2 => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
@@ -47930,7 +51038,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 455] {
+    pub const fn variants() -> [TypeVariant; 463] {
         Self::VARIANTS
     }
 
@@ -47978,6 +51086,7 @@ impl TypeVariant {
             Self::ContractCostParamEntry => gen.into_root_schema_for::<ContractCostParamEntry>(),
             Self::StateArchivalSettings => gen.into_root_schema_for::<StateArchivalSettings>(),
             Self::EvictionIterator => gen.into_root_schema_for::<EvictionIterator>(),
+            Self::ConfigSettingScpTiming => gen.into_root_schema_for::<ConfigSettingScpTiming>(),
             Self::ContractCostParams => gen.into_root_schema_for::<ContractCostParams>(),
             Self::ConfigSettingId => gen.into_root_schema_for::<ConfigSettingId>(),
             Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
@@ -48019,6 +51128,12 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => gen.into_root_schema_for::<ScSpecUdtErrorEnumV0>(),
             Self::ScSpecFunctionInputV0 => gen.into_root_schema_for::<ScSpecFunctionInputV0>(),
             Self::ScSpecFunctionV0 => gen.into_root_schema_for::<ScSpecFunctionV0>(),
+            Self::ScSpecEventParamLocationV0 => {
+                gen.into_root_schema_for::<ScSpecEventParamLocationV0>()
+            }
+            Self::ScSpecEventParamV0 => gen.into_root_schema_for::<ScSpecEventParamV0>(),
+            Self::ScSpecEventDataFormat => gen.into_root_schema_for::<ScSpecEventDataFormat>(),
+            Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
             Self::ScValType => gen.into_root_schema_for::<ScValType>(),
@@ -48043,6 +51158,7 @@ impl TypeVariant {
             Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
             Self::ScVal => gen.into_root_schema_for::<ScVal>(),
             Self::ScMapEntry => gen.into_root_schema_for::<ScMapEntry>(),
+            Self::LedgerCloseMetaBatch => gen.into_root_schema_for::<LedgerCloseMetaBatch>(),
             Self::StoredTransactionSet => gen.into_root_schema_for::<StoredTransactionSet>(),
             Self::StoredDebugTransactionSet => {
                 gen.into_root_schema_for::<StoredDebugTransactionSet>()
@@ -48245,11 +51361,13 @@ impl TypeVariant {
             }
             Self::TransactionMeta => gen.into_root_schema_for::<TransactionMeta>(),
             Self::TransactionResultMeta => gen.into_root_schema_for::<TransactionResultMeta>(),
+            Self::TransactionResultMetaV1 => gen.into_root_schema_for::<TransactionResultMetaV1>(),
             Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
             Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
             Self::LedgerCloseMetaExtV1 => gen.into_root_schema_for::<LedgerCloseMetaExtV1>(),
             Self::LedgerCloseMetaExt => gen.into_root_schema_for::<LedgerCloseMetaExt>(),
             Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
+            Self::LedgerCloseMetaV2 => gen.into_root_schema_for::<LedgerCloseMetaV2>(),
             Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
             Self::ErrorCode => gen.into_root_schema_for::<ErrorCode>(),
             Self::SError => gen.into_root_schema_for::<SError>(),
@@ -48628,7 +51746,7 @@ impl Variants<TypeVariant> for TypeVariant {
 impl core::str::FromStr for TypeVariant {
     type Err = Error;
     #[allow(clippy::too_many_lines)]
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Error> {
         match s {
             "Value" => Ok(Self::Value),
             "ScpBallot" => Ok(Self::ScpBallot),
@@ -48661,6 +51779,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
             "StateArchivalSettings" => Ok(Self::StateArchivalSettings),
             "EvictionIterator" => Ok(Self::EvictionIterator),
+            "ConfigSettingScpTiming" => Ok(Self::ConfigSettingScpTiming),
             "ContractCostParams" => Ok(Self::ContractCostParams),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
@@ -48692,6 +51811,10 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
             "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
             "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
+            "ScSpecEventParamLocationV0" => Ok(Self::ScSpecEventParamLocationV0),
+            "ScSpecEventParamV0" => Ok(Self::ScSpecEventParamV0),
+            "ScSpecEventDataFormat" => Ok(Self::ScSpecEventDataFormat),
+            "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
             "ScValType" => Ok(Self::ScValType),
@@ -48716,6 +51839,7 @@ impl core::str::FromStr for TypeVariant {
             "ScContractInstance" => Ok(Self::ScContractInstance),
             "ScVal" => Ok(Self::ScVal),
             "ScMapEntry" => Ok(Self::ScMapEntry),
+            "LedgerCloseMetaBatch" => Ok(Self::LedgerCloseMetaBatch),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "StoredDebugTransactionSet" => Ok(Self::StoredDebugTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
@@ -48866,11 +51990,13 @@ impl core::str::FromStr for TypeVariant {
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
+            "TransactionResultMetaV1" => Ok(Self::TransactionResultMetaV1),
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaExtV1" => Ok(Self::LedgerCloseMetaExtV1),
             "LedgerCloseMetaExt" => Ok(Self::LedgerCloseMetaExt),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
+            "LedgerCloseMetaV2" => Ok(Self::LedgerCloseMetaV2),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
@@ -49152,6 +52278,7 @@ pub enum Type {
     ContractCostParamEntry(Box<ContractCostParamEntry>),
     StateArchivalSettings(Box<StateArchivalSettings>),
     EvictionIterator(Box<EvictionIterator>),
+    ConfigSettingScpTiming(Box<ConfigSettingScpTiming>),
     ContractCostParams(Box<ContractCostParams>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
@@ -49183,6 +52310,10 @@ pub enum Type {
     ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
     ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
     ScSpecFunctionV0(Box<ScSpecFunctionV0>),
+    ScSpecEventParamLocationV0(Box<ScSpecEventParamLocationV0>),
+    ScSpecEventParamV0(Box<ScSpecEventParamV0>),
+    ScSpecEventDataFormat(Box<ScSpecEventDataFormat>),
+    ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
     ScValType(Box<ScValType>),
@@ -49207,6 +52338,7 @@ pub enum Type {
     ScContractInstance(Box<ScContractInstance>),
     ScVal(Box<ScVal>),
     ScMapEntry(Box<ScMapEntry>),
+    LedgerCloseMetaBatch(Box<LedgerCloseMetaBatch>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     StoredDebugTransactionSet(Box<StoredDebugTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
@@ -49355,11 +52487,13 @@ pub enum Type {
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
+    TransactionResultMetaV1(Box<TransactionResultMetaV1>),
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaExtV1(Box<LedgerCloseMetaExtV1>),
     LedgerCloseMetaExt(Box<LedgerCloseMetaExt>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
+    LedgerCloseMetaV2(Box<LedgerCloseMetaV2>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
@@ -49587,7 +52721,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 455] = [
+    pub const VARIANTS: [TypeVariant; 463] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49611,6 +52745,7 @@ impl Type {
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
+        TypeVariant::ConfigSettingScpTiming,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -49642,6 +52777,10 @@ impl Type {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEventParamLocationV0,
+        TypeVariant::ScSpecEventParamV0,
+        TypeVariant::ScSpecEventDataFormat,
+        TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScValType,
@@ -49666,6 +52805,7 @@ impl Type {
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
+        TypeVariant::LedgerCloseMetaBatch,
         TypeVariant::StoredTransactionSet,
         TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -49814,11 +52954,13 @@ impl Type {
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
+        TypeVariant::TransactionResultMetaV1,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
+        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -50044,7 +53186,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 455] = [
+    pub const VARIANTS_STR: [&'static str; 463] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50068,6 +53210,7 @@ impl Type {
         "ContractCostParamEntry",
         "StateArchivalSettings",
         "EvictionIterator",
+        "ConfigSettingScpTiming",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -50099,6 +53242,10 @@ impl Type {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
+        "ScSpecEventParamLocationV0",
+        "ScSpecEventParamV0",
+        "ScSpecEventDataFormat",
+        "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
         "ScValType",
@@ -50123,6 +53270,7 @@ impl Type {
         "ScContractInstance",
         "ScVal",
         "ScMapEntry",
+        "LedgerCloseMetaBatch",
         "StoredTransactionSet",
         "StoredDebugTransactionSet",
         "PersistedScpStateV0",
@@ -50271,11 +53419,13 @@ impl Type {
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
+        "TransactionResultMetaV1",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
+        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -50504,7 +53654,7 @@ impl Type {
 
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
-    pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
+    pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self, Error> {
         match v {
             TypeVariant::Value => {
                 r.with_limited_depth(|r| Ok(Self::Value(Box::new(Value::read_xdr(r)?))))
@@ -50607,6 +53757,11 @@ impl Type {
             TypeVariant::EvictionIterator => r.with_limited_depth(|r| {
                 Ok(Self::EvictionIterator(Box::new(
                     EvictionIterator::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingScpTiming => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingScpTiming(Box::new(
+                    ConfigSettingScpTiming::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ContractCostParams => r.with_limited_depth(|r| {
@@ -50744,6 +53899,24 @@ impl Type {
                     ScSpecFunctionV0::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::ScSpecEventParamLocationV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventParamLocationV0(Box::new(
+                    ScSpecEventParamLocationV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEventParamV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventParamV0(Box::new(
+                    ScSpecEventParamV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEventDataFormat => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventDataFormat(Box::new(
+                    ScSpecEventDataFormat::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEventV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEventV0(Box::new(ScSpecEventV0::read_xdr(r)?)))
+            }),
             TypeVariant::ScSpecEntryKind => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::read_xdr(
                     r,
@@ -50826,6 +53999,11 @@ impl Type {
             TypeVariant::ScMapEntry => {
                 r.with_limited_depth(|r| Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))))
             }
+            TypeVariant::LedgerCloseMetaBatch => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaBatch(Box::new(
+                    LedgerCloseMetaBatch::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::StoredTransactionSet => r.with_limited_depth(|r| {
                 Ok(Self::StoredTransactionSet(Box::new(
                     StoredTransactionSet::read_xdr(r)?,
@@ -51472,6 +54650,11 @@ impl Type {
                     TransactionResultMeta::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::TransactionResultMetaV1 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultMetaV1(Box::new(
+                    TransactionResultMetaV1::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::UpgradeEntryMeta => r.with_limited_depth(|r| {
                 Ok(Self::UpgradeEntryMeta(Box::new(
                     UpgradeEntryMeta::read_xdr(r)?,
@@ -51495,6 +54678,11 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => r.with_limited_depth(|r| {
                 Ok(Self::LedgerCloseMetaV1(Box::new(
                     LedgerCloseMetaV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaV2 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaV2(Box::new(
+                    LedgerCloseMetaV2::read_xdr(r)?,
                 )))
             }),
             TypeVariant::LedgerCloseMeta => r.with_limited_depth(|r| {
@@ -52491,7 +55679,7 @@ impl Type {
     }
 
     #[cfg(feature = "base64")]
-    pub fn read_xdr_base64<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
+    pub fn read_xdr_base64<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self, Error> {
         let mut dec = Limited::new(
             base64::read::DecoderReader::new(
                 SkipWhitespace::new(&mut r.inner),
@@ -52504,7 +55692,7 @@ impl Type {
     }
 
     #[cfg(feature = "std")]
-    pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
+    pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self, Error> {
         let s = Self::read_xdr(v, r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -52516,7 +55704,10 @@ impl Type {
     }
 
     #[cfg(feature = "base64")]
-    pub fn read_xdr_base64_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
+    pub fn read_xdr_base64_to_end<R: Read>(
+        v: TypeVariant,
+        r: &mut Limited<R>,
+    ) -> Result<Self, Error> {
         let mut dec = Limited::new(
             base64::read::DecoderReader::new(
                 SkipWhitespace::new(&mut r.inner),
@@ -52533,7 +55724,7 @@ impl Type {
     pub fn read_xdr_iter<R: Read>(
         v: TypeVariant,
         r: &mut Limited<R>,
-    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+    ) -> Box<dyn Iterator<Item = Result<Self, Error>> + '_> {
         match v {
             TypeVariant::Value => Box::new(
                 ReadXdrIter::<_, Value>::new(&mut r.inner, r.limits.clone())
@@ -52650,6 +55841,10 @@ impl Type {
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingScpTiming => Box::new(
+                ReadXdrIter::<_, ConfigSettingScpTiming>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.limits.clone())
@@ -52778,6 +55973,22 @@ impl Type {
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
+            TypeVariant::ScSpecEventParamLocationV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventParamLocationV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventParamLocationV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventParamV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventParamV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventParamV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventDataFormat => Box::new(
+                ReadXdrIter::<_, ScSpecEventDataFormat>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t)))),
+            ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
@@ -52873,6 +56084,10 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, ScMapEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaBatch => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaBatch>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.limits.clone())
@@ -53490,6 +56705,10 @@ impl Type {
                 ReadXdrIter::<_, TransactionResultMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
+            TypeVariant::TransactionResultMetaV1 => Box::new(
+                ReadXdrIter::<_, TransactionResultMetaV1>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionResultMetaV1(Box::new(t)))),
+            ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
@@ -53509,6 +56728,10 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.limits.clone())
@@ -54508,7 +57731,7 @@ impl Type {
     pub fn read_xdr_framed_iter<R: Read>(
         v: TypeVariant,
         r: &mut Limited<R>,
-    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+    ) -> Box<dyn Iterator<Item = Result<Self, Error>> + '_> {
         match v {
             TypeVariant::Value => Box::new(
                 ReadXdrIter::<_, Frame<Value>>::new(&mut r.inner, r.limits.clone())
@@ -54631,6 +57854,13 @@ impl Type {
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingScpTiming => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingScpTiming>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.limits.clone())
@@ -54774,6 +58004,25 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
             ),
+            TypeVariant::ScSpecEventParamLocationV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventParamLocationV0>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ScSpecEventParamLocationV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventParamV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventParamV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventParamV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventDataFormat => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventDataFormat>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEventV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEventV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t.0)))),
+            ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t.0)))),
@@ -54872,6 +58121,10 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, Frame<ScMapEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMetaBatch => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaBatch>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t.0)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.limits.clone())
@@ -55582,6 +58835,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
             ),
+            TypeVariant::TransactionResultMetaV1 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultMetaV1>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TransactionResultMetaV1(Box::new(t.0)))),
+            ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t.0)))),
@@ -55601,6 +58861,10 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.limits.clone())
@@ -56776,7 +60040,7 @@ impl Type {
     pub fn read_xdr_base64_iter<R: Read>(
         v: TypeVariant,
         r: &mut Limited<R>,
-    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+    ) -> Box<dyn Iterator<Item = Result<Self, Error>> + '_> {
         let dec = base64::read::DecoderReader::new(
             SkipWhitespace::new(&mut r.inner),
             &base64::engine::general_purpose::STANDARD,
@@ -56876,6 +60140,10 @@ impl Type {
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, EvictionIterator>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingScpTiming => Box::new(
+                ReadXdrIter::<_, ConfigSettingScpTiming>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(dec, r.limits.clone())
@@ -57001,6 +60269,22 @@ impl Type {
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
+            TypeVariant::ScSpecEventParamLocationV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventParamLocationV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventParamLocationV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventParamV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventParamV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventParamV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventDataFormat => Box::new(
+                ReadXdrIter::<_, ScSpecEventDataFormat>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEventV0 => Box::new(
+                ReadXdrIter::<_, ScSpecEventV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t)))),
+            ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
@@ -57096,6 +60380,10 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, ScMapEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaBatch => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaBatch>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.limits.clone())
@@ -57692,6 +60980,10 @@ impl Type {
                 ReadXdrIter::<_, TransactionResultMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
+            TypeVariant::TransactionResultMetaV1 => Box::new(
+                ReadXdrIter::<_, TransactionResultMetaV1>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionResultMetaV1(Box::new(t)))),
+            ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
@@ -57711,6 +61003,10 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.limits.clone())
@@ -58631,14 +61927,22 @@ impl Type {
     }
 
     #[cfg(feature = "std")]
-    pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B, limits: Limits) -> Result<Self> {
+    pub fn from_xdr<B: AsRef<[u8]>>(
+        v: TypeVariant,
+        bytes: B,
+        limits: Limits,
+    ) -> Result<Self, Error> {
         let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(v, &mut cursor)?;
         Ok(t)
     }
 
     #[cfg(feature = "base64")]
-    pub fn from_xdr_base64(v: TypeVariant, b64: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
+    pub fn from_xdr_base64(
+        v: TypeVariant,
+        b64: impl AsRef<[u8]>,
+        limits: Limits,
+    ) -> Result<Self, Error> {
         let mut dec = Limited::new(
             base64::read::DecoderReader::new(
                 SkipWhitespace::new(Cursor::new(b64)),
@@ -58652,13 +61956,13 @@ impl Type {
 
     #[cfg(all(feature = "std", feature = "serde_json"))]
     #[deprecated(note = "use from_json")]
-    pub fn read_json(v: TypeVariant, r: impl Read) -> Result<Self> {
+    pub fn read_json(v: TypeVariant, r: impl Read) -> Result<Self, Error> {
         Self::from_json(v, r)
     }
 
     #[cfg(all(feature = "std", feature = "serde_json"))]
     #[allow(clippy::too_many_lines)]
-    pub fn from_json(v: TypeVariant, r: impl Read) -> Result<Self> {
+    pub fn from_json(v: TypeVariant, r: impl Read) -> Result<Self, Error> {
         match v {
             TypeVariant::Value => Ok(Self::Value(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScpBallot => Ok(Self::ScpBallot(Box::new(serde_json::from_reader(r)?))),
@@ -58723,6 +62027,9 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
@@ -58812,6 +62119,18 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::ScSpecEventParamLocationV0 => Ok(Self::ScSpecEventParamLocationV0(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ScSpecEventParamV0 => Ok(Self::ScSpecEventParamV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecEventV0 => {
+                Ok(Self::ScSpecEventV0(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ScSpecEntryKind => {
                 Ok(Self::ScSpecEntryKind(Box::new(serde_json::from_reader(r)?)))
             }
@@ -58862,6 +62181,9 @@ impl Type {
             ))),
             TypeVariant::ScVal => Ok(Self::ScVal(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59270,6 +62592,9 @@ impl Type {
             TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::TransactionResultMetaV1 => Ok(Self::TransactionResultMetaV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59283,6 +62608,9 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::LedgerCloseMeta => {
@@ -59911,7 +63239,7 @@ impl Type {
     pub fn deserialize_json<'r, R: serde_json::de::Read<'r>>(
         v: TypeVariant,
         r: &mut serde_json::de::Deserializer<R>,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         match v {
             TypeVariant::Value => Ok(Self::Value(Box::new(serde::de::Deserialize::deserialize(
                 r,
@@ -59994,6 +63322,9 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
@@ -60091,6 +63422,18 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::ScSpecEventParamLocationV0 => Ok(Self::ScSpecEventParamLocationV0(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::ScSpecEventParamV0 => Ok(Self::ScSpecEventParamV0(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEventV0 => Ok(Self::ScSpecEventV0(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -60161,6 +63504,9 @@ impl Type {
                 r,
             )?))),
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
@@ -60621,6 +63967,9 @@ impl Type {
             TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::TransactionResultMetaV1 => Ok(Self::TransactionResultMetaV1(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -60634,6 +63983,9 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
@@ -61392,6 +64744,7 @@ impl Type {
             Self::ContractCostParamEntry(ref v) => v.as_ref(),
             Self::StateArchivalSettings(ref v) => v.as_ref(),
             Self::EvictionIterator(ref v) => v.as_ref(),
+            Self::ConfigSettingScpTiming(ref v) => v.as_ref(),
             Self::ContractCostParams(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
@@ -61423,6 +64776,10 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionV0(ref v) => v.as_ref(),
+            Self::ScSpecEventParamLocationV0(ref v) => v.as_ref(),
+            Self::ScSpecEventParamV0(ref v) => v.as_ref(),
+            Self::ScSpecEventDataFormat(ref v) => v.as_ref(),
+            Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
             Self::ScValType(ref v) => v.as_ref(),
@@ -61447,6 +64804,7 @@ impl Type {
             Self::ScContractInstance(ref v) => v.as_ref(),
             Self::ScVal(ref v) => v.as_ref(),
             Self::ScMapEntry(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaBatch(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::StoredDebugTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
@@ -61595,11 +64953,13 @@ impl Type {
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
+            Self::TransactionResultMetaV1(ref v) => v.as_ref(),
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExtV1(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExt(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaV2(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
@@ -61860,6 +65220,7 @@ impl Type {
             Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
             Self::StateArchivalSettings(_) => "StateArchivalSettings",
             Self::EvictionIterator(_) => "EvictionIterator",
+            Self::ConfigSettingScpTiming(_) => "ConfigSettingScpTiming",
             Self::ContractCostParams(_) => "ContractCostParams",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
@@ -61891,6 +65252,10 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
+            Self::ScSpecEventParamLocationV0(_) => "ScSpecEventParamLocationV0",
+            Self::ScSpecEventParamV0(_) => "ScSpecEventParamV0",
+            Self::ScSpecEventDataFormat(_) => "ScSpecEventDataFormat",
+            Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
             Self::ScValType(_) => "ScValType",
@@ -61915,6 +65280,7 @@ impl Type {
             Self::ScContractInstance(_) => "ScContractInstance",
             Self::ScVal(_) => "ScVal",
             Self::ScMapEntry(_) => "ScMapEntry",
+            Self::LedgerCloseMetaBatch(_) => "LedgerCloseMetaBatch",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::StoredDebugTransactionSet(_) => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
@@ -62065,11 +65431,13 @@ impl Type {
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
+            Self::TransactionResultMetaV1(_) => "TransactionResultMetaV1",
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1(_) => "LedgerCloseMetaExtV1",
             Self::LedgerCloseMetaExt(_) => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
+            Self::LedgerCloseMetaV2(_) => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
@@ -62317,7 +65685,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 455] {
+    pub const fn variants() -> [TypeVariant; 463] {
         Self::VARIANTS
     }
 
@@ -62360,6 +65728,7 @@ impl Type {
             Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
             Self::StateArchivalSettings(_) => TypeVariant::StateArchivalSettings,
             Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
+            Self::ConfigSettingScpTiming(_) => TypeVariant::ConfigSettingScpTiming,
             Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
@@ -62391,6 +65760,10 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
             Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
             Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
+            Self::ScSpecEventParamLocationV0(_) => TypeVariant::ScSpecEventParamLocationV0,
+            Self::ScSpecEventParamV0(_) => TypeVariant::ScSpecEventParamV0,
+            Self::ScSpecEventDataFormat(_) => TypeVariant::ScSpecEventDataFormat,
+            Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
             Self::ScValType(_) => TypeVariant::ScValType,
@@ -62415,6 +65788,7 @@ impl Type {
             Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
             Self::ScVal(_) => TypeVariant::ScVal,
             Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
+            Self::LedgerCloseMetaBatch(_) => TypeVariant::LedgerCloseMetaBatch,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::StoredDebugTransactionSet(_) => TypeVariant::StoredDebugTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
@@ -62577,11 +65951,13 @@ impl Type {
             }
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
             Self::TransactionResultMeta(_) => TypeVariant::TransactionResultMeta,
+            Self::TransactionResultMetaV1(_) => TypeVariant::TransactionResultMetaV1,
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaExtV1(_) => TypeVariant::LedgerCloseMetaExtV1,
             Self::LedgerCloseMetaExt(_) => TypeVariant::LedgerCloseMetaExt,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
+            Self::LedgerCloseMetaV2(_) => TypeVariant::LedgerCloseMetaV2,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,
@@ -62870,7 +66246,7 @@ impl Variants<TypeVariant> for Type {
 impl WriteXdr for Type {
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         match self {
             Self::Value(v) => v.write_xdr(w),
             Self::ScpBallot(v) => v.write_xdr(w),
@@ -62895,6 +66271,7 @@ impl WriteXdr for Type {
             Self::ContractCostParamEntry(v) => v.write_xdr(w),
             Self::StateArchivalSettings(v) => v.write_xdr(w),
             Self::EvictionIterator(v) => v.write_xdr(w),
+            Self::ConfigSettingScpTiming(v) => v.write_xdr(w),
             Self::ContractCostParams(v) => v.write_xdr(w),
             Self::ConfigSettingId(v) => v.write_xdr(w),
             Self::ConfigSettingEntry(v) => v.write_xdr(w),
@@ -62926,6 +66303,10 @@ impl WriteXdr for Type {
             Self::ScSpecUdtErrorEnumV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionInputV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionV0(v) => v.write_xdr(w),
+            Self::ScSpecEventParamLocationV0(v) => v.write_xdr(w),
+            Self::ScSpecEventParamV0(v) => v.write_xdr(w),
+            Self::ScSpecEventDataFormat(v) => v.write_xdr(w),
+            Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),
             Self::ScValType(v) => v.write_xdr(w),
@@ -62950,6 +66331,7 @@ impl WriteXdr for Type {
             Self::ScContractInstance(v) => v.write_xdr(w),
             Self::ScVal(v) => v.write_xdr(w),
             Self::ScMapEntry(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaBatch(v) => v.write_xdr(w),
             Self::StoredTransactionSet(v) => v.write_xdr(w),
             Self::StoredDebugTransactionSet(v) => v.write_xdr(w),
             Self::PersistedScpStateV0(v) => v.write_xdr(w),
@@ -63098,11 +66480,13 @@ impl WriteXdr for Type {
             Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),
             Self::TransactionMeta(v) => v.write_xdr(w),
             Self::TransactionResultMeta(v) => v.write_xdr(w),
+            Self::TransactionResultMetaV1(v) => v.write_xdr(w),
             Self::UpgradeEntryMeta(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV0(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExtV1(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExt(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV1(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaV2(v) => v.write_xdr(w),
             Self::LedgerCloseMeta(v) => v.write_xdr(w),
             Self::ErrorCode(v) => v.write_xdr(w),
             Self::SError(v) => v.write_xdr(w),

@@ -77,6 +77,7 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[cfg(feature = "curr")]
 #[test]
 fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(

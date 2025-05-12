@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ConfigSettingEntry",
-  "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; }; ```",
+  "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -203,18 +203,6 @@
       "properties": {
         "contract_ledger_cost_ext_v0": {
           "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "scp_timing"
-      ],
-      "properties": {
-        "scp_timing": {
-          "$ref": "#/definitions/ConfigSettingScpTiming"
         }
       },
       "additionalProperties": false
@@ -440,44 +428,6 @@
       ],
       "properties": {
         "ledger_max_dependent_tx_clusters": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        }
-      }
-    },
-    "ConfigSettingScpTiming": {
-      "description": "ConfigSettingScpTiming is an XDR Struct defines as:\n\n```text struct ConfigSettingSCPTiming { uint32 ledgerTargetCloseTimeMilliseconds; uint32 nominationTimeoutInitialMilliseconds; uint32 nominationTimeoutIncrementMilliseconds; uint32 ballotTimeoutInitialMilliseconds; uint32 ballotTimeoutIncrementMilliseconds; }; ```",
-      "type": "object",
-      "required": [
-        "ballot_timeout_increment_milliseconds",
-        "ballot_timeout_initial_milliseconds",
-        "ledger_target_close_time_milliseconds",
-        "nomination_timeout_increment_milliseconds",
-        "nomination_timeout_initial_milliseconds"
-      ],
-      "properties": {
-        "ballot_timeout_increment_milliseconds": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "ballot_timeout_initial_milliseconds": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "ledger_target_close_time_milliseconds": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "nomination_timeout_increment_milliseconds": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "nomination_timeout_initial_milliseconds": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

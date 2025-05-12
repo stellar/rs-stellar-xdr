@@ -1,14 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecEntryKind",
-  "description": "ScSpecEntryKind is an XDR Enum defines as:\n\n```text enum SCSpecEntryKind { SC_SPEC_ENTRY_FUNCTION_V0 = 0, SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1, SC_SPEC_ENTRY_UDT_UNION_V0 = 2, SC_SPEC_ENTRY_UDT_ENUM_V0 = 3, SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4, SC_SPEC_ENTRY_EVENT_V0 = 5 }; ```",
+  "description": "ScSpecEntryKind is an XDR Enum defines as:\n\n```text enum SCSpecEntryKind { SC_SPEC_ENTRY_FUNCTION_V0 = 0, SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1, SC_SPEC_ENTRY_UDT_UNION_V0 = 2, SC_SPEC_ENTRY_UDT_ENUM_V0 = 3, SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4 }; ```",
   "type": "string",
   "enum": [
     "function_v0",
     "udt_struct_v0",
     "udt_union_v0",
     "udt_enum_v0",
-    "udt_error_enum_v0",
-    "event_v0"
+    "udt_error_enum_v0"
   ]
 }

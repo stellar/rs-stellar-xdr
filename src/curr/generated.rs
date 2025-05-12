@@ -5,7 +5,6 @@
 //  xdr/curr/Stellar-contract-meta.x
 //  xdr/curr/Stellar-contract-spec.x
 //  xdr/curr/Stellar-contract.x
-//  xdr/curr/Stellar-exporter.x
 //  xdr/curr/Stellar-internal.x
 //  xdr/curr/Stellar-ledger-entries.x
 //  xdr/curr/Stellar-ledger.x
@@ -16,14 +15,14 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/curr/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "880f56f0a367f8f0e1b155a8f755fe4a9f909bdd22b0d4615aabc75a81ecff7d",
+        "70f69edb53cfa7c388c0f91b1b6b6b3889cbe1f5765326d618e1ea64d253069f",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -35,15 +34,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "7bd048e1b008c274f667a4f9b8fcf5ae848e301aca0073cdc8b266ecd2c5f2f9",
+        "2e240e191f0b5ecedeecab75e7e936b3dc3dbe159aa2a9547efb15871d683c7c",
     ),
     (
         "xdr/curr/Stellar-contract.x",
-        "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982",
-    ),
-    (
-        "xdr/curr/Stellar-exporter.x",
-        "a00c83d02e8c8382e06f79a191f1fb5abd097a4bbcab8481c67467e3270e0529",
+        "f7cefcd1d38c3b2d56769bd0489221d31cc27101834e93d802f1fa6bb01ae653",
     ),
     (
         "xdr/curr/Stellar-internal.x",
@@ -55,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "6353fb11b577c17a8a96d4330f95a5d56815b846737654d59d8d6451f27e94fa",
+        "0a10b9194fb0431e8953a8b95b2411dcba660a8dae2907a55cd6fd3d523477eb",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
@@ -4923,64 +4918,6 @@ impl WriteXdr for EvictionIterator {
     }
 }
 
-/// ConfigSettingScpTiming is an XDR Struct defines as:
-///
-/// ```text
-/// struct ConfigSettingSCPTiming {
-///     uint32 ledgerTargetCloseTimeMilliseconds;
-///     uint32 nominationTimeoutInitialMilliseconds;
-///     uint32 nominationTimeoutIncrementMilliseconds;
-///     uint32 ballotTimeoutInitialMilliseconds;
-///     uint32 ballotTimeoutIncrementMilliseconds;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ConfigSettingScpTiming {
-    pub ledger_target_close_time_milliseconds: u32,
-    pub nomination_timeout_initial_milliseconds: u32,
-    pub nomination_timeout_increment_milliseconds: u32,
-    pub ballot_timeout_initial_milliseconds: u32,
-    pub ballot_timeout_increment_milliseconds: u32,
-}
-
-impl ReadXdr for ConfigSettingScpTiming {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                ledger_target_close_time_milliseconds: u32::read_xdr(r)?,
-                nomination_timeout_initial_milliseconds: u32::read_xdr(r)?,
-                nomination_timeout_increment_milliseconds: u32::read_xdr(r)?,
-                ballot_timeout_initial_milliseconds: u32::read_xdr(r)?,
-                ballot_timeout_increment_milliseconds: u32::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingScpTiming {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.ledger_target_close_time_milliseconds.write_xdr(w)?;
-            self.nomination_timeout_initial_milliseconds.write_xdr(w)?;
-            self.nomination_timeout_increment_milliseconds
-                .write_xdr(w)?;
-            self.ballot_timeout_initial_milliseconds.write_xdr(w)?;
-            self.ballot_timeout_increment_milliseconds.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// ContractCostCountLimit is an XDR Const defines as:
 ///
 /// ```text
@@ -5115,8 +5052,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12,
 ///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
 ///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
-///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15,
-///     CONFIG_SETTING_SCP_TIMING = 16
+///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15
 /// };
 /// ```
 ///
@@ -5147,11 +5083,10 @@ pub enum ConfigSettingId {
     EvictionIterator = 13,
     ContractParallelComputeV0 = 14,
     ContractLedgerCostExtV0 = 15,
-    ScpTiming = 16,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 17] = [
+    pub const VARIANTS: [ConfigSettingId; 16] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5168,9 +5103,8 @@ impl ConfigSettingId {
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
-        ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 17] = [
+    pub const VARIANTS_STR: [&'static str; 16] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5187,7 +5121,6 @@ impl ConfigSettingId {
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
-        "ScpTiming",
     ];
 
     #[must_use]
@@ -5209,12 +5142,11 @@ impl ConfigSettingId {
             Self::EvictionIterator => "EvictionIterator",
             Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
-            Self::ScpTiming => "ScpTiming",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 17] {
+    pub const fn variants() -> [ConfigSettingId; 16] {
         Self::VARIANTS
     }
 }
@@ -5261,7 +5193,6 @@ impl TryFrom<i32> for ConfigSettingId {
             13 => ConfigSettingId::EvictionIterator,
             14 => ConfigSettingId::ContractParallelComputeV0,
             15 => ConfigSettingId::ContractLedgerCostExtV0,
-            16 => ConfigSettingId::ScpTiming,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5334,8 +5265,6 @@ impl WriteXdr for ConfigSettingId {
 ///     ConfigSettingContractParallelComputeV0 contractParallelCompute;
 /// case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0:
 ///     ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt;
-/// case CONFIG_SETTING_SCP_TIMING:
-///     ConfigSettingSCPTiming contractSCPTiming;
 /// };
 /// ```
 ///
@@ -5366,11 +5295,10 @@ pub enum ConfigSettingEntry {
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
-    ScpTiming(ConfigSettingScpTiming),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 17] = [
+    pub const VARIANTS: [ConfigSettingId; 16] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5387,9 +5315,8 @@ impl ConfigSettingEntry {
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
-        ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 17] = [
+    pub const VARIANTS_STR: [&'static str; 16] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5406,7 +5333,6 @@ impl ConfigSettingEntry {
         "EvictionIterator",
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
-        "ScpTiming",
     ];
 
     #[must_use]
@@ -5428,7 +5354,6 @@ impl ConfigSettingEntry {
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
-            Self::ScpTiming(_) => "ScpTiming",
         }
     }
 
@@ -5456,12 +5381,11 @@ impl ConfigSettingEntry {
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
             Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
             Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
-            Self::ScpTiming(_) => ConfigSettingId::ScpTiming,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 17] {
+    pub const fn variants() -> [ConfigSettingId; 16] {
         Self::VARIANTS
     }
 }
@@ -5543,7 +5467,6 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(
                     ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
                 ),
-                ConfigSettingId::ScpTiming => Self::ScpTiming(ConfigSettingScpTiming::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -5575,7 +5498,6 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
                 Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
                 Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
-                Self::ScpTiming(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -7760,345 +7682,6 @@ impl WriteXdr for ScSpecFunctionV0 {
     }
 }
 
-/// ScSpecEventParamLocationV0 is an XDR Enum defines as:
-///
-/// ```text
-/// enum SCSpecEventParamLocationV0
-/// {
-///     SC_SPEC_EVENT_PARAM_LOCATION_DATA = 0,
-///     SC_SPEC_EVENT_PARAM_LOCATION_TOPIC_LIST = 1
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ScSpecEventParamLocationV0 {
-    Data = 0,
-    TopicList = 1,
-}
-
-impl ScSpecEventParamLocationV0 {
-    pub const VARIANTS: [ScSpecEventParamLocationV0; 2] = [
-        ScSpecEventParamLocationV0::Data,
-        ScSpecEventParamLocationV0::TopicList,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Data", "TopicList"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Data => "Data",
-            Self::TopicList => "TopicList",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScSpecEventParamLocationV0; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScSpecEventParamLocationV0 {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScSpecEventParamLocationV0> for ScSpecEventParamLocationV0 {
-    fn variants() -> slice::Iter<'static, ScSpecEventParamLocationV0> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ScSpecEventParamLocationV0 {}
-
-impl fmt::Display for ScSpecEventParamLocationV0 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScSpecEventParamLocationV0 {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ScSpecEventParamLocationV0::Data,
-            1 => ScSpecEventParamLocationV0::TopicList,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScSpecEventParamLocationV0> for i32 {
-    #[must_use]
-    fn from(e: ScSpecEventParamLocationV0) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScSpecEventParamLocationV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ScSpecEventParamLocationV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ScSpecEventParamV0 is an XDR Struct defines as:
-///
-/// ```text
-/// struct SCSpecEventParamV0
-/// {
-///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string name<30>;
-///     SCSpecTypeDef type;
-///     SCSpecEventParamLocationV0 location;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecEventParamV0 {
-    pub doc: StringM<1024>,
-    pub name: StringM<30>,
-    pub type_: ScSpecTypeDef,
-    pub location: ScSpecEventParamLocationV0,
-}
-
-impl ReadXdr for ScSpecEventParamV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
-                name: StringM::<30>::read_xdr(r)?,
-                type_: ScSpecTypeDef::read_xdr(r)?,
-                location: ScSpecEventParamLocationV0::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ScSpecEventParamV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
-            self.location.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ScSpecEventDataFormat is an XDR Enum defines as:
-///
-/// ```text
-/// enum SCSpecEventDataFormat
-/// {
-///     SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE = 0,
-///     SC_SPEC_EVENT_DATA_FORMAT_VEC = 1,
-///     SC_SPEC_EVENT_DATA_FORMAT_MAP = 2
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ScSpecEventDataFormat {
-    SingleValue = 0,
-    Vec = 1,
-    Map = 2,
-}
-
-impl ScSpecEventDataFormat {
-    pub const VARIANTS: [ScSpecEventDataFormat; 3] = [
-        ScSpecEventDataFormat::SingleValue,
-        ScSpecEventDataFormat::Vec,
-        ScSpecEventDataFormat::Map,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValue", "Vec", "Map"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SingleValue => "SingleValue",
-            Self::Vec => "Vec",
-            Self::Map => "Map",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScSpecEventDataFormat; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScSpecEventDataFormat {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScSpecEventDataFormat> for ScSpecEventDataFormat {
-    fn variants() -> slice::Iter<'static, ScSpecEventDataFormat> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ScSpecEventDataFormat {}
-
-impl fmt::Display for ScSpecEventDataFormat {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScSpecEventDataFormat {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ScSpecEventDataFormat::SingleValue,
-            1 => ScSpecEventDataFormat::Vec,
-            2 => ScSpecEventDataFormat::Map,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScSpecEventDataFormat> for i32 {
-    #[must_use]
-    fn from(e: ScSpecEventDataFormat) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScSpecEventDataFormat {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ScSpecEventDataFormat {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ScSpecEventV0 is an XDR Struct defines as:
-///
-/// ```text
-/// struct SCSpecEventV0
-/// {
-///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string lib<80>;
-///     SCSymbol name;
-///     SCSymbol prefixTopics<2>;
-///     SCSpecEventParamV0 params<50>;
-///     SCSpecEventDataFormat dataFormat;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecEventV0 {
-    pub doc: StringM<1024>,
-    pub lib: StringM<80>,
-    pub name: ScSymbol,
-    pub prefix_topics: VecM<ScSymbol, 2>,
-    pub params: VecM<ScSpecEventParamV0, 50>,
-    pub data_format: ScSpecEventDataFormat,
-}
-
-impl ReadXdr for ScSpecEventV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
-                lib: StringM::<80>::read_xdr(r)?,
-                name: ScSymbol::read_xdr(r)?,
-                prefix_topics: VecM::<ScSymbol, 2>::read_xdr(r)?,
-                params: VecM::<ScSpecEventParamV0, 50>::read_xdr(r)?,
-                data_format: ScSpecEventDataFormat::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ScSpecEventV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.prefix_topics.write_xdr(w)?;
-            self.params.write_xdr(w)?;
-            self.data_format.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// ScSpecEntryKind is an XDR Enum defines as:
 ///
 /// ```text
@@ -8108,8 +7691,7 @@ impl WriteXdr for ScSpecEventV0 {
 ///     SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,
 ///     SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
 ///     SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,
-///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,
-///     SC_SPEC_ENTRY_EVENT_V0 = 5
+///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4
 /// };
 /// ```
 ///
@@ -8129,25 +7711,22 @@ pub enum ScSpecEntryKind {
     UdtUnionV0 = 2,
     UdtEnumV0 = 3,
     UdtErrorEnumV0 = 4,
-    EventV0 = 5,
 }
 
 impl ScSpecEntryKind {
-    pub const VARIANTS: [ScSpecEntryKind; 6] = [
+    pub const VARIANTS: [ScSpecEntryKind; 5] = [
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
-        ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 5] = [
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
         "UdtEnumV0",
         "UdtErrorEnumV0",
-        "EventV0",
     ];
 
     #[must_use]
@@ -8158,12 +7737,11 @@ impl ScSpecEntryKind {
             Self::UdtUnionV0 => "UdtUnionV0",
             Self::UdtEnumV0 => "UdtEnumV0",
             Self::UdtErrorEnumV0 => "UdtErrorEnumV0",
-            Self::EventV0 => "EventV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 6] {
+    pub const fn variants() -> [ScSpecEntryKind; 5] {
         Self::VARIANTS
     }
 }
@@ -8199,7 +7777,6 @@ impl TryFrom<i32> for ScSpecEntryKind {
             2 => ScSpecEntryKind::UdtUnionV0,
             3 => ScSpecEntryKind::UdtEnumV0,
             4 => ScSpecEntryKind::UdtErrorEnumV0,
-            5 => ScSpecEntryKind::EventV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8250,8 +7827,6 @@ impl WriteXdr for ScSpecEntryKind {
 ///     SCSpecUDTEnumV0 udtEnumV0;
 /// case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
 ///     SCSpecUDTErrorEnumV0 udtErrorEnumV0;
-/// case SC_SPEC_ENTRY_EVENT_V0:
-///     SCSpecEventV0 eventV0;
 /// };
 /// ```
 ///
@@ -8271,25 +7846,22 @@ pub enum ScSpecEntry {
     UdtUnionV0(ScSpecUdtUnionV0),
     UdtEnumV0(ScSpecUdtEnumV0),
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
-    EventV0(ScSpecEventV0),
 }
 
 impl ScSpecEntry {
-    pub const VARIANTS: [ScSpecEntryKind; 6] = [
+    pub const VARIANTS: [ScSpecEntryKind; 5] = [
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
-        ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 5] = [
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
         "UdtEnumV0",
         "UdtErrorEnumV0",
-        "EventV0",
     ];
 
     #[must_use]
@@ -8300,7 +7872,6 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => "UdtUnionV0",
             Self::UdtEnumV0(_) => "UdtEnumV0",
             Self::UdtErrorEnumV0(_) => "UdtErrorEnumV0",
-            Self::EventV0(_) => "EventV0",
         }
     }
 
@@ -8313,12 +7884,11 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
             Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
             Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
-            Self::EventV0(_) => ScSpecEntryKind::EventV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 6] {
+    pub const fn variants() -> [ScSpecEntryKind; 5] {
         Self::VARIANTS
     }
 }
@@ -8359,7 +7929,6 @@ impl ReadXdr for ScSpecEntry {
                 ScSpecEntryKind::UdtErrorEnumV0 => {
                     Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
                 }
-                ScSpecEntryKind::EventV0 => Self::EventV0(ScSpecEventV0::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -8380,7 +7949,6 @@ impl WriteXdr for ScSpecEntry {
                 Self::UdtUnionV0(v) => v.write_xdr(w)?,
                 Self::UdtEnumV0(v) => v.write_xdr(w)?,
                 Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
-                Self::EventV0(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -10696,12 +10264,13 @@ impl WriteXdr for ScContractInstance {
 ///
 /// // Special SCVals reserved for system-constructed contract-data
 /// // ledger keys, not generally usable elsewhere.
-/// case SCV_CONTRACT_INSTANCE:
-///     SCContractInstance instance;
 /// case SCV_LEDGER_KEY_CONTRACT_INSTANCE:
 ///     void;
 /// case SCV_LEDGER_KEY_NONCE:
 ///     SCNonceKey nonce_key;
+///
+/// case SCV_CONTRACT_INSTANCE:
+///     SCContractInstance instance;
 /// };
 /// ```
 ///
@@ -10735,9 +10304,9 @@ pub enum ScVal {
     Vec(Option<ScVec>),
     Map(Option<ScMap>),
     Address(ScAddress),
-    ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
+    ContractInstance(ScContractInstance),
 }
 
 impl ScVal {
@@ -10761,9 +10330,9 @@ impl ScVal {
         ScValType::Vec,
         ScValType::Map,
         ScValType::Address,
-        ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
+        ScValType::ContractInstance,
     ];
     pub const VARIANTS_STR: [&'static str; 22] = [
         "Bool",
@@ -10785,9 +10354,9 @@ impl ScVal {
         "Vec",
         "Map",
         "Address",
-        "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
+        "ContractInstance",
     ];
 
     #[must_use]
@@ -10812,9 +10381,9 @@ impl ScVal {
             Self::Vec(_) => "Vec",
             Self::Map(_) => "Map",
             Self::Address(_) => "Address",
-            Self::ContractInstance(_) => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
+            Self::ContractInstance(_) => "ContractInstance",
         }
     }
 
@@ -10841,9 +10410,9 @@ impl ScVal {
             Self::Vec(_) => ScValType::Vec,
             Self::Map(_) => ScValType::Map,
             Self::Address(_) => ScValType::Address,
-            Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
+            Self::ContractInstance(_) => ScValType::ContractInstance,
         }
     }
 
@@ -10901,11 +10470,11 @@ impl ReadXdr for ScVal {
                 ScValType::Vec => Self::Vec(Option::<ScVec>::read_xdr(r)?),
                 ScValType::Map => Self::Map(Option::<ScMap>::read_xdr(r)?),
                 ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
+                ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
+                ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
                 ScValType::ContractInstance => {
                     Self::ContractInstance(ScContractInstance::read_xdr(r)?)
                 }
-                ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
-                ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -10940,9 +10509,9 @@ impl WriteXdr for ScVal {
                 Self::Vec(v) => v.write_xdr(w)?,
                 Self::Map(v) => v.write_xdr(w)?,
                 Self::Address(v) => v.write_xdr(w)?,
-                Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
+                Self::ContractInstance(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -10990,61 +10559,6 @@ impl WriteXdr for ScMapEntry {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// LedgerCloseMetaBatch is an XDR Struct defines as:
-///
-/// ```text
-/// struct LedgerCloseMetaBatch
-/// {
-///     // starting ledger sequence number in the batch
-///     uint32 startSequence;
-///
-///     // ending ledger sequence number in the batch
-///     uint32 endSequence;
-///
-///     // Ledger close meta for each ledger within the batch
-///     LedgerCloseMeta ledgerCloseMetas<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct LedgerCloseMetaBatch {
-    pub start_sequence: u32,
-    pub end_sequence: u32,
-    pub ledger_close_metas: VecM<LedgerCloseMeta>,
-}
-
-impl ReadXdr for LedgerCloseMetaBatch {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                start_sequence: u32::read_xdr(r)?,
-                end_sequence: u32::read_xdr(r)?,
-                ledger_close_metas: VecM::<LedgerCloseMeta>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for LedgerCloseMetaBatch {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.start_sequence.write_xdr(w)?;
-            self.end_sequence.write_xdr(w)?;
-            self.ledger_close_metas.write_xdr(w)?;
             Ok(())
         })
     }
@@ -23765,66 +23279,6 @@ impl WriteXdr for TransactionResultMeta {
     }
 }
 
-/// TransactionResultMetaV1 is an XDR Struct defines as:
-///
-/// ```text
-/// struct TransactionResultMetaV1
-/// {
-///     ExtensionPoint ext;
-///
-///     TransactionResultPair result;
-///     LedgerEntryChanges feeProcessing;
-///     TransactionMeta txApplyProcessing;
-///
-///     LedgerEntryChanges postTxApplyFeeProcessing;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct TransactionResultMetaV1 {
-    pub ext: ExtensionPoint,
-    pub result: TransactionResultPair,
-    pub fee_processing: LedgerEntryChanges,
-    pub tx_apply_processing: TransactionMeta,
-    pub post_tx_apply_fee_processing: LedgerEntryChanges,
-}
-
-impl ReadXdr for TransactionResultMetaV1 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                ext: ExtensionPoint::read_xdr(r)?,
-                result: TransactionResultPair::read_xdr(r)?,
-                fee_processing: LedgerEntryChanges::read_xdr(r)?,
-                tx_apply_processing: TransactionMeta::read_xdr(r)?,
-                post_tx_apply_fee_processing: LedgerEntryChanges::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for TransactionResultMetaV1 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.result.write_xdr(w)?;
-            self.fee_processing.write_xdr(w)?;
-            self.tx_apply_processing.write_xdr(w)?;
-            self.post_tx_apply_fee_processing.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// UpgradeEntryMeta is an XDR Struct defines as:
 ///
 /// ```text
@@ -24183,100 +23637,6 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
-/// LedgerCloseMetaV2 is an XDR Struct defines as:
-///
-/// ```text
-/// struct LedgerCloseMetaV2
-/// {
-///     LedgerCloseMetaExt ext;
-///
-///     LedgerHeaderHistoryEntry ledgerHeader;
-///
-///     GeneralizedTransactionSet txSet;
-///
-///     // NB: transactions are sorted in apply order here
-///     // fees for all transactions are processed first
-///     // followed by applying transactions
-///     TransactionResultMetaV1 txProcessing<>;
-///
-///     // upgrades are applied last
-///     UpgradeEntryMeta upgradesProcessing<>;
-///
-///     // other misc information attached to the ledger close
-///     SCPHistoryEntry scpInfo<>;
-///
-///     // Size in bytes of BucketList, to support downstream
-///     // systems calculating storage fees correctly.
-///     uint64 totalByteSizeOfBucketList;
-///
-///     // Temp keys and all TTL keys that are being evicted at this ledger.
-///     // Note that this can contain TTL keys for both persistent and temporary
-///     // entries, but the name is kept for legacy reasons.
-///     LedgerKey evictedTemporaryLedgerKeys<>;
-///
-///     // Archived persistent ledger entries that are being
-///     // evicted at this ledger.
-///     LedgerEntry evictedPersistentLedgerEntries<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct LedgerCloseMetaV2 {
-    pub ext: LedgerCloseMetaExt,
-    pub ledger_header: LedgerHeaderHistoryEntry,
-    pub tx_set: GeneralizedTransactionSet,
-    pub tx_processing: VecM<TransactionResultMetaV1>,
-    pub upgrades_processing: VecM<UpgradeEntryMeta>,
-    pub scp_info: VecM<ScpHistoryEntry>,
-    pub total_byte_size_of_bucket_list: u64,
-    pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
-    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
-}
-
-impl ReadXdr for LedgerCloseMetaV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                ext: LedgerCloseMetaExt::read_xdr(r)?,
-                ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
-                tx_set: GeneralizedTransactionSet::read_xdr(r)?,
-                tx_processing: VecM::<TransactionResultMetaV1>::read_xdr(r)?,
-                upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
-                scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
-                total_byte_size_of_bucket_list: u64::read_xdr(r)?,
-                evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
-                evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for LedgerCloseMetaV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.ledger_header.write_xdr(w)?;
-            self.tx_set.write_xdr(w)?;
-            self.tx_processing.write_xdr(w)?;
-            self.upgrades_processing.write_xdr(w)?;
-            self.scp_info.write_xdr(w)?;
-            self.total_byte_size_of_bucket_list.write_xdr(w)?;
-            self.evicted_temporary_ledger_keys.write_xdr(w)?;
-            self.evicted_persistent_ledger_entries.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// LedgerCloseMeta is an XDR Union defines as:
 ///
 /// ```text
@@ -24286,8 +23646,6 @@ impl WriteXdr for LedgerCloseMetaV2 {
 ///     LedgerCloseMetaV0 v0;
 /// case 1:
 ///     LedgerCloseMetaV1 v1;
-/// case 2:
-///     LedgerCloseMetaV2 v2;
 /// };
 /// ```
 ///
@@ -24304,19 +23662,17 @@ impl WriteXdr for LedgerCloseMetaV2 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
-    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 3] = [0, 1, 2];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
-            Self::V2(_) => "V2",
         }
     }
 
@@ -24326,12 +23682,11 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
-            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -24367,7 +23722,6 @@ impl ReadXdr for LedgerCloseMeta {
             let v = match dv {
                 0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
                 1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
-                2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -24385,7 +23739,6 @@ impl WriteXdr for LedgerCloseMeta {
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -46873,7 +46226,6 @@ pub enum TypeVariant {
     ContractCostParamEntry,
     StateArchivalSettings,
     EvictionIterator,
-    ConfigSettingScpTiming,
     ContractCostParams,
     ConfigSettingId,
     ConfigSettingEntry,
@@ -46905,10 +46257,6 @@ pub enum TypeVariant {
     ScSpecUdtErrorEnumV0,
     ScSpecFunctionInputV0,
     ScSpecFunctionV0,
-    ScSpecEventParamLocationV0,
-    ScSpecEventParamV0,
-    ScSpecEventDataFormat,
-    ScSpecEventV0,
     ScSpecEntryKind,
     ScSpecEntry,
     ScValType,
@@ -46933,7 +46281,6 @@ pub enum TypeVariant {
     ScContractInstance,
     ScVal,
     ScMapEntry,
-    LedgerCloseMetaBatch,
     StoredTransactionSet,
     StoredDebugTransactionSet,
     PersistedScpStateV0,
@@ -47082,13 +46429,11 @@ pub enum TypeVariant {
     InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
     TransactionResultMeta,
-    TransactionResultMetaV1,
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaExtV1,
     LedgerCloseMetaExt,
     LedgerCloseMetaV1,
-    LedgerCloseMetaV2,
     LedgerCloseMeta,
     ErrorCode,
     SError,
@@ -47316,7 +46661,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: [TypeVariant; 455] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47340,7 +46685,6 @@ impl TypeVariant {
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
-        TypeVariant::ConfigSettingScpTiming,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -47372,10 +46716,6 @@ impl TypeVariant {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
-        TypeVariant::ScSpecEventParamLocationV0,
-        TypeVariant::ScSpecEventParamV0,
-        TypeVariant::ScSpecEventDataFormat,
-        TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScValType,
@@ -47400,7 +46740,6 @@ impl TypeVariant {
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
-        TypeVariant::LedgerCloseMetaBatch,
         TypeVariant::StoredTransactionSet,
         TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -47549,13 +46888,11 @@ impl TypeVariant {
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
-        TypeVariant::TransactionResultMetaV1,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
-        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -47781,7 +47118,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: [&'static str; 455] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47805,7 +47142,6 @@ impl TypeVariant {
         "ContractCostParamEntry",
         "StateArchivalSettings",
         "EvictionIterator",
-        "ConfigSettingScpTiming",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -47837,10 +47173,6 @@ impl TypeVariant {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
-        "ScSpecEventParamLocationV0",
-        "ScSpecEventParamV0",
-        "ScSpecEventDataFormat",
-        "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
         "ScValType",
@@ -47865,7 +47197,6 @@ impl TypeVariant {
         "ScContractInstance",
         "ScVal",
         "ScMapEntry",
-        "LedgerCloseMetaBatch",
         "StoredTransactionSet",
         "StoredDebugTransactionSet",
         "PersistedScpStateV0",
@@ -48014,13 +47345,11 @@ impl TypeVariant {
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
-        "TransactionResultMetaV1",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
-        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -48276,7 +47605,6 @@ impl TypeVariant {
             Self::ContractCostParamEntry => "ContractCostParamEntry",
             Self::StateArchivalSettings => "StateArchivalSettings",
             Self::EvictionIterator => "EvictionIterator",
-            Self::ConfigSettingScpTiming => "ConfigSettingScpTiming",
             Self::ContractCostParams => "ContractCostParams",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
@@ -48308,10 +47636,6 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
-            Self::ScSpecEventParamLocationV0 => "ScSpecEventParamLocationV0",
-            Self::ScSpecEventParamV0 => "ScSpecEventParamV0",
-            Self::ScSpecEventDataFormat => "ScSpecEventDataFormat",
-            Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
             Self::ScValType => "ScValType",
@@ -48336,7 +47660,6 @@ impl TypeVariant {
             Self::ScContractInstance => "ScContractInstance",
             Self::ScVal => "ScVal",
             Self::ScMapEntry => "ScMapEntry",
-            Self::LedgerCloseMetaBatch => "LedgerCloseMetaBatch",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::StoredDebugTransactionSet => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
@@ -48487,13 +47810,11 @@ impl TypeVariant {
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
-            Self::TransactionResultMetaV1 => "TransactionResultMetaV1",
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1 => "LedgerCloseMetaExtV1",
             Self::LedgerCloseMetaExt => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
-            Self::LedgerCloseMetaV2 => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
@@ -48733,7 +48054,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> [TypeVariant; 455] {
         Self::VARIANTS
     }
 
@@ -48781,7 +48102,6 @@ impl TypeVariant {
             Self::ContractCostParamEntry => gen.into_root_schema_for::<ContractCostParamEntry>(),
             Self::StateArchivalSettings => gen.into_root_schema_for::<StateArchivalSettings>(),
             Self::EvictionIterator => gen.into_root_schema_for::<EvictionIterator>(),
-            Self::ConfigSettingScpTiming => gen.into_root_schema_for::<ConfigSettingScpTiming>(),
             Self::ContractCostParams => gen.into_root_schema_for::<ContractCostParams>(),
             Self::ConfigSettingId => gen.into_root_schema_for::<ConfigSettingId>(),
             Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
@@ -48823,12 +48143,6 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumV0 => gen.into_root_schema_for::<ScSpecUdtErrorEnumV0>(),
             Self::ScSpecFunctionInputV0 => gen.into_root_schema_for::<ScSpecFunctionInputV0>(),
             Self::ScSpecFunctionV0 => gen.into_root_schema_for::<ScSpecFunctionV0>(),
-            Self::ScSpecEventParamLocationV0 => {
-                gen.into_root_schema_for::<ScSpecEventParamLocationV0>()
-            }
-            Self::ScSpecEventParamV0 => gen.into_root_schema_for::<ScSpecEventParamV0>(),
-            Self::ScSpecEventDataFormat => gen.into_root_schema_for::<ScSpecEventDataFormat>(),
-            Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
             Self::ScValType => gen.into_root_schema_for::<ScValType>(),
@@ -48853,7 +48167,6 @@ impl TypeVariant {
             Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
             Self::ScVal => gen.into_root_schema_for::<ScVal>(),
             Self::ScMapEntry => gen.into_root_schema_for::<ScMapEntry>(),
-            Self::LedgerCloseMetaBatch => gen.into_root_schema_for::<LedgerCloseMetaBatch>(),
             Self::StoredTransactionSet => gen.into_root_schema_for::<StoredTransactionSet>(),
             Self::StoredDebugTransactionSet => {
                 gen.into_root_schema_for::<StoredDebugTransactionSet>()
@@ -49056,13 +48369,11 @@ impl TypeVariant {
             }
             Self::TransactionMeta => gen.into_root_schema_for::<TransactionMeta>(),
             Self::TransactionResultMeta => gen.into_root_schema_for::<TransactionResultMeta>(),
-            Self::TransactionResultMetaV1 => gen.into_root_schema_for::<TransactionResultMetaV1>(),
             Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
             Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
             Self::LedgerCloseMetaExtV1 => gen.into_root_schema_for::<LedgerCloseMetaExtV1>(),
             Self::LedgerCloseMetaExt => gen.into_root_schema_for::<LedgerCloseMetaExt>(),
             Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
-            Self::LedgerCloseMetaV2 => gen.into_root_schema_for::<LedgerCloseMetaV2>(),
             Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
             Self::ErrorCode => gen.into_root_schema_for::<ErrorCode>(),
             Self::SError => gen.into_root_schema_for::<SError>(),
@@ -49474,7 +48785,6 @@ impl core::str::FromStr for TypeVariant {
             "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
             "StateArchivalSettings" => Ok(Self::StateArchivalSettings),
             "EvictionIterator" => Ok(Self::EvictionIterator),
-            "ConfigSettingScpTiming" => Ok(Self::ConfigSettingScpTiming),
             "ContractCostParams" => Ok(Self::ContractCostParams),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
@@ -49506,10 +48816,6 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
             "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
             "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
-            "ScSpecEventParamLocationV0" => Ok(Self::ScSpecEventParamLocationV0),
-            "ScSpecEventParamV0" => Ok(Self::ScSpecEventParamV0),
-            "ScSpecEventDataFormat" => Ok(Self::ScSpecEventDataFormat),
-            "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
             "ScValType" => Ok(Self::ScValType),
@@ -49534,7 +48840,6 @@ impl core::str::FromStr for TypeVariant {
             "ScContractInstance" => Ok(Self::ScContractInstance),
             "ScVal" => Ok(Self::ScVal),
             "ScMapEntry" => Ok(Self::ScMapEntry),
-            "LedgerCloseMetaBatch" => Ok(Self::LedgerCloseMetaBatch),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "StoredDebugTransactionSet" => Ok(Self::StoredDebugTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
@@ -49685,13 +48990,11 @@ impl core::str::FromStr for TypeVariant {
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
-            "TransactionResultMetaV1" => Ok(Self::TransactionResultMetaV1),
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaExtV1" => Ok(Self::LedgerCloseMetaExtV1),
             "LedgerCloseMetaExt" => Ok(Self::LedgerCloseMetaExt),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
-            "LedgerCloseMetaV2" => Ok(Self::LedgerCloseMetaV2),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
@@ -49973,7 +49276,6 @@ pub enum Type {
     ContractCostParamEntry(Box<ContractCostParamEntry>),
     StateArchivalSettings(Box<StateArchivalSettings>),
     EvictionIterator(Box<EvictionIterator>),
-    ConfigSettingScpTiming(Box<ConfigSettingScpTiming>),
     ContractCostParams(Box<ContractCostParams>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
@@ -50005,10 +49307,6 @@ pub enum Type {
     ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
     ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
     ScSpecFunctionV0(Box<ScSpecFunctionV0>),
-    ScSpecEventParamLocationV0(Box<ScSpecEventParamLocationV0>),
-    ScSpecEventParamV0(Box<ScSpecEventParamV0>),
-    ScSpecEventDataFormat(Box<ScSpecEventDataFormat>),
-    ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
     ScValType(Box<ScValType>),
@@ -50033,7 +49331,6 @@ pub enum Type {
     ScContractInstance(Box<ScContractInstance>),
     ScVal(Box<ScVal>),
     ScMapEntry(Box<ScMapEntry>),
-    LedgerCloseMetaBatch(Box<LedgerCloseMetaBatch>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     StoredDebugTransactionSet(Box<StoredDebugTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
@@ -50182,13 +49479,11 @@ pub enum Type {
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
-    TransactionResultMetaV1(Box<TransactionResultMetaV1>),
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaExtV1(Box<LedgerCloseMetaExtV1>),
     LedgerCloseMetaExt(Box<LedgerCloseMetaExt>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
-    LedgerCloseMetaV2(Box<LedgerCloseMetaV2>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
@@ -50416,7 +49711,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: [TypeVariant; 455] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50440,7 +49735,6 @@ impl Type {
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
-        TypeVariant::ConfigSettingScpTiming,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -50472,10 +49766,6 @@ impl Type {
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
         TypeVariant::ScSpecFunctionV0,
-        TypeVariant::ScSpecEventParamLocationV0,
-        TypeVariant::ScSpecEventParamV0,
-        TypeVariant::ScSpecEventDataFormat,
-        TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScValType,
@@ -50500,7 +49790,6 @@ impl Type {
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
-        TypeVariant::LedgerCloseMetaBatch,
         TypeVariant::StoredTransactionSet,
         TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -50649,13 +49938,11 @@ impl Type {
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
-        TypeVariant::TransactionResultMetaV1,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
-        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -50881,7 +50168,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: [&'static str; 455] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50905,7 +50192,6 @@ impl Type {
         "ContractCostParamEntry",
         "StateArchivalSettings",
         "EvictionIterator",
-        "ConfigSettingScpTiming",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -50937,10 +50223,6 @@ impl Type {
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
         "ScSpecFunctionV0",
-        "ScSpecEventParamLocationV0",
-        "ScSpecEventParamV0",
-        "ScSpecEventDataFormat",
-        "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
         "ScValType",
@@ -50965,7 +50247,6 @@ impl Type {
         "ScContractInstance",
         "ScVal",
         "ScMapEntry",
-        "LedgerCloseMetaBatch",
         "StoredTransactionSet",
         "StoredDebugTransactionSet",
         "PersistedScpStateV0",
@@ -51114,13 +50395,11 @@ impl Type {
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
-        "TransactionResultMetaV1",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
-        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -51454,11 +50733,6 @@ impl Type {
                     EvictionIterator::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ConfigSettingScpTiming => r.with_limited_depth(|r| {
-                Ok(Self::ConfigSettingScpTiming(Box::new(
-                    ConfigSettingScpTiming::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ContractCostParams => r.with_limited_depth(|r| {
                 Ok(Self::ContractCostParams(Box::new(
                     ContractCostParams::read_xdr(r)?,
@@ -51594,24 +50868,6 @@ impl Type {
                     ScSpecFunctionV0::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ScSpecEventParamLocationV0 => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventParamLocationV0(Box::new(
-                    ScSpecEventParamLocationV0::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ScSpecEventParamV0 => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventParamV0(Box::new(
-                    ScSpecEventParamV0::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ScSpecEventDataFormat => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventDataFormat(Box::new(
-                    ScSpecEventDataFormat::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ScSpecEventV0 => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecEventV0(Box::new(ScSpecEventV0::read_xdr(r)?)))
-            }),
             TypeVariant::ScSpecEntryKind => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::read_xdr(
                     r,
@@ -51694,11 +50950,6 @@ impl Type {
             TypeVariant::ScMapEntry => {
                 r.with_limited_depth(|r| Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))))
             }
-            TypeVariant::LedgerCloseMetaBatch => r.with_limited_depth(|r| {
-                Ok(Self::LedgerCloseMetaBatch(Box::new(
-                    LedgerCloseMetaBatch::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::StoredTransactionSet => r.with_limited_depth(|r| {
                 Ok(Self::StoredTransactionSet(Box::new(
                     StoredTransactionSet::read_xdr(r)?,
@@ -52345,11 +51596,6 @@ impl Type {
                     TransactionResultMeta::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::TransactionResultMetaV1 => r.with_limited_depth(|r| {
-                Ok(Self::TransactionResultMetaV1(Box::new(
-                    TransactionResultMetaV1::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::UpgradeEntryMeta => r.with_limited_depth(|r| {
                 Ok(Self::UpgradeEntryMeta(Box::new(
                     UpgradeEntryMeta::read_xdr(r)?,
@@ -52373,11 +51619,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => r.with_limited_depth(|r| {
                 Ok(Self::LedgerCloseMetaV1(Box::new(
                     LedgerCloseMetaV1::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::LedgerCloseMetaV2 => r.with_limited_depth(|r| {
-                Ok(Self::LedgerCloseMetaV2(Box::new(
-                    LedgerCloseMetaV2::read_xdr(r)?,
                 )))
             }),
             TypeVariant::LedgerCloseMeta => r.with_limited_depth(|r| {
@@ -53528,10 +52769,6 @@ impl Type {
                 ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingScpTiming => Box::new(
-                ReadXdrIter::<_, ConfigSettingScpTiming>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
-            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
@@ -53659,22 +52896,6 @@ impl Type {
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
-            TypeVariant::ScSpecEventParamLocationV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventParamLocationV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventParamLocationV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventParamV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventParamV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventParamV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventDataFormat => Box::new(
-                ReadXdrIter::<_, ScSpecEventDataFormat>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t)))),
-            ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
@@ -53770,10 +52991,6 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, ScMapEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaBatch => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaBatch>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.limits.clone())
@@ -54391,10 +53608,6 @@ impl Type {
                 ReadXdrIter::<_, TransactionResultMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
-            TypeVariant::TransactionResultMetaV1 => Box::new(
-                ReadXdrIter::<_, TransactionResultMetaV1>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TransactionResultMetaV1(Box::new(t)))),
-            ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
@@ -54414,10 +53627,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV2>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.limits.clone())
@@ -55541,13 +54750,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t.0)))),
             ),
-            TypeVariant::ConfigSettingScpTiming => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingScpTiming>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t.0)))),
-            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t.0)))),
@@ -55690,25 +54892,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
             ),
-            TypeVariant::ScSpecEventParamLocationV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventParamLocationV0>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ScSpecEventParamLocationV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSpecEventParamV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventParamV0>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventParamV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSpecEventDataFormat => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventDataFormat>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSpecEventV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEventV0>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t.0)))),
-            ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t.0)))),
@@ -55807,10 +54990,6 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, Frame<ScMapEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::LedgerCloseMetaBatch => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaBatch>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t.0)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.limits.clone())
@@ -56521,13 +55700,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
             ),
-            TypeVariant::TransactionResultMetaV1 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultMetaV1>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::TransactionResultMetaV1(Box::new(t.0)))),
-            ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t.0)))),
@@ -56547,10 +55719,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV2>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.limits.clone())
@@ -57824,10 +56992,6 @@ impl Type {
                 ReadXdrIter::<_, EvictionIterator>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingScpTiming => Box::new(
-                ReadXdrIter::<_, ConfigSettingScpTiming>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
-            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
@@ -57952,22 +57116,6 @@ impl Type {
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
-            TypeVariant::ScSpecEventParamLocationV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventParamLocationV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventParamLocationV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventParamV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventParamV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventParamV0(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventDataFormat => Box::new(
-                ReadXdrIter::<_, ScSpecEventDataFormat>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventDataFormat(Box::new(t)))),
-            ),
-            TypeVariant::ScSpecEventV0 => Box::new(
-                ReadXdrIter::<_, ScSpecEventV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSpecEventV0(Box::new(t)))),
-            ),
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
@@ -58063,10 +57211,6 @@ impl Type {
             TypeVariant::ScMapEntry => Box::new(
                 ReadXdrIter::<_, ScMapEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaBatch => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaBatch>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.limits.clone())
@@ -58663,10 +57807,6 @@ impl Type {
                 ReadXdrIter::<_, TransactionResultMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
-            TypeVariant::TransactionResultMetaV1 => Box::new(
-                ReadXdrIter::<_, TransactionResultMetaV1>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TransactionResultMetaV1(Box::new(t)))),
-            ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
@@ -58686,10 +57826,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV2>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.limits.clone())
@@ -59702,9 +58838,6 @@ impl Type {
             TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59792,18 +58925,6 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::ScSpecEventParamLocationV0 => Ok(Self::ScSpecEventParamLocationV0(
-                Box::new(serde_json::from_reader(r)?),
-            )),
-            TypeVariant::ScSpecEventParamV0 => Ok(Self::ScSpecEventParamV0(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ScSpecEventV0 => {
-                Ok(Self::ScSpecEventV0(Box::new(serde_json::from_reader(r)?)))
-            }
             TypeVariant::ScSpecEntryKind => {
                 Ok(Self::ScSpecEntryKind(Box::new(serde_json::from_reader(r)?)))
             }
@@ -59854,9 +58975,6 @@ impl Type {
             ))),
             TypeVariant::ScVal => Ok(Self::ScVal(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60265,9 +59383,6 @@ impl Type {
             TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::TransactionResultMetaV1 => Ok(Self::TransactionResultMetaV1(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60281,9 +59396,6 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::LedgerCloseMeta => {
@@ -60997,9 +60109,6 @@ impl Type {
             TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61095,18 +60204,6 @@ impl Type {
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ScSpecEventParamLocationV0 => Ok(Self::ScSpecEventParamLocationV0(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
-            TypeVariant::ScSpecEventParamV0 => Ok(Self::ScSpecEventParamV0(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScSpecEventV0 => Ok(Self::ScSpecEventV0(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61177,9 +60274,6 @@ impl Type {
                 r,
             )?))),
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
@@ -61640,9 +60734,6 @@ impl Type {
             TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::TransactionResultMetaV1 => Ok(Self::TransactionResultMetaV1(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61656,9 +60747,6 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
@@ -62417,7 +61505,6 @@ impl Type {
             Self::ContractCostParamEntry(ref v) => v.as_ref(),
             Self::StateArchivalSettings(ref v) => v.as_ref(),
             Self::EvictionIterator(ref v) => v.as_ref(),
-            Self::ConfigSettingScpTiming(ref v) => v.as_ref(),
             Self::ContractCostParams(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
@@ -62449,10 +61536,6 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionV0(ref v) => v.as_ref(),
-            Self::ScSpecEventParamLocationV0(ref v) => v.as_ref(),
-            Self::ScSpecEventParamV0(ref v) => v.as_ref(),
-            Self::ScSpecEventDataFormat(ref v) => v.as_ref(),
-            Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
             Self::ScValType(ref v) => v.as_ref(),
@@ -62477,7 +61560,6 @@ impl Type {
             Self::ScContractInstance(ref v) => v.as_ref(),
             Self::ScVal(ref v) => v.as_ref(),
             Self::ScMapEntry(ref v) => v.as_ref(),
-            Self::LedgerCloseMetaBatch(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::StoredDebugTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
@@ -62626,13 +61708,11 @@ impl Type {
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
-            Self::TransactionResultMetaV1(ref v) => v.as_ref(),
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExtV1(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExt(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
-            Self::LedgerCloseMetaV2(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
@@ -62893,7 +61973,6 @@ impl Type {
             Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
             Self::StateArchivalSettings(_) => "StateArchivalSettings",
             Self::EvictionIterator(_) => "EvictionIterator",
-            Self::ConfigSettingScpTiming(_) => "ConfigSettingScpTiming",
             Self::ContractCostParams(_) => "ContractCostParams",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
@@ -62925,10 +62004,6 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
             Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
-            Self::ScSpecEventParamLocationV0(_) => "ScSpecEventParamLocationV0",
-            Self::ScSpecEventParamV0(_) => "ScSpecEventParamV0",
-            Self::ScSpecEventDataFormat(_) => "ScSpecEventDataFormat",
-            Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
             Self::ScValType(_) => "ScValType",
@@ -62953,7 +62028,6 @@ impl Type {
             Self::ScContractInstance(_) => "ScContractInstance",
             Self::ScVal(_) => "ScVal",
             Self::ScMapEntry(_) => "ScMapEntry",
-            Self::LedgerCloseMetaBatch(_) => "LedgerCloseMetaBatch",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::StoredDebugTransactionSet(_) => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
@@ -63104,13 +62178,11 @@ impl Type {
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
-            Self::TransactionResultMetaV1(_) => "TransactionResultMetaV1",
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1(_) => "LedgerCloseMetaExtV1",
             Self::LedgerCloseMetaExt(_) => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
-            Self::LedgerCloseMetaV2(_) => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
@@ -63358,7 +62430,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> [TypeVariant; 455] {
         Self::VARIANTS
     }
 
@@ -63401,7 +62473,6 @@ impl Type {
             Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
             Self::StateArchivalSettings(_) => TypeVariant::StateArchivalSettings,
             Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
-            Self::ConfigSettingScpTiming(_) => TypeVariant::ConfigSettingScpTiming,
             Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
@@ -63433,10 +62504,6 @@ impl Type {
             Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
             Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
             Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
-            Self::ScSpecEventParamLocationV0(_) => TypeVariant::ScSpecEventParamLocationV0,
-            Self::ScSpecEventParamV0(_) => TypeVariant::ScSpecEventParamV0,
-            Self::ScSpecEventDataFormat(_) => TypeVariant::ScSpecEventDataFormat,
-            Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
             Self::ScValType(_) => TypeVariant::ScValType,
@@ -63461,7 +62528,6 @@ impl Type {
             Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
             Self::ScVal(_) => TypeVariant::ScVal,
             Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
-            Self::LedgerCloseMetaBatch(_) => TypeVariant::LedgerCloseMetaBatch,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::StoredDebugTransactionSet(_) => TypeVariant::StoredDebugTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
@@ -63624,13 +62690,11 @@ impl Type {
             }
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
             Self::TransactionResultMeta(_) => TypeVariant::TransactionResultMeta,
-            Self::TransactionResultMetaV1(_) => TypeVariant::TransactionResultMetaV1,
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaExtV1(_) => TypeVariant::LedgerCloseMetaExtV1,
             Self::LedgerCloseMetaExt(_) => TypeVariant::LedgerCloseMetaExt,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
-            Self::LedgerCloseMetaV2(_) => TypeVariant::LedgerCloseMetaV2,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,
@@ -63944,7 +63008,6 @@ impl WriteXdr for Type {
             Self::ContractCostParamEntry(v) => v.write_xdr(w),
             Self::StateArchivalSettings(v) => v.write_xdr(w),
             Self::EvictionIterator(v) => v.write_xdr(w),
-            Self::ConfigSettingScpTiming(v) => v.write_xdr(w),
             Self::ContractCostParams(v) => v.write_xdr(w),
             Self::ConfigSettingId(v) => v.write_xdr(w),
             Self::ConfigSettingEntry(v) => v.write_xdr(w),
@@ -63976,10 +63039,6 @@ impl WriteXdr for Type {
             Self::ScSpecUdtErrorEnumV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionInputV0(v) => v.write_xdr(w),
             Self::ScSpecFunctionV0(v) => v.write_xdr(w),
-            Self::ScSpecEventParamLocationV0(v) => v.write_xdr(w),
-            Self::ScSpecEventParamV0(v) => v.write_xdr(w),
-            Self::ScSpecEventDataFormat(v) => v.write_xdr(w),
-            Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),
             Self::ScValType(v) => v.write_xdr(w),
@@ -64004,7 +63063,6 @@ impl WriteXdr for Type {
             Self::ScContractInstance(v) => v.write_xdr(w),
             Self::ScVal(v) => v.write_xdr(w),
             Self::ScMapEntry(v) => v.write_xdr(w),
-            Self::LedgerCloseMetaBatch(v) => v.write_xdr(w),
             Self::StoredTransactionSet(v) => v.write_xdr(w),
             Self::StoredDebugTransactionSet(v) => v.write_xdr(w),
             Self::PersistedScpStateV0(v) => v.write_xdr(w),
@@ -64153,13 +63211,11 @@ impl WriteXdr for Type {
             Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),
             Self::TransactionMeta(v) => v.write_xdr(w),
             Self::TransactionResultMeta(v) => v.write_xdr(w),
-            Self::TransactionResultMetaV1(v) => v.write_xdr(w),
             Self::UpgradeEntryMeta(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV0(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExtV1(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExt(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV1(v) => v.write_xdr(w),
-            Self::LedgerCloseMetaV2(v) => v.write_xdr(w),
             Self::LedgerCloseMeta(v) => v.write_xdr(w),
             Self::ErrorCode(v) => v.write_xdr(w),
             Self::SError(v) => v.write_xdr(w),

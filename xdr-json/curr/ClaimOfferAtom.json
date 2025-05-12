@@ -13,12 +13,10 @@
   ],
   "properties": {
     "amount_bought": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "amount_sold": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "asset_bought": {
       "$ref": "#/definitions/Asset"
@@ -27,8 +25,7 @@
       "$ref": "#/definitions/Asset"
     },
     "offer_id": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "seller_id": {
       "$ref": "#/definitions/AccountId"

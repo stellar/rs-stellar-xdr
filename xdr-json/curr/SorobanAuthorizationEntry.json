@@ -210,9 +210,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "Int128Parts": {
       "type": "string"
@@ -450,8 +448,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -531,9 +528,7 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -545,8 +540,7 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -757,8 +751,7 @@
           "$ref": "#/definitions/ScAddress"
         },
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "signature": {
           "$ref": "#/definitions/ScVal"
@@ -864,9 +857,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "UInt128Parts": {
       "type": "string"

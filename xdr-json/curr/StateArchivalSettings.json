@@ -52,8 +52,7 @@
       "minimum": 0.0
     },
     "persistent_rent_rate_denominator": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "starting_eviction_scan_level": {
       "type": "integer",
@@ -61,8 +60,7 @@
       "minimum": 0.0
     },
     "temp_rent_rate_denominator": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   }
 }

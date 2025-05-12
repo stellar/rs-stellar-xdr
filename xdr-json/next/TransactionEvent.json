@@ -124,9 +124,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "ExtensionPoint": {
       "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
@@ -347,8 +345,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -428,9 +425,7 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -442,8 +437,7 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -650,9 +644,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "TransactionEventStage": {
       "description": "TransactionEventStage is an XDR Enum defines as:\n\n```text enum TransactionEventStage { // The event has happened before any one of the transactions has its // operations applied. TRANSACTION_EVENT_STAGE_BEFORE_ALL_TXS = 0, // The event has happened immediately after operations of the transaction // have been applied. TRANSACTION_EVENT_STAGE_AFTER_TX = 1, // The event has happened after every transaction had its operations // applied. TRANSACTION_EVENT_STAGE_AFTER_ALL_TXS = 2 }; ```",

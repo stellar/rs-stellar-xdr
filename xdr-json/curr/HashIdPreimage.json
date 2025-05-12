@@ -247,9 +247,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "HashIdPreimageContractId": {
       "description": "HashIdPreimageContractId is an XDR NestedStruct defines as:\n\n```text struct { Hash networkID; ContractIDPreimage contractIDPreimage; } ```",
@@ -344,8 +342,7 @@
           "contentMediaType": "application/binary"
         },
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "signature_expiration_ledger": {
           "type": "integer",
@@ -593,8 +590,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -674,9 +670,7 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -688,8 +682,7 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -888,8 +881,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "SorobanAuthorizedFunction": {
       "description": "SorobanAuthorizedFunction is an XDR Union defines as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; // This variant of auth payload for creating new contract instances // doesn't allow specifying the constructor arguments, creating contracts // with constructors that take arguments is only possible by authorizing // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` // (protocol 22+). case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; // This variant of auth payload for creating new contract instances // is only accepted in and after protocol 22. It allows authorizing the // contract constructor arguments. case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN: CreateContractArgsV2 createContractV2HostFn; }; ```",
@@ -962,9 +954,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "UInt128Parts": {
       "type": "string"

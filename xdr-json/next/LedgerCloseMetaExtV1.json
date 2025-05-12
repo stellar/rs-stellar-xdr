@@ -12,8 +12,7 @@
       "$ref": "#/definitions/ExtensionPoint"
     },
     "soroban_fee_write1_kb": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     }
   },
   "definitions": {

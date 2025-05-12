@@ -16,8 +16,7 @@
       "$ref": "#/definitions/Asset"
     },
     "dest_min": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "destination": {
       "$ref": "#/definitions/MuxedAccount"
@@ -30,8 +29,7 @@
       "maxItems": 5
     },
     "send_amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "send_asset": {
       "$ref": "#/definitions/Asset"

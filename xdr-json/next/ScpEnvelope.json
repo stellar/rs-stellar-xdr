@@ -85,9 +85,7 @@
           "$ref": "#/definitions/ScpStatementPledges"
         },
         "slot_index": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         }
       }
     },

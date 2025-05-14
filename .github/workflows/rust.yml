@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex
+  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand
 
 jobs:
 

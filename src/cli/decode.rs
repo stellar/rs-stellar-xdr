@@ -18,6 +18,8 @@ pub enum Error {
     ReadFile(#[from] std::io::Error),
     #[error("error generating JSON: {0}")]
     GenerateJson(#[from] serde_json::Error),
+    #[error("type doesn't have a text representation, use 'json' as output")]
+    TextUnsupported,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -59,6 +61,7 @@ impl Default for InputFormat {
 pub enum OutputFormat {
     Json,
     JsonFormatted,
+    Text,
     RustDebug,
     RustDebugFormatted,
 }
@@ -134,6 +137,11 @@ impl Cmd {
         match self.output_format {
             OutputFormat::Json => println!("{}", serde_json::to_string(v)?),
             OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),
+            OutputFormat::Text => {
+                let v = serde_json::to_value(v)?;
+                let text = util::serde_json_value_to_text(v).ok_or(Error::TextUnsupported)?;
+                println!("{text}");
+            }
             OutputFormat::RustDebug => println!("{v:?}"),
             OutputFormat::RustDebugFormatted => println!("{v:#?}"),
         }

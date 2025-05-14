@@ -1,11 +1,13 @@
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
-CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
+CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex,rand
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=1dab9225bd9d7ea4701b1de6f8549c8d74402bed
+XDRGEN_VERSION=c9aa0917679c208f793a9276a38edee016ca93c7
 # XDRGEN_LOCAL=1
+XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_CURR=TransactionEnvelope
+XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_NEXT=TransactionEnvelope
 XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
 XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
 XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
@@ -46,6 +48,7 @@ ifeq ($(XDRGEN_LOCAL),)
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/curr \
+			--rust-types-custom-default-impl $(XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_CURR) \
 			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) \
 			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR)' \
 		$^ \
@@ -54,6 +57,7 @@ else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		pushd /xdrgen && bundle install --deployment && rake install && popd && \
 		xdrgen --language rust --namespace generated --output src/curr \
+			--rust-types-custom-default-impl $(XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_CURR) \
 			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) \
 			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR)' \
 		$^ \
@@ -71,6 +75,7 @@ ifeq ($(XDRGEN_LOCAL),)
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/next \
+			--rust-types-custom-default-impl $(XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_NEXT) \
 			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) \
 			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_NEXT)' \
 		$^ \
@@ -79,6 +84,7 @@ else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		pushd /xdrgen && bundle install --deployment && rake install && popd && \
 		xdrgen --language rust --namespace generated --output src/next \
+			--rust-types-custom-default-impl $(XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_NEXT) \
 			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) \
 			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_NEXT)' \
 		$^ \

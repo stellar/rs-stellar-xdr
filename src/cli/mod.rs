@@ -1,6 +1,7 @@
 pub mod compare;
 pub mod decode;
 pub mod encode;
+pub mod generate;
 pub mod guess;
 pub mod types;
 mod util;
@@ -40,6 +41,7 @@ impl Root {
             Cmd::Guess(c) => c.run(&self.channel)?,
             Cmd::Decode(c) => c.run(&self.channel)?,
             Cmd::Encode(c) => c.run(&self.channel)?,
+            Cmd::Generate(c) => c.run(&self.channel)?,
             Cmd::Compare(c) => c.run(&self.channel)?,
             Cmd::Version => version::Cmd::run(),
         }
@@ -74,6 +76,7 @@ pub enum Cmd {
     /// Encode XDR
     Encode(encode::Cmd),
     Compare(compare::Cmd),
+    Generate(generate::Cmd),
     /// Print version information
     Version,
 }
@@ -91,6 +94,8 @@ pub enum Error {
     Decode(#[from] decode::Error),
     #[error("error reading file: {0}")]
     Encode(#[from] encode::Error),
+    #[error(transparent)]
+    Generate(#[from] generate::Error),
     #[error(transparent)]
     Compare(#[from] compare::Error),
 }

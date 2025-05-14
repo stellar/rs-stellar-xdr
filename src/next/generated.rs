@@ -4027,7 +4027,8 @@ mod tests_for_number_or_string {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -4137,7 +4138,8 @@ impl AsRef<[u8]> for Value {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4188,7 +4190,8 @@ impl WriteXdr for ScpBallot {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -4198,7 +4201,7 @@ impl WriteXdr for ScpBallot {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScpStatementType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Prepare = 0,
     Confirm = 1,
     Externalize = 2,
@@ -4306,7 +4309,8 @@ impl WriteXdr for ScpStatementType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4361,7 +4365,8 @@ impl WriteXdr for ScpNomination {
 ///         }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4424,7 +4429,8 @@ impl WriteXdr for ScpStatementPrepare {
 ///         }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4482,7 +4488,8 @@ impl WriteXdr for ScpStatementConfirm {
 ///         }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4578,6 +4585,7 @@ pub enum ScpStatementPledges {
     Nominate(ScpNomination),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScpStatementPledges {
     fn default() -> Self {
         Self::Prepare(ScpStatementPrepare::default())
@@ -4723,7 +4731,8 @@ impl WriteXdr for ScpStatementPledges {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4778,7 +4787,8 @@ impl WriteXdr for ScpStatement {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4827,7 +4837,8 @@ impl WriteXdr for ScpEnvelope {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4878,7 +4889,8 @@ impl WriteXdr for ScpQuorumSet {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4931,7 +4943,8 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5000,7 +5013,8 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5075,7 +5089,8 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5190,7 +5205,8 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5241,7 +5257,8 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5292,7 +5309,8 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5349,7 +5367,8 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5552,7 +5571,8 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -5562,7 +5582,7 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractCostType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     WasmInsnExec = 0,
     MemAlloc = 1,
     MemCpy = 2,
@@ -6006,7 +6026,8 @@ impl WriteXdr for ContractCostType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6084,7 +6105,8 @@ impl WriteXdr for ContractCostParamEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6166,7 +6188,8 @@ impl WriteXdr for StateArchivalSettings {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6223,7 +6246,8 @@ impl WriteXdr for EvictionIterator {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6286,7 +6310,8 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -6412,7 +6437,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -6422,7 +6448,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ConfigSettingId {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ContractMaxSizeBytes = 0,
     ContractComputeV0 = 1,
     ContractLedgerCostV0 = 2,
@@ -6669,6 +6695,7 @@ pub enum ConfigSettingEntry {
     ScpTiming(ConfigSettingScpTiming),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ConfigSettingEntry {
     fn default() -> Self {
         Self::ContractMaxSizeBytes(u32::default())
@@ -6898,7 +6925,8 @@ impl WriteXdr for ConfigSettingEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -6908,7 +6936,7 @@ impl WriteXdr for ConfigSettingEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScEnvMetaKind {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ScEnvMetaKindInterfaceVersion = 0,
 }
 
@@ -7000,7 +7028,8 @@ impl WriteXdr for ScEnvMetaKind {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7067,6 +7096,7 @@ pub enum ScEnvMetaEntry {
     ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScEnvMetaEntry {
     fn default() -> Self {
         Self::ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion::default())
@@ -7164,7 +7194,8 @@ impl WriteXdr for ScEnvMetaEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7212,7 +7243,8 @@ impl WriteXdr for ScMetaV0 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -7222,7 +7254,7 @@ impl WriteXdr for ScMetaV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScMetaKind {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ScMetaV0 = 0,
 }
 
@@ -7331,6 +7363,7 @@ pub enum ScMetaEntry {
     ScMetaV0(ScMetaV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScMetaEntry {
     fn default() -> Self {
         Self::ScMetaV0(ScMetaV0::default())
@@ -7463,7 +7496,8 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -7473,7 +7507,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Val = 0,
     Bool = 1,
     Void = 2,
@@ -7694,7 +7728,8 @@ impl WriteXdr for ScSpecType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7739,7 +7774,8 @@ impl WriteXdr for ScSpecTypeOption {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7786,7 +7822,8 @@ impl WriteXdr for ScSpecTypeResult {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7831,7 +7868,8 @@ impl WriteXdr for ScSpecTypeVec {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7878,7 +7916,8 @@ impl WriteXdr for ScSpecTypeMap {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7922,7 +7961,8 @@ impl WriteXdr for ScSpecTypeTuple {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7966,7 +8006,8 @@ impl WriteXdr for ScSpecTypeBytesN {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8084,6 +8125,7 @@ pub enum ScSpecTypeDef {
     Udt(ScSpecTypeUdt),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScSpecTypeDef {
     fn default() -> Self {
         Self::Val
@@ -8332,7 +8374,8 @@ impl WriteXdr for ScSpecTypeDef {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8385,7 +8428,8 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8439,7 +8483,8 @@ impl WriteXdr for ScSpecUdtStructV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8488,7 +8533,8 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8540,7 +8586,8 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -8550,7 +8597,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecUdtUnionCaseV0Kind {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     VoidV0 = 0,
     TupleV0 = 1,
 }
@@ -8668,6 +8715,7 @@ pub enum ScSpecUdtUnionCaseV0 {
     TupleV0(ScSpecUdtUnionCaseTupleV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScSpecUdtUnionCaseV0 {
     fn default() -> Self {
         Self::VoidV0(ScSpecUdtUnionCaseVoidV0::default())
@@ -8774,7 +8822,8 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8829,7 +8878,8 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8882,7 +8932,8 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8937,7 +8988,8 @@ impl WriteXdr for ScSpecUdtEnumV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8990,7 +9042,8 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9045,7 +9098,8 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9098,7 +9152,8 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9153,7 +9208,8 @@ impl WriteXdr for ScSpecFunctionV0 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9163,7 +9219,7 @@ impl WriteXdr for ScSpecFunctionV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEventParamLocationV0 {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Data = 0,
     TopicList = 1,
 }
@@ -9264,7 +9320,8 @@ impl WriteXdr for ScSpecEventParamLocationV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9320,7 +9377,8 @@ impl WriteXdr for ScSpecEventParamV0 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9330,7 +9388,7 @@ impl WriteXdr for ScSpecEventParamV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEventDataFormat {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     SingleValue = 0,
     Vec = 1,
     Map = 2,
@@ -9437,7 +9495,8 @@ impl WriteXdr for ScSpecEventDataFormat {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9502,7 +9561,8 @@ impl WriteXdr for ScSpecEventV0 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9512,7 +9572,7 @@ impl WriteXdr for ScSpecEventV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEntryKind {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     FunctionV0 = 0,
     UdtStructV0 = 1,
     UdtUnionV0 = 2,
@@ -9665,6 +9725,7 @@ pub enum ScSpecEntry {
     EventV0(ScSpecEventV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScSpecEntry {
     fn default() -> Self {
         Self::FunctionV0(ScSpecFunctionV0::default())
@@ -9844,7 +9905,8 @@ impl WriteXdr for ScSpecEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9854,7 +9916,7 @@ impl WriteXdr for ScSpecEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScValType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Bool = 0,
     Void = 1,
     Error = 2,
@@ -10065,7 +10127,8 @@ impl WriteXdr for ScValType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -10075,7 +10138,7 @@ impl WriteXdr for ScValType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScErrorType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Contract = 0,
     WasmVm = 1,
     Context = 2,
@@ -10218,7 +10281,8 @@ impl WriteXdr for ScErrorType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -10228,7 +10292,7 @@ impl WriteXdr for ScErrorType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScErrorCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ArithDomain = 0,
     IndexBounds = 1,
     InvalidInput = 2,
@@ -10405,6 +10469,7 @@ pub enum ScError {
     Auth(ScErrorCode),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScError {
     fn default() -> Self {
         Self::Contract(u32::default())
@@ -10547,7 +10612,8 @@ impl WriteXdr for ScError {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10619,7 +10685,8 @@ impl<'de> serde::Deserialize<'de> for UInt128Parts {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10693,7 +10760,8 @@ impl<'de> serde::Deserialize<'de> for Int128Parts {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10783,7 +10851,8 @@ impl<'de> serde::Deserialize<'de> for UInt256Parts {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10873,7 +10942,8 @@ impl<'de> serde::Deserialize<'de> for Int256Parts {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -10883,7 +10953,7 @@ impl<'de> serde::Deserialize<'de> for Int256Parts {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractExecutableType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Wasm = 0,
     StellarAsset = 1,
 }
@@ -11001,6 +11071,7 @@ pub enum ContractExecutable {
     StellarAsset,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ContractExecutable {
     fn default() -> Self {
         Self::Wasm(Hash::default())
@@ -11105,7 +11176,8 @@ impl WriteXdr for ContractExecutable {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11115,7 +11187,7 @@ impl WriteXdr for ContractExecutable {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScAddressType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Account = 0,
     Contract = 1,
     MuxedAccount = 2,
@@ -11232,7 +11304,8 @@ impl WriteXdr for ScAddressType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -11331,6 +11404,7 @@ pub enum ScAddress {
     LiquidityPool(PoolId),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScAddress {
     fn default() -> Self {
         Self::Account(AccountId::default())
@@ -11461,7 +11535,8 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11568,7 +11643,8 @@ impl AsRef<[ScVal]> for ScVec {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11675,7 +11751,8 @@ impl AsRef<[ScMapEntry]> for ScMap {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11782,7 +11859,8 @@ impl AsRef<[u8]> for ScBytes {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11889,7 +11967,8 @@ impl AsRef<[u8]> for ScString {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11997,7 +12076,8 @@ impl AsRef<[u8]> for ScSymbol {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12045,7 +12125,8 @@ impl WriteXdr for ScNonceKey {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12197,6 +12278,7 @@ pub enum ScVal {
     LedgerKeyNonce(ScNonceKey),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScVal {
     fn default() -> Self {
         Self::Bool(bool::default())
@@ -12422,7 +12504,8 @@ impl WriteXdr for ScVal {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12476,7 +12559,8 @@ impl WriteXdr for ScMapEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12546,6 +12630,7 @@ pub enum StoredTransactionSet {
     V1(GeneralizedTransactionSet),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for StoredTransactionSet {
     fn default() -> Self {
         Self::V0(TransactionSet::default())
@@ -12644,7 +12729,8 @@ impl WriteXdr for StoredTransactionSet {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12696,7 +12782,8 @@ impl WriteXdr for StoredDebugTransactionSet {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12748,7 +12835,8 @@ impl WriteXdr for PersistedScpStateV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12815,6 +12903,7 @@ pub enum PersistedScpState {
     V1(PersistedScpStateV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for PersistedScpState {
     fn default() -> Self {
         Self::V0(PersistedScpStateV0::default())
@@ -12909,7 +12998,8 @@ impl WriteXdr for PersistedScpState {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13061,7 +13151,8 @@ impl AsRef<[u8]> for Thresholds {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13168,7 +13259,8 @@ impl AsRef<[u8]> for String32 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13275,7 +13367,8 @@ impl AsRef<[u8]> for String64 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13339,7 +13432,8 @@ impl WriteXdr for SequenceNumber {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13446,7 +13540,8 @@ impl AsRef<[u8]> for DataValue {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13548,7 +13643,8 @@ impl AsRef<[u8]> for AssetCode4 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13656,7 +13752,8 @@ impl AsRef<[u8]> for AssetCode12 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13666,7 +13763,7 @@ impl AsRef<[u8]> for AssetCode12 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AssetType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Native = 0,
     CreditAlphanum4 = 1,
     CreditAlphanum12 = 2,
@@ -13793,6 +13890,7 @@ pub enum AssetCode {
     CreditAlphanum12(AssetCode12),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AssetCode {
     fn default() -> Self {
         Self::CreditAlphanum4(AssetCode4::default())
@@ -13890,7 +13988,8 @@ impl WriteXdr for AssetCode {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -13938,7 +14037,8 @@ impl WriteXdr for AlphaNum4 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14012,6 +14112,7 @@ pub enum Asset {
     CreditAlphanum12(AlphaNum12),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for Asset {
     fn default() -> Self {
         Self::Native
@@ -14117,7 +14218,8 @@ impl WriteXdr for Asset {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14165,7 +14267,8 @@ impl WriteXdr for Price {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14224,7 +14327,8 @@ impl WriteXdr for Liabilities {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14234,7 +14338,7 @@ impl WriteXdr for Liabilities {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ThresholdIndexes {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     MasterWeight = 0,
     Low = 1,
     Med = 2,
@@ -14350,7 +14454,8 @@ impl WriteXdr for ThresholdIndexes {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14360,7 +14465,7 @@ impl WriteXdr for ThresholdIndexes {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerEntryType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Account = 0,
     Trustline = 1,
     Offer = 2,
@@ -14502,7 +14607,8 @@ impl WriteXdr for LedgerEntryType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14563,7 +14669,8 @@ impl WriteXdr for Signer {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14573,7 +14680,7 @@ impl WriteXdr for Signer {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AccountFlags {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     RequiredFlag = 1,
     RevocableFlag = 2,
     ImmutableFlag = 4,
@@ -14706,7 +14813,8 @@ pub const MAX_SIGNERS: u64 = 20;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14774,7 +14882,8 @@ impl WriteXdr for SponsorshipDescriptor {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14844,6 +14953,7 @@ pub enum AccountEntryExtensionV2Ext {
     V3(AccountEntryExtensionV3),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AccountEntryExtensionV2Ext {
     fn default() -> Self {
         Self::V0
@@ -14951,7 +15061,8 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15024,6 +15135,7 @@ pub enum AccountEntryExtensionV1Ext {
     V2(AccountEntryExtensionV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AccountEntryExtensionV1Ext {
     fn default() -> Self {
         Self::V0
@@ -15129,7 +15241,8 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15196,6 +15309,7 @@ pub enum AccountEntryExt {
     V1(AccountEntryExtensionV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AccountEntryExt {
     fn default() -> Self {
         Self::V0
@@ -15316,7 +15430,8 @@ impl WriteXdr for AccountEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15399,7 +15514,8 @@ impl WriteXdr for AccountEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -15409,7 +15525,7 @@ impl WriteXdr for AccountEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TrustLineFlags {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     AuthorizedFlag = 1,
     AuthorizedToMaintainLiabilitiesFlag = 2,
     TrustlineClawbackEnabledFlag = 4,
@@ -15540,7 +15656,8 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -15550,7 +15667,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     LiquidityPoolConstantProduct = 0,
 }
 
@@ -15673,6 +15790,7 @@ pub enum TrustLineAsset {
     PoolShare(PoolId),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TrustLineAsset {
     fn default() -> Self {
         Self::Native
@@ -15800,6 +15918,7 @@ pub enum TrustLineEntryExtensionV2Ext {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TrustLineEntryExtensionV2Ext {
     fn default() -> Self {
         Self::V0
@@ -15899,7 +16018,8 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15966,6 +16086,7 @@ pub enum TrustLineEntryV1Ext {
     V2(TrustLineEntryExtensionV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TrustLineEntryV1Ext {
     fn default() -> Self {
         Self::V0
@@ -16071,7 +16192,8 @@ impl WriteXdr for TrustLineEntryV1Ext {
 ///         }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16150,6 +16272,7 @@ pub enum TrustLineEntryExt {
     V1(TrustLineEntryV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TrustLineEntryExt {
     fn default() -> Self {
         Self::V0
@@ -16274,7 +16397,8 @@ impl WriteXdr for TrustLineEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16344,7 +16468,8 @@ impl WriteXdr for TrustLineEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -16354,7 +16479,7 @@ impl WriteXdr for TrustLineEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OfferEntryFlags {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     PassiveFlag = 1,
 }
 
@@ -16471,6 +16596,7 @@ pub enum OfferEntryExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for OfferEntryExt {
     fn default() -> Self {
         Self::V0
@@ -16583,7 +16709,8 @@ impl WriteXdr for OfferEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16673,6 +16800,7 @@ pub enum DataEntryExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for DataEntryExt {
     fn default() -> Self {
         Self::V0
@@ -16775,7 +16903,8 @@ impl WriteXdr for DataEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16834,7 +16963,8 @@ impl WriteXdr for DataEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -16844,7 +16974,7 @@ impl WriteXdr for DataEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimPredicateType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Unconditional = 0,
     And = 1,
     Or = 2,
@@ -17010,6 +17140,7 @@ pub enum ClaimPredicate {
     ),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClaimPredicate {
     fn default() -> Self {
         Self::Unconditional
@@ -17141,7 +17272,8 @@ impl WriteXdr for ClaimPredicate {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -17151,7 +17283,7 @@ impl WriteXdr for ClaimPredicate {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimantType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ClaimantTypeV0 = 0,
 }
 
@@ -17244,7 +17376,8 @@ impl WriteXdr for ClaimantType {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17312,6 +17445,7 @@ pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for Claimant {
     fn default() -> Self {
         Self::ClaimantTypeV0(ClaimantV0::default())
@@ -17407,7 +17541,8 @@ impl WriteXdr for Claimant {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -17417,7 +17552,7 @@ impl WriteXdr for Claimant {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ClaimableBalanceClawbackEnabledFlag = 1,
 }
 
@@ -17535,6 +17670,7 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClaimableBalanceEntryExtensionV1Ext {
     fn default() -> Self {
         Self::V0
@@ -17634,7 +17770,8 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17701,6 +17838,7 @@ pub enum ClaimableBalanceEntryExt {
     V1(ClaimableBalanceEntryExtensionV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClaimableBalanceEntryExt {
     fn default() -> Self {
         Self::V0
@@ -17817,7 +17955,8 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17879,7 +18018,8 @@ impl WriteXdr for ClaimableBalanceEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17935,7 +18075,8 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 ///         }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18033,6 +18174,7 @@ pub enum LiquidityPoolEntryBody {
     LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LiquidityPoolEntryBody {
     fn default() -> Self {
         Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::default())
@@ -18147,7 +18289,8 @@ impl WriteXdr for LiquidityPoolEntryBody {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18195,7 +18338,8 @@ impl WriteXdr for LiquidityPoolEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -18205,7 +18349,7 @@ impl WriteXdr for LiquidityPoolEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractDataDurability {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Temporary = 0,
     Persistent = 1,
 }
@@ -18307,7 +18451,8 @@ impl WriteXdr for ContractDataDurability {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18372,7 +18517,8 @@ impl WriteXdr for ContractDataEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18447,7 +18593,8 @@ impl WriteXdr for ContractCodeCostInputs {
 ///             }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18518,6 +18665,7 @@ pub enum ContractCodeEntryExt {
     V1(ContractCodeEntryV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ContractCodeEntryExt {
     fn default() -> Self {
         Self::V0
@@ -18626,7 +18774,8 @@ impl WriteXdr for ContractCodeEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18677,7 +18826,8 @@ impl WriteXdr for ContractCodeEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18741,6 +18891,7 @@ pub enum LedgerEntryExtensionV1Ext {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerEntryExtensionV1Ext {
     fn default() -> Self {
         Self::V0
@@ -18840,7 +18991,8 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18931,6 +19083,7 @@ pub enum LedgerEntryData {
     Ttl(TtlEntry),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerEntryData {
     fn default() -> Self {
         Self::Account(AccountEntry::default())
@@ -19111,6 +19264,7 @@ pub enum LedgerEntryExt {
     V1(LedgerEntryExtensionV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerEntryExt {
     fn default() -> Self {
         Self::V0
@@ -19242,7 +19396,8 @@ impl WriteXdr for LedgerEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19292,7 +19447,8 @@ impl WriteXdr for LedgerEntry {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19337,7 +19493,8 @@ impl WriteXdr for LedgerKeyAccount {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19385,7 +19542,8 @@ impl WriteXdr for LedgerKeyTrustLine {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19437,7 +19595,8 @@ impl WriteXdr for LedgerKeyOffer {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19484,7 +19643,8 @@ impl WriteXdr for LedgerKeyData {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19528,7 +19688,8 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19574,7 +19735,8 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19624,7 +19786,8 @@ impl WriteXdr for LedgerKeyContractData {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19668,7 +19831,8 @@ impl WriteXdr for LedgerKeyContractCode {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19713,7 +19877,8 @@ impl WriteXdr for LedgerKeyConfigSetting {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19842,6 +20007,7 @@ pub enum LedgerKey {
     Ttl(LedgerKeyTtl),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerKey {
     fn default() -> Self {
         Self::Account(LedgerKeyAccount::default())
@@ -20012,7 +20178,8 @@ impl WriteXdr for LedgerKey {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20022,7 +20189,7 @@ impl WriteXdr for LedgerKey {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum EnvelopeType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     TxV0 = 0,
     Scp = 1,
     Tx = 2,
@@ -20165,7 +20332,8 @@ impl WriteXdr for EnvelopeType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20175,7 +20343,7 @@ impl WriteXdr for EnvelopeType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BucketListType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Live = 0,
     HotArchive = 1,
 }
@@ -20276,7 +20444,8 @@ impl WriteXdr for BucketListType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20286,7 +20455,7 @@ impl WriteXdr for BucketListType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BucketEntryType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Metaentry = -1,
     Liveentry = 0,
     Deadentry = 1,
@@ -20398,7 +20567,8 @@ impl WriteXdr for BucketEntryType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20408,7 +20578,7 @@ impl WriteXdr for BucketEntryType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum HotArchiveBucketEntryType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Metaentry = -1,
     Archived = 0,
     Live = 1,
@@ -20530,6 +20700,7 @@ pub enum BucketMetadataExt {
     V1(BucketListType),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for BucketMetadataExt {
     fn default() -> Self {
         Self::V0
@@ -20637,7 +20808,8 @@ impl WriteXdr for BucketMetadataExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -20710,6 +20882,7 @@ pub enum BucketEntry {
     Metaentry(BucketMetadata),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for BucketEntry {
     fn default() -> Self {
         Self::Liveentry(LedgerEntry::default())
@@ -20844,6 +21017,7 @@ pub enum HotArchiveBucketEntry {
     Metaentry(BucketMetadata),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for HotArchiveBucketEntry {
     fn default() -> Self {
         Self::Archived(LedgerEntry::default())
@@ -20949,7 +21123,8 @@ impl WriteXdr for HotArchiveBucketEntry {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21060,7 +21235,8 @@ impl AsRef<[u8]> for UpgradeType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21070,7 +21246,7 @@ impl AsRef<[u8]> for UpgradeType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum StellarValueType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Basic = 0,
     Signed = 1,
 }
@@ -21166,7 +21342,8 @@ impl WriteXdr for StellarValueType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21233,6 +21410,7 @@ pub enum StellarValueExt {
     Signed(LedgerCloseValueSignature),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for StellarValueExt {
     fn default() -> Self {
         Self::Basic
@@ -21347,7 +21525,8 @@ impl WriteXdr for StellarValueExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21411,7 +21590,8 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21421,7 +21601,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     TradingFlag = 1,
     DepositFlag = 2,
     WithdrawalFlag = 4,
@@ -21540,6 +21720,7 @@ pub enum LedgerHeaderExtensionV1Ext {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerHeaderExtensionV1Ext {
     fn default() -> Self {
         Self::V0
@@ -21639,7 +21820,8 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21706,6 +21888,7 @@ pub enum LedgerHeaderExt {
     V1(LedgerHeaderExtensionV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerHeaderExt {
     fn default() -> Self {
         Self::V0
@@ -21837,7 +22020,8 @@ impl WriteXdr for LedgerHeaderExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21942,7 +22126,8 @@ impl WriteXdr for LedgerHeader {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21952,7 +22137,7 @@ impl WriteXdr for LedgerHeader {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Version = 1,
     BaseFee = 2,
     MaxTxSetSize = 3,
@@ -22078,7 +22263,8 @@ impl WriteXdr for LedgerUpgradeType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22163,6 +22349,7 @@ pub enum LedgerUpgrade {
     MaxSorobanTxSetSize(u32),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerUpgrade {
     fn default() -> Self {
         Self::Version(u32::default())
@@ -22296,7 +22483,8 @@ impl WriteXdr for LedgerUpgrade {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22343,7 +22531,8 @@ impl WriteXdr for ConfigUpgradeSet {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -22353,7 +22542,7 @@ impl WriteXdr for ConfigUpgradeSet {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TxSetComponentType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     TxsetCompTxsMaybeDiscountedFee = 0,
 }
 
@@ -22444,7 +22633,8 @@ impl WriteXdr for TxSetComponentType {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -22551,7 +22741,8 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -22664,7 +22855,8 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22716,7 +22908,8 @@ impl WriteXdr for ParallelTxsComponent {
 ///   }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22788,6 +22981,7 @@ pub enum TxSetComponent {
     TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TxSetComponent {
     fn default() -> Self {
         Self::TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee::default())
@@ -22907,6 +23101,7 @@ pub enum TransactionPhase {
     V1(ParallelTxsComponent),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionPhase {
     fn default() -> Self {
         Self::V0(VecM::<TxSetComponent>::default())
@@ -23004,7 +23199,8 @@ impl WriteXdr for TransactionPhase {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23052,7 +23248,8 @@ impl WriteXdr for TransactionSet {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23117,6 +23314,7 @@ pub enum GeneralizedTransactionSet {
     V1(TransactionSetV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for GeneralizedTransactionSet {
     fn default() -> Self {
         Self::V1(TransactionSetV1::default())
@@ -23210,7 +23408,8 @@ impl WriteXdr for GeneralizedTransactionSet {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23257,7 +23456,8 @@ impl WriteXdr for TransactionResultPair {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23321,6 +23521,7 @@ pub enum TransactionHistoryEntryExt {
     V1(GeneralizedTransactionSet),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionHistoryEntryExt {
     fn default() -> Self {
         Self::V0
@@ -23428,7 +23629,8 @@ impl WriteXdr for TransactionHistoryEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23495,6 +23697,7 @@ pub enum TransactionHistoryResultEntryExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionHistoryResultEntryExt {
     fn default() -> Self {
         Self::V0
@@ -23596,7 +23799,8 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23663,6 +23867,7 @@ pub enum LedgerHeaderHistoryEntryExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerHeaderHistoryEntryExt {
     fn default() -> Self {
         Self::V0
@@ -23764,7 +23969,8 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23815,7 +24021,8 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23863,7 +24070,8 @@ impl WriteXdr for LedgerScpMessages {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23927,6 +24135,7 @@ pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ScpHistoryEntry {
     fn default() -> Self {
         Self::V0(ScpHistoryEntryV0::default())
@@ -24024,7 +24233,8 @@ impl WriteXdr for ScpHistoryEntry {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -24034,7 +24244,7 @@ impl WriteXdr for ScpHistoryEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Created = 0,
     Updated = 1,
     Removed = 2,
@@ -24174,6 +24384,7 @@ pub enum LedgerEntryChange {
     Restored(LedgerEntry),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerEntryChange {
     fn default() -> Self {
         Self::Created(LedgerEntry::default())
@@ -24287,7 +24498,8 @@ impl WriteXdr for LedgerEntryChange {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -24396,7 +24608,8 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24441,7 +24654,8 @@ impl WriteXdr for OperationMeta {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24492,7 +24706,8 @@ impl WriteXdr for TransactionMetaV1 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24545,7 +24760,8 @@ impl WriteXdr for TransactionMetaV2 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -24555,7 +24771,7 @@ impl WriteXdr for TransactionMetaV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractEventType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     System = 0,
     Contract = 1,
     Diagnostic = 2,
@@ -24658,7 +24874,8 @@ impl WriteXdr for ContractEventType {
 ///         }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24726,6 +24943,7 @@ pub enum ContractEventBody {
     V0(ContractEventV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ContractEventBody {
     fn default() -> Self {
         Self::V0(ContractEventV0::default())
@@ -24834,7 +25052,8 @@ impl WriteXdr for ContractEventBody {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24888,7 +25107,8 @@ impl WriteXdr for ContractEvent {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24964,7 +25184,8 @@ impl WriteXdr for DiagnosticEvent {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25050,6 +25271,7 @@ pub enum SorobanTransactionMetaExt {
     V1(SorobanTransactionMetaExtV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SorobanTransactionMetaExt {
     fn default() -> Self {
         Self::V0
@@ -25155,7 +25377,8 @@ impl WriteXdr for SorobanTransactionMetaExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25216,7 +25439,8 @@ impl WriteXdr for SorobanTransactionMeta {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25276,7 +25500,8 @@ impl WriteXdr for TransactionMetaV3 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25328,7 +25553,8 @@ impl WriteXdr for OperationMetaV2 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25383,7 +25609,8 @@ impl WriteXdr for SorobanTransactionMetaV2 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -25393,7 +25620,7 @@ impl WriteXdr for SorobanTransactionMetaV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TransactionEventStage {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     BeforeAllTxs = 0,
     AfterTx = 1,
     AfterAllTxs = 2,
@@ -25495,7 +25722,8 @@ impl WriteXdr for TransactionEventStage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25553,7 +25781,8 @@ impl WriteXdr for TransactionEvent {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25616,7 +25845,8 @@ impl WriteXdr for TransactionMetaV4 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25692,6 +25922,7 @@ pub enum TransactionMeta {
     V4(TransactionMetaV4),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionMeta {
     fn default() -> Self {
         Self::V0(VecM::<OperationMeta>::default())
@@ -25802,7 +26033,8 @@ impl WriteXdr for TransactionMeta {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25858,7 +26090,8 @@ impl WriteXdr for TransactionResultMeta {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25915,7 +26148,8 @@ impl WriteXdr for TransactionResultMetaV1 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25975,7 +26209,8 @@ impl WriteXdr for UpgradeEntryMeta {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26032,7 +26267,8 @@ impl WriteXdr for LedgerCloseMetaV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26103,6 +26339,7 @@ pub enum LedgerCloseMetaExt {
     V1(LedgerCloseMetaExtV1),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerCloseMetaExt {
     fn default() -> Self {
         Self::V0
@@ -26224,7 +26461,8 @@ impl WriteXdr for LedgerCloseMetaExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26324,7 +26562,8 @@ impl WriteXdr for LedgerCloseMetaV1 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26419,6 +26658,7 @@ pub enum LedgerCloseMeta {
     V2(LedgerCloseMetaV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LedgerCloseMeta {
     fn default() -> Self {
         Self::V0(LedgerCloseMetaV0::default())
@@ -26524,7 +26764,8 @@ impl WriteXdr for LedgerCloseMeta {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -26534,7 +26775,7 @@ impl WriteXdr for LedgerCloseMeta {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ErrorCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Misc = 0,
     Data = 1,
     Conf = 2,
@@ -26645,7 +26886,8 @@ impl WriteXdr for ErrorCode {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26692,7 +26934,8 @@ impl WriteXdr for SError {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26737,7 +26980,8 @@ impl WriteXdr for SendMore {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26786,7 +27030,8 @@ impl WriteXdr for SendMoreExtended {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26848,7 +27093,8 @@ impl WriteXdr for AuthCert {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26924,7 +27170,8 @@ pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26970,7 +27217,8 @@ impl WriteXdr for Auth {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -26980,7 +27228,7 @@ impl WriteXdr for Auth {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum IpAddrType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     IPv4 = 0,
     IPv6 = 1,
 }
@@ -27095,6 +27343,7 @@ pub enum PeerAddressIp {
     IPv6([u8; 16]),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for PeerAddressIp {
     fn default() -> Self {
         Self::IPv4(<[u8; 4]>::default())
@@ -27200,7 +27449,8 @@ impl WriteXdr for PeerAddressIp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27285,7 +27535,8 @@ impl WriteXdr for PeerAddress {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -27295,7 +27546,7 @@ impl WriteXdr for PeerAddress {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum MessageType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ErrorMsg = 0,
     Auth = 2,
     DontHave = 3,
@@ -27492,7 +27743,8 @@ impl WriteXdr for MessageType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27540,7 +27792,8 @@ impl WriteXdr for DontHave {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -27550,7 +27803,7 @@ impl WriteXdr for DontHave {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     TimeSlicedSurveyTopology = 1,
 }
 
@@ -27644,7 +27897,8 @@ impl WriteXdr for SurveyMessageCommandType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -27654,7 +27908,7 @@ impl WriteXdr for SurveyMessageCommandType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageResponseType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     SurveyTopologyResponseV2 = 2,
 }
 
@@ -27749,7 +28003,8 @@ impl WriteXdr for SurveyMessageResponseType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27800,7 +28055,8 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27849,7 +28105,8 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27900,7 +28157,8 @@ impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27951,7 +28209,8 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28010,7 +28269,8 @@ impl WriteXdr for SurveyRequestMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28064,7 +28324,8 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28109,7 +28370,8 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -28222,7 +28484,8 @@ impl AsRef<[u8]> for EncryptedBody {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28279,7 +28542,8 @@ impl WriteXdr for SurveyResponseMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28327,7 +28591,8 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28390,7 +28655,8 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28543,7 +28809,8 @@ impl WriteXdr for PeerStats {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28615,7 +28882,8 @@ impl WriteXdr for TimeSlicedNodeData {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28660,7 +28928,8 @@ impl WriteXdr for TimeSlicedPeerData {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -28771,7 +29040,8 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28838,6 +29108,7 @@ pub enum SurveyResponseBody {
     SurveyTopologyResponseV2(TopologyResponseBodyV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SurveyResponseBody {
     fn default() -> Self {
         Self::SurveyTopologyResponseV2(TopologyResponseBodyV2::default())
@@ -28942,7 +29213,8 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -29051,7 +29323,8 @@ impl AsRef<[Hash]> for TxAdvertVector {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29101,7 +29374,8 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -29210,7 +29484,8 @@ impl AsRef<[Hash]> for TxDemandVector {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29342,6 +29617,7 @@ pub enum StellarMessage {
     FloodDemand(FloodDemand),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for StellarMessage {
     fn default() -> Self {
         Self::ErrorMsg(SError::default())
@@ -29578,7 +29854,8 @@ impl WriteXdr for StellarMessage {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29654,6 +29931,7 @@ pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AuthenticatedMessage {
     fn default() -> Self {
         Self::V0(AuthenticatedMessageV0::default())
@@ -29771,6 +30049,7 @@ pub enum LiquidityPoolParameters {
     LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LiquidityPoolParameters {
     fn default() -> Self {
         Self::LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters::default())
@@ -29870,7 +30149,8 @@ impl WriteXdr for LiquidityPoolParameters {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29964,6 +30244,7 @@ pub enum MuxedAccount {
     MuxedEd25519(MuxedAccountMed25519),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for MuxedAccount {
     fn default() -> Self {
         Self::Ed25519(Uint256::default())
@@ -30063,7 +30344,8 @@ impl WriteXdr for MuxedAccount {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30137,7 +30419,8 @@ impl WriteXdr for DecoratedSignature {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -30147,7 +30430,7 @@ impl WriteXdr for DecoratedSignature {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OperationType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     CreateAccount = 0,
     Payment = 1,
     PathPaymentStrictReceive = 2,
@@ -30374,7 +30657,8 @@ impl WriteXdr for OperationType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30427,7 +30711,8 @@ impl WriteXdr for CreateAccountOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30490,7 +30775,8 @@ impl WriteXdr for PaymentOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30566,7 +30852,8 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30639,7 +30926,8 @@ impl WriteXdr for PathPaymentStrictSendOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30710,7 +30998,8 @@ impl WriteXdr for ManageSellOfferOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30777,7 +31066,8 @@ impl WriteXdr for ManageBuyOfferOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30849,7 +31139,8 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30948,6 +31239,7 @@ pub enum ChangeTrustAsset {
     PoolShare(LiquidityPoolParameters),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ChangeTrustAsset {
     fn default() -> Self {
         Self::Native
@@ -31061,7 +31353,8 @@ impl WriteXdr for ChangeTrustAsset {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31116,7 +31409,8 @@ impl WriteXdr for ChangeTrustOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31167,7 +31461,8 @@ impl WriteXdr for AllowTrustOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31214,7 +31509,8 @@ impl WriteXdr for ManageDataOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31260,7 +31556,8 @@ impl WriteXdr for BumpSequenceOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31314,7 +31611,8 @@ impl WriteXdr for CreateClaimableBalanceOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31358,7 +31656,8 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31404,7 +31703,8 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -31414,7 +31714,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     LedgerEntry = 0,
     Signer = 1,
 }
@@ -31513,7 +31813,8 @@ impl WriteXdr for RevokeSponsorshipType {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31584,6 +31885,7 @@ pub enum RevokeSponsorshipOp {
     Signer(RevokeSponsorshipOpSigner),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for RevokeSponsorshipOp {
     fn default() -> Self {
         Self::LedgerEntry(LedgerKey::default())
@@ -31687,7 +31989,8 @@ impl WriteXdr for RevokeSponsorshipOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31741,7 +32044,8 @@ impl WriteXdr for ClawbackOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31789,7 +32093,8 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31854,7 +32159,8 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31921,7 +32227,8 @@ impl WriteXdr for LiquidityPoolDepositOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31990,7 +32297,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -32000,7 +32308,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum HostFunctionType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     InvokeContract = 0,
     CreateContract = 1,
     UploadContractWasm = 2,
@@ -32113,7 +32421,8 @@ impl WriteXdr for HostFunctionType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -32123,7 +32432,7 @@ impl WriteXdr for HostFunctionType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractIdPreimageType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Address = 0,
     Asset = 1,
 }
@@ -32222,7 +32531,8 @@ impl WriteXdr for ContractIdPreimageType {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32293,6 +32603,7 @@ pub enum ContractIdPreimage {
     Asset(Asset),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ContractIdPreimage {
     fn default() -> Self {
         Self::Address(ContractIdPreimageFromAddress::default())
@@ -32395,7 +32706,8 @@ impl WriteXdr for ContractIdPreimage {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32445,7 +32757,8 @@ impl WriteXdr for CreateContractArgs {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32496,7 +32809,8 @@ impl WriteXdr for CreateContractArgsV2 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32572,6 +32886,7 @@ pub enum HostFunction {
     CreateContractV2(CreateContractArgsV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for HostFunction {
     fn default() -> Self {
         Self::InvokeContract(InvokeContractArgs::default())
@@ -32697,7 +33012,8 @@ impl WriteXdr for HostFunction {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -32707,7 +33023,7 @@ impl WriteXdr for HostFunction {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SorobanAuthorizedFunctionType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ContractFn = 0,
     CreateContractHostFn = 1,
     CreateContractV2HostFn = 2,
@@ -32844,6 +33160,7 @@ pub enum SorobanAuthorizedFunction {
     CreateContractV2HostFn(CreateContractArgsV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SorobanAuthorizedFunction {
     fn default() -> Self {
         Self::ContractFn(InvokeContractArgs::default())
@@ -32962,7 +33279,8 @@ impl WriteXdr for SorobanAuthorizedFunction {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33012,7 +33330,8 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33071,7 +33390,8 @@ impl WriteXdr for SorobanAddressCredentials {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -33081,7 +33401,7 @@ impl WriteXdr for SorobanAddressCredentials {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SorobanCredentialsType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     SourceAccount = 0,
     Address = 1,
 }
@@ -33199,6 +33519,7 @@ pub enum SorobanCredentials {
     Address(SorobanAddressCredentials),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SorobanCredentials {
     fn default() -> Self {
         Self::SourceAccount
@@ -33301,7 +33622,8 @@ impl WriteXdr for SorobanCredentials {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33346,7 +33668,8 @@ impl WriteXdr for SorobanAuthorizationEntry {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -33458,7 +33781,8 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33506,7 +33830,8 @@ impl WriteXdr for InvokeHostFunctionOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33553,7 +33878,8 @@ impl WriteXdr for ExtendFootprintTtlOp {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33692,6 +34018,7 @@ pub enum OperationBody {
     RestoreFootprint(RestoreFootprintOp),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for OperationBody {
     fn default() -> Self {
         Self::CreateAccount(CreateAccountOp::default())
@@ -34040,7 +34367,8 @@ impl WriteXdr for OperationBody {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34089,7 +34417,8 @@ impl WriteXdr for Operation {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34143,7 +34472,8 @@ impl WriteXdr for HashIdPreimageOperationId {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34200,7 +34530,8 @@ impl WriteXdr for HashIdPreimageRevokeId {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34250,7 +34581,8 @@ impl WriteXdr for HashIdPreimageContractId {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34355,6 +34687,7 @@ pub enum HashIdPreimage {
     SorobanAuthorization(HashIdPreimageSorobanAuthorization),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for HashIdPreimage {
     fn default() -> Self {
         Self::OpId(HashIdPreimageOperationId::default())
@@ -34480,7 +34813,8 @@ impl WriteXdr for HashIdPreimage {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -34490,7 +34824,7 @@ impl WriteXdr for HashIdPreimage {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum MemoType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     None = 0,
     Text = 1,
     Id = 2,
@@ -34635,6 +34969,7 @@ pub enum Memo {
     Return(Hash),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for Memo {
     fn default() -> Self {
         Self::None
@@ -34750,7 +35085,8 @@ impl WriteXdr for Memo {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34798,7 +35134,8 @@ impl WriteXdr for TimeBounds {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34873,7 +35210,8 @@ impl WriteXdr for LedgerBounds {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34935,7 +35273,8 @@ impl WriteXdr for PreconditionsV2 {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -34945,7 +35284,7 @@ impl WriteXdr for PreconditionsV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PreconditionType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     None = 0,
     Time = 1,
     V2 = 2,
@@ -35070,6 +35409,7 @@ pub enum Preconditions {
     V2(PreconditionsV2),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for Preconditions {
     fn default() -> Self {
         Self::None
@@ -35175,7 +35515,8 @@ impl WriteXdr for Preconditions {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35230,7 +35571,8 @@ impl WriteXdr for LedgerFootprint {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35286,7 +35628,8 @@ impl WriteXdr for SorobanResources {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35350,6 +35693,7 @@ pub enum SorobanTransactionDataExt {
     V1(SorobanResourcesExtV0),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SorobanTransactionDataExt {
     fn default() -> Self {
         Self::V0
@@ -35463,7 +35807,8 @@ impl WriteXdr for SorobanTransactionDataExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35534,6 +35879,7 @@ pub enum TransactionV0Ext {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionV0Ext {
     fn default() -> Self {
         Self::V0
@@ -35637,7 +35983,8 @@ impl WriteXdr for TransactionV0Ext {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35702,7 +36049,8 @@ impl WriteXdr for TransactionV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35769,6 +36117,7 @@ pub enum TransactionExt {
     V1(SorobanTransactionData),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionExt {
     fn default() -> Self {
         Self::V0
@@ -35888,7 +36237,8 @@ impl WriteXdr for TransactionExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35953,7 +36303,8 @@ impl WriteXdr for Transaction {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36017,6 +36368,7 @@ pub enum FeeBumpTransactionInnerTx {
     Tx(TransactionV1Envelope),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for FeeBumpTransactionInnerTx {
     fn default() -> Self {
         Self::Tx(TransactionV1Envelope::default())
@@ -36126,6 +36478,7 @@ pub enum FeeBumpTransactionExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for FeeBumpTransactionExt {
     fn default() -> Self {
         Self::V0
@@ -36231,7 +36584,8 @@ impl WriteXdr for FeeBumpTransactionExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36291,7 +36645,8 @@ impl WriteXdr for FeeBumpTransaction {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36482,6 +36837,7 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
     TxFeeBump(FeeBumpTransaction),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionSignaturePayloadTaggedTransaction {
     fn default() -> Self {
         Self::Tx(Transaction::default())
@@ -36587,7 +36943,8 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36637,7 +36994,8 @@ impl WriteXdr for TransactionSignaturePayload {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -36647,7 +37005,7 @@ impl WriteXdr for TransactionSignaturePayload {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimAtomType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     V0 = 0,
     OrderBook = 1,
     LiquidityPool = 2,
@@ -36759,7 +37117,8 @@ impl WriteXdr for ClaimAtomType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36840,7 +37199,8 @@ impl WriteXdr for ClaimOfferAtomV0 {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36919,7 +37279,8 @@ impl WriteXdr for ClaimOfferAtom {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -37006,6 +37367,7 @@ pub enum ClaimAtom {
     LiquidityPool(ClaimLiquidityAtom),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClaimAtom {
     fn default() -> Self {
         Self::V0(ClaimOfferAtomV0::default())
@@ -37121,7 +37483,8 @@ impl WriteXdr for ClaimAtom {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -37131,7 +37494,7 @@ impl WriteXdr for ClaimAtom {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -37273,6 +37636,7 @@ pub enum CreateAccountResult {
     AlreadyExist,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for CreateAccountResult {
     fn default() -> Self {
         Self::Success
@@ -37406,7 +37770,8 @@ impl WriteXdr for CreateAccountResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -37416,7 +37781,7 @@ impl WriteXdr for CreateAccountResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PaymentResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -37593,6 +37958,7 @@ pub enum PaymentResult {
     NoIssuer,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for PaymentResult {
     fn default() -> Self {
         Self::Success
@@ -37768,7 +38134,8 @@ impl WriteXdr for PaymentResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -37778,7 +38145,7 @@ impl WriteXdr for PaymentResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -37936,7 +38303,8 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -37991,7 +38359,8 @@ impl WriteXdr for SimplePaymentResult {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -38087,6 +38456,7 @@ pub enum PathPaymentStrictReceiveResult {
     OverSendmax,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for PathPaymentStrictReceiveResult {
     fn default() -> Self {
         Self::Success(PathPaymentStrictReceiveResultSuccess::default())
@@ -38282,7 +38652,8 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -38292,7 +38663,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -38449,7 +38820,8 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -38544,6 +38916,7 @@ pub enum PathPaymentStrictSendResult {
     UnderDestmin,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for PathPaymentStrictSendResult {
     fn default() -> Self {
         Self::Success(PathPaymentStrictSendResultSuccess::default())
@@ -38738,7 +39111,8 @@ impl WriteXdr for PathPaymentStrictSendResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -38748,7 +39122,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     SellNoTrust = -2,
@@ -38907,7 +39281,8 @@ impl WriteXdr for ManageSellOfferResultCode {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -38917,7 +39292,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageOfferEffect {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Created = 0,
     Updated = 1,
     Deleted = 2,
@@ -39041,6 +39416,7 @@ pub enum ManageOfferSuccessResultOffer {
     Deleted,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ManageOfferSuccessResultOffer {
     fn default() -> Self {
         Self::Created(OfferEntry::default())
@@ -39156,7 +39532,8 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -39245,6 +39622,7 @@ pub enum ManageSellOfferResult {
     LowReserve,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ManageSellOfferResult {
     fn default() -> Self {
         Self::Success(ManageOfferSuccessResult::default())
@@ -39436,7 +39814,8 @@ impl WriteXdr for ManageSellOfferResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -39446,7 +39825,7 @@ impl WriteXdr for ManageSellOfferResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     SellNoTrust = -2,
@@ -39644,6 +40023,7 @@ pub enum ManageBuyOfferResult {
     LowReserve,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ManageBuyOfferResult {
     fn default() -> Self {
         Self::Success(ManageOfferSuccessResult::default())
@@ -39828,7 +40208,8 @@ impl WriteXdr for ManageBuyOfferResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -39838,7 +40219,7 @@ impl WriteXdr for ManageBuyOfferResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     LowReserve = -1,
     TooManySigners = -2,
@@ -40022,6 +40403,7 @@ pub enum SetOptionsResult {
     AuthRevocableRequired,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SetOptionsResult {
     fn default() -> Self {
         Self::Success
@@ -40193,7 +40575,8 @@ impl WriteXdr for SetOptionsResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -40203,7 +40586,7 @@ impl WriteXdr for SetOptionsResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NoIssuer = -2,
@@ -40373,6 +40756,7 @@ pub enum ChangeTrustResult {
     NotAuthMaintainLiabilities,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ChangeTrustResult {
     fn default() -> Self {
         Self::Success
@@ -40530,7 +40914,8 @@ impl WriteXdr for ChangeTrustResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -40540,7 +40925,7 @@ impl WriteXdr for ChangeTrustResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NoTrustLine = -2,
@@ -40696,6 +41081,7 @@ pub enum AllowTrustResult {
     LowReserve,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AllowTrustResult {
     fn default() -> Self {
         Self::Success
@@ -40839,7 +41225,8 @@ impl WriteXdr for AllowTrustResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -40849,7 +41236,7 @@ impl WriteXdr for AllowTrustResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NoAccount = -2,
@@ -41018,6 +41405,7 @@ pub enum AccountMergeResult {
     IsSponsor,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for AccountMergeResult {
     fn default() -> Self {
         Self::Success(i64::default())
@@ -41160,7 +41548,8 @@ impl WriteXdr for AccountMergeResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41170,7 +41559,7 @@ impl WriteXdr for AccountMergeResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum InflationResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     NotTime = -1,
 }
@@ -41267,7 +41656,8 @@ impl WriteXdr for InflationResultCode {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -41338,6 +41728,7 @@ pub enum InflationResult {
     NotTime,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for InflationResult {
     fn default() -> Self {
         Self::Success(VecM::<InflationPayout>::default())
@@ -41446,7 +41837,8 @@ impl WriteXdr for InflationResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41456,7 +41848,7 @@ impl WriteXdr for InflationResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageDataResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     NotSupportedYet = -1,
     NameNotFound = -2,
@@ -41598,6 +41990,7 @@ pub enum ManageDataResult {
     InvalidName,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ManageDataResult {
     fn default() -> Self {
         Self::Success
@@ -41722,7 +42115,8 @@ impl WriteXdr for ManageDataResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41732,7 +42126,7 @@ impl WriteXdr for ManageDataResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     BadSeq = -1,
 }
@@ -41850,6 +42244,7 @@ pub enum BumpSequenceResult {
     BadSeq,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for BumpSequenceResult {
     fn default() -> Self {
         Self::Success
@@ -41955,7 +42350,8 @@ impl WriteXdr for BumpSequenceResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41965,7 +42361,7 @@ impl WriteXdr for BumpSequenceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     LowReserve = -2,
@@ -42115,6 +42511,7 @@ pub enum CreateClaimableBalanceResult {
     Underfunded,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for CreateClaimableBalanceResult {
     fn default() -> Self {
         Self::Success(ClaimableBalanceId::default())
@@ -42250,7 +42647,8 @@ impl WriteXdr for CreateClaimableBalanceResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42260,7 +42658,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     DoesNotExist = -1,
     CannotClaim = -2,
@@ -42409,6 +42807,7 @@ pub enum ClaimClaimableBalanceResult {
     NotAuthorized,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClaimClaimableBalanceResult {
     fn default() -> Self {
         Self::Success
@@ -42543,7 +42942,8 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42553,7 +42953,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     AlreadySponsored = -2,
@@ -42685,6 +43085,7 @@ pub enum BeginSponsoringFutureReservesResult {
     Recursive,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for BeginSponsoringFutureReservesResult {
     fn default() -> Self {
         Self::Success
@@ -42801,7 +43202,8 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42811,7 +43213,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     NotSponsored = -1,
 }
@@ -42930,6 +43332,7 @@ pub enum EndSponsoringFutureReservesResult {
     NotSponsored,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for EndSponsoringFutureReservesResult {
     fn default() -> Self {
         Self::Success
@@ -43039,7 +43442,8 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43049,7 +43453,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     DoesNotExist = -1,
     NotSponsor = -2,
@@ -43198,6 +43602,7 @@ pub enum RevokeSponsorshipResult {
     Malformed,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for RevokeSponsorshipResult {
     fn default() -> Self {
         Self::Success
@@ -43333,7 +43738,8 @@ impl WriteXdr for RevokeSponsorshipResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43343,7 +43749,7 @@ impl WriteXdr for RevokeSponsorshipResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClawbackResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NotClawbackEnabled = -2,
@@ -43485,6 +43891,7 @@ pub enum ClawbackResult {
     Underfunded,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClawbackResult {
     fn default() -> Self {
         Self::Success
@@ -43612,7 +44019,8 @@ impl WriteXdr for ClawbackResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43622,7 +44030,7 @@ impl WriteXdr for ClawbackResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     DoesNotExist = -1,
     NotIssuer = -2,
@@ -43754,6 +44162,7 @@ pub enum ClawbackClaimableBalanceResult {
     NotClawbackEnabled,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClawbackClaimableBalanceResult {
     fn default() -> Self {
         Self::Success
@@ -43875,7 +44284,8 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43885,7 +44295,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NoTrustLine = -2,
@@ -44034,6 +44444,7 @@ pub enum SetTrustLineFlagsResult {
     LowReserve,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SetTrustLineFlagsResult {
     fn default() -> Self {
         Self::Success
@@ -44176,7 +44587,8 @@ impl WriteXdr for SetTrustLineFlagsResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44186,7 +44598,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NoTrust = -2,
@@ -44349,6 +44761,7 @@ pub enum LiquidityPoolDepositResult {
     PoolFull,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LiquidityPoolDepositResult {
     fn default() -> Self {
         Self::Success
@@ -44500,7 +44913,8 @@ impl WriteXdr for LiquidityPoolDepositResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44510,7 +44924,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     NoTrust = -2,
@@ -44659,6 +45073,7 @@ pub enum LiquidityPoolWithdrawResult {
     UnderMinimum,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for LiquidityPoolWithdrawResult {
     fn default() -> Self {
         Self::Success
@@ -44795,7 +45210,8 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44805,7 +45221,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum InvokeHostFunctionResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     Trapped = -2,
@@ -44954,6 +45370,7 @@ pub enum InvokeHostFunctionResult {
     InsufficientRefundableFee,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for InvokeHostFunctionResult {
     fn default() -> Self {
         Self::Success(Hash::default())
@@ -45092,7 +45509,8 @@ impl WriteXdr for InvokeHostFunctionResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -45102,7 +45520,7 @@ impl WriteXdr for InvokeHostFunctionResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ExtendFootprintTtlResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
@@ -45237,6 +45655,7 @@ pub enum ExtendFootprintTtlResult {
     InsufficientRefundableFee,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ExtendFootprintTtlResult {
     fn default() -> Self {
         Self::Success
@@ -45363,7 +45782,8 @@ impl WriteXdr for ExtendFootprintTtlResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -45373,7 +45793,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RestoreFootprintResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
@@ -45508,6 +45928,7 @@ pub enum RestoreFootprintResult {
     InsufficientRefundableFee,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for RestoreFootprintResult {
     fn default() -> Self {
         Self::Success
@@ -45635,7 +46056,8 @@ impl WriteXdr for RestoreFootprintResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -45645,7 +46067,7 @@ impl WriteXdr for RestoreFootprintResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OperationResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     OpInner = 0,
     OpBadAuth = -1,
     OpNoAccount = -2,
@@ -45866,6 +46288,7 @@ pub enum OperationResultTr {
     RestoreFootprint(RestoreFootprintResult),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for OperationResultTr {
     fn default() -> Self {
         Self::CreateAccount(CreateAccountResult::default())
@@ -46243,6 +46666,7 @@ pub enum OperationResult {
     OpTooManySponsoring,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for OperationResult {
     fn default() -> Self {
         Self::OpInner(OperationResultTr::default())
@@ -46398,7 +46822,8 @@ impl WriteXdr for OperationResult {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -46408,7 +46833,7 @@ impl WriteXdr for OperationResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TransactionResultCode {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     TxFeeBumpInnerSuccess = 1,
     TxSuccess = 0,
     TxFailed = -1,
@@ -46646,6 +47071,7 @@ pub enum InnerTransactionResultResult {
     TxSorobanInvalid,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for InnerTransactionResultResult {
     fn default() -> Self {
         Self::TxSuccess(VecM::<OperationResult>::default())
@@ -46859,6 +47285,7 @@ pub enum InnerTransactionResultExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for InnerTransactionResultExt {
     fn default() -> Self {
         Self::V0
@@ -46986,7 +47413,8 @@ impl WriteXdr for InnerTransactionResultExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -47041,7 +47469,8 @@ impl WriteXdr for InnerTransactionResult {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -47144,6 +47573,7 @@ pub enum TransactionResultResult {
     TxSorobanInvalid,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionResultResult {
     fn default() -> Self {
         Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::default())
@@ -47373,6 +47803,7 @@ pub enum TransactionResultExt {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for TransactionResultExt {
     fn default() -> Self {
         Self::V0
@@ -47501,7 +47932,8 @@ impl WriteXdr for TransactionResultExt {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -47553,7 +47985,8 @@ impl WriteXdr for TransactionResult {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47705,7 +48138,8 @@ impl AsRef<[u8]> for Hash {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47889,7 +48323,8 @@ pub type Int64 = i64;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47953,7 +48388,8 @@ impl WriteXdr for TimePoint {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48036,6 +48472,7 @@ pub enum ExtensionPoint {
     V0,
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ExtensionPoint {
     fn default() -> Self {
         Self::V0
@@ -48135,7 +48572,8 @@ impl WriteXdr for ExtensionPoint {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48145,7 +48583,7 @@ impl WriteXdr for ExtensionPoint {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CryptoKeyType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Ed25519 = 0,
     PreAuthTx = 1,
     HashX = 2,
@@ -48262,7 +48700,8 @@ impl WriteXdr for CryptoKeyType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48272,7 +48711,7 @@ impl WriteXdr for CryptoKeyType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PublicKeyType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     PublicKeyTypeEd25519 = 0,
 }
 
@@ -48368,7 +48807,8 @@ impl WriteXdr for PublicKeyType {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48378,7 +48818,7 @@ impl WriteXdr for PublicKeyType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SignerKeyType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     Ed25519 = 0,
     PreAuthTx = 1,
     HashX = 2,
@@ -48499,6 +48939,7 @@ pub enum PublicKey {
     PublicKeyTypeEd25519(Uint256),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for PublicKey {
     fn default() -> Self {
         Self::PublicKeyTypeEd25519(Uint256::default())
@@ -48596,7 +49037,8 @@ impl WriteXdr for PublicKey {
 ///     }
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48703,6 +49145,7 @@ pub enum SignerKey {
     Ed25519SignedPayload(SignerKeyEd25519SignedPayload),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for SignerKey {
     fn default() -> Self {
         Self::Ed25519(Uint256::default())
@@ -48813,7 +49256,8 @@ impl WriteXdr for SignerKey {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48920,7 +49364,8 @@ impl AsRef<[u8]> for Signature {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49072,7 +49517,8 @@ impl AsRef<[u8]> for SignatureHint {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49127,7 +49573,8 @@ impl WriteXdr for NodeId {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49182,7 +49629,8 @@ impl WriteXdr for AccountId {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49239,7 +49687,8 @@ impl WriteXdr for ContractId {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -49283,7 +49732,8 @@ impl WriteXdr for Curve25519Secret {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -49327,7 +49777,8 @@ impl WriteXdr for Curve25519Public {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -49371,7 +49822,8 @@ impl WriteXdr for HmacSha256Key {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -49415,7 +49867,8 @@ impl WriteXdr for HmacSha256Mac {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -49462,7 +49915,8 @@ impl WriteXdr for ShortHashSeed {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49472,7 +49926,7 @@ impl WriteXdr for ShortHashSeed {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BinaryFuseFilterType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     B8Bit = 0,
     B16Bit = 1,
     B32Bit = 2,
@@ -49588,7 +50042,8 @@ impl WriteXdr for BinaryFuseFilterType {
 /// };
 /// ```
 ///
-#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -49654,7 +50109,8 @@ impl WriteXdr for SerializedBinaryFuseFilter {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49712,7 +50168,8 @@ impl WriteXdr for PoolId {
 /// ```
 ///
 // enum
-#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49722,7 +50179,7 @@ impl WriteXdr for PoolId {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
-    #[default]
+    #[cfg_attr(feature = "alloc", default)]
     ClaimableBalanceIdTypeV0 = 0,
 }
 
@@ -49829,6 +50286,7 @@ pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
 }
 
+#[cfg(feature = "alloc")]
 impl Default for ClaimableBalanceId {
     fn default() -> Self {
         Self::ClaimableBalanceIdTypeV0(Hash::default())
@@ -66800,6 +67258,7 @@ impl Type {
         }
     }
 
+    #[cfg(all(feature = "alloc"))]
     #[must_use]
     #[allow(clippy::too_many_lines)]
     pub fn default<'a>(v: TypeVariant) -> Self {

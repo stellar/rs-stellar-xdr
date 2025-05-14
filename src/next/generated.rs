@@ -65943,10 +65943,7 @@ impl Type {
 
     #[cfg(feature = "arbitrary")]
     #[allow(clippy::too_many_lines)]
-    pub fn arbitrary<'a>(
-        v: TypeVariant,
-        u: &mut arbitrary::Unstructured<'a>,
-    ) -> Result<Self, Error> {
+    pub fn arbitrary(v: TypeVariant, u: &mut arbitrary::Unstructured<'_>) -> Result<Self, Error> {
         match v {
             TypeVariant::Value => Ok(Self::Value(Box::new(Value::arbitrary(u)?))),
             TypeVariant::ScpBallot => Ok(Self::ScpBallot(Box::new(ScpBallot::arbitrary(u)?))),
@@ -67261,7 +67258,7 @@ impl Type {
     #[cfg(feature = "alloc")]
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub fn default<'a>(v: TypeVariant) -> Self {
+    pub fn default(v: TypeVariant) -> Self {
         match v {
             TypeVariant::Value => Self::Value(Box::default()),
             TypeVariant::ScpBallot => Self::ScpBallot(Box::default()),

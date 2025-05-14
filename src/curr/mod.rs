@@ -3,6 +3,7 @@ mod generated;
 mod ledgerkey;
 pub use generated::*;
 
+mod default;
 mod jsonschema;
 mod str;
 

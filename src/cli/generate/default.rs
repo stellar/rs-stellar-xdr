@@ -1,5 +1,4 @@
 use crate::cli::Channel;
-use arbitrary::Unstructured;
 use clap::{Args, ValueEnum};
 use std::{
     io::{stdout, Write},
@@ -10,10 +9,6 @@ use std::{
 pub enum Error {
     #[error("unknown type {0}, choose one of {1:?}")]
     UnknownType(String, &'static [&'static str]),
-    #[error("error decoding JSON: {0}")]
-    ReadJsonCurr(crate::curr::Error),
-    #[error("error decoding JSON: {0}")]
-    ReadJsonNext(crate::next::Error),
     #[error("error reading file: {0}")]
     ReadFile(#[from] std::io::Error),
     #[error("error generating XDR: {0}")]
@@ -22,7 +17,7 @@ pub enum Error {
     WriteXdrNext(crate::next::Error),
     #[error("error generating JSON: {0}")]
     GenerateJson(#[from] serde_json::Error),
-    #[error("error generating random value: {0}")]
+    #[error("error generating arbitrary value: {0}")]
     Arbitrary(#[from] arbitrary::Error),
 }
 
@@ -39,8 +34,8 @@ impl From<crate::curr::Error> for Error {
             | crate::curr::Error::Io(_)
             | crate::curr::Error::DepthLimitExceeded
             | crate::curr::Error::LengthLimitExceeded
-            | crate::curr::Error::Arbitrary(_) => Error::WriteXdrCurr(e),
-            crate::curr::Error::Json(_) => Error::ReadJsonCurr(e),
+            | crate::curr::Error::Arbitrary(_)
+            | crate::curr::Error::Json(_) => Error::WriteXdrCurr(e),
         }
     }
 }
@@ -58,13 +53,13 @@ impl From<crate::next::Error> for Error {
             | crate::next::Error::Io(_)
             | crate::next::Error::DepthLimitExceeded
             | crate::next::Error::LengthLimitExceeded
-            | crate::next::Error::Arbitrary(_) => Error::WriteXdrNext(e),
-            crate::next::Error::Json(_) => Error::ReadJsonNext(e),
+            | crate::next::Error::Arbitrary(_)
+            | crate::next::Error::Json(_) => Error::WriteXdrNext(e),
         }
     }
 }
 
-/// Generate random XDR values
+/// Generate default XDR values
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
@@ -101,25 +96,23 @@ macro_rules! run_x {
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
-            let r = rand::random::<[u8; 10_240]>();
-            let mut u = Unstructured::new(&r);
             match self.output_format {
                 OutputFormat::Single => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
+                    let v = crate::$m::Type::default(r#type);
                     let l = crate::$m::Limits::none();
                     stdout().write_all(&v.to_xdr(l)?)?
                 }
                 OutputFormat::SingleBase64 => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
+                    let v = crate::$m::Type::default(r#type);
                     let l = crate::$m::Limits::none();
                     println!("{}", v.to_xdr_base64(l)?)
                 }
                 OutputFormat::Json => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
+                    let v = crate::$m::Type::default(r#type);
                     println!("{}", serde_json::to_string(&v)?);
                 }
                 OutputFormat::JsonFormatted => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
+                    let v = crate::$m::Type::default(r#type);
                     println!("{}", serde_json::to_string_pretty(&v)?);
                 }
             }
@@ -129,7 +122,7 @@ macro_rules! run_x {
 }
 
 impl Cmd {
-    /// Run the CLIs encode command.
+    /// Run the CLIs generate zero command.
     ///
     /// ## Errors
     ///

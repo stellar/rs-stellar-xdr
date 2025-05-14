@@ -6,12 +6,7 @@ fn main() {
     if let Err(e) = cli::run(env::args_os()) {
         match e {
             cli::Error::Clap(e) => e.exit(),
-            cli::Error::Types(_)
-            | cli::Error::Guess(_)
-            | cli::Error::Decode(_)
-            | cli::Error::Encode(_)
-            | cli::Error::Compare(_)
-            | cli::Error::Random(_) => {
+            _ => {
                 Error::raw(clap::error::ErrorKind::ValueValidation, e).exit()
             }
         }

@@ -146,6 +146,7 @@ impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Utf8Error(l), Self::Utf8Error(r)) => l == r,
+
             // IO errors cannot be compared, but in the absence of any more
             // meaningful way to compare the errors we compare the kind of error
             // and ignore the embedded source error or OS error. The main use
@@ -154,6 +155,10 @@ impl PartialEq for Error {
             // detrimental affect on failure testing, so this is a tradeoff.
             #[cfg(feature = "std")]
             (Self::Io(l), Self::Io(r)) => l.kind() == r.kind(),
+
+            #[cfg(feature = "arbitrary")]
+            (Self::Arbitrary(l), Self::Arbitrary(r)) => l == r,
+
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
@@ -2278,7 +2283,7 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
 
 // Frame ------------------------------------------------------------------------
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4022,9 +4027,8 @@ mod tests_for_number_or_string {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -4133,7 +4137,7 @@ impl AsRef<[u8]> for Value {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4184,7 +4188,7 @@ impl WriteXdr for ScpBallot {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -4194,6 +4198,7 @@ impl WriteXdr for ScpBallot {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScpStatementType {
+    #[default]
     Prepare = 0,
     Confirm = 1,
     Externalize = 2,
@@ -4301,7 +4306,7 @@ impl WriteXdr for ScpStatementType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4356,7 +4361,7 @@ impl WriteXdr for ScpNomination {
 ///         }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4419,7 +4424,7 @@ impl WriteXdr for ScpStatementPrepare {
 ///         }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4477,7 +4482,7 @@ impl WriteXdr for ScpStatementConfirm {
 ///         }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4571,6 +4576,12 @@ pub enum ScpStatementPledges {
     Confirm(ScpStatementConfirm),
     Externalize(ScpStatementExternalize),
     Nominate(ScpNomination),
+}
+
+impl Default for ScpStatementPledges {
+    fn default() -> Self {
+        Self::Prepare(Default::default())
+    }
 }
 
 impl ScpStatementPledges {
@@ -4712,7 +4723,7 @@ impl WriteXdr for ScpStatementPledges {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4767,7 +4778,7 @@ impl WriteXdr for ScpStatement {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4816,7 +4827,7 @@ impl WriteXdr for ScpEnvelope {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4867,7 +4878,7 @@ impl WriteXdr for ScpQuorumSet {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4920,7 +4931,7 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -4989,7 +5000,7 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5064,7 +5075,7 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5179,7 +5190,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5230,7 +5241,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5281,7 +5292,7 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5338,7 +5349,7 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -5541,7 +5552,7 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -5551,6 +5562,7 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractCostType {
+    #[default]
     WasmInsnExec = 0,
     MemAlloc = 1,
     MemCpy = 2,
@@ -5994,7 +6006,7 @@ impl WriteXdr for ContractCostType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6072,7 +6084,7 @@ impl WriteXdr for ContractCostParamEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6154,7 +6166,7 @@ impl WriteXdr for StateArchivalSettings {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6211,7 +6223,7 @@ impl WriteXdr for EvictionIterator {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -6274,9 +6286,8 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -6401,7 +6412,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -6411,6 +6422,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ConfigSettingId {
+    #[default]
     ContractMaxSizeBytes = 0,
     ContractComputeV0 = 1,
     ContractLedgerCostV0 = 2,
@@ -6657,6 +6669,12 @@ pub enum ConfigSettingEntry {
     ScpTiming(ConfigSettingScpTiming),
 }
 
+impl Default for ConfigSettingEntry {
+    fn default() -> Self {
+        Self::ContractMaxSizeBytes(Default::default())
+    }
+}
+
 impl ConfigSettingEntry {
     pub const VARIANTS: [ConfigSettingId; 17] = [
         ConfigSettingId::ContractMaxSizeBytes,
@@ -6880,7 +6898,7 @@ impl WriteXdr for ConfigSettingEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -6890,6 +6908,7 @@ impl WriteXdr for ConfigSettingEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScEnvMetaKind {
+    #[default]
     ScEnvMetaKindInterfaceVersion = 0,
 }
 
@@ -6981,7 +7000,7 @@ impl WriteXdr for ScEnvMetaKind {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7046,6 +7065,12 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
 #[allow(clippy::large_enum_variant)]
 pub enum ScEnvMetaEntry {
     ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion),
+}
+
+impl Default for ScEnvMetaEntry {
+    fn default() -> Self {
+        Self::ScEnvMetaKindInterfaceVersion(Default::default())
+    }
 }
 
 impl ScEnvMetaEntry {
@@ -7139,7 +7164,7 @@ impl WriteXdr for ScEnvMetaEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7187,7 +7212,7 @@ impl WriteXdr for ScMetaV0 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -7197,6 +7222,7 @@ impl WriteXdr for ScMetaV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScMetaKind {
+    #[default]
     ScMetaV0 = 0,
 }
 
@@ -7303,6 +7329,12 @@ impl WriteXdr for ScMetaKind {
 #[allow(clippy::large_enum_variant)]
 pub enum ScMetaEntry {
     ScMetaV0(ScMetaV0),
+}
+
+impl Default for ScMetaEntry {
+    fn default() -> Self {
+        Self::ScMetaV0(Default::default())
+    }
 }
 
 impl ScMetaEntry {
@@ -7431,7 +7463,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -7441,6 +7473,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecType {
+    #[default]
     Val = 0,
     Bool = 1,
     Void = 2,
@@ -7661,7 +7694,7 @@ impl WriteXdr for ScSpecType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7706,7 +7739,7 @@ impl WriteXdr for ScSpecTypeOption {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7753,7 +7786,7 @@ impl WriteXdr for ScSpecTypeResult {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7798,7 +7831,7 @@ impl WriteXdr for ScSpecTypeVec {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7845,7 +7878,7 @@ impl WriteXdr for ScSpecTypeMap {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7889,7 +7922,7 @@ impl WriteXdr for ScSpecTypeTuple {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7933,7 +7966,7 @@ impl WriteXdr for ScSpecTypeBytesN {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8049,6 +8082,12 @@ pub enum ScSpecTypeDef {
     Tuple(Box<ScSpecTypeTuple>),
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdt),
+}
+
+impl Default for ScSpecTypeDef {
+    fn default() -> Self {
+        Self::Val
+    }
 }
 
 impl ScSpecTypeDef {
@@ -8293,7 +8332,7 @@ impl WriteXdr for ScSpecTypeDef {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8346,7 +8385,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8400,7 +8439,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8449,7 +8488,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8501,7 +8540,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -8511,6 +8550,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecUdtUnionCaseV0Kind {
+    #[default]
     VoidV0 = 0,
     TupleV0 = 1,
 }
@@ -8628,6 +8668,12 @@ pub enum ScSpecUdtUnionCaseV0 {
     TupleV0(ScSpecUdtUnionCaseTupleV0),
 }
 
+impl Default for ScSpecUdtUnionCaseV0 {
+    fn default() -> Self {
+        Self::VoidV0(Default::default())
+    }
+}
+
 impl ScSpecUdtUnionCaseV0 {
     pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
         ScSpecUdtUnionCaseV0Kind::VoidV0,
@@ -8728,7 +8774,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8783,7 +8829,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8836,7 +8882,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8891,7 +8937,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8944,7 +8990,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -8999,7 +9045,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9052,7 +9098,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9107,7 +9153,7 @@ impl WriteXdr for ScSpecFunctionV0 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9117,6 +9163,7 @@ impl WriteXdr for ScSpecFunctionV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEventParamLocationV0 {
+    #[default]
     Data = 0,
     TopicList = 1,
 }
@@ -9217,7 +9264,7 @@ impl WriteXdr for ScSpecEventParamLocationV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9273,7 +9320,7 @@ impl WriteXdr for ScSpecEventParamV0 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9283,6 +9330,7 @@ impl WriteXdr for ScSpecEventParamV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEventDataFormat {
+    #[default]
     SingleValue = 0,
     Vec = 1,
     Map = 2,
@@ -9389,7 +9437,7 @@ impl WriteXdr for ScSpecEventDataFormat {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -9454,7 +9502,7 @@ impl WriteXdr for ScSpecEventV0 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9464,6 +9512,7 @@ impl WriteXdr for ScSpecEventV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEntryKind {
+    #[default]
     FunctionV0 = 0,
     UdtStructV0 = 1,
     UdtUnionV0 = 2,
@@ -9614,6 +9663,12 @@ pub enum ScSpecEntry {
     UdtEnumV0(ScSpecUdtEnumV0),
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
     EventV0(ScSpecEventV0),
+}
+
+impl Default for ScSpecEntry {
+    fn default() -> Self {
+        Self::FunctionV0(Default::default())
+    }
 }
 
 impl ScSpecEntry {
@@ -9789,7 +9844,7 @@ impl WriteXdr for ScSpecEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -9799,6 +9854,7 @@ impl WriteXdr for ScSpecEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScValType {
+    #[default]
     Bool = 0,
     Void = 1,
     Error = 2,
@@ -10009,7 +10065,7 @@ impl WriteXdr for ScValType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -10019,6 +10075,7 @@ impl WriteXdr for ScValType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScErrorType {
+    #[default]
     Contract = 0,
     WasmVm = 1,
     Context = 2,
@@ -10161,7 +10218,7 @@ impl WriteXdr for ScErrorType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -10171,6 +10228,7 @@ impl WriteXdr for ScErrorType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScErrorCode {
+    #[default]
     ArithDomain = 0,
     IndexBounds = 1,
     InvalidInput = 2,
@@ -10347,6 +10405,12 @@ pub enum ScError {
     Auth(ScErrorCode),
 }
 
+impl Default for ScError {
+    fn default() -> Self {
+        Self::Contract(Default::default())
+    }
+}
+
 impl ScError {
     pub const VARIANTS: [ScErrorType; 10] = [
         ScErrorType::Contract,
@@ -10483,7 +10547,7 @@ impl WriteXdr for ScError {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10555,7 +10619,7 @@ impl<'de> serde::Deserialize<'de> for UInt128Parts {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10629,7 +10693,7 @@ impl<'de> serde::Deserialize<'de> for Int128Parts {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10719,7 +10783,7 @@ impl<'de> serde::Deserialize<'de> for UInt256Parts {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -10809,7 +10873,7 @@ impl<'de> serde::Deserialize<'de> for Int256Parts {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -10819,6 +10883,7 @@ impl<'de> serde::Deserialize<'de> for Int256Parts {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractExecutableType {
+    #[default]
     Wasm = 0,
     StellarAsset = 1,
 }
@@ -10936,6 +11001,12 @@ pub enum ContractExecutable {
     StellarAsset,
 }
 
+impl Default for ContractExecutable {
+    fn default() -> Self {
+        Self::Wasm(Default::default())
+    }
+}
+
 impl ContractExecutable {
     pub const VARIANTS: [ContractExecutableType; 2] = [
         ContractExecutableType::Wasm,
@@ -11034,7 +11105,7 @@ impl WriteXdr for ContractExecutable {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11044,6 +11115,7 @@ impl WriteXdr for ContractExecutable {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScAddressType {
+    #[default]
     Account = 0,
     Contract = 1,
     MuxedAccount = 2,
@@ -11160,7 +11232,7 @@ impl WriteXdr for ScAddressType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -11257,6 +11329,12 @@ pub enum ScAddress {
     MuxedAccount(MuxedEd25519Account),
     ClaimableBalance(ClaimableBalanceId),
     LiquidityPool(PoolId),
+}
+
+impl Default for ScAddress {
+    fn default() -> Self {
+        Self::Account(Default::default())
+    }
 }
 
 impl ScAddress {
@@ -11383,9 +11461,8 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -11491,9 +11568,8 @@ impl AsRef<[ScVal]> for ScVec {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -11599,9 +11675,8 @@ impl AsRef<[ScMapEntry]> for ScMap {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -11707,9 +11782,8 @@ impl AsRef<[u8]> for ScBytes {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -11815,9 +11889,8 @@ impl AsRef<[u8]> for ScString {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -11924,7 +11997,7 @@ impl AsRef<[u8]> for ScSymbol {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -11972,7 +12045,7 @@ impl WriteXdr for ScNonceKey {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12122,6 +12195,12 @@ pub enum ScVal {
     ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
+}
+
+impl Default for ScVal {
+    fn default() -> Self {
+        Self::Bool(Default::default())
+    }
 }
 
 impl ScVal {
@@ -12343,7 +12422,7 @@ impl WriteXdr for ScVal {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12397,7 +12476,7 @@ impl WriteXdr for ScMapEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12465,6 +12544,12 @@ impl WriteXdr for LedgerCloseMetaBatch {
 pub enum StoredTransactionSet {
     V0(TransactionSet),
     V1(GeneralizedTransactionSet),
+}
+
+impl Default for StoredTransactionSet {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl StoredTransactionSet {
@@ -12559,7 +12644,7 @@ impl WriteXdr for StoredTransactionSet {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12611,7 +12696,7 @@ impl WriteXdr for StoredDebugTransactionSet {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12663,7 +12748,7 @@ impl WriteXdr for PersistedScpStateV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -12728,6 +12813,12 @@ impl WriteXdr for PersistedScpStateV1 {
 pub enum PersistedScpState {
     V0(PersistedScpStateV0),
     V1(PersistedScpStateV1),
+}
+
+impl Default for PersistedScpState {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl PersistedScpState {
@@ -12818,7 +12909,7 @@ impl WriteXdr for PersistedScpState {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -12970,9 +13061,8 @@ impl AsRef<[u8]> for Thresholds {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -13078,9 +13168,8 @@ impl AsRef<[u8]> for String32 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -13186,7 +13275,7 @@ impl AsRef<[u8]> for String64 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13250,9 +13339,8 @@ impl WriteXdr for SequenceNumber {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -13358,7 +13446,7 @@ impl AsRef<[u8]> for DataValue {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13460,7 +13548,7 @@ impl AsRef<[u8]> for AssetCode4 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13568,7 +13656,7 @@ impl AsRef<[u8]> for AssetCode12 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13578,6 +13666,7 @@ impl AsRef<[u8]> for AssetCode12 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AssetType {
+    #[default]
     Native = 0,
     CreditAlphanum4 = 1,
     CreditAlphanum12 = 2,
@@ -13704,6 +13793,12 @@ pub enum AssetCode {
     CreditAlphanum12(AssetCode12),
 }
 
+impl Default for AssetCode {
+    fn default() -> Self {
+        Self::CreditAlphanum4(Default::default())
+    }
+}
+
 impl AssetCode {
     pub const VARIANTS: [AssetType; 2] = [AssetType::CreditAlphanum4, AssetType::CreditAlphanum12];
     pub const VARIANTS_STR: [&'static str; 2] = ["CreditAlphanum4", "CreditAlphanum12"];
@@ -13795,7 +13890,7 @@ impl WriteXdr for AssetCode {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -13843,7 +13938,7 @@ impl WriteXdr for AlphaNum4 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -13915,6 +14010,12 @@ pub enum Asset {
     Native,
     CreditAlphanum4(AlphaNum4),
     CreditAlphanum12(AlphaNum12),
+}
+
+impl Default for Asset {
+    fn default() -> Self {
+        Self::Native
+    }
 }
 
 impl Asset {
@@ -14016,7 +14117,7 @@ impl WriteXdr for Asset {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14064,7 +14165,7 @@ impl WriteXdr for Price {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14123,7 +14224,7 @@ impl WriteXdr for Liabilities {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14133,6 +14234,7 @@ impl WriteXdr for Liabilities {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ThresholdIndexes {
+    #[default]
     MasterWeight = 0,
     Low = 1,
     Med = 2,
@@ -14248,7 +14350,7 @@ impl WriteXdr for ThresholdIndexes {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14258,6 +14360,7 @@ impl WriteXdr for ThresholdIndexes {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerEntryType {
+    #[default]
     Account = 0,
     Trustline = 1,
     Offer = 2,
@@ -14399,7 +14502,7 @@ impl WriteXdr for LedgerEntryType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14460,7 +14563,7 @@ impl WriteXdr for Signer {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14470,6 +14573,7 @@ impl WriteXdr for Signer {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AccountFlags {
+    #[default]
     RequiredFlag = 1,
     RevocableFlag = 2,
     ImmutableFlag = 4,
@@ -14602,7 +14706,7 @@ pub const MAX_SIGNERS: u64 = 20;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -14670,7 +14774,7 @@ impl WriteXdr for SponsorshipDescriptor {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14738,6 +14842,12 @@ impl WriteXdr for AccountEntryExtensionV3 {
 pub enum AccountEntryExtensionV2Ext {
     V0,
     V3(AccountEntryExtensionV3),
+}
+
+impl Default for AccountEntryExtensionV2Ext {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl AccountEntryExtensionV2Ext {
@@ -14841,7 +14951,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14912,6 +15022,12 @@ impl WriteXdr for AccountEntryExtensionV2 {
 pub enum AccountEntryExtensionV1Ext {
     V0,
     V2(AccountEntryExtensionV2),
+}
+
+impl Default for AccountEntryExtensionV1Ext {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl AccountEntryExtensionV1Ext {
@@ -15013,7 +15129,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15078,6 +15194,12 @@ impl WriteXdr for AccountEntryExtensionV1 {
 pub enum AccountEntryExt {
     V0,
     V1(AccountEntryExtensionV1),
+}
+
+impl Default for AccountEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl AccountEntryExt {
@@ -15194,7 +15316,7 @@ impl WriteXdr for AccountEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15277,7 +15399,7 @@ impl WriteXdr for AccountEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -15287,6 +15409,7 @@ impl WriteXdr for AccountEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TrustLineFlags {
+    #[default]
     AuthorizedFlag = 1,
     AuthorizedToMaintainLiabilitiesFlag = 2,
     TrustlineClawbackEnabledFlag = 4,
@@ -15417,7 +15540,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -15427,6 +15550,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolType {
+    #[default]
     LiquidityPoolConstantProduct = 0,
 }
 
@@ -15547,6 +15671,12 @@ pub enum TrustLineAsset {
     CreditAlphanum4(AlphaNum4),
     CreditAlphanum12(AlphaNum12),
     PoolShare(PoolId),
+}
+
+impl Default for TrustLineAsset {
+    fn default() -> Self {
+        Self::Native
+    }
 }
 
 impl TrustLineAsset {
@@ -15670,6 +15800,12 @@ pub enum TrustLineEntryExtensionV2Ext {
     V0,
 }
 
+impl Default for TrustLineEntryExtensionV2Ext {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl TrustLineEntryExtensionV2Ext {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -15763,7 +15899,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -15828,6 +15964,12 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 pub enum TrustLineEntryV1Ext {
     V0,
     V2(TrustLineEntryExtensionV2),
+}
+
+impl Default for TrustLineEntryV1Ext {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl TrustLineEntryV1Ext {
@@ -15929,7 +16071,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
 ///         }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16006,6 +16148,12 @@ impl WriteXdr for TrustLineEntryV1 {
 pub enum TrustLineEntryExt {
     V0,
     V1(TrustLineEntryV1),
+}
+
+impl Default for TrustLineEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl TrustLineEntryExt {
@@ -16126,7 +16274,7 @@ impl WriteXdr for TrustLineEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16196,7 +16344,7 @@ impl WriteXdr for TrustLineEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -16206,6 +16354,7 @@ impl WriteXdr for TrustLineEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OfferEntryFlags {
+    #[default]
     PassiveFlag = 1,
 }
 
@@ -16322,6 +16471,12 @@ pub enum OfferEntryExt {
     V0,
 }
 
+impl Default for OfferEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl OfferEntryExt {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -16428,7 +16583,7 @@ impl WriteXdr for OfferEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16516,6 +16671,12 @@ impl WriteXdr for OfferEntry {
 #[allow(clippy::large_enum_variant)]
 pub enum DataEntryExt {
     V0,
+}
+
+impl Default for DataEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl DataEntryExt {
@@ -16614,7 +16775,7 @@ impl WriteXdr for DataEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -16673,7 +16834,7 @@ impl WriteXdr for DataEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -16683,6 +16844,7 @@ impl WriteXdr for DataEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimPredicateType {
+    #[default]
     Unconditional = 0,
     And = 1,
     Or = 2,
@@ -16848,6 +17010,12 @@ pub enum ClaimPredicate {
     ),
 }
 
+impl Default for ClaimPredicate {
+    fn default() -> Self {
+        Self::Unconditional
+    }
+}
+
 impl ClaimPredicate {
     pub const VARIANTS: [ClaimPredicateType; 6] = [
         ClaimPredicateType::Unconditional,
@@ -16973,7 +17141,7 @@ impl WriteXdr for ClaimPredicate {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -16983,6 +17151,7 @@ impl WriteXdr for ClaimPredicate {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimantType {
+    #[default]
     ClaimantTypeV0 = 0,
 }
 
@@ -17075,7 +17244,7 @@ impl WriteXdr for ClaimantType {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17141,6 +17310,12 @@ impl WriteXdr for ClaimantV0 {
 #[allow(clippy::large_enum_variant)]
 pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),
+}
+
+impl Default for Claimant {
+    fn default() -> Self {
+        Self::ClaimantTypeV0(Default::default())
+    }
 }
 
 impl Claimant {
@@ -17232,7 +17407,7 @@ impl WriteXdr for Claimant {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -17242,6 +17417,7 @@ impl WriteXdr for Claimant {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
+    #[default]
     ClaimableBalanceClawbackEnabledFlag = 1,
 }
 
@@ -17359,6 +17535,12 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
     V0,
 }
 
+impl Default for ClaimableBalanceEntryExtensionV1Ext {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl ClaimableBalanceEntryExtensionV1Ext {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -17452,7 +17634,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17517,6 +17699,12 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 pub enum ClaimableBalanceEntryExt {
     V0,
     V1(ClaimableBalanceEntryExtensionV1),
+}
+
+impl Default for ClaimableBalanceEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl ClaimableBalanceEntryExt {
@@ -17629,7 +17817,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17691,7 +17879,7 @@ impl WriteXdr for ClaimableBalanceEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17747,7 +17935,7 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 ///         }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -17843,6 +18031,12 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolEntryBody {
     LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
+}
+
+impl Default for LiquidityPoolEntryBody {
+    fn default() -> Self {
+        Self::LiquidityPoolConstantProduct(Default::default())
+    }
 }
 
 impl LiquidityPoolEntryBody {
@@ -17953,7 +18147,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18001,7 +18195,7 @@ impl WriteXdr for LiquidityPoolEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -18011,6 +18205,7 @@ impl WriteXdr for LiquidityPoolEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractDataDurability {
+    #[default]
     Temporary = 0,
     Persistent = 1,
 }
@@ -18112,7 +18307,7 @@ impl WriteXdr for ContractDataDurability {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18177,7 +18372,7 @@ impl WriteXdr for ContractDataEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18252,7 +18447,7 @@ impl WriteXdr for ContractCodeCostInputs {
 ///             }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18321,6 +18516,12 @@ impl WriteXdr for ContractCodeEntryV1 {
 pub enum ContractCodeEntryExt {
     V0,
     V1(ContractCodeEntryV1),
+}
+
+impl Default for ContractCodeEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl ContractCodeEntryExt {
@@ -18425,7 +18626,7 @@ impl WriteXdr for ContractCodeEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18476,7 +18677,7 @@ impl WriteXdr for ContractCodeEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18538,6 +18739,12 @@ impl WriteXdr for TtlEntry {
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExtensionV1Ext {
     V0,
+}
+
+impl Default for LedgerEntryExtensionV1Ext {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl LedgerEntryExtensionV1Ext {
@@ -18633,7 +18840,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -18722,6 +18929,12 @@ pub enum LedgerEntryData {
     ContractCode(ContractCodeEntry),
     ConfigSetting(ConfigSettingEntry),
     Ttl(TtlEntry),
+}
+
+impl Default for LedgerEntryData {
+    fn default() -> Self {
+        Self::Account(Default::default())
+    }
 }
 
 impl LedgerEntryData {
@@ -18898,6 +19111,12 @@ pub enum LedgerEntryExt {
     V1(LedgerEntryExtensionV1),
 }
 
+impl Default for LedgerEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl LedgerEntryExt {
     pub const VARIANTS: [i32; 2] = [0, 1];
     pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
@@ -19023,7 +19242,7 @@ impl WriteXdr for LedgerEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19073,7 +19292,7 @@ impl WriteXdr for LedgerEntry {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19118,7 +19337,7 @@ impl WriteXdr for LedgerKeyAccount {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19166,7 +19385,7 @@ impl WriteXdr for LedgerKeyTrustLine {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19218,7 +19437,7 @@ impl WriteXdr for LedgerKeyOffer {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19265,7 +19484,7 @@ impl WriteXdr for LedgerKeyData {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19309,7 +19528,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19355,7 +19574,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19405,7 +19624,7 @@ impl WriteXdr for LedgerKeyContractData {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19449,7 +19668,7 @@ impl WriteXdr for LedgerKeyContractCode {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19494,7 +19713,7 @@ impl WriteXdr for LedgerKeyConfigSetting {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19621,6 +19840,12 @@ pub enum LedgerKey {
     ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
     Ttl(LedgerKeyTtl),
+}
+
+impl Default for LedgerKey {
+    fn default() -> Self {
+        Self::Account(Default::default())
+    }
 }
 
 impl LedgerKey {
@@ -19787,7 +20012,7 @@ impl WriteXdr for LedgerKey {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -19797,6 +20022,7 @@ impl WriteXdr for LedgerKey {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum EnvelopeType {
+    #[default]
     TxV0 = 0,
     Scp = 1,
     Tx = 2,
@@ -19939,7 +20165,7 @@ impl WriteXdr for EnvelopeType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -19949,6 +20175,7 @@ impl WriteXdr for EnvelopeType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BucketListType {
+    #[default]
     Live = 0,
     HotArchive = 1,
 }
@@ -20049,7 +20276,7 @@ impl WriteXdr for BucketListType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20059,6 +20286,7 @@ impl WriteXdr for BucketListType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BucketEntryType {
+    #[default]
     Metaentry = -1,
     Liveentry = 0,
     Deadentry = 1,
@@ -20170,7 +20398,7 @@ impl WriteXdr for BucketEntryType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20180,6 +20408,7 @@ impl WriteXdr for BucketEntryType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum HotArchiveBucketEntryType {
+    #[default]
     Metaentry = -1,
     Archived = 0,
     Live = 1,
@@ -20301,6 +20530,12 @@ pub enum BucketMetadataExt {
     V1(BucketListType),
 }
 
+impl Default for BucketMetadataExt {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl BucketMetadataExt {
     pub const VARIANTS: [i32; 2] = [0, 1];
     pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
@@ -20402,7 +20637,7 @@ impl WriteXdr for BucketMetadataExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -20473,6 +20708,12 @@ pub enum BucketEntry {
     Initentry(LedgerEntry),
     Deadentry(LedgerKey),
     Metaentry(BucketMetadata),
+}
+
+impl Default for BucketEntry {
+    fn default() -> Self {
+        Self::Liveentry(Default::default())
+    }
 }
 
 impl BucketEntry {
@@ -20603,6 +20844,12 @@ pub enum HotArchiveBucketEntry {
     Metaentry(BucketMetadata),
 }
 
+impl Default for HotArchiveBucketEntry {
+    fn default() -> Self {
+        Self::Archived(Default::default())
+    }
+}
+
 impl HotArchiveBucketEntry {
     pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
         HotArchiveBucketEntryType::Archived,
@@ -20702,9 +20949,8 @@ impl WriteXdr for HotArchiveBucketEntry {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -20814,7 +21060,7 @@ impl AsRef<[u8]> for UpgradeType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -20824,6 +21070,7 @@ impl AsRef<[u8]> for UpgradeType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum StellarValueType {
+    #[default]
     Basic = 0,
     Signed = 1,
 }
@@ -20919,7 +21166,7 @@ impl WriteXdr for StellarValueType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -20984,6 +21231,12 @@ impl WriteXdr for LedgerCloseValueSignature {
 pub enum StellarValueExt {
     Basic,
     Signed(LedgerCloseValueSignature),
+}
+
+impl Default for StellarValueExt {
+    fn default() -> Self {
+        Self::Basic
+    }
 }
 
 impl StellarValueExt {
@@ -21094,7 +21347,7 @@ impl WriteXdr for StellarValueExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21158,7 +21411,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21168,6 +21421,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
+    #[default]
     TradingFlag = 1,
     DepositFlag = 2,
     WithdrawalFlag = 4,
@@ -21286,6 +21540,12 @@ pub enum LedgerHeaderExtensionV1Ext {
     V0,
 }
 
+impl Default for LedgerHeaderExtensionV1Ext {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl LedgerHeaderExtensionV1Ext {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -21379,7 +21639,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21444,6 +21704,12 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 pub enum LedgerHeaderExt {
     V0,
     V1(LedgerHeaderExtensionV1),
+}
+
+impl Default for LedgerHeaderExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl LedgerHeaderExt {
@@ -21571,7 +21837,7 @@ impl WriteXdr for LedgerHeaderExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21676,7 +21942,7 @@ impl WriteXdr for LedgerHeader {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21686,6 +21952,7 @@ impl WriteXdr for LedgerHeader {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
+    #[default]
     Version = 1,
     BaseFee = 2,
     MaxTxSetSize = 3,
@@ -21811,7 +22078,7 @@ impl WriteXdr for LedgerUpgradeType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -21894,6 +22161,12 @@ pub enum LedgerUpgrade {
     Flags(u32),
     Config(ConfigUpgradeSetKey),
     MaxSorobanTxSetSize(u32),
+}
+
+impl Default for LedgerUpgrade {
+    fn default() -> Self {
+        Self::Version(Default::default())
+    }
 }
 
 impl LedgerUpgrade {
@@ -22023,7 +22296,7 @@ impl WriteXdr for LedgerUpgrade {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22070,7 +22343,7 @@ impl WriteXdr for ConfigUpgradeSet {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -22080,6 +22353,7 @@ impl WriteXdr for ConfigUpgradeSet {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TxSetComponentType {
+    #[default]
     TxsetCompTxsMaybeDiscountedFee = 0,
 }
 
@@ -22170,9 +22444,8 @@ impl WriteXdr for TxSetComponentType {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -22278,9 +22551,8 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -22392,7 +22664,7 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22444,7 +22716,7 @@ impl WriteXdr for ParallelTxsComponent {
 ///   }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22514,6 +22786,12 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 #[allow(clippy::large_enum_variant)]
 pub enum TxSetComponent {
     TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee),
+}
+
+impl Default for TxSetComponent {
+    fn default() -> Self {
+        Self::TxsetCompTxsMaybeDiscountedFee(Default::default())
+    }
 }
 
 impl TxSetComponent {
@@ -22629,6 +22907,12 @@ pub enum TransactionPhase {
     V1(ParallelTxsComponent),
 }
 
+impl Default for TransactionPhase {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
+}
+
 impl TransactionPhase {
     pub const VARIANTS: [i32; 2] = [0, 1];
     pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
@@ -22720,7 +23004,7 @@ impl WriteXdr for TransactionPhase {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22768,7 +23052,7 @@ impl WriteXdr for TransactionSet {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22831,6 +23115,12 @@ impl WriteXdr for TransactionSetV1 {
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSet {
     V1(TransactionSetV1),
+}
+
+impl Default for GeneralizedTransactionSet {
+    fn default() -> Self {
+        Self::V1(Default::default())
+    }
 }
 
 impl GeneralizedTransactionSet {
@@ -22920,7 +23210,7 @@ impl WriteXdr for GeneralizedTransactionSet {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -22967,7 +23257,7 @@ impl WriteXdr for TransactionResultPair {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23029,6 +23319,12 @@ impl WriteXdr for TransactionResultSet {
 pub enum TransactionHistoryEntryExt {
     V0,
     V1(GeneralizedTransactionSet),
+}
+
+impl Default for TransactionHistoryEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl TransactionHistoryEntryExt {
@@ -23132,7 +23428,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23197,6 +23493,12 @@ impl WriteXdr for TransactionHistoryEntry {
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryResultEntryExt {
     V0,
+}
+
+impl Default for TransactionHistoryResultEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl TransactionHistoryResultEntryExt {
@@ -23294,7 +23596,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23359,6 +23661,12 @@ impl WriteXdr for TransactionHistoryResultEntry {
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderHistoryEntryExt {
     V0,
+}
+
+impl Default for LedgerHeaderHistoryEntryExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl LedgerHeaderHistoryEntryExt {
@@ -23456,7 +23764,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23507,7 +23815,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23555,7 +23863,7 @@ impl WriteXdr for LedgerScpMessages {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23617,6 +23925,12 @@ impl WriteXdr for ScpHistoryEntryV0 {
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),
+}
+
+impl Default for ScpHistoryEntry {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl ScpHistoryEntry {
@@ -23710,7 +24024,7 @@ impl WriteXdr for ScpHistoryEntry {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -23720,6 +24034,7 @@ impl WriteXdr for ScpHistoryEntry {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
+    #[default]
     Created = 0,
     Updated = 1,
     Removed = 2,
@@ -23859,6 +24174,12 @@ pub enum LedgerEntryChange {
     Restored(LedgerEntry),
 }
 
+impl Default for LedgerEntryChange {
+    fn default() -> Self {
+        Self::Created(Default::default())
+    }
+}
+
 impl LedgerEntryChange {
     pub const VARIANTS: [LedgerEntryChangeType; 5] = [
         LedgerEntryChangeType::Created,
@@ -23966,9 +24287,8 @@ impl WriteXdr for LedgerEntryChange {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -24076,7 +24396,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24121,7 +24441,7 @@ impl WriteXdr for OperationMeta {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24172,7 +24492,7 @@ impl WriteXdr for TransactionMetaV1 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24225,7 +24545,7 @@ impl WriteXdr for TransactionMetaV2 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -24235,6 +24555,7 @@ impl WriteXdr for TransactionMetaV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractEventType {
+    #[default]
     System = 0,
     Contract = 1,
     Diagnostic = 2,
@@ -24337,7 +24658,7 @@ impl WriteXdr for ContractEventType {
 ///         }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24403,6 +24724,12 @@ impl WriteXdr for ContractEventV0 {
 #[allow(clippy::large_enum_variant)]
 pub enum ContractEventBody {
     V0(ContractEventV0),
+}
+
+impl Default for ContractEventBody {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl ContractEventBody {
@@ -24507,7 +24834,7 @@ impl WriteXdr for ContractEventBody {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24561,7 +24888,7 @@ impl WriteXdr for ContractEvent {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24637,7 +24964,7 @@ impl WriteXdr for DiagnosticEvent {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24721,6 +25048,12 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
 pub enum SorobanTransactionMetaExt {
     V0,
     V1(SorobanTransactionMetaExtV1),
+}
+
+impl Default for SorobanTransactionMetaExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl SorobanTransactionMetaExt {
@@ -24822,7 +25155,7 @@ impl WriteXdr for SorobanTransactionMetaExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24883,7 +25216,7 @@ impl WriteXdr for SorobanTransactionMeta {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24943,7 +25276,7 @@ impl WriteXdr for TransactionMetaV3 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -24995,7 +25328,7 @@ impl WriteXdr for OperationMetaV2 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25050,7 +25383,7 @@ impl WriteXdr for SorobanTransactionMetaV2 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -25060,6 +25393,7 @@ impl WriteXdr for SorobanTransactionMetaV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TransactionEventStage {
+    #[default]
     BeforeAllTxs = 0,
     AfterTx = 1,
     AfterAllTxs = 2,
@@ -25161,7 +25495,7 @@ impl WriteXdr for TransactionEventStage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25219,7 +25553,7 @@ impl WriteXdr for TransactionEvent {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25282,7 +25616,7 @@ impl WriteXdr for TransactionMetaV4 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25356,6 +25690,12 @@ pub enum TransactionMeta {
     V2(TransactionMetaV2),
     V3(TransactionMetaV3),
     V4(TransactionMetaV4),
+}
+
+impl Default for TransactionMeta {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl TransactionMeta {
@@ -25462,7 +25802,7 @@ impl WriteXdr for TransactionMeta {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25518,7 +25858,7 @@ impl WriteXdr for TransactionResultMeta {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25575,7 +25915,7 @@ impl WriteXdr for TransactionResultMetaV1 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25635,7 +25975,7 @@ impl WriteXdr for UpgradeEntryMeta {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25692,7 +26032,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25761,6 +26101,12 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
 pub enum LedgerCloseMetaExt {
     V0,
     V1(LedgerCloseMetaExtV1),
+}
+
+impl Default for LedgerCloseMetaExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl LedgerCloseMetaExt {
@@ -25878,7 +26224,7 @@ impl WriteXdr for LedgerCloseMetaExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -25978,7 +26324,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26071,6 +26417,12 @@ pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
     V2(LedgerCloseMetaV2),
+}
+
+impl Default for LedgerCloseMeta {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl LedgerCloseMeta {
@@ -26172,7 +26524,7 @@ impl WriteXdr for LedgerCloseMeta {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -26182,6 +26534,7 @@ impl WriteXdr for LedgerCloseMeta {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ErrorCode {
+    #[default]
     Misc = 0,
     Data = 1,
     Conf = 2,
@@ -26292,7 +26645,7 @@ impl WriteXdr for ErrorCode {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26339,7 +26692,7 @@ impl WriteXdr for SError {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26384,7 +26737,7 @@ impl WriteXdr for SendMore {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26433,7 +26786,7 @@ impl WriteXdr for SendMoreExtended {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26495,7 +26848,7 @@ impl WriteXdr for AuthCert {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26571,7 +26924,7 @@ pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26617,7 +26970,7 @@ impl WriteXdr for Auth {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -26627,6 +26980,7 @@ impl WriteXdr for Auth {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum IpAddrType {
+    #[default]
     IPv4 = 0,
     IPv6 = 1,
 }
@@ -26741,6 +27095,12 @@ pub enum PeerAddressIp {
     IPv6([u8; 16]),
 }
 
+impl Default for PeerAddressIp {
+    fn default() -> Self {
+        Self::IPv4(Default::default())
+    }
+}
+
 impl PeerAddressIp {
     pub const VARIANTS: [IpAddrType; 2] = [IpAddrType::IPv4, IpAddrType::IPv6];
     pub const VARIANTS_STR: [&'static str; 2] = ["IPv4", "IPv6"];
@@ -26840,7 +27200,7 @@ impl WriteXdr for PeerAddressIp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -26925,7 +27285,7 @@ impl WriteXdr for PeerAddress {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -26935,6 +27295,7 @@ impl WriteXdr for PeerAddress {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum MessageType {
+    #[default]
     ErrorMsg = 0,
     Auth = 2,
     DontHave = 3,
@@ -27131,7 +27492,7 @@ impl WriteXdr for MessageType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27179,7 +27540,7 @@ impl WriteXdr for DontHave {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -27189,6 +27550,7 @@ impl WriteXdr for DontHave {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
+    #[default]
     TimeSlicedSurveyTopology = 1,
 }
 
@@ -27282,7 +27644,7 @@ impl WriteXdr for SurveyMessageCommandType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -27292,6 +27654,7 @@ impl WriteXdr for SurveyMessageCommandType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageResponseType {
+    #[default]
     SurveyTopologyResponseV2 = 2,
 }
 
@@ -27386,7 +27749,7 @@ impl WriteXdr for SurveyMessageResponseType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27437,7 +27800,7 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27486,7 +27849,7 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27537,7 +27900,7 @@ impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27588,7 +27951,7 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27647,7 +28010,7 @@ impl WriteXdr for SurveyRequestMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27701,7 +28064,7 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27746,9 +28109,8 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -27860,7 +28222,7 @@ impl AsRef<[u8]> for EncryptedBody {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27917,7 +28279,7 @@ impl WriteXdr for SurveyResponseMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -27965,7 +28327,7 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28028,7 +28390,7 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28181,7 +28543,7 @@ impl WriteXdr for PeerStats {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28253,7 +28615,7 @@ impl WriteXdr for TimeSlicedNodeData {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28298,9 +28660,8 @@ impl WriteXdr for TimeSlicedPeerData {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -28410,7 +28771,7 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28475,6 +28836,12 @@ impl WriteXdr for TopologyResponseBodyV2 {
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
     SurveyTopologyResponseV2(TopologyResponseBodyV2),
+}
+
+impl Default for SurveyResponseBody {
+    fn default() -> Self {
+        Self::SurveyTopologyResponseV2(Default::default())
+    }
 }
 
 impl SurveyResponseBody {
@@ -28575,9 +28942,8 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -28685,7 +29051,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28735,9 +29101,8 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -28845,7 +29210,7 @@ impl AsRef<[Hash]> for TxDemandVector {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -28975,6 +29340,12 @@ pub enum StellarMessage {
     SendMoreExtended(SendMoreExtended),
     FloodAdvert(FloodAdvert),
     FloodDemand(FloodDemand),
+}
+
+impl Default for StellarMessage {
+    fn default() -> Self {
+        Self::ErrorMsg(Default::default())
+    }
 }
 
 impl StellarMessage {
@@ -29207,7 +29578,7 @@ impl WriteXdr for StellarMessage {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29281,6 +29652,12 @@ impl WriteXdr for AuthenticatedMessageV0 {
 #[allow(clippy::large_enum_variant)]
 pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
+}
+
+impl Default for AuthenticatedMessage {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl AuthenticatedMessage {
@@ -29394,6 +29771,12 @@ pub enum LiquidityPoolParameters {
     LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
 }
 
+impl Default for LiquidityPoolParameters {
+    fn default() -> Self {
+        Self::LiquidityPoolConstantProduct(Default::default())
+    }
+}
+
 impl LiquidityPoolParameters {
     pub const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
     pub const VARIANTS_STR: [&'static str; 1] = ["LiquidityPoolConstantProduct"];
@@ -29487,7 +29870,7 @@ impl WriteXdr for LiquidityPoolParameters {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29579,6 +29962,12 @@ impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
 pub enum MuxedAccount {
     Ed25519(Uint256),
     MuxedEd25519(MuxedAccountMed25519),
+}
+
+impl Default for MuxedAccount {
+    fn default() -> Self {
+        Self::Ed25519(Default::default())
+    }
 }
 
 impl MuxedAccount {
@@ -29674,7 +30063,7 @@ impl WriteXdr for MuxedAccount {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -29748,7 +30137,7 @@ impl WriteXdr for DecoratedSignature {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -29758,6 +30147,7 @@ impl WriteXdr for DecoratedSignature {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OperationType {
+    #[default]
     CreateAccount = 0,
     Payment = 1,
     PathPaymentStrictReceive = 2,
@@ -29984,7 +30374,7 @@ impl WriteXdr for OperationType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30037,7 +30427,7 @@ impl WriteXdr for CreateAccountOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30100,7 +30490,7 @@ impl WriteXdr for PaymentOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30176,7 +30566,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30249,7 +30639,7 @@ impl WriteXdr for PathPaymentStrictSendOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30320,7 +30710,7 @@ impl WriteXdr for ManageSellOfferOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30387,7 +30777,7 @@ impl WriteXdr for ManageBuyOfferOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30459,7 +30849,7 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30556,6 +30946,12 @@ pub enum ChangeTrustAsset {
     CreditAlphanum4(AlphaNum4),
     CreditAlphanum12(AlphaNum12),
     PoolShare(LiquidityPoolParameters),
+}
+
+impl Default for ChangeTrustAsset {
+    fn default() -> Self {
+        Self::Native
+    }
 }
 
 impl ChangeTrustAsset {
@@ -30665,7 +31061,7 @@ impl WriteXdr for ChangeTrustAsset {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30720,7 +31116,7 @@ impl WriteXdr for ChangeTrustOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30771,7 +31167,7 @@ impl WriteXdr for AllowTrustOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30818,7 +31214,7 @@ impl WriteXdr for ManageDataOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30864,7 +31260,7 @@ impl WriteXdr for BumpSequenceOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30918,7 +31314,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -30962,7 +31358,7 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31008,7 +31404,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -31018,6 +31414,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
+    #[default]
     LedgerEntry = 0,
     Signer = 1,
 }
@@ -31116,7 +31513,7 @@ impl WriteXdr for RevokeSponsorshipType {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31185,6 +31582,12 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 pub enum RevokeSponsorshipOp {
     LedgerEntry(LedgerKey),
     Signer(RevokeSponsorshipOpSigner),
+}
+
+impl Default for RevokeSponsorshipOp {
+    fn default() -> Self {
+        Self::LedgerEntry(Default::default())
+    }
 }
 
 impl RevokeSponsorshipOp {
@@ -31284,7 +31687,7 @@ impl WriteXdr for RevokeSponsorshipOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31338,7 +31741,7 @@ impl WriteXdr for ClawbackOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31386,7 +31789,7 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31451,7 +31854,7 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31518,7 +31921,7 @@ impl WriteXdr for LiquidityPoolDepositOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31587,7 +31990,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -31597,6 +32000,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum HostFunctionType {
+    #[default]
     InvokeContract = 0,
     CreateContract = 1,
     UploadContractWasm = 2,
@@ -31709,7 +32113,7 @@ impl WriteXdr for HostFunctionType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -31719,6 +32123,7 @@ impl WriteXdr for HostFunctionType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractIdPreimageType {
+    #[default]
     Address = 0,
     Asset = 1,
 }
@@ -31817,7 +32222,7 @@ impl WriteXdr for ContractIdPreimageType {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -31886,6 +32291,12 @@ impl WriteXdr for ContractIdPreimageFromAddress {
 pub enum ContractIdPreimage {
     Address(ContractIdPreimageFromAddress),
     Asset(Asset),
+}
+
+impl Default for ContractIdPreimage {
+    fn default() -> Self {
+        Self::Address(Default::default())
+    }
 }
 
 impl ContractIdPreimage {
@@ -31984,7 +32395,7 @@ impl WriteXdr for ContractIdPreimage {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32034,7 +32445,7 @@ impl WriteXdr for CreateContractArgs {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32085,7 +32496,7 @@ impl WriteXdr for CreateContractArgsV2 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32159,6 +32570,12 @@ pub enum HostFunction {
     CreateContract(CreateContractArgs),
     UploadContractWasm(BytesM),
     CreateContractV2(CreateContractArgsV2),
+}
+
+impl Default for HostFunction {
+    fn default() -> Self {
+        Self::InvokeContract(Default::default())
+    }
 }
 
 impl HostFunction {
@@ -32280,7 +32697,7 @@ impl WriteXdr for HostFunction {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -32290,6 +32707,7 @@ impl WriteXdr for HostFunction {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SorobanAuthorizedFunctionType {
+    #[default]
     ContractFn = 0,
     CreateContractHostFn = 1,
     CreateContractV2HostFn = 2,
@@ -32426,6 +32844,12 @@ pub enum SorobanAuthorizedFunction {
     CreateContractV2HostFn(CreateContractArgsV2),
 }
 
+impl Default for SorobanAuthorizedFunction {
+    fn default() -> Self {
+        Self::ContractFn(Default::default())
+    }
+}
+
 impl SorobanAuthorizedFunction {
     pub const VARIANTS: [SorobanAuthorizedFunctionType; 3] = [
         SorobanAuthorizedFunctionType::ContractFn,
@@ -32538,7 +32962,7 @@ impl WriteXdr for SorobanAuthorizedFunction {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32588,7 +33012,7 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32647,7 +33071,7 @@ impl WriteXdr for SorobanAddressCredentials {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -32657,6 +33081,7 @@ impl WriteXdr for SorobanAddressCredentials {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SorobanCredentialsType {
+    #[default]
     SourceAccount = 0,
     Address = 1,
 }
@@ -32774,6 +33199,12 @@ pub enum SorobanCredentials {
     Address(SorobanAddressCredentials),
 }
 
+impl Default for SorobanCredentials {
+    fn default() -> Self {
+        Self::SourceAccount
+    }
+}
+
 impl SorobanCredentials {
     pub const VARIANTS: [SorobanCredentialsType; 2] = [
         SorobanCredentialsType::SourceAccount,
@@ -32870,7 +33301,7 @@ impl WriteXdr for SorobanCredentials {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -32915,9 +33346,8 @@ impl WriteXdr for SorobanAuthorizationEntry {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -33028,7 +33458,7 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33076,7 +33506,7 @@ impl WriteXdr for InvokeHostFunctionOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33123,7 +33553,7 @@ impl WriteXdr for ExtendFootprintTtlOp {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33260,6 +33690,12 @@ pub enum OperationBody {
     InvokeHostFunction(InvokeHostFunctionOp),
     ExtendFootprintTtl(ExtendFootprintTtlOp),
     RestoreFootprint(RestoreFootprintOp),
+}
+
+impl Default for OperationBody {
+    fn default() -> Self {
+        Self::CreateAccount(Default::default())
+    }
 }
 
 impl OperationBody {
@@ -33604,7 +34040,7 @@ impl WriteXdr for OperationBody {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33653,7 +34089,7 @@ impl WriteXdr for Operation {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33707,7 +34143,7 @@ impl WriteXdr for HashIdPreimageOperationId {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33764,7 +34200,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33814,7 +34250,7 @@ impl WriteXdr for HashIdPreimageContractId {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -33917,6 +34353,12 @@ pub enum HashIdPreimage {
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractId(HashIdPreimageContractId),
     SorobanAuthorization(HashIdPreimageSorobanAuthorization),
+}
+
+impl Default for HashIdPreimage {
+    fn default() -> Self {
+        Self::OpId(Default::default())
+    }
 }
 
 impl HashIdPreimage {
@@ -34038,7 +34480,7 @@ impl WriteXdr for HashIdPreimage {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -34048,6 +34490,7 @@ impl WriteXdr for HashIdPreimage {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum MemoType {
+    #[default]
     None = 0,
     Text = 1,
     Id = 2,
@@ -34192,6 +34635,12 @@ pub enum Memo {
     Return(Hash),
 }
 
+impl Default for Memo {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 impl Memo {
     pub const VARIANTS: [MemoType; 5] = [
         MemoType::None,
@@ -34301,7 +34750,7 @@ impl WriteXdr for Memo {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34349,7 +34798,7 @@ impl WriteXdr for TimeBounds {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34424,7 +34873,7 @@ impl WriteXdr for LedgerBounds {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34486,7 +34935,7 @@ impl WriteXdr for PreconditionsV2 {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -34496,6 +34945,7 @@ impl WriteXdr for PreconditionsV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PreconditionType {
+    #[default]
     None = 0,
     Time = 1,
     V2 = 2,
@@ -34620,6 +35070,12 @@ pub enum Preconditions {
     V2(PreconditionsV2),
 }
 
+impl Default for Preconditions {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 impl Preconditions {
     pub const VARIANTS: [PreconditionType; 3] = [
         PreconditionType::None,
@@ -34719,7 +35175,7 @@ impl WriteXdr for Preconditions {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34774,7 +35230,7 @@ impl WriteXdr for LedgerFootprint {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34830,7 +35286,7 @@ impl WriteXdr for SorobanResources {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -34892,6 +35348,12 @@ impl WriteXdr for SorobanResourcesExtV0 {
 pub enum SorobanTransactionDataExt {
     V0,
     V1(SorobanResourcesExtV0),
+}
+
+impl Default for SorobanTransactionDataExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl SorobanTransactionDataExt {
@@ -35001,7 +35463,7 @@ impl WriteXdr for SorobanTransactionDataExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35070,6 +35532,12 @@ impl WriteXdr for SorobanTransactionData {
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionV0Ext {
     V0,
+}
+
+impl Default for TransactionV0Ext {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl TransactionV0Ext {
@@ -35169,7 +35637,7 @@ impl WriteXdr for TransactionV0Ext {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35234,7 +35702,7 @@ impl WriteXdr for TransactionV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35299,6 +35767,12 @@ impl WriteXdr for TransactionV0Envelope {
 pub enum TransactionExt {
     V0,
     V1(SorobanTransactionData),
+}
+
+impl Default for TransactionExt {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl TransactionExt {
@@ -35414,7 +35888,7 @@ impl WriteXdr for TransactionExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35479,7 +35953,7 @@ impl WriteXdr for Transaction {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35541,6 +36015,12 @@ impl WriteXdr for TransactionV1Envelope {
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTx {
     Tx(TransactionV1Envelope),
+}
+
+impl Default for FeeBumpTransactionInnerTx {
+    fn default() -> Self {
+        Self::Tx(Default::default())
+    }
 }
 
 impl FeeBumpTransactionInnerTx {
@@ -35646,6 +36126,12 @@ pub enum FeeBumpTransactionExt {
     V0,
 }
 
+impl Default for FeeBumpTransactionExt {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl FeeBumpTransactionExt {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -35745,7 +36231,7 @@ impl WriteXdr for FeeBumpTransactionExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35805,7 +36291,7 @@ impl WriteXdr for FeeBumpTransaction {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35996,6 +36482,12 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
     TxFeeBump(FeeBumpTransaction),
 }
 
+impl Default for TransactionSignaturePayloadTaggedTransaction {
+    fn default() -> Self {
+        Self::Tx(Default::default())
+    }
+}
+
 impl TransactionSignaturePayloadTaggedTransaction {
     pub const VARIANTS: [EnvelopeType; 2] = [EnvelopeType::Tx, EnvelopeType::TxFeeBump];
     pub const VARIANTS_STR: [&'static str; 2] = ["Tx", "TxFeeBump"];
@@ -36095,7 +36587,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36145,7 +36637,7 @@ impl WriteXdr for TransactionSignaturePayload {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -36155,6 +36647,7 @@ impl WriteXdr for TransactionSignaturePayload {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimAtomType {
+    #[default]
     V0 = 0,
     OrderBook = 1,
     LiquidityPool = 2,
@@ -36266,7 +36759,7 @@ impl WriteXdr for ClaimAtomType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36347,7 +36840,7 @@ impl WriteXdr for ClaimOfferAtomV0 {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36426,7 +36919,7 @@ impl WriteXdr for ClaimOfferAtom {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -36511,6 +37004,12 @@ pub enum ClaimAtom {
     V0(ClaimOfferAtomV0),
     OrderBook(ClaimOfferAtom),
     LiquidityPool(ClaimLiquidityAtom),
+}
+
+impl Default for ClaimAtom {
+    fn default() -> Self {
+        Self::V0(Default::default())
+    }
 }
 
 impl ClaimAtom {
@@ -36622,7 +37121,7 @@ impl WriteXdr for ClaimAtom {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -36632,6 +37131,7 @@ impl WriteXdr for ClaimAtom {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -36773,6 +37273,12 @@ pub enum CreateAccountResult {
     AlreadyExist,
 }
 
+impl Default for CreateAccountResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl CreateAccountResult {
     pub const VARIANTS: [CreateAccountResultCode; 5] = [
         CreateAccountResultCode::Success,
@@ -36900,7 +37406,7 @@ impl WriteXdr for CreateAccountResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -36910,6 +37416,7 @@ impl WriteXdr for CreateAccountResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PaymentResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -37086,6 +37593,12 @@ pub enum PaymentResult {
     NoIssuer,
 }
 
+impl Default for PaymentResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl PaymentResult {
     pub const VARIANTS: [PaymentResultCode; 10] = [
         PaymentResultCode::Success,
@@ -37255,7 +37768,7 @@ impl WriteXdr for PaymentResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -37265,6 +37778,7 @@ impl WriteXdr for PaymentResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -37422,7 +37936,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -37477,7 +37991,7 @@ impl WriteXdr for SimplePaymentResult {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -37571,6 +38085,12 @@ pub enum PathPaymentStrictReceiveResult {
     TooFewOffers,
     OfferCrossSelf,
     OverSendmax,
+}
+
+impl Default for PathPaymentStrictReceiveResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
 }
 
 impl PathPaymentStrictReceiveResult {
@@ -37762,7 +38282,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -37772,6 +38292,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     Underfunded = -2,
@@ -37928,7 +38449,7 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -38021,6 +38542,12 @@ pub enum PathPaymentStrictSendResult {
     TooFewOffers,
     OfferCrossSelf,
     UnderDestmin,
+}
+
+impl Default for PathPaymentStrictSendResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
 }
 
 impl PathPaymentStrictSendResult {
@@ -38211,7 +38738,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -38221,6 +38748,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     SellNoTrust = -2,
@@ -38379,7 +38907,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -38389,6 +38917,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageOfferEffect {
+    #[default]
     Created = 0,
     Updated = 1,
     Deleted = 2,
@@ -38512,6 +39041,12 @@ pub enum ManageOfferSuccessResultOffer {
     Deleted,
 }
 
+impl Default for ManageOfferSuccessResultOffer {
+    fn default() -> Self {
+        Self::Created(Default::default())
+    }
+}
+
 impl ManageOfferSuccessResultOffer {
     pub const VARIANTS: [ManageOfferEffect; 3] = [
         ManageOfferEffect::Created,
@@ -38621,7 +39156,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -38708,6 +39243,12 @@ pub enum ManageSellOfferResult {
     BuyNoIssuer,
     NotFound,
     LowReserve,
+}
+
+impl Default for ManageSellOfferResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
 }
 
 impl ManageSellOfferResult {
@@ -38895,7 +39436,7 @@ impl WriteXdr for ManageSellOfferResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -38905,6 +39446,7 @@ impl WriteXdr for ManageSellOfferResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     SellNoTrust = -2,
@@ -39102,6 +39644,12 @@ pub enum ManageBuyOfferResult {
     LowReserve,
 }
 
+impl Default for ManageBuyOfferResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
+}
+
 impl ManageBuyOfferResult {
     pub const VARIANTS: [ManageBuyOfferResultCode; 13] = [
         ManageBuyOfferResultCode::Success,
@@ -39280,7 +39828,7 @@ impl WriteXdr for ManageBuyOfferResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -39290,6 +39838,7 @@ impl WriteXdr for ManageBuyOfferResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
+    #[default]
     Success = 0,
     LowReserve = -1,
     TooManySigners = -2,
@@ -39473,6 +40022,12 @@ pub enum SetOptionsResult {
     AuthRevocableRequired,
 }
 
+impl Default for SetOptionsResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl SetOptionsResult {
     pub const VARIANTS: [SetOptionsResultCode; 11] = [
         SetOptionsResultCode::Success,
@@ -39638,7 +40193,7 @@ impl WriteXdr for SetOptionsResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -39648,6 +40203,7 @@ impl WriteXdr for SetOptionsResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NoIssuer = -2,
@@ -39817,6 +40373,12 @@ pub enum ChangeTrustResult {
     NotAuthMaintainLiabilities,
 }
 
+impl Default for ChangeTrustResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl ChangeTrustResult {
     pub const VARIANTS: [ChangeTrustResultCode; 9] = [
         ChangeTrustResultCode::Success,
@@ -39968,7 +40530,7 @@ impl WriteXdr for ChangeTrustResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -39978,6 +40540,7 @@ impl WriteXdr for ChangeTrustResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NoTrustLine = -2,
@@ -40133,6 +40696,12 @@ pub enum AllowTrustResult {
     LowReserve,
 }
 
+impl Default for AllowTrustResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl AllowTrustResult {
     pub const VARIANTS: [AllowTrustResultCode; 7] = [
         AllowTrustResultCode::Success,
@@ -40270,7 +40839,7 @@ impl WriteXdr for AllowTrustResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -40280,6 +40849,7 @@ impl WriteXdr for AllowTrustResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NoAccount = -2,
@@ -40448,6 +41018,12 @@ pub enum AccountMergeResult {
     IsSponsor,
 }
 
+impl Default for AccountMergeResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
+}
+
 impl AccountMergeResult {
     pub const VARIANTS: [AccountMergeResultCode; 8] = [
         AccountMergeResultCode::Success,
@@ -40584,7 +41160,7 @@ impl WriteXdr for AccountMergeResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -40594,6 +41170,7 @@ impl WriteXdr for AccountMergeResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum InflationResultCode {
+    #[default]
     Success = 0,
     NotTime = -1,
 }
@@ -40690,7 +41267,7 @@ impl WriteXdr for InflationResultCode {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -40759,6 +41336,12 @@ impl WriteXdr for InflationPayout {
 pub enum InflationResult {
     Success(VecM<InflationPayout>),
     NotTime,
+}
+
+impl Default for InflationResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
 }
 
 impl InflationResult {
@@ -40863,7 +41446,7 @@ impl WriteXdr for InflationResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -40873,6 +41456,7 @@ impl WriteXdr for InflationResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageDataResultCode {
+    #[default]
     Success = 0,
     NotSupportedYet = -1,
     NameNotFound = -2,
@@ -41014,6 +41598,12 @@ pub enum ManageDataResult {
     InvalidName,
 }
 
+impl Default for ManageDataResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl ManageDataResult {
     pub const VARIANTS: [ManageDataResultCode; 5] = [
         ManageDataResultCode::Success,
@@ -41132,7 +41722,7 @@ impl WriteXdr for ManageDataResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41142,6 +41732,7 @@ impl WriteXdr for ManageDataResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
+    #[default]
     Success = 0,
     BadSeq = -1,
 }
@@ -41259,6 +41850,12 @@ pub enum BumpSequenceResult {
     BadSeq,
 }
 
+impl Default for BumpSequenceResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl BumpSequenceResult {
     pub const VARIANTS: [BumpSequenceResultCode; 2] = [
         BumpSequenceResultCode::Success,
@@ -41358,7 +41955,7 @@ impl WriteXdr for BumpSequenceResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41368,6 +41965,7 @@ impl WriteXdr for BumpSequenceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     LowReserve = -2,
@@ -41517,6 +42115,12 @@ pub enum CreateClaimableBalanceResult {
     Underfunded,
 }
 
+impl Default for CreateClaimableBalanceResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
+}
+
 impl CreateClaimableBalanceResult {
     pub const VARIANTS: [CreateClaimableBalanceResultCode; 6] = [
         CreateClaimableBalanceResultCode::Success,
@@ -41646,7 +42250,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41656,6 +42260,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
+    #[default]
     Success = 0,
     DoesNotExist = -1,
     CannotClaim = -2,
@@ -41804,6 +42409,12 @@ pub enum ClaimClaimableBalanceResult {
     NotAuthorized,
 }
 
+impl Default for ClaimClaimableBalanceResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl ClaimClaimableBalanceResult {
     pub const VARIANTS: [ClaimClaimableBalanceResultCode; 6] = [
         ClaimClaimableBalanceResultCode::Success,
@@ -41932,7 +42543,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -41942,6 +42553,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     AlreadySponsored = -2,
@@ -42073,6 +42685,12 @@ pub enum BeginSponsoringFutureReservesResult {
     Recursive,
 }
 
+impl Default for BeginSponsoringFutureReservesResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl BeginSponsoringFutureReservesResult {
     pub const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] = [
         BeginSponsoringFutureReservesResultCode::Success,
@@ -42183,7 +42801,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42193,6 +42811,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
+    #[default]
     Success = 0,
     NotSponsored = -1,
 }
@@ -42311,6 +42930,12 @@ pub enum EndSponsoringFutureReservesResult {
     NotSponsored,
 }
 
+impl Default for EndSponsoringFutureReservesResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl EndSponsoringFutureReservesResult {
     pub const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] = [
         EndSponsoringFutureReservesResultCode::Success,
@@ -42414,7 +43039,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42424,6 +43049,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
+    #[default]
     Success = 0,
     DoesNotExist = -1,
     NotSponsor = -2,
@@ -42572,6 +43198,12 @@ pub enum RevokeSponsorshipResult {
     Malformed,
 }
 
+impl Default for RevokeSponsorshipResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl RevokeSponsorshipResult {
     pub const VARIANTS: [RevokeSponsorshipResultCode; 6] = [
         RevokeSponsorshipResultCode::Success,
@@ -42701,7 +43333,7 @@ impl WriteXdr for RevokeSponsorshipResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42711,6 +43343,7 @@ impl WriteXdr for RevokeSponsorshipResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClawbackResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NotClawbackEnabled = -2,
@@ -42852,6 +43485,12 @@ pub enum ClawbackResult {
     Underfunded,
 }
 
+impl Default for ClawbackResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl ClawbackResult {
     pub const VARIANTS: [ClawbackResultCode; 5] = [
         ClawbackResultCode::Success,
@@ -42973,7 +43612,7 @@ impl WriteXdr for ClawbackResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -42983,6 +43622,7 @@ impl WriteXdr for ClawbackResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
+    #[default]
     Success = 0,
     DoesNotExist = -1,
     NotIssuer = -2,
@@ -43114,6 +43754,12 @@ pub enum ClawbackClaimableBalanceResult {
     NotClawbackEnabled,
 }
 
+impl Default for ClawbackClaimableBalanceResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl ClawbackClaimableBalanceResult {
     pub const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] = [
         ClawbackClaimableBalanceResultCode::Success,
@@ -43229,7 +43875,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43239,6 +43885,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NoTrustLine = -2,
@@ -43387,6 +44034,12 @@ pub enum SetTrustLineFlagsResult {
     LowReserve,
 }
 
+impl Default for SetTrustLineFlagsResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl SetTrustLineFlagsResult {
     pub const VARIANTS: [SetTrustLineFlagsResultCode; 6] = [
         SetTrustLineFlagsResultCode::Success,
@@ -43523,7 +44176,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43533,6 +44186,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NoTrust = -2,
@@ -43695,6 +44349,12 @@ pub enum LiquidityPoolDepositResult {
     PoolFull,
 }
 
+impl Default for LiquidityPoolDepositResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl LiquidityPoolDepositResult {
     pub const VARIANTS: [LiquidityPoolDepositResultCode; 8] = [
         LiquidityPoolDepositResultCode::Success,
@@ -43840,7 +44500,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -43850,6 +44510,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     NoTrust = -2,
@@ -43998,6 +44659,12 @@ pub enum LiquidityPoolWithdrawResult {
     UnderMinimum,
 }
 
+impl Default for LiquidityPoolWithdrawResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl LiquidityPoolWithdrawResult {
     pub const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] = [
         LiquidityPoolWithdrawResultCode::Success,
@@ -44128,7 +44795,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44138,6 +44805,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum InvokeHostFunctionResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     Trapped = -2,
@@ -44286,6 +44954,12 @@ pub enum InvokeHostFunctionResult {
     InsufficientRefundableFee,
 }
 
+impl Default for InvokeHostFunctionResult {
+    fn default() -> Self {
+        Self::Success(Default::default())
+    }
+}
+
 impl InvokeHostFunctionResult {
     pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
         InvokeHostFunctionResultCode::Success,
@@ -44418,7 +45092,7 @@ impl WriteXdr for InvokeHostFunctionResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44428,6 +45102,7 @@ impl WriteXdr for InvokeHostFunctionResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ExtendFootprintTtlResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
@@ -44562,6 +45237,12 @@ pub enum ExtendFootprintTtlResult {
     InsufficientRefundableFee,
 }
 
+impl Default for ExtendFootprintTtlResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl ExtendFootprintTtlResult {
     pub const VARIANTS: [ExtendFootprintTtlResultCode; 4] = [
         ExtendFootprintTtlResultCode::Success,
@@ -44682,7 +45363,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44692,6 +45373,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RestoreFootprintResultCode {
+    #[default]
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
@@ -44826,6 +45508,12 @@ pub enum RestoreFootprintResult {
     InsufficientRefundableFee,
 }
 
+impl Default for RestoreFootprintResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+
 impl RestoreFootprintResult {
     pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
         RestoreFootprintResultCode::Success,
@@ -44947,7 +45635,7 @@ impl WriteXdr for RestoreFootprintResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44957,6 +45645,7 @@ impl WriteXdr for RestoreFootprintResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OperationResultCode {
+    #[default]
     OpInner = 0,
     OpBadAuth = -1,
     OpNoAccount = -2,
@@ -45175,6 +45864,12 @@ pub enum OperationResultTr {
     InvokeHostFunction(InvokeHostFunctionResult),
     ExtendFootprintTtl(ExtendFootprintTtlResult),
     RestoreFootprint(RestoreFootprintResult),
+}
+
+impl Default for OperationResultTr {
+    fn default() -> Self {
+        Self::CreateAccount(Default::default())
+    }
 }
 
 impl OperationResultTr {
@@ -45548,6 +46243,12 @@ pub enum OperationResult {
     OpTooManySponsoring,
 }
 
+impl Default for OperationResult {
+    fn default() -> Self {
+        Self::OpInner(Default::default())
+    }
+}
+
 impl OperationResult {
     pub const VARIANTS: [OperationResultCode; 7] = [
         OperationResultCode::OpInner,
@@ -45697,7 +46398,7 @@ impl WriteXdr for OperationResult {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -45707,6 +46408,7 @@ impl WriteXdr for OperationResult {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TransactionResultCode {
+    #[default]
     TxFeeBumpInnerSuccess = 1,
     TxSuccess = 0,
     TxFailed = -1,
@@ -45944,6 +46646,12 @@ pub enum InnerTransactionResultResult {
     TxSorobanInvalid,
 }
 
+impl Default for InnerTransactionResultResult {
+    fn default() -> Self {
+        Self::TxSuccess(Default::default())
+    }
+}
+
 impl InnerTransactionResultResult {
     pub const VARIANTS: [TransactionResultCode; 17] = [
         TransactionResultCode::TxSuccess,
@@ -46151,6 +46859,12 @@ pub enum InnerTransactionResultExt {
     V0,
 }
 
+impl Default for InnerTransactionResultExt {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl InnerTransactionResultExt {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -46272,7 +46986,7 @@ impl WriteXdr for InnerTransactionResultExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -46327,7 +47041,7 @@ impl WriteXdr for InnerTransactionResult {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -46428,6 +47142,12 @@ pub enum TransactionResultResult {
     TxBadMinSeqAgeOrGap,
     TxMalformed,
     TxSorobanInvalid,
+}
+
+impl Default for TransactionResultResult {
+    fn default() -> Self {
+        Self::TxFeeBumpInnerSuccess(Default::default())
+    }
 }
 
 impl TransactionResultResult {
@@ -46653,6 +47373,12 @@ pub enum TransactionResultExt {
     V0,
 }
 
+impl Default for TransactionResultExt {
+    fn default() -> Self {
+        Self::V0
+    }
+}
+
 impl TransactionResultExt {
     pub const VARIANTS: [i32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
@@ -46775,7 +47501,7 @@ impl WriteXdr for TransactionResultExt {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -46827,7 +47553,7 @@ impl WriteXdr for TransactionResult {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -46979,7 +47705,7 @@ impl AsRef<[u8]> for Hash {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47163,7 +47889,7 @@ pub type Int64 = i64;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47227,7 +47953,7 @@ impl WriteXdr for TimePoint {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47308,6 +48034,12 @@ impl WriteXdr for Duration {
 #[allow(clippy::large_enum_variant)]
 pub enum ExtensionPoint {
     V0,
+}
+
+impl Default for ExtensionPoint {
+    fn default() -> Self {
+        Self::V0
+    }
 }
 
 impl ExtensionPoint {
@@ -47403,7 +48135,7 @@ impl WriteXdr for ExtensionPoint {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47413,6 +48145,7 @@ impl WriteXdr for ExtensionPoint {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CryptoKeyType {
+    #[default]
     Ed25519 = 0,
     PreAuthTx = 1,
     HashX = 2,
@@ -47529,7 +48262,7 @@ impl WriteXdr for CryptoKeyType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47539,6 +48272,7 @@ impl WriteXdr for CryptoKeyType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PublicKeyType {
+    #[default]
     PublicKeyTypeEd25519 = 0,
 }
 
@@ -47634,7 +48368,7 @@ impl WriteXdr for PublicKeyType {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -47644,6 +48378,7 @@ impl WriteXdr for PublicKeyType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SignerKeyType {
+    #[default]
     Ed25519 = 0,
     PreAuthTx = 1,
     HashX = 2,
@@ -47764,6 +48499,12 @@ pub enum PublicKey {
     PublicKeyTypeEd25519(Uint256),
 }
 
+impl Default for PublicKey {
+    fn default() -> Self {
+        Self::PublicKeyTypeEd25519(Default::default())
+    }
+}
+
 impl PublicKey {
     pub const VARIANTS: [PublicKeyType; 1] = [PublicKeyType::PublicKeyTypeEd25519];
     pub const VARIANTS_STR: [&'static str; 1] = ["PublicKeyTypeEd25519"];
@@ -47855,7 +48596,7 @@ impl WriteXdr for PublicKey {
 ///     }
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -47962,6 +48703,12 @@ pub enum SignerKey {
     Ed25519SignedPayload(SignerKeyEd25519SignedPayload),
 }
 
+impl Default for SignerKey {
+    fn default() -> Self {
+        Self::Ed25519(Default::default())
+    }
+}
+
 impl SignerKey {
     pub const VARIANTS: [SignerKeyType; 4] = [
         SignerKeyType::Ed25519,
@@ -48066,9 +48813,8 @@ impl WriteXdr for SignerKey {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     serde_with::serde_as,
@@ -48174,7 +48920,7 @@ impl AsRef<[u8]> for Signature {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48326,7 +49072,7 @@ impl AsRef<[u8]> for SignatureHint {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48381,7 +49127,7 @@ impl WriteXdr for NodeId {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48436,7 +49182,7 @@ impl WriteXdr for AccountId {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48493,7 +49239,7 @@ impl WriteXdr for ContractId {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48537,7 +49283,7 @@ impl WriteXdr for Curve25519Secret {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48581,7 +49327,7 @@ impl WriteXdr for Curve25519Public {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48625,7 +49371,7 @@ impl WriteXdr for HmacSha256Key {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48669,7 +49415,7 @@ impl WriteXdr for HmacSha256Mac {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48716,7 +49462,7 @@ impl WriteXdr for ShortHashSeed {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48726,6 +49472,7 @@ impl WriteXdr for ShortHashSeed {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BinaryFuseFilterType {
+    #[default]
     B8Bit = 0,
     B16Bit = 1,
     B32Bit = 2,
@@ -48841,7 +49588,7 @@ impl WriteXdr for BinaryFuseFilterType {
 /// };
 /// ```
 ///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -48907,7 +49654,7 @@ impl WriteXdr for SerializedBinaryFuseFilter {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48965,7 +49712,7 @@ impl WriteXdr for PoolId {
 /// ```
 ///
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -48975,6 +49722,7 @@ impl WriteXdr for PoolId {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
+    #[default]
     ClaimableBalanceIdTypeV0 = 0,
 }
 
@@ -49079,6 +49827,12 @@ impl WriteXdr for ClaimableBalanceIdType {
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
+}
+
+impl Default for ClaimableBalanceId {
+    fn default() -> Self {
+        Self::ClaimableBalanceIdTypeV0(Default::default())
+    }
 }
 
 impl ClaimableBalanceId {
@@ -53665,20 +54419,6 @@ impl Type {
         "ClaimableBalanceIdType",
         "ClaimableBalanceId",
     ];
-
-    #[cfg(feature = "arbitrary")]
-    #[allow(clippy::too_many_lines)]
-    pub fn arbitrary<'a>(v: TypeVariant, u: &mut arbitrary::Unstructured<'a>) -> Result<Self> {
-        match v {
-            TypeVariant::Hash => {
-                Ok(Self::Hash(Box::new(Hash::arbitrary(u)?)))
-            }
-            TypeVariant::TransactionEnvelope => {
-                Ok(Self::TransactionEnvelope(Box::new(TransactionEnvelope::arbitrary(u)?)))
-            }
-            _ => Err(Error::Invalid),
-        }
-    }
 
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
@@ -64740,6 +65480,2521 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+        }
+    }
+
+    #[cfg(feature = "arbitrary")]
+    #[allow(clippy::too_many_lines)]
+    pub fn arbitrary<'a>(
+        v: TypeVariant,
+        u: &mut arbitrary::Unstructured<'a>,
+    ) -> Result<Self, Error> {
+        match v {
+            TypeVariant::Value => Ok(Self::Value(Box::new(Value::arbitrary(u)?))),
+            TypeVariant::ScpBallot => Ok(Self::ScpBallot(Box::new(ScpBallot::arbitrary(u)?))),
+            TypeVariant::ScpStatementType => Ok(Self::ScpStatementType(Box::new(
+                ScpStatementType::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpNomination => {
+                Ok(Self::ScpNomination(Box::new(ScpNomination::arbitrary(u)?)))
+            }
+            TypeVariant::ScpStatement => {
+                Ok(Self::ScpStatement(Box::new(ScpStatement::arbitrary(u)?)))
+            }
+            TypeVariant::ScpStatementPledges => Ok(Self::ScpStatementPledges(Box::new(
+                ScpStatementPledges::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpStatementPrepare => Ok(Self::ScpStatementPrepare(Box::new(
+                ScpStatementPrepare::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpStatementConfirm => Ok(Self::ScpStatementConfirm(Box::new(
+                ScpStatementConfirm::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpStatementExternalize => Ok(Self::ScpStatementExternalize(Box::new(
+                ScpStatementExternalize::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpEnvelope => Ok(Self::ScpEnvelope(Box::new(ScpEnvelope::arbitrary(u)?))),
+            TypeVariant::ScpQuorumSet => {
+                Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::arbitrary(u)?)))
+            }
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => {
+                Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
+                    ConfigSettingContractExecutionLanesV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractComputeV0 => {
+                Ok(Self::ConfigSettingContractComputeV0(Box::new(
+                    ConfigSettingContractComputeV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractParallelComputeV0 => {
+                Ok(Self::ConfigSettingContractParallelComputeV0(Box::new(
+                    ConfigSettingContractParallelComputeV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    ConfigSettingContractLedgerCostV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostExtV0(Box::new(
+                    ConfigSettingContractLedgerCostExtV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
+                    ConfigSettingContractHistoricalDataV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractEventsV0 => Ok(Self::ConfigSettingContractEventsV0(
+                Box::new(ConfigSettingContractEventsV0::arbitrary(u)?),
+            )),
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                Ok(Self::ConfigSettingContractBandwidthV0(Box::new(
+                    ConfigSettingContractBandwidthV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ContractCostType => Ok(Self::ContractCostType(Box::new(
+                ContractCostType::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractCostParamEntry => Ok(Self::ContractCostParamEntry(Box::new(
+                ContractCostParamEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::StateArchivalSettings => Ok(Self::StateArchivalSettings(Box::new(
+                StateArchivalSettings::arbitrary(u)?,
+            ))),
+            TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
+                EvictionIterator::arbitrary(u)?,
+            ))),
+            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
+                ConfigSettingScpTiming::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
+                ContractCostParams::arbitrary(u)?,
+            ))),
+            TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
+                ConfigSettingId::arbitrary(u)?,
+            ))),
+            TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
+                ConfigSettingEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::ScEnvMetaKind => {
+                Ok(Self::ScEnvMetaKind(Box::new(ScEnvMetaKind::arbitrary(u)?)))
+            }
+            TypeVariant::ScEnvMetaEntry => Ok(Self::ScEnvMetaEntry(Box::new(
+                ScEnvMetaEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => {
+                Ok(Self::ScEnvMetaEntryInterfaceVersion(Box::new(
+                    ScEnvMetaEntryInterfaceVersion::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ScMetaV0 => Ok(Self::ScMetaV0(Box::new(ScMetaV0::arbitrary(u)?))),
+            TypeVariant::ScMetaKind => Ok(Self::ScMetaKind(Box::new(ScMetaKind::arbitrary(u)?))),
+            TypeVariant::ScMetaEntry => Ok(Self::ScMetaEntry(Box::new(ScMetaEntry::arbitrary(u)?))),
+            TypeVariant::ScSpecType => Ok(Self::ScSpecType(Box::new(ScSpecType::arbitrary(u)?))),
+            TypeVariant::ScSpecTypeOption => Ok(Self::ScSpecTypeOption(Box::new(
+                ScSpecTypeOption::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecTypeResult => Ok(Self::ScSpecTypeResult(Box::new(
+                ScSpecTypeResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecTypeVec => {
+                Ok(Self::ScSpecTypeVec(Box::new(ScSpecTypeVec::arbitrary(u)?)))
+            }
+            TypeVariant::ScSpecTypeMap => {
+                Ok(Self::ScSpecTypeMap(Box::new(ScSpecTypeMap::arbitrary(u)?)))
+            }
+            TypeVariant::ScSpecTypeTuple => Ok(Self::ScSpecTypeTuple(Box::new(
+                ScSpecTypeTuple::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecTypeBytesN => Ok(Self::ScSpecTypeBytesN(Box::new(
+                ScSpecTypeBytesN::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecTypeUdt => {
+                Ok(Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::arbitrary(u)?)))
+            }
+            TypeVariant::ScSpecTypeDef => {
+                Ok(Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::arbitrary(u)?)))
+            }
+            TypeVariant::ScSpecUdtStructFieldV0 => Ok(Self::ScSpecUdtStructFieldV0(Box::new(
+                ScSpecUdtStructFieldV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtStructV0 => Ok(Self::ScSpecUdtStructV0(Box::new(
+                ScSpecUdtStructV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Ok(Self::ScSpecUdtUnionCaseVoidV0(Box::new(
+                ScSpecUdtUnionCaseVoidV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Ok(Self::ScSpecUdtUnionCaseTupleV0(
+                Box::new(ScSpecUdtUnionCaseTupleV0::arbitrary(u)?),
+            )),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Ok(Self::ScSpecUdtUnionCaseV0Kind(Box::new(
+                ScSpecUdtUnionCaseV0Kind::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Ok(Self::ScSpecUdtUnionCaseV0(Box::new(
+                ScSpecUdtUnionCaseV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionV0 => Ok(Self::ScSpecUdtUnionV0(Box::new(
+                ScSpecUdtUnionV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Ok(Self::ScSpecUdtEnumCaseV0(Box::new(
+                ScSpecUdtEnumCaseV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumV0 => Ok(Self::ScSpecUdtEnumV0(Box::new(
+                ScSpecUdtEnumV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Ok(Self::ScSpecUdtErrorEnumCaseV0(Box::new(
+                ScSpecUdtErrorEnumCaseV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Ok(Self::ScSpecUdtErrorEnumV0(Box::new(
+                ScSpecUdtErrorEnumV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecFunctionInputV0 => Ok(Self::ScSpecFunctionInputV0(Box::new(
+                ScSpecFunctionInputV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
+                ScSpecFunctionV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecEventParamLocationV0 => Ok(Self::ScSpecEventParamLocationV0(
+                Box::new(ScSpecEventParamLocationV0::arbitrary(u)?),
+            )),
+            TypeVariant::ScSpecEventParamV0 => Ok(Self::ScSpecEventParamV0(Box::new(
+                ScSpecEventParamV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
+                ScSpecEventDataFormat::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecEventV0 => {
+                Ok(Self::ScSpecEventV0(Box::new(ScSpecEventV0::arbitrary(u)?)))
+            }
+            TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
+                ScSpecEntryKind::arbitrary(u)?,
+            ))),
+            TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::arbitrary(u)?))),
+            TypeVariant::ScValType => Ok(Self::ScValType(Box::new(ScValType::arbitrary(u)?))),
+            TypeVariant::ScErrorType => Ok(Self::ScErrorType(Box::new(ScErrorType::arbitrary(u)?))),
+            TypeVariant::ScErrorCode => Ok(Self::ScErrorCode(Box::new(ScErrorCode::arbitrary(u)?))),
+            TypeVariant::ScError => Ok(Self::ScError(Box::new(ScError::arbitrary(u)?))),
+            TypeVariant::UInt128Parts => {
+                Ok(Self::UInt128Parts(Box::new(UInt128Parts::arbitrary(u)?)))
+            }
+            TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::arbitrary(u)?))),
+            TypeVariant::UInt256Parts => {
+                Ok(Self::UInt256Parts(Box::new(UInt256Parts::arbitrary(u)?)))
+            }
+            TypeVariant::Int256Parts => Ok(Self::Int256Parts(Box::new(Int256Parts::arbitrary(u)?))),
+            TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
+                ContractExecutableType::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                ContractExecutable::arbitrary(u)?,
+            ))),
+            TypeVariant::ScAddressType => {
+                Ok(Self::ScAddressType(Box::new(ScAddressType::arbitrary(u)?)))
+            }
+            TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
+                MuxedEd25519Account::arbitrary(u)?,
+            ))),
+            TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::arbitrary(u)?))),
+            TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::arbitrary(u)?))),
+            TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::arbitrary(u)?))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::arbitrary(u)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::arbitrary(u)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::arbitrary(u)?))),
+            TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(ScNonceKey::arbitrary(u)?))),
+            TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
+                ScContractInstance::arbitrary(u)?,
+            ))),
+            TypeVariant::ScVal => Ok(Self::ScVal(Box::new(ScVal::arbitrary(u)?))),
+            TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(ScMapEntry::arbitrary(u)?))),
+            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
+                LedgerCloseMetaBatch::arbitrary(u)?,
+            ))),
+            TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
+                StoredTransactionSet::arbitrary(u)?,
+            ))),
+            TypeVariant::StoredDebugTransactionSet => Ok(Self::StoredDebugTransactionSet(
+                Box::new(StoredDebugTransactionSet::arbitrary(u)?),
+            )),
+            TypeVariant::PersistedScpStateV0 => Ok(Self::PersistedScpStateV0(Box::new(
+                PersistedScpStateV0::arbitrary(u)?,
+            ))),
+            TypeVariant::PersistedScpStateV1 => Ok(Self::PersistedScpStateV1(Box::new(
+                PersistedScpStateV1::arbitrary(u)?,
+            ))),
+            TypeVariant::PersistedScpState => Ok(Self::PersistedScpState(Box::new(
+                PersistedScpState::arbitrary(u)?,
+            ))),
+            TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(Thresholds::arbitrary(u)?))),
+            TypeVariant::String32 => Ok(Self::String32(Box::new(String32::arbitrary(u)?))),
+            TypeVariant::String64 => Ok(Self::String64(Box::new(String64::arbitrary(u)?))),
+            TypeVariant::SequenceNumber => Ok(Self::SequenceNumber(Box::new(
+                SequenceNumber::arbitrary(u)?,
+            ))),
+            TypeVariant::DataValue => Ok(Self::DataValue(Box::new(DataValue::arbitrary(u)?))),
+            TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(AssetCode4::arbitrary(u)?))),
+            TypeVariant::AssetCode12 => Ok(Self::AssetCode12(Box::new(AssetCode12::arbitrary(u)?))),
+            TypeVariant::AssetType => Ok(Self::AssetType(Box::new(AssetType::arbitrary(u)?))),
+            TypeVariant::AssetCode => Ok(Self::AssetCode(Box::new(AssetCode::arbitrary(u)?))),
+            TypeVariant::AlphaNum4 => Ok(Self::AlphaNum4(Box::new(AlphaNum4::arbitrary(u)?))),
+            TypeVariant::AlphaNum12 => Ok(Self::AlphaNum12(Box::new(AlphaNum12::arbitrary(u)?))),
+            TypeVariant::Asset => Ok(Self::Asset(Box::new(Asset::arbitrary(u)?))),
+            TypeVariant::Price => Ok(Self::Price(Box::new(Price::arbitrary(u)?))),
+            TypeVariant::Liabilities => Ok(Self::Liabilities(Box::new(Liabilities::arbitrary(u)?))),
+            TypeVariant::ThresholdIndexes => Ok(Self::ThresholdIndexes(Box::new(
+                ThresholdIndexes::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerEntryType => Ok(Self::LedgerEntryType(Box::new(
+                LedgerEntryType::arbitrary(u)?,
+            ))),
+            TypeVariant::Signer => Ok(Self::Signer(Box::new(Signer::arbitrary(u)?))),
+            TypeVariant::AccountFlags => {
+                Ok(Self::AccountFlags(Box::new(AccountFlags::arbitrary(u)?)))
+            }
+            TypeVariant::SponsorshipDescriptor => Ok(Self::SponsorshipDescriptor(Box::new(
+                SponsorshipDescriptor::arbitrary(u)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV3 => Ok(Self::AccountEntryExtensionV3(Box::new(
+                AccountEntryExtensionV3::arbitrary(u)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV2 => Ok(Self::AccountEntryExtensionV2(Box::new(
+                AccountEntryExtensionV2::arbitrary(u)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV2Ext => Ok(Self::AccountEntryExtensionV2Ext(
+                Box::new(AccountEntryExtensionV2Ext::arbitrary(u)?),
+            )),
+            TypeVariant::AccountEntryExtensionV1 => Ok(Self::AccountEntryExtensionV1(Box::new(
+                AccountEntryExtensionV1::arbitrary(u)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV1Ext => Ok(Self::AccountEntryExtensionV1Ext(
+                Box::new(AccountEntryExtensionV1Ext::arbitrary(u)?),
+            )),
+            TypeVariant::AccountEntry => {
+                Ok(Self::AccountEntry(Box::new(AccountEntry::arbitrary(u)?)))
+            }
+            TypeVariant::AccountEntryExt => Ok(Self::AccountEntryExt(Box::new(
+                AccountEntryExt::arbitrary(u)?,
+            ))),
+            TypeVariant::TrustLineFlags => Ok(Self::TrustLineFlags(Box::new(
+                TrustLineFlags::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolType => Ok(Self::LiquidityPoolType(Box::new(
+                LiquidityPoolType::arbitrary(u)?,
+            ))),
+            TypeVariant::TrustLineAsset => Ok(Self::TrustLineAsset(Box::new(
+                TrustLineAsset::arbitrary(u)?,
+            ))),
+            TypeVariant::TrustLineEntryExtensionV2 => Ok(Self::TrustLineEntryExtensionV2(
+                Box::new(TrustLineEntryExtensionV2::arbitrary(u)?),
+            )),
+            TypeVariant::TrustLineEntryExtensionV2Ext => Ok(Self::TrustLineEntryExtensionV2Ext(
+                Box::new(TrustLineEntryExtensionV2Ext::arbitrary(u)?),
+            )),
+            TypeVariant::TrustLineEntry => Ok(Self::TrustLineEntry(Box::new(
+                TrustLineEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::TrustLineEntryExt => Ok(Self::TrustLineEntryExt(Box::new(
+                TrustLineEntryExt::arbitrary(u)?,
+            ))),
+            TypeVariant::TrustLineEntryV1 => Ok(Self::TrustLineEntryV1(Box::new(
+                TrustLineEntryV1::arbitrary(u)?,
+            ))),
+            TypeVariant::TrustLineEntryV1Ext => Ok(Self::TrustLineEntryV1Ext(Box::new(
+                TrustLineEntryV1Ext::arbitrary(u)?,
+            ))),
+            TypeVariant::OfferEntryFlags => Ok(Self::OfferEntryFlags(Box::new(
+                OfferEntryFlags::arbitrary(u)?,
+            ))),
+            TypeVariant::OfferEntry => Ok(Self::OfferEntry(Box::new(OfferEntry::arbitrary(u)?))),
+            TypeVariant::OfferEntryExt => {
+                Ok(Self::OfferEntryExt(Box::new(OfferEntryExt::arbitrary(u)?)))
+            }
+            TypeVariant::DataEntry => Ok(Self::DataEntry(Box::new(DataEntry::arbitrary(u)?))),
+            TypeVariant::DataEntryExt => {
+                Ok(Self::DataEntryExt(Box::new(DataEntryExt::arbitrary(u)?)))
+            }
+            TypeVariant::ClaimPredicateType => Ok(Self::ClaimPredicateType(Box::new(
+                ClaimPredicateType::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimPredicate => Ok(Self::ClaimPredicate(Box::new(
+                ClaimPredicate::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimantType => {
+                Ok(Self::ClaimantType(Box::new(ClaimantType::arbitrary(u)?)))
+            }
+            TypeVariant::Claimant => Ok(Self::Claimant(Box::new(Claimant::arbitrary(u)?))),
+            TypeVariant::ClaimantV0 => Ok(Self::ClaimantV0(Box::new(ClaimantV0::arbitrary(u)?))),
+            TypeVariant::ClaimableBalanceFlags => Ok(Self::ClaimableBalanceFlags(Box::new(
+                ClaimableBalanceFlags::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => {
+                Ok(Self::ClaimableBalanceEntryExtensionV1(Box::new(
+                    ClaimableBalanceEntryExtensionV1::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
+                Ok(Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(
+                    ClaimableBalanceEntryExtensionV1Ext::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ClaimableBalanceEntry => Ok(Self::ClaimableBalanceEntry(Box::new(
+                ClaimableBalanceEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimableBalanceEntryExt => Ok(Self::ClaimableBalanceEntryExt(Box::new(
+                ClaimableBalanceEntryExt::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolConstantProductParameters => {
+                Ok(Self::LiquidityPoolConstantProductParameters(Box::new(
+                    LiquidityPoolConstantProductParameters::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::LiquidityPoolEntry => Ok(Self::LiquidityPoolEntry(Box::new(
+                LiquidityPoolEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolEntryBody => Ok(Self::LiquidityPoolEntryBody(Box::new(
+                LiquidityPoolEntryBody::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolEntryConstantProduct => {
+                Ok(Self::LiquidityPoolEntryConstantProduct(Box::new(
+                    LiquidityPoolEntryConstantProduct::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ContractDataDurability => Ok(Self::ContractDataDurability(Box::new(
+                ContractDataDurability::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
+                ContractDataEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractCodeCostInputs => Ok(Self::ContractCodeCostInputs(Box::new(
+                ContractCodeCostInputs::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
+                ContractCodeEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractCodeEntryExt => Ok(Self::ContractCodeEntryExt(Box::new(
+                ContractCodeEntryExt::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractCodeEntryV1 => Ok(Self::ContractCodeEntryV1(Box::new(
+                ContractCodeEntryV1::arbitrary(u)?,
+            ))),
+            TypeVariant::TtlEntry => Ok(Self::TtlEntry(Box::new(TtlEntry::arbitrary(u)?))),
+            TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
+                LedgerEntryExtensionV1::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerEntryExtensionV1Ext => Ok(Self::LedgerEntryExtensionV1Ext(
+                Box::new(LedgerEntryExtensionV1Ext::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerEntry => Ok(Self::LedgerEntry(Box::new(LedgerEntry::arbitrary(u)?))),
+            TypeVariant::LedgerEntryData => Ok(Self::LedgerEntryData(Box::new(
+                LedgerEntryData::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerEntryExt => Ok(Self::LedgerEntryExt(Box::new(
+                LedgerEntryExt::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKey => Ok(Self::LedgerKey(Box::new(LedgerKey::arbitrary(u)?))),
+            TypeVariant::LedgerKeyAccount => Ok(Self::LedgerKeyAccount(Box::new(
+                LedgerKeyAccount::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyTrustLine => Ok(Self::LedgerKeyTrustLine(Box::new(
+                LedgerKeyTrustLine::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyOffer => Ok(Self::LedgerKeyOffer(Box::new(
+                LedgerKeyOffer::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyData => {
+                Ok(Self::LedgerKeyData(Box::new(LedgerKeyData::arbitrary(u)?)))
+            }
+            TypeVariant::LedgerKeyClaimableBalance => Ok(Self::LedgerKeyClaimableBalance(
+                Box::new(LedgerKeyClaimableBalance::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerKeyLiquidityPool => Ok(Self::LedgerKeyLiquidityPool(Box::new(
+                LedgerKeyLiquidityPool::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyContractData => Ok(Self::LedgerKeyContractData(Box::new(
+                LedgerKeyContractData::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyContractCode => Ok(Self::LedgerKeyContractCode(Box::new(
+                LedgerKeyContractCode::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyConfigSetting => Ok(Self::LedgerKeyConfigSetting(Box::new(
+                LedgerKeyConfigSetting::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerKeyTtl => {
+                Ok(Self::LedgerKeyTtl(Box::new(LedgerKeyTtl::arbitrary(u)?)))
+            }
+            TypeVariant::EnvelopeType => {
+                Ok(Self::EnvelopeType(Box::new(EnvelopeType::arbitrary(u)?)))
+            }
+            TypeVariant::BucketListType => Ok(Self::BucketListType(Box::new(
+                BucketListType::arbitrary(u)?,
+            ))),
+            TypeVariant::BucketEntryType => Ok(Self::BucketEntryType(Box::new(
+                BucketEntryType::arbitrary(u)?,
+            ))),
+            TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
+                Box::new(HotArchiveBucketEntryType::arbitrary(u)?),
+            )),
+            TypeVariant::BucketMetadata => Ok(Self::BucketMetadata(Box::new(
+                BucketMetadata::arbitrary(u)?,
+            ))),
+            TypeVariant::BucketMetadataExt => Ok(Self::BucketMetadataExt(Box::new(
+                BucketMetadataExt::arbitrary(u)?,
+            ))),
+            TypeVariant::BucketEntry => Ok(Self::BucketEntry(Box::new(BucketEntry::arbitrary(u)?))),
+            TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
+                HotArchiveBucketEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::UpgradeType => Ok(Self::UpgradeType(Box::new(UpgradeType::arbitrary(u)?))),
+            TypeVariant::StellarValueType => Ok(Self::StellarValueType(Box::new(
+                StellarValueType::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseValueSignature => Ok(Self::LedgerCloseValueSignature(
+                Box::new(LedgerCloseValueSignature::arbitrary(u)?),
+            )),
+            TypeVariant::StellarValue => {
+                Ok(Self::StellarValue(Box::new(StellarValue::arbitrary(u)?)))
+            }
+            TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
+                StellarValueExt::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
+                LedgerHeaderFlags::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerHeaderExtensionV1 => Ok(Self::LedgerHeaderExtensionV1(Box::new(
+                LedgerHeaderExtensionV1::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerHeaderExtensionV1Ext => Ok(Self::LedgerHeaderExtensionV1Ext(
+                Box::new(LedgerHeaderExtensionV1Ext::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerHeader => {
+                Ok(Self::LedgerHeader(Box::new(LedgerHeader::arbitrary(u)?)))
+            }
+            TypeVariant::LedgerHeaderExt => Ok(Self::LedgerHeaderExt(Box::new(
+                LedgerHeaderExt::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerUpgradeType => Ok(Self::LedgerUpgradeType(Box::new(
+                LedgerUpgradeType::arbitrary(u)?,
+            ))),
+            TypeVariant::ConfigUpgradeSetKey => Ok(Self::ConfigUpgradeSetKey(Box::new(
+                ConfigUpgradeSetKey::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerUpgrade => {
+                Ok(Self::LedgerUpgrade(Box::new(LedgerUpgrade::arbitrary(u)?)))
+            }
+            TypeVariant::ConfigUpgradeSet => Ok(Self::ConfigUpgradeSet(Box::new(
+                ConfigUpgradeSet::arbitrary(u)?,
+            ))),
+            TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
+                TxSetComponentType::arbitrary(u)?,
+            ))),
+            TypeVariant::DependentTxCluster => Ok(Self::DependentTxCluster(Box::new(
+                DependentTxCluster::arbitrary(u)?,
+            ))),
+            TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
+                ParallelTxExecutionStage::arbitrary(u)?,
+            ))),
+            TypeVariant::ParallelTxsComponent => Ok(Self::ParallelTxsComponent(Box::new(
+                ParallelTxsComponent::arbitrary(u)?,
+            ))),
+            TypeVariant::TxSetComponent => Ok(Self::TxSetComponent(Box::new(
+                TxSetComponent::arbitrary(u)?,
+            ))),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => {
+                Ok(Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(
+                    TxSetComponentTxsMaybeDiscountedFee::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::TransactionPhase => Ok(Self::TransactionPhase(Box::new(
+                TransactionPhase::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionSet => Ok(Self::TransactionSet(Box::new(
+                TransactionSet::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionSetV1 => Ok(Self::TransactionSetV1(Box::new(
+                TransactionSetV1::arbitrary(u)?,
+            ))),
+            TypeVariant::GeneralizedTransactionSet => Ok(Self::GeneralizedTransactionSet(
+                Box::new(GeneralizedTransactionSet::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionResultPair => Ok(Self::TransactionResultPair(Box::new(
+                TransactionResultPair::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionResultSet => Ok(Self::TransactionResultSet(Box::new(
+                TransactionResultSet::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionHistoryEntry => Ok(Self::TransactionHistoryEntry(Box::new(
+                TransactionHistoryEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionHistoryEntryExt => Ok(Self::TransactionHistoryEntryExt(
+                Box::new(TransactionHistoryEntryExt::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionHistoryResultEntry => Ok(Self::TransactionHistoryResultEntry(
+                Box::new(TransactionHistoryResultEntry::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionHistoryResultEntryExt => {
+                Ok(Self::TransactionHistoryResultEntryExt(Box::new(
+                    TransactionHistoryResultEntryExt::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::LedgerHeaderHistoryEntry => Ok(Self::LedgerHeaderHistoryEntry(Box::new(
+                LedgerHeaderHistoryEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerHeaderHistoryEntryExt => Ok(Self::LedgerHeaderHistoryEntryExt(
+                Box::new(LedgerHeaderHistoryEntryExt::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerScpMessages => Ok(Self::LedgerScpMessages(Box::new(
+                LedgerScpMessages::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpHistoryEntryV0 => Ok(Self::ScpHistoryEntryV0(Box::new(
+                ScpHistoryEntryV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ScpHistoryEntry => Ok(Self::ScpHistoryEntry(Box::new(
+                ScpHistoryEntry::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerEntryChangeType => Ok(Self::LedgerEntryChangeType(Box::new(
+                LedgerEntryChangeType::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerEntryChange => Ok(Self::LedgerEntryChange(Box::new(
+                LedgerEntryChange::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerEntryChanges => Ok(Self::LedgerEntryChanges(Box::new(
+                LedgerEntryChanges::arbitrary(u)?,
+            ))),
+            TypeVariant::OperationMeta => {
+                Ok(Self::OperationMeta(Box::new(OperationMeta::arbitrary(u)?)))
+            }
+            TypeVariant::TransactionMetaV1 => Ok(Self::TransactionMetaV1(Box::new(
+                TransactionMetaV1::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionMetaV2 => Ok(Self::TransactionMetaV2(Box::new(
+                TransactionMetaV2::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractEventType => Ok(Self::ContractEventType(Box::new(
+                ContractEventType::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractEvent => {
+                Ok(Self::ContractEvent(Box::new(ContractEvent::arbitrary(u)?)))
+            }
+            TypeVariant::ContractEventBody => Ok(Self::ContractEventBody(Box::new(
+                ContractEventBody::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractEventV0 => Ok(Self::ContractEventV0(Box::new(
+                ContractEventV0::arbitrary(u)?,
+            ))),
+            TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
+                DiagnosticEvent::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanTransactionMetaExtV1 => Ok(Self::SorobanTransactionMetaExtV1(
+                Box::new(SorobanTransactionMetaExtV1::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanTransactionMetaExt => Ok(Self::SorobanTransactionMetaExt(
+                Box::new(SorobanTransactionMetaExt::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanTransactionMeta => Ok(Self::SorobanTransactionMeta(Box::new(
+                SorobanTransactionMeta::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
+                TransactionMetaV3::arbitrary(u)?,
+            ))),
+            TypeVariant::OperationMetaV2 => Ok(Self::OperationMetaV2(Box::new(
+                OperationMetaV2::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanTransactionMetaV2 => Ok(Self::SorobanTransactionMetaV2(Box::new(
+                SorobanTransactionMetaV2::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionEventStage => Ok(Self::TransactionEventStage(Box::new(
+                TransactionEventStage::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionEvent => Ok(Self::TransactionEvent(Box::new(
+                TransactionEvent::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
+                TransactionMetaV4::arbitrary(u)?,
+            ))),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => {
+                Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
+                    InvokeHostFunctionSuccessPreImage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::TransactionMeta => Ok(Self::TransactionMeta(Box::new(
+                TransactionMeta::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
+                TransactionResultMeta::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionResultMetaV1 => Ok(Self::TransactionResultMetaV1(Box::new(
+                TransactionResultMetaV1::arbitrary(u)?,
+            ))),
+            TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
+                UpgradeEntryMeta::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV0 => Ok(Self::LedgerCloseMetaV0(Box::new(
+                LedgerCloseMetaV0::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMetaExtV1 => Ok(Self::LedgerCloseMetaExtV1(Box::new(
+                LedgerCloseMetaExtV1::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMetaExt => Ok(Self::LedgerCloseMetaExt(Box::new(
+                LedgerCloseMetaExt::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
+                LedgerCloseMetaV1::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
+                LedgerCloseMetaV2::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
+                LedgerCloseMeta::arbitrary(u)?,
+            ))),
+            TypeVariant::ErrorCode => Ok(Self::ErrorCode(Box::new(ErrorCode::arbitrary(u)?))),
+            TypeVariant::SError => Ok(Self::SError(Box::new(SError::arbitrary(u)?))),
+            TypeVariant::SendMore => Ok(Self::SendMore(Box::new(SendMore::arbitrary(u)?))),
+            TypeVariant::SendMoreExtended => Ok(Self::SendMoreExtended(Box::new(
+                SendMoreExtended::arbitrary(u)?,
+            ))),
+            TypeVariant::AuthCert => Ok(Self::AuthCert(Box::new(AuthCert::arbitrary(u)?))),
+            TypeVariant::Hello => Ok(Self::Hello(Box::new(Hello::arbitrary(u)?))),
+            TypeVariant::Auth => Ok(Self::Auth(Box::new(Auth::arbitrary(u)?))),
+            TypeVariant::IpAddrType => Ok(Self::IpAddrType(Box::new(IpAddrType::arbitrary(u)?))),
+            TypeVariant::PeerAddress => Ok(Self::PeerAddress(Box::new(PeerAddress::arbitrary(u)?))),
+            TypeVariant::PeerAddressIp => {
+                Ok(Self::PeerAddressIp(Box::new(PeerAddressIp::arbitrary(u)?)))
+            }
+            TypeVariant::MessageType => Ok(Self::MessageType(Box::new(MessageType::arbitrary(u)?))),
+            TypeVariant::DontHave => Ok(Self::DontHave(Box::new(DontHave::arbitrary(u)?))),
+            TypeVariant::SurveyMessageCommandType => Ok(Self::SurveyMessageCommandType(Box::new(
+                SurveyMessageCommandType::arbitrary(u)?,
+            ))),
+            TypeVariant::SurveyMessageResponseType => Ok(Self::SurveyMessageResponseType(
+                Box::new(SurveyMessageResponseType::arbitrary(u)?),
+            )),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => {
+                Ok(Self::TimeSlicedSurveyStartCollectingMessage(Box::new(
+                    TimeSlicedSurveyStartCollectingMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
+                Ok(Self::SignedTimeSlicedSurveyStartCollectingMessage(
+                    Box::new(SignedTimeSlicedSurveyStartCollectingMessage::arbitrary(u)?),
+                ))
+            }
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => {
+                Ok(Self::TimeSlicedSurveyStopCollectingMessage(Box::new(
+                    TimeSlicedSurveyStopCollectingMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => {
+                Ok(Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(
+                    SignedTimeSlicedSurveyStopCollectingMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SurveyRequestMessage => Ok(Self::SurveyRequestMessage(Box::new(
+                SurveyRequestMessage::arbitrary(u)?,
+            ))),
+            TypeVariant::TimeSlicedSurveyRequestMessage => {
+                Ok(Self::TimeSlicedSurveyRequestMessage(Box::new(
+                    TimeSlicedSurveyRequestMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => {
+                Ok(Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
+                    SignedTimeSlicedSurveyRequestMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::EncryptedBody => {
+                Ok(Self::EncryptedBody(Box::new(EncryptedBody::arbitrary(u)?)))
+            }
+            TypeVariant::SurveyResponseMessage => Ok(Self::SurveyResponseMessage(Box::new(
+                SurveyResponseMessage::arbitrary(u)?,
+            ))),
+            TypeVariant::TimeSlicedSurveyResponseMessage => {
+                Ok(Self::TimeSlicedSurveyResponseMessage(Box::new(
+                    TimeSlicedSurveyResponseMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => {
+                Ok(Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
+                    SignedTimeSlicedSurveyResponseMessage::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(PeerStats::arbitrary(u)?))),
+            TypeVariant::TimeSlicedNodeData => Ok(Self::TimeSlicedNodeData(Box::new(
+                TimeSlicedNodeData::arbitrary(u)?,
+            ))),
+            TypeVariant::TimeSlicedPeerData => Ok(Self::TimeSlicedPeerData(Box::new(
+                TimeSlicedPeerData::arbitrary(u)?,
+            ))),
+            TypeVariant::TimeSlicedPeerDataList => Ok(Self::TimeSlicedPeerDataList(Box::new(
+                TimeSlicedPeerDataList::arbitrary(u)?,
+            ))),
+            TypeVariant::TopologyResponseBodyV2 => Ok(Self::TopologyResponseBodyV2(Box::new(
+                TopologyResponseBodyV2::arbitrary(u)?,
+            ))),
+            TypeVariant::SurveyResponseBody => Ok(Self::SurveyResponseBody(Box::new(
+                SurveyResponseBody::arbitrary(u)?,
+            ))),
+            TypeVariant::TxAdvertVector => Ok(Self::TxAdvertVector(Box::new(
+                TxAdvertVector::arbitrary(u)?,
+            ))),
+            TypeVariant::FloodAdvert => Ok(Self::FloodAdvert(Box::new(FloodAdvert::arbitrary(u)?))),
+            TypeVariant::TxDemandVector => Ok(Self::TxDemandVector(Box::new(
+                TxDemandVector::arbitrary(u)?,
+            ))),
+            TypeVariant::FloodDemand => Ok(Self::FloodDemand(Box::new(FloodDemand::arbitrary(u)?))),
+            TypeVariant::StellarMessage => Ok(Self::StellarMessage(Box::new(
+                StellarMessage::arbitrary(u)?,
+            ))),
+            TypeVariant::AuthenticatedMessage => Ok(Self::AuthenticatedMessage(Box::new(
+                AuthenticatedMessage::arbitrary(u)?,
+            ))),
+            TypeVariant::AuthenticatedMessageV0 => Ok(Self::AuthenticatedMessageV0(Box::new(
+                AuthenticatedMessageV0::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolParameters => Ok(Self::LiquidityPoolParameters(Box::new(
+                LiquidityPoolParameters::arbitrary(u)?,
+            ))),
+            TypeVariant::MuxedAccount => {
+                Ok(Self::MuxedAccount(Box::new(MuxedAccount::arbitrary(u)?)))
+            }
+            TypeVariant::MuxedAccountMed25519 => Ok(Self::MuxedAccountMed25519(Box::new(
+                MuxedAccountMed25519::arbitrary(u)?,
+            ))),
+            TypeVariant::DecoratedSignature => Ok(Self::DecoratedSignature(Box::new(
+                DecoratedSignature::arbitrary(u)?,
+            ))),
+            TypeVariant::OperationType => {
+                Ok(Self::OperationType(Box::new(OperationType::arbitrary(u)?)))
+            }
+            TypeVariant::CreateAccountOp => Ok(Self::CreateAccountOp(Box::new(
+                CreateAccountOp::arbitrary(u)?,
+            ))),
+            TypeVariant::PaymentOp => Ok(Self::PaymentOp(Box::new(PaymentOp::arbitrary(u)?))),
+            TypeVariant::PathPaymentStrictReceiveOp => Ok(Self::PathPaymentStrictReceiveOp(
+                Box::new(PathPaymentStrictReceiveOp::arbitrary(u)?),
+            )),
+            TypeVariant::PathPaymentStrictSendOp => Ok(Self::PathPaymentStrictSendOp(Box::new(
+                PathPaymentStrictSendOp::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageSellOfferOp => Ok(Self::ManageSellOfferOp(Box::new(
+                ManageSellOfferOp::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageBuyOfferOp => Ok(Self::ManageBuyOfferOp(Box::new(
+                ManageBuyOfferOp::arbitrary(u)?,
+            ))),
+            TypeVariant::CreatePassiveSellOfferOp => Ok(Self::CreatePassiveSellOfferOp(Box::new(
+                CreatePassiveSellOfferOp::arbitrary(u)?,
+            ))),
+            TypeVariant::SetOptionsOp => {
+                Ok(Self::SetOptionsOp(Box::new(SetOptionsOp::arbitrary(u)?)))
+            }
+            TypeVariant::ChangeTrustAsset => Ok(Self::ChangeTrustAsset(Box::new(
+                ChangeTrustAsset::arbitrary(u)?,
+            ))),
+            TypeVariant::ChangeTrustOp => {
+                Ok(Self::ChangeTrustOp(Box::new(ChangeTrustOp::arbitrary(u)?)))
+            }
+            TypeVariant::AllowTrustOp => {
+                Ok(Self::AllowTrustOp(Box::new(AllowTrustOp::arbitrary(u)?)))
+            }
+            TypeVariant::ManageDataOp => {
+                Ok(Self::ManageDataOp(Box::new(ManageDataOp::arbitrary(u)?)))
+            }
+            TypeVariant::BumpSequenceOp => Ok(Self::BumpSequenceOp(Box::new(
+                BumpSequenceOp::arbitrary(u)?,
+            ))),
+            TypeVariant::CreateClaimableBalanceOp => Ok(Self::CreateClaimableBalanceOp(Box::new(
+                CreateClaimableBalanceOp::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimClaimableBalanceOp => Ok(Self::ClaimClaimableBalanceOp(Box::new(
+                ClaimClaimableBalanceOp::arbitrary(u)?,
+            ))),
+            TypeVariant::BeginSponsoringFutureReservesOp => {
+                Ok(Self::BeginSponsoringFutureReservesOp(Box::new(
+                    BeginSponsoringFutureReservesOp::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::RevokeSponsorshipType => Ok(Self::RevokeSponsorshipType(Box::new(
+                RevokeSponsorshipType::arbitrary(u)?,
+            ))),
+            TypeVariant::RevokeSponsorshipOp => Ok(Self::RevokeSponsorshipOp(Box::new(
+                RevokeSponsorshipOp::arbitrary(u)?,
+            ))),
+            TypeVariant::RevokeSponsorshipOpSigner => Ok(Self::RevokeSponsorshipOpSigner(
+                Box::new(RevokeSponsorshipOpSigner::arbitrary(u)?),
+            )),
+            TypeVariant::ClawbackOp => Ok(Self::ClawbackOp(Box::new(ClawbackOp::arbitrary(u)?))),
+            TypeVariant::ClawbackClaimableBalanceOp => Ok(Self::ClawbackClaimableBalanceOp(
+                Box::new(ClawbackClaimableBalanceOp::arbitrary(u)?),
+            )),
+            TypeVariant::SetTrustLineFlagsOp => Ok(Self::SetTrustLineFlagsOp(Box::new(
+                SetTrustLineFlagsOp::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolDepositOp => Ok(Self::LiquidityPoolDepositOp(Box::new(
+                LiquidityPoolDepositOp::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolWithdrawOp => Ok(Self::LiquidityPoolWithdrawOp(Box::new(
+                LiquidityPoolWithdrawOp::arbitrary(u)?,
+            ))),
+            TypeVariant::HostFunctionType => Ok(Self::HostFunctionType(Box::new(
+                HostFunctionType::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractIdPreimageType => Ok(Self::ContractIdPreimageType(Box::new(
+                ContractIdPreimageType::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractIdPreimage => Ok(Self::ContractIdPreimage(Box::new(
+                ContractIdPreimage::arbitrary(u)?,
+            ))),
+            TypeVariant::ContractIdPreimageFromAddress => Ok(Self::ContractIdPreimageFromAddress(
+                Box::new(ContractIdPreimageFromAddress::arbitrary(u)?),
+            )),
+            TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
+                CreateContractArgs::arbitrary(u)?,
+            ))),
+            TypeVariant::CreateContractArgsV2 => Ok(Self::CreateContractArgsV2(Box::new(
+                CreateContractArgsV2::arbitrary(u)?,
+            ))),
+            TypeVariant::InvokeContractArgs => Ok(Self::InvokeContractArgs(Box::new(
+                InvokeContractArgs::arbitrary(u)?,
+            ))),
+            TypeVariant::HostFunction => {
+                Ok(Self::HostFunction(Box::new(HostFunction::arbitrary(u)?)))
+            }
+            TypeVariant::SorobanAuthorizedFunctionType => Ok(Self::SorobanAuthorizedFunctionType(
+                Box::new(SorobanAuthorizedFunctionType::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanAuthorizedFunction => Ok(Self::SorobanAuthorizedFunction(
+                Box::new(SorobanAuthorizedFunction::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanAuthorizedInvocation => Ok(Self::SorobanAuthorizedInvocation(
+                Box::new(SorobanAuthorizedInvocation::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
+                Box::new(SorobanAddressCredentials::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
+                SorobanCredentialsType::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanCredentials => Ok(Self::SorobanCredentials(Box::new(
+                SorobanCredentials::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
+                Box::new(SorobanAuthorizationEntry::arbitrary(u)?),
+            )),
+            TypeVariant::SorobanAuthorizationEntries => Ok(Self::SorobanAuthorizationEntries(
+                Box::new(SorobanAuthorizationEntries::arbitrary(u)?),
+            )),
+            TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
+                InvokeHostFunctionOp::arbitrary(u)?,
+            ))),
+            TypeVariant::ExtendFootprintTtlOp => Ok(Self::ExtendFootprintTtlOp(Box::new(
+                ExtendFootprintTtlOp::arbitrary(u)?,
+            ))),
+            TypeVariant::RestoreFootprintOp => Ok(Self::RestoreFootprintOp(Box::new(
+                RestoreFootprintOp::arbitrary(u)?,
+            ))),
+            TypeVariant::Operation => Ok(Self::Operation(Box::new(Operation::arbitrary(u)?))),
+            TypeVariant::OperationBody => {
+                Ok(Self::OperationBody(Box::new(OperationBody::arbitrary(u)?)))
+            }
+            TypeVariant::HashIdPreimage => Ok(Self::HashIdPreimage(Box::new(
+                HashIdPreimage::arbitrary(u)?,
+            ))),
+            TypeVariant::HashIdPreimageOperationId => Ok(Self::HashIdPreimageOperationId(
+                Box::new(HashIdPreimageOperationId::arbitrary(u)?),
+            )),
+            TypeVariant::HashIdPreimageRevokeId => Ok(Self::HashIdPreimageRevokeId(Box::new(
+                HashIdPreimageRevokeId::arbitrary(u)?,
+            ))),
+            TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
+                HashIdPreimageContractId::arbitrary(u)?,
+            ))),
+            TypeVariant::HashIdPreimageSorobanAuthorization => {
+                Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
+                    HashIdPreimageSorobanAuthorization::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::arbitrary(u)?))),
+            TypeVariant::Memo => Ok(Self::Memo(Box::new(Memo::arbitrary(u)?))),
+            TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(TimeBounds::arbitrary(u)?))),
+            TypeVariant::LedgerBounds => {
+                Ok(Self::LedgerBounds(Box::new(LedgerBounds::arbitrary(u)?)))
+            }
+            TypeVariant::PreconditionsV2 => Ok(Self::PreconditionsV2(Box::new(
+                PreconditionsV2::arbitrary(u)?,
+            ))),
+            TypeVariant::PreconditionType => Ok(Self::PreconditionType(Box::new(
+                PreconditionType::arbitrary(u)?,
+            ))),
+            TypeVariant::Preconditions => {
+                Ok(Self::Preconditions(Box::new(Preconditions::arbitrary(u)?)))
+            }
+            TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
+                LedgerFootprint::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+                SorobanResources::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanResourcesExtV0 => Ok(Self::SorobanResourcesExtV0(Box::new(
+                SorobanResourcesExtV0::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
+                SorobanTransactionData::arbitrary(u)?,
+            ))),
+            TypeVariant::SorobanTransactionDataExt => Ok(Self::SorobanTransactionDataExt(
+                Box::new(SorobanTransactionDataExt::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionV0 => {
+                Ok(Self::TransactionV0(Box::new(TransactionV0::arbitrary(u)?)))
+            }
+            TypeVariant::TransactionV0Ext => Ok(Self::TransactionV0Ext(Box::new(
+                TransactionV0Ext::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionV0Envelope => Ok(Self::TransactionV0Envelope(Box::new(
+                TransactionV0Envelope::arbitrary(u)?,
+            ))),
+            TypeVariant::Transaction => Ok(Self::Transaction(Box::new(Transaction::arbitrary(u)?))),
+            TypeVariant::TransactionExt => Ok(Self::TransactionExt(Box::new(
+                TransactionExt::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionV1Envelope => Ok(Self::TransactionV1Envelope(Box::new(
+                TransactionV1Envelope::arbitrary(u)?,
+            ))),
+            TypeVariant::FeeBumpTransaction => Ok(Self::FeeBumpTransaction(Box::new(
+                FeeBumpTransaction::arbitrary(u)?,
+            ))),
+            TypeVariant::FeeBumpTransactionInnerTx => Ok(Self::FeeBumpTransactionInnerTx(
+                Box::new(FeeBumpTransactionInnerTx::arbitrary(u)?),
+            )),
+            TypeVariant::FeeBumpTransactionExt => Ok(Self::FeeBumpTransactionExt(Box::new(
+                FeeBumpTransactionExt::arbitrary(u)?,
+            ))),
+            TypeVariant::FeeBumpTransactionEnvelope => Ok(Self::FeeBumpTransactionEnvelope(
+                Box::new(FeeBumpTransactionEnvelope::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionEnvelope => Ok(Self::TransactionEnvelope(Box::new(
+                TransactionEnvelope::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionSignaturePayload => Ok(Self::TransactionSignaturePayload(
+                Box::new(TransactionSignaturePayload::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
+                Ok(Self::TransactionSignaturePayloadTaggedTransaction(
+                    Box::new(TransactionSignaturePayloadTaggedTransaction::arbitrary(u)?),
+                ))
+            }
+            TypeVariant::ClaimAtomType => {
+                Ok(Self::ClaimAtomType(Box::new(ClaimAtomType::arbitrary(u)?)))
+            }
+            TypeVariant::ClaimOfferAtomV0 => Ok(Self::ClaimOfferAtomV0(Box::new(
+                ClaimOfferAtomV0::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimOfferAtom => Ok(Self::ClaimOfferAtom(Box::new(
+                ClaimOfferAtom::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimLiquidityAtom => Ok(Self::ClaimLiquidityAtom(Box::new(
+                ClaimLiquidityAtom::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimAtom => Ok(Self::ClaimAtom(Box::new(ClaimAtom::arbitrary(u)?))),
+            TypeVariant::CreateAccountResultCode => Ok(Self::CreateAccountResultCode(Box::new(
+                CreateAccountResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::CreateAccountResult => Ok(Self::CreateAccountResult(Box::new(
+                CreateAccountResult::arbitrary(u)?,
+            ))),
+            TypeVariant::PaymentResultCode => Ok(Self::PaymentResultCode(Box::new(
+                PaymentResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::PaymentResult => {
+                Ok(Self::PaymentResult(Box::new(PaymentResult::arbitrary(u)?)))
+            }
+            TypeVariant::PathPaymentStrictReceiveResultCode => {
+                Ok(Self::PathPaymentStrictReceiveResultCode(Box::new(
+                    PathPaymentStrictReceiveResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SimplePaymentResult => Ok(Self::SimplePaymentResult(Box::new(
+                SimplePaymentResult::arbitrary(u)?,
+            ))),
+            TypeVariant::PathPaymentStrictReceiveResult => {
+                Ok(Self::PathPaymentStrictReceiveResult(Box::new(
+                    PathPaymentStrictReceiveResult::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => {
+                Ok(Self::PathPaymentStrictReceiveResultSuccess(Box::new(
+                    PathPaymentStrictReceiveResultSuccess::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::PathPaymentStrictSendResultCode => {
+                Ok(Self::PathPaymentStrictSendResultCode(Box::new(
+                    PathPaymentStrictSendResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::PathPaymentStrictSendResult => Ok(Self::PathPaymentStrictSendResult(
+                Box::new(PathPaymentStrictSendResult::arbitrary(u)?),
+            )),
+            TypeVariant::PathPaymentStrictSendResultSuccess => {
+                Ok(Self::PathPaymentStrictSendResultSuccess(Box::new(
+                    PathPaymentStrictSendResultSuccess::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ManageSellOfferResultCode => Ok(Self::ManageSellOfferResultCode(
+                Box::new(ManageSellOfferResultCode::arbitrary(u)?),
+            )),
+            TypeVariant::ManageOfferEffect => Ok(Self::ManageOfferEffect(Box::new(
+                ManageOfferEffect::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageOfferSuccessResult => Ok(Self::ManageOfferSuccessResult(Box::new(
+                ManageOfferSuccessResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageOfferSuccessResultOffer => Ok(Self::ManageOfferSuccessResultOffer(
+                Box::new(ManageOfferSuccessResultOffer::arbitrary(u)?),
+            )),
+            TypeVariant::ManageSellOfferResult => Ok(Self::ManageSellOfferResult(Box::new(
+                ManageSellOfferResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageBuyOfferResultCode => Ok(Self::ManageBuyOfferResultCode(Box::new(
+                ManageBuyOfferResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageBuyOfferResult => Ok(Self::ManageBuyOfferResult(Box::new(
+                ManageBuyOfferResult::arbitrary(u)?,
+            ))),
+            TypeVariant::SetOptionsResultCode => Ok(Self::SetOptionsResultCode(Box::new(
+                SetOptionsResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::SetOptionsResult => Ok(Self::SetOptionsResult(Box::new(
+                SetOptionsResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ChangeTrustResultCode => Ok(Self::ChangeTrustResultCode(Box::new(
+                ChangeTrustResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::ChangeTrustResult => Ok(Self::ChangeTrustResult(Box::new(
+                ChangeTrustResult::arbitrary(u)?,
+            ))),
+            TypeVariant::AllowTrustResultCode => Ok(Self::AllowTrustResultCode(Box::new(
+                AllowTrustResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::AllowTrustResult => Ok(Self::AllowTrustResult(Box::new(
+                AllowTrustResult::arbitrary(u)?,
+            ))),
+            TypeVariant::AccountMergeResultCode => Ok(Self::AccountMergeResultCode(Box::new(
+                AccountMergeResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::AccountMergeResult => Ok(Self::AccountMergeResult(Box::new(
+                AccountMergeResult::arbitrary(u)?,
+            ))),
+            TypeVariant::InflationResultCode => Ok(Self::InflationResultCode(Box::new(
+                InflationResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::InflationPayout => Ok(Self::InflationPayout(Box::new(
+                InflationPayout::arbitrary(u)?,
+            ))),
+            TypeVariant::InflationResult => Ok(Self::InflationResult(Box::new(
+                InflationResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageDataResultCode => Ok(Self::ManageDataResultCode(Box::new(
+                ManageDataResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::ManageDataResult => Ok(Self::ManageDataResult(Box::new(
+                ManageDataResult::arbitrary(u)?,
+            ))),
+            TypeVariant::BumpSequenceResultCode => Ok(Self::BumpSequenceResultCode(Box::new(
+                BumpSequenceResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::BumpSequenceResult => Ok(Self::BumpSequenceResult(Box::new(
+                BumpSequenceResult::arbitrary(u)?,
+            ))),
+            TypeVariant::CreateClaimableBalanceResultCode => {
+                Ok(Self::CreateClaimableBalanceResultCode(Box::new(
+                    CreateClaimableBalanceResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::CreateClaimableBalanceResult => Ok(Self::CreateClaimableBalanceResult(
+                Box::new(CreateClaimableBalanceResult::arbitrary(u)?),
+            )),
+            TypeVariant::ClaimClaimableBalanceResultCode => {
+                Ok(Self::ClaimClaimableBalanceResultCode(Box::new(
+                    ClaimClaimableBalanceResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ClaimClaimableBalanceResult => Ok(Self::ClaimClaimableBalanceResult(
+                Box::new(ClaimClaimableBalanceResult::arbitrary(u)?),
+            )),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => {
+                Ok(Self::BeginSponsoringFutureReservesResultCode(Box::new(
+                    BeginSponsoringFutureReservesResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::BeginSponsoringFutureReservesResult => {
+                Ok(Self::BeginSponsoringFutureReservesResult(Box::new(
+                    BeginSponsoringFutureReservesResult::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::EndSponsoringFutureReservesResultCode => {
+                Ok(Self::EndSponsoringFutureReservesResultCode(Box::new(
+                    EndSponsoringFutureReservesResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::EndSponsoringFutureReservesResult => {
+                Ok(Self::EndSponsoringFutureReservesResult(Box::new(
+                    EndSponsoringFutureReservesResult::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::RevokeSponsorshipResultCode => Ok(Self::RevokeSponsorshipResultCode(
+                Box::new(RevokeSponsorshipResultCode::arbitrary(u)?),
+            )),
+            TypeVariant::RevokeSponsorshipResult => Ok(Self::RevokeSponsorshipResult(Box::new(
+                RevokeSponsorshipResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ClawbackResultCode => Ok(Self::ClawbackResultCode(Box::new(
+                ClawbackResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::ClawbackResult => Ok(Self::ClawbackResult(Box::new(
+                ClawbackResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ClawbackClaimableBalanceResultCode => {
+                Ok(Self::ClawbackClaimableBalanceResultCode(Box::new(
+                    ClawbackClaimableBalanceResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::ClawbackClaimableBalanceResult => {
+                Ok(Self::ClawbackClaimableBalanceResult(Box::new(
+                    ClawbackClaimableBalanceResult::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::SetTrustLineFlagsResultCode => Ok(Self::SetTrustLineFlagsResultCode(
+                Box::new(SetTrustLineFlagsResultCode::arbitrary(u)?),
+            )),
+            TypeVariant::SetTrustLineFlagsResult => Ok(Self::SetTrustLineFlagsResult(Box::new(
+                SetTrustLineFlagsResult::arbitrary(u)?,
+            ))),
+            TypeVariant::LiquidityPoolDepositResultCode => {
+                Ok(Self::LiquidityPoolDepositResultCode(Box::new(
+                    LiquidityPoolDepositResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::LiquidityPoolDepositResult => Ok(Self::LiquidityPoolDepositResult(
+                Box::new(LiquidityPoolDepositResult::arbitrary(u)?),
+            )),
+            TypeVariant::LiquidityPoolWithdrawResultCode => {
+                Ok(Self::LiquidityPoolWithdrawResultCode(Box::new(
+                    LiquidityPoolWithdrawResultCode::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::LiquidityPoolWithdrawResult => Ok(Self::LiquidityPoolWithdrawResult(
+                Box::new(LiquidityPoolWithdrawResult::arbitrary(u)?),
+            )),
+            TypeVariant::InvokeHostFunctionResultCode => Ok(Self::InvokeHostFunctionResultCode(
+                Box::new(InvokeHostFunctionResultCode::arbitrary(u)?),
+            )),
+            TypeVariant::InvokeHostFunctionResult => Ok(Self::InvokeHostFunctionResult(Box::new(
+                InvokeHostFunctionResult::arbitrary(u)?,
+            ))),
+            TypeVariant::ExtendFootprintTtlResultCode => Ok(Self::ExtendFootprintTtlResultCode(
+                Box::new(ExtendFootprintTtlResultCode::arbitrary(u)?),
+            )),
+            TypeVariant::ExtendFootprintTtlResult => Ok(Self::ExtendFootprintTtlResult(Box::new(
+                ExtendFootprintTtlResult::arbitrary(u)?,
+            ))),
+            TypeVariant::RestoreFootprintResultCode => Ok(Self::RestoreFootprintResultCode(
+                Box::new(RestoreFootprintResultCode::arbitrary(u)?),
+            )),
+            TypeVariant::RestoreFootprintResult => Ok(Self::RestoreFootprintResult(Box::new(
+                RestoreFootprintResult::arbitrary(u)?,
+            ))),
+            TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
+                OperationResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::OperationResult => Ok(Self::OperationResult(Box::new(
+                OperationResult::arbitrary(u)?,
+            ))),
+            TypeVariant::OperationResultTr => Ok(Self::OperationResultTr(Box::new(
+                OperationResultTr::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionResultCode => Ok(Self::TransactionResultCode(Box::new(
+                TransactionResultCode::arbitrary(u)?,
+            ))),
+            TypeVariant::InnerTransactionResult => Ok(Self::InnerTransactionResult(Box::new(
+                InnerTransactionResult::arbitrary(u)?,
+            ))),
+            TypeVariant::InnerTransactionResultResult => Ok(Self::InnerTransactionResultResult(
+                Box::new(InnerTransactionResultResult::arbitrary(u)?),
+            )),
+            TypeVariant::InnerTransactionResultExt => Ok(Self::InnerTransactionResultExt(
+                Box::new(InnerTransactionResultExt::arbitrary(u)?),
+            )),
+            TypeVariant::InnerTransactionResultPair => Ok(Self::InnerTransactionResultPair(
+                Box::new(InnerTransactionResultPair::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionResult => Ok(Self::TransactionResult(Box::new(
+                TransactionResult::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionResultResult => Ok(Self::TransactionResultResult(Box::new(
+                TransactionResultResult::arbitrary(u)?,
+            ))),
+            TypeVariant::TransactionResultExt => Ok(Self::TransactionResultExt(Box::new(
+                TransactionResultExt::arbitrary(u)?,
+            ))),
+            TypeVariant::Hash => Ok(Self::Hash(Box::new(Hash::arbitrary(u)?))),
+            TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(Uint256::arbitrary(u)?))),
+            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(Uint32::arbitrary(u)?))),
+            TypeVariant::Int32 => Ok(Self::Int32(Box::new(Int32::arbitrary(u)?))),
+            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(Uint64::arbitrary(u)?))),
+            TypeVariant::Int64 => Ok(Self::Int64(Box::new(Int64::arbitrary(u)?))),
+            TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::arbitrary(u)?))),
+            TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::arbitrary(u)?))),
+            TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
+                ExtensionPoint::arbitrary(u)?,
+            ))),
+            TypeVariant::CryptoKeyType => {
+                Ok(Self::CryptoKeyType(Box::new(CryptoKeyType::arbitrary(u)?)))
+            }
+            TypeVariant::PublicKeyType => {
+                Ok(Self::PublicKeyType(Box::new(PublicKeyType::arbitrary(u)?)))
+            }
+            TypeVariant::SignerKeyType => {
+                Ok(Self::SignerKeyType(Box::new(SignerKeyType::arbitrary(u)?)))
+            }
+            TypeVariant::PublicKey => Ok(Self::PublicKey(Box::new(PublicKey::arbitrary(u)?))),
+            TypeVariant::SignerKey => Ok(Self::SignerKey(Box::new(SignerKey::arbitrary(u)?))),
+            TypeVariant::SignerKeyEd25519SignedPayload => Ok(Self::SignerKeyEd25519SignedPayload(
+                Box::new(SignerKeyEd25519SignedPayload::arbitrary(u)?),
+            )),
+            TypeVariant::Signature => Ok(Self::Signature(Box::new(Signature::arbitrary(u)?))),
+            TypeVariant::SignatureHint => {
+                Ok(Self::SignatureHint(Box::new(SignatureHint::arbitrary(u)?)))
+            }
+            TypeVariant::NodeId => Ok(Self::NodeId(Box::new(NodeId::arbitrary(u)?))),
+            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::arbitrary(u)?))),
+            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(ContractId::arbitrary(u)?))),
+            TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
+                Curve25519Secret::arbitrary(u)?,
+            ))),
+            TypeVariant::Curve25519Public => Ok(Self::Curve25519Public(Box::new(
+                Curve25519Public::arbitrary(u)?,
+            ))),
+            TypeVariant::HmacSha256Key => {
+                Ok(Self::HmacSha256Key(Box::new(HmacSha256Key::arbitrary(u)?)))
+            }
+            TypeVariant::HmacSha256Mac => {
+                Ok(Self::HmacSha256Mac(Box::new(HmacSha256Mac::arbitrary(u)?)))
+            }
+            TypeVariant::ShortHashSeed => {
+                Ok(Self::ShortHashSeed(Box::new(ShortHashSeed::arbitrary(u)?)))
+            }
+            TypeVariant::BinaryFuseFilterType => Ok(Self::BinaryFuseFilterType(Box::new(
+                BinaryFuseFilterType::arbitrary(u)?,
+            ))),
+            TypeVariant::SerializedBinaryFuseFilter => Ok(Self::SerializedBinaryFuseFilter(
+                Box::new(SerializedBinaryFuseFilter::arbitrary(u)?),
+            )),
+            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(PoolId::arbitrary(u)?))),
+            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
+                ClaimableBalanceIdType::arbitrary(u)?,
+            ))),
+            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
+                ClaimableBalanceId::arbitrary(u)?,
+            ))),
+        }
+    }
+
+    #[must_use]
+    #[allow(clippy::too_many_lines)]
+    pub fn default<'a>(v: TypeVariant) -> Self {
+        match v {
+            TypeVariant::Value => Self::Value(Box::new(Value::default())),
+            TypeVariant::ScpBallot => Self::ScpBallot(Box::new(ScpBallot::default())),
+            TypeVariant::ScpStatementType => {
+                Self::ScpStatementType(Box::new(ScpStatementType::default()))
+            }
+            TypeVariant::ScpNomination => Self::ScpNomination(Box::new(ScpNomination::default())),
+            TypeVariant::ScpStatement => Self::ScpStatement(Box::new(ScpStatement::default())),
+            TypeVariant::ScpStatementPledges => {
+                Self::ScpStatementPledges(Box::new(ScpStatementPledges::default()))
+            }
+            TypeVariant::ScpStatementPrepare => {
+                Self::ScpStatementPrepare(Box::new(ScpStatementPrepare::default()))
+            }
+            TypeVariant::ScpStatementConfirm => {
+                Self::ScpStatementConfirm(Box::new(ScpStatementConfirm::default()))
+            }
+            TypeVariant::ScpStatementExternalize => {
+                Self::ScpStatementExternalize(Box::new(ScpStatementExternalize::default()))
+            }
+            TypeVariant::ScpEnvelope => Self::ScpEnvelope(Box::new(ScpEnvelope::default())),
+            TypeVariant::ScpQuorumSet => Self::ScpQuorumSet(Box::new(ScpQuorumSet::default())),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => {
+                Self::ConfigSettingContractExecutionLanesV0(Box::new(
+                    ConfigSettingContractExecutionLanesV0::default(),
+                ))
+            }
+            TypeVariant::ConfigSettingContractComputeV0 => Self::ConfigSettingContractComputeV0(
+                Box::new(ConfigSettingContractComputeV0::default()),
+            ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => {
+                Self::ConfigSettingContractParallelComputeV0(Box::new(
+                    ConfigSettingContractParallelComputeV0::default(),
+                ))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostV0 => {
+                Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    ConfigSettingContractLedgerCostV0::default(),
+                ))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
+                Self::ConfigSettingContractLedgerCostExtV0(Box::new(
+                    ConfigSettingContractLedgerCostExtV0::default(),
+                ))
+            }
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
+                Self::ConfigSettingContractHistoricalDataV0(Box::new(
+                    ConfigSettingContractHistoricalDataV0::default(),
+                ))
+            }
+            TypeVariant::ConfigSettingContractEventsV0 => Self::ConfigSettingContractEventsV0(
+                Box::new(ConfigSettingContractEventsV0::default()),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                Self::ConfigSettingContractBandwidthV0(Box::new(
+                    ConfigSettingContractBandwidthV0::default(),
+                ))
+            }
+            TypeVariant::ContractCostType => {
+                Self::ContractCostType(Box::new(ContractCostType::default()))
+            }
+            TypeVariant::ContractCostParamEntry => {
+                Self::ContractCostParamEntry(Box::new(ContractCostParamEntry::default()))
+            }
+            TypeVariant::StateArchivalSettings => {
+                Self::StateArchivalSettings(Box::new(StateArchivalSettings::default()))
+            }
+            TypeVariant::EvictionIterator => {
+                Self::EvictionIterator(Box::new(EvictionIterator::default()))
+            }
+            TypeVariant::ConfigSettingScpTiming => {
+                Self::ConfigSettingScpTiming(Box::new(ConfigSettingScpTiming::default()))
+            }
+            TypeVariant::ContractCostParams => {
+                Self::ContractCostParams(Box::new(ContractCostParams::default()))
+            }
+            TypeVariant::ConfigSettingId => {
+                Self::ConfigSettingId(Box::new(ConfigSettingId::default()))
+            }
+            TypeVariant::ConfigSettingEntry => {
+                Self::ConfigSettingEntry(Box::new(ConfigSettingEntry::default()))
+            }
+            TypeVariant::ScEnvMetaKind => Self::ScEnvMetaKind(Box::new(ScEnvMetaKind::default())),
+            TypeVariant::ScEnvMetaEntry => {
+                Self::ScEnvMetaEntry(Box::new(ScEnvMetaEntry::default()))
+            }
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => Self::ScEnvMetaEntryInterfaceVersion(
+                Box::new(ScEnvMetaEntryInterfaceVersion::default()),
+            ),
+            TypeVariant::ScMetaV0 => Self::ScMetaV0(Box::new(ScMetaV0::default())),
+            TypeVariant::ScMetaKind => Self::ScMetaKind(Box::new(ScMetaKind::default())),
+            TypeVariant::ScMetaEntry => Self::ScMetaEntry(Box::new(ScMetaEntry::default())),
+            TypeVariant::ScSpecType => Self::ScSpecType(Box::new(ScSpecType::default())),
+            TypeVariant::ScSpecTypeOption => {
+                Self::ScSpecTypeOption(Box::new(ScSpecTypeOption::default()))
+            }
+            TypeVariant::ScSpecTypeResult => {
+                Self::ScSpecTypeResult(Box::new(ScSpecTypeResult::default()))
+            }
+            TypeVariant::ScSpecTypeVec => Self::ScSpecTypeVec(Box::new(ScSpecTypeVec::default())),
+            TypeVariant::ScSpecTypeMap => Self::ScSpecTypeMap(Box::new(ScSpecTypeMap::default())),
+            TypeVariant::ScSpecTypeTuple => {
+                Self::ScSpecTypeTuple(Box::new(ScSpecTypeTuple::default()))
+            }
+            TypeVariant::ScSpecTypeBytesN => {
+                Self::ScSpecTypeBytesN(Box::new(ScSpecTypeBytesN::default()))
+            }
+            TypeVariant::ScSpecTypeUdt => Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::default())),
+            TypeVariant::ScSpecTypeDef => Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::default())),
+            TypeVariant::ScSpecUdtStructFieldV0 => {
+                Self::ScSpecUdtStructFieldV0(Box::new(ScSpecUdtStructFieldV0::default()))
+            }
+            TypeVariant::ScSpecUdtStructV0 => {
+                Self::ScSpecUdtStructV0(Box::new(ScSpecUdtStructV0::default()))
+            }
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => {
+                Self::ScSpecUdtUnionCaseVoidV0(Box::new(ScSpecUdtUnionCaseVoidV0::default()))
+            }
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => {
+                Self::ScSpecUdtUnionCaseTupleV0(Box::new(ScSpecUdtUnionCaseTupleV0::default()))
+            }
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => {
+                Self::ScSpecUdtUnionCaseV0Kind(Box::new(ScSpecUdtUnionCaseV0Kind::default()))
+            }
+            TypeVariant::ScSpecUdtUnionCaseV0 => {
+                Self::ScSpecUdtUnionCaseV0(Box::new(ScSpecUdtUnionCaseV0::default()))
+            }
+            TypeVariant::ScSpecUdtUnionV0 => {
+                Self::ScSpecUdtUnionV0(Box::new(ScSpecUdtUnionV0::default()))
+            }
+            TypeVariant::ScSpecUdtEnumCaseV0 => {
+                Self::ScSpecUdtEnumCaseV0(Box::new(ScSpecUdtEnumCaseV0::default()))
+            }
+            TypeVariant::ScSpecUdtEnumV0 => {
+                Self::ScSpecUdtEnumV0(Box::new(ScSpecUdtEnumV0::default()))
+            }
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => {
+                Self::ScSpecUdtErrorEnumCaseV0(Box::new(ScSpecUdtErrorEnumCaseV0::default()))
+            }
+            TypeVariant::ScSpecUdtErrorEnumV0 => {
+                Self::ScSpecUdtErrorEnumV0(Box::new(ScSpecUdtErrorEnumV0::default()))
+            }
+            TypeVariant::ScSpecFunctionInputV0 => {
+                Self::ScSpecFunctionInputV0(Box::new(ScSpecFunctionInputV0::default()))
+            }
+            TypeVariant::ScSpecFunctionV0 => {
+                Self::ScSpecFunctionV0(Box::new(ScSpecFunctionV0::default()))
+            }
+            TypeVariant::ScSpecEventParamLocationV0 => {
+                Self::ScSpecEventParamLocationV0(Box::new(ScSpecEventParamLocationV0::default()))
+            }
+            TypeVariant::ScSpecEventParamV0 => {
+                Self::ScSpecEventParamV0(Box::new(ScSpecEventParamV0::default()))
+            }
+            TypeVariant::ScSpecEventDataFormat => {
+                Self::ScSpecEventDataFormat(Box::new(ScSpecEventDataFormat::default()))
+            }
+            TypeVariant::ScSpecEventV0 => Self::ScSpecEventV0(Box::new(ScSpecEventV0::default())),
+            TypeVariant::ScSpecEntryKind => {
+                Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::default()))
+            }
+            TypeVariant::ScSpecEntry => Self::ScSpecEntry(Box::new(ScSpecEntry::default())),
+            TypeVariant::ScValType => Self::ScValType(Box::new(ScValType::default())),
+            TypeVariant::ScErrorType => Self::ScErrorType(Box::new(ScErrorType::default())),
+            TypeVariant::ScErrorCode => Self::ScErrorCode(Box::new(ScErrorCode::default())),
+            TypeVariant::ScError => Self::ScError(Box::new(ScError::default())),
+            TypeVariant::UInt128Parts => Self::UInt128Parts(Box::new(UInt128Parts::default())),
+            TypeVariant::Int128Parts => Self::Int128Parts(Box::new(Int128Parts::default())),
+            TypeVariant::UInt256Parts => Self::UInt256Parts(Box::new(UInt256Parts::default())),
+            TypeVariant::Int256Parts => Self::Int256Parts(Box::new(Int256Parts::default())),
+            TypeVariant::ContractExecutableType => {
+                Self::ContractExecutableType(Box::new(ContractExecutableType::default()))
+            }
+            TypeVariant::ContractExecutable => {
+                Self::ContractExecutable(Box::new(ContractExecutable::default()))
+            }
+            TypeVariant::ScAddressType => Self::ScAddressType(Box::new(ScAddressType::default())),
+            TypeVariant::MuxedEd25519Account => {
+                Self::MuxedEd25519Account(Box::new(MuxedEd25519Account::default()))
+            }
+            TypeVariant::ScAddress => Self::ScAddress(Box::new(ScAddress::default())),
+            TypeVariant::ScVec => Self::ScVec(Box::new(ScVec::default())),
+            TypeVariant::ScMap => Self::ScMap(Box::new(ScMap::default())),
+            TypeVariant::ScBytes => Self::ScBytes(Box::new(ScBytes::default())),
+            TypeVariant::ScString => Self::ScString(Box::new(ScString::default())),
+            TypeVariant::ScSymbol => Self::ScSymbol(Box::new(ScSymbol::default())),
+            TypeVariant::ScNonceKey => Self::ScNonceKey(Box::new(ScNonceKey::default())),
+            TypeVariant::ScContractInstance => {
+                Self::ScContractInstance(Box::new(ScContractInstance::default()))
+            }
+            TypeVariant::ScVal => Self::ScVal(Box::new(ScVal::default())),
+            TypeVariant::ScMapEntry => Self::ScMapEntry(Box::new(ScMapEntry::default())),
+            TypeVariant::LedgerCloseMetaBatch => {
+                Self::LedgerCloseMetaBatch(Box::new(LedgerCloseMetaBatch::default()))
+            }
+            TypeVariant::StoredTransactionSet => {
+                Self::StoredTransactionSet(Box::new(StoredTransactionSet::default()))
+            }
+            TypeVariant::StoredDebugTransactionSet => {
+                Self::StoredDebugTransactionSet(Box::new(StoredDebugTransactionSet::default()))
+            }
+            TypeVariant::PersistedScpStateV0 => {
+                Self::PersistedScpStateV0(Box::new(PersistedScpStateV0::default()))
+            }
+            TypeVariant::PersistedScpStateV1 => {
+                Self::PersistedScpStateV1(Box::new(PersistedScpStateV1::default()))
+            }
+            TypeVariant::PersistedScpState => {
+                Self::PersistedScpState(Box::new(PersistedScpState::default()))
+            }
+            TypeVariant::Thresholds => Self::Thresholds(Box::new(Thresholds::default())),
+            TypeVariant::String32 => Self::String32(Box::new(String32::default())),
+            TypeVariant::String64 => Self::String64(Box::new(String64::default())),
+            TypeVariant::SequenceNumber => {
+                Self::SequenceNumber(Box::new(SequenceNumber::default()))
+            }
+            TypeVariant::DataValue => Self::DataValue(Box::new(DataValue::default())),
+            TypeVariant::AssetCode4 => Self::AssetCode4(Box::new(AssetCode4::default())),
+            TypeVariant::AssetCode12 => Self::AssetCode12(Box::new(AssetCode12::default())),
+            TypeVariant::AssetType => Self::AssetType(Box::new(AssetType::default())),
+            TypeVariant::AssetCode => Self::AssetCode(Box::new(AssetCode::default())),
+            TypeVariant::AlphaNum4 => Self::AlphaNum4(Box::new(AlphaNum4::default())),
+            TypeVariant::AlphaNum12 => Self::AlphaNum12(Box::new(AlphaNum12::default())),
+            TypeVariant::Asset => Self::Asset(Box::new(Asset::default())),
+            TypeVariant::Price => Self::Price(Box::new(Price::default())),
+            TypeVariant::Liabilities => Self::Liabilities(Box::new(Liabilities::default())),
+            TypeVariant::ThresholdIndexes => {
+                Self::ThresholdIndexes(Box::new(ThresholdIndexes::default()))
+            }
+            TypeVariant::LedgerEntryType => {
+                Self::LedgerEntryType(Box::new(LedgerEntryType::default()))
+            }
+            TypeVariant::Signer => Self::Signer(Box::new(Signer::default())),
+            TypeVariant::AccountFlags => Self::AccountFlags(Box::new(AccountFlags::default())),
+            TypeVariant::SponsorshipDescriptor => {
+                Self::SponsorshipDescriptor(Box::new(SponsorshipDescriptor::default()))
+            }
+            TypeVariant::AccountEntryExtensionV3 => {
+                Self::AccountEntryExtensionV3(Box::new(AccountEntryExtensionV3::default()))
+            }
+            TypeVariant::AccountEntryExtensionV2 => {
+                Self::AccountEntryExtensionV2(Box::new(AccountEntryExtensionV2::default()))
+            }
+            TypeVariant::AccountEntryExtensionV2Ext => {
+                Self::AccountEntryExtensionV2Ext(Box::new(AccountEntryExtensionV2Ext::default()))
+            }
+            TypeVariant::AccountEntryExtensionV1 => {
+                Self::AccountEntryExtensionV1(Box::new(AccountEntryExtensionV1::default()))
+            }
+            TypeVariant::AccountEntryExtensionV1Ext => {
+                Self::AccountEntryExtensionV1Ext(Box::new(AccountEntryExtensionV1Ext::default()))
+            }
+            TypeVariant::AccountEntry => Self::AccountEntry(Box::new(AccountEntry::default())),
+            TypeVariant::AccountEntryExt => {
+                Self::AccountEntryExt(Box::new(AccountEntryExt::default()))
+            }
+            TypeVariant::TrustLineFlags => {
+                Self::TrustLineFlags(Box::new(TrustLineFlags::default()))
+            }
+            TypeVariant::LiquidityPoolType => {
+                Self::LiquidityPoolType(Box::new(LiquidityPoolType::default()))
+            }
+            TypeVariant::TrustLineAsset => {
+                Self::TrustLineAsset(Box::new(TrustLineAsset::default()))
+            }
+            TypeVariant::TrustLineEntryExtensionV2 => {
+                Self::TrustLineEntryExtensionV2(Box::new(TrustLineEntryExtensionV2::default()))
+            }
+            TypeVariant::TrustLineEntryExtensionV2Ext => Self::TrustLineEntryExtensionV2Ext(
+                Box::new(TrustLineEntryExtensionV2Ext::default()),
+            ),
+            TypeVariant::TrustLineEntry => {
+                Self::TrustLineEntry(Box::new(TrustLineEntry::default()))
+            }
+            TypeVariant::TrustLineEntryExt => {
+                Self::TrustLineEntryExt(Box::new(TrustLineEntryExt::default()))
+            }
+            TypeVariant::TrustLineEntryV1 => {
+                Self::TrustLineEntryV1(Box::new(TrustLineEntryV1::default()))
+            }
+            TypeVariant::TrustLineEntryV1Ext => {
+                Self::TrustLineEntryV1Ext(Box::new(TrustLineEntryV1Ext::default()))
+            }
+            TypeVariant::OfferEntryFlags => {
+                Self::OfferEntryFlags(Box::new(OfferEntryFlags::default()))
+            }
+            TypeVariant::OfferEntry => Self::OfferEntry(Box::new(OfferEntry::default())),
+            TypeVariant::OfferEntryExt => Self::OfferEntryExt(Box::new(OfferEntryExt::default())),
+            TypeVariant::DataEntry => Self::DataEntry(Box::new(DataEntry::default())),
+            TypeVariant::DataEntryExt => Self::DataEntryExt(Box::new(DataEntryExt::default())),
+            TypeVariant::ClaimPredicateType => {
+                Self::ClaimPredicateType(Box::new(ClaimPredicateType::default()))
+            }
+            TypeVariant::ClaimPredicate => {
+                Self::ClaimPredicate(Box::new(ClaimPredicate::default()))
+            }
+            TypeVariant::ClaimantType => Self::ClaimantType(Box::new(ClaimantType::default())),
+            TypeVariant::Claimant => Self::Claimant(Box::new(Claimant::default())),
+            TypeVariant::ClaimantV0 => Self::ClaimantV0(Box::new(ClaimantV0::default())),
+            TypeVariant::ClaimableBalanceFlags => {
+                Self::ClaimableBalanceFlags(Box::new(ClaimableBalanceFlags::default()))
+            }
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => {
+                Self::ClaimableBalanceEntryExtensionV1(Box::new(
+                    ClaimableBalanceEntryExtensionV1::default(),
+                ))
+            }
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
+                Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(
+                    ClaimableBalanceEntryExtensionV1Ext::default(),
+                ))
+            }
+            TypeVariant::ClaimableBalanceEntry => {
+                Self::ClaimableBalanceEntry(Box::new(ClaimableBalanceEntry::default()))
+            }
+            TypeVariant::ClaimableBalanceEntryExt => {
+                Self::ClaimableBalanceEntryExt(Box::new(ClaimableBalanceEntryExt::default()))
+            }
+            TypeVariant::LiquidityPoolConstantProductParameters => {
+                Self::LiquidityPoolConstantProductParameters(Box::new(
+                    LiquidityPoolConstantProductParameters::default(),
+                ))
+            }
+            TypeVariant::LiquidityPoolEntry => {
+                Self::LiquidityPoolEntry(Box::new(LiquidityPoolEntry::default()))
+            }
+            TypeVariant::LiquidityPoolEntryBody => {
+                Self::LiquidityPoolEntryBody(Box::new(LiquidityPoolEntryBody::default()))
+            }
+            TypeVariant::LiquidityPoolEntryConstantProduct => {
+                Self::LiquidityPoolEntryConstantProduct(Box::new(
+                    LiquidityPoolEntryConstantProduct::default(),
+                ))
+            }
+            TypeVariant::ContractDataDurability => {
+                Self::ContractDataDurability(Box::new(ContractDataDurability::default()))
+            }
+            TypeVariant::ContractDataEntry => {
+                Self::ContractDataEntry(Box::new(ContractDataEntry::default()))
+            }
+            TypeVariant::ContractCodeCostInputs => {
+                Self::ContractCodeCostInputs(Box::new(ContractCodeCostInputs::default()))
+            }
+            TypeVariant::ContractCodeEntry => {
+                Self::ContractCodeEntry(Box::new(ContractCodeEntry::default()))
+            }
+            TypeVariant::ContractCodeEntryExt => {
+                Self::ContractCodeEntryExt(Box::new(ContractCodeEntryExt::default()))
+            }
+            TypeVariant::ContractCodeEntryV1 => {
+                Self::ContractCodeEntryV1(Box::new(ContractCodeEntryV1::default()))
+            }
+            TypeVariant::TtlEntry => Self::TtlEntry(Box::new(TtlEntry::default())),
+            TypeVariant::LedgerEntryExtensionV1 => {
+                Self::LedgerEntryExtensionV1(Box::new(LedgerEntryExtensionV1::default()))
+            }
+            TypeVariant::LedgerEntryExtensionV1Ext => {
+                Self::LedgerEntryExtensionV1Ext(Box::new(LedgerEntryExtensionV1Ext::default()))
+            }
+            TypeVariant::LedgerEntry => Self::LedgerEntry(Box::new(LedgerEntry::default())),
+            TypeVariant::LedgerEntryData => {
+                Self::LedgerEntryData(Box::new(LedgerEntryData::default()))
+            }
+            TypeVariant::LedgerEntryExt => {
+                Self::LedgerEntryExt(Box::new(LedgerEntryExt::default()))
+            }
+            TypeVariant::LedgerKey => Self::LedgerKey(Box::new(LedgerKey::default())),
+            TypeVariant::LedgerKeyAccount => {
+                Self::LedgerKeyAccount(Box::new(LedgerKeyAccount::default()))
+            }
+            TypeVariant::LedgerKeyTrustLine => {
+                Self::LedgerKeyTrustLine(Box::new(LedgerKeyTrustLine::default()))
+            }
+            TypeVariant::LedgerKeyOffer => {
+                Self::LedgerKeyOffer(Box::new(LedgerKeyOffer::default()))
+            }
+            TypeVariant::LedgerKeyData => Self::LedgerKeyData(Box::new(LedgerKeyData::default())),
+            TypeVariant::LedgerKeyClaimableBalance => {
+                Self::LedgerKeyClaimableBalance(Box::new(LedgerKeyClaimableBalance::default()))
+            }
+            TypeVariant::LedgerKeyLiquidityPool => {
+                Self::LedgerKeyLiquidityPool(Box::new(LedgerKeyLiquidityPool::default()))
+            }
+            TypeVariant::LedgerKeyContractData => {
+                Self::LedgerKeyContractData(Box::new(LedgerKeyContractData::default()))
+            }
+            TypeVariant::LedgerKeyContractCode => {
+                Self::LedgerKeyContractCode(Box::new(LedgerKeyContractCode::default()))
+            }
+            TypeVariant::LedgerKeyConfigSetting => {
+                Self::LedgerKeyConfigSetting(Box::new(LedgerKeyConfigSetting::default()))
+            }
+            TypeVariant::LedgerKeyTtl => Self::LedgerKeyTtl(Box::new(LedgerKeyTtl::default())),
+            TypeVariant::EnvelopeType => Self::EnvelopeType(Box::new(EnvelopeType::default())),
+            TypeVariant::BucketListType => {
+                Self::BucketListType(Box::new(BucketListType::default()))
+            }
+            TypeVariant::BucketEntryType => {
+                Self::BucketEntryType(Box::new(BucketEntryType::default()))
+            }
+            TypeVariant::HotArchiveBucketEntryType => {
+                Self::HotArchiveBucketEntryType(Box::new(HotArchiveBucketEntryType::default()))
+            }
+            TypeVariant::BucketMetadata => {
+                Self::BucketMetadata(Box::new(BucketMetadata::default()))
+            }
+            TypeVariant::BucketMetadataExt => {
+                Self::BucketMetadataExt(Box::new(BucketMetadataExt::default()))
+            }
+            TypeVariant::BucketEntry => Self::BucketEntry(Box::new(BucketEntry::default())),
+            TypeVariant::HotArchiveBucketEntry => {
+                Self::HotArchiveBucketEntry(Box::new(HotArchiveBucketEntry::default()))
+            }
+            TypeVariant::UpgradeType => Self::UpgradeType(Box::new(UpgradeType::default())),
+            TypeVariant::StellarValueType => {
+                Self::StellarValueType(Box::new(StellarValueType::default()))
+            }
+            TypeVariant::LedgerCloseValueSignature => {
+                Self::LedgerCloseValueSignature(Box::new(LedgerCloseValueSignature::default()))
+            }
+            TypeVariant::StellarValue => Self::StellarValue(Box::new(StellarValue::default())),
+            TypeVariant::StellarValueExt => {
+                Self::StellarValueExt(Box::new(StellarValueExt::default()))
+            }
+            TypeVariant::LedgerHeaderFlags => {
+                Self::LedgerHeaderFlags(Box::new(LedgerHeaderFlags::default()))
+            }
+            TypeVariant::LedgerHeaderExtensionV1 => {
+                Self::LedgerHeaderExtensionV1(Box::new(LedgerHeaderExtensionV1::default()))
+            }
+            TypeVariant::LedgerHeaderExtensionV1Ext => {
+                Self::LedgerHeaderExtensionV1Ext(Box::new(LedgerHeaderExtensionV1Ext::default()))
+            }
+            TypeVariant::LedgerHeader => Self::LedgerHeader(Box::new(LedgerHeader::default())),
+            TypeVariant::LedgerHeaderExt => {
+                Self::LedgerHeaderExt(Box::new(LedgerHeaderExt::default()))
+            }
+            TypeVariant::LedgerUpgradeType => {
+                Self::LedgerUpgradeType(Box::new(LedgerUpgradeType::default()))
+            }
+            TypeVariant::ConfigUpgradeSetKey => {
+                Self::ConfigUpgradeSetKey(Box::new(ConfigUpgradeSetKey::default()))
+            }
+            TypeVariant::LedgerUpgrade => Self::LedgerUpgrade(Box::new(LedgerUpgrade::default())),
+            TypeVariant::ConfigUpgradeSet => {
+                Self::ConfigUpgradeSet(Box::new(ConfigUpgradeSet::default()))
+            }
+            TypeVariant::TxSetComponentType => {
+                Self::TxSetComponentType(Box::new(TxSetComponentType::default()))
+            }
+            TypeVariant::DependentTxCluster => {
+                Self::DependentTxCluster(Box::new(DependentTxCluster::default()))
+            }
+            TypeVariant::ParallelTxExecutionStage => {
+                Self::ParallelTxExecutionStage(Box::new(ParallelTxExecutionStage::default()))
+            }
+            TypeVariant::ParallelTxsComponent => {
+                Self::ParallelTxsComponent(Box::new(ParallelTxsComponent::default()))
+            }
+            TypeVariant::TxSetComponent => {
+                Self::TxSetComponent(Box::new(TxSetComponent::default()))
+            }
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => {
+                Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(
+                    TxSetComponentTxsMaybeDiscountedFee::default(),
+                ))
+            }
+            TypeVariant::TransactionPhase => {
+                Self::TransactionPhase(Box::new(TransactionPhase::default()))
+            }
+            TypeVariant::TransactionSet => {
+                Self::TransactionSet(Box::new(TransactionSet::default()))
+            }
+            TypeVariant::TransactionSetV1 => {
+                Self::TransactionSetV1(Box::new(TransactionSetV1::default()))
+            }
+            TypeVariant::GeneralizedTransactionSet => {
+                Self::GeneralizedTransactionSet(Box::new(GeneralizedTransactionSet::default()))
+            }
+            TypeVariant::TransactionResultPair => {
+                Self::TransactionResultPair(Box::new(TransactionResultPair::default()))
+            }
+            TypeVariant::TransactionResultSet => {
+                Self::TransactionResultSet(Box::new(TransactionResultSet::default()))
+            }
+            TypeVariant::TransactionHistoryEntry => {
+                Self::TransactionHistoryEntry(Box::new(TransactionHistoryEntry::default()))
+            }
+            TypeVariant::TransactionHistoryEntryExt => {
+                Self::TransactionHistoryEntryExt(Box::new(TransactionHistoryEntryExt::default()))
+            }
+            TypeVariant::TransactionHistoryResultEntry => Self::TransactionHistoryResultEntry(
+                Box::new(TransactionHistoryResultEntry::default()),
+            ),
+            TypeVariant::TransactionHistoryResultEntryExt => {
+                Self::TransactionHistoryResultEntryExt(Box::new(
+                    TransactionHistoryResultEntryExt::default(),
+                ))
+            }
+            TypeVariant::LedgerHeaderHistoryEntry => {
+                Self::LedgerHeaderHistoryEntry(Box::new(LedgerHeaderHistoryEntry::default()))
+            }
+            TypeVariant::LedgerHeaderHistoryEntryExt => {
+                Self::LedgerHeaderHistoryEntryExt(Box::new(LedgerHeaderHistoryEntryExt::default()))
+            }
+            TypeVariant::LedgerScpMessages => {
+                Self::LedgerScpMessages(Box::new(LedgerScpMessages::default()))
+            }
+            TypeVariant::ScpHistoryEntryV0 => {
+                Self::ScpHistoryEntryV0(Box::new(ScpHistoryEntryV0::default()))
+            }
+            TypeVariant::ScpHistoryEntry => {
+                Self::ScpHistoryEntry(Box::new(ScpHistoryEntry::default()))
+            }
+            TypeVariant::LedgerEntryChangeType => {
+                Self::LedgerEntryChangeType(Box::new(LedgerEntryChangeType::default()))
+            }
+            TypeVariant::LedgerEntryChange => {
+                Self::LedgerEntryChange(Box::new(LedgerEntryChange::default()))
+            }
+            TypeVariant::LedgerEntryChanges => {
+                Self::LedgerEntryChanges(Box::new(LedgerEntryChanges::default()))
+            }
+            TypeVariant::OperationMeta => Self::OperationMeta(Box::new(OperationMeta::default())),
+            TypeVariant::TransactionMetaV1 => {
+                Self::TransactionMetaV1(Box::new(TransactionMetaV1::default()))
+            }
+            TypeVariant::TransactionMetaV2 => {
+                Self::TransactionMetaV2(Box::new(TransactionMetaV2::default()))
+            }
+            TypeVariant::ContractEventType => {
+                Self::ContractEventType(Box::new(ContractEventType::default()))
+            }
+            TypeVariant::ContractEvent => Self::ContractEvent(Box::new(ContractEvent::default())),
+            TypeVariant::ContractEventBody => {
+                Self::ContractEventBody(Box::new(ContractEventBody::default()))
+            }
+            TypeVariant::ContractEventV0 => {
+                Self::ContractEventV0(Box::new(ContractEventV0::default()))
+            }
+            TypeVariant::DiagnosticEvent => {
+                Self::DiagnosticEvent(Box::new(DiagnosticEvent::default()))
+            }
+            TypeVariant::SorobanTransactionMetaExtV1 => {
+                Self::SorobanTransactionMetaExtV1(Box::new(SorobanTransactionMetaExtV1::default()))
+            }
+            TypeVariant::SorobanTransactionMetaExt => {
+                Self::SorobanTransactionMetaExt(Box::new(SorobanTransactionMetaExt::default()))
+            }
+            TypeVariant::SorobanTransactionMeta => {
+                Self::SorobanTransactionMeta(Box::new(SorobanTransactionMeta::default()))
+            }
+            TypeVariant::TransactionMetaV3 => {
+                Self::TransactionMetaV3(Box::new(TransactionMetaV3::default()))
+            }
+            TypeVariant::OperationMetaV2 => {
+                Self::OperationMetaV2(Box::new(OperationMetaV2::default()))
+            }
+            TypeVariant::SorobanTransactionMetaV2 => {
+                Self::SorobanTransactionMetaV2(Box::new(SorobanTransactionMetaV2::default()))
+            }
+            TypeVariant::TransactionEventStage => {
+                Self::TransactionEventStage(Box::new(TransactionEventStage::default()))
+            }
+            TypeVariant::TransactionEvent => {
+                Self::TransactionEvent(Box::new(TransactionEvent::default()))
+            }
+            TypeVariant::TransactionMetaV4 => {
+                Self::TransactionMetaV4(Box::new(TransactionMetaV4::default()))
+            }
+            TypeVariant::InvokeHostFunctionSuccessPreImage => {
+                Self::InvokeHostFunctionSuccessPreImage(Box::new(
+                    InvokeHostFunctionSuccessPreImage::default(),
+                ))
+            }
+            TypeVariant::TransactionMeta => {
+                Self::TransactionMeta(Box::new(TransactionMeta::default()))
+            }
+            TypeVariant::TransactionResultMeta => {
+                Self::TransactionResultMeta(Box::new(TransactionResultMeta::default()))
+            }
+            TypeVariant::TransactionResultMetaV1 => {
+                Self::TransactionResultMetaV1(Box::new(TransactionResultMetaV1::default()))
+            }
+            TypeVariant::UpgradeEntryMeta => {
+                Self::UpgradeEntryMeta(Box::new(UpgradeEntryMeta::default()))
+            }
+            TypeVariant::LedgerCloseMetaV0 => {
+                Self::LedgerCloseMetaV0(Box::new(LedgerCloseMetaV0::default()))
+            }
+            TypeVariant::LedgerCloseMetaExtV1 => {
+                Self::LedgerCloseMetaExtV1(Box::new(LedgerCloseMetaExtV1::default()))
+            }
+            TypeVariant::LedgerCloseMetaExt => {
+                Self::LedgerCloseMetaExt(Box::new(LedgerCloseMetaExt::default()))
+            }
+            TypeVariant::LedgerCloseMetaV1 => {
+                Self::LedgerCloseMetaV1(Box::new(LedgerCloseMetaV1::default()))
+            }
+            TypeVariant::LedgerCloseMetaV2 => {
+                Self::LedgerCloseMetaV2(Box::new(LedgerCloseMetaV2::default()))
+            }
+            TypeVariant::LedgerCloseMeta => {
+                Self::LedgerCloseMeta(Box::new(LedgerCloseMeta::default()))
+            }
+            TypeVariant::ErrorCode => Self::ErrorCode(Box::new(ErrorCode::default())),
+            TypeVariant::SError => Self::SError(Box::new(SError::default())),
+            TypeVariant::SendMore => Self::SendMore(Box::new(SendMore::default())),
+            TypeVariant::SendMoreExtended => {
+                Self::SendMoreExtended(Box::new(SendMoreExtended::default()))
+            }
+            TypeVariant::AuthCert => Self::AuthCert(Box::new(AuthCert::default())),
+            TypeVariant::Hello => Self::Hello(Box::new(Hello::default())),
+            TypeVariant::Auth => Self::Auth(Box::new(Auth::default())),
+            TypeVariant::IpAddrType => Self::IpAddrType(Box::new(IpAddrType::default())),
+            TypeVariant::PeerAddress => Self::PeerAddress(Box::new(PeerAddress::default())),
+            TypeVariant::PeerAddressIp => Self::PeerAddressIp(Box::new(PeerAddressIp::default())),
+            TypeVariant::MessageType => Self::MessageType(Box::new(MessageType::default())),
+            TypeVariant::DontHave => Self::DontHave(Box::new(DontHave::default())),
+            TypeVariant::SurveyMessageCommandType => {
+                Self::SurveyMessageCommandType(Box::new(SurveyMessageCommandType::default()))
+            }
+            TypeVariant::SurveyMessageResponseType => {
+                Self::SurveyMessageResponseType(Box::new(SurveyMessageResponseType::default()))
+            }
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => {
+                Self::TimeSlicedSurveyStartCollectingMessage(Box::new(
+                    TimeSlicedSurveyStartCollectingMessage::default(),
+                ))
+            }
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
+                Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(
+                    SignedTimeSlicedSurveyStartCollectingMessage::default(),
+                ))
+            }
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => {
+                Self::TimeSlicedSurveyStopCollectingMessage(Box::new(
+                    TimeSlicedSurveyStopCollectingMessage::default(),
+                ))
+            }
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => {
+                Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(
+                    SignedTimeSlicedSurveyStopCollectingMessage::default(),
+                ))
+            }
+            TypeVariant::SurveyRequestMessage => {
+                Self::SurveyRequestMessage(Box::new(SurveyRequestMessage::default()))
+            }
+            TypeVariant::TimeSlicedSurveyRequestMessage => Self::TimeSlicedSurveyRequestMessage(
+                Box::new(TimeSlicedSurveyRequestMessage::default()),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => {
+                Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
+                    SignedTimeSlicedSurveyRequestMessage::default(),
+                ))
+            }
+            TypeVariant::EncryptedBody => Self::EncryptedBody(Box::new(EncryptedBody::default())),
+            TypeVariant::SurveyResponseMessage => {
+                Self::SurveyResponseMessage(Box::new(SurveyResponseMessage::default()))
+            }
+            TypeVariant::TimeSlicedSurveyResponseMessage => Self::TimeSlicedSurveyResponseMessage(
+                Box::new(TimeSlicedSurveyResponseMessage::default()),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => {
+                Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
+                    SignedTimeSlicedSurveyResponseMessage::default(),
+                ))
+            }
+            TypeVariant::PeerStats => Self::PeerStats(Box::new(PeerStats::default())),
+            TypeVariant::TimeSlicedNodeData => {
+                Self::TimeSlicedNodeData(Box::new(TimeSlicedNodeData::default()))
+            }
+            TypeVariant::TimeSlicedPeerData => {
+                Self::TimeSlicedPeerData(Box::new(TimeSlicedPeerData::default()))
+            }
+            TypeVariant::TimeSlicedPeerDataList => {
+                Self::TimeSlicedPeerDataList(Box::new(TimeSlicedPeerDataList::default()))
+            }
+            TypeVariant::TopologyResponseBodyV2 => {
+                Self::TopologyResponseBodyV2(Box::new(TopologyResponseBodyV2::default()))
+            }
+            TypeVariant::SurveyResponseBody => {
+                Self::SurveyResponseBody(Box::new(SurveyResponseBody::default()))
+            }
+            TypeVariant::TxAdvertVector => {
+                Self::TxAdvertVector(Box::new(TxAdvertVector::default()))
+            }
+            TypeVariant::FloodAdvert => Self::FloodAdvert(Box::new(FloodAdvert::default())),
+            TypeVariant::TxDemandVector => {
+                Self::TxDemandVector(Box::new(TxDemandVector::default()))
+            }
+            TypeVariant::FloodDemand => Self::FloodDemand(Box::new(FloodDemand::default())),
+            TypeVariant::StellarMessage => {
+                Self::StellarMessage(Box::new(StellarMessage::default()))
+            }
+            TypeVariant::AuthenticatedMessage => {
+                Self::AuthenticatedMessage(Box::new(AuthenticatedMessage::default()))
+            }
+            TypeVariant::AuthenticatedMessageV0 => {
+                Self::AuthenticatedMessageV0(Box::new(AuthenticatedMessageV0::default()))
+            }
+            TypeVariant::LiquidityPoolParameters => {
+                Self::LiquidityPoolParameters(Box::new(LiquidityPoolParameters::default()))
+            }
+            TypeVariant::MuxedAccount => Self::MuxedAccount(Box::new(MuxedAccount::default())),
+            TypeVariant::MuxedAccountMed25519 => {
+                Self::MuxedAccountMed25519(Box::new(MuxedAccountMed25519::default()))
+            }
+            TypeVariant::DecoratedSignature => {
+                Self::DecoratedSignature(Box::new(DecoratedSignature::default()))
+            }
+            TypeVariant::OperationType => Self::OperationType(Box::new(OperationType::default())),
+            TypeVariant::CreateAccountOp => {
+                Self::CreateAccountOp(Box::new(CreateAccountOp::default()))
+            }
+            TypeVariant::PaymentOp => Self::PaymentOp(Box::new(PaymentOp::default())),
+            TypeVariant::PathPaymentStrictReceiveOp => {
+                Self::PathPaymentStrictReceiveOp(Box::new(PathPaymentStrictReceiveOp::default()))
+            }
+            TypeVariant::PathPaymentStrictSendOp => {
+                Self::PathPaymentStrictSendOp(Box::new(PathPaymentStrictSendOp::default()))
+            }
+            TypeVariant::ManageSellOfferOp => {
+                Self::ManageSellOfferOp(Box::new(ManageSellOfferOp::default()))
+            }
+            TypeVariant::ManageBuyOfferOp => {
+                Self::ManageBuyOfferOp(Box::new(ManageBuyOfferOp::default()))
+            }
+            TypeVariant::CreatePassiveSellOfferOp => {
+                Self::CreatePassiveSellOfferOp(Box::new(CreatePassiveSellOfferOp::default()))
+            }
+            TypeVariant::SetOptionsOp => Self::SetOptionsOp(Box::new(SetOptionsOp::default())),
+            TypeVariant::ChangeTrustAsset => {
+                Self::ChangeTrustAsset(Box::new(ChangeTrustAsset::default()))
+            }
+            TypeVariant::ChangeTrustOp => Self::ChangeTrustOp(Box::new(ChangeTrustOp::default())),
+            TypeVariant::AllowTrustOp => Self::AllowTrustOp(Box::new(AllowTrustOp::default())),
+            TypeVariant::ManageDataOp => Self::ManageDataOp(Box::new(ManageDataOp::default())),
+            TypeVariant::BumpSequenceOp => {
+                Self::BumpSequenceOp(Box::new(BumpSequenceOp::default()))
+            }
+            TypeVariant::CreateClaimableBalanceOp => {
+                Self::CreateClaimableBalanceOp(Box::new(CreateClaimableBalanceOp::default()))
+            }
+            TypeVariant::ClaimClaimableBalanceOp => {
+                Self::ClaimClaimableBalanceOp(Box::new(ClaimClaimableBalanceOp::default()))
+            }
+            TypeVariant::BeginSponsoringFutureReservesOp => Self::BeginSponsoringFutureReservesOp(
+                Box::new(BeginSponsoringFutureReservesOp::default()),
+            ),
+            TypeVariant::RevokeSponsorshipType => {
+                Self::RevokeSponsorshipType(Box::new(RevokeSponsorshipType::default()))
+            }
+            TypeVariant::RevokeSponsorshipOp => {
+                Self::RevokeSponsorshipOp(Box::new(RevokeSponsorshipOp::default()))
+            }
+            TypeVariant::RevokeSponsorshipOpSigner => {
+                Self::RevokeSponsorshipOpSigner(Box::new(RevokeSponsorshipOpSigner::default()))
+            }
+            TypeVariant::ClawbackOp => Self::ClawbackOp(Box::new(ClawbackOp::default())),
+            TypeVariant::ClawbackClaimableBalanceOp => {
+                Self::ClawbackClaimableBalanceOp(Box::new(ClawbackClaimableBalanceOp::default()))
+            }
+            TypeVariant::SetTrustLineFlagsOp => {
+                Self::SetTrustLineFlagsOp(Box::new(SetTrustLineFlagsOp::default()))
+            }
+            TypeVariant::LiquidityPoolDepositOp => {
+                Self::LiquidityPoolDepositOp(Box::new(LiquidityPoolDepositOp::default()))
+            }
+            TypeVariant::LiquidityPoolWithdrawOp => {
+                Self::LiquidityPoolWithdrawOp(Box::new(LiquidityPoolWithdrawOp::default()))
+            }
+            TypeVariant::HostFunctionType => {
+                Self::HostFunctionType(Box::new(HostFunctionType::default()))
+            }
+            TypeVariant::ContractIdPreimageType => {
+                Self::ContractIdPreimageType(Box::new(ContractIdPreimageType::default()))
+            }
+            TypeVariant::ContractIdPreimage => {
+                Self::ContractIdPreimage(Box::new(ContractIdPreimage::default()))
+            }
+            TypeVariant::ContractIdPreimageFromAddress => Self::ContractIdPreimageFromAddress(
+                Box::new(ContractIdPreimageFromAddress::default()),
+            ),
+            TypeVariant::CreateContractArgs => {
+                Self::CreateContractArgs(Box::new(CreateContractArgs::default()))
+            }
+            TypeVariant::CreateContractArgsV2 => {
+                Self::CreateContractArgsV2(Box::new(CreateContractArgsV2::default()))
+            }
+            TypeVariant::InvokeContractArgs => {
+                Self::InvokeContractArgs(Box::new(InvokeContractArgs::default()))
+            }
+            TypeVariant::HostFunction => Self::HostFunction(Box::new(HostFunction::default())),
+            TypeVariant::SorobanAuthorizedFunctionType => Self::SorobanAuthorizedFunctionType(
+                Box::new(SorobanAuthorizedFunctionType::default()),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => {
+                Self::SorobanAuthorizedFunction(Box::new(SorobanAuthorizedFunction::default()))
+            }
+            TypeVariant::SorobanAuthorizedInvocation => {
+                Self::SorobanAuthorizedInvocation(Box::new(SorobanAuthorizedInvocation::default()))
+            }
+            TypeVariant::SorobanAddressCredentials => {
+                Self::SorobanAddressCredentials(Box::new(SorobanAddressCredentials::default()))
+            }
+            TypeVariant::SorobanCredentialsType => {
+                Self::SorobanCredentialsType(Box::new(SorobanCredentialsType::default()))
+            }
+            TypeVariant::SorobanCredentials => {
+                Self::SorobanCredentials(Box::new(SorobanCredentials::default()))
+            }
+            TypeVariant::SorobanAuthorizationEntry => {
+                Self::SorobanAuthorizationEntry(Box::new(SorobanAuthorizationEntry::default()))
+            }
+            TypeVariant::SorobanAuthorizationEntries => {
+                Self::SorobanAuthorizationEntries(Box::new(SorobanAuthorizationEntries::default()))
+            }
+            TypeVariant::InvokeHostFunctionOp => {
+                Self::InvokeHostFunctionOp(Box::new(InvokeHostFunctionOp::default()))
+            }
+            TypeVariant::ExtendFootprintTtlOp => {
+                Self::ExtendFootprintTtlOp(Box::new(ExtendFootprintTtlOp::default()))
+            }
+            TypeVariant::RestoreFootprintOp => {
+                Self::RestoreFootprintOp(Box::new(RestoreFootprintOp::default()))
+            }
+            TypeVariant::Operation => Self::Operation(Box::new(Operation::default())),
+            TypeVariant::OperationBody => Self::OperationBody(Box::new(OperationBody::default())),
+            TypeVariant::HashIdPreimage => {
+                Self::HashIdPreimage(Box::new(HashIdPreimage::default()))
+            }
+            TypeVariant::HashIdPreimageOperationId => {
+                Self::HashIdPreimageOperationId(Box::new(HashIdPreimageOperationId::default()))
+            }
+            TypeVariant::HashIdPreimageRevokeId => {
+                Self::HashIdPreimageRevokeId(Box::new(HashIdPreimageRevokeId::default()))
+            }
+            TypeVariant::HashIdPreimageContractId => {
+                Self::HashIdPreimageContractId(Box::new(HashIdPreimageContractId::default()))
+            }
+            TypeVariant::HashIdPreimageSorobanAuthorization => {
+                Self::HashIdPreimageSorobanAuthorization(Box::new(
+                    HashIdPreimageSorobanAuthorization::default(),
+                ))
+            }
+            TypeVariant::MemoType => Self::MemoType(Box::new(MemoType::default())),
+            TypeVariant::Memo => Self::Memo(Box::new(Memo::default())),
+            TypeVariant::TimeBounds => Self::TimeBounds(Box::new(TimeBounds::default())),
+            TypeVariant::LedgerBounds => Self::LedgerBounds(Box::new(LedgerBounds::default())),
+            TypeVariant::PreconditionsV2 => {
+                Self::PreconditionsV2(Box::new(PreconditionsV2::default()))
+            }
+            TypeVariant::PreconditionType => {
+                Self::PreconditionType(Box::new(PreconditionType::default()))
+            }
+            TypeVariant::Preconditions => Self::Preconditions(Box::new(Preconditions::default())),
+            TypeVariant::LedgerFootprint => {
+                Self::LedgerFootprint(Box::new(LedgerFootprint::default()))
+            }
+            TypeVariant::SorobanResources => {
+                Self::SorobanResources(Box::new(SorobanResources::default()))
+            }
+            TypeVariant::SorobanResourcesExtV0 => {
+                Self::SorobanResourcesExtV0(Box::new(SorobanResourcesExtV0::default()))
+            }
+            TypeVariant::SorobanTransactionData => {
+                Self::SorobanTransactionData(Box::new(SorobanTransactionData::default()))
+            }
+            TypeVariant::SorobanTransactionDataExt => {
+                Self::SorobanTransactionDataExt(Box::new(SorobanTransactionDataExt::default()))
+            }
+            TypeVariant::TransactionV0 => Self::TransactionV0(Box::new(TransactionV0::default())),
+            TypeVariant::TransactionV0Ext => {
+                Self::TransactionV0Ext(Box::new(TransactionV0Ext::default()))
+            }
+            TypeVariant::TransactionV0Envelope => {
+                Self::TransactionV0Envelope(Box::new(TransactionV0Envelope::default()))
+            }
+            TypeVariant::Transaction => Self::Transaction(Box::new(Transaction::default())),
+            TypeVariant::TransactionExt => {
+                Self::TransactionExt(Box::new(TransactionExt::default()))
+            }
+            TypeVariant::TransactionV1Envelope => {
+                Self::TransactionV1Envelope(Box::new(TransactionV1Envelope::default()))
+            }
+            TypeVariant::FeeBumpTransaction => {
+                Self::FeeBumpTransaction(Box::new(FeeBumpTransaction::default()))
+            }
+            TypeVariant::FeeBumpTransactionInnerTx => {
+                Self::FeeBumpTransactionInnerTx(Box::new(FeeBumpTransactionInnerTx::default()))
+            }
+            TypeVariant::FeeBumpTransactionExt => {
+                Self::FeeBumpTransactionExt(Box::new(FeeBumpTransactionExt::default()))
+            }
+            TypeVariant::FeeBumpTransactionEnvelope => {
+                Self::FeeBumpTransactionEnvelope(Box::new(FeeBumpTransactionEnvelope::default()))
+            }
+            TypeVariant::TransactionEnvelope => {
+                Self::TransactionEnvelope(Box::new(TransactionEnvelope::default()))
+            }
+            TypeVariant::TransactionSignaturePayload => {
+                Self::TransactionSignaturePayload(Box::new(TransactionSignaturePayload::default()))
+            }
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
+                Self::TransactionSignaturePayloadTaggedTransaction(Box::new(
+                    TransactionSignaturePayloadTaggedTransaction::default(),
+                ))
+            }
+            TypeVariant::ClaimAtomType => Self::ClaimAtomType(Box::new(ClaimAtomType::default())),
+            TypeVariant::ClaimOfferAtomV0 => {
+                Self::ClaimOfferAtomV0(Box::new(ClaimOfferAtomV0::default()))
+            }
+            TypeVariant::ClaimOfferAtom => {
+                Self::ClaimOfferAtom(Box::new(ClaimOfferAtom::default()))
+            }
+            TypeVariant::ClaimLiquidityAtom => {
+                Self::ClaimLiquidityAtom(Box::new(ClaimLiquidityAtom::default()))
+            }
+            TypeVariant::ClaimAtom => Self::ClaimAtom(Box::new(ClaimAtom::default())),
+            TypeVariant::CreateAccountResultCode => {
+                Self::CreateAccountResultCode(Box::new(CreateAccountResultCode::default()))
+            }
+            TypeVariant::CreateAccountResult => {
+                Self::CreateAccountResult(Box::new(CreateAccountResult::default()))
+            }
+            TypeVariant::PaymentResultCode => {
+                Self::PaymentResultCode(Box::new(PaymentResultCode::default()))
+            }
+            TypeVariant::PaymentResult => Self::PaymentResult(Box::new(PaymentResult::default())),
+            TypeVariant::PathPaymentStrictReceiveResultCode => {
+                Self::PathPaymentStrictReceiveResultCode(Box::new(
+                    PathPaymentStrictReceiveResultCode::default(),
+                ))
+            }
+            TypeVariant::SimplePaymentResult => {
+                Self::SimplePaymentResult(Box::new(SimplePaymentResult::default()))
+            }
+            TypeVariant::PathPaymentStrictReceiveResult => Self::PathPaymentStrictReceiveResult(
+                Box::new(PathPaymentStrictReceiveResult::default()),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => {
+                Self::PathPaymentStrictReceiveResultSuccess(Box::new(
+                    PathPaymentStrictReceiveResultSuccess::default(),
+                ))
+            }
+            TypeVariant::PathPaymentStrictSendResultCode => Self::PathPaymentStrictSendResultCode(
+                Box::new(PathPaymentStrictSendResultCode::default()),
+            ),
+            TypeVariant::PathPaymentStrictSendResult => {
+                Self::PathPaymentStrictSendResult(Box::new(PathPaymentStrictSendResult::default()))
+            }
+            TypeVariant::PathPaymentStrictSendResultSuccess => {
+                Self::PathPaymentStrictSendResultSuccess(Box::new(
+                    PathPaymentStrictSendResultSuccess::default(),
+                ))
+            }
+            TypeVariant::ManageSellOfferResultCode => {
+                Self::ManageSellOfferResultCode(Box::new(ManageSellOfferResultCode::default()))
+            }
+            TypeVariant::ManageOfferEffect => {
+                Self::ManageOfferEffect(Box::new(ManageOfferEffect::default()))
+            }
+            TypeVariant::ManageOfferSuccessResult => {
+                Self::ManageOfferSuccessResult(Box::new(ManageOfferSuccessResult::default()))
+            }
+            TypeVariant::ManageOfferSuccessResultOffer => Self::ManageOfferSuccessResultOffer(
+                Box::new(ManageOfferSuccessResultOffer::default()),
+            ),
+            TypeVariant::ManageSellOfferResult => {
+                Self::ManageSellOfferResult(Box::new(ManageSellOfferResult::default()))
+            }
+            TypeVariant::ManageBuyOfferResultCode => {
+                Self::ManageBuyOfferResultCode(Box::new(ManageBuyOfferResultCode::default()))
+            }
+            TypeVariant::ManageBuyOfferResult => {
+                Self::ManageBuyOfferResult(Box::new(ManageBuyOfferResult::default()))
+            }
+            TypeVariant::SetOptionsResultCode => {
+                Self::SetOptionsResultCode(Box::new(SetOptionsResultCode::default()))
+            }
+            TypeVariant::SetOptionsResult => {
+                Self::SetOptionsResult(Box::new(SetOptionsResult::default()))
+            }
+            TypeVariant::ChangeTrustResultCode => {
+                Self::ChangeTrustResultCode(Box::new(ChangeTrustResultCode::default()))
+            }
+            TypeVariant::ChangeTrustResult => {
+                Self::ChangeTrustResult(Box::new(ChangeTrustResult::default()))
+            }
+            TypeVariant::AllowTrustResultCode => {
+                Self::AllowTrustResultCode(Box::new(AllowTrustResultCode::default()))
+            }
+            TypeVariant::AllowTrustResult => {
+                Self::AllowTrustResult(Box::new(AllowTrustResult::default()))
+            }
+            TypeVariant::AccountMergeResultCode => {
+                Self::AccountMergeResultCode(Box::new(AccountMergeResultCode::default()))
+            }
+            TypeVariant::AccountMergeResult => {
+                Self::AccountMergeResult(Box::new(AccountMergeResult::default()))
+            }
+            TypeVariant::InflationResultCode => {
+                Self::InflationResultCode(Box::new(InflationResultCode::default()))
+            }
+            TypeVariant::InflationPayout => {
+                Self::InflationPayout(Box::new(InflationPayout::default()))
+            }
+            TypeVariant::InflationResult => {
+                Self::InflationResult(Box::new(InflationResult::default()))
+            }
+            TypeVariant::ManageDataResultCode => {
+                Self::ManageDataResultCode(Box::new(ManageDataResultCode::default()))
+            }
+            TypeVariant::ManageDataResult => {
+                Self::ManageDataResult(Box::new(ManageDataResult::default()))
+            }
+            TypeVariant::BumpSequenceResultCode => {
+                Self::BumpSequenceResultCode(Box::new(BumpSequenceResultCode::default()))
+            }
+            TypeVariant::BumpSequenceResult => {
+                Self::BumpSequenceResult(Box::new(BumpSequenceResult::default()))
+            }
+            TypeVariant::CreateClaimableBalanceResultCode => {
+                Self::CreateClaimableBalanceResultCode(Box::new(
+                    CreateClaimableBalanceResultCode::default(),
+                ))
+            }
+            TypeVariant::CreateClaimableBalanceResult => Self::CreateClaimableBalanceResult(
+                Box::new(CreateClaimableBalanceResult::default()),
+            ),
+            TypeVariant::ClaimClaimableBalanceResultCode => Self::ClaimClaimableBalanceResultCode(
+                Box::new(ClaimClaimableBalanceResultCode::default()),
+            ),
+            TypeVariant::ClaimClaimableBalanceResult => {
+                Self::ClaimClaimableBalanceResult(Box::new(ClaimClaimableBalanceResult::default()))
+            }
+            TypeVariant::BeginSponsoringFutureReservesResultCode => {
+                Self::BeginSponsoringFutureReservesResultCode(Box::new(
+                    BeginSponsoringFutureReservesResultCode::default(),
+                ))
+            }
+            TypeVariant::BeginSponsoringFutureReservesResult => {
+                Self::BeginSponsoringFutureReservesResult(Box::new(
+                    BeginSponsoringFutureReservesResult::default(),
+                ))
+            }
+            TypeVariant::EndSponsoringFutureReservesResultCode => {
+                Self::EndSponsoringFutureReservesResultCode(Box::new(
+                    EndSponsoringFutureReservesResultCode::default(),
+                ))
+            }
+            TypeVariant::EndSponsoringFutureReservesResult => {
+                Self::EndSponsoringFutureReservesResult(Box::new(
+                    EndSponsoringFutureReservesResult::default(),
+                ))
+            }
+            TypeVariant::RevokeSponsorshipResultCode => {
+                Self::RevokeSponsorshipResultCode(Box::new(RevokeSponsorshipResultCode::default()))
+            }
+            TypeVariant::RevokeSponsorshipResult => {
+                Self::RevokeSponsorshipResult(Box::new(RevokeSponsorshipResult::default()))
+            }
+            TypeVariant::ClawbackResultCode => {
+                Self::ClawbackResultCode(Box::new(ClawbackResultCode::default()))
+            }
+            TypeVariant::ClawbackResult => {
+                Self::ClawbackResult(Box::new(ClawbackResult::default()))
+            }
+            TypeVariant::ClawbackClaimableBalanceResultCode => {
+                Self::ClawbackClaimableBalanceResultCode(Box::new(
+                    ClawbackClaimableBalanceResultCode::default(),
+                ))
+            }
+            TypeVariant::ClawbackClaimableBalanceResult => Self::ClawbackClaimableBalanceResult(
+                Box::new(ClawbackClaimableBalanceResult::default()),
+            ),
+            TypeVariant::SetTrustLineFlagsResultCode => {
+                Self::SetTrustLineFlagsResultCode(Box::new(SetTrustLineFlagsResultCode::default()))
+            }
+            TypeVariant::SetTrustLineFlagsResult => {
+                Self::SetTrustLineFlagsResult(Box::new(SetTrustLineFlagsResult::default()))
+            }
+            TypeVariant::LiquidityPoolDepositResultCode => Self::LiquidityPoolDepositResultCode(
+                Box::new(LiquidityPoolDepositResultCode::default()),
+            ),
+            TypeVariant::LiquidityPoolDepositResult => {
+                Self::LiquidityPoolDepositResult(Box::new(LiquidityPoolDepositResult::default()))
+            }
+            TypeVariant::LiquidityPoolWithdrawResultCode => Self::LiquidityPoolWithdrawResultCode(
+                Box::new(LiquidityPoolWithdrawResultCode::default()),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResult => {
+                Self::LiquidityPoolWithdrawResult(Box::new(LiquidityPoolWithdrawResult::default()))
+            }
+            TypeVariant::InvokeHostFunctionResultCode => Self::InvokeHostFunctionResultCode(
+                Box::new(InvokeHostFunctionResultCode::default()),
+            ),
+            TypeVariant::InvokeHostFunctionResult => {
+                Self::InvokeHostFunctionResult(Box::new(InvokeHostFunctionResult::default()))
+            }
+            TypeVariant::ExtendFootprintTtlResultCode => Self::ExtendFootprintTtlResultCode(
+                Box::new(ExtendFootprintTtlResultCode::default()),
+            ),
+            TypeVariant::ExtendFootprintTtlResult => {
+                Self::ExtendFootprintTtlResult(Box::new(ExtendFootprintTtlResult::default()))
+            }
+            TypeVariant::RestoreFootprintResultCode => {
+                Self::RestoreFootprintResultCode(Box::new(RestoreFootprintResultCode::default()))
+            }
+            TypeVariant::RestoreFootprintResult => {
+                Self::RestoreFootprintResult(Box::new(RestoreFootprintResult::default()))
+            }
+            TypeVariant::OperationResultCode => {
+                Self::OperationResultCode(Box::new(OperationResultCode::default()))
+            }
+            TypeVariant::OperationResult => {
+                Self::OperationResult(Box::new(OperationResult::default()))
+            }
+            TypeVariant::OperationResultTr => {
+                Self::OperationResultTr(Box::new(OperationResultTr::default()))
+            }
+            TypeVariant::TransactionResultCode => {
+                Self::TransactionResultCode(Box::new(TransactionResultCode::default()))
+            }
+            TypeVariant::InnerTransactionResult => {
+                Self::InnerTransactionResult(Box::new(InnerTransactionResult::default()))
+            }
+            TypeVariant::InnerTransactionResultResult => Self::InnerTransactionResultResult(
+                Box::new(InnerTransactionResultResult::default()),
+            ),
+            TypeVariant::InnerTransactionResultExt => {
+                Self::InnerTransactionResultExt(Box::new(InnerTransactionResultExt::default()))
+            }
+            TypeVariant::InnerTransactionResultPair => {
+                Self::InnerTransactionResultPair(Box::new(InnerTransactionResultPair::default()))
+            }
+            TypeVariant::TransactionResult => {
+                Self::TransactionResult(Box::new(TransactionResult::default()))
+            }
+            TypeVariant::TransactionResultResult => {
+                Self::TransactionResultResult(Box::new(TransactionResultResult::default()))
+            }
+            TypeVariant::TransactionResultExt => {
+                Self::TransactionResultExt(Box::new(TransactionResultExt::default()))
+            }
+            TypeVariant::Hash => Self::Hash(Box::new(Hash::default())),
+            TypeVariant::Uint256 => Self::Uint256(Box::new(Uint256::default())),
+            TypeVariant::Uint32 => Self::Uint32(Box::new(Uint32::default())),
+            TypeVariant::Int32 => Self::Int32(Box::new(Int32::default())),
+            TypeVariant::Uint64 => Self::Uint64(Box::new(Uint64::default())),
+            TypeVariant::Int64 => Self::Int64(Box::new(Int64::default())),
+            TypeVariant::TimePoint => Self::TimePoint(Box::new(TimePoint::default())),
+            TypeVariant::Duration => Self::Duration(Box::new(Duration::default())),
+            TypeVariant::ExtensionPoint => {
+                Self::ExtensionPoint(Box::new(ExtensionPoint::default()))
+            }
+            TypeVariant::CryptoKeyType => Self::CryptoKeyType(Box::new(CryptoKeyType::default())),
+            TypeVariant::PublicKeyType => Self::PublicKeyType(Box::new(PublicKeyType::default())),
+            TypeVariant::SignerKeyType => Self::SignerKeyType(Box::new(SignerKeyType::default())),
+            TypeVariant::PublicKey => Self::PublicKey(Box::new(PublicKey::default())),
+            TypeVariant::SignerKey => Self::SignerKey(Box::new(SignerKey::default())),
+            TypeVariant::SignerKeyEd25519SignedPayload => Self::SignerKeyEd25519SignedPayload(
+                Box::new(SignerKeyEd25519SignedPayload::default()),
+            ),
+            TypeVariant::Signature => Self::Signature(Box::new(Signature::default())),
+            TypeVariant::SignatureHint => Self::SignatureHint(Box::new(SignatureHint::default())),
+            TypeVariant::NodeId => Self::NodeId(Box::new(NodeId::default())),
+            TypeVariant::AccountId => Self::AccountId(Box::new(AccountId::default())),
+            TypeVariant::ContractId => Self::ContractId(Box::new(ContractId::default())),
+            TypeVariant::Curve25519Secret => {
+                Self::Curve25519Secret(Box::new(Curve25519Secret::default()))
+            }
+            TypeVariant::Curve25519Public => {
+                Self::Curve25519Public(Box::new(Curve25519Public::default()))
+            }
+            TypeVariant::HmacSha256Key => Self::HmacSha256Key(Box::new(HmacSha256Key::default())),
+            TypeVariant::HmacSha256Mac => Self::HmacSha256Mac(Box::new(HmacSha256Mac::default())),
+            TypeVariant::ShortHashSeed => Self::ShortHashSeed(Box::new(ShortHashSeed::default())),
+            TypeVariant::BinaryFuseFilterType => {
+                Self::BinaryFuseFilterType(Box::new(BinaryFuseFilterType::default()))
+            }
+            TypeVariant::SerializedBinaryFuseFilter => {
+                Self::SerializedBinaryFuseFilter(Box::new(SerializedBinaryFuseFilter::default()))
+            }
+            TypeVariant::PoolId => Self::PoolId(Box::new(PoolId::default())),
+            TypeVariant::ClaimableBalanceIdType => {
+                Self::ClaimableBalanceIdType(Box::new(ClaimableBalanceIdType::default()))
+            }
+            TypeVariant::ClaimableBalanceId => {
+                Self::ClaimableBalanceId(Box::new(ClaimableBalanceId::default()))
+            }
         }
     }
 

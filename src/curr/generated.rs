@@ -4027,8 +4027,7 @@ mod tests_for_number_or_string {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -6310,8 +6309,7 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11535,8 +11533,7 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11643,8 +11640,7 @@ impl AsRef<[ScVal]> for ScVec {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11751,8 +11747,7 @@ impl AsRef<[ScMapEntry]> for ScMap {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11859,8 +11854,7 @@ impl AsRef<[u8]> for ScBytes {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -11967,8 +11961,7 @@ impl AsRef<[u8]> for ScString {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13151,8 +13144,7 @@ impl AsRef<[u8]> for Thresholds {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13259,8 +13251,7 @@ impl AsRef<[u8]> for String32 {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -13432,8 +13423,7 @@ impl WriteXdr for SequenceNumber {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -21123,8 +21113,7 @@ impl WriteXdr for HotArchiveBucketEntry {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -22633,8 +22622,7 @@ impl WriteXdr for TxSetComponentType {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -22741,8 +22729,7 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -24498,8 +24485,7 @@ impl WriteXdr for LedgerEntryChange {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -28370,8 +28356,7 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -28928,8 +28913,7 @@ impl WriteXdr for TimeSlicedPeerData {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -29213,8 +29197,7 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -29374,8 +29357,7 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -33668,8 +33650,7 @@ impl WriteXdr for SorobanAuthorizationEntry {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -49256,8 +49237,7 @@ impl WriteXdr for SignerKey {
 /// ```
 ///
 #[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),

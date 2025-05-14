@@ -5,7 +5,7 @@ use stellar_xdr::curr as stellar_xdr;
 #[cfg(feature = "next")]
 use stellar_xdr::next as stellar_xdr;
 
-use stellar_xdr::{Uint32, Hash, TransactionEnvelope};
+use stellar_xdr::{Hash, TransactionEnvelope, Uint32};
 
 #[test]
 fn default() {

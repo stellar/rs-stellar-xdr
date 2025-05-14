@@ -1,8 +1,8 @@
 pub mod compare;
 pub mod decode;
 pub mod encode;
-pub mod guess;
 pub mod generate;
+pub mod guess;
 pub mod types;
 mod util;
 mod version;

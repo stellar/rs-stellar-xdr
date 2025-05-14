@@ -140,7 +140,7 @@ impl Cmd {
             OutputFormat::Text => {
                 let v = serde_json::to_value(v)?;
                 let text = util::serde_json_value_to_text(v).ok_or(Error::TextUnsupported)?;
-                println!("{text}")
+                println!("{text}");
             }
             OutputFormat::RustDebug => println!("{v:?}"),
             OutputFormat::RustDebugFormatted => println!("{v:#?}"),

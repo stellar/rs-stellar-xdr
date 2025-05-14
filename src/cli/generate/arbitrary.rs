@@ -1,10 +1,11 @@
-use crate::cli::Channel;
 use arbitrary::Unstructured;
 use clap::{Args, ValueEnum};
 use std::{
     io::{stdout, Write},
     str::FromStr,
 };
+
+use crate::cli::{util, Channel};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -20,6 +21,8 @@ pub enum Error {
     GenerateJson(#[from] serde_json::Error),
     #[error("error generating arbitrary value: {0}")]
     Arbitrary(#[from] arbitrary::Error),
+    #[error("type doesn't have a text representation, use 'json' as output")]
+    TextUnsupported,
 }
 
 impl From<crate::curr::Error> for Error {
@@ -82,6 +85,7 @@ pub enum OutputFormat {
     // TODO: StreamFramed,
     Json,
     JsonFormatted,
+    Text,
 }
 
 impl Default for OutputFormat {
@@ -99,24 +103,26 @@ macro_rules! run_x {
             })?;
             let r = rand::random::<[u8; 10_240]>();
             let mut u = Unstructured::new(&r);
+            let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
             match self.output_format {
                 OutputFormat::Single => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
                     let l = crate::$m::Limits::none();
                     stdout().write_all(&v.to_xdr(l)?)?
                 }
                 OutputFormat::SingleBase64 => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
                     let l = crate::$m::Limits::none();
                     println!("{}", v.to_xdr_base64(l)?)
                 }
                 OutputFormat::Json => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
                     println!("{}", serde_json::to_string(&v)?);
                 }
                 OutputFormat::JsonFormatted => {
-                    let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
                     println!("{}", serde_json::to_string_pretty(&v)?);
+                }
+                OutputFormat::Text => {
+                    let v = serde_json::to_value(v)?;
+                    let text = util::serde_json_value_to_text(v).ok_or(Error::TextUnsupported)?;
+                    println!("{text}")
                 }
             }
             Ok(())

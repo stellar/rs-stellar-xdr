@@ -24,3 +24,14 @@ where
             .collect::<Result<Vec<_>, _>>()?)
     }
 }
+
+pub fn serde_json_value_to_text(v: serde_json::Value) -> Option<String> {
+    let s = match v {
+        serde_json::Value::Null => "null".to_string(),
+        serde_json::Value::Bool(b) => b.to_string(),
+        serde_json::Value::Number(number) => number.to_string(),
+        serde_json::Value::String(s) => s,
+        serde_json::Value::Array(_) | serde_json::Value::Object(_) => None?,
+    };
+    Some(s)
+}

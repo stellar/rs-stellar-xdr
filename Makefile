@@ -4,7 +4,7 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=441786c629fbb66d2e40d5fe43a0edadc6faca12
+XDRGEN_VERSION=d53a95716d14b054bcb93f6f15705a90b7c9780c
 # XDRGEN_LOCAL=1
 XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_CURR=TransactionEnvelope
 XDRGEN_TYPES_CUSTOM_DEFAULT_IMPL_NEXT=TransactionEnvelope

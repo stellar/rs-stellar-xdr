@@ -4580,7 +4580,7 @@ pub enum ScpStatementPledges {
 
 impl Default for ScpStatementPledges {
     fn default() -> Self {
-        Self::Prepare(Default::default())
+        Self::Prepare(ScpStatementPrepare::default())
     }
 }
 
@@ -6671,7 +6671,7 @@ pub enum ConfigSettingEntry {
 
 impl Default for ConfigSettingEntry {
     fn default() -> Self {
-        Self::ContractMaxSizeBytes(Default::default())
+        Self::ContractMaxSizeBytes(u32::default())
     }
 }
 
@@ -7069,7 +7069,7 @@ pub enum ScEnvMetaEntry {
 
 impl Default for ScEnvMetaEntry {
     fn default() -> Self {
-        Self::ScEnvMetaKindInterfaceVersion(Default::default())
+        Self::ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion::default())
     }
 }
 
@@ -7333,7 +7333,7 @@ pub enum ScMetaEntry {
 
 impl Default for ScMetaEntry {
     fn default() -> Self {
-        Self::ScMetaV0(Default::default())
+        Self::ScMetaV0(ScMetaV0::default())
     }
 }
 
@@ -8670,7 +8670,7 @@ pub enum ScSpecUdtUnionCaseV0 {
 
 impl Default for ScSpecUdtUnionCaseV0 {
     fn default() -> Self {
-        Self::VoidV0(Default::default())
+        Self::VoidV0(ScSpecUdtUnionCaseVoidV0::default())
     }
 }
 
@@ -9667,7 +9667,7 @@ pub enum ScSpecEntry {
 
 impl Default for ScSpecEntry {
     fn default() -> Self {
-        Self::FunctionV0(Default::default())
+        Self::FunctionV0(ScSpecFunctionV0::default())
     }
 }
 
@@ -10407,7 +10407,7 @@ pub enum ScError {
 
 impl Default for ScError {
     fn default() -> Self {
-        Self::Contract(Default::default())
+        Self::Contract(u32::default())
     }
 }
 
@@ -11003,7 +11003,7 @@ pub enum ContractExecutable {
 
 impl Default for ContractExecutable {
     fn default() -> Self {
-        Self::Wasm(Default::default())
+        Self::Wasm(Hash::default())
     }
 }
 
@@ -11333,7 +11333,7 @@ pub enum ScAddress {
 
 impl Default for ScAddress {
     fn default() -> Self {
-        Self::Account(Default::default())
+        Self::Account(AccountId::default())
     }
 }
 
@@ -12199,7 +12199,7 @@ pub enum ScVal {
 
 impl Default for ScVal {
     fn default() -> Self {
-        Self::Bool(Default::default())
+        Self::Bool(bool::default())
     }
 }
 
@@ -12548,7 +12548,7 @@ pub enum StoredTransactionSet {
 
 impl Default for StoredTransactionSet {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(TransactionSet::default())
     }
 }
 
@@ -12817,7 +12817,7 @@ pub enum PersistedScpState {
 
 impl Default for PersistedScpState {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(PersistedScpStateV0::default())
     }
 }
 
@@ -13795,7 +13795,7 @@ pub enum AssetCode {
 
 impl Default for AssetCode {
     fn default() -> Self {
-        Self::CreditAlphanum4(Default::default())
+        Self::CreditAlphanum4(AssetCode4::default())
     }
 }
 
@@ -17314,7 +17314,7 @@ pub enum Claimant {
 
 impl Default for Claimant {
     fn default() -> Self {
-        Self::ClaimantTypeV0(Default::default())
+        Self::ClaimantTypeV0(ClaimantV0::default())
     }
 }
 
@@ -18035,7 +18035,7 @@ pub enum LiquidityPoolEntryBody {
 
 impl Default for LiquidityPoolEntryBody {
     fn default() -> Self {
-        Self::LiquidityPoolConstantProduct(Default::default())
+        Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::default())
     }
 }
 
@@ -18933,7 +18933,7 @@ pub enum LedgerEntryData {
 
 impl Default for LedgerEntryData {
     fn default() -> Self {
-        Self::Account(Default::default())
+        Self::Account(AccountEntry::default())
     }
 }
 
@@ -19844,7 +19844,7 @@ pub enum LedgerKey {
 
 impl Default for LedgerKey {
     fn default() -> Self {
-        Self::Account(Default::default())
+        Self::Account(LedgerKeyAccount::default())
     }
 }
 
@@ -20712,7 +20712,7 @@ pub enum BucketEntry {
 
 impl Default for BucketEntry {
     fn default() -> Self {
-        Self::Liveentry(Default::default())
+        Self::Liveentry(LedgerEntry::default())
     }
 }
 
@@ -20846,7 +20846,7 @@ pub enum HotArchiveBucketEntry {
 
 impl Default for HotArchiveBucketEntry {
     fn default() -> Self {
-        Self::Archived(Default::default())
+        Self::Archived(LedgerEntry::default())
     }
 }
 
@@ -22165,7 +22165,7 @@ pub enum LedgerUpgrade {
 
 impl Default for LedgerUpgrade {
     fn default() -> Self {
-        Self::Version(Default::default())
+        Self::Version(u32::default())
     }
 }
 
@@ -22790,7 +22790,7 @@ pub enum TxSetComponent {
 
 impl Default for TxSetComponent {
     fn default() -> Self {
-        Self::TxsetCompTxsMaybeDiscountedFee(Default::default())
+        Self::TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee::default())
     }
 }
 
@@ -22909,7 +22909,7 @@ pub enum TransactionPhase {
 
 impl Default for TransactionPhase {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(VecM::<TxSetComponent>::default())
     }
 }
 
@@ -23119,7 +23119,7 @@ pub enum GeneralizedTransactionSet {
 
 impl Default for GeneralizedTransactionSet {
     fn default() -> Self {
-        Self::V1(Default::default())
+        Self::V1(TransactionSetV1::default())
     }
 }
 
@@ -23929,7 +23929,7 @@ pub enum ScpHistoryEntry {
 
 impl Default for ScpHistoryEntry {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(ScpHistoryEntryV0::default())
     }
 }
 
@@ -24176,7 +24176,7 @@ pub enum LedgerEntryChange {
 
 impl Default for LedgerEntryChange {
     fn default() -> Self {
-        Self::Created(Default::default())
+        Self::Created(LedgerEntry::default())
     }
 }
 
@@ -24728,7 +24728,7 @@ pub enum ContractEventBody {
 
 impl Default for ContractEventBody {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(ContractEventV0::default())
     }
 }
 
@@ -25694,7 +25694,7 @@ pub enum TransactionMeta {
 
 impl Default for TransactionMeta {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(VecM::<OperationMeta>::default())
     }
 }
 
@@ -26421,7 +26421,7 @@ pub enum LedgerCloseMeta {
 
 impl Default for LedgerCloseMeta {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(LedgerCloseMetaV0::default())
     }
 }
 
@@ -27097,7 +27097,7 @@ pub enum PeerAddressIp {
 
 impl Default for PeerAddressIp {
     fn default() -> Self {
-        Self::IPv4(Default::default())
+        Self::IPv4(<[u8; 4]>::default())
     }
 }
 
@@ -28840,7 +28840,7 @@ pub enum SurveyResponseBody {
 
 impl Default for SurveyResponseBody {
     fn default() -> Self {
-        Self::SurveyTopologyResponseV2(Default::default())
+        Self::SurveyTopologyResponseV2(TopologyResponseBodyV2::default())
     }
 }
 
@@ -29344,7 +29344,7 @@ pub enum StellarMessage {
 
 impl Default for StellarMessage {
     fn default() -> Self {
-        Self::ErrorMsg(Default::default())
+        Self::ErrorMsg(SError::default())
     }
 }
 
@@ -29656,7 +29656,7 @@ pub enum AuthenticatedMessage {
 
 impl Default for AuthenticatedMessage {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(AuthenticatedMessageV0::default())
     }
 }
 
@@ -29773,7 +29773,7 @@ pub enum LiquidityPoolParameters {
 
 impl Default for LiquidityPoolParameters {
     fn default() -> Self {
-        Self::LiquidityPoolConstantProduct(Default::default())
+        Self::LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters::default())
     }
 }
 
@@ -29966,7 +29966,7 @@ pub enum MuxedAccount {
 
 impl Default for MuxedAccount {
     fn default() -> Self {
-        Self::Ed25519(Default::default())
+        Self::Ed25519(Uint256::default())
     }
 }
 
@@ -31586,7 +31586,7 @@ pub enum RevokeSponsorshipOp {
 
 impl Default for RevokeSponsorshipOp {
     fn default() -> Self {
-        Self::LedgerEntry(Default::default())
+        Self::LedgerEntry(LedgerKey::default())
     }
 }
 
@@ -32295,7 +32295,7 @@ pub enum ContractIdPreimage {
 
 impl Default for ContractIdPreimage {
     fn default() -> Self {
-        Self::Address(Default::default())
+        Self::Address(ContractIdPreimageFromAddress::default())
     }
 }
 
@@ -32574,7 +32574,7 @@ pub enum HostFunction {
 
 impl Default for HostFunction {
     fn default() -> Self {
-        Self::InvokeContract(Default::default())
+        Self::InvokeContract(InvokeContractArgs::default())
     }
 }
 
@@ -32846,7 +32846,7 @@ pub enum SorobanAuthorizedFunction {
 
 impl Default for SorobanAuthorizedFunction {
     fn default() -> Self {
-        Self::ContractFn(Default::default())
+        Self::ContractFn(InvokeContractArgs::default())
     }
 }
 
@@ -33694,7 +33694,7 @@ pub enum OperationBody {
 
 impl Default for OperationBody {
     fn default() -> Self {
-        Self::CreateAccount(Default::default())
+        Self::CreateAccount(CreateAccountOp::default())
     }
 }
 
@@ -34357,7 +34357,7 @@ pub enum HashIdPreimage {
 
 impl Default for HashIdPreimage {
     fn default() -> Self {
-        Self::OpId(Default::default())
+        Self::OpId(HashIdPreimageOperationId::default())
     }
 }
 
@@ -36019,7 +36019,7 @@ pub enum FeeBumpTransactionInnerTx {
 
 impl Default for FeeBumpTransactionInnerTx {
     fn default() -> Self {
-        Self::Tx(Default::default())
+        Self::Tx(TransactionV1Envelope::default())
     }
 }
 
@@ -36484,7 +36484,7 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
 
 impl Default for TransactionSignaturePayloadTaggedTransaction {
     fn default() -> Self {
-        Self::Tx(Default::default())
+        Self::Tx(Transaction::default())
     }
 }
 
@@ -37008,7 +37008,7 @@ pub enum ClaimAtom {
 
 impl Default for ClaimAtom {
     fn default() -> Self {
-        Self::V0(Default::default())
+        Self::V0(ClaimOfferAtomV0::default())
     }
 }
 
@@ -38089,7 +38089,7 @@ pub enum PathPaymentStrictReceiveResult {
 
 impl Default for PathPaymentStrictReceiveResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(PathPaymentStrictReceiveResultSuccess::default())
     }
 }
 
@@ -38546,7 +38546,7 @@ pub enum PathPaymentStrictSendResult {
 
 impl Default for PathPaymentStrictSendResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(PathPaymentStrictSendResultSuccess::default())
     }
 }
 
@@ -39043,7 +39043,7 @@ pub enum ManageOfferSuccessResultOffer {
 
 impl Default for ManageOfferSuccessResultOffer {
     fn default() -> Self {
-        Self::Created(Default::default())
+        Self::Created(OfferEntry::default())
     }
 }
 
@@ -39247,7 +39247,7 @@ pub enum ManageSellOfferResult {
 
 impl Default for ManageSellOfferResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(ManageOfferSuccessResult::default())
     }
 }
 
@@ -39646,7 +39646,7 @@ pub enum ManageBuyOfferResult {
 
 impl Default for ManageBuyOfferResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(ManageOfferSuccessResult::default())
     }
 }
 
@@ -41020,7 +41020,7 @@ pub enum AccountMergeResult {
 
 impl Default for AccountMergeResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(i64::default())
     }
 }
 
@@ -41340,7 +41340,7 @@ pub enum InflationResult {
 
 impl Default for InflationResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(VecM::<InflationPayout>::default())
     }
 }
 
@@ -42117,7 +42117,7 @@ pub enum CreateClaimableBalanceResult {
 
 impl Default for CreateClaimableBalanceResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(ClaimableBalanceId::default())
     }
 }
 
@@ -44956,7 +44956,7 @@ pub enum InvokeHostFunctionResult {
 
 impl Default for InvokeHostFunctionResult {
     fn default() -> Self {
-        Self::Success(Default::default())
+        Self::Success(Hash::default())
     }
 }
 
@@ -45868,7 +45868,7 @@ pub enum OperationResultTr {
 
 impl Default for OperationResultTr {
     fn default() -> Self {
-        Self::CreateAccount(Default::default())
+        Self::CreateAccount(CreateAccountResult::default())
     }
 }
 
@@ -46245,7 +46245,7 @@ pub enum OperationResult {
 
 impl Default for OperationResult {
     fn default() -> Self {
-        Self::OpInner(Default::default())
+        Self::OpInner(OperationResultTr::default())
     }
 }
 
@@ -46648,7 +46648,7 @@ pub enum InnerTransactionResultResult {
 
 impl Default for InnerTransactionResultResult {
     fn default() -> Self {
-        Self::TxSuccess(Default::default())
+        Self::TxSuccess(VecM::<OperationResult>::default())
     }
 }
 
@@ -47146,7 +47146,7 @@ pub enum TransactionResultResult {
 
 impl Default for TransactionResultResult {
     fn default() -> Self {
-        Self::TxFeeBumpInnerSuccess(Default::default())
+        Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::default())
     }
 }
 
@@ -48501,7 +48501,7 @@ pub enum PublicKey {
 
 impl Default for PublicKey {
     fn default() -> Self {
-        Self::PublicKeyTypeEd25519(Default::default())
+        Self::PublicKeyTypeEd25519(Uint256::default())
     }
 }
 
@@ -48705,7 +48705,7 @@ pub enum SignerKey {
 
 impl Default for SignerKey {
     fn default() -> Self {
-        Self::Ed25519(Default::default())
+        Self::Ed25519(Uint256::default())
     }
 }
 
@@ -49831,7 +49831,7 @@ pub enum ClaimableBalanceId {
 
 impl Default for ClaimableBalanceId {
     fn default() -> Self {
-        Self::ClaimableBalanceIdTypeV0(Default::default())
+        Self::ClaimableBalanceIdTypeV0(Hash::default())
     }
 }
 
@@ -66804,1197 +66804,655 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn default<'a>(v: TypeVariant) -> Self {
         match v {
-            TypeVariant::Value => Self::Value(Box::new(Value::default())),
-            TypeVariant::ScpBallot => Self::ScpBallot(Box::new(ScpBallot::default())),
-            TypeVariant::ScpStatementType => {
-                Self::ScpStatementType(Box::new(ScpStatementType::default()))
-            }
-            TypeVariant::ScpNomination => Self::ScpNomination(Box::new(ScpNomination::default())),
-            TypeVariant::ScpStatement => Self::ScpStatement(Box::new(ScpStatement::default())),
-            TypeVariant::ScpStatementPledges => {
-                Self::ScpStatementPledges(Box::new(ScpStatementPledges::default()))
-            }
-            TypeVariant::ScpStatementPrepare => {
-                Self::ScpStatementPrepare(Box::new(ScpStatementPrepare::default()))
-            }
-            TypeVariant::ScpStatementConfirm => {
-                Self::ScpStatementConfirm(Box::new(ScpStatementConfirm::default()))
-            }
-            TypeVariant::ScpStatementExternalize => {
-                Self::ScpStatementExternalize(Box::new(ScpStatementExternalize::default()))
-            }
-            TypeVariant::ScpEnvelope => Self::ScpEnvelope(Box::new(ScpEnvelope::default())),
-            TypeVariant::ScpQuorumSet => Self::ScpQuorumSet(Box::new(ScpQuorumSet::default())),
+            TypeVariant::Value => Self::Value(Box::default()),
+            TypeVariant::ScpBallot => Self::ScpBallot(Box::default()),
+            TypeVariant::ScpStatementType => Self::ScpStatementType(Box::default()),
+            TypeVariant::ScpNomination => Self::ScpNomination(Box::default()),
+            TypeVariant::ScpStatement => Self::ScpStatement(Box::default()),
+            TypeVariant::ScpStatementPledges => Self::ScpStatementPledges(Box::default()),
+            TypeVariant::ScpStatementPrepare => Self::ScpStatementPrepare(Box::default()),
+            TypeVariant::ScpStatementConfirm => Self::ScpStatementConfirm(Box::default()),
+            TypeVariant::ScpStatementExternalize => Self::ScpStatementExternalize(Box::default()),
+            TypeVariant::ScpEnvelope => Self::ScpEnvelope(Box::default()),
+            TypeVariant::ScpQuorumSet => Self::ScpQuorumSet(Box::default()),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => {
-                Self::ConfigSettingContractExecutionLanesV0(Box::new(
-                    ConfigSettingContractExecutionLanesV0::default(),
-                ))
+                Self::ConfigSettingContractExecutionLanesV0(Box::default())
             }
-            TypeVariant::ConfigSettingContractComputeV0 => Self::ConfigSettingContractComputeV0(
-                Box::new(ConfigSettingContractComputeV0::default()),
-            ),
+            TypeVariant::ConfigSettingContractComputeV0 => {
+                Self::ConfigSettingContractComputeV0(Box::default())
+            }
             TypeVariant::ConfigSettingContractParallelComputeV0 => {
-                Self::ConfigSettingContractParallelComputeV0(Box::new(
-                    ConfigSettingContractParallelComputeV0::default(),
-                ))
+                Self::ConfigSettingContractParallelComputeV0(Box::default())
             }
             TypeVariant::ConfigSettingContractLedgerCostV0 => {
-                Self::ConfigSettingContractLedgerCostV0(Box::new(
-                    ConfigSettingContractLedgerCostV0::default(),
-                ))
+                Self::ConfigSettingContractLedgerCostV0(Box::default())
             }
             TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
-                Self::ConfigSettingContractLedgerCostExtV0(Box::new(
-                    ConfigSettingContractLedgerCostExtV0::default(),
-                ))
+                Self::ConfigSettingContractLedgerCostExtV0(Box::default())
             }
             TypeVariant::ConfigSettingContractHistoricalDataV0 => {
-                Self::ConfigSettingContractHistoricalDataV0(Box::new(
-                    ConfigSettingContractHistoricalDataV0::default(),
-                ))
+                Self::ConfigSettingContractHistoricalDataV0(Box::default())
             }
-            TypeVariant::ConfigSettingContractEventsV0 => Self::ConfigSettingContractEventsV0(
-                Box::new(ConfigSettingContractEventsV0::default()),
-            ),
+            TypeVariant::ConfigSettingContractEventsV0 => {
+                Self::ConfigSettingContractEventsV0(Box::default())
+            }
             TypeVariant::ConfigSettingContractBandwidthV0 => {
-                Self::ConfigSettingContractBandwidthV0(Box::new(
-                    ConfigSettingContractBandwidthV0::default(),
-                ))
+                Self::ConfigSettingContractBandwidthV0(Box::default())
             }
-            TypeVariant::ContractCostType => {
-                Self::ContractCostType(Box::new(ContractCostType::default()))
+            TypeVariant::ContractCostType => Self::ContractCostType(Box::default()),
+            TypeVariant::ContractCostParamEntry => Self::ContractCostParamEntry(Box::default()),
+            TypeVariant::StateArchivalSettings => Self::StateArchivalSettings(Box::default()),
+            TypeVariant::EvictionIterator => Self::EvictionIterator(Box::default()),
+            TypeVariant::ConfigSettingScpTiming => Self::ConfigSettingScpTiming(Box::default()),
+            TypeVariant::ContractCostParams => Self::ContractCostParams(Box::default()),
+            TypeVariant::ConfigSettingId => Self::ConfigSettingId(Box::default()),
+            TypeVariant::ConfigSettingEntry => Self::ConfigSettingEntry(Box::default()),
+            TypeVariant::ScEnvMetaKind => Self::ScEnvMetaKind(Box::default()),
+            TypeVariant::ScEnvMetaEntry => Self::ScEnvMetaEntry(Box::default()),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => {
+                Self::ScEnvMetaEntryInterfaceVersion(Box::default())
             }
-            TypeVariant::ContractCostParamEntry => {
-                Self::ContractCostParamEntry(Box::new(ContractCostParamEntry::default()))
-            }
-            TypeVariant::StateArchivalSettings => {
-                Self::StateArchivalSettings(Box::new(StateArchivalSettings::default()))
-            }
-            TypeVariant::EvictionIterator => {
-                Self::EvictionIterator(Box::new(EvictionIterator::default()))
-            }
-            TypeVariant::ConfigSettingScpTiming => {
-                Self::ConfigSettingScpTiming(Box::new(ConfigSettingScpTiming::default()))
-            }
-            TypeVariant::ContractCostParams => {
-                Self::ContractCostParams(Box::new(ContractCostParams::default()))
-            }
-            TypeVariant::ConfigSettingId => {
-                Self::ConfigSettingId(Box::new(ConfigSettingId::default()))
-            }
-            TypeVariant::ConfigSettingEntry => {
-                Self::ConfigSettingEntry(Box::new(ConfigSettingEntry::default()))
-            }
-            TypeVariant::ScEnvMetaKind => Self::ScEnvMetaKind(Box::new(ScEnvMetaKind::default())),
-            TypeVariant::ScEnvMetaEntry => {
-                Self::ScEnvMetaEntry(Box::new(ScEnvMetaEntry::default()))
-            }
-            TypeVariant::ScEnvMetaEntryInterfaceVersion => Self::ScEnvMetaEntryInterfaceVersion(
-                Box::new(ScEnvMetaEntryInterfaceVersion::default()),
-            ),
-            TypeVariant::ScMetaV0 => Self::ScMetaV0(Box::new(ScMetaV0::default())),
-            TypeVariant::ScMetaKind => Self::ScMetaKind(Box::new(ScMetaKind::default())),
-            TypeVariant::ScMetaEntry => Self::ScMetaEntry(Box::new(ScMetaEntry::default())),
-            TypeVariant::ScSpecType => Self::ScSpecType(Box::new(ScSpecType::default())),
-            TypeVariant::ScSpecTypeOption => {
-                Self::ScSpecTypeOption(Box::new(ScSpecTypeOption::default()))
-            }
-            TypeVariant::ScSpecTypeResult => {
-                Self::ScSpecTypeResult(Box::new(ScSpecTypeResult::default()))
-            }
-            TypeVariant::ScSpecTypeVec => Self::ScSpecTypeVec(Box::new(ScSpecTypeVec::default())),
-            TypeVariant::ScSpecTypeMap => Self::ScSpecTypeMap(Box::new(ScSpecTypeMap::default())),
-            TypeVariant::ScSpecTypeTuple => {
-                Self::ScSpecTypeTuple(Box::new(ScSpecTypeTuple::default()))
-            }
-            TypeVariant::ScSpecTypeBytesN => {
-                Self::ScSpecTypeBytesN(Box::new(ScSpecTypeBytesN::default()))
-            }
-            TypeVariant::ScSpecTypeUdt => Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::default())),
-            TypeVariant::ScSpecTypeDef => Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::default())),
-            TypeVariant::ScSpecUdtStructFieldV0 => {
-                Self::ScSpecUdtStructFieldV0(Box::new(ScSpecUdtStructFieldV0::default()))
-            }
-            TypeVariant::ScSpecUdtStructV0 => {
-                Self::ScSpecUdtStructV0(Box::new(ScSpecUdtStructV0::default()))
-            }
-            TypeVariant::ScSpecUdtUnionCaseVoidV0 => {
-                Self::ScSpecUdtUnionCaseVoidV0(Box::new(ScSpecUdtUnionCaseVoidV0::default()))
-            }
+            TypeVariant::ScMetaV0 => Self::ScMetaV0(Box::default()),
+            TypeVariant::ScMetaKind => Self::ScMetaKind(Box::default()),
+            TypeVariant::ScMetaEntry => Self::ScMetaEntry(Box::default()),
+            TypeVariant::ScSpecType => Self::ScSpecType(Box::default()),
+            TypeVariant::ScSpecTypeOption => Self::ScSpecTypeOption(Box::default()),
+            TypeVariant::ScSpecTypeResult => Self::ScSpecTypeResult(Box::default()),
+            TypeVariant::ScSpecTypeVec => Self::ScSpecTypeVec(Box::default()),
+            TypeVariant::ScSpecTypeMap => Self::ScSpecTypeMap(Box::default()),
+            TypeVariant::ScSpecTypeTuple => Self::ScSpecTypeTuple(Box::default()),
+            TypeVariant::ScSpecTypeBytesN => Self::ScSpecTypeBytesN(Box::default()),
+            TypeVariant::ScSpecTypeUdt => Self::ScSpecTypeUdt(Box::default()),
+            TypeVariant::ScSpecTypeDef => Self::ScSpecTypeDef(Box::default()),
+            TypeVariant::ScSpecUdtStructFieldV0 => Self::ScSpecUdtStructFieldV0(Box::default()),
+            TypeVariant::ScSpecUdtStructV0 => Self::ScSpecUdtStructV0(Box::default()),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Self::ScSpecUdtUnionCaseVoidV0(Box::default()),
             TypeVariant::ScSpecUdtUnionCaseTupleV0 => {
-                Self::ScSpecUdtUnionCaseTupleV0(Box::new(ScSpecUdtUnionCaseTupleV0::default()))
+                Self::ScSpecUdtUnionCaseTupleV0(Box::default())
             }
-            TypeVariant::ScSpecUdtUnionCaseV0Kind => {
-                Self::ScSpecUdtUnionCaseV0Kind(Box::new(ScSpecUdtUnionCaseV0Kind::default()))
-            }
-            TypeVariant::ScSpecUdtUnionCaseV0 => {
-                Self::ScSpecUdtUnionCaseV0(Box::new(ScSpecUdtUnionCaseV0::default()))
-            }
-            TypeVariant::ScSpecUdtUnionV0 => {
-                Self::ScSpecUdtUnionV0(Box::new(ScSpecUdtUnionV0::default()))
-            }
-            TypeVariant::ScSpecUdtEnumCaseV0 => {
-                Self::ScSpecUdtEnumCaseV0(Box::new(ScSpecUdtEnumCaseV0::default()))
-            }
-            TypeVariant::ScSpecUdtEnumV0 => {
-                Self::ScSpecUdtEnumV0(Box::new(ScSpecUdtEnumV0::default()))
-            }
-            TypeVariant::ScSpecUdtErrorEnumCaseV0 => {
-                Self::ScSpecUdtErrorEnumCaseV0(Box::new(ScSpecUdtErrorEnumCaseV0::default()))
-            }
-            TypeVariant::ScSpecUdtErrorEnumV0 => {
-                Self::ScSpecUdtErrorEnumV0(Box::new(ScSpecUdtErrorEnumV0::default()))
-            }
-            TypeVariant::ScSpecFunctionInputV0 => {
-                Self::ScSpecFunctionInputV0(Box::new(ScSpecFunctionInputV0::default()))
-            }
-            TypeVariant::ScSpecFunctionV0 => {
-                Self::ScSpecFunctionV0(Box::new(ScSpecFunctionV0::default()))
-            }
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Self::ScSpecUdtUnionCaseV0Kind(Box::default()),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Self::ScSpecUdtUnionCaseV0(Box::default()),
+            TypeVariant::ScSpecUdtUnionV0 => Self::ScSpecUdtUnionV0(Box::default()),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Self::ScSpecUdtEnumCaseV0(Box::default()),
+            TypeVariant::ScSpecUdtEnumV0 => Self::ScSpecUdtEnumV0(Box::default()),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Self::ScSpecUdtErrorEnumCaseV0(Box::default()),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Self::ScSpecUdtErrorEnumV0(Box::default()),
+            TypeVariant::ScSpecFunctionInputV0 => Self::ScSpecFunctionInputV0(Box::default()),
+            TypeVariant::ScSpecFunctionV0 => Self::ScSpecFunctionV0(Box::default()),
             TypeVariant::ScSpecEventParamLocationV0 => {
-                Self::ScSpecEventParamLocationV0(Box::new(ScSpecEventParamLocationV0::default()))
+                Self::ScSpecEventParamLocationV0(Box::default())
             }
-            TypeVariant::ScSpecEventParamV0 => {
-                Self::ScSpecEventParamV0(Box::new(ScSpecEventParamV0::default()))
-            }
-            TypeVariant::ScSpecEventDataFormat => {
-                Self::ScSpecEventDataFormat(Box::new(ScSpecEventDataFormat::default()))
-            }
-            TypeVariant::ScSpecEventV0 => Self::ScSpecEventV0(Box::new(ScSpecEventV0::default())),
-            TypeVariant::ScSpecEntryKind => {
-                Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::default()))
-            }
-            TypeVariant::ScSpecEntry => Self::ScSpecEntry(Box::new(ScSpecEntry::default())),
-            TypeVariant::ScValType => Self::ScValType(Box::new(ScValType::default())),
-            TypeVariant::ScErrorType => Self::ScErrorType(Box::new(ScErrorType::default())),
-            TypeVariant::ScErrorCode => Self::ScErrorCode(Box::new(ScErrorCode::default())),
-            TypeVariant::ScError => Self::ScError(Box::new(ScError::default())),
-            TypeVariant::UInt128Parts => Self::UInt128Parts(Box::new(UInt128Parts::default())),
-            TypeVariant::Int128Parts => Self::Int128Parts(Box::new(Int128Parts::default())),
-            TypeVariant::UInt256Parts => Self::UInt256Parts(Box::new(UInt256Parts::default())),
-            TypeVariant::Int256Parts => Self::Int256Parts(Box::new(Int256Parts::default())),
-            TypeVariant::ContractExecutableType => {
-                Self::ContractExecutableType(Box::new(ContractExecutableType::default()))
-            }
-            TypeVariant::ContractExecutable => {
-                Self::ContractExecutable(Box::new(ContractExecutable::default()))
-            }
-            TypeVariant::ScAddressType => Self::ScAddressType(Box::new(ScAddressType::default())),
-            TypeVariant::MuxedEd25519Account => {
-                Self::MuxedEd25519Account(Box::new(MuxedEd25519Account::default()))
-            }
-            TypeVariant::ScAddress => Self::ScAddress(Box::new(ScAddress::default())),
-            TypeVariant::ScVec => Self::ScVec(Box::new(ScVec::default())),
-            TypeVariant::ScMap => Self::ScMap(Box::new(ScMap::default())),
-            TypeVariant::ScBytes => Self::ScBytes(Box::new(ScBytes::default())),
-            TypeVariant::ScString => Self::ScString(Box::new(ScString::default())),
-            TypeVariant::ScSymbol => Self::ScSymbol(Box::new(ScSymbol::default())),
-            TypeVariant::ScNonceKey => Self::ScNonceKey(Box::new(ScNonceKey::default())),
-            TypeVariant::ScContractInstance => {
-                Self::ScContractInstance(Box::new(ScContractInstance::default()))
-            }
-            TypeVariant::ScVal => Self::ScVal(Box::new(ScVal::default())),
-            TypeVariant::ScMapEntry => Self::ScMapEntry(Box::new(ScMapEntry::default())),
-            TypeVariant::LedgerCloseMetaBatch => {
-                Self::LedgerCloseMetaBatch(Box::new(LedgerCloseMetaBatch::default()))
-            }
-            TypeVariant::StoredTransactionSet => {
-                Self::StoredTransactionSet(Box::new(StoredTransactionSet::default()))
-            }
+            TypeVariant::ScSpecEventParamV0 => Self::ScSpecEventParamV0(Box::default()),
+            TypeVariant::ScSpecEventDataFormat => Self::ScSpecEventDataFormat(Box::default()),
+            TypeVariant::ScSpecEventV0 => Self::ScSpecEventV0(Box::default()),
+            TypeVariant::ScSpecEntryKind => Self::ScSpecEntryKind(Box::default()),
+            TypeVariant::ScSpecEntry => Self::ScSpecEntry(Box::default()),
+            TypeVariant::ScValType => Self::ScValType(Box::default()),
+            TypeVariant::ScErrorType => Self::ScErrorType(Box::default()),
+            TypeVariant::ScErrorCode => Self::ScErrorCode(Box::default()),
+            TypeVariant::ScError => Self::ScError(Box::default()),
+            TypeVariant::UInt128Parts => Self::UInt128Parts(Box::default()),
+            TypeVariant::Int128Parts => Self::Int128Parts(Box::default()),
+            TypeVariant::UInt256Parts => Self::UInt256Parts(Box::default()),
+            TypeVariant::Int256Parts => Self::Int256Parts(Box::default()),
+            TypeVariant::ContractExecutableType => Self::ContractExecutableType(Box::default()),
+            TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
+            TypeVariant::ScAddressType => Self::ScAddressType(Box::default()),
+            TypeVariant::MuxedEd25519Account => Self::MuxedEd25519Account(Box::default()),
+            TypeVariant::ScAddress => Self::ScAddress(Box::default()),
+            TypeVariant::ScVec => Self::ScVec(Box::default()),
+            TypeVariant::ScMap => Self::ScMap(Box::default()),
+            TypeVariant::ScBytes => Self::ScBytes(Box::default()),
+            TypeVariant::ScString => Self::ScString(Box::default()),
+            TypeVariant::ScSymbol => Self::ScSymbol(Box::default()),
+            TypeVariant::ScNonceKey => Self::ScNonceKey(Box::default()),
+            TypeVariant::ScContractInstance => Self::ScContractInstance(Box::default()),
+            TypeVariant::ScVal => Self::ScVal(Box::default()),
+            TypeVariant::ScMapEntry => Self::ScMapEntry(Box::default()),
+            TypeVariant::LedgerCloseMetaBatch => Self::LedgerCloseMetaBatch(Box::default()),
+            TypeVariant::StoredTransactionSet => Self::StoredTransactionSet(Box::default()),
             TypeVariant::StoredDebugTransactionSet => {
-                Self::StoredDebugTransactionSet(Box::new(StoredDebugTransactionSet::default()))
+                Self::StoredDebugTransactionSet(Box::default())
             }
-            TypeVariant::PersistedScpStateV0 => {
-                Self::PersistedScpStateV0(Box::new(PersistedScpStateV0::default()))
-            }
-            TypeVariant::PersistedScpStateV1 => {
-                Self::PersistedScpStateV1(Box::new(PersistedScpStateV1::default()))
-            }
-            TypeVariant::PersistedScpState => {
-                Self::PersistedScpState(Box::new(PersistedScpState::default()))
-            }
-            TypeVariant::Thresholds => Self::Thresholds(Box::new(Thresholds::default())),
-            TypeVariant::String32 => Self::String32(Box::new(String32::default())),
-            TypeVariant::String64 => Self::String64(Box::new(String64::default())),
-            TypeVariant::SequenceNumber => {
-                Self::SequenceNumber(Box::new(SequenceNumber::default()))
-            }
-            TypeVariant::DataValue => Self::DataValue(Box::new(DataValue::default())),
-            TypeVariant::AssetCode4 => Self::AssetCode4(Box::new(AssetCode4::default())),
-            TypeVariant::AssetCode12 => Self::AssetCode12(Box::new(AssetCode12::default())),
-            TypeVariant::AssetType => Self::AssetType(Box::new(AssetType::default())),
-            TypeVariant::AssetCode => Self::AssetCode(Box::new(AssetCode::default())),
-            TypeVariant::AlphaNum4 => Self::AlphaNum4(Box::new(AlphaNum4::default())),
-            TypeVariant::AlphaNum12 => Self::AlphaNum12(Box::new(AlphaNum12::default())),
-            TypeVariant::Asset => Self::Asset(Box::new(Asset::default())),
-            TypeVariant::Price => Self::Price(Box::new(Price::default())),
-            TypeVariant::Liabilities => Self::Liabilities(Box::new(Liabilities::default())),
-            TypeVariant::ThresholdIndexes => {
-                Self::ThresholdIndexes(Box::new(ThresholdIndexes::default()))
-            }
-            TypeVariant::LedgerEntryType => {
-                Self::LedgerEntryType(Box::new(LedgerEntryType::default()))
-            }
-            TypeVariant::Signer => Self::Signer(Box::new(Signer::default())),
-            TypeVariant::AccountFlags => Self::AccountFlags(Box::new(AccountFlags::default())),
-            TypeVariant::SponsorshipDescriptor => {
-                Self::SponsorshipDescriptor(Box::new(SponsorshipDescriptor::default()))
-            }
-            TypeVariant::AccountEntryExtensionV3 => {
-                Self::AccountEntryExtensionV3(Box::new(AccountEntryExtensionV3::default()))
-            }
-            TypeVariant::AccountEntryExtensionV2 => {
-                Self::AccountEntryExtensionV2(Box::new(AccountEntryExtensionV2::default()))
-            }
+            TypeVariant::PersistedScpStateV0 => Self::PersistedScpStateV0(Box::default()),
+            TypeVariant::PersistedScpStateV1 => Self::PersistedScpStateV1(Box::default()),
+            TypeVariant::PersistedScpState => Self::PersistedScpState(Box::default()),
+            TypeVariant::Thresholds => Self::Thresholds(Box::default()),
+            TypeVariant::String32 => Self::String32(Box::default()),
+            TypeVariant::String64 => Self::String64(Box::default()),
+            TypeVariant::SequenceNumber => Self::SequenceNumber(Box::default()),
+            TypeVariant::DataValue => Self::DataValue(Box::default()),
+            TypeVariant::AssetCode4 => Self::AssetCode4(Box::default()),
+            TypeVariant::AssetCode12 => Self::AssetCode12(Box::default()),
+            TypeVariant::AssetType => Self::AssetType(Box::default()),
+            TypeVariant::AssetCode => Self::AssetCode(Box::default()),
+            TypeVariant::AlphaNum4 => Self::AlphaNum4(Box::default()),
+            TypeVariant::AlphaNum12 => Self::AlphaNum12(Box::default()),
+            TypeVariant::Asset => Self::Asset(Box::default()),
+            TypeVariant::Price => Self::Price(Box::default()),
+            TypeVariant::Liabilities => Self::Liabilities(Box::default()),
+            TypeVariant::ThresholdIndexes => Self::ThresholdIndexes(Box::default()),
+            TypeVariant::LedgerEntryType => Self::LedgerEntryType(Box::default()),
+            TypeVariant::Signer => Self::Signer(Box::default()),
+            TypeVariant::AccountFlags => Self::AccountFlags(Box::default()),
+            TypeVariant::SponsorshipDescriptor => Self::SponsorshipDescriptor(Box::default()),
+            TypeVariant::AccountEntryExtensionV3 => Self::AccountEntryExtensionV3(Box::default()),
+            TypeVariant::AccountEntryExtensionV2 => Self::AccountEntryExtensionV2(Box::default()),
             TypeVariant::AccountEntryExtensionV2Ext => {
-                Self::AccountEntryExtensionV2Ext(Box::new(AccountEntryExtensionV2Ext::default()))
+                Self::AccountEntryExtensionV2Ext(Box::default())
             }
-            TypeVariant::AccountEntryExtensionV1 => {
-                Self::AccountEntryExtensionV1(Box::new(AccountEntryExtensionV1::default()))
-            }
+            TypeVariant::AccountEntryExtensionV1 => Self::AccountEntryExtensionV1(Box::default()),
             TypeVariant::AccountEntryExtensionV1Ext => {
-                Self::AccountEntryExtensionV1Ext(Box::new(AccountEntryExtensionV1Ext::default()))
+                Self::AccountEntryExtensionV1Ext(Box::default())
             }
-            TypeVariant::AccountEntry => Self::AccountEntry(Box::new(AccountEntry::default())),
-            TypeVariant::AccountEntryExt => {
-                Self::AccountEntryExt(Box::new(AccountEntryExt::default()))
-            }
-            TypeVariant::TrustLineFlags => {
-                Self::TrustLineFlags(Box::new(TrustLineFlags::default()))
-            }
-            TypeVariant::LiquidityPoolType => {
-                Self::LiquidityPoolType(Box::new(LiquidityPoolType::default()))
-            }
-            TypeVariant::TrustLineAsset => {
-                Self::TrustLineAsset(Box::new(TrustLineAsset::default()))
-            }
+            TypeVariant::AccountEntry => Self::AccountEntry(Box::default()),
+            TypeVariant::AccountEntryExt => Self::AccountEntryExt(Box::default()),
+            TypeVariant::TrustLineFlags => Self::TrustLineFlags(Box::default()),
+            TypeVariant::LiquidityPoolType => Self::LiquidityPoolType(Box::default()),
+            TypeVariant::TrustLineAsset => Self::TrustLineAsset(Box::default()),
             TypeVariant::TrustLineEntryExtensionV2 => {
-                Self::TrustLineEntryExtensionV2(Box::new(TrustLineEntryExtensionV2::default()))
+                Self::TrustLineEntryExtensionV2(Box::default())
             }
-            TypeVariant::TrustLineEntryExtensionV2Ext => Self::TrustLineEntryExtensionV2Ext(
-                Box::new(TrustLineEntryExtensionV2Ext::default()),
-            ),
-            TypeVariant::TrustLineEntry => {
-                Self::TrustLineEntry(Box::new(TrustLineEntry::default()))
+            TypeVariant::TrustLineEntryExtensionV2Ext => {
+                Self::TrustLineEntryExtensionV2Ext(Box::default())
             }
-            TypeVariant::TrustLineEntryExt => {
-                Self::TrustLineEntryExt(Box::new(TrustLineEntryExt::default()))
-            }
-            TypeVariant::TrustLineEntryV1 => {
-                Self::TrustLineEntryV1(Box::new(TrustLineEntryV1::default()))
-            }
-            TypeVariant::TrustLineEntryV1Ext => {
-                Self::TrustLineEntryV1Ext(Box::new(TrustLineEntryV1Ext::default()))
-            }
-            TypeVariant::OfferEntryFlags => {
-                Self::OfferEntryFlags(Box::new(OfferEntryFlags::default()))
-            }
-            TypeVariant::OfferEntry => Self::OfferEntry(Box::new(OfferEntry::default())),
-            TypeVariant::OfferEntryExt => Self::OfferEntryExt(Box::new(OfferEntryExt::default())),
-            TypeVariant::DataEntry => Self::DataEntry(Box::new(DataEntry::default())),
-            TypeVariant::DataEntryExt => Self::DataEntryExt(Box::new(DataEntryExt::default())),
-            TypeVariant::ClaimPredicateType => {
-                Self::ClaimPredicateType(Box::new(ClaimPredicateType::default()))
-            }
-            TypeVariant::ClaimPredicate => {
-                Self::ClaimPredicate(Box::new(ClaimPredicate::default()))
-            }
-            TypeVariant::ClaimantType => Self::ClaimantType(Box::new(ClaimantType::default())),
-            TypeVariant::Claimant => Self::Claimant(Box::new(Claimant::default())),
-            TypeVariant::ClaimantV0 => Self::ClaimantV0(Box::new(ClaimantV0::default())),
-            TypeVariant::ClaimableBalanceFlags => {
-                Self::ClaimableBalanceFlags(Box::new(ClaimableBalanceFlags::default()))
-            }
+            TypeVariant::TrustLineEntry => Self::TrustLineEntry(Box::default()),
+            TypeVariant::TrustLineEntryExt => Self::TrustLineEntryExt(Box::default()),
+            TypeVariant::TrustLineEntryV1 => Self::TrustLineEntryV1(Box::default()),
+            TypeVariant::TrustLineEntryV1Ext => Self::TrustLineEntryV1Ext(Box::default()),
+            TypeVariant::OfferEntryFlags => Self::OfferEntryFlags(Box::default()),
+            TypeVariant::OfferEntry => Self::OfferEntry(Box::default()),
+            TypeVariant::OfferEntryExt => Self::OfferEntryExt(Box::default()),
+            TypeVariant::DataEntry => Self::DataEntry(Box::default()),
+            TypeVariant::DataEntryExt => Self::DataEntryExt(Box::default()),
+            TypeVariant::ClaimPredicateType => Self::ClaimPredicateType(Box::default()),
+            TypeVariant::ClaimPredicate => Self::ClaimPredicate(Box::default()),
+            TypeVariant::ClaimantType => Self::ClaimantType(Box::default()),
+            TypeVariant::Claimant => Self::Claimant(Box::default()),
+            TypeVariant::ClaimantV0 => Self::ClaimantV0(Box::default()),
+            TypeVariant::ClaimableBalanceFlags => Self::ClaimableBalanceFlags(Box::default()),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => {
-                Self::ClaimableBalanceEntryExtensionV1(Box::new(
-                    ClaimableBalanceEntryExtensionV1::default(),
-                ))
+                Self::ClaimableBalanceEntryExtensionV1(Box::default())
             }
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
-                Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(
-                    ClaimableBalanceEntryExtensionV1Ext::default(),
-                ))
+                Self::ClaimableBalanceEntryExtensionV1Ext(Box::default())
             }
-            TypeVariant::ClaimableBalanceEntry => {
-                Self::ClaimableBalanceEntry(Box::new(ClaimableBalanceEntry::default()))
-            }
-            TypeVariant::ClaimableBalanceEntryExt => {
-                Self::ClaimableBalanceEntryExt(Box::new(ClaimableBalanceEntryExt::default()))
-            }
+            TypeVariant::ClaimableBalanceEntry => Self::ClaimableBalanceEntry(Box::default()),
+            TypeVariant::ClaimableBalanceEntryExt => Self::ClaimableBalanceEntryExt(Box::default()),
             TypeVariant::LiquidityPoolConstantProductParameters => {
-                Self::LiquidityPoolConstantProductParameters(Box::new(
-                    LiquidityPoolConstantProductParameters::default(),
-                ))
+                Self::LiquidityPoolConstantProductParameters(Box::default())
             }
-            TypeVariant::LiquidityPoolEntry => {
-                Self::LiquidityPoolEntry(Box::new(LiquidityPoolEntry::default()))
-            }
-            TypeVariant::LiquidityPoolEntryBody => {
-                Self::LiquidityPoolEntryBody(Box::new(LiquidityPoolEntryBody::default()))
-            }
+            TypeVariant::LiquidityPoolEntry => Self::LiquidityPoolEntry(Box::default()),
+            TypeVariant::LiquidityPoolEntryBody => Self::LiquidityPoolEntryBody(Box::default()),
             TypeVariant::LiquidityPoolEntryConstantProduct => {
-                Self::LiquidityPoolEntryConstantProduct(Box::new(
-                    LiquidityPoolEntryConstantProduct::default(),
-                ))
+                Self::LiquidityPoolEntryConstantProduct(Box::default())
             }
-            TypeVariant::ContractDataDurability => {
-                Self::ContractDataDurability(Box::new(ContractDataDurability::default()))
-            }
-            TypeVariant::ContractDataEntry => {
-                Self::ContractDataEntry(Box::new(ContractDataEntry::default()))
-            }
-            TypeVariant::ContractCodeCostInputs => {
-                Self::ContractCodeCostInputs(Box::new(ContractCodeCostInputs::default()))
-            }
-            TypeVariant::ContractCodeEntry => {
-                Self::ContractCodeEntry(Box::new(ContractCodeEntry::default()))
-            }
-            TypeVariant::ContractCodeEntryExt => {
-                Self::ContractCodeEntryExt(Box::new(ContractCodeEntryExt::default()))
-            }
-            TypeVariant::ContractCodeEntryV1 => {
-                Self::ContractCodeEntryV1(Box::new(ContractCodeEntryV1::default()))
-            }
-            TypeVariant::TtlEntry => Self::TtlEntry(Box::new(TtlEntry::default())),
-            TypeVariant::LedgerEntryExtensionV1 => {
-                Self::LedgerEntryExtensionV1(Box::new(LedgerEntryExtensionV1::default()))
-            }
+            TypeVariant::ContractDataDurability => Self::ContractDataDurability(Box::default()),
+            TypeVariant::ContractDataEntry => Self::ContractDataEntry(Box::default()),
+            TypeVariant::ContractCodeCostInputs => Self::ContractCodeCostInputs(Box::default()),
+            TypeVariant::ContractCodeEntry => Self::ContractCodeEntry(Box::default()),
+            TypeVariant::ContractCodeEntryExt => Self::ContractCodeEntryExt(Box::default()),
+            TypeVariant::ContractCodeEntryV1 => Self::ContractCodeEntryV1(Box::default()),
+            TypeVariant::TtlEntry => Self::TtlEntry(Box::default()),
+            TypeVariant::LedgerEntryExtensionV1 => Self::LedgerEntryExtensionV1(Box::default()),
             TypeVariant::LedgerEntryExtensionV1Ext => {
-                Self::LedgerEntryExtensionV1Ext(Box::new(LedgerEntryExtensionV1Ext::default()))
+                Self::LedgerEntryExtensionV1Ext(Box::default())
             }
-            TypeVariant::LedgerEntry => Self::LedgerEntry(Box::new(LedgerEntry::default())),
-            TypeVariant::LedgerEntryData => {
-                Self::LedgerEntryData(Box::new(LedgerEntryData::default()))
-            }
-            TypeVariant::LedgerEntryExt => {
-                Self::LedgerEntryExt(Box::new(LedgerEntryExt::default()))
-            }
-            TypeVariant::LedgerKey => Self::LedgerKey(Box::new(LedgerKey::default())),
-            TypeVariant::LedgerKeyAccount => {
-                Self::LedgerKeyAccount(Box::new(LedgerKeyAccount::default()))
-            }
-            TypeVariant::LedgerKeyTrustLine => {
-                Self::LedgerKeyTrustLine(Box::new(LedgerKeyTrustLine::default()))
-            }
-            TypeVariant::LedgerKeyOffer => {
-                Self::LedgerKeyOffer(Box::new(LedgerKeyOffer::default()))
-            }
-            TypeVariant::LedgerKeyData => Self::LedgerKeyData(Box::new(LedgerKeyData::default())),
+            TypeVariant::LedgerEntry => Self::LedgerEntry(Box::default()),
+            TypeVariant::LedgerEntryData => Self::LedgerEntryData(Box::default()),
+            TypeVariant::LedgerEntryExt => Self::LedgerEntryExt(Box::default()),
+            TypeVariant::LedgerKey => Self::LedgerKey(Box::default()),
+            TypeVariant::LedgerKeyAccount => Self::LedgerKeyAccount(Box::default()),
+            TypeVariant::LedgerKeyTrustLine => Self::LedgerKeyTrustLine(Box::default()),
+            TypeVariant::LedgerKeyOffer => Self::LedgerKeyOffer(Box::default()),
+            TypeVariant::LedgerKeyData => Self::LedgerKeyData(Box::default()),
             TypeVariant::LedgerKeyClaimableBalance => {
-                Self::LedgerKeyClaimableBalance(Box::new(LedgerKeyClaimableBalance::default()))
+                Self::LedgerKeyClaimableBalance(Box::default())
             }
-            TypeVariant::LedgerKeyLiquidityPool => {
-                Self::LedgerKeyLiquidityPool(Box::new(LedgerKeyLiquidityPool::default()))
-            }
-            TypeVariant::LedgerKeyContractData => {
-                Self::LedgerKeyContractData(Box::new(LedgerKeyContractData::default()))
-            }
-            TypeVariant::LedgerKeyContractCode => {
-                Self::LedgerKeyContractCode(Box::new(LedgerKeyContractCode::default()))
-            }
-            TypeVariant::LedgerKeyConfigSetting => {
-                Self::LedgerKeyConfigSetting(Box::new(LedgerKeyConfigSetting::default()))
-            }
-            TypeVariant::LedgerKeyTtl => Self::LedgerKeyTtl(Box::new(LedgerKeyTtl::default())),
-            TypeVariant::EnvelopeType => Self::EnvelopeType(Box::new(EnvelopeType::default())),
-            TypeVariant::BucketListType => {
-                Self::BucketListType(Box::new(BucketListType::default()))
-            }
-            TypeVariant::BucketEntryType => {
-                Self::BucketEntryType(Box::new(BucketEntryType::default()))
-            }
+            TypeVariant::LedgerKeyLiquidityPool => Self::LedgerKeyLiquidityPool(Box::default()),
+            TypeVariant::LedgerKeyContractData => Self::LedgerKeyContractData(Box::default()),
+            TypeVariant::LedgerKeyContractCode => Self::LedgerKeyContractCode(Box::default()),
+            TypeVariant::LedgerKeyConfigSetting => Self::LedgerKeyConfigSetting(Box::default()),
+            TypeVariant::LedgerKeyTtl => Self::LedgerKeyTtl(Box::default()),
+            TypeVariant::EnvelopeType => Self::EnvelopeType(Box::default()),
+            TypeVariant::BucketListType => Self::BucketListType(Box::default()),
+            TypeVariant::BucketEntryType => Self::BucketEntryType(Box::default()),
             TypeVariant::HotArchiveBucketEntryType => {
-                Self::HotArchiveBucketEntryType(Box::new(HotArchiveBucketEntryType::default()))
+                Self::HotArchiveBucketEntryType(Box::default())
             }
-            TypeVariant::BucketMetadata => {
-                Self::BucketMetadata(Box::new(BucketMetadata::default()))
-            }
-            TypeVariant::BucketMetadataExt => {
-                Self::BucketMetadataExt(Box::new(BucketMetadataExt::default()))
-            }
-            TypeVariant::BucketEntry => Self::BucketEntry(Box::new(BucketEntry::default())),
-            TypeVariant::HotArchiveBucketEntry => {
-                Self::HotArchiveBucketEntry(Box::new(HotArchiveBucketEntry::default()))
-            }
-            TypeVariant::UpgradeType => Self::UpgradeType(Box::new(UpgradeType::default())),
-            TypeVariant::StellarValueType => {
-                Self::StellarValueType(Box::new(StellarValueType::default()))
-            }
+            TypeVariant::BucketMetadata => Self::BucketMetadata(Box::default()),
+            TypeVariant::BucketMetadataExt => Self::BucketMetadataExt(Box::default()),
+            TypeVariant::BucketEntry => Self::BucketEntry(Box::default()),
+            TypeVariant::HotArchiveBucketEntry => Self::HotArchiveBucketEntry(Box::default()),
+            TypeVariant::UpgradeType => Self::UpgradeType(Box::default()),
+            TypeVariant::StellarValueType => Self::StellarValueType(Box::default()),
             TypeVariant::LedgerCloseValueSignature => {
-                Self::LedgerCloseValueSignature(Box::new(LedgerCloseValueSignature::default()))
+                Self::LedgerCloseValueSignature(Box::default())
             }
-            TypeVariant::StellarValue => Self::StellarValue(Box::new(StellarValue::default())),
-            TypeVariant::StellarValueExt => {
-                Self::StellarValueExt(Box::new(StellarValueExt::default()))
-            }
-            TypeVariant::LedgerHeaderFlags => {
-                Self::LedgerHeaderFlags(Box::new(LedgerHeaderFlags::default()))
-            }
-            TypeVariant::LedgerHeaderExtensionV1 => {
-                Self::LedgerHeaderExtensionV1(Box::new(LedgerHeaderExtensionV1::default()))
-            }
+            TypeVariant::StellarValue => Self::StellarValue(Box::default()),
+            TypeVariant::StellarValueExt => Self::StellarValueExt(Box::default()),
+            TypeVariant::LedgerHeaderFlags => Self::LedgerHeaderFlags(Box::default()),
+            TypeVariant::LedgerHeaderExtensionV1 => Self::LedgerHeaderExtensionV1(Box::default()),
             TypeVariant::LedgerHeaderExtensionV1Ext => {
-                Self::LedgerHeaderExtensionV1Ext(Box::new(LedgerHeaderExtensionV1Ext::default()))
+                Self::LedgerHeaderExtensionV1Ext(Box::default())
             }
-            TypeVariant::LedgerHeader => Self::LedgerHeader(Box::new(LedgerHeader::default())),
-            TypeVariant::LedgerHeaderExt => {
-                Self::LedgerHeaderExt(Box::new(LedgerHeaderExt::default()))
-            }
-            TypeVariant::LedgerUpgradeType => {
-                Self::LedgerUpgradeType(Box::new(LedgerUpgradeType::default()))
-            }
-            TypeVariant::ConfigUpgradeSetKey => {
-                Self::ConfigUpgradeSetKey(Box::new(ConfigUpgradeSetKey::default()))
-            }
-            TypeVariant::LedgerUpgrade => Self::LedgerUpgrade(Box::new(LedgerUpgrade::default())),
-            TypeVariant::ConfigUpgradeSet => {
-                Self::ConfigUpgradeSet(Box::new(ConfigUpgradeSet::default()))
-            }
-            TypeVariant::TxSetComponentType => {
-                Self::TxSetComponentType(Box::new(TxSetComponentType::default()))
-            }
-            TypeVariant::DependentTxCluster => {
-                Self::DependentTxCluster(Box::new(DependentTxCluster::default()))
-            }
-            TypeVariant::ParallelTxExecutionStage => {
-                Self::ParallelTxExecutionStage(Box::new(ParallelTxExecutionStage::default()))
-            }
-            TypeVariant::ParallelTxsComponent => {
-                Self::ParallelTxsComponent(Box::new(ParallelTxsComponent::default()))
-            }
-            TypeVariant::TxSetComponent => {
-                Self::TxSetComponent(Box::new(TxSetComponent::default()))
-            }
+            TypeVariant::LedgerHeader => Self::LedgerHeader(Box::default()),
+            TypeVariant::LedgerHeaderExt => Self::LedgerHeaderExt(Box::default()),
+            TypeVariant::LedgerUpgradeType => Self::LedgerUpgradeType(Box::default()),
+            TypeVariant::ConfigUpgradeSetKey => Self::ConfigUpgradeSetKey(Box::default()),
+            TypeVariant::LedgerUpgrade => Self::LedgerUpgrade(Box::default()),
+            TypeVariant::ConfigUpgradeSet => Self::ConfigUpgradeSet(Box::default()),
+            TypeVariant::TxSetComponentType => Self::TxSetComponentType(Box::default()),
+            TypeVariant::DependentTxCluster => Self::DependentTxCluster(Box::default()),
+            TypeVariant::ParallelTxExecutionStage => Self::ParallelTxExecutionStage(Box::default()),
+            TypeVariant::ParallelTxsComponent => Self::ParallelTxsComponent(Box::default()),
+            TypeVariant::TxSetComponent => Self::TxSetComponent(Box::default()),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => {
-                Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(
-                    TxSetComponentTxsMaybeDiscountedFee::default(),
-                ))
+                Self::TxSetComponentTxsMaybeDiscountedFee(Box::default())
             }
-            TypeVariant::TransactionPhase => {
-                Self::TransactionPhase(Box::new(TransactionPhase::default()))
-            }
-            TypeVariant::TransactionSet => {
-                Self::TransactionSet(Box::new(TransactionSet::default()))
-            }
-            TypeVariant::TransactionSetV1 => {
-                Self::TransactionSetV1(Box::new(TransactionSetV1::default()))
-            }
+            TypeVariant::TransactionPhase => Self::TransactionPhase(Box::default()),
+            TypeVariant::TransactionSet => Self::TransactionSet(Box::default()),
+            TypeVariant::TransactionSetV1 => Self::TransactionSetV1(Box::default()),
             TypeVariant::GeneralizedTransactionSet => {
-                Self::GeneralizedTransactionSet(Box::new(GeneralizedTransactionSet::default()))
+                Self::GeneralizedTransactionSet(Box::default())
             }
-            TypeVariant::TransactionResultPair => {
-                Self::TransactionResultPair(Box::new(TransactionResultPair::default()))
-            }
-            TypeVariant::TransactionResultSet => {
-                Self::TransactionResultSet(Box::new(TransactionResultSet::default()))
-            }
-            TypeVariant::TransactionHistoryEntry => {
-                Self::TransactionHistoryEntry(Box::new(TransactionHistoryEntry::default()))
-            }
+            TypeVariant::TransactionResultPair => Self::TransactionResultPair(Box::default()),
+            TypeVariant::TransactionResultSet => Self::TransactionResultSet(Box::default()),
+            TypeVariant::TransactionHistoryEntry => Self::TransactionHistoryEntry(Box::default()),
             TypeVariant::TransactionHistoryEntryExt => {
-                Self::TransactionHistoryEntryExt(Box::new(TransactionHistoryEntryExt::default()))
+                Self::TransactionHistoryEntryExt(Box::default())
             }
-            TypeVariant::TransactionHistoryResultEntry => Self::TransactionHistoryResultEntry(
-                Box::new(TransactionHistoryResultEntry::default()),
-            ),
+            TypeVariant::TransactionHistoryResultEntry => {
+                Self::TransactionHistoryResultEntry(Box::default())
+            }
             TypeVariant::TransactionHistoryResultEntryExt => {
-                Self::TransactionHistoryResultEntryExt(Box::new(
-                    TransactionHistoryResultEntryExt::default(),
-                ))
+                Self::TransactionHistoryResultEntryExt(Box::default())
             }
-            TypeVariant::LedgerHeaderHistoryEntry => {
-                Self::LedgerHeaderHistoryEntry(Box::new(LedgerHeaderHistoryEntry::default()))
-            }
+            TypeVariant::LedgerHeaderHistoryEntry => Self::LedgerHeaderHistoryEntry(Box::default()),
             TypeVariant::LedgerHeaderHistoryEntryExt => {
-                Self::LedgerHeaderHistoryEntryExt(Box::new(LedgerHeaderHistoryEntryExt::default()))
+                Self::LedgerHeaderHistoryEntryExt(Box::default())
             }
-            TypeVariant::LedgerScpMessages => {
-                Self::LedgerScpMessages(Box::new(LedgerScpMessages::default()))
-            }
-            TypeVariant::ScpHistoryEntryV0 => {
-                Self::ScpHistoryEntryV0(Box::new(ScpHistoryEntryV0::default()))
-            }
-            TypeVariant::ScpHistoryEntry => {
-                Self::ScpHistoryEntry(Box::new(ScpHistoryEntry::default()))
-            }
-            TypeVariant::LedgerEntryChangeType => {
-                Self::LedgerEntryChangeType(Box::new(LedgerEntryChangeType::default()))
-            }
-            TypeVariant::LedgerEntryChange => {
-                Self::LedgerEntryChange(Box::new(LedgerEntryChange::default()))
-            }
-            TypeVariant::LedgerEntryChanges => {
-                Self::LedgerEntryChanges(Box::new(LedgerEntryChanges::default()))
-            }
-            TypeVariant::OperationMeta => Self::OperationMeta(Box::new(OperationMeta::default())),
-            TypeVariant::TransactionMetaV1 => {
-                Self::TransactionMetaV1(Box::new(TransactionMetaV1::default()))
-            }
-            TypeVariant::TransactionMetaV2 => {
-                Self::TransactionMetaV2(Box::new(TransactionMetaV2::default()))
-            }
-            TypeVariant::ContractEventType => {
-                Self::ContractEventType(Box::new(ContractEventType::default()))
-            }
-            TypeVariant::ContractEvent => Self::ContractEvent(Box::new(ContractEvent::default())),
-            TypeVariant::ContractEventBody => {
-                Self::ContractEventBody(Box::new(ContractEventBody::default()))
-            }
-            TypeVariant::ContractEventV0 => {
-                Self::ContractEventV0(Box::new(ContractEventV0::default()))
-            }
-            TypeVariant::DiagnosticEvent => {
-                Self::DiagnosticEvent(Box::new(DiagnosticEvent::default()))
-            }
+            TypeVariant::LedgerScpMessages => Self::LedgerScpMessages(Box::default()),
+            TypeVariant::ScpHistoryEntryV0 => Self::ScpHistoryEntryV0(Box::default()),
+            TypeVariant::ScpHistoryEntry => Self::ScpHistoryEntry(Box::default()),
+            TypeVariant::LedgerEntryChangeType => Self::LedgerEntryChangeType(Box::default()),
+            TypeVariant::LedgerEntryChange => Self::LedgerEntryChange(Box::default()),
+            TypeVariant::LedgerEntryChanges => Self::LedgerEntryChanges(Box::default()),
+            TypeVariant::OperationMeta => Self::OperationMeta(Box::default()),
+            TypeVariant::TransactionMetaV1 => Self::TransactionMetaV1(Box::default()),
+            TypeVariant::TransactionMetaV2 => Self::TransactionMetaV2(Box::default()),
+            TypeVariant::ContractEventType => Self::ContractEventType(Box::default()),
+            TypeVariant::ContractEvent => Self::ContractEvent(Box::default()),
+            TypeVariant::ContractEventBody => Self::ContractEventBody(Box::default()),
+            TypeVariant::ContractEventV0 => Self::ContractEventV0(Box::default()),
+            TypeVariant::DiagnosticEvent => Self::DiagnosticEvent(Box::default()),
             TypeVariant::SorobanTransactionMetaExtV1 => {
-                Self::SorobanTransactionMetaExtV1(Box::new(SorobanTransactionMetaExtV1::default()))
+                Self::SorobanTransactionMetaExtV1(Box::default())
             }
             TypeVariant::SorobanTransactionMetaExt => {
-                Self::SorobanTransactionMetaExt(Box::new(SorobanTransactionMetaExt::default()))
+                Self::SorobanTransactionMetaExt(Box::default())
             }
-            TypeVariant::SorobanTransactionMeta => {
-                Self::SorobanTransactionMeta(Box::new(SorobanTransactionMeta::default()))
-            }
-            TypeVariant::TransactionMetaV3 => {
-                Self::TransactionMetaV3(Box::new(TransactionMetaV3::default()))
-            }
-            TypeVariant::OperationMetaV2 => {
-                Self::OperationMetaV2(Box::new(OperationMetaV2::default()))
-            }
-            TypeVariant::SorobanTransactionMetaV2 => {
-                Self::SorobanTransactionMetaV2(Box::new(SorobanTransactionMetaV2::default()))
-            }
-            TypeVariant::TransactionEventStage => {
-                Self::TransactionEventStage(Box::new(TransactionEventStage::default()))
-            }
-            TypeVariant::TransactionEvent => {
-                Self::TransactionEvent(Box::new(TransactionEvent::default()))
-            }
-            TypeVariant::TransactionMetaV4 => {
-                Self::TransactionMetaV4(Box::new(TransactionMetaV4::default()))
-            }
+            TypeVariant::SorobanTransactionMeta => Self::SorobanTransactionMeta(Box::default()),
+            TypeVariant::TransactionMetaV3 => Self::TransactionMetaV3(Box::default()),
+            TypeVariant::OperationMetaV2 => Self::OperationMetaV2(Box::default()),
+            TypeVariant::SorobanTransactionMetaV2 => Self::SorobanTransactionMetaV2(Box::default()),
+            TypeVariant::TransactionEventStage => Self::TransactionEventStage(Box::default()),
+            TypeVariant::TransactionEvent => Self::TransactionEvent(Box::default()),
+            TypeVariant::TransactionMetaV4 => Self::TransactionMetaV4(Box::default()),
             TypeVariant::InvokeHostFunctionSuccessPreImage => {
-                Self::InvokeHostFunctionSuccessPreImage(Box::new(
-                    InvokeHostFunctionSuccessPreImage::default(),
-                ))
+                Self::InvokeHostFunctionSuccessPreImage(Box::default())
             }
-            TypeVariant::TransactionMeta => {
-                Self::TransactionMeta(Box::new(TransactionMeta::default()))
-            }
-            TypeVariant::TransactionResultMeta => {
-                Self::TransactionResultMeta(Box::new(TransactionResultMeta::default()))
-            }
-            TypeVariant::TransactionResultMetaV1 => {
-                Self::TransactionResultMetaV1(Box::new(TransactionResultMetaV1::default()))
-            }
-            TypeVariant::UpgradeEntryMeta => {
-                Self::UpgradeEntryMeta(Box::new(UpgradeEntryMeta::default()))
-            }
-            TypeVariant::LedgerCloseMetaV0 => {
-                Self::LedgerCloseMetaV0(Box::new(LedgerCloseMetaV0::default()))
-            }
-            TypeVariant::LedgerCloseMetaExtV1 => {
-                Self::LedgerCloseMetaExtV1(Box::new(LedgerCloseMetaExtV1::default()))
-            }
-            TypeVariant::LedgerCloseMetaExt => {
-                Self::LedgerCloseMetaExt(Box::new(LedgerCloseMetaExt::default()))
-            }
-            TypeVariant::LedgerCloseMetaV1 => {
-                Self::LedgerCloseMetaV1(Box::new(LedgerCloseMetaV1::default()))
-            }
-            TypeVariant::LedgerCloseMetaV2 => {
-                Self::LedgerCloseMetaV2(Box::new(LedgerCloseMetaV2::default()))
-            }
-            TypeVariant::LedgerCloseMeta => {
-                Self::LedgerCloseMeta(Box::new(LedgerCloseMeta::default()))
-            }
-            TypeVariant::ErrorCode => Self::ErrorCode(Box::new(ErrorCode::default())),
-            TypeVariant::SError => Self::SError(Box::new(SError::default())),
-            TypeVariant::SendMore => Self::SendMore(Box::new(SendMore::default())),
-            TypeVariant::SendMoreExtended => {
-                Self::SendMoreExtended(Box::new(SendMoreExtended::default()))
-            }
-            TypeVariant::AuthCert => Self::AuthCert(Box::new(AuthCert::default())),
-            TypeVariant::Hello => Self::Hello(Box::new(Hello::default())),
-            TypeVariant::Auth => Self::Auth(Box::new(Auth::default())),
-            TypeVariant::IpAddrType => Self::IpAddrType(Box::new(IpAddrType::default())),
-            TypeVariant::PeerAddress => Self::PeerAddress(Box::new(PeerAddress::default())),
-            TypeVariant::PeerAddressIp => Self::PeerAddressIp(Box::new(PeerAddressIp::default())),
-            TypeVariant::MessageType => Self::MessageType(Box::new(MessageType::default())),
-            TypeVariant::DontHave => Self::DontHave(Box::new(DontHave::default())),
-            TypeVariant::SurveyMessageCommandType => {
-                Self::SurveyMessageCommandType(Box::new(SurveyMessageCommandType::default()))
-            }
+            TypeVariant::TransactionMeta => Self::TransactionMeta(Box::default()),
+            TypeVariant::TransactionResultMeta => Self::TransactionResultMeta(Box::default()),
+            TypeVariant::TransactionResultMetaV1 => Self::TransactionResultMetaV1(Box::default()),
+            TypeVariant::UpgradeEntryMeta => Self::UpgradeEntryMeta(Box::default()),
+            TypeVariant::LedgerCloseMetaV0 => Self::LedgerCloseMetaV0(Box::default()),
+            TypeVariant::LedgerCloseMetaExtV1 => Self::LedgerCloseMetaExtV1(Box::default()),
+            TypeVariant::LedgerCloseMetaExt => Self::LedgerCloseMetaExt(Box::default()),
+            TypeVariant::LedgerCloseMetaV1 => Self::LedgerCloseMetaV1(Box::default()),
+            TypeVariant::LedgerCloseMetaV2 => Self::LedgerCloseMetaV2(Box::default()),
+            TypeVariant::LedgerCloseMeta => Self::LedgerCloseMeta(Box::default()),
+            TypeVariant::ErrorCode => Self::ErrorCode(Box::default()),
+            TypeVariant::SError => Self::SError(Box::default()),
+            TypeVariant::SendMore => Self::SendMore(Box::default()),
+            TypeVariant::SendMoreExtended => Self::SendMoreExtended(Box::default()),
+            TypeVariant::AuthCert => Self::AuthCert(Box::default()),
+            TypeVariant::Hello => Self::Hello(Box::default()),
+            TypeVariant::Auth => Self::Auth(Box::default()),
+            TypeVariant::IpAddrType => Self::IpAddrType(Box::default()),
+            TypeVariant::PeerAddress => Self::PeerAddress(Box::default()),
+            TypeVariant::PeerAddressIp => Self::PeerAddressIp(Box::default()),
+            TypeVariant::MessageType => Self::MessageType(Box::default()),
+            TypeVariant::DontHave => Self::DontHave(Box::default()),
+            TypeVariant::SurveyMessageCommandType => Self::SurveyMessageCommandType(Box::default()),
             TypeVariant::SurveyMessageResponseType => {
-                Self::SurveyMessageResponseType(Box::new(SurveyMessageResponseType::default()))
+                Self::SurveyMessageResponseType(Box::default())
             }
             TypeVariant::TimeSlicedSurveyStartCollectingMessage => {
-                Self::TimeSlicedSurveyStartCollectingMessage(Box::new(
-                    TimeSlicedSurveyStartCollectingMessage::default(),
-                ))
+                Self::TimeSlicedSurveyStartCollectingMessage(Box::default())
             }
             TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
-                Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(
-                    SignedTimeSlicedSurveyStartCollectingMessage::default(),
-                ))
+                Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::default())
             }
             TypeVariant::TimeSlicedSurveyStopCollectingMessage => {
-                Self::TimeSlicedSurveyStopCollectingMessage(Box::new(
-                    TimeSlicedSurveyStopCollectingMessage::default(),
-                ))
+                Self::TimeSlicedSurveyStopCollectingMessage(Box::default())
             }
             TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => {
-                Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(
-                    SignedTimeSlicedSurveyStopCollectingMessage::default(),
-                ))
+                Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::default())
             }
-            TypeVariant::SurveyRequestMessage => {
-                Self::SurveyRequestMessage(Box::new(SurveyRequestMessage::default()))
+            TypeVariant::SurveyRequestMessage => Self::SurveyRequestMessage(Box::default()),
+            TypeVariant::TimeSlicedSurveyRequestMessage => {
+                Self::TimeSlicedSurveyRequestMessage(Box::default())
             }
-            TypeVariant::TimeSlicedSurveyRequestMessage => Self::TimeSlicedSurveyRequestMessage(
-                Box::new(TimeSlicedSurveyRequestMessage::default()),
-            ),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => {
-                Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
-                    SignedTimeSlicedSurveyRequestMessage::default(),
-                ))
+                Self::SignedTimeSlicedSurveyRequestMessage(Box::default())
             }
-            TypeVariant::EncryptedBody => Self::EncryptedBody(Box::new(EncryptedBody::default())),
-            TypeVariant::SurveyResponseMessage => {
-                Self::SurveyResponseMessage(Box::new(SurveyResponseMessage::default()))
+            TypeVariant::EncryptedBody => Self::EncryptedBody(Box::default()),
+            TypeVariant::SurveyResponseMessage => Self::SurveyResponseMessage(Box::default()),
+            TypeVariant::TimeSlicedSurveyResponseMessage => {
+                Self::TimeSlicedSurveyResponseMessage(Box::default())
             }
-            TypeVariant::TimeSlicedSurveyResponseMessage => Self::TimeSlicedSurveyResponseMessage(
-                Box::new(TimeSlicedSurveyResponseMessage::default()),
-            ),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => {
-                Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
-                    SignedTimeSlicedSurveyResponseMessage::default(),
-                ))
+                Self::SignedTimeSlicedSurveyResponseMessage(Box::default())
             }
-            TypeVariant::PeerStats => Self::PeerStats(Box::new(PeerStats::default())),
-            TypeVariant::TimeSlicedNodeData => {
-                Self::TimeSlicedNodeData(Box::new(TimeSlicedNodeData::default()))
-            }
-            TypeVariant::TimeSlicedPeerData => {
-                Self::TimeSlicedPeerData(Box::new(TimeSlicedPeerData::default()))
-            }
-            TypeVariant::TimeSlicedPeerDataList => {
-                Self::TimeSlicedPeerDataList(Box::new(TimeSlicedPeerDataList::default()))
-            }
-            TypeVariant::TopologyResponseBodyV2 => {
-                Self::TopologyResponseBodyV2(Box::new(TopologyResponseBodyV2::default()))
-            }
-            TypeVariant::SurveyResponseBody => {
-                Self::SurveyResponseBody(Box::new(SurveyResponseBody::default()))
-            }
-            TypeVariant::TxAdvertVector => {
-                Self::TxAdvertVector(Box::new(TxAdvertVector::default()))
-            }
-            TypeVariant::FloodAdvert => Self::FloodAdvert(Box::new(FloodAdvert::default())),
-            TypeVariant::TxDemandVector => {
-                Self::TxDemandVector(Box::new(TxDemandVector::default()))
-            }
-            TypeVariant::FloodDemand => Self::FloodDemand(Box::new(FloodDemand::default())),
-            TypeVariant::StellarMessage => {
-                Self::StellarMessage(Box::new(StellarMessage::default()))
-            }
-            TypeVariant::AuthenticatedMessage => {
-                Self::AuthenticatedMessage(Box::new(AuthenticatedMessage::default()))
-            }
-            TypeVariant::AuthenticatedMessageV0 => {
-                Self::AuthenticatedMessageV0(Box::new(AuthenticatedMessageV0::default()))
-            }
-            TypeVariant::LiquidityPoolParameters => {
-                Self::LiquidityPoolParameters(Box::new(LiquidityPoolParameters::default()))
-            }
-            TypeVariant::MuxedAccount => Self::MuxedAccount(Box::new(MuxedAccount::default())),
-            TypeVariant::MuxedAccountMed25519 => {
-                Self::MuxedAccountMed25519(Box::new(MuxedAccountMed25519::default()))
-            }
-            TypeVariant::DecoratedSignature => {
-                Self::DecoratedSignature(Box::new(DecoratedSignature::default()))
-            }
-            TypeVariant::OperationType => Self::OperationType(Box::new(OperationType::default())),
-            TypeVariant::CreateAccountOp => {
-                Self::CreateAccountOp(Box::new(CreateAccountOp::default()))
-            }
-            TypeVariant::PaymentOp => Self::PaymentOp(Box::new(PaymentOp::default())),
+            TypeVariant::PeerStats => Self::PeerStats(Box::default()),
+            TypeVariant::TimeSlicedNodeData => Self::TimeSlicedNodeData(Box::default()),
+            TypeVariant::TimeSlicedPeerData => Self::TimeSlicedPeerData(Box::default()),
+            TypeVariant::TimeSlicedPeerDataList => Self::TimeSlicedPeerDataList(Box::default()),
+            TypeVariant::TopologyResponseBodyV2 => Self::TopologyResponseBodyV2(Box::default()),
+            TypeVariant::SurveyResponseBody => Self::SurveyResponseBody(Box::default()),
+            TypeVariant::TxAdvertVector => Self::TxAdvertVector(Box::default()),
+            TypeVariant::FloodAdvert => Self::FloodAdvert(Box::default()),
+            TypeVariant::TxDemandVector => Self::TxDemandVector(Box::default()),
+            TypeVariant::FloodDemand => Self::FloodDemand(Box::default()),
+            TypeVariant::StellarMessage => Self::StellarMessage(Box::default()),
+            TypeVariant::AuthenticatedMessage => Self::AuthenticatedMessage(Box::default()),
+            TypeVariant::AuthenticatedMessageV0 => Self::AuthenticatedMessageV0(Box::default()),
+            TypeVariant::LiquidityPoolParameters => Self::LiquidityPoolParameters(Box::default()),
+            TypeVariant::MuxedAccount => Self::MuxedAccount(Box::default()),
+            TypeVariant::MuxedAccountMed25519 => Self::MuxedAccountMed25519(Box::default()),
+            TypeVariant::DecoratedSignature => Self::DecoratedSignature(Box::default()),
+            TypeVariant::OperationType => Self::OperationType(Box::default()),
+            TypeVariant::CreateAccountOp => Self::CreateAccountOp(Box::default()),
+            TypeVariant::PaymentOp => Self::PaymentOp(Box::default()),
             TypeVariant::PathPaymentStrictReceiveOp => {
-                Self::PathPaymentStrictReceiveOp(Box::new(PathPaymentStrictReceiveOp::default()))
+                Self::PathPaymentStrictReceiveOp(Box::default())
             }
-            TypeVariant::PathPaymentStrictSendOp => {
-                Self::PathPaymentStrictSendOp(Box::new(PathPaymentStrictSendOp::default()))
+            TypeVariant::PathPaymentStrictSendOp => Self::PathPaymentStrictSendOp(Box::default()),
+            TypeVariant::ManageSellOfferOp => Self::ManageSellOfferOp(Box::default()),
+            TypeVariant::ManageBuyOfferOp => Self::ManageBuyOfferOp(Box::default()),
+            TypeVariant::CreatePassiveSellOfferOp => Self::CreatePassiveSellOfferOp(Box::default()),
+            TypeVariant::SetOptionsOp => Self::SetOptionsOp(Box::default()),
+            TypeVariant::ChangeTrustAsset => Self::ChangeTrustAsset(Box::default()),
+            TypeVariant::ChangeTrustOp => Self::ChangeTrustOp(Box::default()),
+            TypeVariant::AllowTrustOp => Self::AllowTrustOp(Box::default()),
+            TypeVariant::ManageDataOp => Self::ManageDataOp(Box::default()),
+            TypeVariant::BumpSequenceOp => Self::BumpSequenceOp(Box::default()),
+            TypeVariant::CreateClaimableBalanceOp => Self::CreateClaimableBalanceOp(Box::default()),
+            TypeVariant::ClaimClaimableBalanceOp => Self::ClaimClaimableBalanceOp(Box::default()),
+            TypeVariant::BeginSponsoringFutureReservesOp => {
+                Self::BeginSponsoringFutureReservesOp(Box::default())
             }
-            TypeVariant::ManageSellOfferOp => {
-                Self::ManageSellOfferOp(Box::new(ManageSellOfferOp::default()))
-            }
-            TypeVariant::ManageBuyOfferOp => {
-                Self::ManageBuyOfferOp(Box::new(ManageBuyOfferOp::default()))
-            }
-            TypeVariant::CreatePassiveSellOfferOp => {
-                Self::CreatePassiveSellOfferOp(Box::new(CreatePassiveSellOfferOp::default()))
-            }
-            TypeVariant::SetOptionsOp => Self::SetOptionsOp(Box::new(SetOptionsOp::default())),
-            TypeVariant::ChangeTrustAsset => {
-                Self::ChangeTrustAsset(Box::new(ChangeTrustAsset::default()))
-            }
-            TypeVariant::ChangeTrustOp => Self::ChangeTrustOp(Box::new(ChangeTrustOp::default())),
-            TypeVariant::AllowTrustOp => Self::AllowTrustOp(Box::new(AllowTrustOp::default())),
-            TypeVariant::ManageDataOp => Self::ManageDataOp(Box::new(ManageDataOp::default())),
-            TypeVariant::BumpSequenceOp => {
-                Self::BumpSequenceOp(Box::new(BumpSequenceOp::default()))
-            }
-            TypeVariant::CreateClaimableBalanceOp => {
-                Self::CreateClaimableBalanceOp(Box::new(CreateClaimableBalanceOp::default()))
-            }
-            TypeVariant::ClaimClaimableBalanceOp => {
-                Self::ClaimClaimableBalanceOp(Box::new(ClaimClaimableBalanceOp::default()))
-            }
-            TypeVariant::BeginSponsoringFutureReservesOp => Self::BeginSponsoringFutureReservesOp(
-                Box::new(BeginSponsoringFutureReservesOp::default()),
-            ),
-            TypeVariant::RevokeSponsorshipType => {
-                Self::RevokeSponsorshipType(Box::new(RevokeSponsorshipType::default()))
-            }
-            TypeVariant::RevokeSponsorshipOp => {
-                Self::RevokeSponsorshipOp(Box::new(RevokeSponsorshipOp::default()))
-            }
+            TypeVariant::RevokeSponsorshipType => Self::RevokeSponsorshipType(Box::default()),
+            TypeVariant::RevokeSponsorshipOp => Self::RevokeSponsorshipOp(Box::default()),
             TypeVariant::RevokeSponsorshipOpSigner => {
-                Self::RevokeSponsorshipOpSigner(Box::new(RevokeSponsorshipOpSigner::default()))
+                Self::RevokeSponsorshipOpSigner(Box::default())
             }
-            TypeVariant::ClawbackOp => Self::ClawbackOp(Box::new(ClawbackOp::default())),
+            TypeVariant::ClawbackOp => Self::ClawbackOp(Box::default()),
             TypeVariant::ClawbackClaimableBalanceOp => {
-                Self::ClawbackClaimableBalanceOp(Box::new(ClawbackClaimableBalanceOp::default()))
+                Self::ClawbackClaimableBalanceOp(Box::default())
             }
-            TypeVariant::SetTrustLineFlagsOp => {
-                Self::SetTrustLineFlagsOp(Box::new(SetTrustLineFlagsOp::default()))
+            TypeVariant::SetTrustLineFlagsOp => Self::SetTrustLineFlagsOp(Box::default()),
+            TypeVariant::LiquidityPoolDepositOp => Self::LiquidityPoolDepositOp(Box::default()),
+            TypeVariant::LiquidityPoolWithdrawOp => Self::LiquidityPoolWithdrawOp(Box::default()),
+            TypeVariant::HostFunctionType => Self::HostFunctionType(Box::default()),
+            TypeVariant::ContractIdPreimageType => Self::ContractIdPreimageType(Box::default()),
+            TypeVariant::ContractIdPreimage => Self::ContractIdPreimage(Box::default()),
+            TypeVariant::ContractIdPreimageFromAddress => {
+                Self::ContractIdPreimageFromAddress(Box::default())
             }
-            TypeVariant::LiquidityPoolDepositOp => {
-                Self::LiquidityPoolDepositOp(Box::new(LiquidityPoolDepositOp::default()))
+            TypeVariant::CreateContractArgs => Self::CreateContractArgs(Box::default()),
+            TypeVariant::CreateContractArgsV2 => Self::CreateContractArgsV2(Box::default()),
+            TypeVariant::InvokeContractArgs => Self::InvokeContractArgs(Box::default()),
+            TypeVariant::HostFunction => Self::HostFunction(Box::default()),
+            TypeVariant::SorobanAuthorizedFunctionType => {
+                Self::SorobanAuthorizedFunctionType(Box::default())
             }
-            TypeVariant::LiquidityPoolWithdrawOp => {
-                Self::LiquidityPoolWithdrawOp(Box::new(LiquidityPoolWithdrawOp::default()))
-            }
-            TypeVariant::HostFunctionType => {
-                Self::HostFunctionType(Box::new(HostFunctionType::default()))
-            }
-            TypeVariant::ContractIdPreimageType => {
-                Self::ContractIdPreimageType(Box::new(ContractIdPreimageType::default()))
-            }
-            TypeVariant::ContractIdPreimage => {
-                Self::ContractIdPreimage(Box::new(ContractIdPreimage::default()))
-            }
-            TypeVariant::ContractIdPreimageFromAddress => Self::ContractIdPreimageFromAddress(
-                Box::new(ContractIdPreimageFromAddress::default()),
-            ),
-            TypeVariant::CreateContractArgs => {
-                Self::CreateContractArgs(Box::new(CreateContractArgs::default()))
-            }
-            TypeVariant::CreateContractArgsV2 => {
-                Self::CreateContractArgsV2(Box::new(CreateContractArgsV2::default()))
-            }
-            TypeVariant::InvokeContractArgs => {
-                Self::InvokeContractArgs(Box::new(InvokeContractArgs::default()))
-            }
-            TypeVariant::HostFunction => Self::HostFunction(Box::new(HostFunction::default())),
-            TypeVariant::SorobanAuthorizedFunctionType => Self::SorobanAuthorizedFunctionType(
-                Box::new(SorobanAuthorizedFunctionType::default()),
-            ),
             TypeVariant::SorobanAuthorizedFunction => {
-                Self::SorobanAuthorizedFunction(Box::new(SorobanAuthorizedFunction::default()))
+                Self::SorobanAuthorizedFunction(Box::default())
             }
             TypeVariant::SorobanAuthorizedInvocation => {
-                Self::SorobanAuthorizedInvocation(Box::new(SorobanAuthorizedInvocation::default()))
+                Self::SorobanAuthorizedInvocation(Box::default())
             }
             TypeVariant::SorobanAddressCredentials => {
-                Self::SorobanAddressCredentials(Box::new(SorobanAddressCredentials::default()))
+                Self::SorobanAddressCredentials(Box::default())
             }
-            TypeVariant::SorobanCredentialsType => {
-                Self::SorobanCredentialsType(Box::new(SorobanCredentialsType::default()))
-            }
-            TypeVariant::SorobanCredentials => {
-                Self::SorobanCredentials(Box::new(SorobanCredentials::default()))
-            }
+            TypeVariant::SorobanCredentialsType => Self::SorobanCredentialsType(Box::default()),
+            TypeVariant::SorobanCredentials => Self::SorobanCredentials(Box::default()),
             TypeVariant::SorobanAuthorizationEntry => {
-                Self::SorobanAuthorizationEntry(Box::new(SorobanAuthorizationEntry::default()))
+                Self::SorobanAuthorizationEntry(Box::default())
             }
             TypeVariant::SorobanAuthorizationEntries => {
-                Self::SorobanAuthorizationEntries(Box::new(SorobanAuthorizationEntries::default()))
+                Self::SorobanAuthorizationEntries(Box::default())
             }
-            TypeVariant::InvokeHostFunctionOp => {
-                Self::InvokeHostFunctionOp(Box::new(InvokeHostFunctionOp::default()))
-            }
-            TypeVariant::ExtendFootprintTtlOp => {
-                Self::ExtendFootprintTtlOp(Box::new(ExtendFootprintTtlOp::default()))
-            }
-            TypeVariant::RestoreFootprintOp => {
-                Self::RestoreFootprintOp(Box::new(RestoreFootprintOp::default()))
-            }
-            TypeVariant::Operation => Self::Operation(Box::new(Operation::default())),
-            TypeVariant::OperationBody => Self::OperationBody(Box::new(OperationBody::default())),
-            TypeVariant::HashIdPreimage => {
-                Self::HashIdPreimage(Box::new(HashIdPreimage::default()))
-            }
+            TypeVariant::InvokeHostFunctionOp => Self::InvokeHostFunctionOp(Box::default()),
+            TypeVariant::ExtendFootprintTtlOp => Self::ExtendFootprintTtlOp(Box::default()),
+            TypeVariant::RestoreFootprintOp => Self::RestoreFootprintOp(Box::default()),
+            TypeVariant::Operation => Self::Operation(Box::default()),
+            TypeVariant::OperationBody => Self::OperationBody(Box::default()),
+            TypeVariant::HashIdPreimage => Self::HashIdPreimage(Box::default()),
             TypeVariant::HashIdPreimageOperationId => {
-                Self::HashIdPreimageOperationId(Box::new(HashIdPreimageOperationId::default()))
+                Self::HashIdPreimageOperationId(Box::default())
             }
-            TypeVariant::HashIdPreimageRevokeId => {
-                Self::HashIdPreimageRevokeId(Box::new(HashIdPreimageRevokeId::default()))
-            }
-            TypeVariant::HashIdPreimageContractId => {
-                Self::HashIdPreimageContractId(Box::new(HashIdPreimageContractId::default()))
-            }
+            TypeVariant::HashIdPreimageRevokeId => Self::HashIdPreimageRevokeId(Box::default()),
+            TypeVariant::HashIdPreimageContractId => Self::HashIdPreimageContractId(Box::default()),
             TypeVariant::HashIdPreimageSorobanAuthorization => {
-                Self::HashIdPreimageSorobanAuthorization(Box::new(
-                    HashIdPreimageSorobanAuthorization::default(),
-                ))
+                Self::HashIdPreimageSorobanAuthorization(Box::default())
             }
-            TypeVariant::MemoType => Self::MemoType(Box::new(MemoType::default())),
-            TypeVariant::Memo => Self::Memo(Box::new(Memo::default())),
-            TypeVariant::TimeBounds => Self::TimeBounds(Box::new(TimeBounds::default())),
-            TypeVariant::LedgerBounds => Self::LedgerBounds(Box::new(LedgerBounds::default())),
-            TypeVariant::PreconditionsV2 => {
-                Self::PreconditionsV2(Box::new(PreconditionsV2::default()))
-            }
-            TypeVariant::PreconditionType => {
-                Self::PreconditionType(Box::new(PreconditionType::default()))
-            }
-            TypeVariant::Preconditions => Self::Preconditions(Box::new(Preconditions::default())),
-            TypeVariant::LedgerFootprint => {
-                Self::LedgerFootprint(Box::new(LedgerFootprint::default()))
-            }
-            TypeVariant::SorobanResources => {
-                Self::SorobanResources(Box::new(SorobanResources::default()))
-            }
-            TypeVariant::SorobanResourcesExtV0 => {
-                Self::SorobanResourcesExtV0(Box::new(SorobanResourcesExtV0::default()))
-            }
-            TypeVariant::SorobanTransactionData => {
-                Self::SorobanTransactionData(Box::new(SorobanTransactionData::default()))
-            }
+            TypeVariant::MemoType => Self::MemoType(Box::default()),
+            TypeVariant::Memo => Self::Memo(Box::default()),
+            TypeVariant::TimeBounds => Self::TimeBounds(Box::default()),
+            TypeVariant::LedgerBounds => Self::LedgerBounds(Box::default()),
+            TypeVariant::PreconditionsV2 => Self::PreconditionsV2(Box::default()),
+            TypeVariant::PreconditionType => Self::PreconditionType(Box::default()),
+            TypeVariant::Preconditions => Self::Preconditions(Box::default()),
+            TypeVariant::LedgerFootprint => Self::LedgerFootprint(Box::default()),
+            TypeVariant::SorobanResources => Self::SorobanResources(Box::default()),
+            TypeVariant::SorobanResourcesExtV0 => Self::SorobanResourcesExtV0(Box::default()),
+            TypeVariant::SorobanTransactionData => Self::SorobanTransactionData(Box::default()),
             TypeVariant::SorobanTransactionDataExt => {
-                Self::SorobanTransactionDataExt(Box::new(SorobanTransactionDataExt::default()))
+                Self::SorobanTransactionDataExt(Box::default())
             }
-            TypeVariant::TransactionV0 => Self::TransactionV0(Box::new(TransactionV0::default())),
-            TypeVariant::TransactionV0Ext => {
-                Self::TransactionV0Ext(Box::new(TransactionV0Ext::default()))
-            }
-            TypeVariant::TransactionV0Envelope => {
-                Self::TransactionV0Envelope(Box::new(TransactionV0Envelope::default()))
-            }
-            TypeVariant::Transaction => Self::Transaction(Box::new(Transaction::default())),
-            TypeVariant::TransactionExt => {
-                Self::TransactionExt(Box::new(TransactionExt::default()))
-            }
-            TypeVariant::TransactionV1Envelope => {
-                Self::TransactionV1Envelope(Box::new(TransactionV1Envelope::default()))
-            }
-            TypeVariant::FeeBumpTransaction => {
-                Self::FeeBumpTransaction(Box::new(FeeBumpTransaction::default()))
-            }
+            TypeVariant::TransactionV0 => Self::TransactionV0(Box::default()),
+            TypeVariant::TransactionV0Ext => Self::TransactionV0Ext(Box::default()),
+            TypeVariant::TransactionV0Envelope => Self::TransactionV0Envelope(Box::default()),
+            TypeVariant::Transaction => Self::Transaction(Box::default()),
+            TypeVariant::TransactionExt => Self::TransactionExt(Box::default()),
+            TypeVariant::TransactionV1Envelope => Self::TransactionV1Envelope(Box::default()),
+            TypeVariant::FeeBumpTransaction => Self::FeeBumpTransaction(Box::default()),
             TypeVariant::FeeBumpTransactionInnerTx => {
-                Self::FeeBumpTransactionInnerTx(Box::new(FeeBumpTransactionInnerTx::default()))
+                Self::FeeBumpTransactionInnerTx(Box::default())
             }
-            TypeVariant::FeeBumpTransactionExt => {
-                Self::FeeBumpTransactionExt(Box::new(FeeBumpTransactionExt::default()))
-            }
+            TypeVariant::FeeBumpTransactionExt => Self::FeeBumpTransactionExt(Box::default()),
             TypeVariant::FeeBumpTransactionEnvelope => {
-                Self::FeeBumpTransactionEnvelope(Box::new(FeeBumpTransactionEnvelope::default()))
+                Self::FeeBumpTransactionEnvelope(Box::default())
             }
-            TypeVariant::TransactionEnvelope => {
-                Self::TransactionEnvelope(Box::new(TransactionEnvelope::default()))
-            }
+            TypeVariant::TransactionEnvelope => Self::TransactionEnvelope(Box::default()),
             TypeVariant::TransactionSignaturePayload => {
-                Self::TransactionSignaturePayload(Box::new(TransactionSignaturePayload::default()))
+                Self::TransactionSignaturePayload(Box::default())
             }
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
-                Self::TransactionSignaturePayloadTaggedTransaction(Box::new(
-                    TransactionSignaturePayloadTaggedTransaction::default(),
-                ))
+                Self::TransactionSignaturePayloadTaggedTransaction(Box::default())
             }
-            TypeVariant::ClaimAtomType => Self::ClaimAtomType(Box::new(ClaimAtomType::default())),
-            TypeVariant::ClaimOfferAtomV0 => {
-                Self::ClaimOfferAtomV0(Box::new(ClaimOfferAtomV0::default()))
-            }
-            TypeVariant::ClaimOfferAtom => {
-                Self::ClaimOfferAtom(Box::new(ClaimOfferAtom::default()))
-            }
-            TypeVariant::ClaimLiquidityAtom => {
-                Self::ClaimLiquidityAtom(Box::new(ClaimLiquidityAtom::default()))
-            }
-            TypeVariant::ClaimAtom => Self::ClaimAtom(Box::new(ClaimAtom::default())),
-            TypeVariant::CreateAccountResultCode => {
-                Self::CreateAccountResultCode(Box::new(CreateAccountResultCode::default()))
-            }
-            TypeVariant::CreateAccountResult => {
-                Self::CreateAccountResult(Box::new(CreateAccountResult::default()))
-            }
-            TypeVariant::PaymentResultCode => {
-                Self::PaymentResultCode(Box::new(PaymentResultCode::default()))
-            }
-            TypeVariant::PaymentResult => Self::PaymentResult(Box::new(PaymentResult::default())),
+            TypeVariant::ClaimAtomType => Self::ClaimAtomType(Box::default()),
+            TypeVariant::ClaimOfferAtomV0 => Self::ClaimOfferAtomV0(Box::default()),
+            TypeVariant::ClaimOfferAtom => Self::ClaimOfferAtom(Box::default()),
+            TypeVariant::ClaimLiquidityAtom => Self::ClaimLiquidityAtom(Box::default()),
+            TypeVariant::ClaimAtom => Self::ClaimAtom(Box::default()),
+            TypeVariant::CreateAccountResultCode => Self::CreateAccountResultCode(Box::default()),
+            TypeVariant::CreateAccountResult => Self::CreateAccountResult(Box::default()),
+            TypeVariant::PaymentResultCode => Self::PaymentResultCode(Box::default()),
+            TypeVariant::PaymentResult => Self::PaymentResult(Box::default()),
             TypeVariant::PathPaymentStrictReceiveResultCode => {
-                Self::PathPaymentStrictReceiveResultCode(Box::new(
-                    PathPaymentStrictReceiveResultCode::default(),
-                ))
+                Self::PathPaymentStrictReceiveResultCode(Box::default())
             }
-            TypeVariant::SimplePaymentResult => {
-                Self::SimplePaymentResult(Box::new(SimplePaymentResult::default()))
+            TypeVariant::SimplePaymentResult => Self::SimplePaymentResult(Box::default()),
+            TypeVariant::PathPaymentStrictReceiveResult => {
+                Self::PathPaymentStrictReceiveResult(Box::default())
             }
-            TypeVariant::PathPaymentStrictReceiveResult => Self::PathPaymentStrictReceiveResult(
-                Box::new(PathPaymentStrictReceiveResult::default()),
-            ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => {
-                Self::PathPaymentStrictReceiveResultSuccess(Box::new(
-                    PathPaymentStrictReceiveResultSuccess::default(),
-                ))
+                Self::PathPaymentStrictReceiveResultSuccess(Box::default())
             }
-            TypeVariant::PathPaymentStrictSendResultCode => Self::PathPaymentStrictSendResultCode(
-                Box::new(PathPaymentStrictSendResultCode::default()),
-            ),
+            TypeVariant::PathPaymentStrictSendResultCode => {
+                Self::PathPaymentStrictSendResultCode(Box::default())
+            }
             TypeVariant::PathPaymentStrictSendResult => {
-                Self::PathPaymentStrictSendResult(Box::new(PathPaymentStrictSendResult::default()))
+                Self::PathPaymentStrictSendResult(Box::default())
             }
             TypeVariant::PathPaymentStrictSendResultSuccess => {
-                Self::PathPaymentStrictSendResultSuccess(Box::new(
-                    PathPaymentStrictSendResultSuccess::default(),
-                ))
+                Self::PathPaymentStrictSendResultSuccess(Box::default())
             }
             TypeVariant::ManageSellOfferResultCode => {
-                Self::ManageSellOfferResultCode(Box::new(ManageSellOfferResultCode::default()))
+                Self::ManageSellOfferResultCode(Box::default())
             }
-            TypeVariant::ManageOfferEffect => {
-                Self::ManageOfferEffect(Box::new(ManageOfferEffect::default()))
+            TypeVariant::ManageOfferEffect => Self::ManageOfferEffect(Box::default()),
+            TypeVariant::ManageOfferSuccessResult => Self::ManageOfferSuccessResult(Box::default()),
+            TypeVariant::ManageOfferSuccessResultOffer => {
+                Self::ManageOfferSuccessResultOffer(Box::default())
             }
-            TypeVariant::ManageOfferSuccessResult => {
-                Self::ManageOfferSuccessResult(Box::new(ManageOfferSuccessResult::default()))
-            }
-            TypeVariant::ManageOfferSuccessResultOffer => Self::ManageOfferSuccessResultOffer(
-                Box::new(ManageOfferSuccessResultOffer::default()),
-            ),
-            TypeVariant::ManageSellOfferResult => {
-                Self::ManageSellOfferResult(Box::new(ManageSellOfferResult::default()))
-            }
-            TypeVariant::ManageBuyOfferResultCode => {
-                Self::ManageBuyOfferResultCode(Box::new(ManageBuyOfferResultCode::default()))
-            }
-            TypeVariant::ManageBuyOfferResult => {
-                Self::ManageBuyOfferResult(Box::new(ManageBuyOfferResult::default()))
-            }
-            TypeVariant::SetOptionsResultCode => {
-                Self::SetOptionsResultCode(Box::new(SetOptionsResultCode::default()))
-            }
-            TypeVariant::SetOptionsResult => {
-                Self::SetOptionsResult(Box::new(SetOptionsResult::default()))
-            }
-            TypeVariant::ChangeTrustResultCode => {
-                Self::ChangeTrustResultCode(Box::new(ChangeTrustResultCode::default()))
-            }
-            TypeVariant::ChangeTrustResult => {
-                Self::ChangeTrustResult(Box::new(ChangeTrustResult::default()))
-            }
-            TypeVariant::AllowTrustResultCode => {
-                Self::AllowTrustResultCode(Box::new(AllowTrustResultCode::default()))
-            }
-            TypeVariant::AllowTrustResult => {
-                Self::AllowTrustResult(Box::new(AllowTrustResult::default()))
-            }
-            TypeVariant::AccountMergeResultCode => {
-                Self::AccountMergeResultCode(Box::new(AccountMergeResultCode::default()))
-            }
-            TypeVariant::AccountMergeResult => {
-                Self::AccountMergeResult(Box::new(AccountMergeResult::default()))
-            }
-            TypeVariant::InflationResultCode => {
-                Self::InflationResultCode(Box::new(InflationResultCode::default()))
-            }
-            TypeVariant::InflationPayout => {
-                Self::InflationPayout(Box::new(InflationPayout::default()))
-            }
-            TypeVariant::InflationResult => {
-                Self::InflationResult(Box::new(InflationResult::default()))
-            }
-            TypeVariant::ManageDataResultCode => {
-                Self::ManageDataResultCode(Box::new(ManageDataResultCode::default()))
-            }
-            TypeVariant::ManageDataResult => {
-                Self::ManageDataResult(Box::new(ManageDataResult::default()))
-            }
-            TypeVariant::BumpSequenceResultCode => {
-                Self::BumpSequenceResultCode(Box::new(BumpSequenceResultCode::default()))
-            }
-            TypeVariant::BumpSequenceResult => {
-                Self::BumpSequenceResult(Box::new(BumpSequenceResult::default()))
-            }
+            TypeVariant::ManageSellOfferResult => Self::ManageSellOfferResult(Box::default()),
+            TypeVariant::ManageBuyOfferResultCode => Self::ManageBuyOfferResultCode(Box::default()),
+            TypeVariant::ManageBuyOfferResult => Self::ManageBuyOfferResult(Box::default()),
+            TypeVariant::SetOptionsResultCode => Self::SetOptionsResultCode(Box::default()),
+            TypeVariant::SetOptionsResult => Self::SetOptionsResult(Box::default()),
+            TypeVariant::ChangeTrustResultCode => Self::ChangeTrustResultCode(Box::default()),
+            TypeVariant::ChangeTrustResult => Self::ChangeTrustResult(Box::default()),
+            TypeVariant::AllowTrustResultCode => Self::AllowTrustResultCode(Box::default()),
+            TypeVariant::AllowTrustResult => Self::AllowTrustResult(Box::default()),
+            TypeVariant::AccountMergeResultCode => Self::AccountMergeResultCode(Box::default()),
+            TypeVariant::AccountMergeResult => Self::AccountMergeResult(Box::default()),
+            TypeVariant::InflationResultCode => Self::InflationResultCode(Box::default()),
+            TypeVariant::InflationPayout => Self::InflationPayout(Box::default()),
+            TypeVariant::InflationResult => Self::InflationResult(Box::default()),
+            TypeVariant::ManageDataResultCode => Self::ManageDataResultCode(Box::default()),
+            TypeVariant::ManageDataResult => Self::ManageDataResult(Box::default()),
+            TypeVariant::BumpSequenceResultCode => Self::BumpSequenceResultCode(Box::default()),
+            TypeVariant::BumpSequenceResult => Self::BumpSequenceResult(Box::default()),
             TypeVariant::CreateClaimableBalanceResultCode => {
-                Self::CreateClaimableBalanceResultCode(Box::new(
-                    CreateClaimableBalanceResultCode::default(),
-                ))
+                Self::CreateClaimableBalanceResultCode(Box::default())
             }
-            TypeVariant::CreateClaimableBalanceResult => Self::CreateClaimableBalanceResult(
-                Box::new(CreateClaimableBalanceResult::default()),
-            ),
-            TypeVariant::ClaimClaimableBalanceResultCode => Self::ClaimClaimableBalanceResultCode(
-                Box::new(ClaimClaimableBalanceResultCode::default()),
-            ),
+            TypeVariant::CreateClaimableBalanceResult => {
+                Self::CreateClaimableBalanceResult(Box::default())
+            }
+            TypeVariant::ClaimClaimableBalanceResultCode => {
+                Self::ClaimClaimableBalanceResultCode(Box::default())
+            }
             TypeVariant::ClaimClaimableBalanceResult => {
-                Self::ClaimClaimableBalanceResult(Box::new(ClaimClaimableBalanceResult::default()))
+                Self::ClaimClaimableBalanceResult(Box::default())
             }
             TypeVariant::BeginSponsoringFutureReservesResultCode => {
-                Self::BeginSponsoringFutureReservesResultCode(Box::new(
-                    BeginSponsoringFutureReservesResultCode::default(),
-                ))
+                Self::BeginSponsoringFutureReservesResultCode(Box::default())
             }
             TypeVariant::BeginSponsoringFutureReservesResult => {
-                Self::BeginSponsoringFutureReservesResult(Box::new(
-                    BeginSponsoringFutureReservesResult::default(),
-                ))
+                Self::BeginSponsoringFutureReservesResult(Box::default())
             }
             TypeVariant::EndSponsoringFutureReservesResultCode => {
-                Self::EndSponsoringFutureReservesResultCode(Box::new(
-                    EndSponsoringFutureReservesResultCode::default(),
-                ))
+                Self::EndSponsoringFutureReservesResultCode(Box::default())
             }
             TypeVariant::EndSponsoringFutureReservesResult => {
-                Self::EndSponsoringFutureReservesResult(Box::new(
-                    EndSponsoringFutureReservesResult::default(),
-                ))
+                Self::EndSponsoringFutureReservesResult(Box::default())
             }
             TypeVariant::RevokeSponsorshipResultCode => {
-                Self::RevokeSponsorshipResultCode(Box::new(RevokeSponsorshipResultCode::default()))
+                Self::RevokeSponsorshipResultCode(Box::default())
             }
-            TypeVariant::RevokeSponsorshipResult => {
-                Self::RevokeSponsorshipResult(Box::new(RevokeSponsorshipResult::default()))
-            }
-            TypeVariant::ClawbackResultCode => {
-                Self::ClawbackResultCode(Box::new(ClawbackResultCode::default()))
-            }
-            TypeVariant::ClawbackResult => {
-                Self::ClawbackResult(Box::new(ClawbackResult::default()))
-            }
+            TypeVariant::RevokeSponsorshipResult => Self::RevokeSponsorshipResult(Box::default()),
+            TypeVariant::ClawbackResultCode => Self::ClawbackResultCode(Box::default()),
+            TypeVariant::ClawbackResult => Self::ClawbackResult(Box::default()),
             TypeVariant::ClawbackClaimableBalanceResultCode => {
-                Self::ClawbackClaimableBalanceResultCode(Box::new(
-                    ClawbackClaimableBalanceResultCode::default(),
-                ))
+                Self::ClawbackClaimableBalanceResultCode(Box::default())
             }
-            TypeVariant::ClawbackClaimableBalanceResult => Self::ClawbackClaimableBalanceResult(
-                Box::new(ClawbackClaimableBalanceResult::default()),
-            ),
+            TypeVariant::ClawbackClaimableBalanceResult => {
+                Self::ClawbackClaimableBalanceResult(Box::default())
+            }
             TypeVariant::SetTrustLineFlagsResultCode => {
-                Self::SetTrustLineFlagsResultCode(Box::new(SetTrustLineFlagsResultCode::default()))
+                Self::SetTrustLineFlagsResultCode(Box::default())
             }
-            TypeVariant::SetTrustLineFlagsResult => {
-                Self::SetTrustLineFlagsResult(Box::new(SetTrustLineFlagsResult::default()))
+            TypeVariant::SetTrustLineFlagsResult => Self::SetTrustLineFlagsResult(Box::default()),
+            TypeVariant::LiquidityPoolDepositResultCode => {
+                Self::LiquidityPoolDepositResultCode(Box::default())
             }
-            TypeVariant::LiquidityPoolDepositResultCode => Self::LiquidityPoolDepositResultCode(
-                Box::new(LiquidityPoolDepositResultCode::default()),
-            ),
             TypeVariant::LiquidityPoolDepositResult => {
-                Self::LiquidityPoolDepositResult(Box::new(LiquidityPoolDepositResult::default()))
+                Self::LiquidityPoolDepositResult(Box::default())
             }
-            TypeVariant::LiquidityPoolWithdrawResultCode => Self::LiquidityPoolWithdrawResultCode(
-                Box::new(LiquidityPoolWithdrawResultCode::default()),
-            ),
+            TypeVariant::LiquidityPoolWithdrawResultCode => {
+                Self::LiquidityPoolWithdrawResultCode(Box::default())
+            }
             TypeVariant::LiquidityPoolWithdrawResult => {
-                Self::LiquidityPoolWithdrawResult(Box::new(LiquidityPoolWithdrawResult::default()))
+                Self::LiquidityPoolWithdrawResult(Box::default())
             }
-            TypeVariant::InvokeHostFunctionResultCode => Self::InvokeHostFunctionResultCode(
-                Box::new(InvokeHostFunctionResultCode::default()),
-            ),
-            TypeVariant::InvokeHostFunctionResult => {
-                Self::InvokeHostFunctionResult(Box::new(InvokeHostFunctionResult::default()))
+            TypeVariant::InvokeHostFunctionResultCode => {
+                Self::InvokeHostFunctionResultCode(Box::default())
             }
-            TypeVariant::ExtendFootprintTtlResultCode => Self::ExtendFootprintTtlResultCode(
-                Box::new(ExtendFootprintTtlResultCode::default()),
-            ),
-            TypeVariant::ExtendFootprintTtlResult => {
-                Self::ExtendFootprintTtlResult(Box::new(ExtendFootprintTtlResult::default()))
+            TypeVariant::InvokeHostFunctionResult => Self::InvokeHostFunctionResult(Box::default()),
+            TypeVariant::ExtendFootprintTtlResultCode => {
+                Self::ExtendFootprintTtlResultCode(Box::default())
             }
+            TypeVariant::ExtendFootprintTtlResult => Self::ExtendFootprintTtlResult(Box::default()),
             TypeVariant::RestoreFootprintResultCode => {
-                Self::RestoreFootprintResultCode(Box::new(RestoreFootprintResultCode::default()))
+                Self::RestoreFootprintResultCode(Box::default())
             }
-            TypeVariant::RestoreFootprintResult => {
-                Self::RestoreFootprintResult(Box::new(RestoreFootprintResult::default()))
+            TypeVariant::RestoreFootprintResult => Self::RestoreFootprintResult(Box::default()),
+            TypeVariant::OperationResultCode => Self::OperationResultCode(Box::default()),
+            TypeVariant::OperationResult => Self::OperationResult(Box::default()),
+            TypeVariant::OperationResultTr => Self::OperationResultTr(Box::default()),
+            TypeVariant::TransactionResultCode => Self::TransactionResultCode(Box::default()),
+            TypeVariant::InnerTransactionResult => Self::InnerTransactionResult(Box::default()),
+            TypeVariant::InnerTransactionResultResult => {
+                Self::InnerTransactionResultResult(Box::default())
             }
-            TypeVariant::OperationResultCode => {
-                Self::OperationResultCode(Box::new(OperationResultCode::default()))
-            }
-            TypeVariant::OperationResult => {
-                Self::OperationResult(Box::new(OperationResult::default()))
-            }
-            TypeVariant::OperationResultTr => {
-                Self::OperationResultTr(Box::new(OperationResultTr::default()))
-            }
-            TypeVariant::TransactionResultCode => {
-                Self::TransactionResultCode(Box::new(TransactionResultCode::default()))
-            }
-            TypeVariant::InnerTransactionResult => {
-                Self::InnerTransactionResult(Box::new(InnerTransactionResult::default()))
-            }
-            TypeVariant::InnerTransactionResultResult => Self::InnerTransactionResultResult(
-                Box::new(InnerTransactionResultResult::default()),
-            ),
             TypeVariant::InnerTransactionResultExt => {
-                Self::InnerTransactionResultExt(Box::new(InnerTransactionResultExt::default()))
+                Self::InnerTransactionResultExt(Box::default())
             }
             TypeVariant::InnerTransactionResultPair => {
-                Self::InnerTransactionResultPair(Box::new(InnerTransactionResultPair::default()))
+                Self::InnerTransactionResultPair(Box::default())
             }
-            TypeVariant::TransactionResult => {
-                Self::TransactionResult(Box::new(TransactionResult::default()))
+            TypeVariant::TransactionResult => Self::TransactionResult(Box::default()),
+            TypeVariant::TransactionResultResult => Self::TransactionResultResult(Box::default()),
+            TypeVariant::TransactionResultExt => Self::TransactionResultExt(Box::default()),
+            TypeVariant::Hash => Self::Hash(Box::default()),
+            TypeVariant::Uint256 => Self::Uint256(Box::default()),
+            TypeVariant::Uint32 => Self::Uint32(Box::default()),
+            TypeVariant::Int32 => Self::Int32(Box::default()),
+            TypeVariant::Uint64 => Self::Uint64(Box::default()),
+            TypeVariant::Int64 => Self::Int64(Box::default()),
+            TypeVariant::TimePoint => Self::TimePoint(Box::default()),
+            TypeVariant::Duration => Self::Duration(Box::default()),
+            TypeVariant::ExtensionPoint => Self::ExtensionPoint(Box::default()),
+            TypeVariant::CryptoKeyType => Self::CryptoKeyType(Box::default()),
+            TypeVariant::PublicKeyType => Self::PublicKeyType(Box::default()),
+            TypeVariant::SignerKeyType => Self::SignerKeyType(Box::default()),
+            TypeVariant::PublicKey => Self::PublicKey(Box::default()),
+            TypeVariant::SignerKey => Self::SignerKey(Box::default()),
+            TypeVariant::SignerKeyEd25519SignedPayload => {
+                Self::SignerKeyEd25519SignedPayload(Box::default())
             }
-            TypeVariant::TransactionResultResult => {
-                Self::TransactionResultResult(Box::new(TransactionResultResult::default()))
-            }
-            TypeVariant::TransactionResultExt => {
-                Self::TransactionResultExt(Box::new(TransactionResultExt::default()))
-            }
-            TypeVariant::Hash => Self::Hash(Box::new(Hash::default())),
-            TypeVariant::Uint256 => Self::Uint256(Box::new(Uint256::default())),
-            TypeVariant::Uint32 => Self::Uint32(Box::new(Uint32::default())),
-            TypeVariant::Int32 => Self::Int32(Box::new(Int32::default())),
-            TypeVariant::Uint64 => Self::Uint64(Box::new(Uint64::default())),
-            TypeVariant::Int64 => Self::Int64(Box::new(Int64::default())),
-            TypeVariant::TimePoint => Self::TimePoint(Box::new(TimePoint::default())),
-            TypeVariant::Duration => Self::Duration(Box::new(Duration::default())),
-            TypeVariant::ExtensionPoint => {
-                Self::ExtensionPoint(Box::new(ExtensionPoint::default()))
-            }
-            TypeVariant::CryptoKeyType => Self::CryptoKeyType(Box::new(CryptoKeyType::default())),
-            TypeVariant::PublicKeyType => Self::PublicKeyType(Box::new(PublicKeyType::default())),
-            TypeVariant::SignerKeyType => Self::SignerKeyType(Box::new(SignerKeyType::default())),
-            TypeVariant::PublicKey => Self::PublicKey(Box::new(PublicKey::default())),
-            TypeVariant::SignerKey => Self::SignerKey(Box::new(SignerKey::default())),
-            TypeVariant::SignerKeyEd25519SignedPayload => Self::SignerKeyEd25519SignedPayload(
-                Box::new(SignerKeyEd25519SignedPayload::default()),
-            ),
-            TypeVariant::Signature => Self::Signature(Box::new(Signature::default())),
-            TypeVariant::SignatureHint => Self::SignatureHint(Box::new(SignatureHint::default())),
-            TypeVariant::NodeId => Self::NodeId(Box::new(NodeId::default())),
-            TypeVariant::AccountId => Self::AccountId(Box::new(AccountId::default())),
-            TypeVariant::ContractId => Self::ContractId(Box::new(ContractId::default())),
-            TypeVariant::Curve25519Secret => {
-                Self::Curve25519Secret(Box::new(Curve25519Secret::default()))
-            }
-            TypeVariant::Curve25519Public => {
-                Self::Curve25519Public(Box::new(Curve25519Public::default()))
-            }
-            TypeVariant::HmacSha256Key => Self::HmacSha256Key(Box::new(HmacSha256Key::default())),
-            TypeVariant::HmacSha256Mac => Self::HmacSha256Mac(Box::new(HmacSha256Mac::default())),
-            TypeVariant::ShortHashSeed => Self::ShortHashSeed(Box::new(ShortHashSeed::default())),
-            TypeVariant::BinaryFuseFilterType => {
-                Self::BinaryFuseFilterType(Box::new(BinaryFuseFilterType::default()))
-            }
+            TypeVariant::Signature => Self::Signature(Box::default()),
+            TypeVariant::SignatureHint => Self::SignatureHint(Box::default()),
+            TypeVariant::NodeId => Self::NodeId(Box::default()),
+            TypeVariant::AccountId => Self::AccountId(Box::default()),
+            TypeVariant::ContractId => Self::ContractId(Box::default()),
+            TypeVariant::Curve25519Secret => Self::Curve25519Secret(Box::default()),
+            TypeVariant::Curve25519Public => Self::Curve25519Public(Box::default()),
+            TypeVariant::HmacSha256Key => Self::HmacSha256Key(Box::default()),
+            TypeVariant::HmacSha256Mac => Self::HmacSha256Mac(Box::default()),
+            TypeVariant::ShortHashSeed => Self::ShortHashSeed(Box::default()),
+            TypeVariant::BinaryFuseFilterType => Self::BinaryFuseFilterType(Box::default()),
             TypeVariant::SerializedBinaryFuseFilter => {
-                Self::SerializedBinaryFuseFilter(Box::new(SerializedBinaryFuseFilter::default()))
+                Self::SerializedBinaryFuseFilter(Box::default())
             }
-            TypeVariant::PoolId => Self::PoolId(Box::new(PoolId::default())),
-            TypeVariant::ClaimableBalanceIdType => {
-                Self::ClaimableBalanceIdType(Box::new(ClaimableBalanceIdType::default()))
-            }
-            TypeVariant::ClaimableBalanceId => {
-                Self::ClaimableBalanceId(Box::new(ClaimableBalanceId::default()))
-            }
+            TypeVariant::PoolId => Self::PoolId(Box::default()),
+            TypeVariant::ClaimableBalanceIdType => Self::ClaimableBalanceIdType(Box::default()),
+            TypeVariant::ClaimableBalanceId => Self::ClaimableBalanceId(Box::default()),
         }
     }
 

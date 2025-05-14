@@ -1,4 +1,5 @@
 //# Custom default implementations of some types.
+#![cfg(feature = "alloc")]
 
 use super::{TransactionEnvelope, TransactionV1Envelope};
 

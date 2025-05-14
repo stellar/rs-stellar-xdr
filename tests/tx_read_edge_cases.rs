@@ -40,7 +40,7 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
                 Interrupted::new(Cursor::new(&v_bytes)),
                 Limits::none(),
             )),
-            Ok(1u64 << 32 | 2u64)
+            Ok((1u64 << 32) | 2u64)
         );
     }
 
@@ -50,21 +50,22 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
         assert_eq!(u32::from_xdr(&v_bytes, Limits::none()), Err(Error::Invalid));
         assert_eq!(
             u64::from_xdr(&v_bytes, Limits::none()),
-            Ok(1u64 << 32 | 2u64)
+            Ok((1u64 << 32) | 2u64)
         );
     }
 
     // from_xdr_base64 should require that the buffer completely fill into the type
     // being read.
     {
-        let v_base64 = base64::encode(v_bytes);
+        use base64::Engine;
+        let v_base64 = base64::engine::general_purpose::STANDARD.encode(v_bytes);
         assert_eq!(
             u32::from_xdr_base64(&v_base64, Limits::none()),
             Err(Error::Invalid)
         );
         assert_eq!(
             u64::from_xdr_base64(&v_base64, Limits::none()),
-            Ok(1u64 << 32 | 2u64)
+            Ok((1u64 << 32) | 2u64)
         );
     }
 

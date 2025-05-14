@@ -8,7 +8,7 @@ use std::{
     io::{self, Read},
 };
 
-use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
+use crate::cli::Channel;
 
 #[derive(thiserror::Error, Debug)]
 #[allow(clippy::enum_variant_names)]
@@ -71,6 +71,7 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let mut rr = ResetRead::new(self.input()?);
+            let mut guessed = false;
             'variants: for v in crate::$m::TypeVariant::VARIANTS {
                 rr.reset();
                 let count: usize = match self.input_format {
@@ -82,8 +83,7 @@ macro_rules! run_x {
                             .unwrap_or_default()
                     }
                     InputFormat::SingleBase64 => {
-                        let sw = SkipWhitespace::new(&mut rr);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
                         crate::$m::Type::read_xdr_base64_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
@@ -103,8 +103,7 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamBase64 => {
-                        let sw = SkipWhitespace::new(&mut rr);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
                         let iter = crate::$m::Type::read_xdr_base64_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
@@ -132,7 +131,11 @@ macro_rules! run_x {
                 };
                 if count > 0 {
                     println!("{}", v.name());
+                    guessed = true;
                 }
+            }
+            if (!guessed) {
+                std::process::exit(1);
             }
             Ok(())
         }

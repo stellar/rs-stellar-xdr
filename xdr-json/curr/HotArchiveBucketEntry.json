@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "HotArchiveBucketEntry",
-  "description": "HotArchiveBucketEntry is an XDR Union defines as:\n\n```text union HotArchiveBucketEntry switch (HotArchiveBucketEntryType type) { case HOT_ARCHIVE_ARCHIVED: LedgerEntry archivedEntry;\n\ncase HOT_ARCHIVE_LIVE: case HOT_ARCHIVE_DELETED: LedgerKey key; case HOT_ARCHIVE_METAENTRY: BucketMetadata metaEntry; }; ```",
+  "description": "HotArchiveBucketEntry is an XDR Union defines as:\n\n```text union HotArchiveBucketEntry switch (HotArchiveBucketEntryType type) { case HOT_ARCHIVE_ARCHIVED: LedgerEntry archivedEntry;\n\ncase HOT_ARCHIVE_LIVE: LedgerKey key; case HOT_ARCHIVE_METAENTRY: BucketMetadata metaEntry; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -12,8 +12,7 @@
         "archived": {
           "$ref": "#/definitions/LedgerEntry"
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -24,20 +23,7 @@
         "live": {
           "$ref": "#/definitions/LedgerKey"
         }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "deleted"
-      ],
-      "properties": {
-        "deleted": {
-          "$ref": "#/definitions/LedgerKey"
-        }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -48,10 +34,15 @@
         "metaentry": {
           "$ref": "#/definitions/BucketMetadata"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntry": {
       "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
@@ -72,8 +63,7 @@
           "$ref": "#/definitions/AccountId"
         },
         "balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/AccountEntryExt"
@@ -138,8 +128,7 @@
             "v1": {
               "$ref": "#/definitions/AccountEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -177,8 +166,7 @@
             "v2": {
               "$ref": "#/definitions/AccountEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -232,8 +220,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -312,8 +299,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -324,8 +310,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -336,12 +321,11 @@
       "type": "string"
     },
     "BucketListType": {
-      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1, COLD_ARCHIVE = 2 }; ```",
+      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
       "type": "string",
       "enum": [
         "live",
-        "hot_archive",
-        "cold_archive"
+        "hot_archive"
       ]
     },
     "BucketMetadata": {
@@ -380,8 +364,7 @@
             "v1": {
               "$ref": "#/definitions/BucketListType"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -407,8 +390,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -423,8 +405,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -442,8 +423,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -452,11 +432,9 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -465,11 +443,9 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -485,8 +461,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "asset": {
           "$ref": "#/definitions/Asset"
@@ -524,8 +499,7 @@
             "v1": {
               "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -569,8 +543,7 @@
             "claimant_type_v0": {
               "$ref": "#/definitions/ClaimantV0"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -600,8 +573,7 @@
       ],
       "properties": {
         "fee_tx_size1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_txs_size_bytes": {
           "type": "integer",
@@ -626,16 +598,13 @@
       ],
       "properties": {
         "fee_rate_per_instructions_increment": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ledger_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_instructions": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_memory_limit": {
           "type": "integer",
@@ -653,8 +622,7 @@
       ],
       "properties": {
         "fee_contract_events1_kb": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "tx_max_contract_events_size_bytes": {
           "type": "integer",
@@ -685,59 +653,64 @@
       ],
       "properties": {
         "fee_historical1_kb": {
+          "type": "string"
+        }
+      }
+    },
+    "ConfigSettingContractLedgerCostExtV0": {
+      "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of in-memory ledger entry read operations per transaction uint32 txMaxInMemoryReadEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
+      "type": "object",
+      "required": [
+        "fee_write1_kb",
+        "tx_max_in_memory_read_entries"
+      ],
+      "properties": {
+        "fee_write1_kb": {
+          "type": "string"
+        },
+        "tx_max_in_memory_read_entries": {
           "type": "integer",
-          "format": "int64"
+          "format": "uint32",
+          "minimum": 0.0
         }
       }
     },
     "ConfigSettingContractLedgerCostV0": {
-      "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of ledger entry read operations per ledger uint32 ledgerMaxReadLedgerEntries; // Maximum number of bytes that can be read per ledger uint32 ledgerMaxReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of ledger entry read operations per transaction uint32 txMaxReadLedgerEntries; // Maximum number of bytes that can be read per transaction uint32 txMaxReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeReadLedgerEntry;  // Fee per ledger entry read int64 feeWriteLedgerEntry; // Fee per ledger entry write\n\nint64 feeRead1KB;  // Fee for reading 1KB\n\n// The following parameters determine the write fee per 1KB. // Write fee grows linearly until bucket list reaches this size int64 bucketListTargetSizeBytes; // Fee per 1KB write when the bucket list is empty int64 writeFee1KBBucketListLow; // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes` int64 writeFee1KBBucketListHigh; // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes` uint32 bucketListWriteFeeGrowthFactor; }; ```",
+      "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of disk entry read operations per ledger uint32 ledgerMaxDiskReadEntries; // Maximum number of bytes of disk reads that can be performed per ledger uint32 ledgerMaxDiskReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of disk entry read operations per transaction uint32 txMaxDiskReadEntries; // Maximum number of bytes of disk reads that can be performed per transaction uint32 txMaxDiskReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeDiskReadLedgerEntry;  // Fee per disk ledger entry read int64 feeWriteLedgerEntry;     // Fee per ledger entry write\n\nint64 feeDiskRead1KB;          // Fee for reading 1KB disk\n\n// The following parameters determine the write fee per 1KB. // Rent fee grows linearly until soroban state reaches this size int64 sorobanStateTargetSizeBytes; // Fee per 1KB rent when the soroban state is empty int64 rentFee1KBSorobanStateSizeLow; // Fee per 1KB rent when the soroban state has reached `sorobanStateTargetSizeBytes` int64 rentFee1KBSorobanStateSizeHigh; // Rent fee multiplier for any additional data past the first `sorobanStateTargetSizeBytes` uint32 sorobanStateRentFeeGrowthFactor; }; ```",
       "type": "object",
       "required": [
-        "bucket_list_target_size_bytes",
-        "bucket_list_write_fee_growth_factor",
-        "fee_read1_kb",
-        "fee_read_ledger_entry",
+        "fee_disk_read1_kb",
+        "fee_disk_read_ledger_entry",
         "fee_write_ledger_entry",
-        "ledger_max_read_bytes",
-        "ledger_max_read_ledger_entries",
+        "ledger_max_disk_read_bytes",
+        "ledger_max_disk_read_entries",
         "ledger_max_write_bytes",
         "ledger_max_write_ledger_entries",
-        "tx_max_read_bytes",
-        "tx_max_read_ledger_entries",
+        "rent_fee1_kb_soroban_state_size_high",
+        "rent_fee1_kb_soroban_state_size_low",
+        "soroban_state_rent_fee_growth_factor",
+        "soroban_state_target_size_bytes",
+        "tx_max_disk_read_bytes",
+        "tx_max_disk_read_entries",
         "tx_max_write_bytes",
-        "tx_max_write_ledger_entries",
-        "write_fee1_kb_bucket_list_high",
-        "write_fee1_kb_bucket_list_low"
+        "tx_max_write_ledger_entries"
       ],
       "properties": {
-        "bucket_list_target_size_bytes": {
-          "type": "integer",
-          "format": "int64"
+        "fee_disk_read1_kb": {
+          "type": "string"
         },
-        "bucket_list_write_fee_growth_factor": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "fee_read1_kb": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "fee_read_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+        "fee_disk_read_ledger_entry": {
+          "type": "string"
         },
         "fee_write_ledger_entry": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
-        "ledger_max_read_bytes": {
+        "ledger_max_disk_read_bytes": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "ledger_max_read_ledger_entries": {
+        "ledger_max_disk_read_entries": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -752,12 +725,26 @@
           "format": "uint32",
           "minimum": 0.0
         },
-        "tx_max_read_bytes": {
+        "rent_fee1_kb_soroban_state_size_high": {
+          "type": "string"
+        },
+        "rent_fee1_kb_soroban_state_size_low": {
+          "type": "string"
+        },
+        "soroban_state_rent_fee_growth_factor": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "tx_max_read_ledger_entries": {
+        "soroban_state_target_size_bytes": {
+          "type": "string"
+        },
+        "tx_max_disk_read_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_disk_read_entries": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -771,19 +758,25 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
-        },
-        "write_fee1_kb_bucket_list_high": {
+        }
+      }
+    },
+    "ConfigSettingContractParallelComputeV0": {
+      "description": "ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractParallelComputeV0 { // Maximum number of clusters with dependent transactions allowed in a // stage of parallel tx set component. // This effectively sets the lower bound on the number of physical threads // necessary to effectively apply transaction sets in parallel. uint32 ledgerMaxDependentTxClusters; }; ```",
+      "type": "object",
+      "required": [
+        "ledger_max_dependent_tx_clusters"
+      ],
+      "properties": {
+        "ledger_max_dependent_tx_clusters": {
           "type": "integer",
-          "format": "int64"
-        },
-        "write_fee1_kb_bucket_list_low": {
-          "type": "integer",
-          "format": "int64"
+          "format": "uint32",
+          "minimum": 0.0
         }
       }
     },
     "ConfigSettingEntry": {
-      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW: uint64 bucketListSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; }; ```",
+      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -796,8 +789,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -808,8 +800,7 @@
             "contract_compute_v0": {
               "$ref": "#/definitions/ConfigSettingContractComputeV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -820,8 +811,7 @@
             "contract_ledger_cost_v0": {
               "$ref": "#/definitions/ConfigSettingContractLedgerCostV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -832,8 +822,7 @@
             "contract_historical_data_v0": {
               "$ref": "#/definitions/ConfigSettingContractHistoricalDataV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -844,8 +833,7 @@
             "contract_events_v0": {
               "$ref": "#/definitions/ConfigSettingContractEventsV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -856,8 +844,7 @@
             "contract_bandwidth_v0": {
               "$ref": "#/definitions/ConfigSettingContractBandwidthV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -868,8 +855,7 @@
             "contract_cost_params_cpu_instructions": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -880,8 +866,7 @@
             "contract_cost_params_memory_bytes": {
               "$ref": "#/definitions/ContractCostParams"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -894,8 +879,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -908,8 +892,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -920,8 +903,7 @@
             "state_archival": {
               "$ref": "#/definitions/StateArchivalSettings"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -932,26 +914,22 @@
             "contract_execution_lanes": {
               "$ref": "#/definitions/ConfigSettingContractExecutionLanesV0"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
           "required": [
-            "bucketlist_size_window"
+            "live_soroban_state_size_window"
           ],
           "properties": {
-            "bucketlist_size_window": {
+            "live_soroban_state_size_window": {
               "type": "array",
               "items": {
-                "type": "integer",
-                "format": "uint64",
-                "minimum": 0.0
+                "type": "string"
               },
               "maxItems": 4294967295
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -962,13 +940,45 @@
             "eviction_iterator": {
               "$ref": "#/definitions/EvictionIterator"
             }
-          },
-          "additionalProperties": false
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_parallel_compute_v0"
+          ],
+          "properties": {
+            "contract_parallel_compute_v0": {
+              "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_ledger_cost_ext_v0"
+          ],
+          "properties": {
+            "contract_ledger_cost_ext_v0": {
+              "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "scp_timing"
+          ],
+          "properties": {
+            "scp_timing": {
+              "$ref": "#/definitions/ConfigSettingScpTiming"
+            }
+          }
         }
       ]
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -983,9 +993,50 @@
         "contract_data_entry_size_bytes",
         "state_archival",
         "contract_execution_lanes",
-        "bucketlist_size_window",
-        "eviction_iterator"
+        "live_soroban_state_size_window",
+        "eviction_iterator",
+        "contract_parallel_compute_v0",
+        "contract_ledger_cost_ext_v0",
+        "scp_timing"
       ]
+    },
+    "ConfigSettingScpTiming": {
+      "description": "ConfigSettingScpTiming is an XDR Struct defines as:\n\n```text struct ConfigSettingSCPTiming { uint32 ledgerTargetCloseTimeMilliseconds; uint32 nominationTimeoutInitialMilliseconds; uint32 nominationTimeoutIncrementMilliseconds; uint32 ballotTimeoutInitialMilliseconds; uint32 ballotTimeoutIncrementMilliseconds; }; ```",
+      "type": "object",
+      "required": [
+        "ballot_timeout_increment_milliseconds",
+        "ballot_timeout_initial_milliseconds",
+        "ledger_target_close_time_milliseconds",
+        "nomination_timeout_increment_milliseconds",
+        "nomination_timeout_initial_milliseconds"
+      ],
+      "properties": {
+        "ballot_timeout_increment_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ballot_timeout_initial_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ledger_target_close_time_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "nomination_timeout_increment_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "nomination_timeout_initial_milliseconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
     },
     "ContractCodeCostInputs": {
       "description": "ContractCodeCostInputs is an XDR Struct defines as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",
@@ -1103,8 +1154,7 @@
             "v1": {
               "$ref": "#/definitions/ContractCodeEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1134,15 +1184,13 @@
       ],
       "properties": {
         "const_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
         },
         "linear_term": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1212,8 +1260,7 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1257,9 +1304,7 @@
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "EvictionIterator": {
       "description": "EvictionIterator is an XDR Struct defines as:\n\n```text struct EvictionIterator { uint32 bucketListLevel; bool isCurrBucket; uint64 bucketFileOffset; }; ```",
@@ -1271,9 +1316,7 @@
       ],
       "properties": {
         "bucket_file_offset": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+          "type": "string"
         },
         "bucket_list_level": {
           "type": "integer",
@@ -1293,54 +1336,10 @@
       ]
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "LedgerEntry": {
       "description": "LedgerEntry is an XDR Struct defines as:\n\n```text struct LedgerEntry { uint32 lastModifiedLedgerSeq; // ledger the LedgerEntry was last changed\n\nunion switch (LedgerEntryType type) { case ACCOUNT: AccountEntry account; case TRUSTLINE: TrustLineEntry trustLine; case OFFER: OfferEntry offer; case DATA: DataEntry data; case CLAIMABLE_BALANCE: ClaimableBalanceEntry claimableBalance; case LIQUIDITY_POOL: LiquidityPoolEntry liquidityPool; case CONTRACT_DATA: ContractDataEntry contractData; case CONTRACT_CODE: ContractCodeEntry contractCode; case CONFIG_SETTING: ConfigSettingEntry configSetting; case TTL: TTLEntry ttl; } data;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: LedgerEntryExtensionV1 v1; } ext; }; ```",
@@ -1376,8 +1375,7 @@
             "account": {
               "$ref": "#/definitions/AccountEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1388,8 +1386,7 @@
             "trustline": {
               "$ref": "#/definitions/TrustLineEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1400,8 +1397,7 @@
             "offer": {
               "$ref": "#/definitions/OfferEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1412,8 +1408,7 @@
             "data": {
               "$ref": "#/definitions/DataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1424,8 +1419,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/ClaimableBalanceEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1436,8 +1430,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LiquidityPoolEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1448,8 +1441,7 @@
             "contract_data": {
               "$ref": "#/definitions/ContractDataEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1460,8 +1452,7 @@
             "contract_code": {
               "$ref": "#/definitions/ContractCodeEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1472,8 +1463,7 @@
             "config_setting": {
               "$ref": "#/definitions/ConfigSettingEntry"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1484,8 +1474,7 @@
             "ttl": {
               "$ref": "#/definitions/TtlEntry"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1507,8 +1496,7 @@
             "v1": {
               "$ref": "#/definitions/LedgerEntryExtensionV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1547,8 +1535,7 @@
             "account": {
               "$ref": "#/definitions/LedgerKeyAccount"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1559,8 +1546,7 @@
             "trustline": {
               "$ref": "#/definitions/LedgerKeyTrustLine"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1571,8 +1557,7 @@
             "offer": {
               "$ref": "#/definitions/LedgerKeyOffer"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1583,8 +1568,7 @@
             "data": {
               "$ref": "#/definitions/LedgerKeyData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1595,8 +1579,7 @@
             "claimable_balance": {
               "$ref": "#/definitions/LedgerKeyClaimableBalance"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1607,8 +1590,7 @@
             "liquidity_pool": {
               "$ref": "#/definitions/LedgerKeyLiquidityPool"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1619,8 +1601,7 @@
             "contract_data": {
               "$ref": "#/definitions/LedgerKeyContractData"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1631,8 +1612,7 @@
             "contract_code": {
               "$ref": "#/definitions/LedgerKeyContractCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1643,8 +1623,7 @@
             "config_setting": {
               "$ref": "#/definitions/LedgerKeyConfigSetting"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -1655,8 +1634,7 @@
             "ttl": {
               "$ref": "#/definitions/LedgerKeyTtl"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1769,8 +1747,7 @@
       ],
       "properties": {
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "seller_id": {
           "$ref": "#/definitions/AccountId"
@@ -1818,12 +1795,10 @@
       ],
       "properties": {
         "buying": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "selling": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1876,8 +1851,7 @@
             "liquidity_pool_constant_product": {
               "$ref": "#/definitions/LiquidityPoolEntryConstantProduct"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -1896,20 +1870,16 @@
           "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
         },
         "pool_shares_trust_line_count": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_a": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "reserve_b": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "total_pool_shares": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -1928,8 +1898,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "buying": {
           "$ref": "#/definitions/Asset"
@@ -1943,8 +1912,7 @@
           "minimum": 0.0
         },
         "offer_id": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "price": {
           "$ref": "#/definitions/Price"
@@ -2030,8 +1998,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2042,8 +2009,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2054,8 +2020,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2066,8 +2031,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2078,8 +2042,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2090,8 +2053,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2102,8 +2064,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2114,8 +2075,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2126,8 +2086,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2138,8 +2097,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2191,8 +2149,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2205,7 +2162,7 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -2223,8 +2180,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2235,8 +2191,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2249,8 +2204,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2262,8 +2216,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2272,12 +2225,9 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2286,11 +2236,9 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2301,8 +2249,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2313,8 +2260,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2325,8 +2271,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2337,8 +2282,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2349,8 +2293,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2361,8 +2304,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2373,8 +2315,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2385,8 +2326,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2397,8 +2337,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2416,8 +2355,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2435,8 +2373,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2447,20 +2384,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "ledger_key_nonce"
-          ],
-          "properties": {
-            "ledger_key_nonce": {
-              "$ref": "#/definitions/ScNonceKey"
-            }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2471,8 +2395,18 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ledger_key_nonce"
+          ],
+          "properties": {
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
+            }
+          }
         }
       ]
     },
@@ -2486,8 +2420,7 @@
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "Signer": {
       "description": "Signer is an XDR Struct defines as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
@@ -2522,12 +2455,12 @@
       ]
     },
     "StateArchivalSettings": {
-      "description": "StateArchivalSettings is an XDR Struct defines as:\n\n```text struct StateArchivalSettings { uint32 maxEntryTTL; uint32 minTemporaryTTL; uint32 minPersistentTTL;\n\n// rent_fee = wfee_rate_average / rent_rate_denominator_for_type int64 persistentRentRateDenominator; int64 tempRentRateDenominator;\n\n// max number of entries that emit archival meta in a single ledger uint32 maxEntriesToArchive;\n\n// Number of snapshots to use when calculating average BucketList size uint32 bucketListSizeWindowSampleSize;\n\n// How often to sample the BucketList size for the average, in ledgers uint32 bucketListWindowSamplePeriod;\n\n// Maximum number of bytes that we scan for eviction per ledger uint32 evictionScanSize;\n\n// Lowest BucketList level to be scanned to evict entries uint32 startingEvictionScanLevel; }; ```",
+      "description": "StateArchivalSettings is an XDR Struct defines as:\n\n```text struct StateArchivalSettings { uint32 maxEntryTTL; uint32 minTemporaryTTL; uint32 minPersistentTTL;\n\n// rent_fee = wfee_rate_average / rent_rate_denominator_for_type int64 persistentRentRateDenominator; int64 tempRentRateDenominator;\n\n// max number of entries that emit archival meta in a single ledger uint32 maxEntriesToArchive;\n\n// Number of snapshots to use when calculating average live Soroban State size uint32 liveSorobanStateSizeWindowSampleSize;\n\n// How often to sample the live Soroban State size for the average, in ledgers uint32 liveSorobanStateSizeWindowSamplePeriod;\n\n// Maximum number of bytes that we scan for eviction per ledger uint32 evictionScanSize;\n\n// Lowest BucketList level to be scanned to evict entries uint32 startingEvictionScanLevel; }; ```",
       "type": "object",
       "required": [
-        "bucket_list_size_window_sample_size",
-        "bucket_list_window_sample_period",
         "eviction_scan_size",
+        "live_soroban_state_size_window_sample_period",
+        "live_soroban_state_size_window_sample_size",
         "max_entries_to_archive",
         "max_entry_ttl",
         "min_persistent_ttl",
@@ -2537,17 +2470,17 @@
         "temp_rent_rate_denominator"
       ],
       "properties": {
-        "bucket_list_size_window_sample_size": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "bucket_list_window_sample_period": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
         "eviction_scan_size": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "live_soroban_state_size_window_sample_period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "live_soroban_state_size_window_sample_size": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -2573,8 +2506,7 @@
           "minimum": 0.0
         },
         "persistent_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "starting_eviction_scan_level": {
           "type": "integer",
@@ -2582,8 +2514,7 @@
           "minimum": 0.0
         },
         "temp_rent_rate_denominator": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2609,9 +2540,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "TrustLineAsset": {
       "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
@@ -2631,8 +2560,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2643,8 +2571,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -2655,8 +2582,7 @@
             "pool_share": {
               "$ref": "#/definitions/PoolId"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2679,8 +2605,7 @@
           "$ref": "#/definitions/TrustLineAsset"
         },
         "balance": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "ext": {
           "$ref": "#/definitions/TrustLineEntryExt"
@@ -2691,8 +2616,7 @@
           "minimum": 0.0
         },
         "limit": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2714,8 +2638,7 @@
             "v1": {
               "$ref": "#/definitions/TrustLineEntryV1"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2777,8 +2700,7 @@
             "v2": {
               "$ref": "#/definitions/TrustLineEntryExtensionV2"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -2805,56 +2727,10 @@
       }
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     }
   }
 }

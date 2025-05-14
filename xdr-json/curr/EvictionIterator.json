@@ -9,10 +9,11 @@
     "is_curr_bucket"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "bucket_file_offset": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "bucket_list_level": {
       "type": "integer",
@@ -22,5 +23,6 @@
     "is_curr_bucket": {
       "type": "boolean"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

@@ -12,10 +12,15 @@
         "claimant_type_v0": {
           "$ref": "#/definitions/ClaimantV0"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -42,8 +47,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -58,8 +62,7 @@
               },
               "maxItems": 2
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -77,8 +80,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -87,11 +89,9 @@
           ],
           "properties": {
             "before_absolute_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -100,11 +100,9 @@
           ],
           "properties": {
             "before_relative_time": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

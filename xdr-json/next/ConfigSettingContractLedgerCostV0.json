@@ -1,53 +1,44 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ConfigSettingContractLedgerCostV0",
-  "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of ledger entry read operations per ledger uint32 ledgerMaxReadLedgerEntries; // Maximum number of bytes that can be read per ledger uint32 ledgerMaxReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of ledger entry read operations per transaction uint32 txMaxReadLedgerEntries; // Maximum number of bytes that can be read per transaction uint32 txMaxReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeReadLedgerEntry;  // Fee per ledger entry read int64 feeWriteLedgerEntry; // Fee per ledger entry write\n\nint64 feeRead1KB;  // Fee for reading 1KB\n\n// The following parameters determine the write fee per 1KB. // Write fee grows linearly until bucket list reaches this size int64 bucketListTargetSizeBytes; // Fee per 1KB write when the bucket list is empty int64 writeFee1KBBucketListLow; // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes` int64 writeFee1KBBucketListHigh; // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes` uint32 bucketListWriteFeeGrowthFactor; }; ```",
+  "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of disk entry read operations per ledger uint32 ledgerMaxDiskReadEntries; // Maximum number of bytes of disk reads that can be performed per ledger uint32 ledgerMaxDiskReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of disk entry read operations per transaction uint32 txMaxDiskReadEntries; // Maximum number of bytes of disk reads that can be performed per transaction uint32 txMaxDiskReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeDiskReadLedgerEntry;  // Fee per disk ledger entry read int64 feeWriteLedgerEntry;     // Fee per ledger entry write\n\nint64 feeDiskRead1KB;          // Fee for reading 1KB disk\n\n// The following parameters determine the write fee per 1KB. // Rent fee grows linearly until soroban state reaches this size int64 sorobanStateTargetSizeBytes; // Fee per 1KB rent when the soroban state is empty int64 rentFee1KBSorobanStateSizeLow; // Fee per 1KB rent when the soroban state has reached `sorobanStateTargetSizeBytes` int64 rentFee1KBSorobanStateSizeHigh; // Rent fee multiplier for any additional data past the first `sorobanStateTargetSizeBytes` uint32 sorobanStateRentFeeGrowthFactor; }; ```",
   "type": "object",
   "required": [
-    "bucket_list_target_size_bytes",
-    "bucket_list_write_fee_growth_factor",
-    "fee_read1_kb",
-    "fee_read_ledger_entry",
+    "fee_disk_read1_kb",
+    "fee_disk_read_ledger_entry",
     "fee_write_ledger_entry",
-    "ledger_max_read_bytes",
-    "ledger_max_read_ledger_entries",
+    "ledger_max_disk_read_bytes",
+    "ledger_max_disk_read_entries",
     "ledger_max_write_bytes",
     "ledger_max_write_ledger_entries",
-    "tx_max_read_bytes",
-    "tx_max_read_ledger_entries",
+    "rent_fee1_kb_soroban_state_size_high",
+    "rent_fee1_kb_soroban_state_size_low",
+    "soroban_state_rent_fee_growth_factor",
+    "soroban_state_target_size_bytes",
+    "tx_max_disk_read_bytes",
+    "tx_max_disk_read_entries",
     "tx_max_write_bytes",
-    "tx_max_write_ledger_entries",
-    "write_fee1_kb_bucket_list_high",
-    "write_fee1_kb_bucket_list_low"
+    "tx_max_write_ledger_entries"
   ],
   "properties": {
-    "bucket_list_target_size_bytes": {
-      "type": "integer",
-      "format": "int64"
+    "$schema": {
+      "type": "string"
     },
-    "bucket_list_write_fee_growth_factor": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
+    "fee_disk_read1_kb": {
+      "type": "string"
     },
-    "fee_read1_kb": {
-      "type": "integer",
-      "format": "int64"
-    },
-    "fee_read_ledger_entry": {
-      "type": "integer",
-      "format": "int64"
+    "fee_disk_read_ledger_entry": {
+      "type": "string"
     },
     "fee_write_ledger_entry": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
-    "ledger_max_read_bytes": {
+    "ledger_max_disk_read_bytes": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
     },
-    "ledger_max_read_ledger_entries": {
+    "ledger_max_disk_read_entries": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
@@ -62,12 +53,26 @@
       "format": "uint32",
       "minimum": 0.0
     },
-    "tx_max_read_bytes": {
+    "rent_fee1_kb_soroban_state_size_high": {
+      "type": "string"
+    },
+    "rent_fee1_kb_soroban_state_size_low": {
+      "type": "string"
+    },
+    "soroban_state_rent_fee_growth_factor": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
     },
-    "tx_max_read_ledger_entries": {
+    "soroban_state_target_size_bytes": {
+      "type": "string"
+    },
+    "tx_max_disk_read_bytes": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "tx_max_disk_read_entries": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
@@ -81,14 +86,7 @@
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
-    },
-    "write_fee1_kb_bucket_list_high": {
-      "type": "integer",
-      "format": "int64"
-    },
-    "write_fee1_kb_bucket_list_low": {
-      "type": "integer",
-      "format": "int64"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

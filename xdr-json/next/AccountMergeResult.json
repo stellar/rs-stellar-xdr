@@ -22,11 +22,15 @@
       ],
       "properties": {
         "success": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
-  ]
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false
 }

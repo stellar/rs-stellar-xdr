@@ -17,6 +17,7 @@ macro_rules! impl_json_schema_string {
 
 impl_json_schema_string!(PublicKey);
 impl_json_schema_string!(AccountId);
+impl_json_schema_string!(ContractId);
 impl_json_schema_string!(MuxedAccount);
 impl_json_schema_string!(MuxedAccountMed25519);
 impl_json_schema_string!(MuxedEd25519Account);
@@ -29,3 +30,7 @@ impl_json_schema_string!(AssetCode4);
 impl_json_schema_string!(AssetCode12);
 impl_json_schema_string!(ClaimableBalanceId);
 impl_json_schema_string!(PoolId);
+impl_json_schema_string!(Int128Parts);
+impl_json_schema_string!(UInt128Parts);
+impl_json_schema_string!(Int256Parts);
+impl_json_schema_string!(UInt256Parts);

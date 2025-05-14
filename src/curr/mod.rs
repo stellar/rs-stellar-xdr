@@ -1,3 +1,4 @@
+#[allow(clippy::empty_line_after_doc_comments)]
 mod generated;
 mod ledgerkey;
 pub use generated::*;
@@ -15,3 +16,5 @@ pub use scval_validations::*;
 
 #[cfg(feature = "alloc")]
 mod scmap;
+
+mod tx_auths;

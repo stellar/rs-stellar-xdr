@@ -10,9 +10,11 @@
     "selling"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "amount": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "buying": {
       "$ref": "#/definitions/Asset"
@@ -24,6 +26,7 @@
       "$ref": "#/definitions/Asset"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -78,8 +81,7 @@
             "credit_alphanum4": {
               "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -90,8 +92,7 @@
             "credit_alphanum12": {
               "$ref": "#/definitions/AlphaNum12"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },

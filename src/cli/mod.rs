@@ -3,7 +3,6 @@ pub mod decode;
 pub mod encode;
 pub mod guess;
 pub mod random;
-pub mod skip_whitespace;
 pub mod types;
 mod util;
 mod version;

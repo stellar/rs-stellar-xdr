@@ -1,88 +1,86 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "DiagnosticEvents",
-  "description": "DiagnosticEvents is an XDR Typedef defines as:\n\n```text typedef DiagnosticEvent DiagnosticEvents<>; ```",
+  "title": "SorobanAuthorizationEntries",
+  "description": "SorobanAuthorizationEntries is an XDR Typedef defines as:\n\n```text typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>; ```",
   "type": "array",
   "items": {
-    "$ref": "#/definitions/DiagnosticEvent"
+    "$ref": "#/definitions/SorobanAuthorizationEntry"
   },
   "maxItems": 4294967295,
   "definitions": {
-    "ContractEvent": {
-      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nHash* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
+    "AccountId": {
+      "type": "string"
+    },
+    "AlphaNum12": {
+      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
-        "body",
-        "ext",
-        "type_"
+        "asset_code",
+        "issuer"
       ],
       "properties": {
-        "body": {
-          "$ref": "#/definitions/ContractEventBody"
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode12"
         },
-        "contract_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "maxLength": 64,
-          "minLength": 64,
-          "contentEncoding": "hex",
-          "contentMediaType": "application/binary"
-        },
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "type_": {
-          "$ref": "#/definitions/ContractEventType"
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
         }
       }
     },
-    "ContractEventBody": {
-      "description": "ContractEventBody is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } ```",
+    "AlphaNum4": {
+      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode4"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "Asset": {
+      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "native"
+          ]
+        },
         {
           "type": "object",
           "required": [
-            "v0"
+            "credit_alphanum4"
           ],
           "properties": {
-            "v0": {
-              "$ref": "#/definitions/ContractEventV0"
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
             }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "ContractEventType": {
-      "description": "ContractEventType is an XDR Enum defines as:\n\n```text enum ContractEventType { SYSTEM = 0, CONTRACT = 1, DIAGNOSTIC = 2 }; ```",
-      "type": "string",
-      "enum": [
-        "system",
-        "contract",
-        "diagnostic"
-      ]
-    },
-    "ContractEventV0": {
-      "description": "ContractEventV0 is an XDR NestedStruct defines as:\n\n```text struct { SCVal topics<>; SCVal data; } ```",
-      "type": "object",
-      "required": [
-        "data",
-        "topics"
-      ],
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/ScVal"
+          }
         },
-        "topics": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ScVal"
-          },
-          "maxItems": 4294967295
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum12"
+          ],
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          }
         }
-      }
+      ]
+    },
+    "AssetCode12": {
+      "type": "string"
+    },
+    "AssetCode4": {
+      "type": "string"
     },
     "ContractExecutable": {
       "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
@@ -106,87 +104,128 @@
               "contentEncoding": "hex",
               "contentMediaType": "application/binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
-    "DiagnosticEvent": {
-      "description": "DiagnosticEvent is an XDR Struct defines as:\n\n```text struct DiagnosticEvent { bool inSuccessfulContractCall; ContractEvent event; }; ```",
+    "ContractIdPreimage": {
+      "description": "ContractIdPreimage is an XDR Union defines as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/ContractIdPreimageFromAddress"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "asset"
+          ],
+          "properties": {
+            "asset": {
+              "$ref": "#/definitions/Asset"
+            }
+          }
+        }
+      ]
+    },
+    "ContractIdPreimageFromAddress": {
+      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defines as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
       "type": "object",
       "required": [
-        "event",
-        "in_successful_contract_call"
+        "address",
+        "salt"
       ],
       "properties": {
-        "event": {
-          "$ref": "#/definitions/ContractEvent"
+        "address": {
+          "$ref": "#/definitions/ScAddress"
         },
-        "in_successful_contract_call": {
-          "type": "boolean"
+        "salt": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "CreateContractArgs": {
+      "description": "CreateContractArgs is an XDR Struct defines as:\n\n```text struct CreateContractArgs { ContractIDPreimage contractIDPreimage; ContractExecutable executable; }; ```",
+      "type": "object",
+      "required": [
+        "contract_id_preimage",
+        "executable"
+      ],
+      "properties": {
+        "contract_id_preimage": {
+          "$ref": "#/definitions/ContractIdPreimage"
+        },
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
+        }
+      }
+    },
+    "CreateContractArgsV2": {
+      "description": "CreateContractArgsV2 is an XDR Struct defines as:\n\n```text struct CreateContractArgsV2 { ContractIDPreimage contractIDPreimage; ContractExecutable executable; // Arguments of the contract's constructor. SCVal constructorArgs<>; }; ```",
+      "type": "object",
+      "required": [
+        "constructor_args",
+        "contract_id_preimage",
+        "executable"
+      ],
+      "properties": {
+        "constructor_args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScVal"
+          },
+          "maxItems": 4294967295
+        },
+        "contract_id_preimage": {
+          "$ref": "#/definitions/ContractIdPreimage"
+        },
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
         }
       }
     },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
-      "type": "string",
-      "enum": [
-        "v0"
-      ]
+      "type": "string"
     },
     "Int128Parts": {
-      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "Int256Parts": {
-      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
+      "type": "string"
+    },
+    "InvokeContractArgs": {
+      "description": "InvokeContractArgs is an XDR Struct defines as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
       "type": "object",
       "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
+        "args",
+        "contract_address",
+        "function_name"
       ],
       "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "int64"
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScVal"
+          },
+          "maxItems": 4294967295
         },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+        "contract_address": {
+          "$ref": "#/definitions/ScAddress"
         },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
+        "function_name": {
+          "$ref": "#/definitions/ScSymbol"
         }
       }
     },
@@ -235,8 +274,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -247,8 +285,7 @@
             "wasm_vm": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -259,8 +296,7 @@
             "context": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -271,8 +307,7 @@
             "storage": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -283,8 +318,7 @@
             "object": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -295,8 +329,7 @@
             "crypto": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -307,8 +340,7 @@
             "events": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -319,8 +351,7 @@
             "budget": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -331,8 +362,7 @@
             "value": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -343,8 +373,7 @@
             "auth": {
               "$ref": "#/definitions/ScErrorCode"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -396,8 +425,7 @@
       ],
       "properties": {
         "nonce": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -410,7 +438,7 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -428,8 +456,7 @@
             "bool": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -440,8 +467,7 @@
             "error": {
               "$ref": "#/definitions/ScError"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -454,8 +480,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -467,8 +492,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -477,12 +501,9 @@
           ],
           "properties": {
             "u64": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -491,11 +512,9 @@
           ],
           "properties": {
             "i64": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -506,8 +525,7 @@
             "timepoint": {
               "$ref": "#/definitions/TimePoint"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -518,8 +536,7 @@
             "duration": {
               "$ref": "#/definitions/Duration"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -530,8 +547,7 @@
             "u128": {
               "$ref": "#/definitions/UInt128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -542,8 +558,7 @@
             "i128": {
               "$ref": "#/definitions/Int128Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -554,8 +569,7 @@
             "u256": {
               "$ref": "#/definitions/UInt256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -566,8 +580,7 @@
             "i256": {
               "$ref": "#/definitions/Int256Parts"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -578,8 +591,7 @@
             "bytes": {
               "$ref": "#/definitions/ScBytes"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -590,8 +602,7 @@
             "string": {
               "$ref": "#/definitions/ScString"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -602,8 +613,7 @@
             "symbol": {
               "$ref": "#/definitions/ScSymbol"
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -621,8 +631,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -640,8 +649,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -652,20 +660,7 @@
             "address": {
               "$ref": "#/definitions/ScAddress"
             }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "ledger_key_nonce"
-          ],
-          "properties": {
-            "ledger_key_nonce": {
-              "$ref": "#/definitions/ScNonceKey"
-            }
-          },
-          "additionalProperties": false
+          }
         },
         {
           "type": "object",
@@ -676,8 +671,18 @@
             "contract_instance": {
               "$ref": "#/definitions/ScContractInstance"
             }
-          },
-          "additionalProperties": false
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ledger_key_nonce"
+          ],
+          "properties": {
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
+            }
+          }
         }
       ]
     },
@@ -689,6 +694,128 @@
       },
       "maxItems": 4294967295
     },
+    "SorobanAddressCredentials": {
+      "description": "SorobanAddressCredentials is an XDR Struct defines as:\n\n```text struct SorobanAddressCredentials { SCAddress address; int64 nonce; uint32 signatureExpirationLedger; SCVal signature; }; ```",
+      "type": "object",
+      "required": [
+        "address",
+        "nonce",
+        "signature",
+        "signature_expiration_ledger"
+      ],
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "nonce": {
+          "type": "string"
+        },
+        "signature": {
+          "$ref": "#/definitions/ScVal"
+        },
+        "signature_expiration_ledger": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "SorobanAuthorizationEntry": {
+      "description": "SorobanAuthorizationEntry is an XDR Struct defines as:\n\n```text struct SorobanAuthorizationEntry { SorobanCredentials credentials; SorobanAuthorizedInvocation rootInvocation; }; ```",
+      "type": "object",
+      "required": [
+        "credentials",
+        "root_invocation"
+      ],
+      "properties": {
+        "credentials": {
+          "$ref": "#/definitions/SorobanCredentials"
+        },
+        "root_invocation": {
+          "$ref": "#/definitions/SorobanAuthorizedInvocation"
+        }
+      }
+    },
+    "SorobanAuthorizedFunction": {
+      "description": "SorobanAuthorizedFunction is an XDR Union defines as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; // This variant of auth payload for creating new contract instances // doesn't allow specifying the constructor arguments, creating contracts // with constructors that take arguments is only possible by authorizing // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` // (protocol 22+). case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; // This variant of auth payload for creating new contract instances // is only accepted in and after protocol 22. It allows authorizing the // contract constructor arguments. case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN: CreateContractArgsV2 createContractV2HostFn; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "contract_fn"
+          ],
+          "properties": {
+            "contract_fn": {
+              "$ref": "#/definitions/InvokeContractArgs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "create_contract_host_fn"
+          ],
+          "properties": {
+            "create_contract_host_fn": {
+              "$ref": "#/definitions/CreateContractArgs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "create_contract_v2_host_fn"
+          ],
+          "properties": {
+            "create_contract_v2_host_fn": {
+              "$ref": "#/definitions/CreateContractArgsV2"
+            }
+          }
+        }
+      ]
+    },
+    "SorobanAuthorizedInvocation": {
+      "description": "SorobanAuthorizedInvocation is an XDR Struct defines as:\n\n```text struct SorobanAuthorizedInvocation { SorobanAuthorizedFunction function; SorobanAuthorizedInvocation subInvocations<>; }; ```",
+      "type": "object",
+      "required": [
+        "function",
+        "sub_invocations"
+      ],
+      "properties": {
+        "function": {
+          "$ref": "#/definitions/SorobanAuthorizedFunction"
+        },
+        "sub_invocations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SorobanAuthorizedInvocation"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "SorobanCredentials": {
+      "description": "SorobanCredentials is an XDR Union defines as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "source_account"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/SorobanAddressCredentials"
+            }
+          }
+        }
+      ]
+    },
     "StringM<32>": {
       "type": "string",
       "maxLength": 32
@@ -699,61 +826,13 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     },
     "UInt128Parts": {
-      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi",
-        "lo"
-      ],
-      "properties": {
-        "hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     },
     "UInt256Parts": {
-      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
-      "type": "object",
-      "required": [
-        "hi_hi",
-        "hi_lo",
-        "lo_hi",
-        "lo_lo"
-      ],
-      "properties": {
-        "hi_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "hi_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_hi": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "lo_lo": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+      "type": "string"
     }
   }
 }

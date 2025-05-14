@@ -8,6 +8,9 @@
     "data_name"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "account_id": {
       "$ref": "#/definitions/AccountId"
     },
@@ -15,6 +18,7 @@
       "$ref": "#/definitions/String64"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

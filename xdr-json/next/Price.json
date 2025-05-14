@@ -8,6 +8,9 @@
     "n"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "d": {
       "type": "integer",
       "format": "int32"
@@ -16,5 +19,6 @@
       "type": "integer",
       "format": "int32"
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

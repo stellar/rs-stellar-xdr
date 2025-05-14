@@ -19,15 +19,28 @@
 //# - AssetCode4
 //# - AssetCode12
 //#
+//# ## Integers
+//# - Int128Parts
+//# - UInt128Parts
+//# - Int256Parts
+//# - UInt256Parts
+//#
 //# ## Other
 //# - ClaimableBalanceId
 //# - PoolId
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
-    MuxedAccountMed25519, MuxedEd25519Account, NodeId, PoolId, PublicKey, ScAddress, SignerKey,
-    SignerKeyEd25519SignedPayload, Uint256,
+    super::num128::{
+        i128_str_from_pieces, i128_str_into_pieces, u128_str_from_pieces, u128_str_into_pieces,
+    },
+    super::num256::{
+        i256_str_from_pieces, i256_str_into_pieces, u256_str_from_pieces, u256_str_into_pieces,
+    },
+    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
+    Int128Parts, Int256Parts, MuxedAccount, MuxedAccountMed25519, MuxedEd25519Account, NodeId,
+    PoolId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, UInt128Parts,
+    UInt256Parts, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -72,16 +85,36 @@ impl core::str::FromStr for AccountId {
     }
 }
 
+impl core::fmt::Display for ContractId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let k = stellar_strkey::Contract(self.0 .0);
+        let s = k.to_string();
+        f.write_str(&s)?;
+        Ok(())
+    }
+}
+
+impl core::str::FromStr for ContractId {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let stellar_strkey::Contract(h) = stellar_strkey::Contract::from_str(s)?;
+        Ok(ContractId(Hash(h)))
+    }
+}
+
 impl core::fmt::Display for PoolId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        self.0.fmt(f)
+        let PoolId(Hash(p_id)) = self.clone();
+        let key = stellar_strkey::Strkey::LiquidityPool(stellar_strkey::LiquidityPool(p_id));
+        key.fmt(f)
     }
 }
 
 impl core::str::FromStr for PoolId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        Ok(PoolId(Hash::from_str(s)?))
+        let pool_key = stellar_strkey::LiquidityPool::from_str(s)?;
+        Ok(PoolId(Hash(pool_key.0)))
     }
 }
 
@@ -131,7 +164,9 @@ impl core::str::FromStr for MuxedAccount {
             | stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_)
-            | stellar_strkey::Strkey::Contract(_) => Err(Error::Invalid),
+            | stellar_strkey::Strkey::Contract(_)
+            | stellar_strkey::Strkey::LiquidityPool(_)
+            | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
         }
     }
 }
@@ -215,7 +250,9 @@ impl core::str::FromStr for SignerKey {
             )),
             stellar_strkey::Strkey::PrivateKeyEd25519(_)
             | stellar_strkey::Strkey::Contract(_)
-            | stellar_strkey::Strkey::MuxedAccountEd25519(_) => Err(Error::Invalid),
+            | stellar_strkey::Strkey::MuxedAccountEd25519(_)
+            | stellar_strkey::Strkey::LiquidityPool(_)
+            | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
         }
     }
 }
@@ -279,7 +316,7 @@ impl core::str::FromStr for ScAddress {
                 ScAddress::Account(AccountId(PublicKey::PublicKeyTypeEd25519(Uint256(k)))),
             ),
             stellar_strkey::Strkey::Contract(stellar_strkey::Contract(h)) => {
-                Ok(ScAddress::Contract(Hash(h)))
+                Ok(ScAddress::Contract(ContractId(Hash(h))))
             }
             stellar_strkey::Strkey::MuxedAccountEd25519(muxed_ed25519) => {
                 Ok(ScAddress::MuxedAccount(MuxedEd25519Account {
@@ -287,6 +324,14 @@ impl core::str::FromStr for ScAddress {
                     ed25519: Uint256(muxed_ed25519.ed25519),
                 }))
             }
+            stellar_strkey::Strkey::LiquidityPool(liquidity_pool) => {
+                Ok(ScAddress::LiquidityPool(PoolId(Hash(liquidity_pool.0))))
+            }
+            stellar_strkey::Strkey::ClaimableBalance(stellar_strkey::ClaimableBalance::V0(
+                claimable_balance,
+            )) => Ok(ScAddress::ClaimableBalance(
+                ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(claimable_balance)),
+            )),
             stellar_strkey::Strkey::PrivateKeyEd25519(_)
             | stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
@@ -299,7 +344,7 @@ impl core::fmt::Display for ScAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             ScAddress::Account(a) => a.fmt(f),
-            ScAddress::Contract(Hash(h)) => {
+            ScAddress::Contract(ContractId(Hash(h))) => {
                 let k = stellar_strkey::Contract(*h);
                 let s = k.to_string();
                 f.write_str(&s)
@@ -314,7 +359,6 @@ impl core::fmt::Display for ScAddress {
                 let s = k.to_string();
                 f.write_str(&s)
             }
-            // TODO: Use strkey (https://github.com/stellar/rs-stellar-xdr/issues/420)
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
         }
@@ -401,36 +445,87 @@ impl core::fmt::Display for AssetCode {
 impl core::str::FromStr for ClaimableBalanceId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        // This conversion to a hex string could be done by XDR encoding the
-        // self value, but because XDR encoding requires the std feature, this
-        // approach is taken instead to preserve the fact that the serde feature
-        // is available with alloc only.
-        let bytes = hex::decode(s).map_err(|_| Error::InvalidHex)?;
-        match bytes.as_slice() {
-            [0, 0, 0, 0, ..] => Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(
-                (&bytes[4..]).try_into()?,
-            ))),
-            _ => Err(Error::Invalid),
-        }
+        let stellar_strkey::ClaimableBalance::V0(cb_id) =
+            stellar_strkey::ClaimableBalance::from_str(s)?;
+        Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(cb_id)))
     }
 }
 
 impl core::fmt::Display for ClaimableBalanceId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // This conversion from a hex string could be done by XDR decoding the
-        // self value, but because XDR decoding requires the std feature, this
-        // approach is taken instead to preserve the fact that the serde feature
-        // is available with alloc only.
-        match self {
-            ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(bytes)) => {
-                for b in [0u8, 0, 0, 0] {
-                    write!(f, "{b:02x}")?;
-                }
-                for b in bytes {
-                    write!(f, "{b:02x}")?;
-                }
-            }
-        }
-        Ok(())
+        let ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(cb_id)) = self.clone();
+        let key =
+            stellar_strkey::Strkey::ClaimableBalance(stellar_strkey::ClaimableBalance::V0(cb_id));
+        key.fmt(f)
+    }
+}
+
+impl core::fmt::Display for UInt128Parts {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = u128_str_from_pieces(self.hi, self.lo);
+        write!(f, "{v}")
+    }
+}
+
+impl core::str::FromStr for UInt128Parts {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let (hi, lo) = u128_str_into_pieces(s).map_err(|_| Error::Invalid)?;
+        Ok(Self { hi, lo })
+    }
+}
+
+impl core::fmt::Display for Int128Parts {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = i128_str_from_pieces(self.hi, self.lo);
+        write!(f, "{v}")
+    }
+}
+
+impl core::str::FromStr for Int128Parts {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let (hi, lo) = i128_str_into_pieces(s).map_err(|_| Error::Invalid)?;
+        Ok(Self { hi, lo })
+    }
+}
+
+impl core::fmt::Display for UInt256Parts {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let u256 = u256_str_from_pieces(self.hi_hi, self.hi_lo, self.lo_hi, self.lo_lo);
+        write!(f, "{u256}")
+    }
+}
+
+impl core::str::FromStr for UInt256Parts {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let (hi_hi, hi_lo, lo_hi, lo_lo) = u256_str_into_pieces(s).map_err(|_| Error::Invalid)?;
+        Ok(Self {
+            hi_hi,
+            hi_lo,
+            lo_hi,
+            lo_lo,
+        })
+    }
+}
+
+impl core::fmt::Display for Int256Parts {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let i256 = i256_str_from_pieces(self.hi_hi, self.hi_lo, self.lo_hi, self.lo_lo);
+        write!(f, "{i256}")
+    }
+}
+
+impl core::str::FromStr for Int256Parts {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let (hi_hi, hi_lo, lo_hi, lo_lo) = i256_str_into_pieces(s).map_err(|_| Error::Invalid)?;
+        Ok(Self {
+            hi_hi,
+            hi_lo,
+            lo_hi,
+            lo_lo,
+        })
     }
 }

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ConfigSettingScpTiming",
+  "description": "ConfigSettingScpTiming is an XDR Struct defines as:\n\n```text struct ConfigSettingSCPTiming { uint32 ledgerTargetCloseTimeMilliseconds; uint32 nominationTimeoutInitialMilliseconds; uint32 nominationTimeoutIncrementMilliseconds; uint32 ballotTimeoutInitialMilliseconds; uint32 ballotTimeoutIncrementMilliseconds; }; ```",
+  "type": "object",
+  "required": [
+    "ballot_timeout_increment_milliseconds",
+    "ballot_timeout_initial_milliseconds",
+    "ledger_target_close_time_milliseconds",
+    "nomination_timeout_increment_milliseconds",
+    "nomination_timeout_initial_milliseconds"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "ballot_timeout_increment_milliseconds": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "ballot_timeout_initial_milliseconds": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "ledger_target_close_time_milliseconds": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "nomination_timeout_increment_milliseconds": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "nomination_timeout_initial_milliseconds": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "unevaluatedProperties": false
+}

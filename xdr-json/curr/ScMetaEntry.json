@@ -12,10 +12,15 @@
         "sc_meta_v0": {
           "$ref": "#/definitions/ScMetaV0"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "ScMetaV0": {
       "description": "ScMetaV0 is an XDR Struct defines as:\n\n```text struct SCMetaV0 { string key<>; string val<>; }; ```",

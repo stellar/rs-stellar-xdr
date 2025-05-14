@@ -8,6 +8,9 @@
     "min_time"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "max_time": {
       "$ref": "#/definitions/TimePoint"
     },
@@ -15,12 +18,11 @@
       "$ref": "#/definitions/TimePoint"
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     }
   }
 }

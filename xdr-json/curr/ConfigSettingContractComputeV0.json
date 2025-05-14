@@ -10,22 +10,23 @@
     "tx_memory_limit"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "fee_rate_per_instructions_increment": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "ledger_max_instructions": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "tx_max_instructions": {
-      "type": "integer",
-      "format": "int64"
+      "type": "string"
     },
     "tx_memory_limit": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

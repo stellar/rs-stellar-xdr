@@ -18,10 +18,15 @@
         "v1": {
           "$ref": "#/definitions/LedgerEntryExtensionV1"
         }
-      },
-      "additionalProperties": false
+      }
     }
   ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"

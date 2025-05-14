@@ -19,8 +19,7 @@
           "maxItems": 4,
           "minItems": 4
         }
-      },
-      "additionalProperties": false
+      }
     },
     {
       "type": "object",
@@ -38,8 +37,13 @@
           "maxItems": 16,
           "minItems": 16
         }
-      },
-      "additionalProperties": false
+      }
     }
-  ]
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false
 }

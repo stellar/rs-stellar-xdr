@@ -10,6 +10,9 @@
     "signer_sponsoring_i_ds"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "ext": {
       "$ref": "#/definitions/AccountEntryExtensionV2Ext"
     },
@@ -31,6 +34,7 @@
       "maxItems": 20
     }
   },
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExtensionV2Ext": {
       "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
@@ -50,8 +54,7 @@
             "v3": {
               "$ref": "#/definitions/AccountEntryExtensionV3"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
@@ -100,9 +103,7 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "type": "string"
     }
   }
 }

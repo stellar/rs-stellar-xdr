@@ -55,7 +55,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "cf936606885dd265082e553aa433c2cf47b720b6d58839b154cf71096b885d1e",
+        "6353fb11b577c17a8a96d4330f95a5d56815b846737654d59d8d6451f27e94fa",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
@@ -26594,12 +26594,18 @@ impl WriteXdr for LedgerCloseMetaV1 {
 ///     // other misc information attached to the ledger close
 ///     SCPHistoryEntry scpInfo<>;
 ///
-///     // Size in bytes of live Soroban state, to support downstream
+///     // Size in bytes of BucketList, to support downstream
 ///     // systems calculating storage fees correctly.
-///     uint64 totalByteSizeOfLiveSorobanState;
+///     uint64 totalByteSizeOfBucketList;
 ///
-///     // TTL and data/code keys that have been evicted at this ledger.
-///     LedgerKey evictedKeys<>;
+///     // Temp keys and all TTL keys that are being evicted at this ledger.
+///     // Note that this can contain TTL keys for both persistent and temporary
+///     // entries, but the name is kept for legacy reasons.
+///     LedgerKey evictedTemporaryLedgerKeys<>;
+///
+///     // Archived persistent ledger entries that are being
+///     // evicted at this ledger.
+///     LedgerEntry evictedPersistentLedgerEntries<>;
 /// };
 /// ```
 ///
@@ -26625,8 +26631,9 @@ pub struct LedgerCloseMetaV2 {
         all(feature = "serde", feature = "alloc"),
         serde_as(as = "NumberOrString")
     )]
-    pub total_byte_size_of_live_soroban_state: u64,
-    pub evicted_keys: VecM<LedgerKey>,
+    pub total_byte_size_of_bucket_list: u64,
+    pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
+    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
 }
 
 impl ReadXdr for LedgerCloseMetaV2 {
@@ -26640,8 +26647,9 @@ impl ReadXdr for LedgerCloseMetaV2 {
                 tx_processing: VecM::<TransactionResultMetaV1>::read_xdr(r)?,
                 upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
                 scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
-                total_byte_size_of_live_soroban_state: u64::read_xdr(r)?,
-                evicted_keys: VecM::<LedgerKey>::read_xdr(r)?,
+                total_byte_size_of_bucket_list: u64::read_xdr(r)?,
+                evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
+                evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
             })
         })
     }
@@ -26657,8 +26665,9 @@ impl WriteXdr for LedgerCloseMetaV2 {
             self.tx_processing.write_xdr(w)?;
             self.upgrades_processing.write_xdr(w)?;
             self.scp_info.write_xdr(w)?;
-            self.total_byte_size_of_live_soroban_state.write_xdr(w)?;
-            self.evicted_keys.write_xdr(w)?;
+            self.total_byte_size_of_bucket_list.write_xdr(w)?;
+            self.evicted_temporary_ledger_keys.write_xdr(w)?;
+            self.evicted_persistent_ledger_entries.write_xdr(w)?;
             Ok(())
         })
     }

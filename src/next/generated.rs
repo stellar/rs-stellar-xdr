@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "880f56f0a367f8f0e1b155a8f755fe4a9f909bdd22b0d4615aabc75a81ecff7d",
+        "5d1d926e4288b0f2d1ce9f891ca2cab97de9246381d57fca22e25a0d276c6682",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -5219,8 +5219,8 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 /// ```text
 /// struct ConfigSettingContractLedgerCostExtV0
 /// {
-///     // Maximum number of in-memory ledger entry read operations per transaction
-///     uint32 txMaxInMemoryReadEntries;
+///     // Maximum number of RO+RW entries in the transaction footprint.
+///     uint32 txMaxFootprintEntries;
 ///     // Fee per 1 KB of data written to the ledger.
 ///     // Unlike the rent fee, this is a flat fee that is charged for any ledger
 ///     // write, independent of the type of the entry being written.
@@ -5240,7 +5240,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractLedgerCostExtV0 {
-    pub tx_max_in_memory_read_entries: u32,
+    pub tx_max_footprint_entries: u32,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
         serde_as(as = "NumberOrString")
@@ -5253,7 +5253,7 @@ impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                tx_max_in_memory_read_entries: u32::read_xdr(r)?,
+                tx_max_footprint_entries: u32::read_xdr(r)?,
                 fee_write1_kb: i64::read_xdr(r)?,
             })
         })
@@ -5264,7 +5264,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.tx_max_in_memory_read_entries.write_xdr(w)?;
+            self.tx_max_footprint_entries.write_xdr(w)?;
             self.fee_write1_kb.write_xdr(w)?;
             Ok(())
         })

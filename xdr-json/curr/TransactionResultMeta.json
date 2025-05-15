@@ -831,17 +831,17 @@
       }
     },
     "ConfigSettingContractLedgerCostExtV0": {
-      "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of in-memory ledger entry read operations per transaction uint32 txMaxInMemoryReadEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
+      "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of RO+RW entries in the transaction footprint. uint32 txMaxFootprintEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
       "type": "object",
       "required": [
         "fee_write1_kb",
-        "tx_max_in_memory_read_entries"
+        "tx_max_footprint_entries"
       ],
       "properties": {
         "fee_write1_kb": {
           "type": "string"
         },
-        "tx_max_in_memory_read_entries": {
+        "tx_max_footprint_entries": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

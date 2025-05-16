@@ -1,0 +1,45 @@
+GIT
+  remote: https://github.com/stellar/xdrgen
+  revision: 3baa928dfb19dd3e04733fedc0503a9dec2eeb84
+  branch: custom-generators
+  specs:
+    xdrgen (0.1.3)
+      activesupport (~> 6)
+      concurrent-ruby (<= 1.3.4)
+      memoist (~> 0.11.0)
+      slop (~> 3.4)
+      treetop (~> 1.5.3)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (6.1.6.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      tzinfo (~> 2.0)
+      zeitwerk (~> 2.3)
+    concurrent-ruby (1.1.10)
+    i18n (1.12.0)
+      concurrent-ruby (~> 1.0)
+    memoist (0.11.0)
+    minitest (5.16.3)
+    polyglot (0.3.5)
+    slop (3.6.0)
+    treetop (1.5.3)
+      polyglot (~> 0.3)
+    tzinfo (2.0.5)
+      concurrent-ruby (~> 1.0)
+    zeitwerk (2.6.0)
+
+PLATFORMS
+  aarch64-linux
+  arm-linux
+  universal-darwin-21
+  x86_64-linux
+
+DEPENDENCIES
+  xdrgen!
+
+BUNDLED WITH
+   2.3.27

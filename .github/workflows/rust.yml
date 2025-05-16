@@ -139,7 +139,7 @@ jobs:
         sys:
         - os: ubuntu-latest
           target: wasm32v1-none
-          cargo-hack-feature-options: '--exclude-features default --each-feature curr,next'
+          cargo-hack-feature-options: --exclude-features default --each-feature curr,next
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
           cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand

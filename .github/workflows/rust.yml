@@ -139,11 +139,11 @@ jobs:
         sys:
         - os: ubuntu-latest
           target: wasm32v1-none
-          cargo-hack-feature-options: '--feature-powerset --exclude-features rand'
+          cargo-hack-feature-options: --feature-powerset --exclude-features rand --group-features base64,serde,serde_json,schemars,hex
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
+          cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand
     uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
     with:
       runs-on: ${{ matrix.sys.os }}
       target: ${{ matrix.sys.target }}
-      cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex

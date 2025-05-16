@@ -1,6 +1,8 @@
 require 'xdrgen'
 require_relative 'generator/generator'
 
+puts "Generating..."
+
 # Operate on the root directory of the repo.
 Dir.chdir("..")
 

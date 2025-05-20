@@ -50,16 +50,18 @@ xdr/next-version: $(wildcard .git/modules/xdr/next/**/*) $(wildcard xdr/next/*.x
 	git submodule status -- xdr/next | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr/next-version
 
 xdr-json/curr: src/curr/generated.rs
+	mkdir -p xdr-json/curr
 	cargo run --features cli -- +curr types schema-files --out-dir xdr-json/curr
 
 xdr-json/next: src/next/generated.rs
+	mkdir -p xdr-json/next
 	cargo run --features cli -- +next types schema-files --out-dir xdr-json/next
 
 clean:
 	rm -f src/*/generated.rs
 	rm -f xdr/*-version
-	rm -f xdr-json/curr/*.json
-	rm -f xdr-json/next/*.json
+	rm -fr xdr-json/curr
+	rm -fr xdr-json/next
 	cargo clean --quiet
 
 fmt:

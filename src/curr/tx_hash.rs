@@ -1,6 +1,7 @@
 use super::{
     FeeBumpTransaction, FeeBumpTransactionEnvelope, Hash, Limits, Transaction,
-    TransactionEnvelope, TransactionV0, TransactionV0Envelope, TransactionV1Envelope, WriteXdr,
+    TransactionEnvelope, TransactionSignaturePayload, TransactionSignaturePayloadTaggedTransaction,
+    TransactionV0, TransactionV0Envelope, TransactionV1Envelope, WriteXdr,
 };
 
 #[cfg(feature = "std")]
@@ -86,19 +87,29 @@ impl Transaction {
     ///
     /// The transaction hash as `Hash`.
     pub fn hash(&self, network_id: &[u8]) -> Result<Hash, super::Error> {
+        // Hash the network ID
         let mut hasher = Sha256::new();
-        
-        // Add network ID
         hasher.update(network_id);
+        let network_id_hash_bytes = hasher.finalize();
         
-        // Add the ENVELOPE_TYPE_TX (2)
-        hasher.update([0, 0, 0, 2]);
+        // Create a Hash from the network ID hash
+        let mut hash_bytes = [0u8; 32];
+        hash_bytes.copy_from_slice(&network_id_hash_bytes);
+        let network_id_hash = Hash(hash_bytes);
         
-        // Add transaction data
-        let tx_bytes = self.to_xdr(Limits::none())?;
-        hasher.update(tx_bytes);
+        // Create the TransactionSignaturePayload
+        let payload = TransactionSignaturePayload {
+            network_id: network_id_hash,
+            tagged_transaction: TransactionSignaturePayloadTaggedTransaction::Tx(self.clone()),
+        };
         
+        // Hash the serialized payload
+        let payload_bytes = payload.to_xdr(Limits::none())?;
+        let mut hasher = Sha256::new();
+        hasher.update(&payload_bytes);
         let result = hasher.finalize();
+        
+        // Create a Hash from the result
         let mut hash_bytes = [0u8; 32];
         hash_bytes.copy_from_slice(&result);
         
@@ -118,10 +129,23 @@ impl TransactionV0 {
     ///
     /// The transaction hash as `Hash`.
     pub fn hash(&self, network_id: &[u8]) -> Result<Hash, super::Error> {
+        // Hash the network ID
+        let mut hasher = Sha256::new();
+        hasher.update(network_id);
+        let network_id_hash_bytes = hasher.finalize();
+        
+        // Create a Hash from the network ID hash
+        let mut hash_bytes = [0u8; 32];
+        hash_bytes.copy_from_slice(&network_id_hash_bytes);
+        let network_id_hash = Hash(hash_bytes);
+        
+        // For TransactionV0, we need to use ENVELOPE_TYPE_TX_V0 (0)
+        // Since TransactionSignaturePayloadTaggedTransaction doesn't have a V0 variant,
+        // we'll do this manually
         let mut hasher = Sha256::new();
         
-        // Add network ID
-        hasher.update(network_id);
+        // Add network ID hash
+        hasher.update(&network_id_hash.0);
         
         // Add the ENVELOPE_TYPE_TX_V0 (0)
         hasher.update([0, 0, 0, 0]);
@@ -150,19 +174,29 @@ impl FeeBumpTransaction {
     ///
     /// The transaction hash as `Hash`.
     pub fn hash(&self, network_id: &[u8]) -> Result<Hash, super::Error> {
+        // Hash the network ID
         let mut hasher = Sha256::new();
-        
-        // Add network ID
         hasher.update(network_id);
+        let network_id_hash_bytes = hasher.finalize();
         
-        // Add the ENVELOPE_TYPE_TX_FEE_BUMP (5)
-        hasher.update([0, 0, 0, 5]);
+        // Create a Hash from the network ID hash
+        let mut hash_bytes = [0u8; 32];
+        hash_bytes.copy_from_slice(&network_id_hash_bytes);
+        let network_id_hash = Hash(hash_bytes);
         
-        // Add transaction data
-        let tx_bytes = self.to_xdr(Limits::none())?;
-        hasher.update(tx_bytes);
+        // Create the TransactionSignaturePayload
+        let payload = TransactionSignaturePayload {
+            network_id: network_id_hash,
+            tagged_transaction: TransactionSignaturePayloadTaggedTransaction::TxFeeBump(self.clone()),
+        };
         
+        // Hash the serialized payload
+        let payload_bytes = payload.to_xdr(Limits::none())?;
+        let mut hasher = Sha256::new();
+        hasher.update(&payload_bytes);
         let result = hasher.finalize();
+        
+        // Create a Hash from the result
         let mut hash_bytes = [0u8; 32];
         hash_bytes.copy_from_slice(&result);
         

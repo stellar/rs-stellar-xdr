@@ -18,6 +18,10 @@ impl TransactionEnvelope {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         match self {
             TransactionEnvelope::TxV0(e) => e.hash(network_id),
@@ -37,6 +41,10 @@ impl TransactionV0Envelope {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         self.tx.hash(network_id)
     }
@@ -52,6 +60,10 @@ impl TransactionV1Envelope {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         self.tx.hash(network_id)
     }
@@ -67,6 +79,10 @@ impl TransactionV0 {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         <_ as Into<Transaction>>::into(self).hash(network_id)
     }
@@ -82,6 +98,10 @@ impl FeeBumpTransactionEnvelope {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         self.tx.hash(network_id)
     }
@@ -97,6 +117,10 @@ impl FeeBumpTransactionInnerTx {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         match self {
             Self::Tx(inner_tx) => inner_tx.hash(network_id),
@@ -114,6 +138,10 @@ impl Transaction {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         let payload = TransactionSignaturePayload {
             network_id: Hash(network_id),
@@ -136,6 +164,10 @@ impl FeeBumpTransaction {
     /// # Returns
     ///
     /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         let payload = TransactionSignaturePayload {
             network_id: Hash(network_id),

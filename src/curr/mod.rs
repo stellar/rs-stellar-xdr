@@ -19,5 +19,4 @@ pub use scval_validations::*;
 mod scmap;
 
 mod tx_auths;
-#[cfg(feature = "std")]
 mod tx_hash;

@@ -42,9 +42,9 @@ fn test_transaction_v0_hash() -> Result<(), stellar_xdr::Error> {
     });
 
     let v0_xdr = v0_env.to_xdr_base64(Limits::none())?;
-    println!("TransactionV0: {}", v0_xdr);
+    println!("TransactionV0: {v0_xdr}");
     let v0_hash = hex::encode(v0_env.hash(NETWORK_ID)?);
-    println!("TransactionV0 Hash: {}", v0_hash);
+    println!("TransactionV0 Hash: {v0_hash}");
     assert_eq!(
         v0_hash,
         "037d99f3d0ded34afbf25ae9bf33d84d0a7b6cb2f37a8751301490660c4fc9c7"
@@ -71,9 +71,9 @@ fn test_transaction_v1_hash() -> Result<(), stellar_xdr::Error> {
     });
 
     let v1_xdr = v1_env.to_xdr_base64(Limits::none())?;
-    println!("Transaction (V1): {}", v1_xdr);
+    println!("Transaction (V1): {v1_xdr}");
     let v1_hash = hex::encode(v1_env.hash(NETWORK_ID)?);
-    println!("Transaction (V1) Hash: {}", v1_hash);
+    println!("Transaction (V1) Hash: {v1_hash}");
     assert_eq!(
         v1_hash,
         "cbe35083a4f43334c6314ef6f8c950200c91a336d7373efd34cfb71d2d009a63"
@@ -103,9 +103,9 @@ fn test_fee_bump_transaction_hash() -> Result<(), stellar_xdr::Error> {
     };
 
     let inner_tx_xdr = fee_bump_tx.inner_tx.to_xdr_base64(Limits::none())?;
-    println!("Fee Bump Inner Transaction: {}", inner_tx_xdr);
+    println!("Fee Bump Inner Transaction: {inner_tx_xdr}");
     let inner_tx_hash = hex::encode(fee_bump_tx.inner_tx.hash(NETWORK_ID)?);
-    println!("Fee Bump Inner Transaction Hash: {}", inner_tx_hash);
+    println!("Fee Bump Inner Transaction Hash: {inner_tx_hash}");
     assert_eq!(
         inner_tx_hash,
         "9f8bd4d2b3bb1ad9b4aac192fd4ee430a12862115d4464b904b4836ab2a60a35"
@@ -117,9 +117,9 @@ fn test_fee_bump_transaction_hash() -> Result<(), stellar_xdr::Error> {
     });
 
     let fee_bump_xdr = fee_bump_env.to_xdr_base64(Limits::none())?;
-    println!("Fee Bump Transaction: {}", fee_bump_xdr);
+    println!("Fee Bump Transaction: {fee_bump_xdr}");
     let fee_bump_hash = hex::encode(fee_bump_env.hash(NETWORK_ID)?);
-    println!("Fee Bump Transaction Hash: {}", fee_bump_hash);
+    println!("Fee Bump Transaction Hash: {fee_bump_hash}");
     assert_eq!(
         fee_bump_hash,
         "93136bdb126dfda1154143c5e16894fc9ccad41c1a54ed1f8dc8ed0964d53330"

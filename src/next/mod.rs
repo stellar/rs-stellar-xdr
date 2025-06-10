@@ -19,3 +19,4 @@ pub use scval_validations::*;
 mod scmap;
 
 mod tx_auths;
+mod tx_hash;

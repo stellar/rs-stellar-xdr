@@ -98,11 +98,24 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             use crate::$m::WriteXdr;
+            use rand::{Rng, SeedableRng};
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
-            let r = rand::random::<[u8; 10_240]>();
-            let mut u = Unstructured::new(&r);
+            let mut rng = rand::rngs::StdRng::from_os_rng();
+            let mut bytes = vec![0; 1024 * 10];
+            let mut iter = bytes.chunks_exact_mut(4);
+            while let Some([a0, b0, c0, d0]) = iter.next() {
+                let [a1, b1, c1, d1] = rng.random::<u32>().to_be_bytes();
+                *a0 = a1;
+                *b0 = b1;
+                *c0 = c1;
+                *d0 = d1;
+            }
+            for elem in iter.into_remainder() {
+                *elem = rng.random::<u8>();
+            }
+            let mut u = Unstructured::new(&bytes);
             let v = crate::$m::Type::arbitrary(r#type, &mut u)?;
             match self.output_format {
                 OutputFormat::Single => {

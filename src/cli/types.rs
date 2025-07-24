@@ -1,7 +1,6 @@
 pub mod list;
 pub mod schema;
 pub mod schema_files;
-pub mod schema_settings;
 
 use clap::{Args, Subcommand};
 

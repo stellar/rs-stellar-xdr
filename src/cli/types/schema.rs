@@ -1,6 +1,6 @@
 use clap::{Args, ValueEnum};
 
-use crate::cli::{types::schema_settings, Channel};
+use crate::{cli::Channel, schemars};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -41,7 +41,7 @@ macro_rules! run_x {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             let settings = match self.output {
-                OutputFormat::JsonSchemaDraft201909 => schema_settings::draft201909(),
+                OutputFormat::JsonSchemaDraft201909 => schemars::draft201909(),
             };
             let generator = settings.into_generator();
             let schema = r#type.json_schema(generator);

@@ -60,8 +60,8 @@ xdr-json/next: src/next/generated.rs
 clean:
 	rm -f src/*/generated.rs
 	rm -f xdr/*-version
-	rm -f xdr-json/curr/*.json
-	rm -f xdr-json/next/*.json
+	rm -fr xdr-json/curr
+	rm -fr xdr-json/next
 	cargo clean --quiet
 
 fmt:

@@ -129,6 +129,9 @@ pub const VERSION: Version = Version {
     xdr_next: include_str!("../xdr/next-version"),
 };
 
+#[cfg(feature = "schemars")]
+pub mod schemars;
+
 #[cfg(feature = "curr")]
 pub mod curr;
 

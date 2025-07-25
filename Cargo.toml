@@ -5,7 +5,7 @@ homepage = "https://github.com/stellar/rs-stellar-xdr"
 repository = "https://github.com/stellar/rs-stellar-xdr"
 authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
-version = "22.1.0"
+version = "23.0.0-rc.2"
 edition = "2021"
 rust-version = "1.84.0"
 
@@ -33,13 +33,15 @@ thiserror = { version = "1.0.37", optional = true }
 schemars = { version = "0.8.16", optional = true }
 ethnum = { version = "1.5.0", optional = true }
 rand = { version = "0.9.0", optional = true }
+sha2 = { version = "0.10.9", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.89"
+bytes-lit = "0.0.5"
 
 [features]
 default = ["std", "curr"]
-std = ["alloc"]
+std = ["alloc", "dep:sha2"]
 alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 curr = []
 next = []

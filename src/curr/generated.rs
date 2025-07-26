@@ -26185,40 +26185,6 @@ impl TransactionResultMeta {
         };
         fee_iter.chain(tx_iters)
     }
-
-    // fn changes(&self) -> impl Iterator<Item = &LedgerEntryChange>{
-    //     let operations_changes: Vec<&LedgerEntryChange> = match self.operations(){
-    //         OperationsMetaRef::V0toV3(operation) => {
-    //             operation.iter().flat_map(|op| op.changes.iter()).collect()
-    //         },
-    //         OperationsMetaRef::V4(operation) => {
-    //             operation.iter().flat_map(|op| op.changes.iter()).collect()
-    //         }
-    //     };
-    //     let fee_process = self.fee_processing.0.iter();
-
-    //     let res = match self.tx_apply_processing {
-    //         TransactionMeta::V0(ops) => Box::new(ops.iter().flat_map(|op| op.changes.0.iter())) as Box<dyn Iterator<Item = _>>,
-    //         TransactionMeta::V1(v1) => Box::new(v1.operations.iter().flat_map(|op| op.changes.0.iter())),
-    //         TransactionMeta::V2(v2) => Box::new(
-    //             v2.tx_changes_before.0.iter()
-    //                 .chain(v2.operations.iter().flat_map(|op| op.changes.0.iter()))
-    //                 .chain(v2.tx_changes_after.0.iter())
-    //         ),
-    //         TransactionMeta::V3(v3) => Box::new(
-    //             v3.tx_changes_before.0.iter()
-    //                 .chain(v3.operations.iter().flat_map(|op| op.changes.0.iter()))
-    //                 .chain(v3.tx_changes_after.0.iter())
-    //         ),
-    //         TransactionMeta::V4(v4) => Box::new(
-    //             v4.tx_changes_before.0.iter()
-    //                 .chain(v4.operations.iter().flat_map(|op| op.changes.0.iter()))
-    //                 .chain(v4.tx_changes_after.0.iter())
-    //         ),
-    //     };
-    //     }
-    //     todo!()
-    // }
 }
 
 impl ReadXdr for TransactionResultMeta {

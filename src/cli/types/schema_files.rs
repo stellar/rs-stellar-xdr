@@ -40,7 +40,7 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             for t in crate::$m::TypeVariant::VARIANTS {
                 let settings = match self.output {
-                    OutputFormat::JsonSchemaDraft201909 => schemars::draft201909(),
+                    OutputFormat::JsonSchemaDraft201909 => schemars::settings_draft201909(),
                 };
                 let generator = settings.into_generator();
                 let schema = t.json_schema(generator);

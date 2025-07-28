@@ -2,6 +2,9 @@ pub mod list;
 pub mod schema;
 pub mod schema_files;
 
+#[deprecated = "use crate::schemars"]
+pub use crate::schemars as schema_settings;
+
 use clap::{Args, Subcommand};
 
 use crate::cli::Channel;

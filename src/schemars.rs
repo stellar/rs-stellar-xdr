@@ -20,7 +20,7 @@ use schemars::{
 // additionalProperties in subschemas and then to get back essentially the same behavior, add
 // evaluatedProperties to the root document.
 #[must_use]
-pub fn draft201909() -> SchemaSettings {
+pub fn settings_draft201909() -> SchemaSettings {
     SchemaSettings::draft2019_09()
         .with_visitor(RemoveAdditionalPropertiesFalseVisitor)
         .with_visitor(AddUnevaluatedPropertiesFalseRootVisitor)

@@ -674,6 +674,7 @@ where
         r: &mut Limited<R>,
     ) -> ReadXdrIter<
         base64::read::DecoderReader<
+            '_,
             base64::engine::general_purpose::GeneralPurpose,
             SkipWhitespace<&mut R>,
         >,

@@ -19,11 +19,11 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     (
         "xdr/curr/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "6aed428fb6c2d000f5bc1eef0ba685d6108f3faa96208ffa588c0e2990813939",
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "5d1d926e4288b0f2d1ce9f891ca2cab97de9246381d57fca22e25a0d276c6682",
+        "cabf86e5b44c7bb4bfbbf282aaff442938f3d341cc7863cad8e1878e93be3c34",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -5627,7 +5627,28 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // Cost of performing BLS12-381 scalar element exponentiation
 ///     Bls12381FrPow = 68,
 ///     // Cost of performing BLS12-381 scalar element inversion
-///     Bls12381FrInv = 69
+///     Bls12381FrInv = 69,
+///
+///     // Cost of encoding a BN254 Fp (base field element)
+///     Bn254EncodeFp = 70,
+///     // Cost of decoding a BN254 Fp (base field element)
+///     Bn254DecodeFp = 71,
+///     // Cost of checking a G1 point lies on the curve
+///     Bn254G1CheckPointOnCurve = 72,
+///     // Cost of checking a G2 point lies on the curve
+///     Bn254G2CheckPointOnCurve = 73,
+///     // Cost of checking a G2 point belongs to the correct subgroup
+///     Bn254G2CheckPointInSubgroup = 74,
+///     // Cost of converting a BN254 G1 point from projective to affine coordinates
+///     Bn254G1ProjectiveToAffine = 75,
+///     // Cost of performing BN254 G1 point addition
+///     Bn254G1Add = 76,
+///     // Cost of performing BN254 G1 scalar multiplication
+///     Bn254G1Mul = 77,
+///     // Cost of performing BN254 pairing operation
+///     Bn254Pairing = 78,
+///     // Cost of converting a BN254 scalar element from U256
+///     Bn254FrFromU256 = 79
 /// };
 /// ```
 ///
@@ -5714,10 +5735,20 @@ pub enum ContractCostType {
     Bls12381FrMul = 67,
     Bls12381FrPow = 68,
     Bls12381FrInv = 69,
+    Bn254EncodeFp = 70,
+    Bn254DecodeFp = 71,
+    Bn254G1CheckPointOnCurve = 72,
+    Bn254G2CheckPointOnCurve = 73,
+    Bn254G2CheckPointInSubgroup = 74,
+    Bn254G1ProjectiveToAffine = 75,
+    Bn254G1Add = 76,
+    Bn254G1Mul = 77,
+    Bn254Pairing = 78,
+    Bn254FrFromU256 = 79,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 70] = [
+    pub const VARIANTS: [ContractCostType; 80] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -5788,8 +5819,18 @@ impl ContractCostType {
         ContractCostType::Bls12381FrMul,
         ContractCostType::Bls12381FrPow,
         ContractCostType::Bls12381FrInv,
+        ContractCostType::Bn254EncodeFp,
+        ContractCostType::Bn254DecodeFp,
+        ContractCostType::Bn254G1CheckPointOnCurve,
+        ContractCostType::Bn254G2CheckPointOnCurve,
+        ContractCostType::Bn254G2CheckPointInSubgroup,
+        ContractCostType::Bn254G1ProjectiveToAffine,
+        ContractCostType::Bn254G1Add,
+        ContractCostType::Bn254G1Mul,
+        ContractCostType::Bn254Pairing,
+        ContractCostType::Bn254FrFromU256,
     ];
-    pub const VARIANTS_STR: [&'static str; 70] = [
+    pub const VARIANTS_STR: [&'static str; 80] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -5860,6 +5901,16 @@ impl ContractCostType {
         "Bls12381FrMul",
         "Bls12381FrPow",
         "Bls12381FrInv",
+        "Bn254EncodeFp",
+        "Bn254DecodeFp",
+        "Bn254G1CheckPointOnCurve",
+        "Bn254G2CheckPointOnCurve",
+        "Bn254G2CheckPointInSubgroup",
+        "Bn254G1ProjectiveToAffine",
+        "Bn254G1Add",
+        "Bn254G1Mul",
+        "Bn254Pairing",
+        "Bn254FrFromU256",
     ];
 
     #[must_use]
@@ -5935,11 +5986,21 @@ impl ContractCostType {
             Self::Bls12381FrMul => "Bls12381FrMul",
             Self::Bls12381FrPow => "Bls12381FrPow",
             Self::Bls12381FrInv => "Bls12381FrInv",
+            Self::Bn254EncodeFp => "Bn254EncodeFp",
+            Self::Bn254DecodeFp => "Bn254DecodeFp",
+            Self::Bn254G1CheckPointOnCurve => "Bn254G1CheckPointOnCurve",
+            Self::Bn254G2CheckPointOnCurve => "Bn254G2CheckPointOnCurve",
+            Self::Bn254G2CheckPointInSubgroup => "Bn254G2CheckPointInSubgroup",
+            Self::Bn254G1ProjectiveToAffine => "Bn254G1ProjectiveToAffine",
+            Self::Bn254G1Add => "Bn254G1Add",
+            Self::Bn254G1Mul => "Bn254G1Mul",
+            Self::Bn254Pairing => "Bn254Pairing",
+            Self::Bn254FrFromU256 => "Bn254FrFromU256",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 70] {
+    pub const fn variants() -> [ContractCostType; 80] {
         Self::VARIANTS
     }
 }
@@ -6040,6 +6101,16 @@ impl TryFrom<i32> for ContractCostType {
             67 => ContractCostType::Bls12381FrMul,
             68 => ContractCostType::Bls12381FrPow,
             69 => ContractCostType::Bls12381FrInv,
+            70 => ContractCostType::Bn254EncodeFp,
+            71 => ContractCostType::Bn254DecodeFp,
+            72 => ContractCostType::Bn254G1CheckPointOnCurve,
+            73 => ContractCostType::Bn254G2CheckPointOnCurve,
+            74 => ContractCostType::Bn254G2CheckPointInSubgroup,
+            75 => ContractCostType::Bn254G1ProjectiveToAffine,
+            76 => ContractCostType::Bn254G1Add,
+            77 => ContractCostType::Bn254G1Mul,
+            78 => ContractCostType::Bn254Pairing,
+            79 => ContractCostType::Bn254FrFromU256,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

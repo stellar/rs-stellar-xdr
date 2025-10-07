@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "cabf86e5b44c7bb4bfbbf282aaff442938f3d341cc7863cad8e1878e93be3c34",
+        "26c2c761d5e175c8b2f373611c942ef4484a6cd33f142f69638b2df82be85313",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -5648,7 +5648,17 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // Cost of performing BN254 pairing operation
 ///     Bn254Pairing = 78,
 ///     // Cost of converting a BN254 scalar element from U256
-///     Bn254FrFromU256 = 79
+///     Bn254FrFromU256 = 79,
+///     // Cost of converting a BN254 scalar element to U256
+///     Bn254FrToU256 = 80,
+///     // // Cost of performing BN254 scalar element addition/subtraction
+///     Bn254FrAddSub = 81,
+///     // Cost of performing BN254 scalar element multiplication
+///     Bn254FrMul = 82,
+///     // Cost of performing BN254 scalar element exponentiation
+///     Bn254FrPow = 83,
+///      // Cost of performing BN254 scalar element inversion
+///     Bn254FrInv = 84
 /// };
 /// ```
 ///
@@ -5745,10 +5755,15 @@ pub enum ContractCostType {
     Bn254G1Mul = 77,
     Bn254Pairing = 78,
     Bn254FrFromU256 = 79,
+    Bn254FrToU256 = 80,
+    Bn254FrAddSub = 81,
+    Bn254FrMul = 82,
+    Bn254FrPow = 83,
+    Bn254FrInv = 84,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 80] = [
+    pub const VARIANTS: [ContractCostType; 85] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -5829,8 +5844,13 @@ impl ContractCostType {
         ContractCostType::Bn254G1Mul,
         ContractCostType::Bn254Pairing,
         ContractCostType::Bn254FrFromU256,
+        ContractCostType::Bn254FrToU256,
+        ContractCostType::Bn254FrAddSub,
+        ContractCostType::Bn254FrMul,
+        ContractCostType::Bn254FrPow,
+        ContractCostType::Bn254FrInv,
     ];
-    pub const VARIANTS_STR: [&'static str; 80] = [
+    pub const VARIANTS_STR: [&'static str; 85] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -5911,6 +5931,11 @@ impl ContractCostType {
         "Bn254G1Mul",
         "Bn254Pairing",
         "Bn254FrFromU256",
+        "Bn254FrToU256",
+        "Bn254FrAddSub",
+        "Bn254FrMul",
+        "Bn254FrPow",
+        "Bn254FrInv",
     ];
 
     #[must_use]
@@ -5996,11 +6021,16 @@ impl ContractCostType {
             Self::Bn254G1Mul => "Bn254G1Mul",
             Self::Bn254Pairing => "Bn254Pairing",
             Self::Bn254FrFromU256 => "Bn254FrFromU256",
+            Self::Bn254FrToU256 => "Bn254FrToU256",
+            Self::Bn254FrAddSub => "Bn254FrAddSub",
+            Self::Bn254FrMul => "Bn254FrMul",
+            Self::Bn254FrPow => "Bn254FrPow",
+            Self::Bn254FrInv => "Bn254FrInv",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 80] {
+    pub const fn variants() -> [ContractCostType; 85] {
         Self::VARIANTS
     }
 }
@@ -6111,6 +6141,11 @@ impl TryFrom<i32> for ContractCostType {
             77 => ContractCostType::Bn254G1Mul,
             78 => ContractCostType::Bn254Pairing,
             79 => ContractCostType::Bn254FrFromU256,
+            80 => ContractCostType::Bn254FrToU256,
+            81 => ContractCostType::Bn254FrAddSub,
+            82 => ContractCostType::Bn254FrMul,
+            83 => ContractCostType::Bn254FrPow,
+            84 => ContractCostType::Bn254FrInv,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

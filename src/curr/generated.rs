@@ -3144,6 +3144,51 @@ mod test {
             Err(Error::LengthLimitExceeded)
         );
     }
+
+    // --- TransactionResultMeta .operations() and .changes() Tests ---
+    fn dummy_ledger_entry_change() -> LedgerEntryChange {
+        LedgerEntryChange::Created(LedgerEntry {
+            last_modified_ledger_seq: 1,
+            data: LedgerEntryData::Data(Default::default()),
+            ext: LedgerEntryExt::V0,
+        })
+    }
+
+    fn dummy_operation_meta() -> OperationMeta {
+        OperationMeta {
+            changes: LedgerEntryChanges(VecM::try_from(vec![dummy_ledger_entry_change()]).unwrap()),
+        }
+    }
+
+    #[test]
+    fn test_operations_and_changes() {
+        let op1 = dummy_operation_meta();
+        let op2 = dummy_operation_meta();
+
+        let tx_meta = TransactionMeta::V1(TransactionMetaV1 {
+            tx_changes: LedgerEntryChanges(VecM::try_from(vec![]).unwrap()),
+            operations: VecM::try_from(vec![op1.clone(), op2.clone()]).unwrap(),
+        });
+
+        let meta = TransactionResultMeta {
+            result: TransactionResultPair::default(),
+            fee_processing: LedgerEntryChanges(VecM::try_from(vec![]).unwrap()),
+            tx_apply_processing: tx_meta,
+        };
+
+        match meta.operations() {
+            OperationsMetaRef::V0toV3(ops) => assert_eq!(ops.len(), 2),
+            OperationsMetaRef::V4(_) => panic!("unexpected V4 in test"),
+        }
+
+        let changes: Vec<_> = meta.changes().collect();
+        assert_eq!(changes.len(), 2);
+        if let LedgerEntryChange::Created(entry) = changes[0] {
+            assert_eq!(entry.last_modified_ledger_seq, 1);
+        } else {
+            panic!("Expected Created variant");
+        }
+    }
 }
 
 #[cfg(all(test, not(feature = "alloc")))]
@@ -4081,6 +4126,7 @@ mod tests_for_number_or_string {
         assert_eq!(serde_json::to_string(&data).unwrap(), expected_json);
     }
 }
+
 
 /// Value is an XDR Typedef defines as:
 ///
@@ -26202,6 +26248,50 @@ pub struct TransactionResultMeta {
     pub result: TransactionResultPair,
     pub fee_processing: LedgerEntryChanges,
     pub tx_apply_processing: TransactionMeta,
+}
+
+/// Enum to handle different OperationMeta types across TransactionMeta variants.
+#[derive(Debug)]
+pub enum OperationsMetaRef<'a> {
+    V0toV3(&'a VecM<OperationMeta>),
+    V4(&'a VecM<OperationMetaV2>),
+}
+
+impl TransactionResultMeta {
+    fn operations(&self) -> OperationsMetaRef {
+        match &self.tx_apply_processing {
+            TransactionMeta::V0(ops) => OperationsMetaRef::V0toV3(ops),
+            TransactionMeta::V1(meta) => OperationsMetaRef::V0toV3(&meta.operations),
+            TransactionMeta::V2(meta) => OperationsMetaRef::V0toV3(&meta.operations),
+            TransactionMeta::V3(meta) => OperationsMetaRef::V0toV3(&meta.operations),
+            TransactionMeta::V4(meta) => OperationsMetaRef::V4(&meta.operations),
+        }
+    }
+
+    pub fn changes(&self) -> impl Iterator<Item = &LedgerEntryChange> {
+        let fee_iter = self.fee_processing.0.iter();
+        let meta = &self.tx_apply_processing;
+        let tx_iters = match meta {
+            TransactionMeta::V0(ops) => Box::new(ops.iter().flat_map(|op| op.changes.0.iter())) as Box<dyn Iterator<Item = _>>,
+            TransactionMeta::V1(meta) => Box::new(meta.operations.iter().flat_map(|op| op.changes.0.iter())),
+            TransactionMeta::V2(meta) => Box::new(
+                meta.tx_changes_before.0.iter()
+                    .chain(meta.operations.iter().flat_map(|op| op.changes.0.iter()))
+                    .chain(meta.tx_changes_after.0.iter())
+            ),
+            TransactionMeta::V3(meta) => Box::new(
+                meta.tx_changes_before.0.iter()
+                    .chain(meta.operations.iter().flat_map(|op| op.changes.0.iter()))
+                    .chain(meta.tx_changes_after.0.iter())
+            ),
+            TransactionMeta::V4(meta) => Box::new(
+                meta.tx_changes_before.0.iter()
+                    .chain(meta.operations.iter().flat_map(|op| op.changes.0.iter()))
+                    .chain(meta.tx_changes_after.0.iter())
+            ),
+        };
+        fee_iter.chain(tx_iters)
+    }
 }
 
 impl ReadXdr for TransactionResultMeta {
@@ -70050,3 +70140,4 @@ impl WriteXdr for Type {
         }
     }
 }
+

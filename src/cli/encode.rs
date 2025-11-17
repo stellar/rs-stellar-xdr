@@ -17,7 +17,9 @@ pub enum Error {
     #[error("error decoding JSON: {0}")]
     ReadJsonNext(crate::next::Error),
     #[error("error reading file: {0}")]
-    ReadFile(#[from] std::io::Error),
+    ReadFile(std::io::Error),
+    #[error("error writing output: {0}")]
+    WriteOutput(std::io::Error),
     #[error("error generating XDR: {0}")]
     WriteXdrCurr(crate::curr::Error),
     #[error("error generating XDR: {0}")]
@@ -112,7 +114,7 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             use crate::$m::WriteXdr;
-            let mut input = util::parse_input::<Error>(&self.input)?;
+            let mut input = util::parse_input(&self.input).map_err(Error::ReadFile)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
@@ -122,12 +124,15 @@ macro_rules! run_x {
                         OutputFormat::Single => {
                             let t = crate::$m::Type::from_json(r#type, f)?;
                             let l = crate::$m::Limits::none();
-                            stdout().write_all(&t.to_xdr(l)?)?
+                            stdout()
+                                .write_all(&t.to_xdr(l)?)
+                                .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
                             let t = crate::$m::Type::from_json(r#type, f)?;
                             let l = crate::$m::Limits::none();
-                            println!("{}", t.to_xdr_base64(l)?)
+                            writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
+                                .map_err(Error::WriteOutput)?
                         }
                         OutputFormat::Stream => {
                             let mut de =
@@ -141,7 +146,9 @@ macro_rules! run_x {
                                     Err(e) => Err(e)?,
                                 };
                                 let l = crate::$m::Limits::none();
-                                stdout().write_all(&t.to_xdr(l)?)?
+                                stdout()
+                                    .write_all(&t.to_xdr(l)?)
+                                    .map_err(Error::WriteOutput)?;
                             }
                         }
                     },
@@ -159,11 +166,16 @@ impl Cmd {
     ///
     /// If the command is configured with state that is invalid.
     pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
+        let result = match channel {
+            Channel::Curr => self.run_curr(),
+            Channel::Next => self.run_next(),
+        };
+
+        match result {
+            Ok(()) => Ok(()),
+            Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+            Err(e) => Err(e),
         }
-        Ok(())
     }
 
     run_x!(run_curr, curr);

@@ -1,12 +1,9 @@
 use std::ffi::OsString;
 use std::fs::File;
-use std::io::{stdin, Cursor, Read};
+use std::io::{stdin, Cursor, Error as IoError, Read};
 use std::path::Path;
 
-pub fn parse_input<E>(input: &[OsString]) -> Result<Vec<Box<dyn Read>>, E>
-where
-    E: From<std::io::Error>,
-{
+pub fn parse_input(input: &[OsString]) -> Result<Vec<Box<dyn Read>>, IoError> {
     if input.is_empty() {
         Ok(vec![Box::new(stdin())])
     } else {
@@ -16,7 +13,7 @@ where
                 let exist = Path::new(input).try_exists();
                 if let Ok(true) = exist {
                     let file = File::open(input)?;
-                    Ok::<Box<dyn Read>, E>(Box::new(file) as Box<dyn Read>)
+                    Ok::<Box<dyn Read>, IoError>(Box::new(file) as Box<dyn Read>)
                 } else {
                     Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes())) as Box<dyn Read>)
                 }

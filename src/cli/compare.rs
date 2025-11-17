@@ -1,4 +1,10 @@
-use std::{fmt::Debug, fs::File, path::PathBuf, str::FromStr};
+use std::{
+    fmt::Debug,
+    fs::File,
+    io::{stdout, Write},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use clap::{Args, ValueEnum};
 
@@ -13,7 +19,9 @@ pub enum Error {
     #[error("error decoding XDR: {0}")]
     ReadXdrNext(#[from] crate::next::Error),
     #[error("error reading file: {0}")]
-    ReadFile(#[from] std::io::Error),
+    ReadFile(std::io::Error),
+    #[error("error writing output: {0}")]
+    WriteOutput(std::io::Error),
 }
 
 /// Compare two XDR values with each other
@@ -57,8 +65,8 @@ impl Default for InputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let f1 = File::open(&self.left)?;
-            let f2 = File::open(&self.right)?;
+            let f1 = File::open(&self.left).map_err(Error::ReadFile)?;
+            let f2 = File::open(&self.right).map_err(Error::ReadFile)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
@@ -87,7 +95,7 @@ macro_rules! run_x {
                 }
             };
             let cmp = t1.cmp(&t2) as i8;
-            println!("{cmp}");
+            writeln!(stdout(), "{cmp}").map_err(Error::WriteOutput)?;
             Ok(())
         }
     };
@@ -100,11 +108,16 @@ impl Cmd {
     ///
     /// If the command is configured with state that is invalid.
     pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
+        let result = match channel {
+            Channel::Curr => self.run_curr(),
+            Channel::Next => self.run_next(),
+        };
+
+        match result {
+            Ok(()) => Ok(()),
+            Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+            Err(e) => Err(e),
         }
-        Ok(())
     }
 
     run_x!(run_curr, curr);

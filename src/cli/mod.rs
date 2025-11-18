@@ -88,11 +88,11 @@ pub enum Error {
     Clap(#[from] clap::Error),
     #[error("{0}")]
     Types(#[from] types::Error),
-    #[error("error decoding XDR: {0}")]
+    #[error(transparent)]
     Guess(#[from] guess::Error),
-    #[error("error reading file: {0}")]
+    #[error(transparent)]
     Decode(#[from] decode::Error),
-    #[error("error reading file: {0}")]
+    #[error(transparent)]
     Encode(#[from] encode::Error),
     #[error(transparent)]
     Generate(#[from] generate::Error),

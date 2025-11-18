@@ -1,12 +1,9 @@
 use clap::{Args, ValueEnum};
+use std::cmp;
 use std::ffi::OsString;
 use std::fs::File;
-use std::io::{stdin, Cursor};
+use std::io::{self, stdin, stdout, Cursor, Read, Write};
 use std::path::Path;
-use std::{
-    cmp,
-    io::{self, Read},
-};
 
 use crate::cli::Channel;
 
@@ -18,7 +15,9 @@ pub enum Error {
     #[error("error decoding XDR: {0}")]
     ReadXdrNext(#[from] crate::next::Error),
     #[error("error reading file: {0}")]
-    ReadFile(#[from] std::io::Error),
+    ReadFile(std::io::Error),
+    #[error("error writing output: {0}")]
+    WriteOutput(std::io::Error),
 }
 
 #[derive(Args, Debug, Clone)]
@@ -130,7 +129,7 @@ macro_rules! run_x {
                     }
                 };
                 if count > 0 {
-                    println!("{}", v.name());
+                    writeln!(stdout(), "{}", v.name()).map_err(Error::WriteOutput)?;
                     guessed = true;
                 }
             }
@@ -149,11 +148,16 @@ impl Cmd {
     ///
     /// If the command is configured with state that is invalid.
     pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
+        let result = match channel {
+            Channel::Curr => self.run_curr(),
+            Channel::Next => self.run_next(),
+        };
+
+        match result {
+            Ok(()) => Ok(()),
+            Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+            Err(e) => Err(e),
         }
-        Ok(())
     }
 
     run_x!(run_curr, curr);
@@ -163,7 +167,7 @@ impl Cmd {
         if let Some(input) = &self.input {
             let exist = Path::new(input).try_exists();
             if let Ok(true) = exist {
-                Ok(Box::new(File::open(input)?))
+                Ok(Box::new(File::open(input).map_err(Error::ReadFile)?))
             } else {
                 Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes())))
             }

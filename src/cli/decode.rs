@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::io::{stdout, Write};
 use std::{fmt::Debug, str::FromStr};
 
 use clap::{Args, ValueEnum};
@@ -15,7 +16,9 @@ pub enum Error {
     #[error("error decoding XDR: {0}")]
     ReadXdrNext(#[from] crate::next::Error),
     #[error("error reading file: {0}")]
-    ReadFile(#[from] std::io::Error),
+    ReadFile(std::io::Error),
+    #[error("error writing output: {0}")]
+    WriteOutput(std::io::Error),
     #[error("error generating JSON: {0}")]
     GenerateJson(#[from] serde_json::Error),
     #[error("type doesn't have a text representation, use 'json' as output")]
@@ -75,7 +78,7 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut input = util::parse_input::<Error>(&self.input)?;
+            let mut input = util::parse_input(&self.input).map_err(Error::ReadFile)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
@@ -123,28 +126,33 @@ impl Cmd {
     ///
     /// If the command is configured with state that is invalid.
     pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
+        let result = match channel {
+            Channel::Curr => self.run_curr(),
+            Channel::Next => self.run_next(),
+        };
+
+        match result {
+            Ok(()) => Ok(()),
+            Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+            Err(e) => Err(e),
         }
-        Ok(())
     }
 
     run_x!(run_curr, curr);
     run_x!(run_next, next);
 
     fn out(&self, v: &(impl Serialize + Debug)) -> Result<(), Error> {
-        match self.output_format {
-            OutputFormat::Json => println!("{}", serde_json::to_string(v)?),
-            OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),
+        let text = match self.output_format {
+            OutputFormat::Json => serde_json::to_string(v)?,
+            OutputFormat::JsonFormatted => serde_json::to_string_pretty(v)?,
             OutputFormat::Text => {
                 let v = serde_json::to_value(v)?;
-                let text = util::serde_json_value_to_text(v).ok_or(Error::TextUnsupported)?;
-                println!("{text}");
+                util::serde_json_value_to_text(v).ok_or(Error::TextUnsupported)?
             }
-            OutputFormat::RustDebug => println!("{v:?}"),
-            OutputFormat::RustDebugFormatted => println!("{v:#?}"),
-        }
+            OutputFormat::RustDebug => format!("{v:?}"),
+            OutputFormat::RustDebugFormatted => format!("{v:#?}"),
+        };
+        writeln!(stdout(), "{text}").map_err(Error::WriteOutput)?;
         Ok(())
     }
 }

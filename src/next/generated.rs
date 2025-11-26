@@ -35,7 +35,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "7bd048e1b008c274f667a4f9b8fcf5ae848e301aca0073cdc8b266ecd2c5f2f9",
+        "7d99679155f6ce029f4f2bd8e1bf09524ef2f3e4ca8973265085cfcfdbdae987",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -8590,7 +8590,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     string name<60>;
-///     SCSpecUDTStructFieldV0 fields<40>;
+///     SCSpecUDTStructFieldV0 fields<>;
 /// };
 /// ```
 ///
@@ -8609,7 +8609,7 @@ pub struct ScSpecUdtStructV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
-    pub fields: VecM<ScSpecUdtStructFieldV0, 40>,
+    pub fields: VecM<ScSpecUdtStructFieldV0>,
 }
 
 impl ReadXdr for ScSpecUdtStructV0 {
@@ -8620,7 +8620,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                fields: VecM::<ScSpecUdtStructFieldV0, 40>::read_xdr(r)?,
+                fields: VecM::<ScSpecUdtStructFieldV0>::read_xdr(r)?,
             })
         })
     }
@@ -8695,7 +8695,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string name<60>;
-///     SCSpecTypeDef type<12>;
+///     SCSpecTypeDef type<>;
 /// };
 /// ```
 ///
@@ -8713,7 +8713,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 pub struct ScSpecUdtUnionCaseTupleV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
-    pub type_: VecM<ScSpecTypeDef, 12>,
+    pub type_: VecM<ScSpecTypeDef>,
 }
 
 impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
@@ -8723,7 +8723,7 @@ impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                type_: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
+                type_: VecM::<ScSpecTypeDef>::read_xdr(r)?,
             })
         })
     }
@@ -8984,7 +8984,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     string name<60>;
-///     SCSpecUDTUnionCaseV0 cases<50>;
+///     SCSpecUDTUnionCaseV0 cases<>;
 /// };
 /// ```
 ///
@@ -9003,7 +9003,7 @@ pub struct ScSpecUdtUnionV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
-    pub cases: VecM<ScSpecUdtUnionCaseV0, 50>,
+    pub cases: VecM<ScSpecUdtUnionCaseV0>,
 }
 
 impl ReadXdr for ScSpecUdtUnionV0 {
@@ -9014,7 +9014,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                cases: VecM::<ScSpecUdtUnionCaseV0, 50>::read_xdr(r)?,
+                cases: VecM::<ScSpecUdtUnionCaseV0>::read_xdr(r)?,
             })
         })
     }
@@ -9094,7 +9094,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     string name<60>;
-///     SCSpecUDTEnumCaseV0 cases<50>;
+///     SCSpecUDTEnumCaseV0 cases<>;
 /// };
 /// ```
 ///
@@ -9113,7 +9113,7 @@ pub struct ScSpecUdtEnumV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
-    pub cases: VecM<ScSpecUdtEnumCaseV0, 50>,
+    pub cases: VecM<ScSpecUdtEnumCaseV0>,
 }
 
 impl ReadXdr for ScSpecUdtEnumV0 {
@@ -9124,7 +9124,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                cases: VecM::<ScSpecUdtEnumCaseV0, 50>::read_xdr(r)?,
+                cases: VecM::<ScSpecUdtEnumCaseV0>::read_xdr(r)?,
             })
         })
     }
@@ -9204,7 +9204,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     string name<60>;
-///     SCSpecUDTErrorEnumCaseV0 cases<50>;
+///     SCSpecUDTErrorEnumCaseV0 cases<>;
 /// };
 /// ```
 ///
@@ -9223,7 +9223,7 @@ pub struct ScSpecUdtErrorEnumV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
-    pub cases: VecM<ScSpecUdtErrorEnumCaseV0, 50>,
+    pub cases: VecM<ScSpecUdtErrorEnumCaseV0>,
 }
 
 impl ReadXdr for ScSpecUdtErrorEnumV0 {
@@ -9234,7 +9234,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                cases: VecM::<ScSpecUdtErrorEnumCaseV0, 50>::read_xdr(r)?,
+                cases: VecM::<ScSpecUdtErrorEnumCaseV0>::read_xdr(r)?,
             })
         })
     }
@@ -9313,7 +9313,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     SCSymbol name;
-///     SCSpecFunctionInputV0 inputs<10>;
+///     SCSpecFunctionInputV0 inputs<>;
 ///     SCSpecTypeDef outputs<1>;
 /// };
 /// ```
@@ -9332,7 +9332,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 pub struct ScSpecFunctionV0 {
     pub doc: StringM<1024>,
     pub name: ScSymbol,
-    pub inputs: VecM<ScSpecFunctionInputV0, 10>,
+    pub inputs: VecM<ScSpecFunctionInputV0>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
 }
 
@@ -9343,7 +9343,7 @@ impl ReadXdr for ScSpecFunctionV0 {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
-                inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
+                inputs: VecM::<ScSpecFunctionInputV0>::read_xdr(r)?,
                 outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
             })
         })
@@ -9656,7 +9656,7 @@ impl WriteXdr for ScSpecEventDataFormat {
 ///     string lib<80>;
 ///     SCSymbol name;
 ///     SCSymbol prefixTopics<2>;
-///     SCSpecEventParamV0 params<50>;
+///     SCSpecEventParamV0 params<>;
 ///     SCSpecEventDataFormat dataFormat;
 /// };
 /// ```
@@ -9677,7 +9677,7 @@ pub struct ScSpecEventV0 {
     pub lib: StringM<80>,
     pub name: ScSymbol,
     pub prefix_topics: VecM<ScSymbol, 2>,
-    pub params: VecM<ScSpecEventParamV0, 50>,
+    pub params: VecM<ScSpecEventParamV0>,
     pub data_format: ScSpecEventDataFormat,
 }
 
@@ -9690,7 +9690,7 @@ impl ReadXdr for ScSpecEventV0 {
                 lib: StringM::<80>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
                 prefix_topics: VecM::<ScSymbol, 2>::read_xdr(r)?,
-                params: VecM::<ScSpecEventParamV0, 50>::read_xdr(r)?,
+                params: VecM::<ScSpecEventParamV0>::read_xdr(r)?,
                 data_format: ScSpecEventDataFormat::read_xdr(r)?,
             })
         })

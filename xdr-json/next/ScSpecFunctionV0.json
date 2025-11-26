@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecFunctionV0",
-  "description": "ScSpecFunctionV0 is an XDR Struct defines as:\n\n```text struct SCSpecFunctionV0 { string doc<SC_SPEC_DOC_LIMIT>; SCSymbol name; SCSpecFunctionInputV0 inputs<10>; SCSpecTypeDef outputs<1>; }; ```",
+  "description": "ScSpecFunctionV0 is an XDR Struct defines as:\n\n```text struct SCSpecFunctionV0 { string doc<SC_SPEC_DOC_LIMIT>; SCSymbol name; SCSpecFunctionInputV0 inputs<>; SCSpecTypeDef outputs<1>; }; ```",
   "type": "object",
   "required": [
     "doc",
@@ -21,7 +21,7 @@
       "items": {
         "$ref": "#/definitions/ScSpecFunctionInputV0"
       },
-      "maxItems": 10
+      "maxItems": 4294967295
     },
     "name": {
       "$ref": "#/definitions/ScSymbol"

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecEventV0",
-  "description": "ScSpecEventV0 is an XDR Struct defines as:\n\n```text struct SCSpecEventV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; SCSymbol name; SCSymbol prefixTopics<2>; SCSpecEventParamV0 params<50>; SCSpecEventDataFormat dataFormat; }; ```",
+  "description": "ScSpecEventV0 is an XDR Struct defines as:\n\n```text struct SCSpecEventV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; SCSymbol name; SCSymbol prefixTopics<2>; SCSpecEventParamV0 params<>; SCSpecEventDataFormat dataFormat; }; ```",
   "type": "object",
   "required": [
     "data_format",
@@ -32,7 +32,7 @@
       "items": {
         "$ref": "#/definitions/ScSpecEventParamV0"
       },
-      "maxItems": 50
+      "maxItems": 4294967295
     },
     "prefix_topics": {
       "type": "array",

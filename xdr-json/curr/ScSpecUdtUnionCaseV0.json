@@ -238,7 +238,7 @@
       }
     },
     "ScSpecUdtUnionCaseTupleV0": {
-      "description": "ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionCaseTupleV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; SCSpecTypeDef type<12>; }; ```",
+      "description": "ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionCaseTupleV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; SCSpecTypeDef type<>; }; ```",
       "type": "object",
       "required": [
         "doc",
@@ -257,7 +257,7 @@
           "items": {
             "$ref": "#/definitions/ScSpecTypeDef"
           },
-          "maxItems": 12
+          "maxItems": 4294967295
         }
       }
     },

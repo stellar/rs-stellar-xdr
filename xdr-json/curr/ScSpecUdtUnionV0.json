@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecUdtUnionV0",
-  "description": "ScSpecUdtUnionV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTUnionCaseV0 cases<50>; }; ```",
+  "description": "ScSpecUdtUnionV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTUnionCaseV0 cases<>; }; ```",
   "type": "object",
   "required": [
     "cases",
@@ -18,7 +18,7 @@
       "items": {
         "$ref": "#/definitions/ScSpecUdtUnionCaseV0"
       },
-      "maxItems": 50
+      "maxItems": 4294967295
     },
     "doc": {
       "$ref": "#/definitions/StringM<1024>"
@@ -237,7 +237,7 @@
       }
     },
     "ScSpecUdtUnionCaseTupleV0": {
-      "description": "ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionCaseTupleV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; SCSpecTypeDef type<12>; }; ```",
+      "description": "ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionCaseTupleV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; SCSpecTypeDef type<>; }; ```",
       "type": "object",
       "required": [
         "doc",
@@ -256,7 +256,7 @@
           "items": {
             "$ref": "#/definitions/ScSpecTypeDef"
           },
-          "maxItems": 12
+          "maxItems": 4294967295
         }
       }
     },

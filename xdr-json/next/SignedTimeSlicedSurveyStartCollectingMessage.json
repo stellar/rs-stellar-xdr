@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SignedTimeSlicedSurveyStartCollectingMessage",
-  "description": "SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:\n\n```text struct SignedTimeSlicedSurveyStartCollectingMessage { Signature signature; TimeSlicedSurveyStartCollectingMessage startCollecting; }; ```",
+  "description": "SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:\n\n```text struct SignedTimeSlicedSurveyStartCollectingMessage { Signature signature; TimeSlicedSurveyStartCollectingMessage startCollecting; }; ```",
   "type": "object",
   "required": [
     "signature",
@@ -24,14 +24,14 @@
       "type": "string"
     },
     "Signature": {
-      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "description": "Signature is an XDR Typedef defined as:\n\n```text typedef opaque Signature<64>; ```",
       "type": "string",
       "maxLength": 128,
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
     "TimeSlicedSurveyStartCollectingMessage": {
-      "description": "TimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:\n\n```text struct TimeSlicedSurveyStartCollectingMessage { NodeID surveyorID; uint32 nonce; uint32 ledgerNum; }; ```",
+      "description": "TimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:\n\n```text struct TimeSlicedSurveyStartCollectingMessage { NodeID surveyorID; uint32 nonce; uint32 ledgerNum; }; ```",
       "type": "object",
       "required": [
         "ledger_num",

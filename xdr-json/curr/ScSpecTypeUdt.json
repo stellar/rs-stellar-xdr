@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecTypeUdt",
-  "description": "ScSpecTypeUdt is an XDR Struct defines as:\n\n```text struct SCSpecTypeUDT { string name<60>; }; ```",
+  "description": "ScSpecTypeUdt is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDT { string name<60>; }; ```",
   "type": "object",
   "required": [
     "name"

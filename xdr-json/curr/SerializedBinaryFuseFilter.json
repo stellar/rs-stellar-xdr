@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SerializedBinaryFuseFilter",
-  "description": "SerializedBinaryFuseFilter is an XDR Struct defines as:\n\n```text struct SerializedBinaryFuseFilter { BinaryFuseFilterType type;\n\n// Seed used to hash input to filter ShortHashSeed inputHashSeed;\n\n// Seed used for internal filter hash operations ShortHashSeed filterSeed; uint32 segmentLength; uint32 segementLengthMask; uint32 segmentCount; uint32 segmentCountLength; uint32 fingerprintLength; // Length in terms of element count, not bytes\n\n// Array of uint8_t, uint16_t, or uint32_t depending on filter type opaque fingerprints<>; }; ```",
+  "description": "SerializedBinaryFuseFilter is an XDR Struct defined as:\n\n```text struct SerializedBinaryFuseFilter { BinaryFuseFilterType type;\n\n// Seed used to hash input to filter ShortHashSeed inputHashSeed;\n\n// Seed used for internal filter hash operations ShortHashSeed filterSeed; uint32 segmentLength; uint32 segementLengthMask; uint32 segmentCount; uint32 segmentCountLength; uint32 fingerprintLength; // Length in terms of element count, not bytes\n\n// Array of uint8_t, uint16_t, or uint32_t depending on filter type opaque fingerprints<>; }; ```",
   "type": "object",
   "required": [
     "filter_seed",
@@ -61,7 +61,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "BinaryFuseFilterType": {
-      "description": "BinaryFuseFilterType is an XDR Enum defines as:\n\n```text enum BinaryFuseFilterType { BINARY_FUSE_FILTER_8_BIT = 0, BINARY_FUSE_FILTER_16_BIT = 1, BINARY_FUSE_FILTER_32_BIT = 2 }; ```",
+      "description": "BinaryFuseFilterType is an XDR Enum defined as:\n\n```text enum BinaryFuseFilterType { BINARY_FUSE_FILTER_8_BIT = 0, BINARY_FUSE_FILTER_16_BIT = 1, BINARY_FUSE_FILTER_32_BIT = 2 }; ```",
       "type": "string",
       "enum": [
         "b8_bit",
@@ -70,7 +70,7 @@
       ]
     },
     "ShortHashSeed": {
-      "description": "ShortHashSeed is an XDR Struct defines as:\n\n```text struct ShortHashSeed { opaque seed[16]; }; ```",
+      "description": "ShortHashSeed is an XDR Struct defined as:\n\n```text struct ShortHashSeed { opaque seed[16]; }; ```",
       "type": "object",
       "required": [
         "seed"

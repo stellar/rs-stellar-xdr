@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "BumpSequenceResult",
-  "description": "BumpSequenceResult is an XDR Union defines as:\n\n```text union BumpSequenceResult switch (BumpSequenceResultCode code) { case BUMP_SEQUENCE_SUCCESS: void; case BUMP_SEQUENCE_BAD_SEQ: void; }; ```",
+  "description": "BumpSequenceResult is an XDR Union defined as:\n\n```text union BumpSequenceResult switch (BumpSequenceResultCode code) { case BUMP_SEQUENCE_SUCCESS: void; case BUMP_SEQUENCE_BAD_SEQ: void; }; ```",
   "type": "string",
   "enum": [
     "success",

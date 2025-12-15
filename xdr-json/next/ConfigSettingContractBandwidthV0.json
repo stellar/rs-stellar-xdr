@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ConfigSettingContractBandwidthV0",
-  "description": "ConfigSettingContractBandwidthV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractBandwidthV0 { // Maximum sum of all transaction sizes in the ledger in bytes uint32 ledgerMaxTxsSizeBytes; // Maximum size in bytes for a transaction uint32 txMaxSizeBytes;\n\n// Fee for 1 KB of transaction size int64 feeTxSize1KB; }; ```",
+  "description": "ConfigSettingContractBandwidthV0 is an XDR Struct defined as:\n\n```text struct ConfigSettingContractBandwidthV0 { // Maximum sum of all transaction sizes in the ledger in bytes uint32 ledgerMaxTxsSizeBytes; // Maximum size in bytes for a transaction uint32 txMaxSizeBytes;\n\n// Fee for 1 KB of transaction size int64 feeTxSize1KB; }; ```",
   "type": "object",
   "required": [
     "fee_tx_size1_kb",

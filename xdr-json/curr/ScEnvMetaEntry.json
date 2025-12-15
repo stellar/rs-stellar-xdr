@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScEnvMetaEntry",
-  "description": "ScEnvMetaEntry is an XDR Union defines as:\n\n```text union SCEnvMetaEntry switch (SCEnvMetaKind kind) { case SC_ENV_META_KIND_INTERFACE_VERSION: struct { uint32 protocol; uint32 preRelease; } interfaceVersion; }; ```",
+  "description": "ScEnvMetaEntry is an XDR Union defined as:\n\n```text union SCEnvMetaEntry switch (SCEnvMetaKind kind) { case SC_ENV_META_KIND_INTERFACE_VERSION: struct { uint32 protocol; uint32 preRelease; } interfaceVersion; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -23,7 +23,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "ScEnvMetaEntryInterfaceVersion": {
-      "description": "ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defines as:\n\n```text struct { uint32 protocol; uint32 preRelease; } ```",
+      "description": "ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defined as:\n\n```text struct { uint32 protocol; uint32 preRelease; } ```",
       "type": "object",
       "required": [
         "pre_release",

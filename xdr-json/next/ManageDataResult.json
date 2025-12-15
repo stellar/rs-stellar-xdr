@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ManageDataResult",
-  "description": "ManageDataResult is an XDR Union defines as:\n\n```text union ManageDataResult switch (ManageDataResultCode code) { case MANAGE_DATA_SUCCESS: void; case MANAGE_DATA_NOT_SUPPORTED_YET: case MANAGE_DATA_NAME_NOT_FOUND: case MANAGE_DATA_LOW_RESERVE: case MANAGE_DATA_INVALID_NAME: void; }; ```",
+  "description": "ManageDataResult is an XDR Union defined as:\n\n```text union ManageDataResult switch (ManageDataResultCode code) { case MANAGE_DATA_SUCCESS: void; case MANAGE_DATA_NOT_SUPPORTED_YET: case MANAGE_DATA_NAME_NOT_FOUND: case MANAGE_DATA_LOW_RESERVE: case MANAGE_DATA_INVALID_NAME: void; }; ```",
   "type": "string",
   "enum": [
     "success",

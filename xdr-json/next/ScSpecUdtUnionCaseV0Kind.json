@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecUdtUnionCaseV0Kind",
-  "description": "ScSpecUdtUnionCaseV0Kind is an XDR Enum defines as:\n\n```text enum SCSpecUDTUnionCaseV0Kind { SC_SPEC_UDT_UNION_CASE_VOID_V0 = 0, SC_SPEC_UDT_UNION_CASE_TUPLE_V0 = 1 }; ```",
+  "description": "ScSpecUdtUnionCaseV0Kind is an XDR Enum defined as:\n\n```text enum SCSpecUDTUnionCaseV0Kind { SC_SPEC_UDT_UNION_CASE_VOID_V0 = 0, SC_SPEC_UDT_UNION_CASE_TUPLE_V0 = 1 }; ```",
   "type": "string",
   "enum": [
     "void_v0",

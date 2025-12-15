@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ClawbackResultCode",
-  "description": "ClawbackResultCode is an XDR Enum defines as:\n\n```text enum ClawbackResultCode { // codes considered as \"success\" for the operation CLAWBACK_SUCCESS = 0,\n\n// codes considered as \"failure\" for the operation CLAWBACK_MALFORMED = -1, CLAWBACK_NOT_CLAWBACK_ENABLED = -2, CLAWBACK_NO_TRUST = -3, CLAWBACK_UNDERFUNDED = -4 }; ```",
+  "description": "ClawbackResultCode is an XDR Enum defined as:\n\n```text enum ClawbackResultCode { // codes considered as \"success\" for the operation CLAWBACK_SUCCESS = 0,\n\n// codes considered as \"failure\" for the operation CLAWBACK_MALFORMED = -1, CLAWBACK_NOT_CLAWBACK_ENABLED = -2, CLAWBACK_NO_TRUST = -3, CLAWBACK_UNDERFUNDED = -4 }; ```",
   "type": "string",
   "enum": [
     "success",

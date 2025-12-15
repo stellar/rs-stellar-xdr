@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SorobanTransactionMeta",
-  "description": "SorobanTransactionMeta is an XDR Struct defines as:\n\n```text struct SorobanTransactionMeta { SorobanTransactionMetaExt ext;\n\nContractEvent events<>;             // custom events populated by the // contracts themselves. SCVal returnValue;                  // return value of the host fn invocation\n\n// Diagnostics events that are not hashed. // This will contain all contract and diagnostic events. Even ones // that were emitted in a failed contract call. DiagnosticEvent diagnosticEvents<>; }; ```",
+  "description": "SorobanTransactionMeta is an XDR Struct defined as:\n\n```text struct SorobanTransactionMeta { SorobanTransactionMetaExt ext;\n\nContractEvent events<>;             // custom events populated by the // contracts themselves. SCVal returnValue;                  // return value of the host fn invocation\n\n// Diagnostics events that are not hashed. // This will contain all contract and diagnostic events. Even ones // that were emitted in a failed contract call. DiagnosticEvent diagnosticEvents<>; }; ```",
   "type": "object",
   "required": [
     "diagnostic_events",
@@ -37,7 +37,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "ContractEvent": {
-      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nContractID* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
+      "description": "ContractEvent is an XDR Struct defined as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nContractID* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
       "type": "object",
       "required": [
         "body",
@@ -67,7 +67,7 @@
       }
     },
     "ContractEventBody": {
-      "description": "ContractEventBody is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } ```",
+      "description": "ContractEventBody is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } ```",
       "oneOf": [
         {
           "type": "object",
@@ -83,7 +83,7 @@
       ]
     },
     "ContractEventType": {
-      "description": "ContractEventType is an XDR Enum defines as:\n\n```text enum ContractEventType { SYSTEM = 0, CONTRACT = 1, DIAGNOSTIC = 2 }; ```",
+      "description": "ContractEventType is an XDR Enum defined as:\n\n```text enum ContractEventType { SYSTEM = 0, CONTRACT = 1, DIAGNOSTIC = 2 }; ```",
       "type": "string",
       "enum": [
         "system",
@@ -92,7 +92,7 @@
       ]
     },
     "ContractEventV0": {
-      "description": "ContractEventV0 is an XDR NestedStruct defines as:\n\n```text struct { SCVal topics<>; SCVal data; } ```",
+      "description": "ContractEventV0 is an XDR NestedStruct defined as:\n\n```text struct { SCVal topics<>; SCVal data; } ```",
       "type": "object",
       "required": [
         "data",
@@ -112,7 +112,7 @@
       }
     },
     "ContractExecutable": {
-      "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
+      "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -141,7 +141,7 @@
       "type": "string"
     },
     "DiagnosticEvent": {
-      "description": "DiagnosticEvent is an XDR Struct defines as:\n\n```text struct DiagnosticEvent { bool inSuccessfulContractCall; ContractEvent event; }; ```",
+      "description": "DiagnosticEvent is an XDR Struct defined as:\n\n```text struct DiagnosticEvent { bool inSuccessfulContractCall; ContractEvent event; }; ```",
       "type": "object",
       "required": [
         "event",
@@ -157,11 +157,11 @@
       }
     },
     "Duration": {
-      "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
+      "description": "Duration is an XDR Typedef defined as:\n\n```text typedef uint64 Duration; ```",
       "type": "string"
     },
     "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "description": "ExtensionPoint is an XDR Union defined as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
       "type": "string",
       "enum": [
         "v0"
@@ -177,13 +177,13 @@
       "type": "string"
     },
     "ScBytes": {
-      "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
+      "description": "ScBytes is an XDR Typedef defined as:\n\n```text typedef opaque SCBytes<>; ```",
       "type": "string",
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
     "ScContractInstance": {
-      "description": "ScContractInstance is an XDR Struct defines as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
+      "description": "ScContractInstance is an XDR Struct defined as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
       "type": "object",
       "required": [
         "executable"
@@ -205,7 +205,7 @@
       }
     },
     "ScError": {
-      "description": "ScError is an XDR Union defines as:\n\n```text union SCError switch (SCErrorType type) { case SCE_CONTRACT: uint32 contractCode; case SCE_WASM_VM: case SCE_CONTEXT: case SCE_STORAGE: case SCE_OBJECT: case SCE_CRYPTO: case SCE_EVENTS: case SCE_BUDGET: case SCE_VALUE: case SCE_AUTH: SCErrorCode code; }; ```",
+      "description": "ScError is an XDR Union defined as:\n\n```text union SCError switch (SCErrorType type) { case SCE_CONTRACT: uint32 contractCode; case SCE_WASM_VM: case SCE_CONTEXT: case SCE_STORAGE: case SCE_OBJECT: case SCE_CRYPTO: case SCE_EVENTS: case SCE_BUDGET: case SCE_VALUE: case SCE_AUTH: SCErrorCode code; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -322,7 +322,7 @@
       ]
     },
     "ScErrorCode": {
-      "description": "ScErrorCode is an XDR Enum defines as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
+      "description": "ScErrorCode is an XDR Enum defined as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
       "type": "string",
       "enum": [
         "arith_domain",
@@ -338,7 +338,7 @@
       ]
     },
     "ScMap": {
-      "description": "ScMap is an XDR Typedef defines as:\n\n```text typedef SCMapEntry SCMap<>; ```",
+      "description": "ScMap is an XDR Typedef defined as:\n\n```text typedef SCMapEntry SCMap<>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/ScMapEntry"
@@ -346,7 +346,7 @@
       "maxItems": 4294967295
     },
     "ScMapEntry": {
-      "description": "ScMapEntry is an XDR Struct defines as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
+      "description": "ScMapEntry is an XDR Struct defined as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
       "type": "object",
       "required": [
         "key",
@@ -362,7 +362,7 @@
       }
     },
     "ScNonceKey": {
-      "description": "ScNonceKey is an XDR Struct defines as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
+      "description": "ScNonceKey is an XDR Struct defined as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
       "type": "object",
       "required": [
         "nonce"
@@ -374,15 +374,15 @@
       }
     },
     "ScString": {
-      "description": "ScString is an XDR Typedef defines as:\n\n```text typedef string SCString<>; ```",
+      "description": "ScString is an XDR Typedef defined as:\n\n```text typedef string SCString<>; ```",
       "$ref": "#/definitions/StringM<4294967295>"
     },
     "ScSymbol": {
-      "description": "ScSymbol is an XDR Typedef defines as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
+      "description": "ScSymbol is an XDR Typedef defined as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
+      "description": "ScVal is an XDR Union defined as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -631,7 +631,7 @@
       ]
     },
     "ScVec": {
-      "description": "ScVec is an XDR Typedef defines as:\n\n```text typedef SCVal SCVec<>; ```",
+      "description": "ScVec is an XDR Typedef defined as:\n\n```text typedef SCVal SCVec<>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/ScVal"
@@ -639,7 +639,7 @@
       "maxItems": 4294967295
     },
     "SorobanTransactionMetaExt": {
-      "description": "SorobanTransactionMetaExt is an XDR Union defines as:\n\n```text union SorobanTransactionMetaExt switch (int v) { case 0: void; case 1: SorobanTransactionMetaExtV1 v1; }; ```",
+      "description": "SorobanTransactionMetaExt is an XDR Union defined as:\n\n```text union SorobanTransactionMetaExt switch (int v) { case 0: void; case 1: SorobanTransactionMetaExtV1 v1; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -661,7 +661,7 @@
       ]
     },
     "SorobanTransactionMetaExtV1": {
-      "description": "SorobanTransactionMetaExtV1 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaExtV1 { ExtensionPoint ext;\n\n// The following are the components of the overall Soroban resource fee // charged for the transaction. // The following relation holds: // `resourceFeeCharged = totalNonRefundableResourceFeeCharged + totalRefundableResourceFeeCharged` // where `resourceFeeCharged` is the overall fee charged for the // transaction. Also, `resourceFeeCharged` <= `sorobanData.resourceFee` // i.e.we never charge more than the declared resource fee. // The inclusion fee for charged the Soroban transaction can be found using // the following equation: // `result.feeCharged = resourceFeeCharged + inclusionFeeCharged`.\n\n// Total amount (in stroops) that has been charged for non-refundable // Soroban resources. // Non-refundable resources are charged based on the usage declared in // the transaction envelope (such as `instructions`, `readBytes` etc.) and // is charged regardless of the success of the transaction. int64 totalNonRefundableResourceFeeCharged; // Total amount (in stroops) that has been charged for refundable // Soroban resource fees. // Currently this comprises the rent fee (`rentFeeCharged`) and the // fee for the events and return value. // Refundable resources are charged based on the actual resources usage. // Since currently refundable resources are only used for the successful // transactions, this will be `0` for failed transactions. int64 totalRefundableResourceFeeCharged; // Amount (in stroops) that has been charged for rent. // This is a part of `totalNonRefundableResourceFeeCharged`. int64 rentFeeCharged; }; ```",
+      "description": "SorobanTransactionMetaExtV1 is an XDR Struct defined as:\n\n```text struct SorobanTransactionMetaExtV1 { ExtensionPoint ext;\n\n// The following are the components of the overall Soroban resource fee // charged for the transaction. // The following relation holds: // `resourceFeeCharged = totalNonRefundableResourceFeeCharged + totalRefundableResourceFeeCharged` // where `resourceFeeCharged` is the overall fee charged for the // transaction. Also, `resourceFeeCharged` <= `sorobanData.resourceFee` // i.e.we never charge more than the declared resource fee. // The inclusion fee for charged the Soroban transaction can be found using // the following equation: // `result.feeCharged = resourceFeeCharged + inclusionFeeCharged`.\n\n// Total amount (in stroops) that has been charged for non-refundable // Soroban resources. // Non-refundable resources are charged based on the usage declared in // the transaction envelope (such as `instructions`, `readBytes` etc.) and // is charged regardless of the success of the transaction. int64 totalNonRefundableResourceFeeCharged; // Total amount (in stroops) that has been charged for refundable // Soroban resource fees. // Currently this comprises the rent fee (`rentFeeCharged`) and the // fee for the events and return value. // Refundable resources are charged based on the actual resources usage. // Since currently refundable resources are only used for the successful // transactions, this will be `0` for failed transactions. int64 totalRefundableResourceFeeCharged; // Amount (in stroops) that has been charged for rent. // This is a part of `totalNonRefundableResourceFeeCharged`. int64 rentFeeCharged; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -693,7 +693,7 @@
       "maxLength": 4294967295
     },
     "TimePoint": {
-      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
       "type": "string"
     },
     "UInt128Parts": {

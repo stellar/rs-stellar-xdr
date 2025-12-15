@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScpNomination",
-  "description": "ScpNomination is an XDR Struct defines as:\n\n```text struct SCPNomination { Hash quorumSetHash; // D Value votes<>;      // X Value accepted<>;   // Y }; ```",
+  "description": "ScpNomination is an XDR Struct defined as:\n\n```text struct SCPNomination { Hash quorumSetHash; // D Value votes<>;      // X Value accepted<>;   // Y }; ```",
   "type": "object",
   "required": [
     "accepted",
@@ -37,7 +37,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "Value": {
-      "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",
+      "description": "Value is an XDR Typedef defined as:\n\n```text typedef opaque Value<>; ```",
       "type": "string",
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"

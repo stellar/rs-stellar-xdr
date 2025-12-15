@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "AccountMergeResult",
-  "description": "AccountMergeResult is an XDR Union defines as:\n\n```text union AccountMergeResult switch (AccountMergeResultCode code) { case ACCOUNT_MERGE_SUCCESS: int64 sourceAccountBalance; // how much got transferred from source account case ACCOUNT_MERGE_MALFORMED: case ACCOUNT_MERGE_NO_ACCOUNT: case ACCOUNT_MERGE_IMMUTABLE_SET: case ACCOUNT_MERGE_HAS_SUB_ENTRIES: case ACCOUNT_MERGE_SEQNUM_TOO_FAR: case ACCOUNT_MERGE_DEST_FULL: case ACCOUNT_MERGE_IS_SPONSOR: void; }; ```",
+  "description": "AccountMergeResult is an XDR Union defined as:\n\n```text union AccountMergeResult switch (AccountMergeResultCode code) { case ACCOUNT_MERGE_SUCCESS: int64 sourceAccountBalance; // how much got transferred from source account case ACCOUNT_MERGE_MALFORMED: case ACCOUNT_MERGE_NO_ACCOUNT: case ACCOUNT_MERGE_IMMUTABLE_SET: case ACCOUNT_MERGE_HAS_SUB_ENTRIES: case ACCOUNT_MERGE_SEQNUM_TOO_FAR: case ACCOUNT_MERGE_DEST_FULL: case ACCOUNT_MERGE_IS_SPONSOR: void; }; ```",
   "oneOf": [
     {
       "type": "string",

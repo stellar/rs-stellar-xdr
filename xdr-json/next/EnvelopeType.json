@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "EnvelopeType",
-  "description": "EnvelopeType is an XDR Enum defines as:\n\n```text enum EnvelopeType { ENVELOPE_TYPE_TX_V0 = 0, ENVELOPE_TYPE_SCP = 1, ENVELOPE_TYPE_TX = 2, ENVELOPE_TYPE_AUTH = 3, ENVELOPE_TYPE_SCPVALUE = 4, ENVELOPE_TYPE_TX_FEE_BUMP = 5, ENVELOPE_TYPE_OP_ID = 6, ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7, ENVELOPE_TYPE_CONTRACT_ID = 8, ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9 }; ```",
+  "description": "EnvelopeType is an XDR Enum defined as:\n\n```text enum EnvelopeType { ENVELOPE_TYPE_TX_V0 = 0, ENVELOPE_TYPE_SCP = 1, ENVELOPE_TYPE_TX = 2, ENVELOPE_TYPE_AUTH = 3, ENVELOPE_TYPE_SCPVALUE = 4, ENVELOPE_TYPE_TX_FEE_BUMP = 5, ENVELOPE_TYPE_OP_ID = 6, ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7, ENVELOPE_TYPE_CONTRACT_ID = 8, ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9 }; ```",
   "type": "string",
   "enum": [
     "tx_v0",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecUdtEnumV0",
-  "description": "ScSpecUdtEnumV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTEnumCaseV0 cases<>; }; ```",
+  "description": "ScSpecUdtEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTEnumCaseV0 cases<>; }; ```",
   "type": "object",
   "required": [
     "cases",
@@ -33,7 +33,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "ScSpecUdtEnumCaseV0": {
-      "description": "ScSpecUdtEnumCaseV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTEnumCaseV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; uint32 value; }; ```",
+      "description": "ScSpecUdtEnumCaseV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTEnumCaseV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; uint32 value; }; ```",
       "type": "object",
       "required": [
         "doc",

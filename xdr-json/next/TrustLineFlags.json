@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TrustLineFlags",
-  "description": "TrustLineFlags is an XDR Enum defines as:\n\n```text enum TrustLineFlags { // issuer has authorized account to perform transactions with its credit AUTHORIZED_FLAG = 1, // issuer has authorized account to maintain and reduce liabilities for its // credit AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2, // issuer has specified that it may clawback its credit, and that claimable // balances created with its credit may also be clawed back TRUSTLINE_CLAWBACK_ENABLED_FLAG = 4 }; ```",
+  "description": "TrustLineFlags is an XDR Enum defined as:\n\n```text enum TrustLineFlags { // issuer has authorized account to perform transactions with its credit AUTHORIZED_FLAG = 1, // issuer has authorized account to maintain and reduce liabilities for its // credit AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2, // issuer has specified that it may clawback its credit, and that claimable // balances created with its credit may also be clawed back TRUSTLINE_CLAWBACK_ENABLED_FLAG = 4 }; ```",
   "type": "string",
   "enum": [
     "authorized_flag",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "HotArchiveBucketEntryType",
-  "description": "HotArchiveBucketEntryType is an XDR Enum defines as:\n\n```text enum HotArchiveBucketEntryType { HOT_ARCHIVE_METAENTRY = -1, // Bucket metadata, should come first. HOT_ARCHIVE_ARCHIVED = 0,   // Entry is Archived HOT_ARCHIVE_LIVE = 1        // Entry was previously HOT_ARCHIVE_ARCHIVED, but // has been added back to the live BucketList. // Does not need to be persisted. }; ```",
+  "description": "HotArchiveBucketEntryType is an XDR Enum defined as:\n\n```text enum HotArchiveBucketEntryType { HOT_ARCHIVE_METAENTRY = -1, // Bucket metadata, should come first. HOT_ARCHIVE_ARCHIVED = 0,   // Entry is Archived HOT_ARCHIVE_LIVE = 1        // Entry was previously HOT_ARCHIVE_ARCHIVED, but // has been added back to the live BucketList. // Does not need to be persisted. }; ```",
   "type": "string",
   "enum": [
     "metaentry",

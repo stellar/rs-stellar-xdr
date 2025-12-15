@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "RevokeSponsorshipOpSigner",
-  "description": "RevokeSponsorshipOpSigner is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; SignerKey signerKey; } ```",
+  "description": "RevokeSponsorshipOpSigner is an XDR NestedStruct defined as:\n\n```text struct { AccountID accountID; SignerKey signerKey; } ```",
   "type": "object",
   "required": [
     "account_id",

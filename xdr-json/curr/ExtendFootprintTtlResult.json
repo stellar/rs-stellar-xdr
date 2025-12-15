@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ExtendFootprintTtlResult",
-  "description": "ExtendFootprintTtlResult is an XDR Union defines as:\n\n```text union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code) { case EXTEND_FOOTPRINT_TTL_SUCCESS: void; case EXTEND_FOOTPRINT_TTL_MALFORMED: case EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED: case EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
+  "description": "ExtendFootprintTtlResult is an XDR Union defined as:\n\n```text union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code) { case EXTEND_FOOTPRINT_TTL_SUCCESS: void; case EXTEND_FOOTPRINT_TTL_MALFORMED: case EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED: case EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
   "type": "string",
   "enum": [
     "success",

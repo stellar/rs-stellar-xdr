@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "CreateClaimableBalanceOp",
-  "description": "CreateClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct CreateClaimableBalanceOp { Asset asset; int64 amount; Claimant claimants<10>; }; ```",
+  "description": "CreateClaimableBalanceOp is an XDR Struct defined as:\n\n```text struct CreateClaimableBalanceOp { Asset asset; int64 amount; Claimant claimants<10>; }; ```",
   "type": "object",
   "required": [
     "amount",
@@ -32,7 +32,7 @@
       "type": "string"
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -48,7 +48,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -64,7 +64,7 @@
       }
     },
     "Asset": {
-      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "description": "Asset is an XDR Union defined as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -103,7 +103,7 @@
       "type": "string"
     },
     "ClaimPredicate": {
-      "description": "ClaimPredicate is an XDR Union defines as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
+      "description": "ClaimPredicate is an XDR Union defined as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -184,7 +184,7 @@
       ]
     },
     "Claimant": {
-      "description": "Claimant is an XDR Union defines as:\n\n```text union Claimant switch (ClaimantType type) { case CLAIMANT_TYPE_V0: struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } v0; }; ```",
+      "description": "Claimant is an XDR Union defined as:\n\n```text union Claimant switch (ClaimantType type) { case CLAIMANT_TYPE_V0: struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } v0; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -200,7 +200,7 @@
       ]
     },
     "ClaimantV0": {
-      "description": "ClaimantV0 is an XDR NestedStruct defines as:\n\n```text struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } ```",
+      "description": "ClaimantV0 is an XDR NestedStruct defined as:\n\n```text struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } ```",
       "type": "object",
       "required": [
         "destination",

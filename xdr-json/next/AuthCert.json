@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "AuthCert",
-  "description": "AuthCert is an XDR Struct defines as:\n\n```text struct AuthCert { Curve25519Public pubkey; uint64 expiration; Signature sig; }; ```",
+  "description": "AuthCert is an XDR Struct defined as:\n\n```text struct AuthCert { Curve25519Public pubkey; uint64 expiration; Signature sig; }; ```",
   "type": "object",
   "required": [
     "expiration",
@@ -25,7 +25,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "Curve25519Public": {
-      "description": "Curve25519Public is an XDR Struct defines as:\n\n```text struct Curve25519Public { opaque key[32]; }; ```",
+      "description": "Curve25519Public is an XDR Struct defined as:\n\n```text struct Curve25519Public { opaque key[32]; }; ```",
       "type": "object",
       "required": [
         "key"
@@ -44,7 +44,7 @@
       }
     },
     "Signature": {
-      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "description": "Signature is an XDR Typedef defined as:\n\n```text typedef opaque Signature<64>; ```",
       "type": "string",
       "maxLength": 128,
       "contentEncoding": "hex",

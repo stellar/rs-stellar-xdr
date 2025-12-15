@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "RevokeSponsorshipType",
-  "description": "RevokeSponsorshipType is an XDR Enum defines as:\n\n```text enum RevokeSponsorshipType { REVOKE_SPONSORSHIP_LEDGER_ENTRY = 0, REVOKE_SPONSORSHIP_SIGNER = 1 }; ```",
+  "description": "RevokeSponsorshipType is an XDR Enum defined as:\n\n```text enum RevokeSponsorshipType { REVOKE_SPONSORSHIP_LEDGER_ENTRY = 0, REVOKE_SPONSORSHIP_SIGNER = 1 }; ```",
   "type": "string",
   "enum": [
     "ledger_entry",

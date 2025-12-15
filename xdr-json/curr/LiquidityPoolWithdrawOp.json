@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "LiquidityPoolWithdrawOp",
-  "description": "LiquidityPoolWithdrawOp is an XDR Struct defines as:\n\n```text struct LiquidityPoolWithdrawOp { PoolID liquidityPoolID; int64 amount;     // amount of pool shares to withdraw int64 minAmountA; // minimum amount of first asset to withdraw int64 minAmountB; // minimum amount of second asset to withdraw }; ```",
+  "description": "LiquidityPoolWithdrawOp is an XDR Struct defined as:\n\n```text struct LiquidityPoolWithdrawOp { PoolID liquidityPoolID; int64 amount;     // amount of pool shares to withdraw int64 minAmountA; // minimum amount of first asset to withdraw int64 minAmountB; // minimum amount of second asset to withdraw }; ```",
   "type": "object",
   "required": [
     "amount",

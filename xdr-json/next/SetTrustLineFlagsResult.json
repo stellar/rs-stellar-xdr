@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SetTrustLineFlagsResult",
-  "description": "SetTrustLineFlagsResult is an XDR Union defines as:\n\n```text union SetTrustLineFlagsResult switch (SetTrustLineFlagsResultCode code) { case SET_TRUST_LINE_FLAGS_SUCCESS: void; case SET_TRUST_LINE_FLAGS_MALFORMED: case SET_TRUST_LINE_FLAGS_NO_TRUST_LINE: case SET_TRUST_LINE_FLAGS_CANT_REVOKE: case SET_TRUST_LINE_FLAGS_INVALID_STATE: case SET_TRUST_LINE_FLAGS_LOW_RESERVE: void; }; ```",
+  "description": "SetTrustLineFlagsResult is an XDR Union defined as:\n\n```text union SetTrustLineFlagsResult switch (SetTrustLineFlagsResultCode code) { case SET_TRUST_LINE_FLAGS_SUCCESS: void; case SET_TRUST_LINE_FLAGS_MALFORMED: case SET_TRUST_LINE_FLAGS_NO_TRUST_LINE: case SET_TRUST_LINE_FLAGS_CANT_REVOKE: case SET_TRUST_LINE_FLAGS_INVALID_STATE: case SET_TRUST_LINE_FLAGS_LOW_RESERVE: void; }; ```",
   "type": "string",
   "enum": [
     "success",

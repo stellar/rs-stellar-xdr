@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "String32",
-  "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
+  "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",
   "properties": {
     "$schema": {
       "type": "string"

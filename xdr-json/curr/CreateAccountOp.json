@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "CreateAccountOp",
-  "description": "CreateAccountOp is an XDR Struct defines as:\n\n```text struct CreateAccountOp { AccountID destination; // account to create int64 startingBalance; // amount they end up with }; ```",
+  "description": "CreateAccountOp is an XDR Struct defined as:\n\n```text struct CreateAccountOp { AccountID destination; // account to create int64 startingBalance; // amount they end up with }; ```",
   "type": "object",
   "required": [
     "destination",

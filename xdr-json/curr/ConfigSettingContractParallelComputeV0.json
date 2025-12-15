@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ConfigSettingContractParallelComputeV0",
-  "description": "ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractParallelComputeV0 { // Maximum number of clusters with dependent transactions allowed in a // stage of parallel tx set component. // This effectively sets the lower bound on the number of physical threads // necessary to effectively apply transaction sets in parallel. uint32 ledgerMaxDependentTxClusters; }; ```",
+  "description": "ConfigSettingContractParallelComputeV0 is an XDR Struct defined as:\n\n```text struct ConfigSettingContractParallelComputeV0 { // Maximum number of clusters with dependent transactions allowed in a // stage of parallel tx set component. // This effectively sets the lower bound on the number of physical threads // necessary to effectively apply transaction sets in parallel. uint32 ledgerMaxDependentTxClusters; }; ```",
   "type": "object",
   "required": [
     "ledger_max_dependent_tx_clusters"

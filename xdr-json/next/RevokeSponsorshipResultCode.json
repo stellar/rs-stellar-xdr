@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "RevokeSponsorshipResultCode",
-  "description": "RevokeSponsorshipResultCode is an XDR Enum defines as:\n\n```text enum RevokeSponsorshipResultCode { // codes considered as \"success\" for the operation REVOKE_SPONSORSHIP_SUCCESS = 0,\n\n// codes considered as \"failure\" for the operation REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1, REVOKE_SPONSORSHIP_NOT_SPONSOR = -2, REVOKE_SPONSORSHIP_LOW_RESERVE = -3, REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4, REVOKE_SPONSORSHIP_MALFORMED = -5 }; ```",
+  "description": "RevokeSponsorshipResultCode is an XDR Enum defined as:\n\n```text enum RevokeSponsorshipResultCode { // codes considered as \"success\" for the operation REVOKE_SPONSORSHIP_SUCCESS = 0,\n\n// codes considered as \"failure\" for the operation REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1, REVOKE_SPONSORSHIP_NOT_SPONSOR = -2, REVOKE_SPONSORSHIP_LOW_RESERVE = -3, REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4, REVOKE_SPONSORSHIP_MALFORMED = -5 }; ```",
   "type": "string",
   "enum": [
     "success",

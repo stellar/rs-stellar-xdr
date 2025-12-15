@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "InvokeHostFunctionResult",
-  "description": "InvokeHostFunctionResult is an XDR Union defines as:\n\n```text union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code) { case INVOKE_HOST_FUNCTION_SUCCESS: Hash success; // sha256(InvokeHostFunctionSuccessPreImage) case INVOKE_HOST_FUNCTION_MALFORMED: case INVOKE_HOST_FUNCTION_TRAPPED: case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED: case INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED: case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
+  "description": "InvokeHostFunctionResult is an XDR Union defined as:\n\n```text union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code) { case INVOKE_HOST_FUNCTION_SUCCESS: Hash success; // sha256(InvokeHostFunctionSuccessPreImage) case INVOKE_HOST_FUNCTION_MALFORMED: case INVOKE_HOST_FUNCTION_TRAPPED: case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED: case INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED: case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
   "oneOf": [
     {
       "type": "string",

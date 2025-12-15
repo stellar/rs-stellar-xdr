@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ClaimClaimableBalanceOp",
-  "description": "ClaimClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct ClaimClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
+  "description": "ClaimClaimableBalanceOp is an XDR Struct defined as:\n\n```text struct ClaimClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
   "type": "object",
   "required": [
     "balance_id"

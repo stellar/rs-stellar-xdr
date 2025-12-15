@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SurveyResponseBody",
-  "description": "SurveyResponseBody is an XDR Union defines as:\n\n```text union SurveyResponseBody switch (SurveyMessageResponseType type) { case SURVEY_TOPOLOGY_RESPONSE_V2: TopologyResponseBodyV2 topologyResponseBodyV2; }; ```",
+  "description": "SurveyResponseBody is an XDR Union defined as:\n\n```text union SurveyResponseBody switch (SurveyMessageResponseType type) { case SURVEY_TOPOLOGY_RESPONSE_V2: TopologyResponseBodyV2 topologyResponseBodyV2; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -26,7 +26,7 @@
       "type": "string"
     },
     "PeerStats": {
-      "description": "PeerStats is an XDR Struct defines as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
+      "description": "PeerStats is an XDR Struct defined as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
       "type": "object",
       "required": [
         "bytes_read",
@@ -98,7 +98,7 @@
       "maxLength": 100
     },
     "TimeSlicedNodeData": {
-      "description": "TimeSlicedNodeData is an XDR Struct defines as:\n\n```text struct TimeSlicedNodeData { uint32 addedAuthenticatedPeers; uint32 droppedAuthenticatedPeers; uint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\n// SCP stats uint32 p75SCPFirstToSelfLatencyMs; uint32 p75SCPSelfToOtherLatencyMs;\n\n// How many times the node lost sync in the time slice uint32 lostSyncCount;\n\n// Config data bool isValidator; uint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",
+      "description": "TimeSlicedNodeData is an XDR Struct defined as:\n\n```text struct TimeSlicedNodeData { uint32 addedAuthenticatedPeers; uint32 droppedAuthenticatedPeers; uint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\n// SCP stats uint32 p75SCPFirstToSelfLatencyMs; uint32 p75SCPSelfToOtherLatencyMs;\n\n// How many times the node lost sync in the time slice uint32 lostSyncCount;\n\n// Config data bool isValidator; uint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",
       "type": "object",
       "required": [
         "added_authenticated_peers",
@@ -164,7 +164,7 @@
       }
     },
     "TimeSlicedPeerData": {
-      "description": "TimeSlicedPeerData is an XDR Struct defines as:\n\n```text struct TimeSlicedPeerData { PeerStats peerStats; uint32 averageLatencyMs; }; ```",
+      "description": "TimeSlicedPeerData is an XDR Struct defined as:\n\n```text struct TimeSlicedPeerData { PeerStats peerStats; uint32 averageLatencyMs; }; ```",
       "type": "object",
       "required": [
         "average_latency_ms",
@@ -182,7 +182,7 @@
       }
     },
     "TimeSlicedPeerDataList": {
-      "description": "TimeSlicedPeerDataList is an XDR Typedef defines as:\n\n```text typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>; ```",
+      "description": "TimeSlicedPeerDataList is an XDR Typedef defined as:\n\n```text typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/TimeSlicedPeerData"
@@ -190,7 +190,7 @@
       "maxItems": 25
     },
     "TopologyResponseBodyV2": {
-      "description": "TopologyResponseBodyV2 is an XDR Struct defines as:\n\n```text struct TopologyResponseBodyV2 { TimeSlicedPeerDataList inboundPeers; TimeSlicedPeerDataList outboundPeers; TimeSlicedNodeData nodeData; }; ```",
+      "description": "TopologyResponseBodyV2 is an XDR Struct defined as:\n\n```text struct TopologyResponseBodyV2 { TimeSlicedPeerDataList inboundPeers; TimeSlicedPeerDataList outboundPeers; TimeSlicedNodeData nodeData; }; ```",
       "type": "object",
       "required": [
         "inbound_peers",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractIdPreimage",
-  "description": "ContractIdPreimage is an XDR Union defines as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
+  "description": "ContractIdPreimage is an XDR Union defined as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -37,7 +37,7 @@
       "type": "string"
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -53,7 +53,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -69,7 +69,7 @@
       }
     },
     "Asset": {
-      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "description": "Asset is an XDR Union defined as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -108,7 +108,7 @@
       "type": "string"
     },
     "ContractIdPreimageFromAddress": {
-      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defines as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
+      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defined as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
       "type": "object",
       "required": [
         "address",

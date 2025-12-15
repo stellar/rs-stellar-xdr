@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TxSetComponentType",
-  "description": "TxSetComponentType is an XDR Enum defines as:\n\n```text enum TxSetComponentType { // txs with effective fee <= bid derived from a base fee (if any). // If base fee is not specified, no discount is applied. TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE = 0 }; ```",
+  "description": "TxSetComponentType is an XDR Enum defined as:\n\n```text enum TxSetComponentType { // txs with effective fee <= bid derived from a base fee (if any). // If base fee is not specified, no discount is applied. TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE = 0 }; ```",
   "type": "string",
   "enum": [
     "txset_comp_txs_maybe_discounted_fee"

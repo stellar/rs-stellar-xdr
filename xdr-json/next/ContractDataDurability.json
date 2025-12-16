@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractDataDurability",
-  "description": "ContractDataDurability is an XDR Enum defines as:\n\n```text enum ContractDataDurability { TEMPORARY = 0, PERSISTENT = 1 }; ```",
+  "description": "ContractDataDurability is an XDR Enum defined as:\n\n```text enum ContractDataDurability { TEMPORARY = 0, PERSISTENT = 1 }; ```",
   "type": "string",
   "enum": [
     "temporary",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ManageDataOp",
-  "description": "ManageDataOp is an XDR Struct defines as:\n\n```text struct ManageDataOp { string64 dataName; DataValue* dataValue; // set to null to clear }; ```",
+  "description": "ManageDataOp is an XDR Struct defined as:\n\n```text struct ManageDataOp { string64 dataName; DataValue* dataValue; // set to null to clear }; ```",
   "type": "object",
   "required": [
     "data_name"
@@ -27,14 +27,14 @@
   "unevaluatedProperties": false,
   "definitions": {
     "DataValue": {
-      "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
+      "description": "DataValue is an XDR Typedef defined as:\n\n```text typedef opaque DataValue<64>; ```",
       "type": "string",
       "maxLength": 128,
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
     "String64": {
-      "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
+      "description": "String64 is an XDR Typedef defined as:\n\n```text typedef string string64<64>; ```",
       "$ref": "#/definitions/StringM<64>"
     },
     "StringM<64>": {

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ConfigSettingContractLedgerCostExtV0",
-  "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of RO+RW entries in the transaction footprint. uint32 txMaxFootprintEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
+  "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defined as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of RO+RW entries in the transaction footprint. uint32 txMaxFootprintEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
   "type": "object",
   "required": [
     "fee_write1_kb",

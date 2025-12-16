@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SorobanAuthorizedFunctionType",
-  "description": "SorobanAuthorizedFunctionType is an XDR Enum defines as:\n\n```text enum SorobanAuthorizedFunctionType { SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN = 0, SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1, SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN = 2 }; ```",
+  "description": "SorobanAuthorizedFunctionType is an XDR Enum defined as:\n\n```text enum SorobanAuthorizedFunctionType { SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN = 0, SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1, SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN = 2 }; ```",
   "type": "string",
   "enum": [
     "contract_fn",

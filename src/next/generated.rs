@@ -4082,7 +4082,7 @@ mod tests_for_number_or_string {
     }
 }
 
-/// Value is an XDR Typedef defines as:
+/// Value is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque Value<>;
@@ -4189,7 +4189,7 @@ impl AsRef<[u8]> for Value {
     }
 }
 
-/// ScpBallot is an XDR Struct defines as:
+/// ScpBallot is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPBallot
@@ -4238,7 +4238,7 @@ impl WriteXdr for ScpBallot {
     }
 }
 
-/// ScpStatementType is an XDR Enum defines as:
+/// ScpStatementType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCPStatementType
@@ -4359,7 +4359,7 @@ impl WriteXdr for ScpStatementType {
     }
 }
 
-/// ScpNomination is an XDR Struct defines as:
+/// ScpNomination is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPNomination
@@ -4412,7 +4412,7 @@ impl WriteXdr for ScpNomination {
     }
 }
 
-/// ScpStatementPrepare is an XDR NestedStruct defines as:
+/// ScpStatementPrepare is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -4477,7 +4477,7 @@ impl WriteXdr for ScpStatementPrepare {
     }
 }
 
-/// ScpStatementConfirm is an XDR NestedStruct defines as:
+/// ScpStatementConfirm is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -4538,7 +4538,7 @@ impl WriteXdr for ScpStatementConfirm {
     }
 }
 
-/// ScpStatementExternalize is an XDR NestedStruct defines as:
+/// ScpStatementExternalize is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -4591,7 +4591,7 @@ impl WriteXdr for ScpStatementExternalize {
     }
 }
 
-/// ScpStatementPledges is an XDR NestedUnion defines as:
+/// ScpStatementPledges is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (SCPStatementType type)
@@ -4749,7 +4749,7 @@ impl WriteXdr for ScpStatementPledges {
     }
 }
 
-/// ScpStatement is an XDR Struct defines as:
+/// ScpStatement is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPStatement
@@ -4838,7 +4838,7 @@ impl WriteXdr for ScpStatement {
     }
 }
 
-/// ScpEnvelope is an XDR Struct defines as:
+/// ScpEnvelope is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPEnvelope
@@ -4887,7 +4887,7 @@ impl WriteXdr for ScpEnvelope {
     }
 }
 
-/// ScpQuorumSet is an XDR Struct defines as:
+/// ScpQuorumSet is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPQuorumSet
@@ -4940,7 +4940,7 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
-/// ConfigSettingContractExecutionLanesV0 is an XDR Struct defines as:
+/// ConfigSettingContractExecutionLanesV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractExecutionLanesV0
@@ -4986,7 +4986,7 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
     }
 }
 
-/// ConfigSettingContractComputeV0 is an XDR Struct defines as:
+/// ConfigSettingContractComputeV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractComputeV0
@@ -5061,7 +5061,7 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
     }
 }
 
-/// ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:
+/// ConfigSettingContractParallelComputeV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractParallelComputeV0
@@ -5110,7 +5110,7 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
     }
 }
 
-/// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
+/// ConfigSettingContractLedgerCostV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractLedgerCostV0
@@ -5252,7 +5252,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     }
 }
 
-/// ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:
+/// ConfigSettingContractLedgerCostExtV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractLedgerCostExtV0
@@ -5309,7 +5309,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
     }
 }
 
-/// ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:
+/// ConfigSettingContractHistoricalDataV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractHistoricalDataV0
@@ -5358,7 +5358,7 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     }
 }
 
-/// ConfigSettingContractEventsV0 is an XDR Struct defines as:
+/// ConfigSettingContractEventsV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractEventsV0
@@ -5413,7 +5413,7 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
     }
 }
 
-/// ConfigSettingContractBandwidthV0 is an XDR Struct defines as:
+/// ConfigSettingContractBandwidthV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractBandwidthV0
@@ -5474,7 +5474,7 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
     }
 }
 
-/// ContractCostType is an XDR Enum defines as:
+/// ContractCostType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractCostType {
@@ -6181,7 +6181,7 @@ impl WriteXdr for ContractCostType {
     }
 }
 
-/// ContractCostParamEntry is an XDR Struct defines as:
+/// ContractCostParamEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ContractCostParamEntry {
@@ -6243,7 +6243,7 @@ impl WriteXdr for ContractCostParamEntry {
     }
 }
 
-/// StateArchivalSettings is an XDR Struct defines as:
+/// StateArchivalSettings is an XDR Struct defined as:
 ///
 /// ```text
 /// struct StateArchivalSettings {
@@ -6345,7 +6345,7 @@ impl WriteXdr for StateArchivalSettings {
     }
 }
 
-/// EvictionIterator is an XDR Struct defines as:
+/// EvictionIterator is an XDR Struct defined as:
 ///
 /// ```text
 /// struct EvictionIterator {
@@ -6401,7 +6401,7 @@ impl WriteXdr for EvictionIterator {
     }
 }
 
-/// ConfigSettingScpTiming is an XDR Struct defines as:
+/// ConfigSettingScpTiming is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingSCPTiming {
@@ -6462,7 +6462,7 @@ impl WriteXdr for ConfigSettingScpTiming {
     }
 }
 
-/// ContractCostCountLimit is an XDR Const defines as:
+/// ContractCostCountLimit is an XDR Const defined as:
 ///
 /// ```text
 /// const CONTRACT_COST_COUNT_LIMIT = 1024;
@@ -6470,7 +6470,7 @@ impl WriteXdr for ConfigSettingScpTiming {
 ///
 pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 
-/// ContractCostParams is an XDR Typedef defines as:
+/// ContractCostParams is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>;
@@ -6577,7 +6577,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     }
 }
 
-/// ConfigSettingId is an XDR Enum defines as:
+/// ConfigSettingId is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ConfigSettingID
@@ -6781,7 +6781,7 @@ impl WriteXdr for ConfigSettingId {
     }
 }
 
-/// ConfigSettingEntry is an XDR Union defines as:
+/// ConfigSettingEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union ConfigSettingEntry switch (ConfigSettingID configSettingID)
@@ -7081,7 +7081,7 @@ impl WriteXdr for ConfigSettingEntry {
     }
 }
 
-/// ScEnvMetaKind is an XDR Enum defines as:
+/// ScEnvMetaKind is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCEnvMetaKind
@@ -7185,7 +7185,7 @@ impl WriteXdr for ScEnvMetaKind {
     }
 }
 
-/// ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defines as:
+/// ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct {
@@ -7233,7 +7233,7 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
     }
 }
 
-/// ScEnvMetaEntry is an XDR Union defines as:
+/// ScEnvMetaEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union SCEnvMetaEntry switch (SCEnvMetaKind kind)
@@ -7350,7 +7350,7 @@ impl WriteXdr for ScEnvMetaEntry {
     }
 }
 
-/// ScMetaV0 is an XDR Struct defines as:
+/// ScMetaV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCMetaV0
@@ -7399,7 +7399,7 @@ impl WriteXdr for ScMetaV0 {
     }
 }
 
-/// ScMetaKind is an XDR Enum defines as:
+/// ScMetaKind is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCMetaKind
@@ -7503,7 +7503,7 @@ impl WriteXdr for ScMetaKind {
     }
 }
 
-/// ScMetaEntry is an XDR Union defines as:
+/// ScMetaEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union SCMetaEntry switch (SCMetaKind kind)
@@ -7613,7 +7613,7 @@ impl WriteXdr for ScMetaEntry {
     }
 }
 
-/// ScSpecDocLimit is an XDR Const defines as:
+/// ScSpecDocLimit is an XDR Const defined as:
 ///
 /// ```text
 /// const SC_SPEC_DOC_LIMIT = 1024;
@@ -7621,7 +7621,7 @@ impl WriteXdr for ScMetaEntry {
 ///
 pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 
-/// ScSpecType is an XDR Enum defines as:
+/// ScSpecType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecType
@@ -7885,7 +7885,7 @@ impl WriteXdr for ScSpecType {
     }
 }
 
-/// ScSpecTypeOption is an XDR Struct defines as:
+/// ScSpecTypeOption is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeOption
@@ -7930,7 +7930,7 @@ impl WriteXdr for ScSpecTypeOption {
     }
 }
 
-/// ScSpecTypeResult is an XDR Struct defines as:
+/// ScSpecTypeResult is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeResult
@@ -7979,7 +7979,7 @@ impl WriteXdr for ScSpecTypeResult {
     }
 }
 
-/// ScSpecTypeVec is an XDR Struct defines as:
+/// ScSpecTypeVec is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeVec
@@ -8024,7 +8024,7 @@ impl WriteXdr for ScSpecTypeVec {
     }
 }
 
-/// ScSpecTypeMap is an XDR Struct defines as:
+/// ScSpecTypeMap is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeMap
@@ -8073,7 +8073,7 @@ impl WriteXdr for ScSpecTypeMap {
     }
 }
 
-/// ScSpecTypeTuple is an XDR Struct defines as:
+/// ScSpecTypeTuple is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeTuple
@@ -8118,7 +8118,7 @@ impl WriteXdr for ScSpecTypeTuple {
     }
 }
 
-/// ScSpecTypeBytesN is an XDR Struct defines as:
+/// ScSpecTypeBytesN is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeBytesN
@@ -8163,7 +8163,7 @@ impl WriteXdr for ScSpecTypeBytesN {
     }
 }
 
-/// ScSpecTypeUdt is an XDR Struct defines as:
+/// ScSpecTypeUdt is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeUDT
@@ -8208,7 +8208,7 @@ impl WriteXdr for ScSpecTypeUdt {
     }
 }
 
-/// ScSpecTypeDef is an XDR Union defines as:
+/// ScSpecTypeDef is an XDR Union defined as:
 ///
 /// ```text
 /// union SCSpecTypeDef switch (SCSpecType type)
@@ -8529,7 +8529,7 @@ impl WriteXdr for ScSpecTypeDef {
     }
 }
 
-/// ScSpecUdtStructFieldV0 is an XDR Struct defines as:
+/// ScSpecUdtStructFieldV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTStructFieldV0
@@ -8582,7 +8582,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
     }
 }
 
-/// ScSpecUdtStructV0 is an XDR Struct defines as:
+/// ScSpecUdtStructV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTStructV0
@@ -8639,7 +8639,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseVoidV0 is an XDR Struct defines as:
+/// ScSpecUdtUnionCaseVoidV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTUnionCaseVoidV0
@@ -8688,7 +8688,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:
+/// ScSpecUdtUnionCaseTupleV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTUnionCaseTupleV0
@@ -8741,7 +8741,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseV0Kind is an XDR Enum defines as:
+/// ScSpecUdtUnionCaseV0Kind is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecUDTUnionCaseV0Kind
@@ -8852,7 +8852,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
     }
 }
 
-/// ScSpecUdtUnionCaseV0 is an XDR Union defines as:
+/// ScSpecUdtUnionCaseV0 is an XDR Union defined as:
 ///
 /// ```text
 /// union SCSpecUDTUnionCaseV0 switch (SCSpecUDTUnionCaseV0Kind kind)
@@ -8976,7 +8976,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     }
 }
 
-/// ScSpecUdtUnionV0 is an XDR Struct defines as:
+/// ScSpecUdtUnionV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTUnionV0
@@ -9033,7 +9033,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     }
 }
 
-/// ScSpecUdtEnumCaseV0 is an XDR Struct defines as:
+/// ScSpecUdtEnumCaseV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTEnumCaseV0
@@ -9086,7 +9086,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
     }
 }
 
-/// ScSpecUdtEnumV0 is an XDR Struct defines as:
+/// ScSpecUdtEnumV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTEnumV0
@@ -9143,7 +9143,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
     }
 }
 
-/// ScSpecUdtErrorEnumCaseV0 is an XDR Struct defines as:
+/// ScSpecUdtErrorEnumCaseV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTErrorEnumCaseV0
@@ -9196,7 +9196,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     }
 }
 
-/// ScSpecUdtErrorEnumV0 is an XDR Struct defines as:
+/// ScSpecUdtErrorEnumV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTErrorEnumV0
@@ -9253,7 +9253,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
     }
 }
 
-/// ScSpecFunctionInputV0 is an XDR Struct defines as:
+/// ScSpecFunctionInputV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecFunctionInputV0
@@ -9306,7 +9306,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
     }
 }
 
-/// ScSpecFunctionV0 is an XDR Struct defines as:
+/// ScSpecFunctionV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecFunctionV0
@@ -9363,7 +9363,7 @@ impl WriteXdr for ScSpecFunctionV0 {
     }
 }
 
-/// ScSpecEventParamLocationV0 is an XDR Enum defines as:
+/// ScSpecEventParamLocationV0 is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecEventParamLocationV0
@@ -9474,7 +9474,7 @@ impl WriteXdr for ScSpecEventParamLocationV0 {
     }
 }
 
-/// ScSpecEventParamV0 is an XDR Struct defines as:
+/// ScSpecEventParamV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecEventParamV0
@@ -9531,7 +9531,7 @@ impl WriteXdr for ScSpecEventParamV0 {
     }
 }
 
-/// ScSpecEventDataFormat is an XDR Enum defines as:
+/// ScSpecEventDataFormat is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecEventDataFormat
@@ -9647,7 +9647,7 @@ impl WriteXdr for ScSpecEventDataFormat {
     }
 }
 
-/// ScSpecEventV0 is an XDR Struct defines as:
+/// ScSpecEventV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecEventV0
@@ -9712,7 +9712,7 @@ impl WriteXdr for ScSpecEventV0 {
     }
 }
 
-/// ScSpecEntryKind is an XDR Enum defines as:
+/// ScSpecEntryKind is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecEntryKind
@@ -9850,7 +9850,7 @@ impl WriteXdr for ScSpecEntryKind {
     }
 }
 
-/// ScSpecEntry is an XDR Union defines as:
+/// ScSpecEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union SCSpecEntry switch (SCSpecEntryKind kind)
@@ -10011,7 +10011,7 @@ impl WriteXdr for ScSpecEntry {
     }
 }
 
-/// ScValType is an XDR Enum defines as:
+/// ScValType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCValType
@@ -10274,7 +10274,7 @@ impl WriteXdr for ScValType {
     }
 }
 
-/// ScErrorType is an XDR Enum defines as:
+/// ScErrorType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCErrorType
@@ -10428,7 +10428,7 @@ impl WriteXdr for ScErrorType {
     }
 }
 
-/// ScErrorCode is an XDR Enum defines as:
+/// ScErrorCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCErrorCode
@@ -10590,7 +10590,7 @@ impl WriteXdr for ScErrorCode {
     }
 }
 
-/// ScError is an XDR Union defines as:
+/// ScError is an XDR Union defined as:
 ///
 /// ```text
 /// union SCError switch (SCErrorType type)
@@ -10769,7 +10769,7 @@ impl WriteXdr for ScError {
     }
 }
 
-/// UInt128Parts is an XDR Struct defines as:
+/// UInt128Parts is an XDR Struct defined as:
 ///
 /// ```text
 /// struct UInt128Parts {
@@ -10842,7 +10842,7 @@ impl<'de> serde::Deserialize<'de> for UInt128Parts {
     }
 }
 
-/// Int128Parts is an XDR Struct defines as:
+/// Int128Parts is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Int128Parts {
@@ -10915,7 +10915,7 @@ impl<'de> serde::Deserialize<'de> for Int128Parts {
     }
 }
 
-/// UInt256Parts is an XDR Struct defines as:
+/// UInt256Parts is an XDR Struct defined as:
 ///
 /// ```text
 /// struct UInt256Parts {
@@ -11006,7 +11006,7 @@ impl<'de> serde::Deserialize<'de> for UInt256Parts {
     }
 }
 
-/// Int256Parts is an XDR Struct defines as:
+/// Int256Parts is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Int256Parts {
@@ -11097,7 +11097,7 @@ impl<'de> serde::Deserialize<'de> for Int256Parts {
     }
 }
 
-/// ContractExecutableType is an XDR Enum defines as:
+/// ContractExecutableType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractExecutableType
@@ -11208,7 +11208,7 @@ impl WriteXdr for ContractExecutableType {
     }
 }
 
-/// ContractExecutable is an XDR Union defines as:
+/// ContractExecutable is an XDR Union defined as:
 ///
 /// ```text
 /// union ContractExecutable switch (ContractExecutableType type)
@@ -11328,7 +11328,7 @@ impl WriteXdr for ContractExecutable {
     }
 }
 
-/// ScAddressType is an XDR Enum defines as:
+/// ScAddressType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCAddressType
@@ -11460,7 +11460,7 @@ impl WriteXdr for ScAddressType {
     }
 }
 
-/// MuxedEd25519Account is an XDR Struct defines as:
+/// MuxedEd25519Account is an XDR Struct defined as:
 ///
 /// ```text
 /// struct MuxedEd25519Account
@@ -11535,7 +11535,7 @@ impl<'de> serde::Deserialize<'de> for MuxedEd25519Account {
     }
 }
 
-/// ScAddress is an XDR Union defines as:
+/// ScAddress is an XDR Union defined as:
 ///
 /// ```text
 /// union SCAddress switch (SCAddressType type)
@@ -11686,7 +11686,7 @@ impl WriteXdr for ScAddress {
     }
 }
 
-/// ScsymbolLimit is an XDR Const defines as:
+/// ScsymbolLimit is an XDR Const defined as:
 ///
 /// ```text
 /// const SCSYMBOL_LIMIT = 32;
@@ -11694,7 +11694,7 @@ impl WriteXdr for ScAddress {
 ///
 pub const SCSYMBOL_LIMIT: u64 = 32;
 
-/// ScVec is an XDR Typedef defines as:
+/// ScVec is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef SCVal SCVec<>;
@@ -11801,7 +11801,7 @@ impl AsRef<[ScVal]> for ScVec {
     }
 }
 
-/// ScMap is an XDR Typedef defines as:
+/// ScMap is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef SCMapEntry SCMap<>;
@@ -11908,7 +11908,7 @@ impl AsRef<[ScMapEntry]> for ScMap {
     }
 }
 
-/// ScBytes is an XDR Typedef defines as:
+/// ScBytes is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque SCBytes<>;
@@ -12015,7 +12015,7 @@ impl AsRef<[u8]> for ScBytes {
     }
 }
 
-/// ScString is an XDR Typedef defines as:
+/// ScString is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef string SCString<>;
@@ -12122,7 +12122,7 @@ impl AsRef<[u8]> for ScString {
     }
 }
 
-/// ScSymbol is an XDR Typedef defines as:
+/// ScSymbol is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef string SCSymbol<SCSYMBOL_LIMIT>;
@@ -12229,7 +12229,7 @@ impl AsRef<[u8]> for ScSymbol {
     }
 }
 
-/// ScNonceKey is an XDR Struct defines as:
+/// ScNonceKey is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCNonceKey {
@@ -12277,7 +12277,7 @@ impl WriteXdr for ScNonceKey {
     }
 }
 
-/// ScContractInstance is an XDR Struct defines as:
+/// ScContractInstance is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCContractInstance {
@@ -12325,7 +12325,7 @@ impl WriteXdr for ScContractInstance {
     }
 }
 
-/// ScVal is an XDR Union defines as:
+/// ScVal is an XDR Union defined as:
 ///
 /// ```text
 /// union SCVal switch (SCValType type)
@@ -12655,7 +12655,7 @@ impl WriteXdr for ScVal {
     }
 }
 
-/// ScMapEntry is an XDR Struct defines as:
+/// ScMapEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCMapEntry
@@ -12704,7 +12704,7 @@ impl WriteXdr for ScMapEntry {
     }
 }
 
-/// LedgerCloseMetaBatch is an XDR Struct defines as:
+/// LedgerCloseMetaBatch is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseMetaBatch
@@ -12762,7 +12762,7 @@ impl WriteXdr for LedgerCloseMetaBatch {
     }
 }
 
-/// StoredTransactionSet is an XDR Union defines as:
+/// StoredTransactionSet is an XDR Union defined as:
 ///
 /// ```text
 /// union StoredTransactionSet switch (int v)
@@ -12879,7 +12879,7 @@ impl WriteXdr for StoredTransactionSet {
     }
 }
 
-/// StoredDebugTransactionSet is an XDR Struct defines as:
+/// StoredDebugTransactionSet is an XDR Struct defined as:
 ///
 /// ```text
 /// struct StoredDebugTransactionSet
@@ -12932,7 +12932,7 @@ impl WriteXdr for StoredDebugTransactionSet {
     }
 }
 
-/// PersistedScpStateV0 is an XDR Struct defines as:
+/// PersistedScpStateV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PersistedSCPStateV0
@@ -12985,7 +12985,7 @@ impl WriteXdr for PersistedScpStateV0 {
     }
 }
 
-/// PersistedScpStateV1 is an XDR Struct defines as:
+/// PersistedScpStateV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PersistedSCPStateV1
@@ -13035,7 +13035,7 @@ impl WriteXdr for PersistedScpStateV1 {
     }
 }
 
-/// PersistedScpState is an XDR Union defines as:
+/// PersistedScpState is an XDR Union defined as:
 ///
 /// ```text
 /// union PersistedSCPState switch (int v)
@@ -13152,7 +13152,7 @@ impl WriteXdr for PersistedScpState {
     }
 }
 
-/// Thresholds is an XDR Typedef defines as:
+/// Thresholds is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque Thresholds[4];
@@ -13305,7 +13305,7 @@ impl AsRef<[u8]> for Thresholds {
     }
 }
 
-/// String32 is an XDR Typedef defines as:
+/// String32 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef string string32<32>;
@@ -13412,7 +13412,7 @@ impl AsRef<[u8]> for String32 {
     }
 }
 
-/// String64 is an XDR Typedef defines as:
+/// String64 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef string string64<64>;
@@ -13519,7 +13519,7 @@ impl AsRef<[u8]> for String64 {
     }
 }
 
-/// SequenceNumber is an XDR Typedef defines as:
+/// SequenceNumber is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef int64 SequenceNumber;
@@ -13584,7 +13584,7 @@ impl WriteXdr for SequenceNumber {
     }
 }
 
-/// DataValue is an XDR Typedef defines as:
+/// DataValue is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque DataValue<64>;
@@ -13691,7 +13691,7 @@ impl AsRef<[u8]> for DataValue {
     }
 }
 
-/// AssetCode4 is an XDR Typedef defines as:
+/// AssetCode4 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque AssetCode4[4];
@@ -13794,7 +13794,7 @@ impl AsRef<[u8]> for AssetCode4 {
     }
 }
 
-/// AssetCode12 is an XDR Typedef defines as:
+/// AssetCode12 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque AssetCode12[12];
@@ -13897,7 +13897,7 @@ impl AsRef<[u8]> for AssetCode12 {
     }
 }
 
-/// AssetType is an XDR Enum defines as:
+/// AssetType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum AssetType
@@ -14019,7 +14019,7 @@ impl WriteXdr for AssetType {
     }
 }
 
-/// AssetCode is an XDR Union defines as:
+/// AssetCode is an XDR Union defined as:
 ///
 /// ```text
 /// union AssetCode switch (AssetType type)
@@ -14136,7 +14136,7 @@ impl WriteXdr for AssetCode {
     }
 }
 
-/// AlphaNum4 is an XDR Struct defines as:
+/// AlphaNum4 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AlphaNum4
@@ -14185,7 +14185,7 @@ impl WriteXdr for AlphaNum4 {
     }
 }
 
-/// AlphaNum12 is an XDR Struct defines as:
+/// AlphaNum12 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AlphaNum12
@@ -14234,7 +14234,7 @@ impl WriteXdr for AlphaNum12 {
     }
 }
 
-/// Asset is an XDR Union defines as:
+/// Asset is an XDR Union defined as:
 ///
 /// ```text
 /// union Asset switch (AssetType type)
@@ -14366,7 +14366,7 @@ impl WriteXdr for Asset {
     }
 }
 
-/// Price is an XDR Struct defines as:
+/// Price is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Price
@@ -14415,7 +14415,7 @@ impl WriteXdr for Price {
     }
 }
 
-/// Liabilities is an XDR Struct defines as:
+/// Liabilities is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Liabilities
@@ -14472,7 +14472,7 @@ impl WriteXdr for Liabilities {
     }
 }
 
-/// ThresholdIndexes is an XDR Enum defines as:
+/// ThresholdIndexes is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ThresholdIndexes
@@ -14593,7 +14593,7 @@ impl WriteXdr for ThresholdIndexes {
     }
 }
 
-/// LedgerEntryType is an XDR Enum defines as:
+/// LedgerEntryType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerEntryType
@@ -14755,7 +14755,7 @@ impl WriteXdr for LedgerEntryType {
     }
 }
 
-/// Signer is an XDR Struct defines as:
+/// Signer is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Signer
@@ -14804,7 +14804,7 @@ impl WriteXdr for Signer {
     }
 }
 
-/// AccountFlags is an XDR Enum defines as:
+/// AccountFlags is an XDR Enum defined as:
 ///
 /// ```text
 /// enum AccountFlags
@@ -14940,7 +14940,7 @@ impl WriteXdr for AccountFlags {
     }
 }
 
-/// MaskAccountFlags is an XDR Const defines as:
+/// MaskAccountFlags is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_ACCOUNT_FLAGS = 0x7;
@@ -14948,7 +14948,7 @@ impl WriteXdr for AccountFlags {
 ///
 pub const MASK_ACCOUNT_FLAGS: u64 = 0x7;
 
-/// MaskAccountFlagsV17 is an XDR Const defines as:
+/// MaskAccountFlagsV17 is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_ACCOUNT_FLAGS_V17 = 0xF;
@@ -14956,7 +14956,7 @@ pub const MASK_ACCOUNT_FLAGS: u64 = 0x7;
 ///
 pub const MASK_ACCOUNT_FLAGS_V17: u64 = 0xF;
 
-/// MaxSigners is an XDR Const defines as:
+/// MaxSigners is an XDR Const defined as:
 ///
 /// ```text
 /// const MAX_SIGNERS = 20;
@@ -14964,7 +14964,7 @@ pub const MASK_ACCOUNT_FLAGS_V17: u64 = 0xF;
 ///
 pub const MAX_SIGNERS: u64 = 20;
 
-/// SponsorshipDescriptor is an XDR Typedef defines as:
+/// SponsorshipDescriptor is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef AccountID* SponsorshipDescriptor;
@@ -15023,7 +15023,7 @@ impl WriteXdr for SponsorshipDescriptor {
     }
 }
 
-/// AccountEntryExtensionV3 is an XDR Struct defines as:
+/// AccountEntryExtensionV3 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AccountEntryExtensionV3
@@ -15082,7 +15082,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
     }
 }
 
-/// AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:
+/// AccountEntryExtensionV2Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -15199,7 +15199,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
     }
 }
 
-/// AccountEntryExtensionV2 is an XDR Struct defines as:
+/// AccountEntryExtensionV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AccountEntryExtensionV2
@@ -15264,7 +15264,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
     }
 }
 
-/// AccountEntryExtensionV1Ext is an XDR NestedUnion defines as:
+/// AccountEntryExtensionV1Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -15381,7 +15381,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
     }
 }
 
-/// AccountEntryExtensionV1 is an XDR Struct defines as:
+/// AccountEntryExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AccountEntryExtensionV1
@@ -15438,7 +15438,7 @@ impl WriteXdr for AccountEntryExtensionV1 {
     }
 }
 
-/// AccountEntryExt is an XDR NestedUnion defines as:
+/// AccountEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -15555,7 +15555,7 @@ impl WriteXdr for AccountEntryExt {
     }
 }
 
-/// AccountEntry is an XDR Struct defines as:
+/// AccountEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AccountEntry
@@ -15655,7 +15655,7 @@ impl WriteXdr for AccountEntry {
     }
 }
 
-/// TrustLineFlags is an XDR Enum defines as:
+/// TrustLineFlags is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TrustLineFlags
@@ -15780,7 +15780,7 @@ impl WriteXdr for TrustLineFlags {
     }
 }
 
-/// MaskTrustlineFlags is an XDR Const defines as:
+/// MaskTrustlineFlags is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_TRUSTLINE_FLAGS = 1;
@@ -15788,7 +15788,7 @@ impl WriteXdr for TrustLineFlags {
 ///
 pub const MASK_TRUSTLINE_FLAGS: u64 = 1;
 
-/// MaskTrustlineFlagsV13 is an XDR Const defines as:
+/// MaskTrustlineFlagsV13 is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_TRUSTLINE_FLAGS_V13 = 3;
@@ -15796,7 +15796,7 @@ pub const MASK_TRUSTLINE_FLAGS: u64 = 1;
 ///
 pub const MASK_TRUSTLINE_FLAGS_V13: u64 = 3;
 
-/// MaskTrustlineFlagsV17 is an XDR Const defines as:
+/// MaskTrustlineFlagsV17 is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_TRUSTLINE_FLAGS_V17 = 7;
@@ -15804,7 +15804,7 @@ pub const MASK_TRUSTLINE_FLAGS_V13: u64 = 3;
 ///
 pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 
-/// LiquidityPoolType is an XDR Enum defines as:
+/// LiquidityPoolType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LiquidityPoolType
@@ -15908,7 +15908,7 @@ impl WriteXdr for LiquidityPoolType {
     }
 }
 
-/// TrustLineAsset is an XDR Union defines as:
+/// TrustLineAsset is an XDR Union defined as:
 ///
 /// ```text
 /// union TrustLineAsset switch (AssetType type)
@@ -16050,7 +16050,7 @@ impl WriteXdr for TrustLineAsset {
     }
 }
 
-/// TrustLineEntryExtensionV2Ext is an XDR NestedUnion defines as:
+/// TrustLineEntryExtensionV2Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -16160,7 +16160,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
     }
 }
 
-/// TrustLineEntryExtensionV2 is an XDR Struct defines as:
+/// TrustLineEntryExtensionV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TrustLineEntryExtensionV2
@@ -16215,7 +16215,7 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
     }
 }
 
-/// TrustLineEntryV1Ext is an XDR NestedUnion defines as:
+/// TrustLineEntryV1Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -16332,7 +16332,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
     }
 }
 
-/// TrustLineEntryV1 is an XDR NestedStruct defines as:
+/// TrustLineEntryV1 is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -16389,7 +16389,7 @@ impl WriteXdr for TrustLineEntryV1 {
     }
 }
 
-/// TrustLineEntryExt is an XDR NestedUnion defines as:
+/// TrustLineEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -16518,7 +16518,7 @@ impl WriteXdr for TrustLineEntryExt {
     }
 }
 
-/// TrustLineEntry is an XDR Struct defines as:
+/// TrustLineEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TrustLineEntry
@@ -16614,7 +16614,7 @@ impl WriteXdr for TrustLineEntry {
     }
 }
 
-/// OfferEntryFlags is an XDR Enum defines as:
+/// OfferEntryFlags is an XDR Enum defined as:
 ///
 /// ```text
 /// enum OfferEntryFlags
@@ -16720,7 +16720,7 @@ impl WriteXdr for OfferEntryFlags {
     }
 }
 
-/// MaskOfferentryFlags is an XDR Const defines as:
+/// MaskOfferentryFlags is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_OFFERENTRY_FLAGS = 1;
@@ -16728,7 +16728,7 @@ impl WriteXdr for OfferEntryFlags {
 ///
 pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 
-/// OfferEntryExt is an XDR NestedUnion defines as:
+/// OfferEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -16838,7 +16838,7 @@ impl WriteXdr for OfferEntryExt {
     }
 }
 
-/// OfferEntry is an XDR Struct defines as:
+/// OfferEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct OfferEntry
@@ -16932,7 +16932,7 @@ impl WriteXdr for OfferEntry {
     }
 }
 
-/// DataEntryExt is an XDR NestedUnion defines as:
+/// DataEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -17042,7 +17042,7 @@ impl WriteXdr for DataEntryExt {
     }
 }
 
-/// DataEntry is an XDR Struct defines as:
+/// DataEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DataEntry
@@ -17106,7 +17106,7 @@ impl WriteXdr for DataEntry {
     }
 }
 
-/// ClaimPredicateType is an XDR Enum defines as:
+/// ClaimPredicateType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimPredicateType
@@ -17244,7 +17244,7 @@ impl WriteXdr for ClaimPredicateType {
     }
 }
 
-/// ClaimPredicate is an XDR Union defines as:
+/// ClaimPredicate is an XDR Union defined as:
 ///
 /// ```text
 /// union ClaimPredicate switch (ClaimPredicateType type)
@@ -17420,7 +17420,7 @@ impl WriteXdr for ClaimPredicate {
     }
 }
 
-/// ClaimantType is an XDR Enum defines as:
+/// ClaimantType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimantType
@@ -17524,7 +17524,7 @@ impl WriteXdr for ClaimantType {
     }
 }
 
-/// ClaimantV0 is an XDR NestedStruct defines as:
+/// ClaimantV0 is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -17573,7 +17573,7 @@ impl WriteXdr for ClaimantV0 {
     }
 }
 
-/// Claimant is an XDR Union defines as:
+/// Claimant is an XDR Union defined as:
 ///
 /// ```text
 /// union Claimant switch (ClaimantType type)
@@ -17687,7 +17687,7 @@ impl WriteXdr for Claimant {
     }
 }
 
-/// ClaimableBalanceFlags is an XDR Enum defines as:
+/// ClaimableBalanceFlags is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimableBalanceFlags
@@ -17794,7 +17794,7 @@ impl WriteXdr for ClaimableBalanceFlags {
     }
 }
 
-/// MaskClaimableBalanceFlags is an XDR Const defines as:
+/// MaskClaimableBalanceFlags is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_CLAIMABLE_BALANCE_FLAGS = 0x1;
@@ -17802,7 +17802,7 @@ impl WriteXdr for ClaimableBalanceFlags {
 ///
 pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 
-/// ClaimableBalanceEntryExtensionV1Ext is an XDR NestedUnion defines as:
+/// ClaimableBalanceEntryExtensionV1Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -17912,7 +17912,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     }
 }
 
-/// ClaimableBalanceEntryExtensionV1 is an XDR Struct defines as:
+/// ClaimableBalanceEntryExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimableBalanceEntryExtensionV1
@@ -17967,7 +17967,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     }
 }
 
-/// ClaimableBalanceEntryExt is an XDR NestedUnion defines as:
+/// ClaimableBalanceEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -18084,7 +18084,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
     }
 }
 
-/// ClaimableBalanceEntry is an XDR Struct defines as:
+/// ClaimableBalanceEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimableBalanceEntry
@@ -18165,7 +18165,7 @@ impl WriteXdr for ClaimableBalanceEntry {
     }
 }
 
-/// LiquidityPoolConstantProductParameters is an XDR Struct defines as:
+/// LiquidityPoolConstantProductParameters is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LiquidityPoolConstantProductParameters
@@ -18218,7 +18218,7 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
     }
 }
 
-/// LiquidityPoolEntryConstantProduct is an XDR NestedStruct defines as:
+/// LiquidityPoolEntryConstantProduct is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -18297,7 +18297,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
     }
 }
 
-/// LiquidityPoolEntryBody is an XDR NestedUnion defines as:
+/// LiquidityPoolEntryBody is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (LiquidityPoolType type)
@@ -18422,7 +18422,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
     }
 }
 
-/// LiquidityPoolEntry is an XDR Struct defines as:
+/// LiquidityPoolEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LiquidityPoolEntry
@@ -18486,7 +18486,7 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
-/// ContractDataDurability is an XDR Enum defines as:
+/// ContractDataDurability is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractDataDurability {
@@ -18596,7 +18596,7 @@ impl WriteXdr for ContractDataDurability {
     }
 }
 
-/// ContractDataEntry is an XDR Struct defines as:
+/// ContractDataEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ContractDataEntry {
@@ -18657,7 +18657,7 @@ impl WriteXdr for ContractDataEntry {
     }
 }
 
-/// ContractCodeCostInputs is an XDR Struct defines as:
+/// ContractCodeCostInputs is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ContractCodeCostInputs {
@@ -18741,7 +18741,7 @@ impl WriteXdr for ContractCodeCostInputs {
     }
 }
 
-/// ContractCodeEntryV1 is an XDR NestedStruct defines as:
+/// ContractCodeEntryV1 is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -18790,7 +18790,7 @@ impl WriteXdr for ContractCodeEntryV1 {
     }
 }
 
-/// ContractCodeEntryExt is an XDR NestedUnion defines as:
+/// ContractCodeEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -18911,7 +18911,7 @@ impl WriteXdr for ContractCodeEntryExt {
     }
 }
 
-/// ContractCodeEntry is an XDR Struct defines as:
+/// ContractCodeEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ContractCodeEntry {
@@ -18974,7 +18974,7 @@ impl WriteXdr for ContractCodeEntry {
     }
 }
 
-/// TtlEntry is an XDR Struct defines as:
+/// TtlEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TTLEntry {
@@ -19023,7 +19023,7 @@ impl WriteXdr for TtlEntry {
     }
 }
 
-/// LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:
+/// LedgerEntryExtensionV1Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -19133,7 +19133,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
     }
 }
 
-/// LedgerEntryExtensionV1 is an XDR Struct defines as:
+/// LedgerEntryExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerEntryExtensionV1
@@ -19188,7 +19188,7 @@ impl WriteXdr for LedgerEntryExtensionV1 {
     }
 }
 
-/// LedgerEntryData is an XDR NestedUnion defines as:
+/// LedgerEntryData is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (LedgerEntryType type)
@@ -19393,7 +19393,7 @@ impl WriteXdr for LedgerEntryData {
     }
 }
 
-/// LedgerEntryExt is an XDR NestedUnion defines as:
+/// LedgerEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -19510,7 +19510,7 @@ impl WriteXdr for LedgerEntryExt {
     }
 }
 
-/// LedgerEntry is an XDR Struct defines as:
+/// LedgerEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerEntry
@@ -19596,7 +19596,7 @@ impl WriteXdr for LedgerEntry {
     }
 }
 
-/// LedgerKeyAccount is an XDR NestedStruct defines as:
+/// LedgerKeyAccount is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19641,7 +19641,7 @@ impl WriteXdr for LedgerKeyAccount {
     }
 }
 
-/// LedgerKeyTrustLine is an XDR NestedStruct defines as:
+/// LedgerKeyTrustLine is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19690,7 +19690,7 @@ impl WriteXdr for LedgerKeyTrustLine {
     }
 }
 
-/// LedgerKeyOffer is an XDR NestedStruct defines as:
+/// LedgerKeyOffer is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19743,7 +19743,7 @@ impl WriteXdr for LedgerKeyOffer {
     }
 }
 
-/// LedgerKeyData is an XDR NestedStruct defines as:
+/// LedgerKeyData is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19792,7 +19792,7 @@ impl WriteXdr for LedgerKeyData {
     }
 }
 
-/// LedgerKeyClaimableBalance is an XDR NestedStruct defines as:
+/// LedgerKeyClaimableBalance is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19837,7 +19837,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
     }
 }
 
-/// LedgerKeyLiquidityPool is an XDR NestedStruct defines as:
+/// LedgerKeyLiquidityPool is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19882,7 +19882,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     }
 }
 
-/// LedgerKeyContractData is an XDR NestedStruct defines as:
+/// LedgerKeyContractData is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19935,7 +19935,7 @@ impl WriteXdr for LedgerKeyContractData {
     }
 }
 
-/// LedgerKeyContractCode is an XDR NestedStruct defines as:
+/// LedgerKeyContractCode is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -19980,7 +19980,7 @@ impl WriteXdr for LedgerKeyContractCode {
     }
 }
 
-/// LedgerKeyConfigSetting is an XDR NestedStruct defines as:
+/// LedgerKeyConfigSetting is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -20025,7 +20025,7 @@ impl WriteXdr for LedgerKeyConfigSetting {
     }
 }
 
-/// LedgerKeyTtl is an XDR NestedStruct defines as:
+/// LedgerKeyTtl is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -20071,7 +20071,7 @@ impl WriteXdr for LedgerKeyTtl {
     }
 }
 
-/// LedgerKey is an XDR Union defines as:
+/// LedgerKey is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerKey switch (LedgerEntryType type)
@@ -20317,7 +20317,7 @@ impl WriteXdr for LedgerKey {
     }
 }
 
-/// EnvelopeType is an XDR Enum defines as:
+/// EnvelopeType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum EnvelopeType
@@ -20479,7 +20479,7 @@ impl WriteXdr for EnvelopeType {
     }
 }
 
-/// BucketListType is an XDR Enum defines as:
+/// BucketListType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum BucketListType
@@ -20587,7 +20587,7 @@ impl WriteXdr for BucketListType {
     }
 }
 
-/// BucketEntryType is an XDR Enum defines as:
+/// BucketEntryType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum BucketEntryType
@@ -20711,7 +20711,7 @@ impl WriteXdr for BucketEntryType {
     }
 }
 
-/// HotArchiveBucketEntryType is an XDR Enum defines as:
+/// HotArchiveBucketEntryType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum HotArchiveBucketEntryType
@@ -20829,7 +20829,7 @@ impl WriteXdr for HotArchiveBucketEntryType {
     }
 }
 
-/// BucketMetadataExt is an XDR NestedUnion defines as:
+/// BucketMetadataExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -20946,7 +20946,7 @@ impl WriteXdr for BucketMetadataExt {
     }
 }
 
-/// BucketMetadata is an XDR Struct defines as:
+/// BucketMetadata is an XDR Struct defined as:
 ///
 /// ```text
 /// struct BucketMetadata
@@ -21005,7 +21005,7 @@ impl WriteXdr for BucketMetadata {
     }
 }
 
-/// BucketEntry is an XDR Union defines as:
+/// BucketEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union BucketEntry switch (BucketEntryType type)
@@ -21142,7 +21142,7 @@ impl WriteXdr for BucketEntry {
     }
 }
 
-/// HotArchiveBucketEntry is an XDR Union defines as:
+/// HotArchiveBucketEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union HotArchiveBucketEntry switch (HotArchiveBucketEntryType type)
@@ -21274,7 +21274,7 @@ impl WriteXdr for HotArchiveBucketEntry {
     }
 }
 
-/// UpgradeType is an XDR Typedef defines as:
+/// UpgradeType is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque UpgradeType<128>;
@@ -21381,7 +21381,7 @@ impl AsRef<[u8]> for UpgradeType {
     }
 }
 
-/// StellarValueType is an XDR Enum defines as:
+/// StellarValueType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum StellarValueType
@@ -21489,7 +21489,7 @@ impl WriteXdr for StellarValueType {
     }
 }
 
-/// LedgerCloseValueSignature is an XDR Struct defines as:
+/// LedgerCloseValueSignature is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseValueSignature
@@ -21538,7 +21538,7 @@ impl WriteXdr for LedgerCloseValueSignature {
     }
 }
 
-/// StellarValueExt is an XDR NestedUnion defines as:
+/// StellarValueExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (StellarValueType v)
@@ -21655,7 +21655,7 @@ impl WriteXdr for StellarValueExt {
     }
 }
 
-/// StellarValue is an XDR Struct defines as:
+/// StellarValue is an XDR Struct defined as:
 ///
 /// ```text
 /// struct StellarValue
@@ -21727,7 +21727,7 @@ impl WriteXdr for StellarValue {
     }
 }
 
-/// MaskLedgerHeaderFlags is an XDR Const defines as:
+/// MaskLedgerHeaderFlags is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_LEDGER_HEADER_FLAGS = 0x7;
@@ -21735,7 +21735,7 @@ impl WriteXdr for StellarValue {
 ///
 pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 
-/// LedgerHeaderFlags is an XDR Enum defines as:
+/// LedgerHeaderFlags is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerHeaderFlags
@@ -21851,7 +21851,7 @@ impl WriteXdr for LedgerHeaderFlags {
     }
 }
 
-/// LedgerHeaderExtensionV1Ext is an XDR NestedUnion defines as:
+/// LedgerHeaderExtensionV1Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -21961,7 +21961,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
     }
 }
 
-/// LedgerHeaderExtensionV1 is an XDR Struct defines as:
+/// LedgerHeaderExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerHeaderExtensionV1
@@ -22016,7 +22016,7 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
     }
 }
 
-/// LedgerHeaderExt is an XDR NestedUnion defines as:
+/// LedgerHeaderExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -22133,7 +22133,7 @@ impl WriteXdr for LedgerHeaderExt {
     }
 }
 
-/// LedgerHeader is an XDR Struct defines as:
+/// LedgerHeader is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerHeader
@@ -22267,7 +22267,7 @@ impl WriteXdr for LedgerHeader {
     }
 }
 
-/// LedgerUpgradeType is an XDR Enum defines as:
+/// LedgerUpgradeType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerUpgradeType
@@ -22411,7 +22411,7 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
-/// ConfigUpgradeSetKey is an XDR Struct defines as:
+/// ConfigUpgradeSetKey is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigUpgradeSetKey {
@@ -22459,7 +22459,7 @@ impl WriteXdr for ConfigUpgradeSetKey {
     }
 }
 
-/// LedgerUpgrade is an XDR Union defines as:
+/// LedgerUpgrade is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerUpgrade switch (LedgerUpgradeType type)
@@ -22632,7 +22632,7 @@ impl WriteXdr for LedgerUpgrade {
     }
 }
 
-/// ConfigUpgradeSet is an XDR Struct defines as:
+/// ConfigUpgradeSet is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigUpgradeSet {
@@ -22676,7 +22676,7 @@ impl WriteXdr for ConfigUpgradeSet {
     }
 }
 
-/// TxSetComponentType is an XDR Enum defines as:
+/// TxSetComponentType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TxSetComponentType
@@ -22783,7 +22783,7 @@ impl WriteXdr for TxSetComponentType {
     }
 }
 
-/// DependentTxCluster is an XDR Typedef defines as:
+/// DependentTxCluster is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef TransactionEnvelope DependentTxCluster<>;
@@ -22890,7 +22890,7 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     }
 }
 
-/// ParallelTxExecutionStage is an XDR Typedef defines as:
+/// ParallelTxExecutionStage is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef DependentTxCluster ParallelTxExecutionStage<>;
@@ -22997,7 +22997,7 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     }
 }
 
-/// ParallelTxsComponent is an XDR Struct defines as:
+/// ParallelTxsComponent is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ParallelTxsComponent
@@ -23053,7 +23053,7 @@ impl WriteXdr for ParallelTxsComponent {
     }
 }
 
-/// TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defines as:
+/// TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -23106,7 +23106,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     }
 }
 
-/// TxSetComponent is an XDR Union defines as:
+/// TxSetComponent is an XDR Union defined as:
 ///
 /// ```text
 /// union TxSetComponent switch (TxSetComponentType type)
@@ -23227,7 +23227,7 @@ impl WriteXdr for TxSetComponent {
     }
 }
 
-/// TransactionPhase is an XDR Union defines as:
+/// TransactionPhase is an XDR Union defined as:
 ///
 /// ```text
 /// union TransactionPhase switch (int v)
@@ -23344,7 +23344,7 @@ impl WriteXdr for TransactionPhase {
     }
 }
 
-/// TransactionSet is an XDR Struct defines as:
+/// TransactionSet is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionSet
@@ -23393,7 +23393,7 @@ impl WriteXdr for TransactionSet {
     }
 }
 
-/// TransactionSetV1 is an XDR Struct defines as:
+/// TransactionSetV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionSetV1
@@ -23442,7 +23442,7 @@ impl WriteXdr for TransactionSetV1 {
     }
 }
 
-/// GeneralizedTransactionSet is an XDR Union defines as:
+/// GeneralizedTransactionSet is an XDR Union defined as:
 ///
 /// ```text
 /// union GeneralizedTransactionSet switch (int v)
@@ -23553,7 +23553,7 @@ impl WriteXdr for GeneralizedTransactionSet {
     }
 }
 
-/// TransactionResultPair is an XDR Struct defines as:
+/// TransactionResultPair is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionResultPair
@@ -23602,7 +23602,7 @@ impl WriteXdr for TransactionResultPair {
     }
 }
 
-/// TransactionResultSet is an XDR Struct defines as:
+/// TransactionResultSet is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionResultSet
@@ -23647,7 +23647,7 @@ impl WriteXdr for TransactionResultSet {
     }
 }
 
-/// TransactionHistoryEntryExt is an XDR NestedUnion defines as:
+/// TransactionHistoryEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -23764,7 +23764,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
     }
 }
 
-/// TransactionHistoryEntry is an XDR Struct defines as:
+/// TransactionHistoryEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionHistoryEntry
@@ -23826,7 +23826,7 @@ impl WriteXdr for TransactionHistoryEntry {
     }
 }
 
-/// TransactionHistoryResultEntryExt is an XDR NestedUnion defines as:
+/// TransactionHistoryResultEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -23936,7 +23936,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
     }
 }
 
-/// TransactionHistoryResultEntry is an XDR Struct defines as:
+/// TransactionHistoryResultEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionHistoryResultEntry
@@ -23996,7 +23996,7 @@ impl WriteXdr for TransactionHistoryResultEntry {
     }
 }
 
-/// LedgerHeaderHistoryEntryExt is an XDR NestedUnion defines as:
+/// LedgerHeaderHistoryEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -24106,7 +24106,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
     }
 }
 
-/// LedgerHeaderHistoryEntry is an XDR Struct defines as:
+/// LedgerHeaderHistoryEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerHeaderHistoryEntry
@@ -24166,7 +24166,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
     }
 }
 
-/// LedgerScpMessages is an XDR Struct defines as:
+/// LedgerScpMessages is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerSCPMessages
@@ -24215,7 +24215,7 @@ impl WriteXdr for LedgerScpMessages {
     }
 }
 
-/// ScpHistoryEntryV0 is an XDR Struct defines as:
+/// ScpHistoryEntryV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPHistoryEntryV0
@@ -24264,7 +24264,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
     }
 }
 
-/// ScpHistoryEntry is an XDR Union defines as:
+/// ScpHistoryEntry is an XDR Union defined as:
 ///
 /// ```text
 /// union SCPHistoryEntry switch (int v)
@@ -24374,7 +24374,7 @@ impl WriteXdr for ScpHistoryEntry {
     }
 }
 
-/// LedgerEntryChangeType is an XDR Enum defines as:
+/// LedgerEntryChangeType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerEntryChangeType
@@ -24501,7 +24501,7 @@ impl WriteXdr for LedgerEntryChangeType {
     }
 }
 
-/// LedgerEntryChange is an XDR Union defines as:
+/// LedgerEntryChange is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerEntryChange switch (LedgerEntryChangeType type)
@@ -24646,7 +24646,7 @@ impl WriteXdr for LedgerEntryChange {
     }
 }
 
-/// LedgerEntryChanges is an XDR Typedef defines as:
+/// LedgerEntryChanges is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef LedgerEntryChange LedgerEntryChanges<>;
@@ -24753,7 +24753,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
     }
 }
 
-/// OperationMeta is an XDR Struct defines as:
+/// OperationMeta is an XDR Struct defined as:
 ///
 /// ```text
 /// struct OperationMeta
@@ -24798,7 +24798,7 @@ impl WriteXdr for OperationMeta {
     }
 }
 
-/// TransactionMetaV1 is an XDR Struct defines as:
+/// TransactionMetaV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionMetaV1
@@ -24847,7 +24847,7 @@ impl WriteXdr for TransactionMetaV1 {
     }
 }
 
-/// TransactionMetaV2 is an XDR Struct defines as:
+/// TransactionMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionMetaV2
@@ -24902,7 +24902,7 @@ impl WriteXdr for TransactionMetaV2 {
     }
 }
 
-/// ContractEventType is an XDR Enum defines as:
+/// ContractEventType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractEventType
@@ -25018,7 +25018,7 @@ impl WriteXdr for ContractEventType {
     }
 }
 
-/// ContractEventV0 is an XDR NestedStruct defines as:
+/// ContractEventV0 is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -25067,7 +25067,7 @@ impl WriteXdr for ContractEventV0 {
     }
 }
 
-/// ContractEventBody is an XDR NestedUnion defines as:
+/// ContractEventBody is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -25181,7 +25181,7 @@ impl WriteXdr for ContractEventBody {
     }
 }
 
-/// ContractEvent is an XDR Struct defines as:
+/// ContractEvent is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ContractEvent
@@ -25251,7 +25251,7 @@ impl WriteXdr for ContractEvent {
     }
 }
 
-/// DiagnosticEvent is an XDR Struct defines as:
+/// DiagnosticEvent is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DiagnosticEvent
@@ -25300,7 +25300,7 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
-/// SorobanTransactionMetaExtV1 is an XDR Struct defines as:
+/// SorobanTransactionMetaExtV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanTransactionMetaExtV1
@@ -25396,7 +25396,7 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
     }
 }
 
-/// SorobanTransactionMetaExt is an XDR Union defines as:
+/// SorobanTransactionMetaExt is an XDR Union defined as:
 ///
 /// ```text
 /// union SorobanTransactionMetaExt switch (int v)
@@ -25513,7 +25513,7 @@ impl WriteXdr for SorobanTransactionMetaExt {
     }
 }
 
-/// SorobanTransactionMeta is an XDR Struct defines as:
+/// SorobanTransactionMeta is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanTransactionMeta
@@ -25576,7 +25576,7 @@ impl WriteXdr for SorobanTransactionMeta {
     }
 }
 
-/// TransactionMetaV3 is an XDR Struct defines as:
+/// TransactionMetaV3 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionMetaV3
@@ -25641,7 +25641,7 @@ impl WriteXdr for TransactionMetaV3 {
     }
 }
 
-/// OperationMetaV2 is an XDR Struct defines as:
+/// OperationMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct OperationMetaV2
@@ -25696,7 +25696,7 @@ impl WriteXdr for OperationMetaV2 {
     }
 }
 
-/// SorobanTransactionMetaV2 is an XDR Struct defines as:
+/// SorobanTransactionMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanTransactionMetaV2
@@ -25746,7 +25746,7 @@ impl WriteXdr for SorobanTransactionMetaV2 {
     }
 }
 
-/// TransactionEventStage is an XDR Enum defines as:
+/// TransactionEventStage is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TransactionEventStage {
@@ -25867,7 +25867,7 @@ impl WriteXdr for TransactionEventStage {
     }
 }
 
-/// TransactionEvent is an XDR Struct defines as:
+/// TransactionEvent is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionEvent {    
@@ -25915,7 +25915,7 @@ impl WriteXdr for TransactionEvent {
     }
 }
 
-/// TransactionMetaV4 is an XDR Struct defines as:
+/// TransactionMetaV4 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionMetaV4
@@ -25989,7 +25989,7 @@ impl WriteXdr for TransactionMetaV4 {
     }
 }
 
-/// InvokeHostFunctionSuccessPreImage is an XDR Struct defines as:
+/// InvokeHostFunctionSuccessPreImage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InvokeHostFunctionSuccessPreImage
@@ -26038,7 +26038,7 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     }
 }
 
-/// TransactionMeta is an XDR Union defines as:
+/// TransactionMeta is an XDR Union defined as:
 ///
 /// ```text
 /// union TransactionMeta switch (int v)
@@ -26176,7 +26176,7 @@ impl WriteXdr for TransactionMeta {
     }
 }
 
-/// TransactionResultMeta is an XDR Struct defines as:
+/// TransactionResultMeta is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionResultMeta
@@ -26229,7 +26229,7 @@ impl WriteXdr for TransactionResultMeta {
     }
 }
 
-/// TransactionResultMetaV1 is an XDR Struct defines as:
+/// TransactionResultMetaV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionResultMetaV1
@@ -26292,7 +26292,7 @@ impl WriteXdr for TransactionResultMetaV1 {
     }
 }
 
-/// UpgradeEntryMeta is an XDR Struct defines as:
+/// UpgradeEntryMeta is an XDR Struct defined as:
 ///
 /// ```text
 /// struct UpgradeEntryMeta
@@ -26341,7 +26341,7 @@ impl WriteXdr for UpgradeEntryMeta {
     }
 }
 
-/// LedgerCloseMetaV0 is an XDR Struct defines as:
+/// LedgerCloseMetaV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseMetaV0
@@ -26411,7 +26411,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
     }
 }
 
-/// LedgerCloseMetaExtV1 is an XDR Struct defines as:
+/// LedgerCloseMetaExtV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseMetaExtV1
@@ -26464,7 +26464,7 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
     }
 }
 
-/// LedgerCloseMetaExt is an XDR Union defines as:
+/// LedgerCloseMetaExt is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerCloseMetaExt switch (int v)
@@ -26581,7 +26581,7 @@ impl WriteXdr for LedgerCloseMetaExt {
     }
 }
 
-/// LedgerCloseMetaV1 is an XDR Struct defines as:
+/// LedgerCloseMetaV1 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseMetaV1
@@ -26679,7 +26679,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
-/// LedgerCloseMetaV2 is an XDR Struct defines as:
+/// LedgerCloseMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseMetaV2
@@ -26771,7 +26771,7 @@ impl WriteXdr for LedgerCloseMetaV2 {
     }
 }
 
-/// LedgerCloseMeta is an XDR Union defines as:
+/// LedgerCloseMeta is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerCloseMeta switch (int v)
@@ -26895,7 +26895,7 @@ impl WriteXdr for LedgerCloseMeta {
     }
 }
 
-/// ErrorCode is an XDR Enum defines as:
+/// ErrorCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ErrorCode
@@ -27021,7 +27021,7 @@ impl WriteXdr for ErrorCode {
     }
 }
 
-/// SError is an XDR Struct defines as:
+/// SError is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Error
@@ -27070,7 +27070,7 @@ impl WriteXdr for SError {
     }
 }
 
-/// SendMore is an XDR Struct defines as:
+/// SendMore is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SendMore
@@ -27115,7 +27115,7 @@ impl WriteXdr for SendMore {
     }
 }
 
-/// SendMoreExtended is an XDR Struct defines as:
+/// SendMoreExtended is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SendMoreExtended
@@ -27164,7 +27164,7 @@ impl WriteXdr for SendMoreExtended {
     }
 }
 
-/// AuthCert is an XDR Struct defines as:
+/// AuthCert is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AuthCert
@@ -27221,7 +27221,7 @@ impl WriteXdr for AuthCert {
     }
 }
 
-/// Hello is an XDR Struct defines as:
+/// Hello is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Hello
@@ -27298,7 +27298,7 @@ impl WriteXdr for Hello {
     }
 }
 
-/// AuthMsgFlagFlowControlBytesRequested is an XDR Const defines as:
+/// AuthMsgFlagFlowControlBytesRequested is an XDR Const defined as:
 ///
 /// ```text
 /// const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED = 200;
@@ -27306,7 +27306,7 @@ impl WriteXdr for Hello {
 ///
 pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 
-/// Auth is an XDR Struct defines as:
+/// Auth is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Auth
@@ -27351,7 +27351,7 @@ impl WriteXdr for Auth {
     }
 }
 
-/// IpAddrType is an XDR Enum defines as:
+/// IpAddrType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum IPAddrType
@@ -27459,7 +27459,7 @@ impl WriteXdr for IpAddrType {
     }
 }
 
-/// PeerAddressIp is an XDR NestedUnion defines as:
+/// PeerAddressIp is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (IPAddrType type)
@@ -27576,7 +27576,7 @@ impl WriteXdr for PeerAddressIp {
     }
 }
 
-/// PeerAddress is an XDR Struct defines as:
+/// PeerAddress is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PeerAddress
@@ -27636,7 +27636,7 @@ impl WriteXdr for PeerAddress {
     }
 }
 
-/// MessageType is an XDR Enum defines as:
+/// MessageType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum MessageType
@@ -27878,7 +27878,7 @@ impl WriteXdr for MessageType {
     }
 }
 
-/// DontHave is an XDR Struct defines as:
+/// DontHave is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DontHave
@@ -27927,7 +27927,7 @@ impl WriteXdr for DontHave {
     }
 }
 
-/// SurveyMessageCommandType is an XDR Enum defines as:
+/// SurveyMessageCommandType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SurveyMessageCommandType
@@ -28032,7 +28032,7 @@ impl WriteXdr for SurveyMessageCommandType {
     }
 }
 
-/// SurveyMessageResponseType is an XDR Enum defines as:
+/// SurveyMessageResponseType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SurveyMessageResponseType
@@ -28137,7 +28137,7 @@ impl WriteXdr for SurveyMessageResponseType {
     }
 }
 
-/// TimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:
+/// TimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedSurveyStartCollectingMessage
@@ -28190,7 +28190,7 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:
+/// SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SignedTimeSlicedSurveyStartCollectingMessage
@@ -28239,7 +28239,7 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
     }
 }
 
-/// TimeSlicedSurveyStopCollectingMessage is an XDR Struct defines as:
+/// TimeSlicedSurveyStopCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedSurveyStopCollectingMessage
@@ -28292,7 +28292,7 @@ impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyStopCollectingMessage is an XDR Struct defines as:
+/// SignedTimeSlicedSurveyStopCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SignedTimeSlicedSurveyStopCollectingMessage
@@ -28341,7 +28341,7 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     }
 }
 
-/// SurveyRequestMessage is an XDR Struct defines as:
+/// SurveyRequestMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SurveyRequestMessage
@@ -28402,7 +28402,7 @@ impl WriteXdr for SurveyRequestMessage {
     }
 }
 
-/// TimeSlicedSurveyRequestMessage is an XDR Struct defines as:
+/// TimeSlicedSurveyRequestMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedSurveyRequestMessage
@@ -28459,7 +28459,7 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyRequestMessage is an XDR Struct defines as:
+/// SignedTimeSlicedSurveyRequestMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SignedTimeSlicedSurveyRequestMessage
@@ -28508,7 +28508,7 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     }
 }
 
-/// EncryptedBody is an XDR Typedef defines as:
+/// EncryptedBody is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque EncryptedBody<64000>;
@@ -28615,7 +28615,7 @@ impl AsRef<[u8]> for EncryptedBody {
     }
 }
 
-/// SurveyResponseMessage is an XDR Struct defines as:
+/// SurveyResponseMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SurveyResponseMessage
@@ -28676,7 +28676,7 @@ impl WriteXdr for SurveyResponseMessage {
     }
 }
 
-/// TimeSlicedSurveyResponseMessage is an XDR Struct defines as:
+/// TimeSlicedSurveyResponseMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedSurveyResponseMessage
@@ -28725,7 +28725,7 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyResponseMessage is an XDR Struct defines as:
+/// SignedTimeSlicedSurveyResponseMessage is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SignedTimeSlicedSurveyResponseMessage
@@ -28774,7 +28774,7 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
     }
 }
 
-/// PeerStats is an XDR Struct defines as:
+/// PeerStats is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PeerStats
@@ -28929,7 +28929,7 @@ impl WriteXdr for PeerStats {
     }
 }
 
-/// TimeSlicedNodeData is an XDR Struct defines as:
+/// TimeSlicedNodeData is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedNodeData
@@ -29016,7 +29016,7 @@ impl WriteXdr for TimeSlicedNodeData {
     }
 }
 
-/// TimeSlicedPeerData is an XDR Struct defines as:
+/// TimeSlicedPeerData is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedPeerData
@@ -29065,7 +29065,7 @@ impl WriteXdr for TimeSlicedPeerData {
     }
 }
 
-/// TimeSlicedPeerDataList is an XDR Typedef defines as:
+/// TimeSlicedPeerDataList is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>;
@@ -29172,7 +29172,7 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     }
 }
 
-/// TopologyResponseBodyV2 is an XDR Struct defines as:
+/// TopologyResponseBodyV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TopologyResponseBodyV2
@@ -29225,7 +29225,7 @@ impl WriteXdr for TopologyResponseBodyV2 {
     }
 }
 
-/// SurveyResponseBody is an XDR Union defines as:
+/// SurveyResponseBody is an XDR Union defined as:
 ///
 /// ```text
 /// union SurveyResponseBody switch (SurveyMessageResponseType type)
@@ -29341,7 +29341,7 @@ impl WriteXdr for SurveyResponseBody {
     }
 }
 
-/// TxAdvertVectorMaxSize is an XDR Const defines as:
+/// TxAdvertVectorMaxSize is an XDR Const defined as:
 ///
 /// ```text
 /// const TX_ADVERT_VECTOR_MAX_SIZE = 1000;
@@ -29349,7 +29349,7 @@ impl WriteXdr for SurveyResponseBody {
 ///
 pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 
-/// TxAdvertVector is an XDR Typedef defines as:
+/// TxAdvertVector is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;
@@ -29456,7 +29456,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
     }
 }
 
-/// FloodAdvert is an XDR Struct defines as:
+/// FloodAdvert is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FloodAdvert
@@ -29501,7 +29501,7 @@ impl WriteXdr for FloodAdvert {
     }
 }
 
-/// TxDemandVectorMaxSize is an XDR Const defines as:
+/// TxDemandVectorMaxSize is an XDR Const defined as:
 ///
 /// ```text
 /// const TX_DEMAND_VECTOR_MAX_SIZE = 1000;
@@ -29509,7 +29509,7 @@ impl WriteXdr for FloodAdvert {
 ///
 pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 
-/// TxDemandVector is an XDR Typedef defines as:
+/// TxDemandVector is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;
@@ -29616,7 +29616,7 @@ impl AsRef<[Hash]> for TxDemandVector {
     }
 }
 
-/// FloodDemand is an XDR Struct defines as:
+/// FloodDemand is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FloodDemand
@@ -29661,7 +29661,7 @@ impl WriteXdr for FloodDemand {
     }
 }
 
-/// StellarMessage is an XDR Union defines as:
+/// StellarMessage is an XDR Union defined as:
 ///
 /// ```text
 /// union StellarMessage switch (MessageType type)
@@ -29984,7 +29984,7 @@ impl WriteXdr for StellarMessage {
     }
 }
 
-/// AuthenticatedMessageV0 is an XDR NestedStruct defines as:
+/// AuthenticatedMessageV0 is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -30041,7 +30041,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
     }
 }
 
-/// AuthenticatedMessage is an XDR Union defines as:
+/// AuthenticatedMessage is an XDR Union defined as:
 ///
 /// ```text
 /// union AuthenticatedMessage switch (uint32 v)
@@ -30156,7 +30156,7 @@ impl WriteXdr for AuthenticatedMessage {
     }
 }
 
-/// MaxOpsPerTx is an XDR Const defines as:
+/// MaxOpsPerTx is an XDR Const defined as:
 ///
 /// ```text
 /// const MAX_OPS_PER_TX = 100;
@@ -30164,7 +30164,7 @@ impl WriteXdr for AuthenticatedMessage {
 ///
 pub const MAX_OPS_PER_TX: u64 = 100;
 
-/// LiquidityPoolParameters is an XDR Union defines as:
+/// LiquidityPoolParameters is an XDR Union defined as:
 ///
 /// ```text
 /// union LiquidityPoolParameters switch (LiquidityPoolType type)
@@ -30280,7 +30280,7 @@ impl WriteXdr for LiquidityPoolParameters {
     }
 }
 
-/// MuxedAccountMed25519 is an XDR NestedStruct defines as:
+/// MuxedAccountMed25519 is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -30355,7 +30355,7 @@ impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
     }
 }
 
-/// MuxedAccount is an XDR Union defines as:
+/// MuxedAccount is an XDR Union defined as:
 ///
 /// ```text
 /// union MuxedAccount switch (CryptoKeyType type)
@@ -30475,7 +30475,7 @@ impl WriteXdr for MuxedAccount {
     }
 }
 
-/// DecoratedSignature is an XDR Struct defines as:
+/// DecoratedSignature is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DecoratedSignature
@@ -30524,7 +30524,7 @@ impl WriteXdr for DecoratedSignature {
     }
 }
 
-/// OperationType is an XDR Enum defines as:
+/// OperationType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum OperationType
@@ -30788,7 +30788,7 @@ impl WriteXdr for OperationType {
     }
 }
 
-/// CreateAccountOp is an XDR Struct defines as:
+/// CreateAccountOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreateAccountOp
@@ -30841,7 +30841,7 @@ impl WriteXdr for CreateAccountOp {
     }
 }
 
-/// PaymentOp is an XDR Struct defines as:
+/// PaymentOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PaymentOp
@@ -30898,7 +30898,7 @@ impl WriteXdr for PaymentOp {
     }
 }
 
-/// PathPaymentStrictReceiveOp is an XDR Struct defines as:
+/// PathPaymentStrictReceiveOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PathPaymentStrictReceiveOp
@@ -30975,7 +30975,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
     }
 }
 
-/// PathPaymentStrictSendOp is an XDR Struct defines as:
+/// PathPaymentStrictSendOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PathPaymentStrictSendOp
@@ -31052,7 +31052,7 @@ impl WriteXdr for PathPaymentStrictSendOp {
     }
 }
 
-/// ManageSellOfferOp is an XDR Struct defines as:
+/// ManageSellOfferOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ManageSellOfferOp
@@ -31123,7 +31123,7 @@ impl WriteXdr for ManageSellOfferOp {
     }
 }
 
-/// ManageBuyOfferOp is an XDR Struct defines as:
+/// ManageBuyOfferOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ManageBuyOfferOp
@@ -31195,7 +31195,7 @@ impl WriteXdr for ManageBuyOfferOp {
     }
 }
 
-/// CreatePassiveSellOfferOp is an XDR Struct defines as:
+/// CreatePassiveSellOfferOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreatePassiveSellOfferOp
@@ -31256,7 +31256,7 @@ impl WriteXdr for CreatePassiveSellOfferOp {
     }
 }
 
-/// SetOptionsOp is an XDR Struct defines as:
+/// SetOptionsOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SetOptionsOp
@@ -31340,7 +31340,7 @@ impl WriteXdr for SetOptionsOp {
     }
 }
 
-/// ChangeTrustAsset is an XDR Union defines as:
+/// ChangeTrustAsset is an XDR Union defined as:
 ///
 /// ```text
 /// union ChangeTrustAsset switch (AssetType type)
@@ -31482,7 +31482,7 @@ impl WriteXdr for ChangeTrustAsset {
     }
 }
 
-/// ChangeTrustOp is an XDR Struct defines as:
+/// ChangeTrustOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ChangeTrustOp
@@ -31537,7 +31537,7 @@ impl WriteXdr for ChangeTrustOp {
     }
 }
 
-/// AllowTrustOp is an XDR Struct defines as:
+/// AllowTrustOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AllowTrustOp
@@ -31592,7 +31592,7 @@ impl WriteXdr for AllowTrustOp {
     }
 }
 
-/// ManageDataOp is an XDR Struct defines as:
+/// ManageDataOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ManageDataOp
@@ -31641,7 +31641,7 @@ impl WriteXdr for ManageDataOp {
     }
 }
 
-/// BumpSequenceOp is an XDR Struct defines as:
+/// BumpSequenceOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct BumpSequenceOp
@@ -31686,7 +31686,7 @@ impl WriteXdr for BumpSequenceOp {
     }
 }
 
-/// CreateClaimableBalanceOp is an XDR Struct defines as:
+/// CreateClaimableBalanceOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreateClaimableBalanceOp
@@ -31743,7 +31743,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
     }
 }
 
-/// ClaimClaimableBalanceOp is an XDR Struct defines as:
+/// ClaimClaimableBalanceOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimClaimableBalanceOp
@@ -31788,7 +31788,7 @@ impl WriteXdr for ClaimClaimableBalanceOp {
     }
 }
 
-/// BeginSponsoringFutureReservesOp is an XDR Struct defines as:
+/// BeginSponsoringFutureReservesOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct BeginSponsoringFutureReservesOp
@@ -31833,7 +31833,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
     }
 }
 
-/// RevokeSponsorshipType is an XDR Enum defines as:
+/// RevokeSponsorshipType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum RevokeSponsorshipType
@@ -31944,7 +31944,7 @@ impl WriteXdr for RevokeSponsorshipType {
     }
 }
 
-/// RevokeSponsorshipOpSigner is an XDR NestedStruct defines as:
+/// RevokeSponsorshipOpSigner is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -31993,7 +31993,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
     }
 }
 
-/// RevokeSponsorshipOp is an XDR Union defines as:
+/// RevokeSponsorshipOp is an XDR Union defined as:
 ///
 /// ```text
 /// union RevokeSponsorshipOp switch (RevokeSponsorshipType type)
@@ -32119,7 +32119,7 @@ impl WriteXdr for RevokeSponsorshipOp {
     }
 }
 
-/// ClawbackOp is an XDR Struct defines as:
+/// ClawbackOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClawbackOp
@@ -32176,7 +32176,7 @@ impl WriteXdr for ClawbackOp {
     }
 }
 
-/// ClawbackClaimableBalanceOp is an XDR Struct defines as:
+/// ClawbackClaimableBalanceOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClawbackClaimableBalanceOp
@@ -32221,7 +32221,7 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
     }
 }
 
-/// SetTrustLineFlagsOp is an XDR Struct defines as:
+/// SetTrustLineFlagsOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SetTrustLineFlagsOp
@@ -32279,7 +32279,7 @@ impl WriteXdr for SetTrustLineFlagsOp {
     }
 }
 
-/// LiquidityPoolFeeV18 is an XDR Const defines as:
+/// LiquidityPoolFeeV18 is an XDR Const defined as:
 ///
 /// ```text
 /// const LIQUIDITY_POOL_FEE_V18 = 30;
@@ -32287,7 +32287,7 @@ impl WriteXdr for SetTrustLineFlagsOp {
 ///
 pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 
-/// LiquidityPoolDepositOp is an XDR Struct defines as:
+/// LiquidityPoolDepositOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LiquidityPoolDepositOp
@@ -32356,7 +32356,7 @@ impl WriteXdr for LiquidityPoolDepositOp {
     }
 }
 
-/// LiquidityPoolWithdrawOp is an XDR Struct defines as:
+/// LiquidityPoolWithdrawOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LiquidityPoolWithdrawOp
@@ -32425,7 +32425,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     }
 }
 
-/// HostFunctionType is an XDR Enum defines as:
+/// HostFunctionType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum HostFunctionType
@@ -32551,7 +32551,7 @@ impl WriteXdr for HostFunctionType {
     }
 }
 
-/// ContractIdPreimageType is an XDR Enum defines as:
+/// ContractIdPreimageType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractIDPreimageType
@@ -32662,7 +32662,7 @@ impl WriteXdr for ContractIdPreimageType {
     }
 }
 
-/// ContractIdPreimageFromAddress is an XDR NestedStruct defines as:
+/// ContractIdPreimageFromAddress is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -32711,7 +32711,7 @@ impl WriteXdr for ContractIdPreimageFromAddress {
     }
 }
 
-/// ContractIdPreimage is an XDR Union defines as:
+/// ContractIdPreimage is an XDR Union defined as:
 ///
 /// ```text
 /// union ContractIDPreimage switch (ContractIDPreimageType type)
@@ -32837,7 +32837,7 @@ impl WriteXdr for ContractIdPreimage {
     }
 }
 
-/// CreateContractArgs is an XDR Struct defines as:
+/// CreateContractArgs is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreateContractArgs
@@ -32886,7 +32886,7 @@ impl WriteXdr for CreateContractArgs {
     }
 }
 
-/// CreateContractArgsV2 is an XDR Struct defines as:
+/// CreateContractArgsV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreateContractArgsV2
@@ -32940,7 +32940,7 @@ impl WriteXdr for CreateContractArgsV2 {
     }
 }
 
-/// InvokeContractArgs is an XDR Struct defines as:
+/// InvokeContractArgs is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InvokeContractArgs {
@@ -32992,7 +32992,7 @@ impl WriteXdr for InvokeContractArgs {
     }
 }
 
-/// HostFunction is an XDR Union defines as:
+/// HostFunction is an XDR Union defined as:
 ///
 /// ```text
 /// union HostFunction switch (HostFunctionType type)
@@ -33141,7 +33141,7 @@ impl WriteXdr for HostFunction {
     }
 }
 
-/// SorobanAuthorizedFunctionType is an XDR Enum defines as:
+/// SorobanAuthorizedFunctionType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SorobanAuthorizedFunctionType
@@ -33261,7 +33261,7 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
     }
 }
 
-/// SorobanAuthorizedFunction is an XDR Union defines as:
+/// SorobanAuthorizedFunction is an XDR Union defined as:
 ///
 /// ```text
 /// union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type)
@@ -33410,7 +33410,7 @@ impl WriteXdr for SorobanAuthorizedFunction {
     }
 }
 
-/// SorobanAuthorizedInvocation is an XDR Struct defines as:
+/// SorobanAuthorizedInvocation is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanAuthorizedInvocation
@@ -33459,7 +33459,7 @@ impl WriteXdr for SorobanAuthorizedInvocation {
     }
 }
 
-/// SorobanAddressCredentials is an XDR Struct defines as:
+/// SorobanAddressCredentials is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanAddressCredentials
@@ -33520,7 +33520,7 @@ impl WriteXdr for SorobanAddressCredentials {
     }
 }
 
-/// SorobanCredentialsType is an XDR Enum defines as:
+/// SorobanCredentialsType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SorobanCredentialsType
@@ -33631,7 +33631,7 @@ impl WriteXdr for SorobanCredentialsType {
     }
 }
 
-/// SorobanCredentials is an XDR Union defines as:
+/// SorobanCredentials is an XDR Union defined as:
 ///
 /// ```text
 /// union SorobanCredentials switch (SorobanCredentialsType type)
@@ -33753,7 +33753,7 @@ impl WriteXdr for SorobanCredentials {
     }
 }
 
-/// SorobanAuthorizationEntry is an XDR Struct defines as:
+/// SorobanAuthorizationEntry is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanAuthorizationEntry
@@ -33802,7 +33802,7 @@ impl WriteXdr for SorobanAuthorizationEntry {
     }
 }
 
-/// SorobanAuthorizationEntries is an XDR Typedef defines as:
+/// SorobanAuthorizationEntries is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>;
@@ -33909,7 +33909,7 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
     }
 }
 
-/// InvokeHostFunctionOp is an XDR Struct defines as:
+/// InvokeHostFunctionOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InvokeHostFunctionOp
@@ -33960,7 +33960,7 @@ impl WriteXdr for InvokeHostFunctionOp {
     }
 }
 
-/// ExtendFootprintTtlOp is an XDR Struct defines as:
+/// ExtendFootprintTtlOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ExtendFootprintTTLOp
@@ -34009,7 +34009,7 @@ impl WriteXdr for ExtendFootprintTtlOp {
     }
 }
 
-/// RestoreFootprintOp is an XDR Struct defines as:
+/// RestoreFootprintOp is an XDR Struct defined as:
 ///
 /// ```text
 /// struct RestoreFootprintOp
@@ -34054,7 +34054,7 @@ impl WriteXdr for RestoreFootprintOp {
     }
 }
 
-/// OperationBody is an XDR NestedUnion defines as:
+/// OperationBody is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (OperationType type)
@@ -34436,7 +34436,7 @@ impl WriteXdr for OperationBody {
     }
 }
 
-/// Operation is an XDR Struct defines as:
+/// Operation is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Operation
@@ -34546,7 +34546,7 @@ impl WriteXdr for Operation {
     }
 }
 
-/// HashIdPreimageOperationId is an XDR NestedStruct defines as:
+/// HashIdPreimageOperationId is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -34599,7 +34599,7 @@ impl WriteXdr for HashIdPreimageOperationId {
     }
 }
 
-/// HashIdPreimageRevokeId is an XDR NestedStruct defines as:
+/// HashIdPreimageRevokeId is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -34660,7 +34660,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
     }
 }
 
-/// HashIdPreimageContractId is an XDR NestedStruct defines as:
+/// HashIdPreimageContractId is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -34709,7 +34709,7 @@ impl WriteXdr for HashIdPreimageContractId {
     }
 }
 
-/// HashIdPreimageSorobanAuthorization is an XDR NestedStruct defines as:
+/// HashIdPreimageSorobanAuthorization is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -34770,7 +34770,7 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
     }
 }
 
-/// HashIdPreimage is an XDR Union defines as:
+/// HashIdPreimage is an XDR Union defined as:
 ///
 /// ```text
 /// union HashIDPreimage switch (EnvelopeType type)
@@ -34939,7 +34939,7 @@ impl WriteXdr for HashIdPreimage {
     }
 }
 
-/// MemoType is an XDR Enum defines as:
+/// MemoType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum MemoType
@@ -35065,7 +35065,7 @@ impl WriteXdr for MemoType {
     }
 }
 
-/// Memo is an XDR Union defines as:
+/// Memo is an XDR Union defined as:
 ///
 /// ```text
 /// union Memo switch (MemoType type)
@@ -35215,7 +35215,7 @@ impl WriteXdr for Memo {
     }
 }
 
-/// TimeBounds is an XDR Struct defines as:
+/// TimeBounds is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeBounds
@@ -35264,7 +35264,7 @@ impl WriteXdr for TimeBounds {
     }
 }
 
-/// LedgerBounds is an XDR Struct defines as:
+/// LedgerBounds is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerBounds
@@ -35313,7 +35313,7 @@ impl WriteXdr for LedgerBounds {
     }
 }
 
-/// PreconditionsV2 is an XDR Struct defines as:
+/// PreconditionsV2 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PreconditionsV2
@@ -35401,7 +35401,7 @@ impl WriteXdr for PreconditionsV2 {
     }
 }
 
-/// PreconditionType is an XDR Enum defines as:
+/// PreconditionType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PreconditionType
@@ -35517,7 +35517,7 @@ impl WriteXdr for PreconditionType {
     }
 }
 
-/// Preconditions is an XDR Union defines as:
+/// Preconditions is an XDR Union defined as:
 ///
 /// ```text
 /// union Preconditions switch (PreconditionType type)
@@ -35645,7 +35645,7 @@ impl WriteXdr for Preconditions {
     }
 }
 
-/// LedgerFootprint is an XDR Struct defines as:
+/// LedgerFootprint is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerFootprint
@@ -35694,7 +35694,7 @@ impl WriteXdr for LedgerFootprint {
     }
 }
 
-/// SorobanResources is an XDR Struct defines as:
+/// SorobanResources is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanResources
@@ -35756,7 +35756,7 @@ impl WriteXdr for SorobanResources {
     }
 }
 
-/// SorobanResourcesExtV0 is an XDR Struct defines as:
+/// SorobanResourcesExtV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanResourcesExtV0
@@ -35804,7 +35804,7 @@ impl WriteXdr for SorobanResourcesExtV0 {
     }
 }
 
-/// SorobanTransactionDataExt is an XDR NestedUnion defines as:
+/// SorobanTransactionDataExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -35921,7 +35921,7 @@ impl WriteXdr for SorobanTransactionDataExt {
     }
 }
 
-/// SorobanTransactionData is an XDR Struct defines as:
+/// SorobanTransactionData is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanTransactionData
@@ -35993,7 +35993,7 @@ impl WriteXdr for SorobanTransactionData {
     }
 }
 
-/// TransactionV0Ext is an XDR NestedUnion defines as:
+/// TransactionV0Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -36103,7 +36103,7 @@ impl WriteXdr for TransactionV0Ext {
     }
 }
 
-/// TransactionV0 is an XDR Struct defines as:
+/// TransactionV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionV0
@@ -36177,7 +36177,7 @@ impl WriteXdr for TransactionV0 {
     }
 }
 
-/// TransactionV0Envelope is an XDR Struct defines as:
+/// TransactionV0Envelope is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionV0Envelope
@@ -36228,7 +36228,7 @@ impl WriteXdr for TransactionV0Envelope {
     }
 }
 
-/// TransactionExt is an XDR NestedUnion defines as:
+/// TransactionExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -36345,7 +36345,7 @@ impl WriteXdr for TransactionExt {
     }
 }
 
-/// Transaction is an XDR Struct defines as:
+/// Transaction is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Transaction
@@ -36431,7 +36431,7 @@ impl WriteXdr for Transaction {
     }
 }
 
-/// TransactionV1Envelope is an XDR Struct defines as:
+/// TransactionV1Envelope is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionV1Envelope
@@ -36482,7 +36482,7 @@ impl WriteXdr for TransactionV1Envelope {
     }
 }
 
-/// FeeBumpTransactionInnerTx is an XDR NestedUnion defines as:
+/// FeeBumpTransactionInnerTx is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (EnvelopeType type)
@@ -36592,7 +36592,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     }
 }
 
-/// FeeBumpTransactionExt is an XDR NestedUnion defines as:
+/// FeeBumpTransactionExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -36702,7 +36702,7 @@ impl WriteXdr for FeeBumpTransactionExt {
     }
 }
 
-/// FeeBumpTransaction is an XDR Struct defines as:
+/// FeeBumpTransaction is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FeeBumpTransaction
@@ -36773,7 +36773,7 @@ impl WriteXdr for FeeBumpTransaction {
     }
 }
 
-/// FeeBumpTransactionEnvelope is an XDR Struct defines as:
+/// FeeBumpTransactionEnvelope is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FeeBumpTransactionEnvelope
@@ -36824,7 +36824,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
     }
 }
 
-/// TransactionEnvelope is an XDR Union defines as:
+/// TransactionEnvelope is an XDR Union defined as:
 ///
 /// ```text
 /// union TransactionEnvelope switch (EnvelopeType type)
@@ -36947,7 +36947,7 @@ impl WriteXdr for TransactionEnvelope {
     }
 }
 
-/// TransactionSignaturePayloadTaggedTransaction is an XDR NestedUnion defines as:
+/// TransactionSignaturePayloadTaggedTransaction is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (EnvelopeType type)
@@ -37065,7 +37065,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     }
 }
 
-/// TransactionSignaturePayload is an XDR Struct defines as:
+/// TransactionSignaturePayload is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionSignaturePayload
@@ -37122,7 +37122,7 @@ impl WriteXdr for TransactionSignaturePayload {
     }
 }
 
-/// ClaimAtomType is an XDR Enum defines as:
+/// ClaimAtomType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimAtomType
@@ -37238,7 +37238,7 @@ impl WriteXdr for ClaimAtomType {
     }
 }
 
-/// ClaimOfferAtomV0 is an XDR Struct defines as:
+/// ClaimOfferAtomV0 is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimOfferAtomV0
@@ -37320,7 +37320,7 @@ impl WriteXdr for ClaimOfferAtomV0 {
     }
 }
 
-/// ClaimOfferAtom is an XDR Struct defines as:
+/// ClaimOfferAtom is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimOfferAtom
@@ -37402,7 +37402,7 @@ impl WriteXdr for ClaimOfferAtom {
     }
 }
 
-/// ClaimLiquidityAtom is an XDR Struct defines as:
+/// ClaimLiquidityAtom is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimLiquidityAtom
@@ -37475,7 +37475,7 @@ impl WriteXdr for ClaimLiquidityAtom {
     }
 }
 
-/// ClaimAtom is an XDR Union defines as:
+/// ClaimAtom is an XDR Union defined as:
 ///
 /// ```text
 /// union ClaimAtom switch (ClaimAtomType type)
@@ -37605,7 +37605,7 @@ impl WriteXdr for ClaimAtom {
     }
 }
 
-/// CreateAccountResultCode is an XDR Enum defines as:
+/// CreateAccountResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum CreateAccountResultCode
@@ -37741,7 +37741,7 @@ impl WriteXdr for CreateAccountResultCode {
     }
 }
 
-/// CreateAccountResult is an XDR Union defines as:
+/// CreateAccountResult is an XDR Union defined as:
 ///
 /// ```text
 /// union CreateAccountResult switch (CreateAccountResultCode code)
@@ -37888,7 +37888,7 @@ impl WriteXdr for CreateAccountResult {
     }
 }
 
-/// PaymentResultCode is an XDR Enum defines as:
+/// PaymentResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PaymentResultCode
@@ -38053,7 +38053,7 @@ impl WriteXdr for PaymentResultCode {
     }
 }
 
-/// PaymentResult is an XDR Union defines as:
+/// PaymentResult is an XDR Union defined as:
 ///
 /// ```text
 /// union PaymentResult switch (PaymentResultCode code)
@@ -38240,7 +38240,7 @@ impl WriteXdr for PaymentResult {
     }
 }
 
-/// PathPaymentStrictReceiveResultCode is an XDR Enum defines as:
+/// PathPaymentStrictReceiveResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PathPaymentStrictReceiveResultCode
@@ -38432,7 +38432,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
     }
 }
 
-/// SimplePaymentResult is an XDR Struct defines as:
+/// SimplePaymentResult is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SimplePaymentResult
@@ -38489,7 +38489,7 @@ impl WriteXdr for SimplePaymentResult {
     }
 }
 
-/// PathPaymentStrictReceiveResultSuccess is an XDR NestedStruct defines as:
+/// PathPaymentStrictReceiveResultSuccess is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -38538,7 +38538,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     }
 }
 
-/// PathPaymentStrictReceiveResult is an XDR Union defines as:
+/// PathPaymentStrictReceiveResult is an XDR Union defined as:
 ///
 /// ```text
 /// union PathPaymentStrictReceiveResult switch (
@@ -38759,7 +38759,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
     }
 }
 
-/// PathPaymentStrictSendResultCode is an XDR Enum defines as:
+/// PathPaymentStrictSendResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PathPaymentStrictSendResultCode
@@ -38950,7 +38950,7 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
     }
 }
 
-/// PathPaymentStrictSendResultSuccess is an XDR NestedStruct defines as:
+/// PathPaymentStrictSendResultSuccess is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -38999,7 +38999,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
     }
 }
 
-/// PathPaymentStrictSendResult is an XDR Union defines as:
+/// PathPaymentStrictSendResult is an XDR Union defined as:
 ///
 /// ```text
 /// union PathPaymentStrictSendResult switch (PathPaymentStrictSendResultCode code)
@@ -39219,7 +39219,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
     }
 }
 
-/// ManageSellOfferResultCode is an XDR Enum defines as:
+/// ManageSellOfferResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ManageSellOfferResultCode
@@ -39409,7 +39409,7 @@ impl WriteXdr for ManageSellOfferResultCode {
     }
 }
 
-/// ManageOfferEffect is an XDR Enum defines as:
+/// ManageOfferEffect is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ManageOfferEffect
@@ -39525,7 +39525,7 @@ impl WriteXdr for ManageOfferEffect {
     }
 }
 
-/// ManageOfferSuccessResultOffer is an XDR NestedUnion defines as:
+/// ManageOfferSuccessResultOffer is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (ManageOfferEffect effect)
@@ -39652,7 +39652,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
     }
 }
 
-/// ManageOfferSuccessResult is an XDR Struct defines as:
+/// ManageOfferSuccessResult is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ManageOfferSuccessResult
@@ -39711,7 +39711,7 @@ impl WriteXdr for ManageOfferSuccessResult {
     }
 }
 
-/// ManageSellOfferResult is an XDR Union defines as:
+/// ManageSellOfferResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ManageSellOfferResult switch (ManageSellOfferResultCode code)
@@ -39925,7 +39925,7 @@ impl WriteXdr for ManageSellOfferResult {
     }
 }
 
-/// ManageBuyOfferResultCode is an XDR Enum defines as:
+/// ManageBuyOfferResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ManageBuyOfferResultCode
@@ -40112,7 +40112,7 @@ impl WriteXdr for ManageBuyOfferResultCode {
     }
 }
 
-/// ManageBuyOfferResult is an XDR Union defines as:
+/// ManageBuyOfferResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ManageBuyOfferResult switch (ManageBuyOfferResultCode code)
@@ -40325,7 +40325,7 @@ impl WriteXdr for ManageBuyOfferResult {
     }
 }
 
-/// SetOptionsResultCode is an XDR Enum defines as:
+/// SetOptionsResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SetOptionsResultCode
@@ -40496,7 +40496,7 @@ impl WriteXdr for SetOptionsResultCode {
     }
 }
 
-/// SetOptionsResult is an XDR Union defines as:
+/// SetOptionsResult is an XDR Union defined as:
 ///
 /// ```text
 /// union SetOptionsResult switch (SetOptionsResultCode code)
@@ -40691,7 +40691,7 @@ impl WriteXdr for SetOptionsResult {
     }
 }
 
-/// ChangeTrustResultCode is an XDR Enum defines as:
+/// ChangeTrustResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ChangeTrustResultCode
@@ -40853,7 +40853,7 @@ impl WriteXdr for ChangeTrustResultCode {
     }
 }
 
-/// ChangeTrustResult is an XDR Union defines as:
+/// ChangeTrustResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ChangeTrustResult switch (ChangeTrustResultCode code)
@@ -41034,7 +41034,7 @@ impl WriteXdr for ChangeTrustResult {
     }
 }
 
-/// AllowTrustResultCode is an XDR Enum defines as:
+/// AllowTrustResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum AllowTrustResultCode
@@ -41182,7 +41182,7 @@ impl WriteXdr for AllowTrustResultCode {
     }
 }
 
-/// AllowTrustResult is an XDR Union defines as:
+/// AllowTrustResult is an XDR Union defined as:
 ///
 /// ```text
 /// union AllowTrustResult switch (AllowTrustResultCode code)
@@ -41345,7 +41345,7 @@ impl WriteXdr for AllowTrustResult {
     }
 }
 
-/// AccountMergeResultCode is an XDR Enum defines as:
+/// AccountMergeResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum AccountMergeResultCode
@@ -41498,7 +41498,7 @@ impl WriteXdr for AccountMergeResultCode {
     }
 }
 
-/// AccountMergeResult is an XDR Union defines as:
+/// AccountMergeResult is an XDR Union defined as:
 ///
 /// ```text
 /// union AccountMergeResult switch (AccountMergeResultCode code)
@@ -41675,7 +41675,7 @@ impl WriteXdr for AccountMergeResult {
     }
 }
 
-/// InflationResultCode is an XDR Enum defines as:
+/// InflationResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum InflationResultCode
@@ -41786,7 +41786,7 @@ impl WriteXdr for InflationResultCode {
     }
 }
 
-/// InflationPayout is an XDR Struct defines as:
+/// InflationPayout is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InflationPayout // or use PaymentResultAtom to limit types?
@@ -41839,7 +41839,7 @@ impl WriteXdr for InflationPayout {
     }
 }
 
-/// InflationResult is an XDR Union defines as:
+/// InflationResult is an XDR Union defined as:
 ///
 /// ```text
 /// union InflationResult switch (InflationResultCode code)
@@ -41959,7 +41959,7 @@ impl WriteXdr for InflationResult {
     }
 }
 
-/// ManageDataResultCode is an XDR Enum defines as:
+/// ManageDataResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ManageDataResultCode
@@ -42095,7 +42095,7 @@ impl WriteXdr for ManageDataResultCode {
     }
 }
 
-/// ManageDataResult is an XDR Union defines as:
+/// ManageDataResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ManageDataResult switch (ManageDataResultCode code)
@@ -42242,7 +42242,7 @@ impl WriteXdr for ManageDataResult {
     }
 }
 
-/// BumpSequenceResultCode is an XDR Enum defines as:
+/// BumpSequenceResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum BumpSequenceResultCode
@@ -42355,7 +42355,7 @@ impl WriteXdr for BumpSequenceResultCode {
     }
 }
 
-/// BumpSequenceResult is an XDR Union defines as:
+/// BumpSequenceResult is an XDR Union defined as:
 ///
 /// ```text
 /// union BumpSequenceResult switch (BumpSequenceResultCode code)
@@ -42475,7 +42475,7 @@ impl WriteXdr for BumpSequenceResult {
     }
 }
 
-/// CreateClaimableBalanceResultCode is an XDR Enum defines as:
+/// CreateClaimableBalanceResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum CreateClaimableBalanceResultCode
@@ -42613,7 +42613,7 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
     }
 }
 
-/// CreateClaimableBalanceResult is an XDR Union defines as:
+/// CreateClaimableBalanceResult is an XDR Union defined as:
 ///
 /// ```text
 /// union CreateClaimableBalanceResult switch (
@@ -42772,7 +42772,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
     }
 }
 
-/// ClaimClaimableBalanceResultCode is an XDR Enum defines as:
+/// ClaimClaimableBalanceResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimClaimableBalanceResultCode
@@ -42910,7 +42910,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
     }
 }
 
-/// ClaimClaimableBalanceResult is an XDR Union defines as:
+/// ClaimClaimableBalanceResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ClaimClaimableBalanceResult switch (ClaimClaimableBalanceResultCode code)
@@ -43066,7 +43066,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
     }
 }
 
-/// BeginSponsoringFutureReservesResultCode is an XDR Enum defines as:
+/// BeginSponsoringFutureReservesResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum BeginSponsoringFutureReservesResultCode
@@ -43191,7 +43191,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     }
 }
 
-/// BeginSponsoringFutureReservesResult is an XDR Union defines as:
+/// BeginSponsoringFutureReservesResult is an XDR Union defined as:
 ///
 /// ```text
 /// union BeginSponsoringFutureReservesResult switch (
@@ -43328,7 +43328,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
     }
 }
 
-/// EndSponsoringFutureReservesResultCode is an XDR Enum defines as:
+/// EndSponsoringFutureReservesResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum EndSponsoringFutureReservesResultCode
@@ -43442,7 +43442,7 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
     }
 }
 
-/// EndSponsoringFutureReservesResult is an XDR Union defines as:
+/// EndSponsoringFutureReservesResult is an XDR Union defined as:
 ///
 /// ```text
 /// union EndSponsoringFutureReservesResult switch (
@@ -43564,7 +43564,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
     }
 }
 
-/// RevokeSponsorshipResultCode is an XDR Enum defines as:
+/// RevokeSponsorshipResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum RevokeSponsorshipResultCode
@@ -43705,7 +43705,7 @@ impl WriteXdr for RevokeSponsorshipResultCode {
     }
 }
 
-/// RevokeSponsorshipResult is an XDR Union defines as:
+/// RevokeSponsorshipResult is an XDR Union defined as:
 ///
 /// ```text
 /// union RevokeSponsorshipResult switch (RevokeSponsorshipResultCode code)
@@ -43861,7 +43861,7 @@ impl WriteXdr for RevokeSponsorshipResult {
     }
 }
 
-/// ClawbackResultCode is an XDR Enum defines as:
+/// ClawbackResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClawbackResultCode
@@ -43996,7 +43996,7 @@ impl WriteXdr for ClawbackResultCode {
     }
 }
 
-/// ClawbackResult is an XDR Union defines as:
+/// ClawbackResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ClawbackResult switch (ClawbackResultCode code)
@@ -44143,7 +44143,7 @@ impl WriteXdr for ClawbackResult {
     }
 }
 
-/// ClawbackClaimableBalanceResultCode is an XDR Enum defines as:
+/// ClawbackClaimableBalanceResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClawbackClaimableBalanceResultCode
@@ -44268,7 +44268,7 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
     }
 }
 
-/// ClawbackClaimableBalanceResult is an XDR Union defines as:
+/// ClawbackClaimableBalanceResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ClawbackClaimableBalanceResult switch (
@@ -44405,7 +44405,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
     }
 }
 
-/// SetTrustLineFlagsResultCode is an XDR Enum defines as:
+/// SetTrustLineFlagsResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SetTrustLineFlagsResultCode
@@ -44547,7 +44547,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
     }
 }
 
-/// SetTrustLineFlagsResult is an XDR Union defines as:
+/// SetTrustLineFlagsResult is an XDR Union defined as:
 ///
 /// ```text
 /// union SetTrustLineFlagsResult switch (SetTrustLineFlagsResultCode code)
@@ -44703,7 +44703,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
     }
 }
 
-/// LiquidityPoolDepositResultCode is an XDR Enum defines as:
+/// LiquidityPoolDepositResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LiquidityPoolDepositResultCode
@@ -44860,7 +44860,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
     }
 }
 
-/// LiquidityPoolDepositResult is an XDR Union defines as:
+/// LiquidityPoolDepositResult is an XDR Union defined as:
 ///
 /// ```text
 /// union LiquidityPoolDepositResult switch (LiquidityPoolDepositResultCode code)
@@ -45032,7 +45032,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
     }
 }
 
-/// LiquidityPoolWithdrawResultCode is an XDR Enum defines as:
+/// LiquidityPoolWithdrawResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LiquidityPoolWithdrawResultCode
@@ -45176,7 +45176,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
     }
 }
 
-/// LiquidityPoolWithdrawResult is an XDR Union defines as:
+/// LiquidityPoolWithdrawResult is an XDR Union defined as:
 ///
 /// ```text
 /// union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code)
@@ -45332,7 +45332,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     }
 }
 
-/// InvokeHostFunctionResultCode is an XDR Enum defines as:
+/// InvokeHostFunctionResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum InvokeHostFunctionResultCode
@@ -45473,7 +45473,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
     }
 }
 
-/// InvokeHostFunctionResult is an XDR Union defines as:
+/// InvokeHostFunctionResult is an XDR Union defined as:
 ///
 /// ```text
 /// union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
@@ -45633,7 +45633,7 @@ impl WriteXdr for InvokeHostFunctionResult {
     }
 }
 
-/// ExtendFootprintTtlResultCode is an XDR Enum defines as:
+/// ExtendFootprintTtlResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ExtendFootprintTTLResultCode
@@ -45762,7 +45762,7 @@ impl WriteXdr for ExtendFootprintTtlResultCode {
     }
 }
 
-/// ExtendFootprintTtlResult is an XDR Union defines as:
+/// ExtendFootprintTtlResult is an XDR Union defined as:
 ///
 /// ```text
 /// union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code)
@@ -45906,7 +45906,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
     }
 }
 
-/// RestoreFootprintResultCode is an XDR Enum defines as:
+/// RestoreFootprintResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum RestoreFootprintResultCode
@@ -46035,7 +46035,7 @@ impl WriteXdr for RestoreFootprintResultCode {
     }
 }
 
-/// RestoreFootprintResult is an XDR Union defines as:
+/// RestoreFootprintResult is an XDR Union defined as:
 ///
 /// ```text
 /// union RestoreFootprintResult switch (RestoreFootprintResultCode code)
@@ -46179,7 +46179,7 @@ impl WriteXdr for RestoreFootprintResult {
     }
 }
 
-/// OperationResultCode is an XDR Enum defines as:
+/// OperationResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum OperationResultCode
@@ -46324,7 +46324,7 @@ impl WriteXdr for OperationResultCode {
     }
 }
 
-/// OperationResultTr is an XDR NestedUnion defines as:
+/// OperationResultTr is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (OperationType type)
@@ -46710,7 +46710,7 @@ impl WriteXdr for OperationResultTr {
     }
 }
 
-/// OperationResult is an XDR Union defines as:
+/// OperationResult is an XDR Union defined as:
 ///
 /// ```text
 /// union OperationResult switch (OperationResultCode code)
@@ -46930,7 +46930,7 @@ impl WriteXdr for OperationResult {
     }
 }
 
-/// TransactionResultCode is an XDR Enum defines as:
+/// TransactionResultCode is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TransactionResultCode
@@ -47150,7 +47150,7 @@ impl WriteXdr for TransactionResultCode {
     }
 }
 
-/// InnerTransactionResultResult is an XDR NestedUnion defines as:
+/// InnerTransactionResultResult is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (TransactionResultCode code)
@@ -47399,7 +47399,7 @@ impl WriteXdr for InnerTransactionResultResult {
     }
 }
 
-/// InnerTransactionResultExt is an XDR NestedUnion defines as:
+/// InnerTransactionResultExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -47509,7 +47509,7 @@ impl WriteXdr for InnerTransactionResultExt {
     }
 }
 
-/// InnerTransactionResult is an XDR Struct defines as:
+/// InnerTransactionResult is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InnerTransactionResult
@@ -47599,7 +47599,7 @@ impl WriteXdr for InnerTransactionResult {
     }
 }
 
-/// InnerTransactionResultPair is an XDR Struct defines as:
+/// InnerTransactionResultPair is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InnerTransactionResultPair
@@ -47648,7 +47648,7 @@ impl WriteXdr for InnerTransactionResultPair {
     }
 }
 
-/// TransactionResultResult is an XDR NestedUnion defines as:
+/// TransactionResultResult is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (TransactionResultCode code)
@@ -47917,7 +47917,7 @@ impl WriteXdr for TransactionResultResult {
     }
 }
 
-/// TransactionResultExt is an XDR NestedUnion defines as:
+/// TransactionResultExt is an XDR NestedUnion defined as:
 ///
 /// ```text
 /// union switch (int v)
@@ -48027,7 +48027,7 @@ impl WriteXdr for TransactionResultExt {
     }
 }
 
-/// TransactionResult is an XDR Struct defines as:
+/// TransactionResult is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionResult
@@ -48118,7 +48118,7 @@ impl WriteXdr for TransactionResult {
     }
 }
 
-/// Hash is an XDR Typedef defines as:
+/// Hash is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque Hash[32];
@@ -48271,7 +48271,7 @@ impl AsRef<[u8]> for Hash {
     }
 }
 
-/// Uint256 is an XDR Typedef defines as:
+/// Uint256 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque uint256[32];
@@ -48424,7 +48424,7 @@ impl AsRef<[u8]> for Uint256 {
     }
 }
 
-/// Uint32 is an XDR Typedef defines as:
+/// Uint32 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef unsigned int uint32;
@@ -48432,7 +48432,7 @@ impl AsRef<[u8]> for Uint256 {
 ///
 pub type Uint32 = u32;
 
-/// Int32 is an XDR Typedef defines as:
+/// Int32 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef int int32;
@@ -48440,7 +48440,7 @@ pub type Uint32 = u32;
 ///
 pub type Int32 = i32;
 
-/// Uint64 is an XDR Typedef defines as:
+/// Uint64 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef unsigned hyper uint64;
@@ -48448,7 +48448,7 @@ pub type Int32 = i32;
 ///
 pub type Uint64 = u64;
 
-/// Int64 is an XDR Typedef defines as:
+/// Int64 is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef hyper int64;
@@ -48456,7 +48456,7 @@ pub type Uint64 = u64;
 ///
 pub type Int64 = i64;
 
-/// TimePoint is an XDR Typedef defines as:
+/// TimePoint is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef uint64 TimePoint;
@@ -48521,7 +48521,7 @@ impl WriteXdr for TimePoint {
     }
 }
 
-/// Duration is an XDR Typedef defines as:
+/// Duration is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef uint64 Duration;
@@ -48586,7 +48586,7 @@ impl WriteXdr for Duration {
     }
 }
 
-/// ExtensionPoint is an XDR Union defines as:
+/// ExtensionPoint is an XDR Union defined as:
 ///
 /// ```text
 /// union ExtensionPoint switch (int v)
@@ -48696,7 +48696,7 @@ impl WriteXdr for ExtensionPoint {
     }
 }
 
-/// CryptoKeyType is an XDR Enum defines as:
+/// CryptoKeyType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum CryptoKeyType
@@ -48830,7 +48830,7 @@ impl WriteXdr for CryptoKeyType {
     }
 }
 
-/// PublicKeyType is an XDR Enum defines as:
+/// PublicKeyType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PublicKeyType
@@ -48934,7 +48934,7 @@ impl WriteXdr for PublicKeyType {
     }
 }
 
-/// SignerKeyType is an XDR Enum defines as:
+/// SignerKeyType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SignerKeyType
@@ -49056,7 +49056,7 @@ impl WriteXdr for SignerKeyType {
     }
 }
 
-/// PublicKey is an XDR Union defines as:
+/// PublicKey is an XDR Union defined as:
 ///
 /// ```text
 /// union PublicKey switch (PublicKeyType type)
@@ -49165,7 +49165,7 @@ impl WriteXdr for PublicKey {
     }
 }
 
-/// SignerKeyEd25519SignedPayload is an XDR NestedStruct defines as:
+/// SignerKeyEd25519SignedPayload is an XDR NestedStruct defined as:
 ///
 /// ```text
 /// struct
@@ -49245,7 +49245,7 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
     }
 }
 
-/// SignerKey is an XDR Union defines as:
+/// SignerKey is an XDR Union defined as:
 ///
 /// ```text
 /// union SignerKey switch (SignerKeyType type)
@@ -49389,7 +49389,7 @@ impl WriteXdr for SignerKey {
     }
 }
 
-/// Signature is an XDR Typedef defines as:
+/// Signature is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque Signature<64>;
@@ -49496,7 +49496,7 @@ impl AsRef<[u8]> for Signature {
     }
 }
 
-/// SignatureHint is an XDR Typedef defines as:
+/// SignatureHint is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque SignatureHint[4];
@@ -49649,7 +49649,7 @@ impl AsRef<[u8]> for SignatureHint {
     }
 }
 
-/// NodeId is an XDR Typedef defines as:
+/// NodeId is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef PublicKey NodeID;
@@ -49705,7 +49705,7 @@ impl WriteXdr for NodeId {
     }
 }
 
-/// AccountId is an XDR Typedef defines as:
+/// AccountId is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef PublicKey AccountID;
@@ -49761,7 +49761,7 @@ impl WriteXdr for AccountId {
     }
 }
 
-/// ContractId is an XDR Typedef defines as:
+/// ContractId is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash ContractID;
@@ -49817,7 +49817,7 @@ impl WriteXdr for ContractId {
     }
 }
 
-/// Curve25519Secret is an XDR Struct defines as:
+/// Curve25519Secret is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Curve25519Secret
@@ -49862,7 +49862,7 @@ impl WriteXdr for Curve25519Secret {
     }
 }
 
-/// Curve25519Public is an XDR Struct defines as:
+/// Curve25519Public is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Curve25519Public
@@ -49907,7 +49907,7 @@ impl WriteXdr for Curve25519Public {
     }
 }
 
-/// HmacSha256Key is an XDR Struct defines as:
+/// HmacSha256Key is an XDR Struct defined as:
 ///
 /// ```text
 /// struct HmacSha256Key
@@ -49952,7 +49952,7 @@ impl WriteXdr for HmacSha256Key {
     }
 }
 
-/// HmacSha256Mac is an XDR Struct defines as:
+/// HmacSha256Mac is an XDR Struct defined as:
 ///
 /// ```text
 /// struct HmacSha256Mac
@@ -49997,7 +49997,7 @@ impl WriteXdr for HmacSha256Mac {
     }
 }
 
-/// ShortHashSeed is an XDR Struct defines as:
+/// ShortHashSeed is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ShortHashSeed
@@ -50042,7 +50042,7 @@ impl WriteXdr for ShortHashSeed {
     }
 }
 
-/// BinaryFuseFilterType is an XDR Enum defines as:
+/// BinaryFuseFilterType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum BinaryFuseFilterType
@@ -50158,7 +50158,7 @@ impl WriteXdr for BinaryFuseFilterType {
     }
 }
 
-/// SerializedBinaryFuseFilter is an XDR Struct defines as:
+/// SerializedBinaryFuseFilter is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SerializedBinaryFuseFilter
@@ -50241,7 +50241,7 @@ impl WriteXdr for SerializedBinaryFuseFilter {
     }
 }
 
-/// PoolId is an XDR Typedef defines as:
+/// PoolId is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash PoolID;
@@ -50297,7 +50297,7 @@ impl WriteXdr for PoolId {
     }
 }
 
-/// ClaimableBalanceIdType is an XDR Enum defines as:
+/// ClaimableBalanceIdType is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimableBalanceIDType
@@ -50402,7 +50402,7 @@ impl WriteXdr for ClaimableBalanceIdType {
     }
 }
 
-/// ClaimableBalanceId is an XDR Union defines as:
+/// ClaimableBalanceId is an XDR Union defined as:
 ///
 /// ```text
 /// union ClaimableBalanceID switch (ClaimableBalanceIDType type)

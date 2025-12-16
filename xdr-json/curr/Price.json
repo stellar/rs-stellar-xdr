@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "Price",
-  "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
+  "description": "Price is an XDR Struct defined as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
   "type": "object",
   "required": [
     "d",

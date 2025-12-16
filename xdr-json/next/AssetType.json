@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "AssetType",
-  "description": "AssetType is an XDR Enum defines as:\n\n```text enum AssetType { ASSET_TYPE_NATIVE = 0, ASSET_TYPE_CREDIT_ALPHANUM4 = 1, ASSET_TYPE_CREDIT_ALPHANUM12 = 2, ASSET_TYPE_POOL_SHARE = 3 }; ```",
+  "description": "AssetType is an XDR Enum defined as:\n\n```text enum AssetType { ASSET_TYPE_NATIVE = 0, ASSET_TYPE_CREDIT_ALPHANUM4 = 1, ASSET_TYPE_CREDIT_ALPHANUM12 = 2, ASSET_TYPE_POOL_SHARE = 3 }; ```",
   "type": "string",
   "enum": [
     "native",

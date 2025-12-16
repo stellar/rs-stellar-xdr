@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "RestoreFootprintResult",
-  "description": "RestoreFootprintResult is an XDR Union defines as:\n\n```text union RestoreFootprintResult switch (RestoreFootprintResultCode code) { case RESTORE_FOOTPRINT_SUCCESS: void; case RESTORE_FOOTPRINT_MALFORMED: case RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED: case RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
+  "description": "RestoreFootprintResult is an XDR Union defined as:\n\n```text union RestoreFootprintResult switch (RestoreFootprintResultCode code) { case RESTORE_FOOTPRINT_SUCCESS: void; case RESTORE_FOOTPRINT_MALFORMED: case RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED: case RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
   "type": "string",
   "enum": [
     "success",

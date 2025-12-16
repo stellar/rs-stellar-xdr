@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScMetaEntry",
-  "description": "ScMetaEntry is an XDR Union defines as:\n\n```text union SCMetaEntry switch (SCMetaKind kind) { case SC_META_V0: SCMetaV0 v0; }; ```",
+  "description": "ScMetaEntry is an XDR Union defined as:\n\n```text union SCMetaEntry switch (SCMetaKind kind) { case SC_META_V0: SCMetaV0 v0; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -23,7 +23,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "ScMetaV0": {
-      "description": "ScMetaV0 is an XDR Struct defines as:\n\n```text struct SCMetaV0 { string key<>; string val<>; }; ```",
+      "description": "ScMetaV0 is an XDR Struct defined as:\n\n```text struct SCMetaV0 { string key<>; string val<>; }; ```",
       "type": "object",
       "required": [
         "key",

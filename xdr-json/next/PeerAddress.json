@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "PeerAddress",
-  "description": "PeerAddress is an XDR Struct defines as:\n\n```text struct PeerAddress { union switch (IPAddrType type) { case IPv4: opaque ipv4[4]; case IPv6: opaque ipv6[16]; } ip; uint32 port; uint32 numFailures; }; ```",
+  "description": "PeerAddress is an XDR Struct defined as:\n\n```text struct PeerAddress { union switch (IPAddrType type) { case IPv4: opaque ipv4[4]; case IPv6: opaque ipv6[16]; } ip; uint32 port; uint32 numFailures; }; ```",
   "type": "object",
   "required": [
     "ip",
@@ -29,7 +29,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "PeerAddressIp": {
-      "description": "PeerAddressIp is an XDR NestedUnion defines as:\n\n```text union switch (IPAddrType type) { case IPv4: opaque ipv4[4]; case IPv6: opaque ipv6[16]; } ```",
+      "description": "PeerAddressIp is an XDR NestedUnion defined as:\n\n```text union switch (IPAddrType type) { case IPv4: opaque ipv4[4]; case IPv6: opaque ipv6[16]; } ```",
       "oneOf": [
         {
           "type": "object",

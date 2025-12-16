@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractCodeCostInputs",
-  "description": "ContractCodeCostInputs is an XDR Struct defines as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",
+  "description": "ContractCodeCostInputs is an XDR Struct defined as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",
   "type": "object",
   "required": [
     "ext",
@@ -77,7 +77,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "description": "ExtensionPoint is an XDR Union defined as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
       "type": "string",
       "enum": [
         "v0"

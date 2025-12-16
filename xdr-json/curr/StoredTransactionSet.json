@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "StoredTransactionSet",
-  "description": "StoredTransactionSet is an XDR Union defines as:\n\n```text union StoredTransactionSet switch (int v) { case 0: TransactionSet txSet; case 1: GeneralizedTransactionSet generalizedTxSet; }; ```",
+  "description": "StoredTransactionSet is an XDR Union defined as:\n\n```text union StoredTransactionSet switch (int v) { case 0: TransactionSet txSet; case 1: GeneralizedTransactionSet generalizedTxSet; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -37,7 +37,7 @@
       "type": "string"
     },
     "AllowTrustOp": {
-      "description": "AllowTrustOp is an XDR Struct defines as:\n\n```text struct AllowTrustOp { AccountID trustor; AssetCode asset;\n\n// One of 0, AUTHORIZED_FLAG, or AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG uint32 authorize; }; ```",
+      "description": "AllowTrustOp is an XDR Struct defined as:\n\n```text struct AllowTrustOp { AccountID trustor; AssetCode asset;\n\n// One of 0, AUTHORIZED_FLAG, or AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG uint32 authorize; }; ```",
       "type": "object",
       "required": [
         "asset",
@@ -59,7 +59,7 @@
       }
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -75,7 +75,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -91,7 +91,7 @@
       }
     },
     "Asset": {
-      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "description": "Asset is an XDR Union defined as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -133,7 +133,7 @@
       "type": "string"
     },
     "BeginSponsoringFutureReservesOp": {
-      "description": "BeginSponsoringFutureReservesOp is an XDR Struct defines as:\n\n```text struct BeginSponsoringFutureReservesOp { AccountID sponsoredID; }; ```",
+      "description": "BeginSponsoringFutureReservesOp is an XDR Struct defined as:\n\n```text struct BeginSponsoringFutureReservesOp { AccountID sponsoredID; }; ```",
       "type": "object",
       "required": [
         "sponsored_id"
@@ -145,7 +145,7 @@
       }
     },
     "BumpSequenceOp": {
-      "description": "BumpSequenceOp is an XDR Struct defines as:\n\n```text struct BumpSequenceOp { SequenceNumber bumpTo; }; ```",
+      "description": "BumpSequenceOp is an XDR Struct defined as:\n\n```text struct BumpSequenceOp { SequenceNumber bumpTo; }; ```",
       "type": "object",
       "required": [
         "bump_to"
@@ -157,7 +157,7 @@
       }
     },
     "ChangeTrustAsset": {
-      "description": "ChangeTrustAsset is an XDR Union defines as:\n\n```text union ChangeTrustAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: LiquidityPoolParameters liquidityPool;\n\n// add other asset types here in the future }; ```",
+      "description": "ChangeTrustAsset is an XDR Union defined as:\n\n```text union ChangeTrustAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: LiquidityPoolParameters liquidityPool;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -201,7 +201,7 @@
       ]
     },
     "ChangeTrustOp": {
-      "description": "ChangeTrustOp is an XDR Struct defines as:\n\n```text struct ChangeTrustOp { ChangeTrustAsset line;\n\n// if limit is set to 0, deletes the trust line int64 limit; }; ```",
+      "description": "ChangeTrustOp is an XDR Struct defined as:\n\n```text struct ChangeTrustOp { ChangeTrustAsset line;\n\n// if limit is set to 0, deletes the trust line int64 limit; }; ```",
       "type": "object",
       "required": [
         "limit",
@@ -217,7 +217,7 @@
       }
     },
     "ClaimClaimableBalanceOp": {
-      "description": "ClaimClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct ClaimClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
+      "description": "ClaimClaimableBalanceOp is an XDR Struct defined as:\n\n```text struct ClaimClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
       "type": "object",
       "required": [
         "balance_id"
@@ -229,7 +229,7 @@
       }
     },
     "ClaimPredicate": {
-      "description": "ClaimPredicate is an XDR Union defines as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
+      "description": "ClaimPredicate is an XDR Union defined as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -313,7 +313,7 @@
       "type": "string"
     },
     "Claimant": {
-      "description": "Claimant is an XDR Union defines as:\n\n```text union Claimant switch (ClaimantType type) { case CLAIMANT_TYPE_V0: struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } v0; }; ```",
+      "description": "Claimant is an XDR Union defined as:\n\n```text union Claimant switch (ClaimantType type) { case CLAIMANT_TYPE_V0: struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } v0; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -329,7 +329,7 @@
       ]
     },
     "ClaimantV0": {
-      "description": "ClaimantV0 is an XDR NestedStruct defines as:\n\n```text struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } ```",
+      "description": "ClaimantV0 is an XDR NestedStruct defined as:\n\n```text struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } ```",
       "type": "object",
       "required": [
         "destination",
@@ -345,7 +345,7 @@
       }
     },
     "ClawbackClaimableBalanceOp": {
-      "description": "ClawbackClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct ClawbackClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
+      "description": "ClawbackClaimableBalanceOp is an XDR Struct defined as:\n\n```text struct ClawbackClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
       "type": "object",
       "required": [
         "balance_id"
@@ -357,7 +357,7 @@
       }
     },
     "ClawbackOp": {
-      "description": "ClawbackOp is an XDR Struct defines as:\n\n```text struct ClawbackOp { Asset asset; MuxedAccount from; int64 amount; }; ```",
+      "description": "ClawbackOp is an XDR Struct defined as:\n\n```text struct ClawbackOp { Asset asset; MuxedAccount from; int64 amount; }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -377,7 +377,7 @@
       }
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defined as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -400,7 +400,7 @@
       ]
     },
     "ContractDataDurability": {
-      "description": "ContractDataDurability is an XDR Enum defines as:\n\n```text enum ContractDataDurability { TEMPORARY = 0, PERSISTENT = 1 }; ```",
+      "description": "ContractDataDurability is an XDR Enum defined as:\n\n```text enum ContractDataDurability { TEMPORARY = 0, PERSISTENT = 1 }; ```",
       "type": "string",
       "enum": [
         "temporary",
@@ -408,7 +408,7 @@
       ]
     },
     "ContractExecutable": {
-      "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
+      "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -434,7 +434,7 @@
       ]
     },
     "ContractIdPreimage": {
-      "description": "ContractIdPreimage is an XDR Union defines as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
+      "description": "ContractIdPreimage is an XDR Union defined as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -461,7 +461,7 @@
       ]
     },
     "ContractIdPreimageFromAddress": {
-      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defines as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
+      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defined as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
       "type": "object",
       "required": [
         "address",
@@ -481,7 +481,7 @@
       }
     },
     "CreateAccountOp": {
-      "description": "CreateAccountOp is an XDR Struct defines as:\n\n```text struct CreateAccountOp { AccountID destination; // account to create int64 startingBalance; // amount they end up with }; ```",
+      "description": "CreateAccountOp is an XDR Struct defined as:\n\n```text struct CreateAccountOp { AccountID destination; // account to create int64 startingBalance; // amount they end up with }; ```",
       "type": "object",
       "required": [
         "destination",
@@ -497,7 +497,7 @@
       }
     },
     "CreateClaimableBalanceOp": {
-      "description": "CreateClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct CreateClaimableBalanceOp { Asset asset; int64 amount; Claimant claimants<10>; }; ```",
+      "description": "CreateClaimableBalanceOp is an XDR Struct defined as:\n\n```text struct CreateClaimableBalanceOp { Asset asset; int64 amount; Claimant claimants<10>; }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -521,7 +521,7 @@
       }
     },
     "CreateContractArgs": {
-      "description": "CreateContractArgs is an XDR Struct defines as:\n\n```text struct CreateContractArgs { ContractIDPreimage contractIDPreimage; ContractExecutable executable; }; ```",
+      "description": "CreateContractArgs is an XDR Struct defined as:\n\n```text struct CreateContractArgs { ContractIDPreimage contractIDPreimage; ContractExecutable executable; }; ```",
       "type": "object",
       "required": [
         "contract_id_preimage",
@@ -537,7 +537,7 @@
       }
     },
     "CreateContractArgsV2": {
-      "description": "CreateContractArgsV2 is an XDR Struct defines as:\n\n```text struct CreateContractArgsV2 { ContractIDPreimage contractIDPreimage; ContractExecutable executable; // Arguments of the contract's constructor. SCVal constructorArgs<>; }; ```",
+      "description": "CreateContractArgsV2 is an XDR Struct defined as:\n\n```text struct CreateContractArgsV2 { ContractIDPreimage contractIDPreimage; ContractExecutable executable; // Arguments of the contract's constructor. SCVal constructorArgs<>; }; ```",
       "type": "object",
       "required": [
         "constructor_args",
@@ -561,7 +561,7 @@
       }
     },
     "CreatePassiveSellOfferOp": {
-      "description": "CreatePassiveSellOfferOp is an XDR Struct defines as:\n\n```text struct CreatePassiveSellOfferOp { Asset selling; // A Asset buying;  // B int64 amount;  // amount taker gets Price price;   // cost of A in terms of B }; ```",
+      "description": "CreatePassiveSellOfferOp is an XDR Struct defined as:\n\n```text struct CreatePassiveSellOfferOp { Asset selling; // A Asset buying;  // B int64 amount;  // amount taker gets Price price;   // cost of A in terms of B }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -585,14 +585,14 @@
       }
     },
     "DataValue": {
-      "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
+      "description": "DataValue is an XDR Typedef defined as:\n\n```text typedef opaque DataValue<64>; ```",
       "type": "string",
       "maxLength": 128,
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
     "DecoratedSignature": {
-      "description": "DecoratedSignature is an XDR Struct defines as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
+      "description": "DecoratedSignature is an XDR Struct defined as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
       "type": "object",
       "required": [
         "hint",
@@ -612,7 +612,7 @@
       }
     },
     "DependentTxCluster": {
-      "description": "DependentTxCluster is an XDR Typedef defines as:\n\n```text typedef TransactionEnvelope DependentTxCluster<>; ```",
+      "description": "DependentTxCluster is an XDR Typedef defined as:\n\n```text typedef TransactionEnvelope DependentTxCluster<>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/TransactionEnvelope"
@@ -620,11 +620,11 @@
       "maxItems": 4294967295
     },
     "Duration": {
-      "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
+      "description": "Duration is an XDR Typedef defined as:\n\n```text typedef uint64 Duration; ```",
       "type": "string"
     },
     "ExtendFootprintTtlOp": {
-      "description": "ExtendFootprintTtlOp is an XDR Struct defines as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
+      "description": "ExtendFootprintTtlOp is an XDR Struct defined as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -642,14 +642,14 @@
       }
     },
     "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "description": "ExtensionPoint is an XDR Union defined as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "FeeBumpTransaction": {
-      "description": "FeeBumpTransaction is an XDR Struct defines as:\n\n```text struct FeeBumpTransaction { MuxedAccount feeSource; int64 fee; union switch (EnvelopeType type) { case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; } innerTx; union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "FeeBumpTransaction is an XDR Struct defined as:\n\n```text struct FeeBumpTransaction { MuxedAccount feeSource; int64 fee; union switch (EnvelopeType type) { case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; } innerTx; union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -673,7 +673,7 @@
       }
     },
     "FeeBumpTransactionEnvelope": {
-      "description": "FeeBumpTransactionEnvelope is an XDR Struct defines as:\n\n```text struct FeeBumpTransactionEnvelope { FeeBumpTransaction tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
+      "description": "FeeBumpTransactionEnvelope is an XDR Struct defined as:\n\n```text struct FeeBumpTransactionEnvelope { FeeBumpTransaction tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
       "type": "object",
       "required": [
         "signatures",
@@ -693,14 +693,14 @@
       }
     },
     "FeeBumpTransactionExt": {
-      "description": "FeeBumpTransactionExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "description": "FeeBumpTransactionExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; } ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "FeeBumpTransactionInnerTx": {
-      "description": "FeeBumpTransactionInnerTx is an XDR NestedUnion defines as:\n\n```text union switch (EnvelopeType type) { case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; } ```",
+      "description": "FeeBumpTransactionInnerTx is an XDR NestedUnion defined as:\n\n```text union switch (EnvelopeType type) { case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; } ```",
       "oneOf": [
         {
           "type": "object",
@@ -716,7 +716,7 @@
       ]
     },
     "GeneralizedTransactionSet": {
-      "description": "GeneralizedTransactionSet is an XDR Union defines as:\n\n```text union GeneralizedTransactionSet switch (int v) { // We consider the legacy TransactionSet to be v0. case 1: TransactionSetV1 v1TxSet; }; ```",
+      "description": "GeneralizedTransactionSet is an XDR Union defined as:\n\n```text union GeneralizedTransactionSet switch (int v) { // We consider the legacy TransactionSet to be v0. case 1: TransactionSetV1 v1TxSet; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -732,7 +732,7 @@
       ]
     },
     "HostFunction": {
-      "description": "HostFunction is an XDR Union defines as:\n\n```text union HostFunction switch (HostFunctionType type) { case HOST_FUNCTION_TYPE_INVOKE_CONTRACT: InvokeContractArgs invokeContract; case HOST_FUNCTION_TYPE_CREATE_CONTRACT: CreateContractArgs createContract; case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM: opaque wasm<>; case HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2: CreateContractArgsV2 createContractV2; }; ```",
+      "description": "HostFunction is an XDR Union defined as:\n\n```text union HostFunction switch (HostFunctionType type) { case HOST_FUNCTION_TYPE_INVOKE_CONTRACT: InvokeContractArgs invokeContract; case HOST_FUNCTION_TYPE_CREATE_CONTRACT: CreateContractArgs createContract; case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM: opaque wasm<>; case HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2: CreateContractArgsV2 createContractV2; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -789,7 +789,7 @@
       "type": "string"
     },
     "InvokeContractArgs": {
-      "description": "InvokeContractArgs is an XDR Struct defines as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
+      "description": "InvokeContractArgs is an XDR Struct defined as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
       "type": "object",
       "required": [
         "args",
@@ -813,7 +813,7 @@
       }
     },
     "InvokeHostFunctionOp": {
-      "description": "InvokeHostFunctionOp is an XDR Struct defines as:\n\n```text struct InvokeHostFunctionOp { // Host function to invoke. HostFunction hostFunction; // Per-address authorizations for this host function. SorobanAuthorizationEntry auth<>; }; ```",
+      "description": "InvokeHostFunctionOp is an XDR Struct defined as:\n\n```text struct InvokeHostFunctionOp { // Host function to invoke. HostFunction hostFunction; // Per-address authorizations for this host function. SorobanAuthorizationEntry auth<>; }; ```",
       "type": "object",
       "required": [
         "auth",
@@ -833,7 +833,7 @@
       }
     },
     "LedgerBounds": {
-      "description": "LedgerBounds is an XDR Struct defines as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
+      "description": "LedgerBounds is an XDR Struct defined as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
       "type": "object",
       "required": [
         "max_ledger",
@@ -853,7 +853,7 @@
       }
     },
     "LedgerFootprint": {
-      "description": "LedgerFootprint is an XDR Struct defines as:\n\n```text struct LedgerFootprint { LedgerKey readOnly<>; LedgerKey readWrite<>; }; ```",
+      "description": "LedgerFootprint is an XDR Struct defined as:\n\n```text struct LedgerFootprint { LedgerKey readOnly<>; LedgerKey readWrite<>; }; ```",
       "type": "object",
       "required": [
         "read_only",
@@ -877,7 +877,7 @@
       }
     },
     "LedgerKey": {
-      "description": "LedgerKey is an XDR Union defines as:\n\n```text union LedgerKey switch (LedgerEntryType type) { case ACCOUNT: struct { AccountID accountID; } account;\n\ncase TRUSTLINE: struct { AccountID accountID; TrustLineAsset asset; } trustLine;\n\ncase OFFER: struct { AccountID sellerID; int64 offerID; } offer;\n\ncase DATA: struct { AccountID accountID; string64 dataName; } data;\n\ncase CLAIMABLE_BALANCE: struct { ClaimableBalanceID balanceID; } claimableBalance;\n\ncase LIQUIDITY_POOL: struct { PoolID liquidityPoolID; } liquidityPool; case CONTRACT_DATA: struct { SCAddress contract; SCVal key; ContractDataDurability durability; } contractData; case CONTRACT_CODE: struct { Hash hash; } contractCode; case CONFIG_SETTING: struct { ConfigSettingID configSettingID; } configSetting; case TTL: struct { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; } ttl; }; ```",
+      "description": "LedgerKey is an XDR Union defined as:\n\n```text union LedgerKey switch (LedgerEntryType type) { case ACCOUNT: struct { AccountID accountID; } account;\n\ncase TRUSTLINE: struct { AccountID accountID; TrustLineAsset asset; } trustLine;\n\ncase OFFER: struct { AccountID sellerID; int64 offerID; } offer;\n\ncase DATA: struct { AccountID accountID; string64 dataName; } data;\n\ncase CLAIMABLE_BALANCE: struct { ClaimableBalanceID balanceID; } claimableBalance;\n\ncase LIQUIDITY_POOL: struct { PoolID liquidityPoolID; } liquidityPool; case CONTRACT_DATA: struct { SCAddress contract; SCVal key; ContractDataDurability durability; } contractData; case CONTRACT_CODE: struct { Hash hash; } contractCode; case CONFIG_SETTING: struct { ConfigSettingID configSettingID; } configSetting; case TTL: struct { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; } ttl; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -992,7 +992,7 @@
       ]
     },
     "LedgerKeyAccount": {
-      "description": "LedgerKeyAccount is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; } ```",
+      "description": "LedgerKeyAccount is an XDR NestedStruct defined as:\n\n```text struct { AccountID accountID; } ```",
       "type": "object",
       "required": [
         "account_id"
@@ -1004,7 +1004,7 @@
       }
     },
     "LedgerKeyClaimableBalance": {
-      "description": "LedgerKeyClaimableBalance is an XDR NestedStruct defines as:\n\n```text struct { ClaimableBalanceID balanceID; } ```",
+      "description": "LedgerKeyClaimableBalance is an XDR NestedStruct defined as:\n\n```text struct { ClaimableBalanceID balanceID; } ```",
       "type": "object",
       "required": [
         "balance_id"
@@ -1016,7 +1016,7 @@
       }
     },
     "LedgerKeyConfigSetting": {
-      "description": "LedgerKeyConfigSetting is an XDR NestedStruct defines as:\n\n```text struct { ConfigSettingID configSettingID; } ```",
+      "description": "LedgerKeyConfigSetting is an XDR NestedStruct defined as:\n\n```text struct { ConfigSettingID configSettingID; } ```",
       "type": "object",
       "required": [
         "config_setting_id"
@@ -1028,7 +1028,7 @@
       }
     },
     "LedgerKeyContractCode": {
-      "description": "LedgerKeyContractCode is an XDR NestedStruct defines as:\n\n```text struct { Hash hash; } ```",
+      "description": "LedgerKeyContractCode is an XDR NestedStruct defined as:\n\n```text struct { Hash hash; } ```",
       "type": "object",
       "required": [
         "hash"
@@ -1044,7 +1044,7 @@
       }
     },
     "LedgerKeyContractData": {
-      "description": "LedgerKeyContractData is an XDR NestedStruct defines as:\n\n```text struct { SCAddress contract; SCVal key; ContractDataDurability durability; } ```",
+      "description": "LedgerKeyContractData is an XDR NestedStruct defined as:\n\n```text struct { SCAddress contract; SCVal key; ContractDataDurability durability; } ```",
       "type": "object",
       "required": [
         "contract",
@@ -1064,7 +1064,7 @@
       }
     },
     "LedgerKeyData": {
-      "description": "LedgerKeyData is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; string64 dataName; } ```",
+      "description": "LedgerKeyData is an XDR NestedStruct defined as:\n\n```text struct { AccountID accountID; string64 dataName; } ```",
       "type": "object",
       "required": [
         "account_id",
@@ -1080,7 +1080,7 @@
       }
     },
     "LedgerKeyLiquidityPool": {
-      "description": "LedgerKeyLiquidityPool is an XDR NestedStruct defines as:\n\n```text struct { PoolID liquidityPoolID; } ```",
+      "description": "LedgerKeyLiquidityPool is an XDR NestedStruct defined as:\n\n```text struct { PoolID liquidityPoolID; } ```",
       "type": "object",
       "required": [
         "liquidity_pool_id"
@@ -1092,7 +1092,7 @@
       }
     },
     "LedgerKeyOffer": {
-      "description": "LedgerKeyOffer is an XDR NestedStruct defines as:\n\n```text struct { AccountID sellerID; int64 offerID; } ```",
+      "description": "LedgerKeyOffer is an XDR NestedStruct defined as:\n\n```text struct { AccountID sellerID; int64 offerID; } ```",
       "type": "object",
       "required": [
         "offer_id",
@@ -1108,7 +1108,7 @@
       }
     },
     "LedgerKeyTrustLine": {
-      "description": "LedgerKeyTrustLine is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; TrustLineAsset asset; } ```",
+      "description": "LedgerKeyTrustLine is an XDR NestedStruct defined as:\n\n```text struct { AccountID accountID; TrustLineAsset asset; } ```",
       "type": "object",
       "required": [
         "account_id",
@@ -1124,7 +1124,7 @@
       }
     },
     "LedgerKeyTtl": {
-      "description": "LedgerKeyTtl is an XDR NestedStruct defines as:\n\n```text struct { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; } ```",
+      "description": "LedgerKeyTtl is an XDR NestedStruct defined as:\n\n```text struct { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; } ```",
       "type": "object",
       "required": [
         "key_hash"
@@ -1140,7 +1140,7 @@
       }
     },
     "LiquidityPoolConstantProductParameters": {
-      "description": "LiquidityPoolConstantProductParameters is an XDR Struct defines as:\n\n```text struct LiquidityPoolConstantProductParameters { Asset assetA; // assetA < assetB Asset assetB; int32 fee; // Fee is in basis points, so the actual rate is (fee/100)% }; ```",
+      "description": "LiquidityPoolConstantProductParameters is an XDR Struct defined as:\n\n```text struct LiquidityPoolConstantProductParameters { Asset assetA; // assetA < assetB Asset assetB; int32 fee; // Fee is in basis points, so the actual rate is (fee/100)% }; ```",
       "type": "object",
       "required": [
         "asset_a",
@@ -1161,7 +1161,7 @@
       }
     },
     "LiquidityPoolDepositOp": {
-      "description": "LiquidityPoolDepositOp is an XDR Struct defines as:\n\n```text struct LiquidityPoolDepositOp { PoolID liquidityPoolID; int64 maxAmountA; // maximum amount of first asset to deposit int64 maxAmountB; // maximum amount of second asset to deposit Price minPrice;   // minimum depositA/depositB Price maxPrice;   // maximum depositA/depositB }; ```",
+      "description": "LiquidityPoolDepositOp is an XDR Struct defined as:\n\n```text struct LiquidityPoolDepositOp { PoolID liquidityPoolID; int64 maxAmountA; // maximum amount of first asset to deposit int64 maxAmountB; // maximum amount of second asset to deposit Price minPrice;   // minimum depositA/depositB Price maxPrice;   // maximum depositA/depositB }; ```",
       "type": "object",
       "required": [
         "liquidity_pool_id",
@@ -1189,7 +1189,7 @@
       }
     },
     "LiquidityPoolParameters": {
-      "description": "LiquidityPoolParameters is an XDR Union defines as:\n\n```text union LiquidityPoolParameters switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: LiquidityPoolConstantProductParameters constantProduct; }; ```",
+      "description": "LiquidityPoolParameters is an XDR Union defined as:\n\n```text union LiquidityPoolParameters switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: LiquidityPoolConstantProductParameters constantProduct; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -1205,7 +1205,7 @@
       ]
     },
     "LiquidityPoolWithdrawOp": {
-      "description": "LiquidityPoolWithdrawOp is an XDR Struct defines as:\n\n```text struct LiquidityPoolWithdrawOp { PoolID liquidityPoolID; int64 amount;     // amount of pool shares to withdraw int64 minAmountA; // minimum amount of first asset to withdraw int64 minAmountB; // minimum amount of second asset to withdraw }; ```",
+      "description": "LiquidityPoolWithdrawOp is an XDR Struct defined as:\n\n```text struct LiquidityPoolWithdrawOp { PoolID liquidityPoolID; int64 amount;     // amount of pool shares to withdraw int64 minAmountA; // minimum amount of first asset to withdraw int64 minAmountB; // minimum amount of second asset to withdraw }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -1229,7 +1229,7 @@
       }
     },
     "ManageBuyOfferOp": {
-      "description": "ManageBuyOfferOp is an XDR Struct defines as:\n\n```text struct ManageBuyOfferOp { Asset selling; Asset buying; int64 buyAmount; // amount being bought. if set to 0, delete the offer Price price;     // price of thing being bought in terms of what you are // selling\n\n// 0=create a new offer, otherwise edit an existing offer int64 offerID; }; ```",
+      "description": "ManageBuyOfferOp is an XDR Struct defined as:\n\n```text struct ManageBuyOfferOp { Asset selling; Asset buying; int64 buyAmount; // amount being bought. if set to 0, delete the offer Price price;     // price of thing being bought in terms of what you are // selling\n\n// 0=create a new offer, otherwise edit an existing offer int64 offerID; }; ```",
       "type": "object",
       "required": [
         "buy_amount",
@@ -1257,7 +1257,7 @@
       }
     },
     "ManageDataOp": {
-      "description": "ManageDataOp is an XDR Struct defines as:\n\n```text struct ManageDataOp { string64 dataName; DataValue* dataValue; // set to null to clear }; ```",
+      "description": "ManageDataOp is an XDR Struct defined as:\n\n```text struct ManageDataOp { string64 dataName; DataValue* dataValue; // set to null to clear }; ```",
       "type": "object",
       "required": [
         "data_name"
@@ -1279,7 +1279,7 @@
       }
     },
     "ManageSellOfferOp": {
-      "description": "ManageSellOfferOp is an XDR Struct defines as:\n\n```text struct ManageSellOfferOp { Asset selling; Asset buying; int64 amount; // amount being sold. if set to 0, delete the offer Price price;  // price of thing being sold in terms of what you are buying\n\n// 0=create a new offer, otherwise edit an existing offer int64 offerID; }; ```",
+      "description": "ManageSellOfferOp is an XDR Struct defined as:\n\n```text struct ManageSellOfferOp { Asset selling; Asset buying; int64 amount; // amount being sold. if set to 0, delete the offer Price price;  // price of thing being sold in terms of what you are buying\n\n// 0=create a new offer, otherwise edit an existing offer int64 offerID; }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -1307,7 +1307,7 @@
       }
     },
     "Memo": {
-      "description": "Memo is an XDR Union defines as:\n\n```text union Memo switch (MemoType type) { case MEMO_NONE: void; case MEMO_TEXT: string text<28>; case MEMO_ID: uint64 id; case MEMO_HASH: Hash hash; // the hash of what to pull from the content server case MEMO_RETURN: Hash retHash; // the hash of the tx you are rejecting }; ```",
+      "description": "Memo is an XDR Union defined as:\n\n```text union Memo switch (MemoType type) { case MEMO_NONE: void; case MEMO_TEXT: string text<28>; case MEMO_ID: uint64 id; case MEMO_HASH: Hash hash; // the hash of what to pull from the content server case MEMO_RETURN: Hash retHash; // the hash of the tx you are rejecting }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -1373,7 +1373,7 @@
       "type": "string"
     },
     "Operation": {
-      "description": "Operation is an XDR Struct defines as:\n\n```text struct Operation { // sourceAccount is the account used to run the operation // if not set, the runtime defaults to \"sourceAccount\" specified at // the transaction level MuxedAccount* sourceAccount;\n\nunion switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } body; }; ```",
+      "description": "Operation is an XDR Struct defined as:\n\n```text struct Operation { // sourceAccount is the account used to run the operation // if not set, the runtime defaults to \"sourceAccount\" specified at // the transaction level MuxedAccount* sourceAccount;\n\nunion switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } body; }; ```",
       "type": "object",
       "required": [
         "body"
@@ -1395,7 +1395,7 @@
       }
     },
     "OperationBody": {
-      "description": "OperationBody is an XDR NestedUnion defines as:\n\n```text union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } ```",
+      "description": "OperationBody is an XDR NestedUnion defined as:\n\n```text union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -1682,7 +1682,7 @@
       ]
     },
     "ParallelTxExecutionStage": {
-      "description": "ParallelTxExecutionStage is an XDR Typedef defines as:\n\n```text typedef DependentTxCluster ParallelTxExecutionStage<>; ```",
+      "description": "ParallelTxExecutionStage is an XDR Typedef defined as:\n\n```text typedef DependentTxCluster ParallelTxExecutionStage<>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/DependentTxCluster"
@@ -1690,7 +1690,7 @@
       "maxItems": 4294967295
     },
     "ParallelTxsComponent": {
-      "description": "ParallelTxsComponent is an XDR Struct defines as:\n\n```text struct ParallelTxsComponent { int64* baseFee; // A sequence of stages that *may* have arbitrary data dependencies between // each other, i.e. in a general case the stage execution order may not be // arbitrarily shuffled without affecting the end result. ParallelTxExecutionStage executionStages<>; }; ```",
+      "description": "ParallelTxsComponent is an XDR Struct defined as:\n\n```text struct ParallelTxsComponent { int64* baseFee; // A sequence of stages that *may* have arbitrary data dependencies between // each other, i.e. in a general case the stage execution order may not be // arbitrarily shuffled without affecting the end result. ParallelTxExecutionStage executionStages<>; }; ```",
       "type": "object",
       "required": [
         "execution_stages"
@@ -1713,7 +1713,7 @@
       }
     },
     "PathPaymentStrictReceiveOp": {
-      "description": "PathPaymentStrictReceiveOp is an XDR Struct defines as:\n\n```text struct PathPaymentStrictReceiveOp { Asset sendAsset; // asset we pay with int64 sendMax;   // the maximum amount of sendAsset to // send (excluding fees). // The operation will fail if can't be met\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destAmount;         // amount they end up with\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
+      "description": "PathPaymentStrictReceiveOp is an XDR Struct defined as:\n\n```text struct PathPaymentStrictReceiveOp { Asset sendAsset; // asset we pay with int64 sendMax;   // the maximum amount of sendAsset to // send (excluding fees). // The operation will fail if can't be met\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destAmount;         // amount they end up with\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
       "type": "object",
       "required": [
         "dest_amount",
@@ -1749,7 +1749,7 @@
       }
     },
     "PathPaymentStrictSendOp": {
-      "description": "PathPaymentStrictSendOp is an XDR Struct defines as:\n\n```text struct PathPaymentStrictSendOp { Asset sendAsset;  // asset we pay with int64 sendAmount; // amount of sendAsset to send (excluding fees)\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destMin;            // the minimum amount of dest asset to // be received // The operation will fail if it can't be met\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
+      "description": "PathPaymentStrictSendOp is an XDR Struct defined as:\n\n```text struct PathPaymentStrictSendOp { Asset sendAsset;  // asset we pay with int64 sendAmount; // amount of sendAsset to send (excluding fees)\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destMin;            // the minimum amount of dest asset to // be received // The operation will fail if it can't be met\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
       "type": "object",
       "required": [
         "dest_asset",
@@ -1785,7 +1785,7 @@
       }
     },
     "PaymentOp": {
-      "description": "PaymentOp is an XDR Struct defines as:\n\n```text struct PaymentOp { MuxedAccount destination; // recipient of the payment Asset asset;              // what they end up with int64 amount;             // amount they end up with }; ```",
+      "description": "PaymentOp is an XDR Struct defined as:\n\n```text struct PaymentOp { MuxedAccount destination; // recipient of the payment Asset asset;              // what they end up with int64 amount;             // amount they end up with }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -1808,7 +1808,7 @@
       "type": "string"
     },
     "Preconditions": {
-      "description": "Preconditions is an XDR Union defines as:\n\n```text union Preconditions switch (PreconditionType type) { case PRECOND_NONE: void; case PRECOND_TIME: TimeBounds timeBounds; case PRECOND_V2: PreconditionsV2 v2; }; ```",
+      "description": "Preconditions is an XDR Union defined as:\n\n```text union Preconditions switch (PreconditionType type) { case PRECOND_NONE: void; case PRECOND_TIME: TimeBounds timeBounds; case PRECOND_V2: PreconditionsV2 v2; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -1841,7 +1841,7 @@
       ]
     },
     "PreconditionsV2": {
-      "description": "PreconditionsV2 is an XDR Struct defines as:\n\n```text struct PreconditionsV2 { TimeBounds* timeBounds;\n\n// Transaction only valid for ledger numbers n such that // minLedger <= n < maxLedger (if maxLedger == 0, then // only minLedger is checked) LedgerBounds* ledgerBounds;\n\n// If NULL, only valid when sourceAccount's sequence number // is seqNum - 1.  Otherwise, valid when sourceAccount's // sequence number n satisfies minSeqNum <= n < tx.seqNum. // Note that after execution the account's sequence number // is always raised to tx.seqNum, and a transaction is not // valid if tx.seqNum is too high to ensure replay protection. SequenceNumber* minSeqNum;\n\n// For the transaction to be valid, the current ledger time must // be at least minSeqAge greater than sourceAccount's seqTime. Duration minSeqAge;\n\n// For the transaction to be valid, the current ledger number // must be at least minSeqLedgerGap greater than sourceAccount's // seqLedger. uint32 minSeqLedgerGap;\n\n// For the transaction to be valid, there must be a signature // corresponding to every Signer in this array, even if the // signature is not otherwise required by the sourceAccount or // operations. SignerKey extraSigners<2>; }; ```",
+      "description": "PreconditionsV2 is an XDR Struct defined as:\n\n```text struct PreconditionsV2 { TimeBounds* timeBounds;\n\n// Transaction only valid for ledger numbers n such that // minLedger <= n < maxLedger (if maxLedger == 0, then // only minLedger is checked) LedgerBounds* ledgerBounds;\n\n// If NULL, only valid when sourceAccount's sequence number // is seqNum - 1.  Otherwise, valid when sourceAccount's // sequence number n satisfies minSeqNum <= n < tx.seqNum. // Note that after execution the account's sequence number // is always raised to tx.seqNum, and a transaction is not // valid if tx.seqNum is too high to ensure replay protection. SequenceNumber* minSeqNum;\n\n// For the transaction to be valid, the current ledger time must // be at least minSeqAge greater than sourceAccount's seqTime. Duration minSeqAge;\n\n// For the transaction to be valid, the current ledger number // must be at least minSeqLedgerGap greater than sourceAccount's // seqLedger. uint32 minSeqLedgerGap;\n\n// For the transaction to be valid, there must be a signature // corresponding to every Signer in this array, even if the // signature is not otherwise required by the sourceAccount or // operations. SignerKey extraSigners<2>; }; ```",
       "type": "object",
       "required": [
         "extra_signers",
@@ -1897,7 +1897,7 @@
       }
     },
     "Price": {
-      "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
+      "description": "Price is an XDR Struct defined as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
       "type": "object",
       "required": [
         "d",
@@ -1915,7 +1915,7 @@
       }
     },
     "RestoreFootprintOp": {
-      "description": "RestoreFootprintOp is an XDR Struct defines as:\n\n```text struct RestoreFootprintOp { ExtensionPoint ext; }; ```",
+      "description": "RestoreFootprintOp is an XDR Struct defined as:\n\n```text struct RestoreFootprintOp { ExtensionPoint ext; }; ```",
       "type": "object",
       "required": [
         "ext"
@@ -1927,7 +1927,7 @@
       }
     },
     "RevokeSponsorshipOp": {
-      "description": "RevokeSponsorshipOp is an XDR Union defines as:\n\n```text union RevokeSponsorshipOp switch (RevokeSponsorshipType type) { case REVOKE_SPONSORSHIP_LEDGER_ENTRY: LedgerKey ledgerKey; case REVOKE_SPONSORSHIP_SIGNER: struct { AccountID accountID; SignerKey signerKey; } signer; }; ```",
+      "description": "RevokeSponsorshipOp is an XDR Union defined as:\n\n```text union RevokeSponsorshipOp switch (RevokeSponsorshipType type) { case REVOKE_SPONSORSHIP_LEDGER_ENTRY: LedgerKey ledgerKey; case REVOKE_SPONSORSHIP_SIGNER: struct { AccountID accountID; SignerKey signerKey; } signer; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -1954,7 +1954,7 @@
       ]
     },
     "RevokeSponsorshipOpSigner": {
-      "description": "RevokeSponsorshipOpSigner is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; SignerKey signerKey; } ```",
+      "description": "RevokeSponsorshipOpSigner is an XDR NestedStruct defined as:\n\n```text struct { AccountID accountID; SignerKey signerKey; } ```",
       "type": "object",
       "required": [
         "account_id",
@@ -1973,13 +1973,13 @@
       "type": "string"
     },
     "ScBytes": {
-      "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
+      "description": "ScBytes is an XDR Typedef defined as:\n\n```text typedef opaque SCBytes<>; ```",
       "type": "string",
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
     "ScContractInstance": {
-      "description": "ScContractInstance is an XDR Struct defines as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
+      "description": "ScContractInstance is an XDR Struct defined as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
       "type": "object",
       "required": [
         "executable"
@@ -2001,7 +2001,7 @@
       }
     },
     "ScError": {
-      "description": "ScError is an XDR Union defines as:\n\n```text union SCError switch (SCErrorType type) { case SCE_CONTRACT: uint32 contractCode; case SCE_WASM_VM: case SCE_CONTEXT: case SCE_STORAGE: case SCE_OBJECT: case SCE_CRYPTO: case SCE_EVENTS: case SCE_BUDGET: case SCE_VALUE: case SCE_AUTH: SCErrorCode code; }; ```",
+      "description": "ScError is an XDR Union defined as:\n\n```text union SCError switch (SCErrorType type) { case SCE_CONTRACT: uint32 contractCode; case SCE_WASM_VM: case SCE_CONTEXT: case SCE_STORAGE: case SCE_OBJECT: case SCE_CRYPTO: case SCE_EVENTS: case SCE_BUDGET: case SCE_VALUE: case SCE_AUTH: SCErrorCode code; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -2118,7 +2118,7 @@
       ]
     },
     "ScErrorCode": {
-      "description": "ScErrorCode is an XDR Enum defines as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
+      "description": "ScErrorCode is an XDR Enum defined as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
       "type": "string",
       "enum": [
         "arith_domain",
@@ -2134,7 +2134,7 @@
       ]
     },
     "ScMap": {
-      "description": "ScMap is an XDR Typedef defines as:\n\n```text typedef SCMapEntry SCMap<>; ```",
+      "description": "ScMap is an XDR Typedef defined as:\n\n```text typedef SCMapEntry SCMap<>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/ScMapEntry"
@@ -2142,7 +2142,7 @@
       "maxItems": 4294967295
     },
     "ScMapEntry": {
-      "description": "ScMapEntry is an XDR Struct defines as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
+      "description": "ScMapEntry is an XDR Struct defined as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
       "type": "object",
       "required": [
         "key",
@@ -2158,7 +2158,7 @@
       }
     },
     "ScNonceKey": {
-      "description": "ScNonceKey is an XDR Struct defines as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
+      "description": "ScNonceKey is an XDR Struct defined as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
       "type": "object",
       "required": [
         "nonce"
@@ -2170,15 +2170,15 @@
       }
     },
     "ScString": {
-      "description": "ScString is an XDR Typedef defines as:\n\n```text typedef string SCString<>; ```",
+      "description": "ScString is an XDR Typedef defined as:\n\n```text typedef string SCString<>; ```",
       "$ref": "#/definitions/StringM<4294967295>"
     },
     "ScSymbol": {
-      "description": "ScSymbol is an XDR Typedef defines as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
+      "description": "ScSymbol is an XDR Typedef defined as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
+      "description": "ScVal is an XDR Union defined as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -2427,7 +2427,7 @@
       ]
     },
     "ScVec": {
-      "description": "ScVec is an XDR Typedef defines as:\n\n```text typedef SCVal SCVec<>; ```",
+      "description": "ScVec is an XDR Typedef defined as:\n\n```text typedef SCVal SCVec<>; ```",
       "type": "array",
       "items": {
         "$ref": "#/definitions/ScVal"
@@ -2435,11 +2435,11 @@
       "maxItems": 4294967295
     },
     "SequenceNumber": {
-      "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
+      "description": "SequenceNumber is an XDR Typedef defined as:\n\n```text typedef int64 SequenceNumber; ```",
       "type": "string"
     },
     "SetOptionsOp": {
-      "description": "SetOptionsOp is an XDR Struct defines as:\n\n```text struct SetOptionsOp { AccountID* inflationDest; // sets the inflation destination\n\nuint32* clearFlags; // which flags to clear uint32* setFlags;   // which flags to set\n\n// account threshold manipulation uint32* masterWeight; // weight of the master account uint32* lowThreshold; uint32* medThreshold; uint32* highThreshold;\n\nstring32* homeDomain; // sets the home domain\n\n// Add, update or remove a signer for the account // signer is deleted if the weight is 0 Signer* signer; }; ```",
+      "description": "SetOptionsOp is an XDR Struct defined as:\n\n```text struct SetOptionsOp { AccountID* inflationDest; // sets the inflation destination\n\nuint32* clearFlags; // which flags to clear uint32* setFlags;   // which flags to set\n\n// account threshold manipulation uint32* masterWeight; // weight of the master account uint32* lowThreshold; uint32* medThreshold; uint32* highThreshold;\n\nstring32* homeDomain; // sets the home domain\n\n// Add, update or remove a signer for the account // signer is deleted if the weight is 0 Signer* signer; }; ```",
       "type": "object",
       "properties": {
         "clear_flags": {
@@ -2523,7 +2523,7 @@
       }
     },
     "SetTrustLineFlagsOp": {
-      "description": "SetTrustLineFlagsOp is an XDR Struct defines as:\n\n```text struct SetTrustLineFlagsOp { AccountID trustor; Asset asset;\n\nuint32 clearFlags; // which flags to clear uint32 setFlags;   // which flags to set }; ```",
+      "description": "SetTrustLineFlagsOp is an XDR Struct defined as:\n\n```text struct SetTrustLineFlagsOp { AccountID trustor; Asset asset;\n\nuint32 clearFlags; // which flags to clear uint32 setFlags;   // which flags to set }; ```",
       "type": "object",
       "required": [
         "asset",
@@ -2551,14 +2551,14 @@
       }
     },
     "Signature": {
-      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "description": "Signature is an XDR Typedef defined as:\n\n```text typedef opaque Signature<64>; ```",
       "type": "string",
       "maxLength": 128,
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
     "Signer": {
-      "description": "Signer is an XDR Struct defines as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
+      "description": "Signer is an XDR Struct defined as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
       "type": "object",
       "required": [
         "key",
@@ -2579,7 +2579,7 @@
       "type": "string"
     },
     "SorobanAddressCredentials": {
-      "description": "SorobanAddressCredentials is an XDR Struct defines as:\n\n```text struct SorobanAddressCredentials { SCAddress address; int64 nonce; uint32 signatureExpirationLedger; SCVal signature; }; ```",
+      "description": "SorobanAddressCredentials is an XDR Struct defined as:\n\n```text struct SorobanAddressCredentials { SCAddress address; int64 nonce; uint32 signatureExpirationLedger; SCVal signature; }; ```",
       "type": "object",
       "required": [
         "address",
@@ -2605,7 +2605,7 @@
       }
     },
     "SorobanAuthorizationEntry": {
-      "description": "SorobanAuthorizationEntry is an XDR Struct defines as:\n\n```text struct SorobanAuthorizationEntry { SorobanCredentials credentials; SorobanAuthorizedInvocation rootInvocation; }; ```",
+      "description": "SorobanAuthorizationEntry is an XDR Struct defined as:\n\n```text struct SorobanAuthorizationEntry { SorobanCredentials credentials; SorobanAuthorizedInvocation rootInvocation; }; ```",
       "type": "object",
       "required": [
         "credentials",
@@ -2621,7 +2621,7 @@
       }
     },
     "SorobanAuthorizedFunction": {
-      "description": "SorobanAuthorizedFunction is an XDR Union defines as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; // This variant of auth payload for creating new contract instances // doesn't allow specifying the constructor arguments, creating contracts // with constructors that take arguments is only possible by authorizing // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` // (protocol 22+). case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; // This variant of auth payload for creating new contract instances // is only accepted in and after protocol 22. It allows authorizing the // contract constructor arguments. case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN: CreateContractArgsV2 createContractV2HostFn; }; ```",
+      "description": "SorobanAuthorizedFunction is an XDR Union defined as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; // This variant of auth payload for creating new contract instances // doesn't allow specifying the constructor arguments, creating contracts // with constructors that take arguments is only possible by authorizing // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` // (protocol 22+). case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; // This variant of auth payload for creating new contract instances // is only accepted in and after protocol 22. It allows authorizing the // contract constructor arguments. case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN: CreateContractArgsV2 createContractV2HostFn; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -2659,7 +2659,7 @@
       ]
     },
     "SorobanAuthorizedInvocation": {
-      "description": "SorobanAuthorizedInvocation is an XDR Struct defines as:\n\n```text struct SorobanAuthorizedInvocation { SorobanAuthorizedFunction function; SorobanAuthorizedInvocation subInvocations<>; }; ```",
+      "description": "SorobanAuthorizedInvocation is an XDR Struct defined as:\n\n```text struct SorobanAuthorizedInvocation { SorobanAuthorizedFunction function; SorobanAuthorizedInvocation subInvocations<>; }; ```",
       "type": "object",
       "required": [
         "function",
@@ -2679,7 +2679,7 @@
       }
     },
     "SorobanCredentials": {
-      "description": "SorobanCredentials is an XDR Union defines as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; }; ```",
+      "description": "SorobanCredentials is an XDR Union defined as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -2701,7 +2701,7 @@
       ]
     },
     "SorobanResources": {
-      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from disk backed entries uint32 diskReadBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
+      "description": "SorobanResources is an XDR Struct defined as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from disk backed entries uint32 diskReadBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
       "type": "object",
       "required": [
         "disk_read_bytes",
@@ -2731,7 +2731,7 @@
       }
     },
     "SorobanResourcesExtV0": {
-      "description": "SorobanResourcesExtV0 is an XDR Struct defines as:\n\n```text struct SorobanResourcesExtV0 { // Vector of indices representing what Soroban // entries in the footprint are archived, based on the // order of keys provided in the readWrite footprint. uint32 archivedSorobanEntries<>; }; ```",
+      "description": "SorobanResourcesExtV0 is an XDR Struct defined as:\n\n```text struct SorobanResourcesExtV0 { // Vector of indices representing what Soroban // entries in the footprint are archived, based on the // order of keys provided in the readWrite footprint. uint32 archivedSorobanEntries<>; }; ```",
       "type": "object",
       "required": [
         "archived_soroban_entries"
@@ -2749,7 +2749,7 @@
       }
     },
     "SorobanTransactionData": {
-      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
+      "description": "SorobanTransactionData is an XDR Struct defined as:\n\n```text struct SorobanTransactionData { union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -2769,7 +2769,7 @@
       }
     },
     "SorobanTransactionDataExt": {
-      "description": "SorobanTransactionDataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ```",
+      "description": "SorobanTransactionDataExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -2791,11 +2791,11 @@
       ]
     },
     "String32": {
-      "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
+      "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",
       "$ref": "#/definitions/StringM<32>"
     },
     "String64": {
-      "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
+      "description": "String64 is an XDR Typedef defined as:\n\n```text typedef string string64<64>; ```",
       "$ref": "#/definitions/StringM<64>"
     },
     "StringM<28>": {
@@ -2815,7 +2815,7 @@
       "maxLength": 64
     },
     "TimeBounds": {
-      "description": "TimeBounds is an XDR Struct defines as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
+      "description": "TimeBounds is an XDR Struct defined as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
       "type": "object",
       "required": [
         "max_time",
@@ -2831,11 +2831,11 @@
       }
     },
     "TimePoint": {
-      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
       "type": "string"
     },
     "Transaction": {
-      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
+      "description": "Transaction is an XDR Struct defined as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
       "type": "object",
       "required": [
         "cond",
@@ -2877,7 +2877,7 @@
       }
     },
     "TransactionEnvelope": {
-      "description": "TransactionEnvelope is an XDR Union defines as:\n\n```text union TransactionEnvelope switch (EnvelopeType type) { case ENVELOPE_TYPE_TX_V0: TransactionV0Envelope v0; case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; case ENVELOPE_TYPE_TX_FEE_BUMP: FeeBumpTransactionEnvelope feeBump; }; ```",
+      "description": "TransactionEnvelope is an XDR Union defined as:\n\n```text union TransactionEnvelope switch (EnvelopeType type) { case ENVELOPE_TYPE_TX_V0: TransactionV0Envelope v0; case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; case ENVELOPE_TYPE_TX_FEE_BUMP: FeeBumpTransactionEnvelope feeBump; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -2915,7 +2915,7 @@
       ]
     },
     "TransactionExt": {
-      "description": "TransactionExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ```",
+      "description": "TransactionExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -2937,7 +2937,7 @@
       ]
     },
     "TransactionPhase": {
-      "description": "TransactionPhase is an XDR Union defines as:\n\n```text union TransactionPhase switch (int v) { case 0: TxSetComponent v0Components<>; case 1: ParallelTxsComponent parallelTxsComponent; }; ```",
+      "description": "TransactionPhase is an XDR Union defined as:\n\n```text union TransactionPhase switch (int v) { case 0: TxSetComponent v0Components<>; case 1: ParallelTxsComponent parallelTxsComponent; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -2968,7 +2968,7 @@
       ]
     },
     "TransactionSet": {
-      "description": "TransactionSet is an XDR Struct defines as:\n\n```text struct TransactionSet { Hash previousLedgerHash; TransactionEnvelope txs<>; }; ```",
+      "description": "TransactionSet is an XDR Struct defined as:\n\n```text struct TransactionSet { Hash previousLedgerHash; TransactionEnvelope txs<>; }; ```",
       "type": "object",
       "required": [
         "previous_ledger_hash",
@@ -2992,7 +2992,7 @@
       }
     },
     "TransactionSetV1": {
-      "description": "TransactionSetV1 is an XDR Struct defines as:\n\n```text struct TransactionSetV1 { Hash previousLedgerHash; TransactionPhase phases<>; }; ```",
+      "description": "TransactionSetV1 is an XDR Struct defined as:\n\n```text struct TransactionSetV1 { Hash previousLedgerHash; TransactionPhase phases<>; }; ```",
       "type": "object",
       "required": [
         "phases",
@@ -3016,7 +3016,7 @@
       }
     },
     "TransactionV0": {
-      "description": "TransactionV0 is an XDR Struct defines as:\n\n```text struct TransactionV0 { uint256 sourceAccountEd25519; uint32 fee; SequenceNumber seqNum; TimeBounds* timeBounds; Memo memo; Operation operations<MAX_OPS_PER_TX>; union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "TransactionV0 is an XDR Struct defined as:\n\n```text struct TransactionV0 { uint256 sourceAccountEd25519; uint32 fee; SequenceNumber seqNum; TimeBounds* timeBounds; Memo memo; Operation operations<MAX_OPS_PER_TX>; union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -3068,7 +3068,7 @@
       }
     },
     "TransactionV0Envelope": {
-      "description": "TransactionV0Envelope is an XDR Struct defines as:\n\n```text struct TransactionV0Envelope { TransactionV0 tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
+      "description": "TransactionV0Envelope is an XDR Struct defined as:\n\n```text struct TransactionV0Envelope { TransactionV0 tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
       "type": "object",
       "required": [
         "signatures",
@@ -3088,14 +3088,14 @@
       }
     },
     "TransactionV0Ext": {
-      "description": "TransactionV0Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "description": "TransactionV0Ext is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; } ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "TransactionV1Envelope": {
-      "description": "TransactionV1Envelope is an XDR Struct defines as:\n\n```text struct TransactionV1Envelope { Transaction tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
+      "description": "TransactionV1Envelope is an XDR Struct defined as:\n\n```text struct TransactionV1Envelope { Transaction tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
       "type": "object",
       "required": [
         "signatures",
@@ -3115,7 +3115,7 @@
       }
     },
     "TrustLineAsset": {
-      "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
+      "description": "TrustLineAsset is an XDR Union defined as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -3159,7 +3159,7 @@
       ]
     },
     "TxSetComponent": {
-      "description": "TxSetComponent is an XDR Union defines as:\n\n```text union TxSetComponent switch (TxSetComponentType type) { case TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE: struct { int64* baseFee; TransactionEnvelope txs<>; } txsMaybeDiscountedFee; }; ```",
+      "description": "TxSetComponent is an XDR Union defined as:\n\n```text union TxSetComponent switch (TxSetComponentType type) { case TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE: struct { int64* baseFee; TransactionEnvelope txs<>; } txsMaybeDiscountedFee; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -3175,7 +3175,7 @@
       ]
     },
     "TxSetComponentTxsMaybeDiscountedFee": {
-      "description": "TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defines as:\n\n```text struct { int64* baseFee; TransactionEnvelope txs<>; } ```",
+      "description": "TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defined as:\n\n```text struct { int64* baseFee; TransactionEnvelope txs<>; } ```",
       "type": "object",
       "required": [
         "txs"

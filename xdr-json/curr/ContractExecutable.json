@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractExecutable",
-  "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
+  "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
   "oneOf": [
     {
       "type": "string",

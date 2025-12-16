@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "CreateAccountResult",
-  "description": "CreateAccountResult is an XDR Union defines as:\n\n```text union CreateAccountResult switch (CreateAccountResultCode code) { case CREATE_ACCOUNT_SUCCESS: void; case CREATE_ACCOUNT_MALFORMED: case CREATE_ACCOUNT_UNDERFUNDED: case CREATE_ACCOUNT_LOW_RESERVE: case CREATE_ACCOUNT_ALREADY_EXIST: void; }; ```",
+  "description": "CreateAccountResult is an XDR Union defined as:\n\n```text union CreateAccountResult switch (CreateAccountResultCode code) { case CREATE_ACCOUNT_SUCCESS: void; case CREATE_ACCOUNT_MALFORMED: case CREATE_ACCOUNT_UNDERFUNDED: case CREATE_ACCOUNT_LOW_RESERVE: case CREATE_ACCOUNT_ALREADY_EXIST: void; }; ```",
   "type": "string",
   "enum": [
     "success",

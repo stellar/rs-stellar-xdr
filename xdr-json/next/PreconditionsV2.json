@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "PreconditionsV2",
-  "description": "PreconditionsV2 is an XDR Struct defines as:\n\n```text struct PreconditionsV2 { TimeBounds* timeBounds;\n\n// Transaction only valid for ledger numbers n such that // minLedger <= n < maxLedger (if maxLedger == 0, then // only minLedger is checked) LedgerBounds* ledgerBounds;\n\n// If NULL, only valid when sourceAccount's sequence number // is seqNum - 1.  Otherwise, valid when sourceAccount's // sequence number n satisfies minSeqNum <= n < tx.seqNum. // Note that after execution the account's sequence number // is always raised to tx.seqNum, and a transaction is not // valid if tx.seqNum is too high to ensure replay protection. SequenceNumber* minSeqNum;\n\n// For the transaction to be valid, the current ledger time must // be at least minSeqAge greater than sourceAccount's seqTime. Duration minSeqAge;\n\n// For the transaction to be valid, the current ledger number // must be at least minSeqLedgerGap greater than sourceAccount's // seqLedger. uint32 minSeqLedgerGap;\n\n// For the transaction to be valid, there must be a signature // corresponding to every Signer in this array, even if the // signature is not otherwise required by the sourceAccount or // operations. SignerKey extraSigners<2>; }; ```",
+  "description": "PreconditionsV2 is an XDR Struct defined as:\n\n```text struct PreconditionsV2 { TimeBounds* timeBounds;\n\n// Transaction only valid for ledger numbers n such that // minLedger <= n < maxLedger (if maxLedger == 0, then // only minLedger is checked) LedgerBounds* ledgerBounds;\n\n// If NULL, only valid when sourceAccount's sequence number // is seqNum - 1.  Otherwise, valid when sourceAccount's // sequence number n satisfies minSeqNum <= n < tx.seqNum. // Note that after execution the account's sequence number // is always raised to tx.seqNum, and a transaction is not // valid if tx.seqNum is too high to ensure replay protection. SequenceNumber* minSeqNum;\n\n// For the transaction to be valid, the current ledger time must // be at least minSeqAge greater than sourceAccount's seqTime. Duration minSeqAge;\n\n// For the transaction to be valid, the current ledger number // must be at least minSeqLedgerGap greater than sourceAccount's // seqLedger. uint32 minSeqLedgerGap;\n\n// For the transaction to be valid, there must be a signature // corresponding to every Signer in this array, even if the // signature is not otherwise required by the sourceAccount or // operations. SignerKey extraSigners<2>; }; ```",
   "type": "object",
   "required": [
     "extra_signers",
@@ -61,11 +61,11 @@
   "unevaluatedProperties": false,
   "definitions": {
     "Duration": {
-      "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
+      "description": "Duration is an XDR Typedef defined as:\n\n```text typedef uint64 Duration; ```",
       "type": "string"
     },
     "LedgerBounds": {
-      "description": "LedgerBounds is an XDR Struct defines as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
+      "description": "LedgerBounds is an XDR Struct defined as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
       "type": "object",
       "required": [
         "max_ledger",
@@ -85,14 +85,14 @@
       }
     },
     "SequenceNumber": {
-      "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
+      "description": "SequenceNumber is an XDR Typedef defined as:\n\n```text typedef int64 SequenceNumber; ```",
       "type": "string"
     },
     "SignerKey": {
       "type": "string"
     },
     "TimeBounds": {
-      "description": "TimeBounds is an XDR Struct defines as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
+      "description": "TimeBounds is an XDR Struct defined as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
       "type": "object",
       "required": [
         "max_time",
@@ -108,7 +108,7 @@
       }
     },
     "TimePoint": {
-      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
       "type": "string"
     }
   }

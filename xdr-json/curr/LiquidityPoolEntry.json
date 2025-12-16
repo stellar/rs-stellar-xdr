@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "LiquidityPoolEntry",
-  "description": "LiquidityPoolEntry is an XDR Struct defines as:\n\n```text struct LiquidityPoolEntry { PoolID liquidityPoolID;\n\nunion switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } constantProduct; } body; }; ```",
+  "description": "LiquidityPoolEntry is an XDR Struct defined as:\n\n```text struct LiquidityPoolEntry { PoolID liquidityPoolID;\n\nunion switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } constantProduct; } body; }; ```",
   "type": "object",
   "required": [
     "body",
@@ -24,7 +24,7 @@
       "type": "string"
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -40,7 +40,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -56,7 +56,7 @@
       }
     },
     "Asset": {
-      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "description": "Asset is an XDR Union defined as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -95,7 +95,7 @@
       "type": "string"
     },
     "LiquidityPoolConstantProductParameters": {
-      "description": "LiquidityPoolConstantProductParameters is an XDR Struct defines as:\n\n```text struct LiquidityPoolConstantProductParameters { Asset assetA; // assetA < assetB Asset assetB; int32 fee; // Fee is in basis points, so the actual rate is (fee/100)% }; ```",
+      "description": "LiquidityPoolConstantProductParameters is an XDR Struct defined as:\n\n```text struct LiquidityPoolConstantProductParameters { Asset assetA; // assetA < assetB Asset assetB; int32 fee; // Fee is in basis points, so the actual rate is (fee/100)% }; ```",
       "type": "object",
       "required": [
         "asset_a",
@@ -116,7 +116,7 @@
       }
     },
     "LiquidityPoolEntryBody": {
-      "description": "LiquidityPoolEntryBody is an XDR NestedUnion defines as:\n\n```text union switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } constantProduct; } ```",
+      "description": "LiquidityPoolEntryBody is an XDR NestedUnion defined as:\n\n```text union switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } constantProduct; } ```",
       "oneOf": [
         {
           "type": "object",
@@ -132,7 +132,7 @@
       ]
     },
     "LiquidityPoolEntryConstantProduct": {
-      "description": "LiquidityPoolEntryConstantProduct is an XDR NestedStruct defines as:\n\n```text struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } ```",
+      "description": "LiquidityPoolEntryConstantProduct is an XDR NestedStruct defined as:\n\n```text struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } ```",
       "type": "object",
       "required": [
         "params",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "StellarValueType",
-  "description": "StellarValueType is an XDR Enum defines as:\n\n```text enum StellarValueType { STELLAR_VALUE_BASIC = 0, STELLAR_VALUE_SIGNED = 1 }; ```",
+  "description": "StellarValueType is an XDR Enum defined as:\n\n```text enum StellarValueType { STELLAR_VALUE_BASIC = 0, STELLAR_VALUE_SIGNED = 1 }; ```",
   "type": "string",
   "enum": [
     "basic",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "PathPaymentStrictSendResultSuccess",
-  "description": "PathPaymentStrictSendResultSuccess is an XDR NestedStruct defines as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
+  "description": "PathPaymentStrictSendResultSuccess is an XDR NestedStruct defined as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
   "type": "object",
   "required": [
     "last",
@@ -28,7 +28,7 @@
       "type": "string"
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -44,7 +44,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -60,7 +60,7 @@
       }
     },
     "Asset": {
-      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "description": "Asset is an XDR Union defined as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -99,7 +99,7 @@
       "type": "string"
     },
     "ClaimAtom": {
-      "description": "ClaimAtom is an XDR Union defines as:\n\n```text union ClaimAtom switch (ClaimAtomType type) { case CLAIM_ATOM_TYPE_V0: ClaimOfferAtomV0 v0; case CLAIM_ATOM_TYPE_ORDER_BOOK: ClaimOfferAtom orderBook; case CLAIM_ATOM_TYPE_LIQUIDITY_POOL: ClaimLiquidityAtom liquidityPool; }; ```",
+      "description": "ClaimAtom is an XDR Union defined as:\n\n```text union ClaimAtom switch (ClaimAtomType type) { case CLAIM_ATOM_TYPE_V0: ClaimOfferAtomV0 v0; case CLAIM_ATOM_TYPE_ORDER_BOOK: ClaimOfferAtom orderBook; case CLAIM_ATOM_TYPE_LIQUIDITY_POOL: ClaimLiquidityAtom liquidityPool; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -137,7 +137,7 @@
       ]
     },
     "ClaimLiquidityAtom": {
-      "description": "ClaimLiquidityAtom is an XDR Struct defines as:\n\n```text struct ClaimLiquidityAtom { PoolID liquidityPoolID;\n\n// amount and asset taken from the pool Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the pool Asset assetBought; int64 amountBought; }; ```",
+      "description": "ClaimLiquidityAtom is an XDR Struct defined as:\n\n```text struct ClaimLiquidityAtom { PoolID liquidityPoolID;\n\n// amount and asset taken from the pool Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the pool Asset assetBought; int64 amountBought; }; ```",
       "type": "object",
       "required": [
         "amount_bought",
@@ -165,7 +165,7 @@
       }
     },
     "ClaimOfferAtom": {
-      "description": "ClaimOfferAtom is an XDR Struct defines as:\n\n```text struct ClaimOfferAtom { // emitted to identify the offer AccountID sellerID; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
+      "description": "ClaimOfferAtom is an XDR Struct defined as:\n\n```text struct ClaimOfferAtom { // emitted to identify the offer AccountID sellerID; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
       "type": "object",
       "required": [
         "amount_bought",
@@ -197,7 +197,7 @@
       }
     },
     "ClaimOfferAtomV0": {
-      "description": "ClaimOfferAtomV0 is an XDR Struct defines as:\n\n```text struct ClaimOfferAtomV0 { // emitted to identify the offer uint256 sellerEd25519; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
+      "description": "ClaimOfferAtomV0 is an XDR Struct defined as:\n\n```text struct ClaimOfferAtomV0 { // emitted to identify the offer uint256 sellerEd25519; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
       "type": "object",
       "required": [
         "amount_bought",
@@ -236,7 +236,7 @@
       "type": "string"
     },
     "SimplePaymentResult": {
-      "description": "SimplePaymentResult is an XDR Struct defines as:\n\n```text struct SimplePaymentResult { AccountID destination; Asset asset; int64 amount; }; ```",
+      "description": "SimplePaymentResult is an XDR Struct defined as:\n\n```text struct SimplePaymentResult { AccountID destination; Asset asset; int64 amount; }; ```",
       "type": "object",
       "required": [
         "amount",

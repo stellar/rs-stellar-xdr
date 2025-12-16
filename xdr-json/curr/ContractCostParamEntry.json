@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractCostParamEntry",
-  "description": "ContractCostParamEntry is an XDR Struct defines as:\n\n```text struct ContractCostParamEntry { // use `ext` to add more terms (e.g. higher order polynomials) in the future ExtensionPoint ext;\n\nint64 constTerm; int64 linearTerm; }; ```",
+  "description": "ContractCostParamEntry is an XDR Struct defined as:\n\n```text struct ContractCostParamEntry { // use `ext` to add more terms (e.g. higher order polynomials) in the future ExtensionPoint ext;\n\nint64 constTerm; int64 linearTerm; }; ```",
   "type": "object",
   "required": [
     "const_term",
@@ -25,7 +25,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "description": "ExtensionPoint is an XDR Union defined as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
       "type": "string",
       "enum": [
         "v0"

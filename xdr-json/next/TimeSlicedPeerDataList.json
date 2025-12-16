@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TimeSlicedPeerDataList",
-  "description": "TimeSlicedPeerDataList is an XDR Typedef defines as:\n\n```text typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>; ```",
+  "description": "TimeSlicedPeerDataList is an XDR Typedef defined as:\n\n```text typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>; ```",
   "type": "array",
   "items": {
     "$ref": "#/definitions/TimeSlicedPeerData"
@@ -12,7 +12,7 @@
       "type": "string"
     },
     "PeerStats": {
-      "description": "PeerStats is an XDR Struct defines as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
+      "description": "PeerStats is an XDR Struct defined as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
       "type": "object",
       "required": [
         "bytes_read",
@@ -84,7 +84,7 @@
       "maxLength": 100
     },
     "TimeSlicedPeerData": {
-      "description": "TimeSlicedPeerData is an XDR Struct defines as:\n\n```text struct TimeSlicedPeerData { PeerStats peerStats; uint32 averageLatencyMs; }; ```",
+      "description": "TimeSlicedPeerData is an XDR Struct defined as:\n\n```text struct TimeSlicedPeerData { PeerStats peerStats; uint32 averageLatencyMs; }; ```",
       "type": "object",
       "required": [
         "average_latency_ms",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "AccountEntry",
-  "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
+  "description": "AccountEntry is an XDR Struct defined as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
   "type": "object",
   "required": [
     "account_id",
@@ -71,7 +71,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExt": {
-      "description": "AccountEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ```",
+      "description": "AccountEntryExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -93,7 +93,7 @@
       ]
     },
     "AccountEntryExtensionV1": {
-      "description": "AccountEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV1 { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ext; }; ```",
+      "description": "AccountEntryExtensionV1 is an XDR Struct defined as:\n\n```text struct AccountEntryExtensionV1 { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -109,7 +109,7 @@
       }
     },
     "AccountEntryExtensionV1Ext": {
-      "description": "AccountEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ```",
+      "description": "AccountEntryExtensionV1Ext is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -131,7 +131,7 @@
       ]
     },
     "AccountEntryExtensionV2": {
-      "description": "AccountEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV2 { uint32 numSponsored; uint32 numSponsoring; SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;\n\nunion switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ext; }; ```",
+      "description": "AccountEntryExtensionV2 is an XDR Struct defined as:\n\n```text struct AccountEntryExtensionV2 { uint32 numSponsored; uint32 numSponsoring; SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;\n\nunion switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -163,7 +163,7 @@
       }
     },
     "AccountEntryExtensionV2Ext": {
-      "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
+      "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -185,7 +185,7 @@
       ]
     },
     "AccountEntryExtensionV3": {
-      "description": "AccountEntryExtensionV3 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
+      "description": "AccountEntryExtensionV3 is an XDR Struct defined as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -210,14 +210,14 @@
       "type": "string"
     },
     "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "description": "ExtensionPoint is an XDR Union defined as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "Liabilities": {
-      "description": "Liabilities is an XDR Struct defines as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
+      "description": "Liabilities is an XDR Struct defined as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
       "type": "object",
       "required": [
         "buying",
@@ -233,11 +233,11 @@
       }
     },
     "SequenceNumber": {
-      "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
+      "description": "SequenceNumber is an XDR Typedef defined as:\n\n```text typedef int64 SequenceNumber; ```",
       "type": "string"
     },
     "Signer": {
-      "description": "Signer is an XDR Struct defines as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
+      "description": "Signer is an XDR Struct defined as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
       "type": "object",
       "required": [
         "key",
@@ -258,7 +258,7 @@
       "type": "string"
     },
     "SponsorshipDescriptor": {
-      "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
+      "description": "SponsorshipDescriptor is an XDR Typedef defined as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
       "anyOf": [
         {
           "$ref": "#/definitions/AccountId"
@@ -269,7 +269,7 @@
       ]
     },
     "String32": {
-      "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
+      "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",
       "$ref": "#/definitions/StringM<32>"
     },
     "StringM<32>": {
@@ -277,7 +277,7 @@
       "maxLength": 32
     },
     "TimePoint": {
-      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
       "type": "string"
     }
   }

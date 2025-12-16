@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "AccountEntryExtensionV2",
-  "description": "AccountEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV2 { uint32 numSponsored; uint32 numSponsoring; SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;\n\nunion switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ext; }; ```",
+  "description": "AccountEntryExtensionV2 is an XDR Struct defined as:\n\n```text struct AccountEntryExtensionV2 { uint32 numSponsored; uint32 numSponsoring; SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;\n\nunion switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ext; }; ```",
   "type": "object",
   "required": [
     "ext",
@@ -37,7 +37,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "AccountEntryExtensionV2Ext": {
-      "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
+      "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -59,7 +59,7 @@
       ]
     },
     "AccountEntryExtensionV3": {
-      "description": "AccountEntryExtensionV3 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
+      "description": "AccountEntryExtensionV3 is an XDR Struct defined as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -84,14 +84,14 @@
       "type": "string"
     },
     "ExtensionPoint": {
-      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "description": "ExtensionPoint is an XDR Union defined as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "SponsorshipDescriptor": {
-      "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
+      "description": "SponsorshipDescriptor is an XDR Typedef defined as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
       "anyOf": [
         {
           "$ref": "#/definitions/AccountId"
@@ -102,7 +102,7 @@
       ]
     },
     "TimePoint": {
-      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
       "type": "string"
     }
   }

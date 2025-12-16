@@ -33,7 +33,7 @@
 //!
 //! Default features: `std`, `curr`.
 //!
-//! Teirs of functionality:
+//! Tiers of functionality:
 //!
 //! 1. `std` – The std feature provides all functionality (types, encode,
 //! decode), and is the default feature set.

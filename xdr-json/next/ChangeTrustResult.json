@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ChangeTrustResult",
-  "description": "ChangeTrustResult is an XDR Union defines as:\n\n```text union ChangeTrustResult switch (ChangeTrustResultCode code) { case CHANGE_TRUST_SUCCESS: void; case CHANGE_TRUST_MALFORMED: case CHANGE_TRUST_NO_ISSUER: case CHANGE_TRUST_INVALID_LIMIT: case CHANGE_TRUST_LOW_RESERVE: case CHANGE_TRUST_SELF_NOT_ALLOWED: case CHANGE_TRUST_TRUST_LINE_MISSING: case CHANGE_TRUST_CANNOT_DELETE: case CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES: void; }; ```",
+  "description": "ChangeTrustResult is an XDR Union defined as:\n\n```text union ChangeTrustResult switch (ChangeTrustResultCode code) { case CHANGE_TRUST_SUCCESS: void; case CHANGE_TRUST_MALFORMED: case CHANGE_TRUST_NO_ISSUER: case CHANGE_TRUST_INVALID_LIMIT: case CHANGE_TRUST_LOW_RESERVE: case CHANGE_TRUST_SELF_NOT_ALLOWED: case CHANGE_TRUST_TRUST_LINE_MISSING: case CHANGE_TRUST_CANNOT_DELETE: case CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES: void; }; ```",
   "type": "string",
   "enum": [
     "success",

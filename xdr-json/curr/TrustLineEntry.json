@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TrustLineEntry",
-  "description": "TrustLineEntry is an XDR Struct defines as:\n\n```text struct TrustLineEntry { AccountID accountID;  // account this trustline belongs to TrustLineAsset asset; // type of asset (with issuer) int64 balance;        // how much of this asset the user has. // Asset defines the unit for this;\n\nint64 limit;  // balance cannot be above this uint32 flags; // see TrustLineFlags\n\n// reserved for future use union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ext; }; ```",
+  "description": "TrustLineEntry is an XDR Struct defined as:\n\n```text struct TrustLineEntry { AccountID accountID;  // account this trustline belongs to TrustLineAsset asset; // type of asset (with issuer) int64 balance;        // how much of this asset the user has. // Asset defines the unit for this;\n\nint64 limit;  // balance cannot be above this uint32 flags; // see TrustLineFlags\n\n// reserved for future use union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ext; }; ```",
   "type": "object",
   "required": [
     "account_id",
@@ -42,7 +42,7 @@
       "type": "string"
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -58,7 +58,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -80,7 +80,7 @@
       "type": "string"
     },
     "Liabilities": {
-      "description": "Liabilities is an XDR Struct defines as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
+      "description": "Liabilities is an XDR Struct defined as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
       "type": "object",
       "required": [
         "buying",
@@ -99,7 +99,7 @@
       "type": "string"
     },
     "TrustLineAsset": {
-      "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
+      "description": "TrustLineAsset is an XDR Union defined as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -143,7 +143,7 @@
       ]
     },
     "TrustLineEntryExt": {
-      "description": "TrustLineEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ```",
+      "description": "TrustLineEntryExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -165,7 +165,7 @@
       ]
     },
     "TrustLineEntryExtensionV2": {
-      "description": "TrustLineEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct TrustLineEntryExtensionV2 { int32 liquidityPoolUseCount;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+      "description": "TrustLineEntryExtensionV2 is an XDR Struct defined as:\n\n```text struct TrustLineEntryExtensionV2 { int32 liquidityPoolUseCount;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -182,14 +182,14 @@
       }
     },
     "TrustLineEntryExtensionV2Ext": {
-      "description": "TrustLineEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "description": "TrustLineEntryExtensionV2Ext is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; } ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "TrustLineEntryV1": {
-      "description": "TrustLineEntryV1 is an XDR NestedStruct defines as:\n\n```text struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } ```",
+      "description": "TrustLineEntryV1 is an XDR NestedStruct defined as:\n\n```text struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } ```",
       "type": "object",
       "required": [
         "ext",
@@ -205,7 +205,7 @@
       }
     },
     "TrustLineEntryV1Ext": {
-      "description": "TrustLineEntryV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ```",
+      "description": "TrustLineEntryV1Ext is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ```",
       "oneOf": [
         {
           "type": "string",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScMetaV0",
-  "description": "ScMetaV0 is an XDR Struct defines as:\n\n```text struct SCMetaV0 { string key<>; string val<>; }; ```",
+  "description": "ScMetaV0 is an XDR Struct defined as:\n\n```text struct SCMetaV0 { string key<>; string val<>; }; ```",
   "type": "object",
   "required": [
     "key",

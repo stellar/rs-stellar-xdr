@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ManageDataResultCode",
-  "description": "ManageDataResultCode is an XDR Enum defines as:\n\n```text enum ManageDataResultCode { // codes considered as \"success\" for the operation MANAGE_DATA_SUCCESS = 0, // codes considered as \"failure\" for the operation MANAGE_DATA_NOT_SUPPORTED_YET = -1, // The network hasn't moved to this protocol change yet MANAGE_DATA_NAME_NOT_FOUND = -2, // Trying to remove a Data Entry that isn't there MANAGE_DATA_LOW_RESERVE = -3, // not enough funds to create a new Data Entry MANAGE_DATA_INVALID_NAME = -4 // Name not a valid string }; ```",
+  "description": "ManageDataResultCode is an XDR Enum defined as:\n\n```text enum ManageDataResultCode { // codes considered as \"success\" for the operation MANAGE_DATA_SUCCESS = 0, // codes considered as \"failure\" for the operation MANAGE_DATA_NOT_SUPPORTED_YET = -1, // The network hasn't moved to this protocol change yet MANAGE_DATA_NAME_NOT_FOUND = -2, // Trying to remove a Data Entry that isn't there MANAGE_DATA_LOW_RESERVE = -3, // not enough funds to create a new Data Entry MANAGE_DATA_INVALID_NAME = -4 // Name not a valid string }; ```",
   "type": "string",
   "enum": [
     "success",

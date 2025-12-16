@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "BucketMetadata",
-  "description": "BucketMetadata is an XDR Struct defines as:\n\n```text struct BucketMetadata { // Indicates the protocol version used to create / merge this bucket. uint32 ledgerVersion;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ext; }; ```",
+  "description": "BucketMetadata is an XDR Struct defined as:\n\n```text struct BucketMetadata { // Indicates the protocol version used to create / merge this bucket. uint32 ledgerVersion;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ext; }; ```",
   "type": "object",
   "required": [
     "ext",
@@ -23,7 +23,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "BucketListType": {
-      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
+      "description": "BucketListType is an XDR Enum defined as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
       "type": "string",
       "enum": [
         "live",
@@ -31,7 +31,7 @@
       ]
     },
     "BucketMetadataExt": {
-      "description": "BucketMetadataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ```",
+      "description": "BucketMetadataExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ```",
       "oneOf": [
         {
           "type": "string",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "DecoratedSignature",
-  "description": "DecoratedSignature is an XDR Struct defines as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
+  "description": "DecoratedSignature is an XDR Struct defined as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
   "type": "object",
   "required": [
     "hint",
@@ -25,7 +25,7 @@
   "unevaluatedProperties": false,
   "definitions": {
     "Signature": {
-      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "description": "Signature is an XDR Typedef defined as:\n\n```text typedef opaque Signature<64>; ```",
       "type": "string",
       "maxLength": 128,
       "contentEncoding": "hex",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ConfigSettingContractEventsV0",
-  "description": "ConfigSettingContractEventsV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractEventsV0 { // Maximum size of events that a contract call can emit. uint32 txMaxContractEventsSizeBytes; // Fee for generating 1KB of contract events. int64 feeContractEvents1KB; }; ```",
+  "description": "ConfigSettingContractEventsV0 is an XDR Struct defined as:\n\n```text struct ConfigSettingContractEventsV0 { // Maximum size of events that a contract call can emit. uint32 txMaxContractEventsSizeBytes; // Fee for generating 1KB of contract events. int64 feeContractEvents1KB; }; ```",
   "type": "object",
   "required": [
     "fee_contract_events1_kb",

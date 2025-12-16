@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "EncryptedBody",
-  "description": "EncryptedBody is an XDR Typedef defines as:\n\n```text typedef opaque EncryptedBody<64000>; ```",
+  "description": "EncryptedBody is an XDR Typedef defined as:\n\n```text typedef opaque EncryptedBody<64000>; ```",
   "type": "string",
   "maxLength": 128000,
   "contentEncoding": "hex",

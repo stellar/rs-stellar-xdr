@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TransactionResultPair",
-  "description": "TransactionResultPair is an XDR Struct defines as:\n\n```text struct TransactionResultPair { Hash transactionHash; TransactionResult result; // result for the transaction }; ```",
+  "description": "TransactionResultPair is an XDR Struct defined as:\n\n```text struct TransactionResultPair { Hash transactionHash; TransactionResult result; // result for the transaction }; ```",
   "type": "object",
   "required": [
     "result",
@@ -28,7 +28,7 @@
       "type": "string"
     },
     "AccountMergeResult": {
-      "description": "AccountMergeResult is an XDR Union defines as:\n\n```text union AccountMergeResult switch (AccountMergeResultCode code) { case ACCOUNT_MERGE_SUCCESS: int64 sourceAccountBalance; // how much got transferred from source account case ACCOUNT_MERGE_MALFORMED: case ACCOUNT_MERGE_NO_ACCOUNT: case ACCOUNT_MERGE_IMMUTABLE_SET: case ACCOUNT_MERGE_HAS_SUB_ENTRIES: case ACCOUNT_MERGE_SEQNUM_TOO_FAR: case ACCOUNT_MERGE_DEST_FULL: case ACCOUNT_MERGE_IS_SPONSOR: void; }; ```",
+      "description": "AccountMergeResult is an XDR Union defined as:\n\n```text union AccountMergeResult switch (AccountMergeResultCode code) { case ACCOUNT_MERGE_SUCCESS: int64 sourceAccountBalance; // how much got transferred from source account case ACCOUNT_MERGE_MALFORMED: case ACCOUNT_MERGE_NO_ACCOUNT: case ACCOUNT_MERGE_IMMUTABLE_SET: case ACCOUNT_MERGE_HAS_SUB_ENTRIES: case ACCOUNT_MERGE_SEQNUM_TOO_FAR: case ACCOUNT_MERGE_DEST_FULL: case ACCOUNT_MERGE_IS_SPONSOR: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -56,7 +56,7 @@
       ]
     },
     "AllowTrustResult": {
-      "description": "AllowTrustResult is an XDR Union defines as:\n\n```text union AllowTrustResult switch (AllowTrustResultCode code) { case ALLOW_TRUST_SUCCESS: void; case ALLOW_TRUST_MALFORMED: case ALLOW_TRUST_NO_TRUST_LINE: case ALLOW_TRUST_TRUST_NOT_REQUIRED: case ALLOW_TRUST_CANT_REVOKE: case ALLOW_TRUST_SELF_NOT_ALLOWED: case ALLOW_TRUST_LOW_RESERVE: void; }; ```",
+      "description": "AllowTrustResult is an XDR Union defined as:\n\n```text union AllowTrustResult switch (AllowTrustResultCode code) { case ALLOW_TRUST_SUCCESS: void; case ALLOW_TRUST_MALFORMED: case ALLOW_TRUST_NO_TRUST_LINE: case ALLOW_TRUST_TRUST_NOT_REQUIRED: case ALLOW_TRUST_CANT_REVOKE: case ALLOW_TRUST_SELF_NOT_ALLOWED: case ALLOW_TRUST_LOW_RESERVE: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -69,7 +69,7 @@
       ]
     },
     "AlphaNum12": {
-      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum12 is an XDR Struct defined as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -85,7 +85,7 @@
       }
     },
     "AlphaNum4": {
-      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "description": "AlphaNum4 is an XDR Struct defined as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
       "type": "object",
       "required": [
         "asset_code",
@@ -101,7 +101,7 @@
       }
     },
     "Asset": {
-      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "description": "Asset is an XDR Union defined as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -140,7 +140,7 @@
       "type": "string"
     },
     "BeginSponsoringFutureReservesResult": {
-      "description": "BeginSponsoringFutureReservesResult is an XDR Union defines as:\n\n```text union BeginSponsoringFutureReservesResult switch ( BeginSponsoringFutureReservesResultCode code) { case BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case BEGIN_SPONSORING_FUTURE_RESERVES_MALFORMED: case BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED: case BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE: void; }; ```",
+      "description": "BeginSponsoringFutureReservesResult is an XDR Union defined as:\n\n```text union BeginSponsoringFutureReservesResult switch ( BeginSponsoringFutureReservesResultCode code) { case BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case BEGIN_SPONSORING_FUTURE_RESERVES_MALFORMED: case BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED: case BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -150,7 +150,7 @@
       ]
     },
     "BumpSequenceResult": {
-      "description": "BumpSequenceResult is an XDR Union defines as:\n\n```text union BumpSequenceResult switch (BumpSequenceResultCode code) { case BUMP_SEQUENCE_SUCCESS: void; case BUMP_SEQUENCE_BAD_SEQ: void; }; ```",
+      "description": "BumpSequenceResult is an XDR Union defined as:\n\n```text union BumpSequenceResult switch (BumpSequenceResultCode code) { case BUMP_SEQUENCE_SUCCESS: void; case BUMP_SEQUENCE_BAD_SEQ: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -158,7 +158,7 @@
       ]
     },
     "ChangeTrustResult": {
-      "description": "ChangeTrustResult is an XDR Union defines as:\n\n```text union ChangeTrustResult switch (ChangeTrustResultCode code) { case CHANGE_TRUST_SUCCESS: void; case CHANGE_TRUST_MALFORMED: case CHANGE_TRUST_NO_ISSUER: case CHANGE_TRUST_INVALID_LIMIT: case CHANGE_TRUST_LOW_RESERVE: case CHANGE_TRUST_SELF_NOT_ALLOWED: case CHANGE_TRUST_TRUST_LINE_MISSING: case CHANGE_TRUST_CANNOT_DELETE: case CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES: void; }; ```",
+      "description": "ChangeTrustResult is an XDR Union defined as:\n\n```text union ChangeTrustResult switch (ChangeTrustResultCode code) { case CHANGE_TRUST_SUCCESS: void; case CHANGE_TRUST_MALFORMED: case CHANGE_TRUST_NO_ISSUER: case CHANGE_TRUST_INVALID_LIMIT: case CHANGE_TRUST_LOW_RESERVE: case CHANGE_TRUST_SELF_NOT_ALLOWED: case CHANGE_TRUST_TRUST_LINE_MISSING: case CHANGE_TRUST_CANNOT_DELETE: case CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -173,7 +173,7 @@
       ]
     },
     "ClaimAtom": {
-      "description": "ClaimAtom is an XDR Union defines as:\n\n```text union ClaimAtom switch (ClaimAtomType type) { case CLAIM_ATOM_TYPE_V0: ClaimOfferAtomV0 v0; case CLAIM_ATOM_TYPE_ORDER_BOOK: ClaimOfferAtom orderBook; case CLAIM_ATOM_TYPE_LIQUIDITY_POOL: ClaimLiquidityAtom liquidityPool; }; ```",
+      "description": "ClaimAtom is an XDR Union defined as:\n\n```text union ClaimAtom switch (ClaimAtomType type) { case CLAIM_ATOM_TYPE_V0: ClaimOfferAtomV0 v0; case CLAIM_ATOM_TYPE_ORDER_BOOK: ClaimOfferAtom orderBook; case CLAIM_ATOM_TYPE_LIQUIDITY_POOL: ClaimLiquidityAtom liquidityPool; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -211,7 +211,7 @@
       ]
     },
     "ClaimClaimableBalanceResult": {
-      "description": "ClaimClaimableBalanceResult is an XDR Union defines as:\n\n```text union ClaimClaimableBalanceResult switch (ClaimClaimableBalanceResultCode code) { case CLAIM_CLAIMABLE_BALANCE_SUCCESS: void; case CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST: case CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM: case CLAIM_CLAIMABLE_BALANCE_LINE_FULL: case CLAIM_CLAIMABLE_BALANCE_NO_TRUST: case CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED: void; }; ```",
+      "description": "ClaimClaimableBalanceResult is an XDR Union defined as:\n\n```text union ClaimClaimableBalanceResult switch (ClaimClaimableBalanceResultCode code) { case CLAIM_CLAIMABLE_BALANCE_SUCCESS: void; case CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST: case CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM: case CLAIM_CLAIMABLE_BALANCE_LINE_FULL: case CLAIM_CLAIMABLE_BALANCE_NO_TRUST: case CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -223,7 +223,7 @@
       ]
     },
     "ClaimLiquidityAtom": {
-      "description": "ClaimLiquidityAtom is an XDR Struct defines as:\n\n```text struct ClaimLiquidityAtom { PoolID liquidityPoolID;\n\n// amount and asset taken from the pool Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the pool Asset assetBought; int64 amountBought; }; ```",
+      "description": "ClaimLiquidityAtom is an XDR Struct defined as:\n\n```text struct ClaimLiquidityAtom { PoolID liquidityPoolID;\n\n// amount and asset taken from the pool Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the pool Asset assetBought; int64 amountBought; }; ```",
       "type": "object",
       "required": [
         "amount_bought",
@@ -251,7 +251,7 @@
       }
     },
     "ClaimOfferAtom": {
-      "description": "ClaimOfferAtom is an XDR Struct defines as:\n\n```text struct ClaimOfferAtom { // emitted to identify the offer AccountID sellerID; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
+      "description": "ClaimOfferAtom is an XDR Struct defined as:\n\n```text struct ClaimOfferAtom { // emitted to identify the offer AccountID sellerID; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
       "type": "object",
       "required": [
         "amount_bought",
@@ -283,7 +283,7 @@
       }
     },
     "ClaimOfferAtomV0": {
-      "description": "ClaimOfferAtomV0 is an XDR Struct defines as:\n\n```text struct ClaimOfferAtomV0 { // emitted to identify the offer uint256 sellerEd25519; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
+      "description": "ClaimOfferAtomV0 is an XDR Struct defined as:\n\n```text struct ClaimOfferAtomV0 { // emitted to identify the offer uint256 sellerEd25519; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
       "type": "object",
       "required": [
         "amount_bought",
@@ -322,7 +322,7 @@
       "type": "string"
     },
     "ClawbackClaimableBalanceResult": {
-      "description": "ClawbackClaimableBalanceResult is an XDR Union defines as:\n\n```text union ClawbackClaimableBalanceResult switch ( ClawbackClaimableBalanceResultCode code) { case CLAWBACK_CLAIMABLE_BALANCE_SUCCESS: void; case CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST: case CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER: case CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED: void; }; ```",
+      "description": "ClawbackClaimableBalanceResult is an XDR Union defined as:\n\n```text union ClawbackClaimableBalanceResult switch ( ClawbackClaimableBalanceResultCode code) { case CLAWBACK_CLAIMABLE_BALANCE_SUCCESS: void; case CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST: case CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER: case CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -332,7 +332,7 @@
       ]
     },
     "ClawbackResult": {
-      "description": "ClawbackResult is an XDR Union defines as:\n\n```text union ClawbackResult switch (ClawbackResultCode code) { case CLAWBACK_SUCCESS: void; case CLAWBACK_MALFORMED: case CLAWBACK_NOT_CLAWBACK_ENABLED: case CLAWBACK_NO_TRUST: case CLAWBACK_UNDERFUNDED: void; }; ```",
+      "description": "ClawbackResult is an XDR Union defined as:\n\n```text union ClawbackResult switch (ClawbackResultCode code) { case CLAWBACK_SUCCESS: void; case CLAWBACK_MALFORMED: case CLAWBACK_NOT_CLAWBACK_ENABLED: case CLAWBACK_NO_TRUST: case CLAWBACK_UNDERFUNDED: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -343,7 +343,7 @@
       ]
     },
     "CreateAccountResult": {
-      "description": "CreateAccountResult is an XDR Union defines as:\n\n```text union CreateAccountResult switch (CreateAccountResultCode code) { case CREATE_ACCOUNT_SUCCESS: void; case CREATE_ACCOUNT_MALFORMED: case CREATE_ACCOUNT_UNDERFUNDED: case CREATE_ACCOUNT_LOW_RESERVE: case CREATE_ACCOUNT_ALREADY_EXIST: void; }; ```",
+      "description": "CreateAccountResult is an XDR Union defined as:\n\n```text union CreateAccountResult switch (CreateAccountResultCode code) { case CREATE_ACCOUNT_SUCCESS: void; case CREATE_ACCOUNT_MALFORMED: case CREATE_ACCOUNT_UNDERFUNDED: case CREATE_ACCOUNT_LOW_RESERVE: case CREATE_ACCOUNT_ALREADY_EXIST: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -354,7 +354,7 @@
       ]
     },
     "CreateClaimableBalanceResult": {
-      "description": "CreateClaimableBalanceResult is an XDR Union defines as:\n\n```text union CreateClaimableBalanceResult switch ( CreateClaimableBalanceResultCode code) { case CREATE_CLAIMABLE_BALANCE_SUCCESS: ClaimableBalanceID balanceID; case CREATE_CLAIMABLE_BALANCE_MALFORMED: case CREATE_CLAIMABLE_BALANCE_LOW_RESERVE: case CREATE_CLAIMABLE_BALANCE_NO_TRUST: case CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED: case CREATE_CLAIMABLE_BALANCE_UNDERFUNDED: void; }; ```",
+      "description": "CreateClaimableBalanceResult is an XDR Union defined as:\n\n```text union CreateClaimableBalanceResult switch ( CreateClaimableBalanceResultCode code) { case CREATE_CLAIMABLE_BALANCE_SUCCESS: ClaimableBalanceID balanceID; case CREATE_CLAIMABLE_BALANCE_MALFORMED: case CREATE_CLAIMABLE_BALANCE_LOW_RESERVE: case CREATE_CLAIMABLE_BALANCE_NO_TRUST: case CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED: case CREATE_CLAIMABLE_BALANCE_UNDERFUNDED: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -380,7 +380,7 @@
       ]
     },
     "EndSponsoringFutureReservesResult": {
-      "description": "EndSponsoringFutureReservesResult is an XDR Union defines as:\n\n```text union EndSponsoringFutureReservesResult switch ( EndSponsoringFutureReservesResultCode code) { case END_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED: void; }; ```",
+      "description": "EndSponsoringFutureReservesResult is an XDR Union defined as:\n\n```text union EndSponsoringFutureReservesResult switch ( EndSponsoringFutureReservesResultCode code) { case END_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -388,7 +388,7 @@
       ]
     },
     "ExtendFootprintTtlResult": {
-      "description": "ExtendFootprintTtlResult is an XDR Union defines as:\n\n```text union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code) { case EXTEND_FOOTPRINT_TTL_SUCCESS: void; case EXTEND_FOOTPRINT_TTL_MALFORMED: case EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED: case EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
+      "description": "ExtendFootprintTtlResult is an XDR Union defined as:\n\n```text union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code) { case EXTEND_FOOTPRINT_TTL_SUCCESS: void; case EXTEND_FOOTPRINT_TTL_MALFORMED: case EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED: case EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -398,7 +398,7 @@
       ]
     },
     "InflationPayout": {
-      "description": "InflationPayout is an XDR Struct defines as:\n\n```text struct InflationPayout // or use PaymentResultAtom to limit types? { AccountID destination; int64 amount; }; ```",
+      "description": "InflationPayout is an XDR Struct defined as:\n\n```text struct InflationPayout // or use PaymentResultAtom to limit types? { AccountID destination; int64 amount; }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -414,7 +414,7 @@
       }
     },
     "InflationResult": {
-      "description": "InflationResult is an XDR Union defines as:\n\n```text union InflationResult switch (InflationResultCode code) { case INFLATION_SUCCESS: InflationPayout payouts<>; case INFLATION_NOT_TIME: void; }; ```",
+      "description": "InflationResult is an XDR Union defined as:\n\n```text union InflationResult switch (InflationResultCode code) { case INFLATION_SUCCESS: InflationPayout payouts<>; case INFLATION_NOT_TIME: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -440,7 +440,7 @@
       ]
     },
     "InnerTransactionResult": {
-      "description": "InnerTransactionResult is an XDR Struct defines as:\n\n```text struct InnerTransactionResult { // Always 0. Here for binary compatibility. int64 feeCharged;\n\nunion switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "InnerTransactionResult is an XDR Struct defined as:\n\n```text struct InnerTransactionResult { // Always 0. Here for binary compatibility. int64 feeCharged;\n\nunion switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -460,14 +460,14 @@
       }
     },
     "InnerTransactionResultExt": {
-      "description": "InnerTransactionResultExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "description": "InnerTransactionResultExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; } ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "InnerTransactionResultPair": {
-      "description": "InnerTransactionResultPair is an XDR Struct defines as:\n\n```text struct InnerTransactionResultPair { Hash transactionHash;          // hash of the inner transaction InnerTransactionResult result; // result for the inner transaction }; ```",
+      "description": "InnerTransactionResultPair is an XDR Struct defined as:\n\n```text struct InnerTransactionResultPair { Hash transactionHash;          // hash of the inner transaction InnerTransactionResult result; // result for the inner transaction }; ```",
       "type": "object",
       "required": [
         "result",
@@ -487,7 +487,7 @@
       }
     },
     "InnerTransactionResultResult": {
-      "description": "InnerTransactionResultResult is an XDR NestedUnion defines as:\n\n```text union switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } ```",
+      "description": "InnerTransactionResultResult is an XDR NestedUnion defined as:\n\n```text union switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -542,7 +542,7 @@
       ]
     },
     "InvokeHostFunctionResult": {
-      "description": "InvokeHostFunctionResult is an XDR Union defines as:\n\n```text union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code) { case INVOKE_HOST_FUNCTION_SUCCESS: Hash success; // sha256(InvokeHostFunctionSuccessPreImage) case INVOKE_HOST_FUNCTION_MALFORMED: case INVOKE_HOST_FUNCTION_TRAPPED: case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED: case INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED: case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
+      "description": "InvokeHostFunctionResult is an XDR Union defined as:\n\n```text union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code) { case INVOKE_HOST_FUNCTION_SUCCESS: Hash success; // sha256(InvokeHostFunctionSuccessPreImage) case INVOKE_HOST_FUNCTION_MALFORMED: case INVOKE_HOST_FUNCTION_TRAPPED: case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED: case INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED: case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -572,7 +572,7 @@
       ]
     },
     "LiquidityPoolDepositResult": {
-      "description": "LiquidityPoolDepositResult is an XDR Union defines as:\n\n```text union LiquidityPoolDepositResult switch (LiquidityPoolDepositResultCode code) { case LIQUIDITY_POOL_DEPOSIT_SUCCESS: void; case LIQUIDITY_POOL_DEPOSIT_MALFORMED: case LIQUIDITY_POOL_DEPOSIT_NO_TRUST: case LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED: case LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED: case LIQUIDITY_POOL_DEPOSIT_LINE_FULL: case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE: case LIQUIDITY_POOL_DEPOSIT_POOL_FULL: void; }; ```",
+      "description": "LiquidityPoolDepositResult is an XDR Union defined as:\n\n```text union LiquidityPoolDepositResult switch (LiquidityPoolDepositResultCode code) { case LIQUIDITY_POOL_DEPOSIT_SUCCESS: void; case LIQUIDITY_POOL_DEPOSIT_MALFORMED: case LIQUIDITY_POOL_DEPOSIT_NO_TRUST: case LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED: case LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED: case LIQUIDITY_POOL_DEPOSIT_LINE_FULL: case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE: case LIQUIDITY_POOL_DEPOSIT_POOL_FULL: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -586,7 +586,7 @@
       ]
     },
     "LiquidityPoolWithdrawResult": {
-      "description": "LiquidityPoolWithdrawResult is an XDR Union defines as:\n\n```text union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code) { case LIQUIDITY_POOL_WITHDRAW_SUCCESS: void; case LIQUIDITY_POOL_WITHDRAW_MALFORMED: case LIQUIDITY_POOL_WITHDRAW_NO_TRUST: case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED: case LIQUIDITY_POOL_WITHDRAW_LINE_FULL: case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM: void; }; ```",
+      "description": "LiquidityPoolWithdrawResult is an XDR Union defined as:\n\n```text union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code) { case LIQUIDITY_POOL_WITHDRAW_SUCCESS: void; case LIQUIDITY_POOL_WITHDRAW_MALFORMED: case LIQUIDITY_POOL_WITHDRAW_NO_TRUST: case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED: case LIQUIDITY_POOL_WITHDRAW_LINE_FULL: case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -598,7 +598,7 @@
       ]
     },
     "ManageBuyOfferResult": {
-      "description": "ManageBuyOfferResult is an XDR Union defines as:\n\n```text union ManageBuyOfferResult switch (ManageBuyOfferResultCode code) { case MANAGE_BUY_OFFER_SUCCESS: ManageOfferSuccessResult success; case MANAGE_BUY_OFFER_MALFORMED: case MANAGE_BUY_OFFER_SELL_NO_TRUST: case MANAGE_BUY_OFFER_BUY_NO_TRUST: case MANAGE_BUY_OFFER_SELL_NOT_AUTHORIZED: case MANAGE_BUY_OFFER_BUY_NOT_AUTHORIZED: case MANAGE_BUY_OFFER_LINE_FULL: case MANAGE_BUY_OFFER_UNDERFUNDED: case MANAGE_BUY_OFFER_CROSS_SELF: case MANAGE_BUY_OFFER_SELL_NO_ISSUER: case MANAGE_BUY_OFFER_BUY_NO_ISSUER: case MANAGE_BUY_OFFER_NOT_FOUND: case MANAGE_BUY_OFFER_LOW_RESERVE: void; }; ```",
+      "description": "ManageBuyOfferResult is an XDR Union defined as:\n\n```text union ManageBuyOfferResult switch (ManageBuyOfferResultCode code) { case MANAGE_BUY_OFFER_SUCCESS: ManageOfferSuccessResult success; case MANAGE_BUY_OFFER_MALFORMED: case MANAGE_BUY_OFFER_SELL_NO_TRUST: case MANAGE_BUY_OFFER_BUY_NO_TRUST: case MANAGE_BUY_OFFER_SELL_NOT_AUTHORIZED: case MANAGE_BUY_OFFER_BUY_NOT_AUTHORIZED: case MANAGE_BUY_OFFER_LINE_FULL: case MANAGE_BUY_OFFER_UNDERFUNDED: case MANAGE_BUY_OFFER_CROSS_SELF: case MANAGE_BUY_OFFER_SELL_NO_ISSUER: case MANAGE_BUY_OFFER_BUY_NO_ISSUER: case MANAGE_BUY_OFFER_NOT_FOUND: case MANAGE_BUY_OFFER_LOW_RESERVE: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -631,7 +631,7 @@
       ]
     },
     "ManageDataResult": {
-      "description": "ManageDataResult is an XDR Union defines as:\n\n```text union ManageDataResult switch (ManageDataResultCode code) { case MANAGE_DATA_SUCCESS: void; case MANAGE_DATA_NOT_SUPPORTED_YET: case MANAGE_DATA_NAME_NOT_FOUND: case MANAGE_DATA_LOW_RESERVE: case MANAGE_DATA_INVALID_NAME: void; }; ```",
+      "description": "ManageDataResult is an XDR Union defined as:\n\n```text union ManageDataResult switch (ManageDataResultCode code) { case MANAGE_DATA_SUCCESS: void; case MANAGE_DATA_NOT_SUPPORTED_YET: case MANAGE_DATA_NAME_NOT_FOUND: case MANAGE_DATA_LOW_RESERVE: case MANAGE_DATA_INVALID_NAME: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -642,7 +642,7 @@
       ]
     },
     "ManageOfferSuccessResult": {
-      "description": "ManageOfferSuccessResult is an XDR Struct defines as:\n\n```text struct ManageOfferSuccessResult { // offers that got claimed while creating this offer ClaimAtom offersClaimed<>;\n\nunion switch (ManageOfferEffect effect) { case MANAGE_OFFER_CREATED: case MANAGE_OFFER_UPDATED: OfferEntry offer; case MANAGE_OFFER_DELETED: void; } offer; }; ```",
+      "description": "ManageOfferSuccessResult is an XDR Struct defined as:\n\n```text struct ManageOfferSuccessResult { // offers that got claimed while creating this offer ClaimAtom offersClaimed<>;\n\nunion switch (ManageOfferEffect effect) { case MANAGE_OFFER_CREATED: case MANAGE_OFFER_UPDATED: OfferEntry offer; case MANAGE_OFFER_DELETED: void; } offer; }; ```",
       "type": "object",
       "required": [
         "offer",
@@ -662,7 +662,7 @@
       }
     },
     "ManageOfferSuccessResultOffer": {
-      "description": "ManageOfferSuccessResultOffer is an XDR NestedUnion defines as:\n\n```text union switch (ManageOfferEffect effect) { case MANAGE_OFFER_CREATED: case MANAGE_OFFER_UPDATED: OfferEntry offer; case MANAGE_OFFER_DELETED: void; } ```",
+      "description": "ManageOfferSuccessResultOffer is an XDR NestedUnion defined as:\n\n```text union switch (ManageOfferEffect effect) { case MANAGE_OFFER_CREATED: case MANAGE_OFFER_UPDATED: OfferEntry offer; case MANAGE_OFFER_DELETED: void; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -695,7 +695,7 @@
       ]
     },
     "ManageSellOfferResult": {
-      "description": "ManageSellOfferResult is an XDR Union defines as:\n\n```text union ManageSellOfferResult switch (ManageSellOfferResultCode code) { case MANAGE_SELL_OFFER_SUCCESS: ManageOfferSuccessResult success; case MANAGE_SELL_OFFER_MALFORMED: case MANAGE_SELL_OFFER_SELL_NO_TRUST: case MANAGE_SELL_OFFER_BUY_NO_TRUST: case MANAGE_SELL_OFFER_SELL_NOT_AUTHORIZED: case MANAGE_SELL_OFFER_BUY_NOT_AUTHORIZED: case MANAGE_SELL_OFFER_LINE_FULL: case MANAGE_SELL_OFFER_UNDERFUNDED: case MANAGE_SELL_OFFER_CROSS_SELF: case MANAGE_SELL_OFFER_SELL_NO_ISSUER: case MANAGE_SELL_OFFER_BUY_NO_ISSUER: case MANAGE_SELL_OFFER_NOT_FOUND: case MANAGE_SELL_OFFER_LOW_RESERVE: void; }; ```",
+      "description": "ManageSellOfferResult is an XDR Union defined as:\n\n```text union ManageSellOfferResult switch (ManageSellOfferResultCode code) { case MANAGE_SELL_OFFER_SUCCESS: ManageOfferSuccessResult success; case MANAGE_SELL_OFFER_MALFORMED: case MANAGE_SELL_OFFER_SELL_NO_TRUST: case MANAGE_SELL_OFFER_BUY_NO_TRUST: case MANAGE_SELL_OFFER_SELL_NOT_AUTHORIZED: case MANAGE_SELL_OFFER_BUY_NOT_AUTHORIZED: case MANAGE_SELL_OFFER_LINE_FULL: case MANAGE_SELL_OFFER_UNDERFUNDED: case MANAGE_SELL_OFFER_CROSS_SELF: case MANAGE_SELL_OFFER_SELL_NO_ISSUER: case MANAGE_SELL_OFFER_BUY_NO_ISSUER: case MANAGE_SELL_OFFER_NOT_FOUND: case MANAGE_SELL_OFFER_LOW_RESERVE: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -728,7 +728,7 @@
       ]
     },
     "OfferEntry": {
-      "description": "OfferEntry is an XDR Struct defines as:\n\n```text struct OfferEntry { AccountID sellerID; int64 offerID; Asset selling; // A Asset buying;  // B int64 amount;  // amount of A\n\n/* price for this offer: price of A in terms of B price=AmountB/AmountA=priceNumerator/priceDenominator price is after fees */ Price price; uint32 flags; // see OfferEntryFlags\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "OfferEntry is an XDR Struct defined as:\n\n```text struct OfferEntry { AccountID sellerID; int64 offerID; Asset selling; // A Asset buying;  // B int64 amount;  // amount of A\n\n/* price for this offer: price of A in terms of B price=AmountB/AmountA=priceNumerator/priceDenominator price is after fees */ Price price; uint32 flags; // see OfferEntryFlags\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -770,14 +770,14 @@
       }
     },
     "OfferEntryExt": {
-      "description": "OfferEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "description": "OfferEntryExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; } ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "OperationResult": {
-      "description": "OperationResult is an XDR Union defines as:\n\n```text union OperationResult switch (OperationResultCode code) { case opINNER: union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountResult createAccountResult; case PAYMENT: PaymentResult paymentResult; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveResult pathPaymentStrictReceiveResult; case MANAGE_SELL_OFFER: ManageSellOfferResult manageSellOfferResult; case CREATE_PASSIVE_SELL_OFFER: ManageSellOfferResult createPassiveSellOfferResult; case SET_OPTIONS: SetOptionsResult setOptionsResult; case CHANGE_TRUST: ChangeTrustResult changeTrustResult; case ALLOW_TRUST: AllowTrustResult allowTrustResult; case ACCOUNT_MERGE: AccountMergeResult accountMergeResult; case INFLATION: InflationResult inflationResult; case MANAGE_DATA: ManageDataResult manageDataResult; case BUMP_SEQUENCE: BumpSequenceResult bumpSeqResult; case MANAGE_BUY_OFFER: ManageBuyOfferResult manageBuyOfferResult; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendResult pathPaymentStrictSendResult; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceResult createClaimableBalanceResult; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceResult claimClaimableBalanceResult; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult; case END_SPONSORING_FUTURE_RESERVES: EndSponsoringFutureReservesResult endSponsoringFutureReservesResult; case REVOKE_SPONSORSHIP: RevokeSponsorshipResult revokeSponsorshipResult; case CLAWBACK: ClawbackResult clawbackResult; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceResult clawbackClaimableBalanceResult; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsResult setTrustLineFlagsResult; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositResult liquidityPoolDepositResult; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawResult liquidityPoolWithdrawResult; case INVOKE_HOST_FUNCTION: InvokeHostFunctionResult invokeHostFunctionResult; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLResult extendFootprintTTLResult; case RESTORE_FOOTPRINT: RestoreFootprintResult restoreFootprintResult; } tr; case opBAD_AUTH: case opNO_ACCOUNT: case opNOT_SUPPORTED: case opTOO_MANY_SUBENTRIES: case opEXCEEDED_WORK_LIMIT: case opTOO_MANY_SPONSORING: void; }; ```",
+      "description": "OperationResult is an XDR Union defined as:\n\n```text union OperationResult switch (OperationResultCode code) { case opINNER: union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountResult createAccountResult; case PAYMENT: PaymentResult paymentResult; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveResult pathPaymentStrictReceiveResult; case MANAGE_SELL_OFFER: ManageSellOfferResult manageSellOfferResult; case CREATE_PASSIVE_SELL_OFFER: ManageSellOfferResult createPassiveSellOfferResult; case SET_OPTIONS: SetOptionsResult setOptionsResult; case CHANGE_TRUST: ChangeTrustResult changeTrustResult; case ALLOW_TRUST: AllowTrustResult allowTrustResult; case ACCOUNT_MERGE: AccountMergeResult accountMergeResult; case INFLATION: InflationResult inflationResult; case MANAGE_DATA: ManageDataResult manageDataResult; case BUMP_SEQUENCE: BumpSequenceResult bumpSeqResult; case MANAGE_BUY_OFFER: ManageBuyOfferResult manageBuyOfferResult; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendResult pathPaymentStrictSendResult; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceResult createClaimableBalanceResult; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceResult claimClaimableBalanceResult; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult; case END_SPONSORING_FUTURE_RESERVES: EndSponsoringFutureReservesResult endSponsoringFutureReservesResult; case REVOKE_SPONSORSHIP: RevokeSponsorshipResult revokeSponsorshipResult; case CLAWBACK: ClawbackResult clawbackResult; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceResult clawbackClaimableBalanceResult; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsResult setTrustLineFlagsResult; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositResult liquidityPoolDepositResult; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawResult liquidityPoolWithdrawResult; case INVOKE_HOST_FUNCTION: InvokeHostFunctionResult invokeHostFunctionResult; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLResult extendFootprintTTLResult; case RESTORE_FOOTPRINT: RestoreFootprintResult restoreFootprintResult; } tr; case opBAD_AUTH: case opNO_ACCOUNT: case opNOT_SUPPORTED: case opTOO_MANY_SUBENTRIES: case opEXCEEDED_WORK_LIMIT: case opTOO_MANY_SPONSORING: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -804,7 +804,7 @@
       ]
     },
     "OperationResultTr": {
-      "description": "OperationResultTr is an XDR NestedUnion defines as:\n\n```text union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountResult createAccountResult; case PAYMENT: PaymentResult paymentResult; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveResult pathPaymentStrictReceiveResult; case MANAGE_SELL_OFFER: ManageSellOfferResult manageSellOfferResult; case CREATE_PASSIVE_SELL_OFFER: ManageSellOfferResult createPassiveSellOfferResult; case SET_OPTIONS: SetOptionsResult setOptionsResult; case CHANGE_TRUST: ChangeTrustResult changeTrustResult; case ALLOW_TRUST: AllowTrustResult allowTrustResult; case ACCOUNT_MERGE: AccountMergeResult accountMergeResult; case INFLATION: InflationResult inflationResult; case MANAGE_DATA: ManageDataResult manageDataResult; case BUMP_SEQUENCE: BumpSequenceResult bumpSeqResult; case MANAGE_BUY_OFFER: ManageBuyOfferResult manageBuyOfferResult; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendResult pathPaymentStrictSendResult; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceResult createClaimableBalanceResult; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceResult claimClaimableBalanceResult; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult; case END_SPONSORING_FUTURE_RESERVES: EndSponsoringFutureReservesResult endSponsoringFutureReservesResult; case REVOKE_SPONSORSHIP: RevokeSponsorshipResult revokeSponsorshipResult; case CLAWBACK: ClawbackResult clawbackResult; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceResult clawbackClaimableBalanceResult; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsResult setTrustLineFlagsResult; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositResult liquidityPoolDepositResult; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawResult liquidityPoolWithdrawResult; case INVOKE_HOST_FUNCTION: InvokeHostFunctionResult invokeHostFunctionResult; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLResult extendFootprintTTLResult; case RESTORE_FOOTPRINT: RestoreFootprintResult restoreFootprintResult; } ```",
+      "description": "OperationResultTr is an XDR NestedUnion defined as:\n\n```text union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountResult createAccountResult; case PAYMENT: PaymentResult paymentResult; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveResult pathPaymentStrictReceiveResult; case MANAGE_SELL_OFFER: ManageSellOfferResult manageSellOfferResult; case CREATE_PASSIVE_SELL_OFFER: ManageSellOfferResult createPassiveSellOfferResult; case SET_OPTIONS: SetOptionsResult setOptionsResult; case CHANGE_TRUST: ChangeTrustResult changeTrustResult; case ALLOW_TRUST: AllowTrustResult allowTrustResult; case ACCOUNT_MERGE: AccountMergeResult accountMergeResult; case INFLATION: InflationResult inflationResult; case MANAGE_DATA: ManageDataResult manageDataResult; case BUMP_SEQUENCE: BumpSequenceResult bumpSeqResult; case MANAGE_BUY_OFFER: ManageBuyOfferResult manageBuyOfferResult; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendResult pathPaymentStrictSendResult; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceResult createClaimableBalanceResult; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceResult claimClaimableBalanceResult; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult; case END_SPONSORING_FUTURE_RESERVES: EndSponsoringFutureReservesResult endSponsoringFutureReservesResult; case REVOKE_SPONSORSHIP: RevokeSponsorshipResult revokeSponsorshipResult; case CLAWBACK: ClawbackResult clawbackResult; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceResult clawbackClaimableBalanceResult; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsResult setTrustLineFlagsResult; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositResult liquidityPoolDepositResult; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawResult liquidityPoolWithdrawResult; case INVOKE_HOST_FUNCTION: InvokeHostFunctionResult invokeHostFunctionResult; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLResult extendFootprintTTLResult; case RESTORE_FOOTPRINT: RestoreFootprintResult restoreFootprintResult; } ```",
       "oneOf": [
         {
           "type": "object",
@@ -1106,7 +1106,7 @@
       ]
     },
     "PathPaymentStrictReceiveResult": {
-      "description": "PathPaymentStrictReceiveResult is an XDR Union defines as:\n\n```text union PathPaymentStrictReceiveResult switch ( PathPaymentStrictReceiveResultCode code) { case PATH_PAYMENT_STRICT_RECEIVE_SUCCESS: struct { ClaimAtom offers<>; SimplePaymentResult last; } success; case PATH_PAYMENT_STRICT_RECEIVE_MALFORMED: case PATH_PAYMENT_STRICT_RECEIVE_UNDERFUNDED: case PATH_PAYMENT_STRICT_RECEIVE_SRC_NO_TRUST: case PATH_PAYMENT_STRICT_RECEIVE_SRC_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_RECEIVE_NO_DESTINATION: case PATH_PAYMENT_STRICT_RECEIVE_NO_TRUST: case PATH_PAYMENT_STRICT_RECEIVE_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_RECEIVE_LINE_FULL: void; case PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER: Asset noIssuer; // the asset that caused the error case PATH_PAYMENT_STRICT_RECEIVE_TOO_FEW_OFFERS: case PATH_PAYMENT_STRICT_RECEIVE_OFFER_CROSS_SELF: case PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX: void; }; ```",
+      "description": "PathPaymentStrictReceiveResult is an XDR Union defined as:\n\n```text union PathPaymentStrictReceiveResult switch ( PathPaymentStrictReceiveResultCode code) { case PATH_PAYMENT_STRICT_RECEIVE_SUCCESS: struct { ClaimAtom offers<>; SimplePaymentResult last; } success; case PATH_PAYMENT_STRICT_RECEIVE_MALFORMED: case PATH_PAYMENT_STRICT_RECEIVE_UNDERFUNDED: case PATH_PAYMENT_STRICT_RECEIVE_SRC_NO_TRUST: case PATH_PAYMENT_STRICT_RECEIVE_SRC_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_RECEIVE_NO_DESTINATION: case PATH_PAYMENT_STRICT_RECEIVE_NO_TRUST: case PATH_PAYMENT_STRICT_RECEIVE_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_RECEIVE_LINE_FULL: void; case PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER: Asset noIssuer; // the asset that caused the error case PATH_PAYMENT_STRICT_RECEIVE_TOO_FEW_OFFERS: case PATH_PAYMENT_STRICT_RECEIVE_OFFER_CROSS_SELF: case PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -1149,7 +1149,7 @@
       ]
     },
     "PathPaymentStrictReceiveResultSuccess": {
-      "description": "PathPaymentStrictReceiveResultSuccess is an XDR NestedStruct defines as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
+      "description": "PathPaymentStrictReceiveResultSuccess is an XDR NestedStruct defined as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
       "type": "object",
       "required": [
         "last",
@@ -1169,7 +1169,7 @@
       }
     },
     "PathPaymentStrictSendResult": {
-      "description": "PathPaymentStrictSendResult is an XDR Union defines as:\n\n```text union PathPaymentStrictSendResult switch (PathPaymentStrictSendResultCode code) { case PATH_PAYMENT_STRICT_SEND_SUCCESS: struct { ClaimAtom offers<>; SimplePaymentResult last; } success; case PATH_PAYMENT_STRICT_SEND_MALFORMED: case PATH_PAYMENT_STRICT_SEND_UNDERFUNDED: case PATH_PAYMENT_STRICT_SEND_SRC_NO_TRUST: case PATH_PAYMENT_STRICT_SEND_SRC_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_SEND_NO_DESTINATION: case PATH_PAYMENT_STRICT_SEND_NO_TRUST: case PATH_PAYMENT_STRICT_SEND_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_SEND_LINE_FULL: void; case PATH_PAYMENT_STRICT_SEND_NO_ISSUER: Asset noIssuer; // the asset that caused the error case PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS: case PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF: case PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN: void; }; ```",
+      "description": "PathPaymentStrictSendResult is an XDR Union defined as:\n\n```text union PathPaymentStrictSendResult switch (PathPaymentStrictSendResultCode code) { case PATH_PAYMENT_STRICT_SEND_SUCCESS: struct { ClaimAtom offers<>; SimplePaymentResult last; } success; case PATH_PAYMENT_STRICT_SEND_MALFORMED: case PATH_PAYMENT_STRICT_SEND_UNDERFUNDED: case PATH_PAYMENT_STRICT_SEND_SRC_NO_TRUST: case PATH_PAYMENT_STRICT_SEND_SRC_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_SEND_NO_DESTINATION: case PATH_PAYMENT_STRICT_SEND_NO_TRUST: case PATH_PAYMENT_STRICT_SEND_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_SEND_LINE_FULL: void; case PATH_PAYMENT_STRICT_SEND_NO_ISSUER: Asset noIssuer; // the asset that caused the error case PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS: case PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF: case PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN: void; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -1212,7 +1212,7 @@
       ]
     },
     "PathPaymentStrictSendResultSuccess": {
-      "description": "PathPaymentStrictSendResultSuccess is an XDR NestedStruct defines as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
+      "description": "PathPaymentStrictSendResultSuccess is an XDR NestedStruct defined as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
       "type": "object",
       "required": [
         "last",
@@ -1232,7 +1232,7 @@
       }
     },
     "PaymentResult": {
-      "description": "PaymentResult is an XDR Union defines as:\n\n```text union PaymentResult switch (PaymentResultCode code) { case PAYMENT_SUCCESS: void; case PAYMENT_MALFORMED: case PAYMENT_UNDERFUNDED: case PAYMENT_SRC_NO_TRUST: case PAYMENT_SRC_NOT_AUTHORIZED: case PAYMENT_NO_DESTINATION: case PAYMENT_NO_TRUST: case PAYMENT_NOT_AUTHORIZED: case PAYMENT_LINE_FULL: case PAYMENT_NO_ISSUER: void; }; ```",
+      "description": "PaymentResult is an XDR Union defined as:\n\n```text union PaymentResult switch (PaymentResultCode code) { case PAYMENT_SUCCESS: void; case PAYMENT_MALFORMED: case PAYMENT_UNDERFUNDED: case PAYMENT_SRC_NO_TRUST: case PAYMENT_SRC_NOT_AUTHORIZED: case PAYMENT_NO_DESTINATION: case PAYMENT_NO_TRUST: case PAYMENT_NOT_AUTHORIZED: case PAYMENT_LINE_FULL: case PAYMENT_NO_ISSUER: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -1251,7 +1251,7 @@
       "type": "string"
     },
     "Price": {
-      "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
+      "description": "Price is an XDR Struct defined as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
       "type": "object",
       "required": [
         "d",
@@ -1269,7 +1269,7 @@
       }
     },
     "RestoreFootprintResult": {
-      "description": "RestoreFootprintResult is an XDR Union defines as:\n\n```text union RestoreFootprintResult switch (RestoreFootprintResultCode code) { case RESTORE_FOOTPRINT_SUCCESS: void; case RESTORE_FOOTPRINT_MALFORMED: case RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED: case RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
+      "description": "RestoreFootprintResult is an XDR Union defined as:\n\n```text union RestoreFootprintResult switch (RestoreFootprintResultCode code) { case RESTORE_FOOTPRINT_SUCCESS: void; case RESTORE_FOOTPRINT_MALFORMED: case RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED: case RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -1279,7 +1279,7 @@
       ]
     },
     "RevokeSponsorshipResult": {
-      "description": "RevokeSponsorshipResult is an XDR Union defines as:\n\n```text union RevokeSponsorshipResult switch (RevokeSponsorshipResultCode code) { case REVOKE_SPONSORSHIP_SUCCESS: void; case REVOKE_SPONSORSHIP_DOES_NOT_EXIST: case REVOKE_SPONSORSHIP_NOT_SPONSOR: case REVOKE_SPONSORSHIP_LOW_RESERVE: case REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE: case REVOKE_SPONSORSHIP_MALFORMED: void; }; ```",
+      "description": "RevokeSponsorshipResult is an XDR Union defined as:\n\n```text union RevokeSponsorshipResult switch (RevokeSponsorshipResultCode code) { case REVOKE_SPONSORSHIP_SUCCESS: void; case REVOKE_SPONSORSHIP_DOES_NOT_EXIST: case REVOKE_SPONSORSHIP_NOT_SPONSOR: case REVOKE_SPONSORSHIP_LOW_RESERVE: case REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE: case REVOKE_SPONSORSHIP_MALFORMED: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -1291,7 +1291,7 @@
       ]
     },
     "SetOptionsResult": {
-      "description": "SetOptionsResult is an XDR Union defines as:\n\n```text union SetOptionsResult switch (SetOptionsResultCode code) { case SET_OPTIONS_SUCCESS: void; case SET_OPTIONS_LOW_RESERVE: case SET_OPTIONS_TOO_MANY_SIGNERS: case SET_OPTIONS_BAD_FLAGS: case SET_OPTIONS_INVALID_INFLATION: case SET_OPTIONS_CANT_CHANGE: case SET_OPTIONS_UNKNOWN_FLAG: case SET_OPTIONS_THRESHOLD_OUT_OF_RANGE: case SET_OPTIONS_BAD_SIGNER: case SET_OPTIONS_INVALID_HOME_DOMAIN: case SET_OPTIONS_AUTH_REVOCABLE_REQUIRED: void; }; ```",
+      "description": "SetOptionsResult is an XDR Union defined as:\n\n```text union SetOptionsResult switch (SetOptionsResultCode code) { case SET_OPTIONS_SUCCESS: void; case SET_OPTIONS_LOW_RESERVE: case SET_OPTIONS_TOO_MANY_SIGNERS: case SET_OPTIONS_BAD_FLAGS: case SET_OPTIONS_INVALID_INFLATION: case SET_OPTIONS_CANT_CHANGE: case SET_OPTIONS_UNKNOWN_FLAG: case SET_OPTIONS_THRESHOLD_OUT_OF_RANGE: case SET_OPTIONS_BAD_SIGNER: case SET_OPTIONS_INVALID_HOME_DOMAIN: case SET_OPTIONS_AUTH_REVOCABLE_REQUIRED: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -1308,7 +1308,7 @@
       ]
     },
     "SetTrustLineFlagsResult": {
-      "description": "SetTrustLineFlagsResult is an XDR Union defines as:\n\n```text union SetTrustLineFlagsResult switch (SetTrustLineFlagsResultCode code) { case SET_TRUST_LINE_FLAGS_SUCCESS: void; case SET_TRUST_LINE_FLAGS_MALFORMED: case SET_TRUST_LINE_FLAGS_NO_TRUST_LINE: case SET_TRUST_LINE_FLAGS_CANT_REVOKE: case SET_TRUST_LINE_FLAGS_INVALID_STATE: case SET_TRUST_LINE_FLAGS_LOW_RESERVE: void; }; ```",
+      "description": "SetTrustLineFlagsResult is an XDR Union defined as:\n\n```text union SetTrustLineFlagsResult switch (SetTrustLineFlagsResultCode code) { case SET_TRUST_LINE_FLAGS_SUCCESS: void; case SET_TRUST_LINE_FLAGS_MALFORMED: case SET_TRUST_LINE_FLAGS_NO_TRUST_LINE: case SET_TRUST_LINE_FLAGS_CANT_REVOKE: case SET_TRUST_LINE_FLAGS_INVALID_STATE: case SET_TRUST_LINE_FLAGS_LOW_RESERVE: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -1320,7 +1320,7 @@
       ]
     },
     "SimplePaymentResult": {
-      "description": "SimplePaymentResult is an XDR Struct defines as:\n\n```text struct SimplePaymentResult { AccountID destination; Asset asset; int64 amount; }; ```",
+      "description": "SimplePaymentResult is an XDR Struct defined as:\n\n```text struct SimplePaymentResult { AccountID destination; Asset asset; int64 amount; }; ```",
       "type": "object",
       "required": [
         "amount",
@@ -1340,7 +1340,7 @@
       }
     },
     "TransactionResult": {
-      "description": "TransactionResult is an XDR Struct defines as:\n\n```text struct TransactionResult { int64 feeCharged; // actual fee charged for the transaction\n\nunion switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "TransactionResult is an XDR Struct defined as:\n\n```text struct TransactionResult { int64 feeCharged; // actual fee charged for the transaction\n\nunion switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -1360,14 +1360,14 @@
       }
     },
     "TransactionResultExt": {
-      "description": "TransactionResultExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "description": "TransactionResultExt is an XDR NestedUnion defined as:\n\n```text union switch (int v) { case 0: void; } ```",
       "type": "string",
       "enum": [
         "v0"
       ]
     },
     "TransactionResultResult": {
-      "description": "TransactionResultResult is an XDR NestedUnion defines as:\n\n```text union switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } ```",
+      "description": "TransactionResultResult is an XDR NestedUnion defined as:\n\n```text union switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } ```",
       "oneOf": [
         {
           "type": "string",

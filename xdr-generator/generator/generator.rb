@@ -409,7 +409,7 @@ class Generator < Xdrgen::Generators::Base
     return if defn.is_a?(AST::Definitions::Namespace)
 
     out.puts <<-EOS.strip_heredoc
-      /// #{name defn} is an XDR #{defn.class.name.demodulize} defines as:
+      /// #{name defn} is an XDR #{defn.class.name.demodulize} defined as:
       ///
       /// ```text
     EOS

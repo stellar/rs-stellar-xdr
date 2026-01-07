@@ -1502,6 +1502,7 @@ class Generator < Xdrgen::Generators::Base
     end
 
     out.puts "/// Sparse type for #{name(union)} extracting only specified paths"
+    out.puts "#[allow(non_camel_case_types)]"
     out.puts "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"
     out.puts "pub enum #{sparse_type_name} {"
     out.indent do
@@ -1637,6 +1638,7 @@ class Generator < Xdrgen::Generators::Base
     included_fields = fields_info.select { |f| f[:has_path] }
 
     out.puts "/// Sparse type for #{name(struct)} extracting only specified paths"
+    out.puts "#[allow(non_camel_case_types)]"
     out.puts "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"
     out.puts "pub struct #{sparse_type_name} {"
     out.indent do

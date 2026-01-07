@@ -62867,6 +62867,7 @@ impl SeekableSkipXdr for ClaimableBalanceId {
 // ============================================================================
 
 /// Sparse type for TransactionEnvelope extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TransactionEnvelopeSparse {
     TxV0(TransactionEnvelopeSparse_TxV0),
@@ -62917,6 +62918,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse {
 }
 
 /// Sparse type for TransactionV0Envelope extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEnvelopeSparse_TxV0 {
     pub tx: TransactionEnvelopeSparse_TransactionV0Envelope_Tx,
@@ -62945,6 +62947,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TxV0 {
 }
 
 /// Sparse type for TransactionV0 extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
     pub operations: VecM<Operation, 100>,
@@ -62983,6 +62986,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
 }
 
 /// Sparse type for TransactionV1Envelope extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEnvelopeSparse_Tx {
     pub tx: TransactionEnvelopeSparse_TransactionV1Envelope_Tx,
@@ -63011,6 +63015,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_Tx {
 }
 
 /// Sparse type for Transaction extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
     pub operations: VecM<Operation, 100>,
@@ -63049,6 +63054,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
 }
 
 /// Sparse type for FeeBumpTransactionEnvelope extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEnvelopeSparse_TxFeeBump {
     pub tx: TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx,
@@ -63077,6 +63083,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TxFeeBump {
 }
 
 /// Sparse type for FeeBumpTransaction extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx {}
 
@@ -63113,6 +63120,7 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx
 // ============================================================================
 
 /// Sparse type for LedgerCloseMeta extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LedgerCloseMetaTxHashes {
     V0(LedgerCloseMetaTxHashes_V0),
@@ -63157,6 +63165,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes {
 }
 
 /// Sparse type for LedgerCloseMetaV0 extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_V0 {
     pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>,
@@ -63215,6 +63224,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_V0 {
 }
 
 /// Sparse type for TransactionResultMeta extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing {
     pub result: LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
@@ -63246,6 +63256,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing 
 }
 
 /// Sparse type for TransactionResultPair extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
     pub transaction_hash: Hash,
@@ -63274,6 +63285,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
 }
 
 /// Sparse type for LedgerCloseMetaV1 extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_V1 {
     pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>,
@@ -63340,6 +63352,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_V1 {
 }
 
 /// Sparse type for TransactionResultMeta extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing {
     pub result: LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
@@ -63371,6 +63384,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing 
 }
 
 /// Sparse type for LedgerCloseMetaV2 extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_V2 {
     pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>,
@@ -63435,6 +63449,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_V2 {
 }
 
 /// Sparse type for TransactionResultMetaV1 extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing {
     pub result: LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result,
@@ -63470,6 +63485,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing 
 }
 
 /// Sparse type for TransactionResultPair extracting only specified paths
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result {
     pub transaction_hash: Hash,

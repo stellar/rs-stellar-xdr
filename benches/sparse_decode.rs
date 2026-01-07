@@ -16,7 +16,7 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 use stellar_xdr::curr::{
-    AccountId, CreateAccountOp, LedgerCloseMeta, LedgerCloseMetaTxHashes, Limits, Memo,
+    AccountId, CreateAccountOp, Frame, LedgerCloseMeta, LedgerCloseMetaTxHashes, Limits, Memo,
     MuxedAccount, Operation, OperationBody, Preconditions, PublicKey, ReadXdr, SeekableReadXdr,
     SequenceNumber, Transaction, TransactionEnvelope, TransactionEnvelopeSparse, TransactionExt,
     TransactionV1Envelope, Uint256, WriteXdr,
@@ -121,23 +121,40 @@ fn benchmark_transaction_envelope(c: &mut Criterion) {
 ///
 /// For real data, download from the AWS Public Blockchain Dataset:
 /// https://aws-public-blockchain.s3.us-east-2.amazonaws.com/v1.1/stellar/ledgers/pubnet/
+///
+/// The files are in Frame<LedgerCloseMeta> format with zstd compression.
 fn benchmark_ledger_close_meta(c: &mut Criterion) {
     // Try to load real ledger data, or skip this benchmark if not available
-    let fixture_path = std::path::Path::new("benches/fixtures/ledger_close_meta.xdr");
+    // Look for any .xdr file in the fixtures directory
+    let fixtures_dir = std::path::Path::new("benches/fixtures");
+    let fixture_path = std::fs::read_dir(fixtures_dir).ok().and_then(|entries| {
+        entries
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .find(|p| p.extension().is_some_and(|ext| ext == "xdr"))
+    });
 
-    if !fixture_path.exists() {
-        eprintln!(
-            "Skipping LedgerCloseMeta benchmarks: {} not found",
-            fixture_path.display()
-        );
+    let Some(fixture_path) = fixture_path else {
+        eprintln!("Skipping LedgerCloseMeta benchmarks: no .xdr file found in benches/fixtures/");
         eprintln!("To enable, download a ledger file from AWS Public Blockchain Dataset:");
-        eprintln!("  curl -o ledger.xdr.zstd 'https://aws-public-blockchain.s3.us-east-2.amazonaws.com/v1.1/stellar/ledgers/pubnet/ledger-NNNNNN.xdr.zstd'");
-        eprintln!("  zstd -d ledger.xdr.zstd -o benches/fixtures/ledger_close_meta.xdr");
+        eprintln!("  curl -o ledger.xdr.zst 'https://aws-public-blockchain.s3.us-east-2.amazonaws.com/v1.1/stellar/ledgers/pubnet/FC6331FF--60608000-60671999/FC62697B--60659332.xdr.zst'");
+        eprintln!("  zstd -d ledger.xdr.zst -o benches/fixtures/FC62697B--60659332.xdr");
         return;
-    }
+    };
 
-    let xdr_data = std::fs::read(fixture_path).expect("read fixture");
-    let size = xdr_data.len();
+    eprintln!("Using fixture: {}", fixture_path.display());
+
+    let xdr_data = std::fs::read(&fixture_path).expect("read fixture");
+
+    // The files from AWS are Frame<LedgerCloseMeta>, so decode the frame first
+    // to get the raw LedgerCloseMeta XDR for benchmarking
+    let framed = Frame::<LedgerCloseMeta>::from_xdr(&xdr_data, Limits::none())
+        .expect("decode Frame<LedgerCloseMeta>");
+    let ledger_meta_xdr = framed
+        .0
+        .to_xdr(Limits::none())
+        .expect("encode LedgerCloseMeta");
+    let size = ledger_meta_xdr.len();
 
     let mut group = c.benchmark_group("LedgerCloseMeta");
     group.throughput(Throughput::Bytes(size as u64));
@@ -145,8 +162,8 @@ fn benchmark_ledger_close_meta(c: &mut Criterion) {
     // Benchmark full decode and extract tx hashes
     group.bench_function("full_decode_tx_hashes", |b| {
         b.iter(|| {
-            let meta =
-                LedgerCloseMeta::from_xdr(black_box(&xdr_data), Limits::none()).expect("decode");
+            let meta = LedgerCloseMeta::from_xdr(black_box(&ledger_meta_xdr), Limits::none())
+                .expect("decode");
             let hashes: Vec<_> = match &meta {
                 LedgerCloseMeta::V0(v) => v
                     .tx_processing
@@ -171,8 +188,9 @@ fn benchmark_ledger_close_meta(c: &mut Criterion) {
     // Benchmark sparse decode for tx hashes
     group.bench_function("sparse_decode_tx_hashes", |b| {
         b.iter(|| {
-            let sparse = LedgerCloseMetaTxHashes::from_xdr(black_box(&xdr_data), Limits::none())
-                .expect("decode");
+            let sparse =
+                LedgerCloseMetaTxHashes::from_xdr(black_box(&ledger_meta_xdr), Limits::none())
+                    .expect("decode");
             let hashes: Vec<_> = match &sparse {
                 LedgerCloseMetaTxHashes::V0(v) => v
                     .tx_processing
@@ -197,9 +215,11 @@ fn benchmark_ledger_close_meta(c: &mut Criterion) {
     // Benchmark seekable sparse decode for tx hashes
     group.bench_function("seekable_sparse_decode_tx_hashes", |b| {
         b.iter(|| {
-            let sparse =
-                LedgerCloseMetaTxHashes::from_xdr_seekable(black_box(&xdr_data), Limits::none())
-                    .expect("decode");
+            let sparse = LedgerCloseMetaTxHashes::from_xdr_seekable(
+                black_box(&ledger_meta_xdr),
+                Limits::none(),
+            )
+            .expect("decode");
             let hashes: Vec<_> = match &sparse {
                 LedgerCloseMetaTxHashes::V0(v) => v
                     .tx_processing

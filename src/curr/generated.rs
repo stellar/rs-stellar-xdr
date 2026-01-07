@@ -116,7 +116,7 @@ use std::borrow::Cow;
 #[cfg(feature = "std")]
 use std::{
     error, io,
-    io::{BufRead, BufReader, Cursor, Read, Write},
+    io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom, Write},
 };
 
 /// Error contains all errors returned by functions in this crate. It can be
@@ -455,6 +455,14 @@ impl<W: Write> Write for Limited<W> {
 }
 
 #[cfg(feature = "std")]
+impl<S: Seek> Seek for Limited<S> {
+    /// Forwards the seek operation to the wrapped object.
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        self.inner.seek(pos)
+    }
+}
+
+#[cfg(feature = "std")]
 pub struct ReadXdrIter<R: Read, S: ReadXdr> {
     reader: Limited<BufReader<R>>,
     _s: PhantomData<S>,
@@ -741,6 +749,92 @@ pub trait WriteXdr {
     }
 }
 
+/// `SkipXdr` allows types to skip their XDR representation without fully
+/// decoding them. This is useful for sparse decoding where only specific
+/// nested fields need to be extracted.
+pub trait SkipXdr
+where
+    Self: Sized,
+{
+    /// Skip the XDR representation of this type.
+    ///
+    /// Read and discard just enough bytes from the given read implementation
+    /// to skip past this type's XDR encoding.
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error>;
+}
+
+/// Helper function to skip a fixed number of bytes from a reader.
+/// This reads and discards the bytes efficiently using a small buffer.
+#[cfg(feature = "std")]
+fn skip_bytes<R: Read>(r: &mut Limited<R>, n: usize) -> Result<(), Error> {
+    r.consume_len(n)?;
+    let mut remaining = n;
+    let mut buf = [0u8; 1024];
+    while remaining > 0 {
+        let to_read = remaining.min(buf.len());
+        r.read_exact(&mut buf[..to_read])?;
+        remaining -= to_read;
+    }
+    Ok(())
+}
+
+/// `SeekableSkipXdr` allows types to skip their XDR representation using seek
+/// operations instead of reading bytes. This is more performant for seekable
+/// readers (like files) because it avoids actually reading and discarding data.
+pub trait SeekableSkipXdr
+where
+    Self: Sized,
+{
+    /// Skip the XDR representation of this type using seek.
+    ///
+    /// Uses seek to skip past this type's XDR encoding without reading the bytes.
+    /// More efficient than `SkipXdr` for file-backed readers.
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error>;
+}
+
+/// Helper function to skip a fixed number of bytes from a seekable reader.
+/// Uses seek instead of read for better performance on file-backed readers.
+#[cfg(feature = "std")]
+fn seek_skip_bytes<R: Seek>(r: &mut Limited<R>, n: usize) -> Result<(), Error> {
+    r.consume_len(n)?;
+    r.seek(SeekFrom::Current(n as i64))?;
+    Ok(())
+}
+
+/// `SeekableReadXdr` allows types to read their XDR representation from a
+/// seekable reader, using seek to skip over fields rather than reading them.
+/// This is more performant for file-backed readers when doing sparse decoding.
+pub trait SeekableReadXdr
+where
+    Self: Sized,
+{
+    /// Read the XDR and construct the type from a seekable reader.
+    ///
+    /// This is similar to `ReadXdr::read_xdr` but uses seek operations to
+    /// skip over fields, which is more efficient for file-backed readers.
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error>;
+
+    /// Construct the type from the XDR bytes using a seekable cursor.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "std")]
+    fn from_xdr_seekable(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self, Error> {
+        let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
+        let t = Self::seekable_read_xdr(&mut cursor)?;
+        // Check that any further reads, such as this read of one byte, read no
+        // data, indicating EOF. If a byte is read the data is invalid.
+        if cursor.read(&mut [0u8; 1])? == 0 {
+            Ok(t)
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
 /// `Pad_len` returns the number of bytes to pad an XDR value of the given
 /// length to make the final serialized size a multiple of 4.
 #[cfg(feature = "std")]
@@ -771,6 +865,25 @@ impl WriteXdr for i32 {
     }
 }
 
+impl SkipXdr for i32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 4];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for i32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
+    }
+}
+
 impl ReadXdr for u32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -791,6 +904,25 @@ impl WriteXdr for u32 {
             w.consume_len(b.len())?;
             Ok(w.write_all(&b)?)
         })
+    }
+}
+
+impl SkipXdr for u32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 4];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for u32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
     }
 }
 
@@ -817,6 +949,25 @@ impl WriteXdr for i64 {
     }
 }
 
+impl SkipXdr for i64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 8];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for i64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 8))
+    }
+}
+
 impl ReadXdr for u64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -840,6 +991,25 @@ impl WriteXdr for u64 {
     }
 }
 
+impl SkipXdr for u64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 8];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for u64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 8))
+    }
+}
+
 impl ReadXdr for f32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -854,6 +1024,20 @@ impl WriteXdr for f32 {
     }
 }
 
+impl SkipXdr for f32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| skip_bytes(r, 4))
+    }
+}
+
+impl SeekableSkipXdr for f32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
+    }
+}
+
 impl ReadXdr for f64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -865,6 +1049,20 @@ impl WriteXdr for f64 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
         todo!()
+    }
+}
+
+impl SkipXdr for f64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| skip_bytes(r, 8))
+    }
+}
+
+impl SeekableSkipXdr for f64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 8))
     }
 }
 
@@ -886,6 +1084,20 @@ impl WriteXdr for bool {
             let i = u32::from(*self); // true = 1, false = 0
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for bool {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| skip_bytes(r, 4))
+    }
+}
+
+impl SeekableSkipXdr for bool {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
     }
 }
 
@@ -921,6 +1133,34 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
     }
 }
 
+impl<T: SkipXdr> SkipXdr for Option<T> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            match i {
+                0 => Ok(()),
+                1 => T::skip_xdr(r),
+                _ => Err(Error::Invalid),
+            }
+        })
+    }
+}
+
+impl<T: SeekableSkipXdr> SeekableSkipXdr for Option<T> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            match i {
+                0 => Ok(()),
+                1 => T::seekable_skip_xdr(r),
+                _ => Err(Error::Invalid),
+            }
+        })
+    }
+}
+
 impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -935,6 +1175,20 @@ impl<T: WriteXdr> WriteXdr for Box<T> {
     }
 }
 
+impl<T: SkipXdr> SkipXdr for Box<T> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| T::skip_xdr(r))
+    }
+}
+
+impl<T: SeekableSkipXdr> SeekableSkipXdr for Box<T> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| T::seekable_skip_xdr(r))
+    }
+}
+
 impl ReadXdr for () {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -945,6 +1199,20 @@ impl ReadXdr for () {
 impl WriteXdr for () {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl SkipXdr for () {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(_r: &mut Limited<R>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl SeekableSkipXdr for () {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(_r: &mut Limited<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -982,6 +1250,26 @@ impl<const N: usize> WriteXdr for [u8; N] {
     }
 }
 
+impl<const N: usize> SkipXdr for [u8; N] {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let padding = pad_len(N);
+            skip_bytes(r, N + padding)
+        })
+    }
+}
+
+impl<const N: usize> SeekableSkipXdr for [u8; N] {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let padding = pad_len(N);
+            seek_skip_bytes(r, N + padding)
+        })
+    }
+}
+
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1003,6 +1291,30 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
         w.with_limited_depth(|w| {
             for t in self {
                 t.write_xdr(w)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: SkipXdr, const N: usize> SkipXdr for [T; N] {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            for _ in 0..N {
+                T::skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: SeekableSkipXdr, const N: usize> SeekableSkipXdr for [T; N] {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            for _ in 0..N {
+                T::seekable_skip_xdr(r)?;
             }
             Ok(())
         })
@@ -1476,6 +1788,34 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
     }
 }
 
+impl<const MAX: u32> SkipXdr for VecM<u8, MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> SeekableSkipXdr for VecM<u8, MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            seek_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1507,6 +1847,38 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
                 t.write_xdr(w)?;
             }
 
+            Ok(())
+        })
+    }
+}
+
+impl<T: SkipXdr, const MAX: u32> SkipXdr for VecM<T, MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            for _ in 0..len {
+                T::skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: SeekableSkipXdr, const MAX: u32> SeekableSkipXdr for VecM<T, MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            for _ in 0..len {
+                T::seekable_skip_xdr(r)?;
+            }
             Ok(())
         })
     }
@@ -1916,6 +2288,34 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     }
 }
 
+impl<const MAX: u32> SkipXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> SeekableSkipXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            seek_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
 // StringM ------------------------------------------------------------------------
 
 /// A string type that contains arbitrary bytes.
@@ -2315,6 +2715,34 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
             w.write_all(&[0u8; 3][..padding])?;
 
             Ok(())
+        })
+    }
+}
+
+impl<const MAX: u32> SkipXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> SeekableSkipXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            seek_skip_bytes(r, len as usize + padding)
         })
     }
 }
@@ -4126,7 +4554,7 @@ impl ReadXdr for Value {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = BytesM::read_xdr(r)?;
+            let i = BytesM::<{ u32::MAX }>::read_xdr(r)?;
             let v = Value(i);
             Ok(v)
         })
@@ -4137,6 +4565,20 @@ impl WriteXdr for Value {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for Value {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<{ u32::MAX }>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for Value {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<{ u32::MAX }>::seekable_skip_xdr(r))
     }
 }
 
@@ -4233,6 +4675,28 @@ impl WriteXdr for ScpBallot {
         w.with_limited_depth(|w| {
             self.counter.write_xdr(w)?;
             self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScpBallot {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            Value::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpBallot {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            Value::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -4359,6 +4823,20 @@ impl WriteXdr for ScpStatementType {
     }
 }
 
+impl SkipXdr for ScpStatementType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScpStatementType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScpNomination is an XDR Struct defined as:
 ///
 /// ```text
@@ -4407,6 +4885,30 @@ impl WriteXdr for ScpNomination {
             self.quorum_set_hash.write_xdr(w)?;
             self.votes.write_xdr(w)?;
             self.accepted.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScpNomination {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            VecM::<Value>::skip_xdr(r)?;
+            VecM::<Value>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpNomination {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            VecM::<Value>::seekable_skip_xdr(r)?;
+            VecM::<Value>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -4477,6 +4979,36 @@ impl WriteXdr for ScpStatementPrepare {
     }
 }
 
+impl SkipXdr for ScpStatementPrepare {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            ScpBallot::skip_xdr(r)?;
+            Option::<ScpBallot>::skip_xdr(r)?;
+            Option::<ScpBallot>::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpStatementPrepare {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            ScpBallot::seekable_skip_xdr(r)?;
+            Option::<ScpBallot>::seekable_skip_xdr(r)?;
+            Option::<ScpBallot>::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScpStatementConfirm is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -4538,6 +5070,34 @@ impl WriteXdr for ScpStatementConfirm {
     }
 }
 
+impl SkipXdr for ScpStatementConfirm {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScpBallot::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpStatementConfirm {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScpBallot::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScpStatementExternalize is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -4586,6 +5146,30 @@ impl WriteXdr for ScpStatementExternalize {
             self.commit.write_xdr(w)?;
             self.n_h.write_xdr(w)?;
             self.commit_quorum_set_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScpStatementExternalize {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScpBallot::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpStatementExternalize {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScpBallot::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -4749,6 +5333,44 @@ impl WriteXdr for ScpStatementPledges {
     }
 }
 
+impl SkipXdr for ScpStatementPledges {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScpStatementType::Prepare => ScpStatementPrepare::skip_xdr(r)?,
+                ScpStatementType::Confirm => ScpStatementConfirm::skip_xdr(r)?,
+                ScpStatementType::Externalize => ScpStatementExternalize::skip_xdr(r)?,
+                ScpStatementType::Nominate => ScpNomination::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpStatementPledges {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScpStatementType::Prepare => ScpStatementPrepare::seekable_skip_xdr(r)?,
+                ScpStatementType::Confirm => ScpStatementConfirm::seekable_skip_xdr(r)?,
+                ScpStatementType::Externalize => ScpStatementExternalize::seekable_skip_xdr(r)?,
+                ScpStatementType::Nominate => ScpNomination::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScpStatement is an XDR Struct defined as:
 ///
 /// ```text
@@ -4838,6 +5460,30 @@ impl WriteXdr for ScpStatement {
     }
 }
 
+impl SkipXdr for ScpStatement {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            ScpStatementPledges::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpStatement {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            ScpStatementPledges::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScpEnvelope is an XDR Struct defined as:
 ///
 /// ```text
@@ -4882,6 +5528,28 @@ impl WriteXdr for ScpEnvelope {
         w.with_limited_depth(|w| {
             self.statement.write_xdr(w)?;
             self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScpEnvelope {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScpStatement::skip_xdr(r)?;
+            Signature::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpEnvelope {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScpStatement::seekable_skip_xdr(r)?;
+            Signature::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -4940,6 +5608,30 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
+impl SkipXdr for ScpQuorumSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            VecM::<NodeId>::skip_xdr(r)?;
+            VecM::<ScpQuorumSet>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpQuorumSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            VecM::<NodeId>::seekable_skip_xdr(r)?;
+            VecM::<ScpQuorumSet>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ConfigSettingContractExecutionLanesV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -4981,6 +5673,26 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_tx_count.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigSettingContractExecutionLanesV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractExecutionLanesV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -5061,6 +5773,32 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
     }
 }
 
+impl SkipXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ConfigSettingContractParallelComputeV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -5105,6 +5843,26 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ledger_max_dependent_tx_clusters.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigSettingContractParallelComputeV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractParallelComputeV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -5252,6 +6010,54 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     }
 }
 
+impl SkipXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ConfigSettingContractLedgerCostExtV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -5309,6 +6115,28 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
     }
 }
 
+impl SkipXdr for ConfigSettingContractLedgerCostExtV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractLedgerCostExtV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ConfigSettingContractHistoricalDataV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -5353,6 +6181,26 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.fee_historical1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -5408,6 +6256,28 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
         w.with_limited_depth(|w| {
             self.tx_max_contract_events_size_bytes.write_xdr(w)?;
             self.fee_contract_events1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigSettingContractEventsV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractEventsV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -5469,6 +6339,30 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
             self.ledger_max_txs_size_bytes.write_xdr(w)?;
             self.tx_max_size_bytes.write_xdr(w)?;
             self.fee_tx_size1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -6181,6 +7075,20 @@ impl WriteXdr for ContractCostType {
     }
 }
 
+impl SkipXdr for ContractCostType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractCostType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ContractCostParamEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -6238,6 +7146,30 @@ impl WriteXdr for ContractCostParamEntry {
             self.ext.write_xdr(w)?;
             self.const_term.write_xdr(w)?;
             self.linear_term.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractCostParamEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractCostParamEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -6345,6 +7277,44 @@ impl WriteXdr for StateArchivalSettings {
     }
 }
 
+impl SkipXdr for StateArchivalSettings {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for StateArchivalSettings {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// EvictionIterator is an XDR Struct defined as:
 ///
 /// ```text
@@ -6396,6 +7366,30 @@ impl WriteXdr for EvictionIterator {
             self.bucket_list_level.write_xdr(w)?;
             self.is_curr_bucket.write_xdr(w)?;
             self.bucket_file_offset.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for EvictionIterator {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            bool::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for EvictionIterator {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            bool::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -6457,6 +7451,34 @@ impl WriteXdr for ConfigSettingScpTiming {
                 .write_xdr(w)?;
             self.ballot_timeout_initial_milliseconds.write_xdr(w)?;
             self.ballot_timeout_increment_milliseconds.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigSettingScpTiming {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingScpTiming {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -6525,6 +7547,20 @@ impl WriteXdr for ContractCostParams {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for ContractCostParams {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<ContractCostParamEntry, 1024>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractCostParams {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<ContractCostParamEntry, 1024>::seekable_skip_xdr(r))
     }
 }
 
@@ -6778,6 +7814,20 @@ impl WriteXdr for ConfigSettingId {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -7081,6 +8131,104 @@ impl WriteXdr for ConfigSettingEntry {
     }
 }
 
+impl SkipXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ConfigSettingId::ContractMaxSizeBytes => u32::skip_xdr(r)?,
+                ConfigSettingId::ContractComputeV0 => ConfigSettingContractComputeV0::skip_xdr(r)?,
+                ConfigSettingId::ContractLedgerCostV0 => {
+                    ConfigSettingContractLedgerCostV0::skip_xdr(r)?
+                }
+                ConfigSettingId::ContractHistoricalDataV0 => {
+                    ConfigSettingContractHistoricalDataV0::skip_xdr(r)?
+                }
+                ConfigSettingId::ContractEventsV0 => ConfigSettingContractEventsV0::skip_xdr(r)?,
+                ConfigSettingId::ContractBandwidthV0 => {
+                    ConfigSettingContractBandwidthV0::skip_xdr(r)?
+                }
+                ConfigSettingId::ContractCostParamsCpuInstructions => {
+                    ContractCostParams::skip_xdr(r)?
+                }
+                ConfigSettingId::ContractCostParamsMemoryBytes => ContractCostParams::skip_xdr(r)?,
+                ConfigSettingId::ContractDataKeySizeBytes => u32::skip_xdr(r)?,
+                ConfigSettingId::ContractDataEntrySizeBytes => u32::skip_xdr(r)?,
+                ConfigSettingId::StateArchival => StateArchivalSettings::skip_xdr(r)?,
+                ConfigSettingId::ContractExecutionLanes => {
+                    ConfigSettingContractExecutionLanesV0::skip_xdr(r)?
+                }
+                ConfigSettingId::LiveSorobanStateSizeWindow => VecM::<u64>::skip_xdr(r)?,
+                ConfigSettingId::EvictionIterator => EvictionIterator::skip_xdr(r)?,
+                ConfigSettingId::ContractParallelComputeV0 => {
+                    ConfigSettingContractParallelComputeV0::skip_xdr(r)?
+                }
+                ConfigSettingId::ContractLedgerCostExtV0 => {
+                    ConfigSettingContractLedgerCostExtV0::skip_xdr(r)?
+                }
+                ConfigSettingId::ScpTiming => ConfigSettingScpTiming::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ConfigSettingId::ContractMaxSizeBytes => u32::seekable_skip_xdr(r)?,
+                ConfigSettingId::ContractComputeV0 => {
+                    ConfigSettingContractComputeV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractLedgerCostV0 => {
+                    ConfigSettingContractLedgerCostV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractHistoricalDataV0 => {
+                    ConfigSettingContractHistoricalDataV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractEventsV0 => {
+                    ConfigSettingContractEventsV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractBandwidthV0 => {
+                    ConfigSettingContractBandwidthV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractCostParamsCpuInstructions => {
+                    ContractCostParams::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractCostParamsMemoryBytes => {
+                    ContractCostParams::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractDataKeySizeBytes => u32::seekable_skip_xdr(r)?,
+                ConfigSettingId::ContractDataEntrySizeBytes => u32::seekable_skip_xdr(r)?,
+                ConfigSettingId::StateArchival => StateArchivalSettings::seekable_skip_xdr(r)?,
+                ConfigSettingId::ContractExecutionLanes => {
+                    ConfigSettingContractExecutionLanesV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::LiveSorobanStateSizeWindow => VecM::<u64>::seekable_skip_xdr(r)?,
+                ConfigSettingId::EvictionIterator => EvictionIterator::seekable_skip_xdr(r)?,
+                ConfigSettingId::ContractParallelComputeV0 => {
+                    ConfigSettingContractParallelComputeV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ContractLedgerCostExtV0 => {
+                    ConfigSettingContractLedgerCostExtV0::seekable_skip_xdr(r)?
+                }
+                ConfigSettingId::ScpTiming => ConfigSettingScpTiming::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScEnvMetaKind is an XDR Enum defined as:
 ///
 /// ```text
@@ -7185,6 +8333,20 @@ impl WriteXdr for ScEnvMetaKind {
     }
 }
 
+impl SkipXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -7228,6 +8390,28 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
         w.with_limited_depth(|w| {
             self.protocol.write_xdr(w)?;
             self.pre_release.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScEnvMetaEntryInterfaceVersion {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScEnvMetaEntryInterfaceVersion {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -7350,6 +8534,42 @@ impl WriteXdr for ScEnvMetaEntry {
     }
 }
 
+impl SkipXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
+                    ScEnvMetaEntryInterfaceVersion::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
+                    ScEnvMetaEntryInterfaceVersion::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScMetaV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -7381,8 +8601,8 @@ impl ReadXdr for ScMetaV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                key: StringM::read_xdr(r)?,
-                val: StringM::read_xdr(r)?,
+                key: StringM::<{ u32::MAX }>::read_xdr(r)?,
+                val: StringM::<{ u32::MAX }>::read_xdr(r)?,
             })
         })
     }
@@ -7394,6 +8614,28 @@ impl WriteXdr for ScMetaV0 {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScMetaV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<{ u32::MAX }>::skip_xdr(r)?;
+            StringM::<{ u32::MAX }>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScMetaV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<{ u32::MAX }>::seekable_skip_xdr(r)?;
+            StringM::<{ u32::MAX }>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -7503,6 +8745,20 @@ impl WriteXdr for ScMetaKind {
     }
 }
 
+impl SkipXdr for ScMetaKind {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScMetaKind {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScMetaEntry is an XDR Union defined as:
 ///
 /// ```text
@@ -7607,6 +8863,38 @@ impl WriteXdr for ScMetaEntry {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::ScMetaV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScMetaEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScMetaKind::ScMetaV0 => ScMetaV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScMetaEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScMetaKind::ScMetaV0 => ScMetaV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -7885,6 +9173,20 @@ impl WriteXdr for ScSpecType {
     }
 }
 
+impl SkipXdr for ScSpecType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScSpecType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScSpecTypeOption is an XDR Struct defined as:
 ///
 /// ```text
@@ -7925,6 +9227,26 @@ impl WriteXdr for ScSpecTypeOption {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.value_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecTypeOption {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeOption {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -7979,6 +9301,28 @@ impl WriteXdr for ScSpecTypeResult {
     }
 }
 
+impl SkipXdr for ScSpecTypeResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::skip_xdr(r)?;
+            Box::<ScSpecTypeDef>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
+            Box::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecTypeVec is an XDR Struct defined as:
 ///
 /// ```text
@@ -8019,6 +9363,26 @@ impl WriteXdr for ScSpecTypeVec {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.element_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecTypeVec {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeVec {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -8073,6 +9437,28 @@ impl WriteXdr for ScSpecTypeMap {
     }
 }
 
+impl SkipXdr for ScSpecTypeMap {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::skip_xdr(r)?;
+            Box::<ScSpecTypeDef>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeMap {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Box::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
+            Box::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecTypeTuple is an XDR Struct defined as:
 ///
 /// ```text
@@ -8113,6 +9499,26 @@ impl WriteXdr for ScSpecTypeTuple {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.value_types.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecTypeTuple {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScSpecTypeDef, 12>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeTuple {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScSpecTypeDef, 12>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -8163,6 +9569,26 @@ impl WriteXdr for ScSpecTypeBytesN {
     }
 }
 
+impl SkipXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecTypeUdt is an XDR Struct defined as:
 ///
 /// ```text
@@ -8203,6 +9629,26 @@ impl WriteXdr for ScSpecTypeUdt {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.name.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecTypeUdt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<60>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeUdt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<60>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -8529,6 +9975,88 @@ impl WriteXdr for ScSpecTypeDef {
     }
 }
 
+impl SkipXdr for ScSpecTypeDef {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScSpecType::Val => (),
+                ScSpecType::Bool => (),
+                ScSpecType::Void => (),
+                ScSpecType::Error => (),
+                ScSpecType::U32 => (),
+                ScSpecType::I32 => (),
+                ScSpecType::U64 => (),
+                ScSpecType::I64 => (),
+                ScSpecType::Timepoint => (),
+                ScSpecType::Duration => (),
+                ScSpecType::U128 => (),
+                ScSpecType::I128 => (),
+                ScSpecType::U256 => (),
+                ScSpecType::I256 => (),
+                ScSpecType::Bytes => (),
+                ScSpecType::String => (),
+                ScSpecType::Symbol => (),
+                ScSpecType::Address => (),
+                ScSpecType::MuxedAddress => (),
+                ScSpecType::Option => Box::<ScSpecTypeOption>::skip_xdr(r)?,
+                ScSpecType::Result => Box::<ScSpecTypeResult>::skip_xdr(r)?,
+                ScSpecType::Vec => Box::<ScSpecTypeVec>::skip_xdr(r)?,
+                ScSpecType::Map => Box::<ScSpecTypeMap>::skip_xdr(r)?,
+                ScSpecType::Tuple => Box::<ScSpecTypeTuple>::skip_xdr(r)?,
+                ScSpecType::BytesN => ScSpecTypeBytesN::skip_xdr(r)?,
+                ScSpecType::Udt => ScSpecTypeUdt::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecTypeDef {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScSpecType::Val => (),
+                ScSpecType::Bool => (),
+                ScSpecType::Void => (),
+                ScSpecType::Error => (),
+                ScSpecType::U32 => (),
+                ScSpecType::I32 => (),
+                ScSpecType::U64 => (),
+                ScSpecType::I64 => (),
+                ScSpecType::Timepoint => (),
+                ScSpecType::Duration => (),
+                ScSpecType::U128 => (),
+                ScSpecType::I128 => (),
+                ScSpecType::U256 => (),
+                ScSpecType::I256 => (),
+                ScSpecType::Bytes => (),
+                ScSpecType::String => (),
+                ScSpecType::Symbol => (),
+                ScSpecType::Address => (),
+                ScSpecType::MuxedAddress => (),
+                ScSpecType::Option => Box::<ScSpecTypeOption>::seekable_skip_xdr(r)?,
+                ScSpecType::Result => Box::<ScSpecTypeResult>::seekable_skip_xdr(r)?,
+                ScSpecType::Vec => Box::<ScSpecTypeVec>::seekable_skip_xdr(r)?,
+                ScSpecType::Map => Box::<ScSpecTypeMap>::seekable_skip_xdr(r)?,
+                ScSpecType::Tuple => Box::<ScSpecTypeTuple>::seekable_skip_xdr(r)?,
+                ScSpecType::BytesN => ScSpecTypeBytesN::seekable_skip_xdr(r)?,
+                ScSpecType::Udt => ScSpecTypeUdt::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecUdtStructFieldV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -8577,6 +10105,30 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecUdtStructFieldV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<30>::skip_xdr(r)?;
+            ScSpecTypeDef::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtStructFieldV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<30>::seekable_skip_xdr(r)?;
+            ScSpecTypeDef::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -8639,6 +10191,32 @@ impl WriteXdr for ScSpecUdtStructV0 {
     }
 }
 
+impl SkipXdr for ScSpecUdtStructV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<80>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            VecM::<ScSpecUdtStructFieldV0>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtStructV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<80>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecUdtStructFieldV0>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecUdtUnionCaseVoidV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -8683,6 +10261,28 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecUdtUnionCaseVoidV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtUnionCaseVoidV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -8736,6 +10336,30 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecUdtUnionCaseTupleV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            VecM::<ScSpecTypeDef>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtUnionCaseTupleV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecTypeDef>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -8849,6 +10473,20 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ScSpecUdtUnionCaseV0Kind {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtUnionCaseV0Kind {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -8976,6 +10614,42 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     }
 }
 
+impl SkipXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScSpecUdtUnionCaseV0Kind::VoidV0 => ScSpecUdtUnionCaseVoidV0::skip_xdr(r)?,
+                ScSpecUdtUnionCaseV0Kind::TupleV0 => ScSpecUdtUnionCaseTupleV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScSpecUdtUnionCaseV0Kind::VoidV0 => ScSpecUdtUnionCaseVoidV0::seekable_skip_xdr(r)?,
+                ScSpecUdtUnionCaseV0Kind::TupleV0 => {
+                    ScSpecUdtUnionCaseTupleV0::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecUdtUnionV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -9033,6 +10707,32 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     }
 }
 
+impl SkipXdr for ScSpecUdtUnionV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<80>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            VecM::<ScSpecUdtUnionCaseV0>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtUnionV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<80>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecUdtUnionCaseV0>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecUdtEnumCaseV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -9081,6 +10781,30 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -9143,6 +10867,32 @@ impl WriteXdr for ScSpecUdtEnumV0 {
     }
 }
 
+impl SkipXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<80>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            VecM::<ScSpecUdtEnumCaseV0>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<80>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecUdtEnumCaseV0>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecUdtErrorEnumCaseV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -9191,6 +10941,30 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecUdtErrorEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtErrorEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -9253,6 +11027,32 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
     }
 }
 
+impl SkipXdr for ScSpecUdtErrorEnumV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<80>::skip_xdr(r)?;
+            StringM::<60>::skip_xdr(r)?;
+            VecM::<ScSpecUdtErrorEnumCaseV0>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecUdtErrorEnumV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<80>::seekable_skip_xdr(r)?;
+            StringM::<60>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecUdtErrorEnumCaseV0>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScSpecFunctionInputV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -9301,6 +11101,30 @@ impl WriteXdr for ScSpecFunctionInputV0 {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<30>::skip_xdr(r)?;
+            ScSpecTypeDef::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<30>::seekable_skip_xdr(r)?;
+            ScSpecTypeDef::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -9358,6 +11182,32 @@ impl WriteXdr for ScSpecFunctionV0 {
             self.name.write_xdr(w)?;
             self.inputs.write_xdr(w)?;
             self.outputs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecFunctionV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            ScSymbol::skip_xdr(r)?;
+            VecM::<ScSpecFunctionInputV0>::skip_xdr(r)?;
+            VecM::<ScSpecTypeDef, 1>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecFunctionV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            ScSymbol::seekable_skip_xdr(r)?;
+            VecM::<ScSpecFunctionInputV0>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecTypeDef, 1>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -9474,6 +11324,20 @@ impl WriteXdr for ScSpecEventParamLocationV0 {
     }
 }
 
+impl SkipXdr for ScSpecEventParamLocationV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScSpecEventParamLocationV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScSpecEventParamV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -9526,6 +11390,32 @@ impl WriteXdr for ScSpecEventParamV0 {
             self.name.write_xdr(w)?;
             self.type_.write_xdr(w)?;
             self.location.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecEventParamV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<30>::skip_xdr(r)?;
+            ScSpecTypeDef::skip_xdr(r)?;
+            ScSpecEventParamLocationV0::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecEventParamV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<30>::seekable_skip_xdr(r)?;
+            ScSpecTypeDef::seekable_skip_xdr(r)?;
+            ScSpecEventParamLocationV0::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -9647,6 +11537,20 @@ impl WriteXdr for ScSpecEventDataFormat {
     }
 }
 
+impl SkipXdr for ScSpecEventDataFormat {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScSpecEventDataFormat {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScSpecEventV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -9707,6 +11611,36 @@ impl WriteXdr for ScSpecEventV0 {
             self.prefix_topics.write_xdr(w)?;
             self.params.write_xdr(w)?;
             self.data_format.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecEventV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::skip_xdr(r)?;
+            StringM::<80>::skip_xdr(r)?;
+            ScSymbol::skip_xdr(r)?;
+            VecM::<ScSymbol, 2>::skip_xdr(r)?;
+            VecM::<ScSpecEventParamV0>::skip_xdr(r)?;
+            ScSpecEventDataFormat::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecEventV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StringM::<1024>::seekable_skip_xdr(r)?;
+            StringM::<80>::seekable_skip_xdr(r)?;
+            ScSymbol::seekable_skip_xdr(r)?;
+            VecM::<ScSymbol, 2>::seekable_skip_xdr(r)?;
+            VecM::<ScSpecEventParamV0>::seekable_skip_xdr(r)?;
+            ScSpecEventDataFormat::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -9847,6 +11781,20 @@ impl WriteXdr for ScSpecEntryKind {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ScSpecEntryKind {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScSpecEntryKind {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -10005,6 +11953,48 @@ impl WriteXdr for ScSpecEntry {
                 Self::UdtEnumV0(v) => v.write_xdr(w)?,
                 Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
                 Self::EventV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScSpecEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScSpecEntryKind::FunctionV0 => ScSpecFunctionV0::skip_xdr(r)?,
+                ScSpecEntryKind::UdtStructV0 => ScSpecUdtStructV0::skip_xdr(r)?,
+                ScSpecEntryKind::UdtUnionV0 => ScSpecUdtUnionV0::skip_xdr(r)?,
+                ScSpecEntryKind::UdtEnumV0 => ScSpecUdtEnumV0::skip_xdr(r)?,
+                ScSpecEntryKind::UdtErrorEnumV0 => ScSpecUdtErrorEnumV0::skip_xdr(r)?,
+                ScSpecEntryKind::EventV0 => ScSpecEventV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScSpecEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScSpecEntryKind::FunctionV0 => ScSpecFunctionV0::seekable_skip_xdr(r)?,
+                ScSpecEntryKind::UdtStructV0 => ScSpecUdtStructV0::seekable_skip_xdr(r)?,
+                ScSpecEntryKind::UdtUnionV0 => ScSpecUdtUnionV0::seekable_skip_xdr(r)?,
+                ScSpecEntryKind::UdtEnumV0 => ScSpecUdtEnumV0::seekable_skip_xdr(r)?,
+                ScSpecEntryKind::UdtErrorEnumV0 => ScSpecUdtErrorEnumV0::seekable_skip_xdr(r)?,
+                ScSpecEntryKind::EventV0 => ScSpecEventV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -10274,6 +12264,20 @@ impl WriteXdr for ScValType {
     }
 }
 
+impl SkipXdr for ScValType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScValType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ScErrorType is an XDR Enum defined as:
 ///
 /// ```text
@@ -10425,6 +12429,20 @@ impl WriteXdr for ScErrorType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ScErrorType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScErrorType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -10587,6 +12605,20 @@ impl WriteXdr for ScErrorCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ScErrorCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScErrorCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -10769,6 +12801,56 @@ impl WriteXdr for ScError {
     }
 }
 
+impl SkipXdr for ScError {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScErrorType = <ScErrorType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScErrorType::Contract => u32::skip_xdr(r)?,
+                ScErrorType::WasmVm => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Context => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Storage => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Object => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Crypto => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Events => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Budget => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Value => ScErrorCode::skip_xdr(r)?,
+                ScErrorType::Auth => ScErrorCode::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScError {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScErrorType = <ScErrorType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScErrorType::Contract => u32::seekable_skip_xdr(r)?,
+                ScErrorType::WasmVm => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Context => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Storage => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Object => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Crypto => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Events => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Budget => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Value => ScErrorCode::seekable_skip_xdr(r)?,
+                ScErrorType::Auth => ScErrorCode::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// UInt128Parts is an XDR Struct defined as:
 ///
 /// ```text
@@ -10809,6 +12891,28 @@ impl WriteXdr for UInt128Parts {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
             self.lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -10882,6 +12986,28 @@ impl WriteXdr for Int128Parts {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
             self.lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -10963,6 +13089,32 @@ impl WriteXdr for UInt256Parts {
             self.hi_lo.write_xdr(w)?;
             self.lo_hi.write_xdr(w)?;
             self.lo_lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -11054,6 +13206,32 @@ impl WriteXdr for Int256Parts {
             self.hi_lo.write_xdr(w)?;
             self.lo_hi.write_xdr(w)?;
             self.lo_lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -11208,6 +13386,20 @@ impl WriteXdr for ContractExecutableType {
     }
 }
 
+impl SkipXdr for ContractExecutableType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractExecutableType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ContractExecutable is an XDR Union defined as:
 ///
 /// ```text
@@ -11322,6 +13514,40 @@ impl WriteXdr for ContractExecutable {
             match self {
                 Self::Wasm(v) => v.write_xdr(w)?,
                 Self::StellarAsset => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractExecutable {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ContractExecutableType::Wasm => Hash::skip_xdr(r)?,
+                ContractExecutableType::StellarAsset => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractExecutable {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ContractExecutableType::Wasm => Hash::seekable_skip_xdr(r)?,
+                ContractExecutableType::StellarAsset => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -11460,6 +13686,20 @@ impl WriteXdr for ScAddressType {
     }
 }
 
+impl SkipXdr for ScAddressType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScAddressType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// MuxedEd25519Account is an XDR Struct defined as:
 ///
 /// ```text
@@ -11501,6 +13741,28 @@ impl WriteXdr for MuxedEd25519Account {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.ed25519.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for MuxedEd25519Account {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::skip_xdr(r)?;
+            Uint256::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for MuxedEd25519Account {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::seekable_skip_xdr(r)?;
+            Uint256::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -11686,6 +13948,46 @@ impl WriteXdr for ScAddress {
     }
 }
 
+impl SkipXdr for ScAddress {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScAddressType::Account => AccountId::skip_xdr(r)?,
+                ScAddressType::Contract => ContractId::skip_xdr(r)?,
+                ScAddressType::MuxedAccount => MuxedEd25519Account::skip_xdr(r)?,
+                ScAddressType::ClaimableBalance => ClaimableBalanceId::skip_xdr(r)?,
+                ScAddressType::LiquidityPool => PoolId::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScAddress {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScAddressType::Account => AccountId::seekable_skip_xdr(r)?,
+                ScAddressType::Contract => ContractId::seekable_skip_xdr(r)?,
+                ScAddressType::MuxedAccount => MuxedEd25519Account::seekable_skip_xdr(r)?,
+                ScAddressType::ClaimableBalance => ClaimableBalanceId::seekable_skip_xdr(r)?,
+                ScAddressType::LiquidityPool => PoolId::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScsymbolLimit is an XDR Const defined as:
 ///
 /// ```text
@@ -11749,6 +14051,20 @@ impl WriteXdr for ScVec {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<ScVal>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<ScVal>::seekable_skip_xdr(r))
     }
 }
 
@@ -11859,6 +14175,20 @@ impl WriteXdr for ScMap {
     }
 }
 
+impl SkipXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<ScMapEntry>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<ScMapEntry>::seekable_skip_xdr(r))
+    }
+}
+
 impl Deref for ScMap {
     type Target = VecM<ScMapEntry>;
     fn deref(&self) -> &Self::Target {
@@ -11952,7 +14282,7 @@ impl ReadXdr for ScBytes {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = BytesM::read_xdr(r)?;
+            let i = BytesM::<{ u32::MAX }>::read_xdr(r)?;
             let v = ScBytes(i);
             Ok(v)
         })
@@ -11963,6 +14293,20 @@ impl WriteXdr for ScBytes {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for ScBytes {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<{ u32::MAX }>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScBytes {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<{ u32::MAX }>::seekable_skip_xdr(r))
     }
 }
 
@@ -12059,7 +14403,7 @@ impl ReadXdr for ScString {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = StringM::read_xdr(r)?;
+            let i = StringM::<{ u32::MAX }>::read_xdr(r)?;
             let v = ScString(i);
             Ok(v)
         })
@@ -12070,6 +14414,20 @@ impl WriteXdr for ScString {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for ScString {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<{ u32::MAX }>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScString {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<{ u32::MAX }>::seekable_skip_xdr(r))
     }
 }
 
@@ -12180,6 +14538,20 @@ impl WriteXdr for ScSymbol {
     }
 }
 
+impl SkipXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<32>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<32>::seekable_skip_xdr(r))
+    }
+}
+
 impl Deref for ScSymbol {
     type Target = StringM<32>;
     fn deref(&self) -> &Self::Target {
@@ -12277,6 +14649,26 @@ impl WriteXdr for ScNonceKey {
     }
 }
 
+impl SkipXdr for ScNonceKey {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScNonceKey {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScContractInstance is an XDR Struct defined as:
 ///
 /// ```text
@@ -12320,6 +14712,28 @@ impl WriteXdr for ScContractInstance {
         w.with_limited_depth(|w| {
             self.executable.write_xdr(w)?;
             self.storage.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScContractInstance {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractExecutable::skip_xdr(r)?;
+            Option::<ScMap>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScContractInstance {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractExecutable::seekable_skip_xdr(r)?;
+            Option::<ScMap>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -12655,6 +15069,80 @@ impl WriteXdr for ScVal {
     }
 }
 
+impl SkipXdr for ScVal {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScValType::Bool => bool::skip_xdr(r)?,
+                ScValType::Void => (),
+                ScValType::Error => ScError::skip_xdr(r)?,
+                ScValType::U32 => u32::skip_xdr(r)?,
+                ScValType::I32 => i32::skip_xdr(r)?,
+                ScValType::U64 => u64::skip_xdr(r)?,
+                ScValType::I64 => i64::skip_xdr(r)?,
+                ScValType::Timepoint => TimePoint::skip_xdr(r)?,
+                ScValType::Duration => Duration::skip_xdr(r)?,
+                ScValType::U128 => UInt128Parts::skip_xdr(r)?,
+                ScValType::I128 => Int128Parts::skip_xdr(r)?,
+                ScValType::U256 => UInt256Parts::skip_xdr(r)?,
+                ScValType::I256 => Int256Parts::skip_xdr(r)?,
+                ScValType::Bytes => ScBytes::skip_xdr(r)?,
+                ScValType::String => ScString::skip_xdr(r)?,
+                ScValType::Symbol => ScSymbol::skip_xdr(r)?,
+                ScValType::Vec => Option::<ScVec>::skip_xdr(r)?,
+                ScValType::Map => Option::<ScMap>::skip_xdr(r)?,
+                ScValType::Address => ScAddress::skip_xdr(r)?,
+                ScValType::ContractInstance => ScContractInstance::skip_xdr(r)?,
+                ScValType::LedgerKeyContractInstance => (),
+                ScValType::LedgerKeyNonce => ScNonceKey::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScVal {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ScValType::Bool => bool::seekable_skip_xdr(r)?,
+                ScValType::Void => (),
+                ScValType::Error => ScError::seekable_skip_xdr(r)?,
+                ScValType::U32 => u32::seekable_skip_xdr(r)?,
+                ScValType::I32 => i32::seekable_skip_xdr(r)?,
+                ScValType::U64 => u64::seekable_skip_xdr(r)?,
+                ScValType::I64 => i64::seekable_skip_xdr(r)?,
+                ScValType::Timepoint => TimePoint::seekable_skip_xdr(r)?,
+                ScValType::Duration => Duration::seekable_skip_xdr(r)?,
+                ScValType::U128 => UInt128Parts::seekable_skip_xdr(r)?,
+                ScValType::I128 => Int128Parts::seekable_skip_xdr(r)?,
+                ScValType::U256 => UInt256Parts::seekable_skip_xdr(r)?,
+                ScValType::I256 => Int256Parts::seekable_skip_xdr(r)?,
+                ScValType::Bytes => ScBytes::seekable_skip_xdr(r)?,
+                ScValType::String => ScString::seekable_skip_xdr(r)?,
+                ScValType::Symbol => ScSymbol::seekable_skip_xdr(r)?,
+                ScValType::Vec => Option::<ScVec>::seekable_skip_xdr(r)?,
+                ScValType::Map => Option::<ScMap>::seekable_skip_xdr(r)?,
+                ScValType::Address => ScAddress::seekable_skip_xdr(r)?,
+                ScValType::ContractInstance => ScContractInstance::seekable_skip_xdr(r)?,
+                ScValType::LedgerKeyContractInstance => (),
+                ScValType::LedgerKeyNonce => ScNonceKey::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ScMapEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -12699,6 +15187,28 @@ impl WriteXdr for ScMapEntry {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScVal::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScVal::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -12757,6 +15267,30 @@ impl WriteXdr for LedgerCloseMetaBatch {
             self.start_sequence.write_xdr(w)?;
             self.end_sequence.write_xdr(w)?;
             self.ledger_close_metas.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerCloseMetaBatch {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            VecM::<LedgerCloseMeta>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMetaBatch {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            VecM::<LedgerCloseMeta>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -12879,6 +15413,40 @@ impl WriteXdr for StoredTransactionSet {
     }
 }
 
+impl SkipXdr for StoredTransactionSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => TransactionSet::skip_xdr(r)?,
+                1 => GeneralizedTransactionSet::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for StoredTransactionSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => TransactionSet::seekable_skip_xdr(r)?,
+                1 => GeneralizedTransactionSet::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// StoredDebugTransactionSet is an XDR Struct defined as:
 ///
 /// ```text
@@ -12927,6 +15495,30 @@ impl WriteXdr for StoredDebugTransactionSet {
             self.tx_set.write_xdr(w)?;
             self.ledger_seq.write_xdr(w)?;
             self.scp_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for StoredDebugTransactionSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StoredTransactionSet::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            StellarValue::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for StoredDebugTransactionSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            StoredTransactionSet::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            StellarValue::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -12985,6 +15577,30 @@ impl WriteXdr for PersistedScpStateV0 {
     }
 }
 
+impl SkipXdr for PersistedScpStateV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScpEnvelope>::skip_xdr(r)?;
+            VecM::<ScpQuorumSet>::skip_xdr(r)?;
+            VecM::<StoredTransactionSet>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PersistedScpStateV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScpEnvelope>::seekable_skip_xdr(r)?;
+            VecM::<ScpQuorumSet>::seekable_skip_xdr(r)?;
+            VecM::<StoredTransactionSet>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// PersistedScpStateV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -13030,6 +15646,28 @@ impl WriteXdr for PersistedScpStateV1 {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
             self.quorum_sets.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PersistedScpStateV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScpEnvelope>::skip_xdr(r)?;
+            VecM::<ScpQuorumSet>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PersistedScpStateV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScpEnvelope>::seekable_skip_xdr(r)?;
+            VecM::<ScpQuorumSet>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -13152,6 +15790,40 @@ impl WriteXdr for PersistedScpState {
     }
 }
 
+impl SkipXdr for PersistedScpState {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => PersistedScpStateV0::skip_xdr(r)?,
+                1 => PersistedScpStateV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PersistedScpState {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => PersistedScpStateV0::seekable_skip_xdr(r)?,
+                1 => PersistedScpStateV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// Thresholds is an XDR Typedef defined as:
 ///
 /// ```text
@@ -13268,6 +15940,20 @@ impl WriteXdr for Thresholds {
     }
 }
 
+impl SkipXdr for Thresholds {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 4]>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for Thresholds {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 4]>::seekable_skip_xdr(r))
+    }
+}
+
 impl Thresholds {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
@@ -13360,6 +16046,20 @@ impl WriteXdr for String32 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for String32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<32>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for String32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<32>::seekable_skip_xdr(r))
     }
 }
 
@@ -13467,6 +16167,20 @@ impl WriteXdr for String64 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for String64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<64>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for String64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| StringM::<64>::seekable_skip_xdr(r))
     }
 }
 
@@ -13584,6 +16298,20 @@ impl WriteXdr for SequenceNumber {
     }
 }
 
+impl SkipXdr for SequenceNumber {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i64::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SequenceNumber {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i64::seekable_skip_xdr(r))
+    }
+}
+
 /// DataValue is an XDR Typedef defined as:
 ///
 /// ```text
@@ -13639,6 +16367,20 @@ impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for DataValue {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<64>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for DataValue {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<64>::seekable_skip_xdr(r))
     }
 }
 
@@ -13757,6 +16499,20 @@ impl WriteXdr for AssetCode4 {
     }
 }
 
+impl SkipXdr for AssetCode4 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 4]>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AssetCode4 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 4]>::seekable_skip_xdr(r))
+    }
+}
+
 impl AssetCode4 {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
@@ -13857,6 +16613,20 @@ impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for AssetCode12 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 12]>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AssetCode12 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 12]>::seekable_skip_xdr(r))
     }
 }
 
@@ -14019,6 +16789,20 @@ impl WriteXdr for AssetType {
     }
 }
 
+impl SkipXdr for AssetType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AssetType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// AssetCode is an XDR Union defined as:
 ///
 /// ```text
@@ -14136,6 +16920,40 @@ impl WriteXdr for AssetCode {
     }
 }
 
+impl SkipXdr for AssetCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::CreditAlphanum4 => AssetCode4::skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AssetCode12::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AssetCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::CreditAlphanum4 => AssetCode4::seekable_skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AssetCode12::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AlphaNum4 is an XDR Struct defined as:
 ///
 /// ```text
@@ -14185,6 +17003,28 @@ impl WriteXdr for AlphaNum4 {
     }
 }
 
+impl SkipXdr for AlphaNum4 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AssetCode4::skip_xdr(r)?;
+            AccountId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AlphaNum4 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AssetCode4::seekable_skip_xdr(r)?;
+            AccountId::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// AlphaNum12 is an XDR Struct defined as:
 ///
 /// ```text
@@ -14229,6 +17069,28 @@ impl WriteXdr for AlphaNum12 {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
             self.issuer.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AlphaNum12 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AssetCode12::skip_xdr(r)?;
+            AccountId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AlphaNum12 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AssetCode12::seekable_skip_xdr(r)?;
+            AccountId::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -14366,6 +17228,42 @@ impl WriteXdr for Asset {
     }
 }
 
+impl SkipXdr for Asset {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::Native => (),
+                AssetType::CreditAlphanum4 => AlphaNum4::skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AlphaNum12::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Asset {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::Native => (),
+                AssetType::CreditAlphanum4 => AlphaNum4::seekable_skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AlphaNum12::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// Price is an XDR Struct defined as:
 ///
 /// ```text
@@ -14410,6 +17308,28 @@ impl WriteXdr for Price {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
             self.d.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Price {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i32::skip_xdr(r)?;
+            i32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Price {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i32::seekable_skip_xdr(r)?;
+            i32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -14467,6 +17387,28 @@ impl WriteXdr for Liabilities {
         w.with_limited_depth(|w| {
             self.buying.write_xdr(w)?;
             self.selling.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Liabilities {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Liabilities {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -14590,6 +17532,20 @@ impl WriteXdr for ThresholdIndexes {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ThresholdIndexes {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ThresholdIndexes {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -14755,6 +17711,20 @@ impl WriteXdr for LedgerEntryType {
     }
 }
 
+impl SkipXdr for LedgerEntryType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// Signer is an XDR Struct defined as:
 ///
 /// ```text
@@ -14799,6 +17769,28 @@ impl WriteXdr for Signer {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.weight.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Signer {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SignerKey::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Signer {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SignerKey::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -14940,6 +17932,20 @@ impl WriteXdr for AccountFlags {
     }
 }
 
+impl SkipXdr for AccountFlags {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AccountFlags {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// MaskAccountFlags is an XDR Const defined as:
 ///
 /// ```text
@@ -15023,6 +18029,20 @@ impl WriteXdr for SponsorshipDescriptor {
     }
 }
 
+impl SkipXdr for SponsorshipDescriptor {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| Option::<AccountId>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SponsorshipDescriptor {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| Option::<AccountId>::seekable_skip_xdr(r))
+    }
+}
+
 /// AccountEntryExtensionV3 is an XDR Struct defined as:
 ///
 /// ```text
@@ -15077,6 +18097,30 @@ impl WriteXdr for AccountEntryExtensionV3 {
             self.ext.write_xdr(w)?;
             self.seq_ledger.write_xdr(w)?;
             self.seq_time.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AccountEntryExtensionV3 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            TimePoint::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntryExtensionV3 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            TimePoint::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -15199,6 +18243,40 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
     }
 }
 
+impl SkipXdr for AccountEntryExtensionV2Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                3 => AccountEntryExtensionV3::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntryExtensionV2Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                3 => AccountEntryExtensionV3::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AccountEntryExtensionV2 is an XDR Struct defined as:
 ///
 /// ```text
@@ -15259,6 +18337,32 @@ impl WriteXdr for AccountEntryExtensionV2 {
             self.num_sponsoring.write_xdr(w)?;
             self.signer_sponsoring_i_ds.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AccountEntryExtensionV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            VecM::<SponsorshipDescriptor, 20>::skip_xdr(r)?;
+            AccountEntryExtensionV2Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntryExtensionV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            VecM::<SponsorshipDescriptor, 20>::seekable_skip_xdr(r)?;
+            AccountEntryExtensionV2Ext::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -15381,6 +18485,40 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
     }
 }
 
+impl SkipXdr for AccountEntryExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                2 => AccountEntryExtensionV2::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntryExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                2 => AccountEntryExtensionV2::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AccountEntryExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -15433,6 +18571,28 @@ impl WriteXdr for AccountEntryExtensionV1 {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AccountEntryExtensionV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Liabilities::skip_xdr(r)?;
+            AccountEntryExtensionV1Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntryExtensionV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Liabilities::seekable_skip_xdr(r)?;
+            AccountEntryExtensionV1Ext::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -15555,6 +18715,40 @@ impl WriteXdr for AccountEntryExt {
     }
 }
 
+impl SkipXdr for AccountEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => AccountEntryExtensionV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => AccountEntryExtensionV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AccountEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -15650,6 +18844,44 @@ impl WriteXdr for AccountEntry {
             self.thresholds.write_xdr(w)?;
             self.signers.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AccountEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Option::<AccountId>::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            String32::skip_xdr(r)?;
+            Thresholds::skip_xdr(r)?;
+            VecM::<Signer, 20>::skip_xdr(r)?;
+            AccountEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Option::<AccountId>::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            String32::seekable_skip_xdr(r)?;
+            Thresholds::seekable_skip_xdr(r)?;
+            VecM::<Signer, 20>::seekable_skip_xdr(r)?;
+            AccountEntryExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -15780,6 +19012,20 @@ impl WriteXdr for TrustLineFlags {
     }
 }
 
+impl SkipXdr for TrustLineFlags {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TrustLineFlags {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// MaskTrustlineFlags is an XDR Const defined as:
 ///
 /// ```text
@@ -15905,6 +19151,20 @@ impl WriteXdr for LiquidityPoolType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for LiquidityPoolType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -16050,6 +19310,44 @@ impl WriteXdr for TrustLineAsset {
     }
 }
 
+impl SkipXdr for TrustLineAsset {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::Native => (),
+                AssetType::CreditAlphanum4 => AlphaNum4::skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AlphaNum12::skip_xdr(r)?,
+                AssetType::PoolShare => PoolId::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineAsset {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::Native => (),
+                AssetType::CreditAlphanum4 => AlphaNum4::seekable_skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AlphaNum12::seekable_skip_xdr(r)?,
+                AssetType::PoolShare => PoolId::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TrustLineEntryExtensionV2Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
@@ -16160,6 +19458,38 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
     }
 }
 
+impl SkipXdr for TrustLineEntryExtensionV2Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineEntryExtensionV2Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TrustLineEntryExtensionV2 is an XDR Struct defined as:
 ///
 /// ```text
@@ -16210,6 +19540,28 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
         w.with_limited_depth(|w| {
             self.liquidity_pool_use_count.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TrustLineEntryExtensionV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i32::skip_xdr(r)?;
+            TrustLineEntryExtensionV2Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineEntryExtensionV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i32::seekable_skip_xdr(r)?;
+            TrustLineEntryExtensionV2Ext::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -16332,6 +19684,40 @@ impl WriteXdr for TrustLineEntryV1Ext {
     }
 }
 
+impl SkipXdr for TrustLineEntryV1Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                2 => TrustLineEntryExtensionV2::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineEntryV1Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                2 => TrustLineEntryExtensionV2::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TrustLineEntryV1 is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -16384,6 +19770,28 @@ impl WriteXdr for TrustLineEntryV1 {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TrustLineEntryV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Liabilities::skip_xdr(r)?;
+            TrustLineEntryV1Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineEntryV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Liabilities::seekable_skip_xdr(r)?;
+            TrustLineEntryV1Ext::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -16518,6 +19926,40 @@ impl WriteXdr for TrustLineEntryExt {
     }
 }
 
+impl SkipXdr for TrustLineEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => TrustLineEntryV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => TrustLineEntryV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TrustLineEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -16609,6 +20051,36 @@ impl WriteXdr for TrustLineEntry {
             self.limit.write_xdr(w)?;
             self.flags.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TrustLineEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            TrustLineAsset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            TrustLineEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TrustLineEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            TrustLineAsset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            TrustLineEntryExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -16717,6 +20189,20 @@ impl WriteXdr for OfferEntryFlags {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for OfferEntryFlags {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for OfferEntryFlags {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -16838,6 +20324,38 @@ impl WriteXdr for OfferEntryExt {
     }
 }
 
+impl SkipXdr for OfferEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OfferEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// OfferEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -16927,6 +20445,40 @@ impl WriteXdr for OfferEntry {
             self.price.write_xdr(w)?;
             self.flags.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for OfferEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Price::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            OfferEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OfferEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Price::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            OfferEntryExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -17042,6 +20594,38 @@ impl WriteXdr for DataEntryExt {
     }
 }
 
+impl SkipXdr for DataEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for DataEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// DataEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -17101,6 +20685,32 @@ impl WriteXdr for DataEntry {
             self.data_name.write_xdr(w)?;
             self.data_value.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for DataEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            String64::skip_xdr(r)?;
+            DataValue::skip_xdr(r)?;
+            DataEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for DataEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            String64::seekable_skip_xdr(r)?;
+            DataValue::seekable_skip_xdr(r)?;
+            DataEntryExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -17241,6 +20851,20 @@ impl WriteXdr for ClaimPredicateType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ClaimPredicateType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClaimPredicateType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -17420,6 +21044,48 @@ impl WriteXdr for ClaimPredicate {
     }
 }
 
+impl SkipXdr for ClaimPredicate {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimPredicateType::Unconditional => (),
+                ClaimPredicateType::And => VecM::<ClaimPredicate, 2>::skip_xdr(r)?,
+                ClaimPredicateType::Or => VecM::<ClaimPredicate, 2>::skip_xdr(r)?,
+                ClaimPredicateType::Not => Option::<Box<ClaimPredicate>>::skip_xdr(r)?,
+                ClaimPredicateType::BeforeAbsoluteTime => i64::skip_xdr(r)?,
+                ClaimPredicateType::BeforeRelativeTime => i64::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimPredicate {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimPredicateType::Unconditional => (),
+                ClaimPredicateType::And => VecM::<ClaimPredicate, 2>::seekable_skip_xdr(r)?,
+                ClaimPredicateType::Or => VecM::<ClaimPredicate, 2>::seekable_skip_xdr(r)?,
+                ClaimPredicateType::Not => Option::<Box<ClaimPredicate>>::seekable_skip_xdr(r)?,
+                ClaimPredicateType::BeforeAbsoluteTime => i64::seekable_skip_xdr(r)?,
+                ClaimPredicateType::BeforeRelativeTime => i64::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClaimantType is an XDR Enum defined as:
 ///
 /// ```text
@@ -17524,6 +21190,20 @@ impl WriteXdr for ClaimantType {
     }
 }
 
+impl SkipXdr for ClaimantType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClaimantType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ClaimantV0 is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -17568,6 +21248,28 @@ impl WriteXdr for ClaimantV0 {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.predicate.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClaimantV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            ClaimPredicate::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimantV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            ClaimPredicate::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -17687,6 +21389,38 @@ impl WriteXdr for Claimant {
     }
 }
 
+impl SkipXdr for Claimant {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimantType::ClaimantTypeV0 => ClaimantV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Claimant {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimantType::ClaimantTypeV0 => ClaimantV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClaimableBalanceFlags is an XDR Enum defined as:
 ///
 /// ```text
@@ -17791,6 +21525,20 @@ impl WriteXdr for ClaimableBalanceFlags {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ClaimableBalanceFlags {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceFlags {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -17912,6 +21660,38 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     }
 }
 
+impl SkipXdr for ClaimableBalanceEntryExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceEntryExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClaimableBalanceEntryExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -17962,6 +21742,28 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.flags.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClaimableBalanceEntryExtensionV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceEntryExtensionV1Ext::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceEntryExtensionV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceEntryExtensionV1Ext::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -18084,6 +21886,40 @@ impl WriteXdr for ClaimableBalanceEntryExt {
     }
 }
 
+impl SkipXdr for ClaimableBalanceEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => ClaimableBalanceEntryExtensionV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => ClaimableBalanceEntryExtensionV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClaimableBalanceEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -18165,6 +22001,34 @@ impl WriteXdr for ClaimableBalanceEntry {
     }
 }
 
+impl SkipXdr for ClaimableBalanceEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::skip_xdr(r)?;
+            VecM::<Claimant, 10>::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            ClaimableBalanceEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::seekable_skip_xdr(r)?;
+            VecM::<Claimant, 10>::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            ClaimableBalanceEntryExt::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LiquidityPoolConstantProductParameters is an XDR Struct defined as:
 ///
 /// ```text
@@ -18213,6 +22077,30 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
             self.asset_a.write_xdr(w)?;
             self.asset_b.write_xdr(w)?;
             self.fee.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LiquidityPoolConstantProductParameters {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolConstantProductParameters {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -18292,6 +22180,34 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
             self.reserve_b.write_xdr(w)?;
             self.total_pool_shares.write_xdr(w)?;
             self.pool_shares_trust_line_count.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LiquidityPoolEntryConstantProduct {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LiquidityPoolConstantProductParameters::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolEntryConstantProduct {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LiquidityPoolConstantProductParameters::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -18422,6 +22338,42 @@ impl WriteXdr for LiquidityPoolEntryBody {
     }
 }
 
+impl SkipXdr for LiquidityPoolEntryBody {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolType::LiquidityPoolConstantProduct => {
+                    LiquidityPoolEntryConstantProduct::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolEntryBody {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolType::LiquidityPoolConstantProduct => {
+                    LiquidityPoolEntryConstantProduct::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LiquidityPoolEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -18481,6 +22433,28 @@ impl WriteXdr for LiquidityPoolEntry {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.body.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LiquidityPoolEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::skip_xdr(r)?;
+            LiquidityPoolEntryBody::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::seekable_skip_xdr(r)?;
+            LiquidityPoolEntryBody::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -18596,6 +22570,20 @@ impl WriteXdr for ContractDataDurability {
     }
 }
 
+impl SkipXdr for ContractDataDurability {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractDataDurability {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ContractDataEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -18652,6 +22640,34 @@ impl WriteXdr for ContractDataEntry {
             self.key.write_xdr(w)?;
             self.durability.write_xdr(w)?;
             self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            ScAddress::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            ContractDataDurability::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            ScAddress::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
+            ContractDataDurability::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -18741,6 +22757,46 @@ impl WriteXdr for ContractCodeCostInputs {
     }
 }
 
+impl SkipXdr for ContractCodeCostInputs {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractCodeCostInputs {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ContractCodeEntryV1 is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -18785,6 +22841,28 @@ impl WriteXdr for ContractCodeEntryV1 {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.cost_inputs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractCodeEntryV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            ContractCodeCostInputs::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractCodeEntryV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            ContractCodeCostInputs::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -18911,6 +22989,40 @@ impl WriteXdr for ContractCodeEntryExt {
     }
 }
 
+impl SkipXdr for ContractCodeEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => ContractCodeEntryV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractCodeEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => ContractCodeEntryV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ContractCodeEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -18956,7 +23068,7 @@ impl ReadXdr for ContractCodeEntry {
             Ok(Self {
                 ext: ContractCodeEntryExt::read_xdr(r)?,
                 hash: Hash::read_xdr(r)?,
-                code: BytesM::read_xdr(r)?,
+                code: BytesM::<{ u32::MAX }>::read_xdr(r)?,
             })
         })
     }
@@ -18969,6 +23081,30 @@ impl WriteXdr for ContractCodeEntry {
             self.ext.write_xdr(w)?;
             self.hash.write_xdr(w)?;
             self.code.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractCodeEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractCodeEntryExt::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            BytesM::<{ u32::MAX }>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractCodeEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractCodeEntryExt::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
+            BytesM::<{ u32::MAX }>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19018,6 +23154,28 @@ impl WriteXdr for TtlEntry {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
             self.live_until_ledger_seq.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TtlEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TtlEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19133,6 +23291,38 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
     }
 }
 
+impl SkipXdr for LedgerEntryExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerEntryExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -19183,6 +23373,28 @@ impl WriteXdr for LedgerEntryExtensionV1 {
         w.with_limited_depth(|w| {
             self.sponsoring_id.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerEntryExtensionV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SponsorshipDescriptor::skip_xdr(r)?;
+            LedgerEntryExtensionV1Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryExtensionV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SponsorshipDescriptor::seekable_skip_xdr(r)?;
+            LedgerEntryExtensionV1Ext::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19393,6 +23605,56 @@ impl WriteXdr for LedgerEntryData {
     }
 }
 
+impl SkipXdr for LedgerEntryData {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerEntryType::Account => AccountEntry::skip_xdr(r)?,
+                LedgerEntryType::Trustline => TrustLineEntry::skip_xdr(r)?,
+                LedgerEntryType::Offer => OfferEntry::skip_xdr(r)?,
+                LedgerEntryType::Data => DataEntry::skip_xdr(r)?,
+                LedgerEntryType::ClaimableBalance => ClaimableBalanceEntry::skip_xdr(r)?,
+                LedgerEntryType::LiquidityPool => LiquidityPoolEntry::skip_xdr(r)?,
+                LedgerEntryType::ContractData => ContractDataEntry::skip_xdr(r)?,
+                LedgerEntryType::ContractCode => ContractCodeEntry::skip_xdr(r)?,
+                LedgerEntryType::ConfigSetting => ConfigSettingEntry::skip_xdr(r)?,
+                LedgerEntryType::Ttl => TtlEntry::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryData {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerEntryType::Account => AccountEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::Trustline => TrustLineEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::Offer => OfferEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::Data => DataEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::ClaimableBalance => ClaimableBalanceEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::LiquidityPool => LiquidityPoolEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::ContractData => ContractDataEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::ContractCode => ContractCodeEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::ConfigSetting => ConfigSettingEntry::seekable_skip_xdr(r)?,
+                LedgerEntryType::Ttl => TtlEntry::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerEntryExt is an XDR NestedUnion defined as:
 ///
 /// ```text
@@ -19510,6 +23772,40 @@ impl WriteXdr for LedgerEntryExt {
     }
 }
 
+impl SkipXdr for LedgerEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => LedgerEntryExtensionV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => LedgerEntryExtensionV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -19596,6 +23892,30 @@ impl WriteXdr for LedgerEntry {
     }
 }
 
+impl SkipXdr for LedgerEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            LedgerEntryData::skip_xdr(r)?;
+            LedgerEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            LedgerEntryData::seekable_skip_xdr(r)?;
+            LedgerEntryExt::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerKeyAccount is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -19636,6 +23956,26 @@ impl WriteXdr for LedgerKeyAccount {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerKeyAccount {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyAccount {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19685,6 +24025,28 @@ impl WriteXdr for LedgerKeyTrustLine {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.asset.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerKeyTrustLine {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            TrustLineAsset::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyTrustLine {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            TrustLineAsset::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19743,6 +24105,28 @@ impl WriteXdr for LedgerKeyOffer {
     }
 }
 
+impl SkipXdr for LedgerKeyOffer {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyOffer {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerKeyData is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -19787,6 +24171,28 @@ impl WriteXdr for LedgerKeyData {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.data_name.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerKeyData {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            String64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyData {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            String64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19837,6 +24243,26 @@ impl WriteXdr for LedgerKeyClaimableBalance {
     }
 }
 
+impl SkipXdr for LedgerKeyClaimableBalance {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyClaimableBalance {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerKeyLiquidityPool is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -19877,6 +24303,26 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerKeyLiquidityPool {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyLiquidityPool {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -19935,6 +24381,30 @@ impl WriteXdr for LedgerKeyContractData {
     }
 }
 
+impl SkipXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            ContractDataDurability::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
+            ContractDataDurability::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerKeyContractCode is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -19975,6 +24445,26 @@ impl WriteXdr for LedgerKeyContractCode {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerKeyContractCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyContractCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -20025,6 +24515,26 @@ impl WriteXdr for LedgerKeyConfigSetting {
     }
 }
 
+impl SkipXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ConfigSettingId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ConfigSettingId::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerKeyTtl is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -20066,6 +24576,26 @@ impl WriteXdr for LedgerKeyTtl {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerKeyTtl {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKeyTtl {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -20317,6 +24847,58 @@ impl WriteXdr for LedgerKey {
     }
 }
 
+impl SkipXdr for LedgerKey {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerEntryType::Account => LedgerKeyAccount::skip_xdr(r)?,
+                LedgerEntryType::Trustline => LedgerKeyTrustLine::skip_xdr(r)?,
+                LedgerEntryType::Offer => LedgerKeyOffer::skip_xdr(r)?,
+                LedgerEntryType::Data => LedgerKeyData::skip_xdr(r)?,
+                LedgerEntryType::ClaimableBalance => LedgerKeyClaimableBalance::skip_xdr(r)?,
+                LedgerEntryType::LiquidityPool => LedgerKeyLiquidityPool::skip_xdr(r)?,
+                LedgerEntryType::ContractData => LedgerKeyContractData::skip_xdr(r)?,
+                LedgerEntryType::ContractCode => LedgerKeyContractCode::skip_xdr(r)?,
+                LedgerEntryType::ConfigSetting => LedgerKeyConfigSetting::skip_xdr(r)?,
+                LedgerEntryType::Ttl => LedgerKeyTtl::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerKey {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerEntryType::Account => LedgerKeyAccount::seekable_skip_xdr(r)?,
+                LedgerEntryType::Trustline => LedgerKeyTrustLine::seekable_skip_xdr(r)?,
+                LedgerEntryType::Offer => LedgerKeyOffer::seekable_skip_xdr(r)?,
+                LedgerEntryType::Data => LedgerKeyData::seekable_skip_xdr(r)?,
+                LedgerEntryType::ClaimableBalance => {
+                    LedgerKeyClaimableBalance::seekable_skip_xdr(r)?
+                }
+                LedgerEntryType::LiquidityPool => LedgerKeyLiquidityPool::seekable_skip_xdr(r)?,
+                LedgerEntryType::ContractData => LedgerKeyContractData::seekable_skip_xdr(r)?,
+                LedgerEntryType::ContractCode => LedgerKeyContractCode::seekable_skip_xdr(r)?,
+                LedgerEntryType::ConfigSetting => LedgerKeyConfigSetting::seekable_skip_xdr(r)?,
+                LedgerEntryType::Ttl => LedgerKeyTtl::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// EnvelopeType is an XDR Enum defined as:
 ///
 /// ```text
@@ -20479,6 +25061,20 @@ impl WriteXdr for EnvelopeType {
     }
 }
 
+impl SkipXdr for EnvelopeType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for EnvelopeType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// BucketListType is an XDR Enum defined as:
 ///
 /// ```text
@@ -20584,6 +25180,20 @@ impl WriteXdr for BucketListType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for BucketListType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for BucketListType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -20711,6 +25321,20 @@ impl WriteXdr for BucketEntryType {
     }
 }
 
+impl SkipXdr for BucketEntryType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for BucketEntryType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// HotArchiveBucketEntryType is an XDR Enum defined as:
 ///
 /// ```text
@@ -20826,6 +25450,20 @@ impl WriteXdr for HotArchiveBucketEntryType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for HotArchiveBucketEntryType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for HotArchiveBucketEntryType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -20946,6 +25584,40 @@ impl WriteXdr for BucketMetadataExt {
     }
 }
 
+impl SkipXdr for BucketMetadataExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => BucketListType::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BucketMetadataExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => BucketListType::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// BucketMetadata is an XDR Struct defined as:
 ///
 /// ```text
@@ -21000,6 +25672,28 @@ impl WriteXdr for BucketMetadata {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for BucketMetadata {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            BucketMetadataExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BucketMetadata {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            BucketMetadataExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -21142,6 +25836,44 @@ impl WriteXdr for BucketEntry {
     }
 }
 
+impl SkipXdr for BucketEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                BucketEntryType::Liveentry => LedgerEntry::skip_xdr(r)?,
+                BucketEntryType::Initentry => LedgerEntry::skip_xdr(r)?,
+                BucketEntryType::Deadentry => LedgerKey::skip_xdr(r)?,
+                BucketEntryType::Metaentry => BucketMetadata::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BucketEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                BucketEntryType::Liveentry => LedgerEntry::seekable_skip_xdr(r)?,
+                BucketEntryType::Initentry => LedgerEntry::seekable_skip_xdr(r)?,
+                BucketEntryType::Deadentry => LedgerKey::seekable_skip_xdr(r)?,
+                BucketEntryType::Metaentry => BucketMetadata::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// HotArchiveBucketEntry is an XDR Union defined as:
 ///
 /// ```text
@@ -21274,6 +26006,44 @@ impl WriteXdr for HotArchiveBucketEntry {
     }
 }
 
+impl SkipXdr for HotArchiveBucketEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: HotArchiveBucketEntryType =
+                <HotArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                HotArchiveBucketEntryType::Archived => LedgerEntry::skip_xdr(r)?,
+                HotArchiveBucketEntryType::Live => LedgerKey::skip_xdr(r)?,
+                HotArchiveBucketEntryType::Metaentry => BucketMetadata::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HotArchiveBucketEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: HotArchiveBucketEntryType =
+                <HotArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                HotArchiveBucketEntryType::Archived => LedgerEntry::seekable_skip_xdr(r)?,
+                HotArchiveBucketEntryType::Live => LedgerKey::seekable_skip_xdr(r)?,
+                HotArchiveBucketEntryType::Metaentry => BucketMetadata::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// UpgradeType is an XDR Typedef defined as:
 ///
 /// ```text
@@ -21329,6 +26099,20 @@ impl WriteXdr for UpgradeType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for UpgradeType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<128>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for UpgradeType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<128>::seekable_skip_xdr(r))
     }
 }
 
@@ -21489,6 +26273,20 @@ impl WriteXdr for StellarValueType {
     }
 }
 
+impl SkipXdr for StellarValueType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for StellarValueType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// LedgerCloseValueSignature is an XDR Struct defined as:
 ///
 /// ```text
@@ -21533,6 +26331,28 @@ impl WriteXdr for LedgerCloseValueSignature {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
             self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerCloseValueSignature {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            Signature::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseValueSignature {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            Signature::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -21655,6 +26475,40 @@ impl WriteXdr for StellarValueExt {
     }
 }
 
+impl SkipXdr for StellarValueExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                StellarValueType::Basic => (),
+                StellarValueType::Signed => LedgerCloseValueSignature::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for StellarValueExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                StellarValueType::Basic => (),
+                StellarValueType::Signed => LedgerCloseValueSignature::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// StellarValue is an XDR Struct defined as:
 ///
 /// ```text
@@ -21722,6 +26576,32 @@ impl WriteXdr for StellarValue {
             self.close_time.write_xdr(w)?;
             self.upgrades.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for StellarValue {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            TimePoint::skip_xdr(r)?;
+            VecM::<UpgradeType, 6>::skip_xdr(r)?;
+            StellarValueExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for StellarValue {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            TimePoint::seekable_skip_xdr(r)?;
+            VecM::<UpgradeType, 6>::seekable_skip_xdr(r)?;
+            StellarValueExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -21851,6 +26731,20 @@ impl WriteXdr for LedgerHeaderFlags {
     }
 }
 
+impl SkipXdr for LedgerHeaderFlags {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeaderFlags {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// LedgerHeaderExtensionV1Ext is an XDR NestedUnion defined as:
 ///
 /// ```text
@@ -21961,6 +26855,38 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
     }
 }
 
+impl SkipXdr for LedgerHeaderExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeaderExtensionV1Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerHeaderExtensionV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -22011,6 +26937,28 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerHeaderExtensionV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            LedgerHeaderExtensionV1Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeaderExtensionV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            LedgerHeaderExtensionV1Ext::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -22127,6 +27075,40 @@ impl WriteXdr for LedgerHeaderExt {
             match self {
                 Self::V0 => ().write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerHeaderExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => LedgerHeaderExtensionV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeaderExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => LedgerHeaderExtensionV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -22262,6 +27244,54 @@ impl WriteXdr for LedgerHeader {
             self.max_tx_set_size.write_xdr(w)?;
             self.skip_list.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerHeader {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            StellarValue::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            <[Hash; 4]>::skip_xdr(r)?;
+            LedgerHeaderExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeader {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
+            StellarValue::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            <[Hash; 4]>::seekable_skip_xdr(r)?;
+            LedgerHeaderExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -22411,6 +27441,20 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
+impl SkipXdr for LedgerUpgradeType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LedgerUpgradeType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ConfigUpgradeSetKey is an XDR Struct defined as:
 ///
 /// ```text
@@ -22454,6 +27498,28 @@ impl WriteXdr for ConfigUpgradeSetKey {
         w.with_limited_depth(|w| {
             self.contract_id.write_xdr(w)?;
             self.content_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigUpgradeSetKey {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractId::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigUpgradeSetKey {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractId::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -22632,6 +27698,50 @@ impl WriteXdr for LedgerUpgrade {
     }
 }
 
+impl SkipXdr for LedgerUpgrade {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerUpgradeType::Version => u32::skip_xdr(r)?,
+                LedgerUpgradeType::BaseFee => u32::skip_xdr(r)?,
+                LedgerUpgradeType::MaxTxSetSize => u32::skip_xdr(r)?,
+                LedgerUpgradeType::BaseReserve => u32::skip_xdr(r)?,
+                LedgerUpgradeType::Flags => u32::skip_xdr(r)?,
+                LedgerUpgradeType::Config => ConfigUpgradeSetKey::skip_xdr(r)?,
+                LedgerUpgradeType::MaxSorobanTxSetSize => u32::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerUpgrade {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerUpgradeType::Version => u32::seekable_skip_xdr(r)?,
+                LedgerUpgradeType::BaseFee => u32::seekable_skip_xdr(r)?,
+                LedgerUpgradeType::MaxTxSetSize => u32::seekable_skip_xdr(r)?,
+                LedgerUpgradeType::BaseReserve => u32::seekable_skip_xdr(r)?,
+                LedgerUpgradeType::Flags => u32::seekable_skip_xdr(r)?,
+                LedgerUpgradeType::Config => ConfigUpgradeSetKey::seekable_skip_xdr(r)?,
+                LedgerUpgradeType::MaxSorobanTxSetSize => u32::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ConfigUpgradeSet is an XDR Struct defined as:
 ///
 /// ```text
@@ -22671,6 +27781,26 @@ impl WriteXdr for ConfigUpgradeSet {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.updated_entry.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ConfigSettingEntry>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ConfigSettingEntry>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -22783,6 +27913,20 @@ impl WriteXdr for TxSetComponentType {
     }
 }
 
+impl SkipXdr for TxSetComponentType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TxSetComponentType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// DependentTxCluster is an XDR Typedef defined as:
 ///
 /// ```text
@@ -22838,6 +27982,20 @@ impl WriteXdr for DependentTxCluster {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for DependentTxCluster {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<TransactionEnvelope>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for DependentTxCluster {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<TransactionEnvelope>::seekable_skip_xdr(r))
     }
 }
 
@@ -22948,6 +28106,20 @@ impl WriteXdr for ParallelTxExecutionStage {
     }
 }
 
+impl SkipXdr for ParallelTxExecutionStage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<DependentTxCluster>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ParallelTxExecutionStage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<DependentTxCluster>::seekable_skip_xdr(r))
+    }
+}
+
 impl Deref for ParallelTxExecutionStage {
     type Target = VecM<DependentTxCluster>;
     fn deref(&self) -> &Self::Target {
@@ -23053,6 +28225,28 @@ impl WriteXdr for ParallelTxsComponent {
     }
 }
 
+impl SkipXdr for ParallelTxsComponent {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<i64>::skip_xdr(r)?;
+            VecM::<ParallelTxExecutionStage>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ParallelTxsComponent {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<i64>::seekable_skip_xdr(r)?;
+            VecM::<ParallelTxExecutionStage>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -23101,6 +28295,28 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
         w.with_limited_depth(|w| {
             self.base_fee.write_xdr(w)?;
             self.txs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TxSetComponentTxsMaybeDiscountedFee {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<i64>::skip_xdr(r)?;
+            VecM::<TransactionEnvelope>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TxSetComponentTxsMaybeDiscountedFee {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<i64>::seekable_skip_xdr(r)?;
+            VecM::<TransactionEnvelope>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -23227,6 +28443,42 @@ impl WriteXdr for TxSetComponent {
     }
 }
 
+impl SkipXdr for TxSetComponent {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => {
+                    TxSetComponentTxsMaybeDiscountedFee::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TxSetComponent {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => {
+                    TxSetComponentTxsMaybeDiscountedFee::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionPhase is an XDR Union defined as:
 ///
 /// ```text
@@ -23344,6 +28596,40 @@ impl WriteXdr for TransactionPhase {
     }
 }
 
+impl SkipXdr for TransactionPhase {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => VecM::<TxSetComponent>::skip_xdr(r)?,
+                1 => ParallelTxsComponent::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionPhase {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => VecM::<TxSetComponent>::seekable_skip_xdr(r)?,
+                1 => ParallelTxsComponent::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionSet is an XDR Struct defined as:
 ///
 /// ```text
@@ -23393,6 +28679,28 @@ impl WriteXdr for TransactionSet {
     }
 }
 
+impl SkipXdr for TransactionSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            VecM::<TransactionEnvelope>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            VecM::<TransactionEnvelope>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TransactionSetV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -23437,6 +28745,28 @@ impl WriteXdr for TransactionSetV1 {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
             self.phases.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionSetV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            VecM::<TransactionPhase>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionSetV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            VecM::<TransactionPhase>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -23553,6 +28883,38 @@ impl WriteXdr for GeneralizedTransactionSet {
     }
 }
 
+impl SkipXdr for GeneralizedTransactionSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                1 => TransactionSetV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for GeneralizedTransactionSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                1 => TransactionSetV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionResultPair is an XDR Struct defined as:
 ///
 /// ```text
@@ -23602,6 +28964,28 @@ impl WriteXdr for TransactionResultPair {
     }
 }
 
+impl SkipXdr for TransactionResultPair {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            TransactionResult::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultPair {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            TransactionResult::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TransactionResultSet is an XDR Struct defined as:
 ///
 /// ```text
@@ -23642,6 +29026,26 @@ impl WriteXdr for TransactionResultSet {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.results.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionResultSet {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<TransactionResultPair>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultSet {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<TransactionResultPair>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -23764,6 +29168,40 @@ impl WriteXdr for TransactionHistoryEntryExt {
     }
 }
 
+impl SkipXdr for TransactionHistoryEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => GeneralizedTransactionSet::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionHistoryEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => GeneralizedTransactionSet::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionHistoryEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -23821,6 +29259,30 @@ impl WriteXdr for TransactionHistoryEntry {
             self.ledger_seq.write_xdr(w)?;
             self.tx_set.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionHistoryEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            TransactionSet::skip_xdr(r)?;
+            TransactionHistoryEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionHistoryEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            TransactionSet::seekable_skip_xdr(r)?;
+            TransactionHistoryEntryExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -23936,6 +29398,38 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
     }
 }
 
+impl SkipXdr for TransactionHistoryResultEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionHistoryResultEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionHistoryResultEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -23991,6 +29485,30 @@ impl WriteXdr for TransactionHistoryResultEntry {
             self.ledger_seq.write_xdr(w)?;
             self.tx_result_set.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionHistoryResultEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            TransactionResultSet::skip_xdr(r)?;
+            TransactionHistoryResultEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionHistoryResultEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            TransactionResultSet::seekable_skip_xdr(r)?;
+            TransactionHistoryResultEntryExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -24106,6 +29624,38 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
     }
 }
 
+impl SkipXdr for LedgerHeaderHistoryEntryExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeaderHistoryEntryExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerHeaderHistoryEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -24166,6 +29716,30 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
     }
 }
 
+impl SkipXdr for LedgerHeaderHistoryEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            LedgerHeader::skip_xdr(r)?;
+            LedgerHeaderHistoryEntryExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerHeaderHistoryEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            LedgerHeader::seekable_skip_xdr(r)?;
+            LedgerHeaderHistoryEntryExt::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerScpMessages is an XDR Struct defined as:
 ///
 /// ```text
@@ -24215,6 +29789,28 @@ impl WriteXdr for LedgerScpMessages {
     }
 }
 
+impl SkipXdr for LedgerScpMessages {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            VecM::<ScpEnvelope>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerScpMessages {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            VecM::<ScpEnvelope>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScpHistoryEntryV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -24259,6 +29855,28 @@ impl WriteXdr for ScpHistoryEntryV0 {
         w.with_limited_depth(|w| {
             self.quorum_sets.write_xdr(w)?;
             self.ledger_messages.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScpHistoryEntryV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScpQuorumSet>::skip_xdr(r)?;
+            LedgerScpMessages::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpHistoryEntryV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScpQuorumSet>::seekable_skip_xdr(r)?;
+            LedgerScpMessages::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -24368,6 +29986,38 @@ impl WriteXdr for ScpHistoryEntry {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ScpHistoryEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => ScpHistoryEntryV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ScpHistoryEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => ScpHistoryEntryV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -24498,6 +30148,20 @@ impl WriteXdr for LedgerEntryChangeType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for LedgerEntryChangeType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryChangeType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -24646,6 +30310,46 @@ impl WriteXdr for LedgerEntryChange {
     }
 }
 
+impl SkipXdr for LedgerEntryChange {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerEntryChangeType::Created => LedgerEntry::skip_xdr(r)?,
+                LedgerEntryChangeType::Updated => LedgerEntry::skip_xdr(r)?,
+                LedgerEntryChangeType::Removed => LedgerKey::skip_xdr(r)?,
+                LedgerEntryChangeType::State => LedgerEntry::skip_xdr(r)?,
+                LedgerEntryChangeType::Restored => LedgerEntry::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryChange {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LedgerEntryChangeType::Created => LedgerEntry::seekable_skip_xdr(r)?,
+                LedgerEntryChangeType::Updated => LedgerEntry::seekable_skip_xdr(r)?,
+                LedgerEntryChangeType::Removed => LedgerKey::seekable_skip_xdr(r)?,
+                LedgerEntryChangeType::State => LedgerEntry::seekable_skip_xdr(r)?,
+                LedgerEntryChangeType::Restored => LedgerEntry::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerEntryChanges is an XDR Typedef defined as:
 ///
 /// ```text
@@ -24701,6 +30405,20 @@ impl WriteXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for LedgerEntryChanges {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<LedgerEntryChange>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LedgerEntryChanges {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<LedgerEntryChange>::seekable_skip_xdr(r))
     }
 }
 
@@ -24798,6 +30516,26 @@ impl WriteXdr for OperationMeta {
     }
 }
 
+impl SkipXdr for OperationMeta {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerEntryChanges::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OperationMeta {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TransactionMetaV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -24842,6 +30580,28 @@ impl WriteXdr for TransactionMetaV1 {
         w.with_limited_depth(|w| {
             self.tx_changes.write_xdr(w)?;
             self.operations.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionMetaV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerEntryChanges::skip_xdr(r)?;
+            VecM::<OperationMeta>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionMetaV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            VecM::<OperationMeta>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -24897,6 +30657,30 @@ impl WriteXdr for TransactionMetaV2 {
             self.tx_changes_before.write_xdr(w)?;
             self.operations.write_xdr(w)?;
             self.tx_changes_after.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionMetaV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerEntryChanges::skip_xdr(r)?;
+            VecM::<OperationMeta>::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionMetaV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            VecM::<OperationMeta>::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25018,6 +30802,20 @@ impl WriteXdr for ContractEventType {
     }
 }
 
+impl SkipXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ContractEventV0 is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -25062,6 +30860,28 @@ impl WriteXdr for ContractEventV0 {
         w.with_limited_depth(|w| {
             self.topics.write_xdr(w)?;
             self.data.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScVal>::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ScVal>::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25181,6 +31001,38 @@ impl WriteXdr for ContractEventBody {
     }
 }
 
+impl SkipXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => ContractEventV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => ContractEventV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ContractEvent is an XDR Struct defined as:
 ///
 /// ```text
@@ -25251,6 +31103,32 @@ impl WriteXdr for ContractEvent {
     }
 }
 
+impl SkipXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            Option::<ContractId>::skip_xdr(r)?;
+            ContractEventType::skip_xdr(r)?;
+            ContractEventBody::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            Option::<ContractId>::seekable_skip_xdr(r)?;
+            ContractEventType::seekable_skip_xdr(r)?;
+            ContractEventBody::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// DiagnosticEvent is an XDR Struct defined as:
 ///
 /// ```text
@@ -25295,6 +31173,28 @@ impl WriteXdr for DiagnosticEvent {
         w.with_limited_depth(|w| {
             self.in_successful_contract_call.write_xdr(w)?;
             self.event.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            bool::skip_xdr(r)?;
+            ContractEvent::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            bool::seekable_skip_xdr(r)?;
+            ContractEvent::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25391,6 +31291,32 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
                 .write_xdr(w)?;
             self.total_refundable_resource_fee_charged.write_xdr(w)?;
             self.rent_fee_charged.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanTransactionMetaExtV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanTransactionMetaExtV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25513,6 +31439,40 @@ impl WriteXdr for SorobanTransactionMetaExt {
     }
 }
 
+impl SkipXdr for SorobanTransactionMetaExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => SorobanTransactionMetaExtV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanTransactionMetaExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => SorobanTransactionMetaExtV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SorobanTransactionMeta is an XDR Struct defined as:
 ///
 /// ```text
@@ -25571,6 +31531,32 @@ impl WriteXdr for SorobanTransactionMeta {
             self.events.write_xdr(w)?;
             self.return_value.write_xdr(w)?;
             self.diagnostic_events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanTransactionMeta {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanTransactionMetaExt::skip_xdr(r)?;
+            VecM::<ContractEvent>::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            VecM::<DiagnosticEvent>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanTransactionMeta {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanTransactionMetaExt::seekable_skip_xdr(r)?;
+            VecM::<ContractEvent>::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
+            VecM::<DiagnosticEvent>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25641,6 +31627,34 @@ impl WriteXdr for TransactionMetaV3 {
     }
 }
 
+impl SkipXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            VecM::<OperationMeta>::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            Option::<SorobanTransactionMeta>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            VecM::<OperationMeta>::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            Option::<SorobanTransactionMeta>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// OperationMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
@@ -25696,6 +31710,30 @@ impl WriteXdr for OperationMetaV2 {
     }
 }
 
+impl SkipXdr for OperationMetaV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            VecM::<ContractEvent>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OperationMetaV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            VecM::<ContractEvent>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SorobanTransactionMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
@@ -25741,6 +31779,28 @@ impl WriteXdr for SorobanTransactionMetaV2 {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.return_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanTransactionMetaV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanTransactionMetaExt::skip_xdr(r)?;
+            Option::<ScVal>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanTransactionMetaV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanTransactionMetaExt::seekable_skip_xdr(r)?;
+            Option::<ScVal>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25867,6 +31927,20 @@ impl WriteXdr for TransactionEventStage {
     }
 }
 
+impl SkipXdr for TransactionEventStage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TransactionEventStage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// TransactionEvent is an XDR Struct defined as:
 ///
 /// ```text
@@ -25910,6 +31984,28 @@ impl WriteXdr for TransactionEvent {
         w.with_limited_depth(|w| {
             self.stage.write_xdr(w)?;
             self.event.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionEvent {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TransactionEventStage::skip_xdr(r)?;
+            ContractEvent::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionEvent {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TransactionEventStage::seekable_skip_xdr(r)?;
+            ContractEvent::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -25989,6 +32085,38 @@ impl WriteXdr for TransactionMetaV4 {
     }
 }
 
+impl SkipXdr for TransactionMetaV4 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            VecM::<OperationMetaV2>::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            Option::<SorobanTransactionMetaV2>::skip_xdr(r)?;
+            VecM::<TransactionEvent>::skip_xdr(r)?;
+            VecM::<DiagnosticEvent>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionMetaV4 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            VecM::<OperationMetaV2>::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            Option::<SorobanTransactionMetaV2>::seekable_skip_xdr(r)?;
+            VecM::<TransactionEvent>::seekable_skip_xdr(r)?;
+            VecM::<DiagnosticEvent>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// InvokeHostFunctionSuccessPreImage is an XDR Struct defined as:
 ///
 /// ```text
@@ -26033,6 +32161,28 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
         w.with_limited_depth(|w| {
             self.return_value.write_xdr(w)?;
             self.events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for InvokeHostFunctionSuccessPreImage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScVal::skip_xdr(r)?;
+            VecM::<ContractEvent>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InvokeHostFunctionSuccessPreImage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScVal::seekable_skip_xdr(r)?;
+            VecM::<ContractEvent>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -26176,6 +32326,46 @@ impl WriteXdr for TransactionMeta {
     }
 }
 
+impl SkipXdr for TransactionMeta {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => VecM::<OperationMeta>::skip_xdr(r)?,
+                1 => TransactionMetaV1::skip_xdr(r)?,
+                2 => TransactionMetaV2::skip_xdr(r)?,
+                3 => TransactionMetaV3::skip_xdr(r)?,
+                4 => TransactionMetaV4::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionMeta {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => VecM::<OperationMeta>::seekable_skip_xdr(r)?,
+                1 => TransactionMetaV1::seekable_skip_xdr(r)?,
+                2 => TransactionMetaV2::seekable_skip_xdr(r)?,
+                3 => TransactionMetaV3::seekable_skip_xdr(r)?,
+                4 => TransactionMetaV4::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionResultMeta is an XDR Struct defined as:
 ///
 /// ```text
@@ -26224,6 +32414,30 @@ impl WriteXdr for TransactionResultMeta {
             self.result.write_xdr(w)?;
             self.fee_processing.write_xdr(w)?;
             self.tx_apply_processing.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionResultMeta {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TransactionResultPair::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            TransactionMeta::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultMeta {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TransactionResultPair::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            TransactionMeta::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -26292,6 +32506,34 @@ impl WriteXdr for TransactionResultMetaV1 {
     }
 }
 
+impl SkipXdr for TransactionResultMetaV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            TransactionResultPair::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            TransactionMeta::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultMetaV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            TransactionResultPair::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            TransactionMeta::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// UpgradeEntryMeta is an XDR Struct defined as:
 ///
 /// ```text
@@ -26336,6 +32578,28 @@ impl WriteXdr for UpgradeEntryMeta {
         w.with_limited_depth(|w| {
             self.upgrade.write_xdr(w)?;
             self.changes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for UpgradeEntryMeta {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerUpgrade::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for UpgradeEntryMeta {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerUpgrade::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -26411,6 +32675,34 @@ impl WriteXdr for LedgerCloseMetaV0 {
     }
 }
 
+impl SkipXdr for LedgerCloseMetaV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerHeaderHistoryEntry::skip_xdr(r)?;
+            TransactionSet::skip_xdr(r)?;
+            VecM::<TransactionResultMeta>::skip_xdr(r)?;
+            VecM::<UpgradeEntryMeta>::skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMetaV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerHeaderHistoryEntry::seekable_skip_xdr(r)?;
+            TransactionSet::seekable_skip_xdr(r)?;
+            VecM::<TransactionResultMeta>::seekable_skip_xdr(r)?;
+            VecM::<UpgradeEntryMeta>::seekable_skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerCloseMetaExtV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -26459,6 +32751,28 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.soroban_fee_write1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerCloseMetaExtV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMetaExtV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -26581,6 +32895,40 @@ impl WriteXdr for LedgerCloseMetaExt {
     }
 }
 
+impl SkipXdr for LedgerCloseMetaExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => LedgerCloseMetaExtV1::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMetaExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => LedgerCloseMetaExtV1::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerCloseMetaV1 is an XDR Struct defined as:
 ///
 /// ```text
@@ -26679,6 +33027,42 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
+impl SkipXdr for LedgerCloseMetaV1 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::skip_xdr(r)?;
+            GeneralizedTransactionSet::skip_xdr(r)?;
+            VecM::<TransactionResultMeta>::skip_xdr(r)?;
+            VecM::<UpgradeEntryMeta>::skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            VecM::<LedgerKey>::skip_xdr(r)?;
+            VecM::<LedgerEntry>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMetaV1 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::seekable_skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::seekable_skip_xdr(r)?;
+            GeneralizedTransactionSet::seekable_skip_xdr(r)?;
+            VecM::<TransactionResultMeta>::seekable_skip_xdr(r)?;
+            VecM::<UpgradeEntryMeta>::seekable_skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            VecM::<LedgerKey>::seekable_skip_xdr(r)?;
+            VecM::<LedgerEntry>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerCloseMetaV2 is an XDR Struct defined as:
 ///
 /// ```text
@@ -26766,6 +33150,40 @@ impl WriteXdr for LedgerCloseMetaV2 {
             self.scp_info.write_xdr(w)?;
             self.total_byte_size_of_live_soroban_state.write_xdr(w)?;
             self.evicted_keys.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::skip_xdr(r)?;
+            GeneralizedTransactionSet::skip_xdr(r)?;
+            VecM::<TransactionResultMetaV1>::skip_xdr(r)?;
+            VecM::<UpgradeEntryMeta>::skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            VecM::<LedgerKey>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::seekable_skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::seekable_skip_xdr(r)?;
+            GeneralizedTransactionSet::seekable_skip_xdr(r)?;
+            VecM::<TransactionResultMetaV1>::seekable_skip_xdr(r)?;
+            VecM::<UpgradeEntryMeta>::seekable_skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            VecM::<LedgerKey>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -26889,6 +33307,42 @@ impl WriteXdr for LedgerCloseMeta {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
                 Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerCloseMeta {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => LedgerCloseMetaV0::skip_xdr(r)?,
+                1 => LedgerCloseMetaV1::skip_xdr(r)?,
+                2 => LedgerCloseMetaV2::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerCloseMeta {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => LedgerCloseMetaV0::seekable_skip_xdr(r)?,
+                1 => LedgerCloseMetaV1::seekable_skip_xdr(r)?,
+                2 => LedgerCloseMetaV2::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -27021,6 +33475,20 @@ impl WriteXdr for ErrorCode {
     }
 }
 
+impl SkipXdr for ErrorCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ErrorCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// SError is an XDR Struct defined as:
 ///
 /// ```text
@@ -27065,6 +33533,28 @@ impl WriteXdr for SError {
         w.with_limited_depth(|w| {
             self.code.write_xdr(w)?;
             self.msg.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SError {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ErrorCode::skip_xdr(r)?;
+            StringM::<100>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SError {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ErrorCode::seekable_skip_xdr(r)?;
+            StringM::<100>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -27115,6 +33605,26 @@ impl WriteXdr for SendMore {
     }
 }
 
+impl SkipXdr for SendMore {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SendMore {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SendMoreExtended is an XDR Struct defined as:
 ///
 /// ```text
@@ -27159,6 +33669,28 @@ impl WriteXdr for SendMoreExtended {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
             self.num_bytes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SendMoreExtended {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SendMoreExtended {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -27216,6 +33748,30 @@ impl WriteXdr for AuthCert {
             self.pubkey.write_xdr(w)?;
             self.expiration.write_xdr(w)?;
             self.sig.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AuthCert {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Curve25519Public::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Signature::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AuthCert {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Curve25519Public::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            Signature::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -27298,6 +33854,42 @@ impl WriteXdr for Hello {
     }
 }
 
+impl SkipXdr for Hello {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Hash::skip_xdr(r)?;
+            StringM::<100>::skip_xdr(r)?;
+            i32::skip_xdr(r)?;
+            NodeId::skip_xdr(r)?;
+            AuthCert::skip_xdr(r)?;
+            Uint256::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Hello {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Hash::seekable_skip_xdr(r)?;
+            StringM::<100>::seekable_skip_xdr(r)?;
+            i32::seekable_skip_xdr(r)?;
+            NodeId::seekable_skip_xdr(r)?;
+            AuthCert::seekable_skip_xdr(r)?;
+            Uint256::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// AuthMsgFlagFlowControlBytesRequested is an XDR Const defined as:
 ///
 /// ```text
@@ -27346,6 +33938,26 @@ impl WriteXdr for Auth {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Auth {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Auth {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -27456,6 +34068,20 @@ impl WriteXdr for IpAddrType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for IpAddrType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for IpAddrType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -27576,6 +34202,40 @@ impl WriteXdr for PeerAddressIp {
     }
 }
 
+impl SkipXdr for PeerAddressIp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                IpAddrType::IPv4 => <[u8; 4]>::skip_xdr(r)?,
+                IpAddrType::IPv6 => <[u8; 16]>::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PeerAddressIp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                IpAddrType::IPv4 => <[u8; 4]>::seekable_skip_xdr(r)?,
+                IpAddrType::IPv6 => <[u8; 16]>::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// PeerAddress is an XDR Struct defined as:
 ///
 /// ```text
@@ -27631,6 +34291,30 @@ impl WriteXdr for PeerAddress {
             self.ip.write_xdr(w)?;
             self.port.write_xdr(w)?;
             self.num_failures.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PeerAddress {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PeerAddressIp::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PeerAddress {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PeerAddressIp::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -27878,6 +34562,20 @@ impl WriteXdr for MessageType {
     }
 }
 
+impl SkipXdr for MessageType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for MessageType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// DontHave is an XDR Struct defined as:
 ///
 /// ```text
@@ -27922,6 +34620,28 @@ impl WriteXdr for DontHave {
         w.with_limited_depth(|w| {
             self.type_.write_xdr(w)?;
             self.req_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for DontHave {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MessageType::skip_xdr(r)?;
+            Uint256::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for DontHave {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MessageType::seekable_skip_xdr(r)?;
+            Uint256::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -28032,6 +34752,20 @@ impl WriteXdr for SurveyMessageCommandType {
     }
 }
 
+impl SkipXdr for SurveyMessageCommandType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SurveyMessageCommandType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// SurveyMessageResponseType is an XDR Enum defined as:
 ///
 /// ```text
@@ -28137,6 +34871,20 @@ impl WriteXdr for SurveyMessageResponseType {
     }
 }
 
+impl SkipXdr for SurveyMessageResponseType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SurveyMessageResponseType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// TimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28190,6 +34938,30 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
     }
 }
 
+impl SkipXdr for TimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28234,6 +35006,28 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
         w.with_limited_depth(|w| {
             self.signature.write_xdr(w)?;
             self.start_collecting.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SignedTimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::skip_xdr(r)?;
+            TimeSlicedSurveyStartCollectingMessage::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SignedTimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::seekable_skip_xdr(r)?;
+            TimeSlicedSurveyStartCollectingMessage::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -28292,6 +35086,30 @@ impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
     }
 }
 
+impl SkipXdr for TimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SignedTimeSlicedSurveyStopCollectingMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28336,6 +35154,28 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
         w.with_limited_depth(|w| {
             self.signature.write_xdr(w)?;
             self.stop_collecting.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SignedTimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::skip_xdr(r)?;
+            TimeSlicedSurveyStopCollectingMessage::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SignedTimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::seekable_skip_xdr(r)?;
+            TimeSlicedSurveyStopCollectingMessage::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -28402,6 +35242,34 @@ impl WriteXdr for SurveyRequestMessage {
     }
 }
 
+impl SkipXdr for SurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            NodeId::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Curve25519Public::skip_xdr(r)?;
+            SurveyMessageCommandType::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            NodeId::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Curve25519Public::seekable_skip_xdr(r)?;
+            SurveyMessageCommandType::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TimeSlicedSurveyRequestMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28459,6 +35327,32 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
     }
 }
 
+impl SkipXdr for TimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SurveyRequestMessage::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SurveyRequestMessage::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SignedTimeSlicedSurveyRequestMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28503,6 +35397,28 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
         w.with_limited_depth(|w| {
             self.request_signature.write_xdr(w)?;
             self.request.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SignedTimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::skip_xdr(r)?;
+            TimeSlicedSurveyRequestMessage::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SignedTimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::seekable_skip_xdr(r)?;
+            TimeSlicedSurveyRequestMessage::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -28563,6 +35479,20 @@ impl WriteXdr for EncryptedBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for EncryptedBody {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<64000>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for EncryptedBody {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<64000>::seekable_skip_xdr(r))
     }
 }
 
@@ -28676,6 +35606,34 @@ impl WriteXdr for SurveyResponseMessage {
     }
 }
 
+impl SkipXdr for SurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            NodeId::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            SurveyMessageCommandType::skip_xdr(r)?;
+            EncryptedBody::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            NodeId::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            SurveyMessageCommandType::seekable_skip_xdr(r)?;
+            EncryptedBody::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TimeSlicedSurveyResponseMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28725,6 +35683,28 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
     }
 }
 
+impl SkipXdr for TimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SurveyResponseMessage::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SurveyResponseMessage::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SignedTimeSlicedSurveyResponseMessage is an XDR Struct defined as:
 ///
 /// ```text
@@ -28769,6 +35749,28 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
         w.with_limited_depth(|w| {
             self.response_signature.write_xdr(w)?;
             self.response.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SignedTimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::skip_xdr(r)?;
+            TimeSlicedSurveyResponseMessage::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SignedTimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Signature::seekable_skip_xdr(r)?;
+            TimeSlicedSurveyResponseMessage::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -28929,6 +35931,54 @@ impl WriteXdr for PeerStats {
     }
 }
 
+impl SkipXdr for PeerStats {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::skip_xdr(r)?;
+            StringM::<100>::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PeerStats {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            NodeId::seekable_skip_xdr(r)?;
+            StringM::<100>::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TimeSlicedNodeData is an XDR Struct defined as:
 ///
 /// ```text
@@ -29016,6 +36066,44 @@ impl WriteXdr for TimeSlicedNodeData {
     }
 }
 
+impl SkipXdr for TimeSlicedNodeData {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            bool::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedNodeData {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            bool::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TimeSlicedPeerData is an XDR Struct defined as:
 ///
 /// ```text
@@ -29060,6 +36148,28 @@ impl WriteXdr for TimeSlicedPeerData {
         w.with_limited_depth(|w| {
             self.peer_stats.write_xdr(w)?;
             self.average_latency_ms.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TimeSlicedPeerData {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PeerStats::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedPeerData {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PeerStats::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -29120,6 +36230,20 @@ impl WriteXdr for TimeSlicedPeerDataList {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for TimeSlicedPeerDataList {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<TimeSlicedPeerData, 25>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TimeSlicedPeerDataList {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<TimeSlicedPeerData, 25>::seekable_skip_xdr(r))
     }
 }
 
@@ -29220,6 +36344,30 @@ impl WriteXdr for TopologyResponseBodyV2 {
             self.inbound_peers.write_xdr(w)?;
             self.outbound_peers.write_xdr(w)?;
             self.node_data.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TopologyResponseBodyV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TimeSlicedPeerDataList::skip_xdr(r)?;
+            TimeSlicedPeerDataList::skip_xdr(r)?;
+            TimeSlicedNodeData::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TopologyResponseBodyV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TimeSlicedPeerDataList::seekable_skip_xdr(r)?;
+            TimeSlicedPeerDataList::seekable_skip_xdr(r)?;
+            TimeSlicedNodeData::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -29341,6 +36489,44 @@ impl WriteXdr for SurveyResponseBody {
     }
 }
 
+impl SkipXdr for SurveyResponseBody {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SurveyMessageResponseType =
+                <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SurveyMessageResponseType::SurveyTopologyResponseV2 => {
+                    TopologyResponseBodyV2::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SurveyResponseBody {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SurveyMessageResponseType =
+                <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SurveyMessageResponseType::SurveyTopologyResponseV2 => {
+                    TopologyResponseBodyV2::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TxAdvertVectorMaxSize is an XDR Const defined as:
 ///
 /// ```text
@@ -29404,6 +36590,20 @@ impl WriteXdr for TxAdvertVector {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for TxAdvertVector {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<Hash, 1000>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TxAdvertVector {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<Hash, 1000>::seekable_skip_xdr(r))
     }
 }
 
@@ -29501,6 +36701,26 @@ impl WriteXdr for FloodAdvert {
     }
 }
 
+impl SkipXdr for FloodAdvert {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TxAdvertVector::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for FloodAdvert {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TxAdvertVector::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TxDemandVectorMaxSize is an XDR Const defined as:
 ///
 /// ```text
@@ -29564,6 +36784,20 @@ impl WriteXdr for TxDemandVector {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for TxDemandVector {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<Hash, 1000>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TxDemandVector {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<Hash, 1000>::seekable_skip_xdr(r))
     }
 }
 
@@ -29656,6 +36890,26 @@ impl WriteXdr for FloodDemand {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for FloodDemand {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TxDemandVector::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for FloodDemand {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TxDemandVector::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -29984,6 +37238,94 @@ impl WriteXdr for StellarMessage {
     }
 }
 
+impl SkipXdr for StellarMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                MessageType::ErrorMsg => SError::skip_xdr(r)?,
+                MessageType::Hello => Hello::skip_xdr(r)?,
+                MessageType::Auth => Auth::skip_xdr(r)?,
+                MessageType::DontHave => DontHave::skip_xdr(r)?,
+                MessageType::Peers => VecM::<PeerAddress, 100>::skip_xdr(r)?,
+                MessageType::GetTxSet => Uint256::skip_xdr(r)?,
+                MessageType::TxSet => TransactionSet::skip_xdr(r)?,
+                MessageType::GeneralizedTxSet => GeneralizedTransactionSet::skip_xdr(r)?,
+                MessageType::Transaction => TransactionEnvelope::skip_xdr(r)?,
+                MessageType::TimeSlicedSurveyRequest => {
+                    SignedTimeSlicedSurveyRequestMessage::skip_xdr(r)?
+                }
+                MessageType::TimeSlicedSurveyResponse => {
+                    SignedTimeSlicedSurveyResponseMessage::skip_xdr(r)?
+                }
+                MessageType::TimeSlicedSurveyStartCollecting => {
+                    SignedTimeSlicedSurveyStartCollectingMessage::skip_xdr(r)?
+                }
+                MessageType::TimeSlicedSurveyStopCollecting => {
+                    SignedTimeSlicedSurveyStopCollectingMessage::skip_xdr(r)?
+                }
+                MessageType::GetScpQuorumset => Uint256::skip_xdr(r)?,
+                MessageType::ScpQuorumset => ScpQuorumSet::skip_xdr(r)?,
+                MessageType::ScpMessage => ScpEnvelope::skip_xdr(r)?,
+                MessageType::GetScpState => u32::skip_xdr(r)?,
+                MessageType::SendMore => SendMore::skip_xdr(r)?,
+                MessageType::SendMoreExtended => SendMoreExtended::skip_xdr(r)?,
+                MessageType::FloodAdvert => FloodAdvert::skip_xdr(r)?,
+                MessageType::FloodDemand => FloodDemand::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for StellarMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                MessageType::ErrorMsg => SError::seekable_skip_xdr(r)?,
+                MessageType::Hello => Hello::seekable_skip_xdr(r)?,
+                MessageType::Auth => Auth::seekable_skip_xdr(r)?,
+                MessageType::DontHave => DontHave::seekable_skip_xdr(r)?,
+                MessageType::Peers => VecM::<PeerAddress, 100>::seekable_skip_xdr(r)?,
+                MessageType::GetTxSet => Uint256::seekable_skip_xdr(r)?,
+                MessageType::TxSet => TransactionSet::seekable_skip_xdr(r)?,
+                MessageType::GeneralizedTxSet => GeneralizedTransactionSet::seekable_skip_xdr(r)?,
+                MessageType::Transaction => TransactionEnvelope::seekable_skip_xdr(r)?,
+                MessageType::TimeSlicedSurveyRequest => {
+                    SignedTimeSlicedSurveyRequestMessage::seekable_skip_xdr(r)?
+                }
+                MessageType::TimeSlicedSurveyResponse => {
+                    SignedTimeSlicedSurveyResponseMessage::seekable_skip_xdr(r)?
+                }
+                MessageType::TimeSlicedSurveyStartCollecting => {
+                    SignedTimeSlicedSurveyStartCollectingMessage::seekable_skip_xdr(r)?
+                }
+                MessageType::TimeSlicedSurveyStopCollecting => {
+                    SignedTimeSlicedSurveyStopCollectingMessage::seekable_skip_xdr(r)?
+                }
+                MessageType::GetScpQuorumset => Uint256::seekable_skip_xdr(r)?,
+                MessageType::ScpQuorumset => ScpQuorumSet::seekable_skip_xdr(r)?,
+                MessageType::ScpMessage => ScpEnvelope::seekable_skip_xdr(r)?,
+                MessageType::GetScpState => u32::seekable_skip_xdr(r)?,
+                MessageType::SendMore => SendMore::seekable_skip_xdr(r)?,
+                MessageType::SendMoreExtended => SendMoreExtended::seekable_skip_xdr(r)?,
+                MessageType::FloodAdvert => FloodAdvert::seekable_skip_xdr(r)?,
+                MessageType::FloodDemand => FloodDemand::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AuthenticatedMessageV0 is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -30036,6 +37378,30 @@ impl WriteXdr for AuthenticatedMessageV0 {
             self.sequence.write_xdr(w)?;
             self.message.write_xdr(w)?;
             self.mac.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AuthenticatedMessageV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::skip_xdr(r)?;
+            StellarMessage::skip_xdr(r)?;
+            HmacSha256Mac::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AuthenticatedMessageV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::seekable_skip_xdr(r)?;
+            StellarMessage::seekable_skip_xdr(r)?;
+            HmacSha256Mac::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -30150,6 +37516,38 @@ impl WriteXdr for AuthenticatedMessage {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for AuthenticatedMessage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => AuthenticatedMessageV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AuthenticatedMessage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => AuthenticatedMessageV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -30280,6 +37678,42 @@ impl WriteXdr for LiquidityPoolParameters {
     }
 }
 
+impl SkipXdr for LiquidityPoolParameters {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolType::LiquidityPoolConstantProduct => {
+                    LiquidityPoolConstantProductParameters::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolParameters {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolType::LiquidityPoolConstantProduct => {
+                    LiquidityPoolConstantProductParameters::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// MuxedAccountMed25519 is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -30321,6 +37755,28 @@ impl WriteXdr for MuxedAccountMed25519 {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.ed25519.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for MuxedAccountMed25519 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::skip_xdr(r)?;
+            Uint256::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for MuxedAccountMed25519 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u64::seekable_skip_xdr(r)?;
+            Uint256::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -30475,6 +37931,40 @@ impl WriteXdr for MuxedAccount {
     }
 }
 
+impl SkipXdr for MuxedAccount {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                CryptoKeyType::Ed25519 => Uint256::skip_xdr(r)?,
+                CryptoKeyType::MuxedEd25519 => MuxedAccountMed25519::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for MuxedAccount {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                CryptoKeyType::Ed25519 => Uint256::seekable_skip_xdr(r)?,
+                CryptoKeyType::MuxedEd25519 => MuxedAccountMed25519::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// DecoratedSignature is an XDR Struct defined as:
 ///
 /// ```text
@@ -30519,6 +38009,28 @@ impl WriteXdr for DecoratedSignature {
         w.with_limited_depth(|w| {
             self.hint.write_xdr(w)?;
             self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for DecoratedSignature {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SignatureHint::skip_xdr(r)?;
+            Signature::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for DecoratedSignature {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SignatureHint::seekable_skip_xdr(r)?;
+            Signature::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -30788,6 +38300,20 @@ impl WriteXdr for OperationType {
     }
 }
 
+impl SkipXdr for OperationType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for OperationType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// CreateAccountOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -30836,6 +38362,28 @@ impl WriteXdr for CreateAccountOp {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.starting_balance.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for CreateAccountOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreateAccountOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -30893,6 +38441,30 @@ impl WriteXdr for PaymentOp {
             self.destination.write_xdr(w)?;
             self.asset.write_xdr(w)?;
             self.amount.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PaymentOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PaymentOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -30975,6 +38547,36 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
     }
 }
 
+impl SkipXdr for PathPaymentStrictReceiveOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            MuxedAccount::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            VecM::<Asset, 5>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictReceiveOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            MuxedAccount::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            VecM::<Asset, 5>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// PathPaymentStrictSendOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31052,6 +38654,36 @@ impl WriteXdr for PathPaymentStrictSendOp {
     }
 }
 
+impl SkipXdr for PathPaymentStrictSendOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            MuxedAccount::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            VecM::<Asset, 5>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictSendOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            MuxedAccount::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            VecM::<Asset, 5>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ManageSellOfferOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31118,6 +38750,34 @@ impl WriteXdr for ManageSellOfferOp {
             self.amount.write_xdr(w)?;
             self.price.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ManageSellOfferOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Price::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageSellOfferOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Price::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -31195,6 +38855,34 @@ impl WriteXdr for ManageBuyOfferOp {
     }
 }
 
+impl SkipXdr for ManageBuyOfferOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Price::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageBuyOfferOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Price::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// CreatePassiveSellOfferOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31251,6 +38939,32 @@ impl WriteXdr for CreatePassiveSellOfferOp {
             self.buying.write_xdr(w)?;
             self.amount.write_xdr(w)?;
             self.price.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for CreatePassiveSellOfferOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Price::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreatePassiveSellOfferOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Price::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -31335,6 +39049,42 @@ impl WriteXdr for SetOptionsOp {
             self.high_threshold.write_xdr(w)?;
             self.home_domain.write_xdr(w)?;
             self.signer.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SetOptionsOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<AccountId>::skip_xdr(r)?;
+            Option::<u32>::skip_xdr(r)?;
+            Option::<u32>::skip_xdr(r)?;
+            Option::<u32>::skip_xdr(r)?;
+            Option::<u32>::skip_xdr(r)?;
+            Option::<u32>::skip_xdr(r)?;
+            Option::<u32>::skip_xdr(r)?;
+            Option::<String32>::skip_xdr(r)?;
+            Option::<Signer>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SetOptionsOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<AccountId>::seekable_skip_xdr(r)?;
+            Option::<u32>::seekable_skip_xdr(r)?;
+            Option::<u32>::seekable_skip_xdr(r)?;
+            Option::<u32>::seekable_skip_xdr(r)?;
+            Option::<u32>::seekable_skip_xdr(r)?;
+            Option::<u32>::seekable_skip_xdr(r)?;
+            Option::<u32>::seekable_skip_xdr(r)?;
+            Option::<String32>::seekable_skip_xdr(r)?;
+            Option::<Signer>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -31482,6 +39232,44 @@ impl WriteXdr for ChangeTrustAsset {
     }
 }
 
+impl SkipXdr for ChangeTrustAsset {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::Native => (),
+                AssetType::CreditAlphanum4 => AlphaNum4::skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AlphaNum12::skip_xdr(r)?,
+                AssetType::PoolShare => LiquidityPoolParameters::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ChangeTrustAsset {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AssetType::Native => (),
+                AssetType::CreditAlphanum4 => AlphaNum4::seekable_skip_xdr(r)?,
+                AssetType::CreditAlphanum12 => AlphaNum12::seekable_skip_xdr(r)?,
+                AssetType::PoolShare => LiquidityPoolParameters::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ChangeTrustOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31532,6 +39320,28 @@ impl WriteXdr for ChangeTrustOp {
         w.with_limited_depth(|w| {
             self.line.write_xdr(w)?;
             self.limit.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ChangeTrustOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ChangeTrustAsset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ChangeTrustOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ChangeTrustAsset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -31592,6 +39402,30 @@ impl WriteXdr for AllowTrustOp {
     }
 }
 
+impl SkipXdr for AllowTrustOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            AssetCode::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AllowTrustOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            AssetCode::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ManageDataOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31641,6 +39475,28 @@ impl WriteXdr for ManageDataOp {
     }
 }
 
+impl SkipXdr for ManageDataOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            String64::skip_xdr(r)?;
+            Option::<DataValue>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageDataOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            String64::seekable_skip_xdr(r)?;
+            Option::<DataValue>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// BumpSequenceOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31681,6 +39537,26 @@ impl WriteXdr for BumpSequenceOp {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.bump_to.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for BumpSequenceOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SequenceNumber::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BumpSequenceOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SequenceNumber::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -31743,6 +39619,30 @@ impl WriteXdr for CreateClaimableBalanceOp {
     }
 }
 
+impl SkipXdr for CreateClaimableBalanceOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            VecM::<Claimant, 10>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreateClaimableBalanceOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            VecM::<Claimant, 10>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ClaimClaimableBalanceOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31788,6 +39688,26 @@ impl WriteXdr for ClaimClaimableBalanceOp {
     }
 }
 
+impl SkipXdr for ClaimClaimableBalanceOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimClaimableBalanceOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// BeginSponsoringFutureReservesOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -31828,6 +39748,26 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.sponsored_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for BeginSponsoringFutureReservesOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BeginSponsoringFutureReservesOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -31944,6 +39884,20 @@ impl WriteXdr for RevokeSponsorshipType {
     }
 }
 
+impl SkipXdr for RevokeSponsorshipType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for RevokeSponsorshipType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// RevokeSponsorshipOpSigner is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -31988,6 +39942,28 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.signer_key.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for RevokeSponsorshipOpSigner {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            SignerKey::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for RevokeSponsorshipOpSigner {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            SignerKey::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -32119,6 +40095,40 @@ impl WriteXdr for RevokeSponsorshipOp {
     }
 }
 
+impl SkipXdr for RevokeSponsorshipOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                RevokeSponsorshipType::LedgerEntry => LedgerKey::skip_xdr(r)?,
+                RevokeSponsorshipType::Signer => RevokeSponsorshipOpSigner::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for RevokeSponsorshipOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                RevokeSponsorshipType::LedgerEntry => LedgerKey::seekable_skip_xdr(r)?,
+                RevokeSponsorshipType::Signer => RevokeSponsorshipOpSigner::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClawbackOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -32176,6 +40186,30 @@ impl WriteXdr for ClawbackOp {
     }
 }
 
+impl SkipXdr for ClawbackOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::skip_xdr(r)?;
+            MuxedAccount::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClawbackOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Asset::seekable_skip_xdr(r)?;
+            MuxedAccount::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ClawbackClaimableBalanceOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -32216,6 +40250,26 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClawbackClaimableBalanceOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClawbackClaimableBalanceOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ClaimableBalanceId::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -32274,6 +40328,32 @@ impl WriteXdr for SetTrustLineFlagsOp {
             self.asset.write_xdr(w)?;
             self.clear_flags.write_xdr(w)?;
             self.set_flags.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SetTrustLineFlagsOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SetTrustLineFlagsOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -32356,6 +40436,34 @@ impl WriteXdr for LiquidityPoolDepositOp {
     }
 }
 
+impl SkipXdr for LiquidityPoolDepositOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Price::skip_xdr(r)?;
+            Price::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolDepositOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Price::seekable_skip_xdr(r)?;
+            Price::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LiquidityPoolWithdrawOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -32420,6 +40528,32 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
             self.amount.write_xdr(w)?;
             self.min_amount_a.write_xdr(w)?;
             self.min_amount_b.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LiquidityPoolWithdrawOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolWithdrawOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -32551,6 +40685,20 @@ impl WriteXdr for HostFunctionType {
     }
 }
 
+impl SkipXdr for HostFunctionType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for HostFunctionType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ContractIdPreimageType is an XDR Enum defined as:
 ///
 /// ```text
@@ -32662,6 +40810,20 @@ impl WriteXdr for ContractIdPreimageType {
     }
 }
 
+impl SkipXdr for ContractIdPreimageType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractIdPreimageType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ContractIdPreimageFromAddress is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -32706,6 +40868,28 @@ impl WriteXdr for ContractIdPreimageFromAddress {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
             self.salt.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ContractIdPreimageFromAddress {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::skip_xdr(r)?;
+            Uint256::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractIdPreimageFromAddress {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::seekable_skip_xdr(r)?;
+            Uint256::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -32837,6 +41021,42 @@ impl WriteXdr for ContractIdPreimage {
     }
 }
 
+impl SkipXdr for ContractIdPreimage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ContractIdPreimageType::Address => ContractIdPreimageFromAddress::skip_xdr(r)?,
+                ContractIdPreimageType::Asset => Asset::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ContractIdPreimage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ContractIdPreimageType::Address => {
+                    ContractIdPreimageFromAddress::seekable_skip_xdr(r)?
+                }
+                ContractIdPreimageType::Asset => Asset::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// CreateContractArgs is an XDR Struct defined as:
 ///
 /// ```text
@@ -32881,6 +41101,28 @@ impl WriteXdr for CreateContractArgs {
         w.with_limited_depth(|w| {
             self.contract_id_preimage.write_xdr(w)?;
             self.executable.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for CreateContractArgs {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractIdPreimage::skip_xdr(r)?;
+            ContractExecutable::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreateContractArgs {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractIdPreimage::seekable_skip_xdr(r)?;
+            ContractExecutable::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -32940,6 +41182,30 @@ impl WriteXdr for CreateContractArgsV2 {
     }
 }
 
+impl SkipXdr for CreateContractArgsV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractIdPreimage::skip_xdr(r)?;
+            ContractExecutable::skip_xdr(r)?;
+            VecM::<ScVal>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreateContractArgsV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ContractIdPreimage::seekable_skip_xdr(r)?;
+            ContractExecutable::seekable_skip_xdr(r)?;
+            VecM::<ScVal>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// InvokeContractArgs is an XDR Struct defined as:
 ///
 /// ```text
@@ -32987,6 +41253,30 @@ impl WriteXdr for InvokeContractArgs {
             self.contract_address.write_xdr(w)?;
             self.function_name.write_xdr(w)?;
             self.args.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for InvokeContractArgs {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::skip_xdr(r)?;
+            ScSymbol::skip_xdr(r)?;
+            VecM::<ScVal>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InvokeContractArgs {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::seekable_skip_xdr(r)?;
+            ScSymbol::seekable_skip_xdr(r)?;
+            VecM::<ScVal>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -33111,7 +41401,7 @@ impl ReadXdr for HostFunction {
                     Self::CreateContract(CreateContractArgs::read_xdr(r)?)
                 }
                 HostFunctionType::UploadContractWasm => {
-                    Self::UploadContractWasm(BytesM::read_xdr(r)?)
+                    Self::UploadContractWasm(BytesM::<{ u32::MAX }>::read_xdr(r)?)
                 }
                 HostFunctionType::CreateContractV2 => {
                     Self::CreateContractV2(CreateContractArgsV2::read_xdr(r)?)
@@ -33135,6 +41425,46 @@ impl WriteXdr for HostFunction {
                 Self::CreateContract(v) => v.write_xdr(w)?,
                 Self::UploadContractWasm(v) => v.write_xdr(w)?,
                 Self::CreateContractV2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                HostFunctionType::InvokeContract => InvokeContractArgs::skip_xdr(r)?,
+                HostFunctionType::CreateContract => CreateContractArgs::skip_xdr(r)?,
+                HostFunctionType::UploadContractWasm => BytesM::<{ u32::MAX }>::skip_xdr(r)?,
+                HostFunctionType::CreateContractV2 => CreateContractArgsV2::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                HostFunctionType::InvokeContract => InvokeContractArgs::seekable_skip_xdr(r)?,
+                HostFunctionType::CreateContract => CreateContractArgs::seekable_skip_xdr(r)?,
+                HostFunctionType::UploadContractWasm => {
+                    BytesM::<{ u32::MAX }>::seekable_skip_xdr(r)?
+                }
+                HostFunctionType::CreateContractV2 => CreateContractArgsV2::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -33258,6 +41588,20 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for SorobanAuthorizedFunctionType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SorobanAuthorizedFunctionType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -33410,6 +41754,54 @@ impl WriteXdr for SorobanAuthorizedFunction {
     }
 }
 
+impl SkipXdr for SorobanAuthorizedFunction {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SorobanAuthorizedFunctionType =
+                <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SorobanAuthorizedFunctionType::ContractFn => InvokeContractArgs::skip_xdr(r)?,
+                SorobanAuthorizedFunctionType::CreateContractHostFn => {
+                    CreateContractArgs::skip_xdr(r)?
+                }
+                SorobanAuthorizedFunctionType::CreateContractV2HostFn => {
+                    CreateContractArgsV2::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanAuthorizedFunction {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SorobanAuthorizedFunctionType =
+                <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SorobanAuthorizedFunctionType::ContractFn => {
+                    InvokeContractArgs::seekable_skip_xdr(r)?
+                }
+                SorobanAuthorizedFunctionType::CreateContractHostFn => {
+                    CreateContractArgs::seekable_skip_xdr(r)?
+                }
+                SorobanAuthorizedFunctionType::CreateContractV2HostFn => {
+                    CreateContractArgsV2::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SorobanAuthorizedInvocation is an XDR Struct defined as:
 ///
 /// ```text
@@ -33454,6 +41846,28 @@ impl WriteXdr for SorobanAuthorizedInvocation {
         w.with_limited_depth(|w| {
             self.function.write_xdr(w)?;
             self.sub_invocations.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanAuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanAuthorizedFunction::skip_xdr(r)?;
+            VecM::<SorobanAuthorizedInvocation>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanAuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanAuthorizedFunction::seekable_skip_xdr(r)?;
+            VecM::<SorobanAuthorizedInvocation>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -33515,6 +41929,32 @@ impl WriteXdr for SorobanAddressCredentials {
             self.nonce.write_xdr(w)?;
             self.signature_expiration_ledger.write_xdr(w)?;
             self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanAddressCredentials {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            ScVal::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanAddressCredentials {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ScAddress::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            ScVal::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -33628,6 +42068,20 @@ impl WriteXdr for SorobanCredentialsType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for SorobanCredentialsType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SorobanCredentialsType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -33753,6 +42207,40 @@ impl WriteXdr for SorobanCredentials {
     }
 }
 
+impl SkipXdr for SorobanCredentials {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SorobanCredentialsType::SourceAccount => (),
+                SorobanCredentialsType::Address => SorobanAddressCredentials::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanCredentials {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SorobanCredentialsType::SourceAccount => (),
+                SorobanCredentialsType::Address => SorobanAddressCredentials::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SorobanAuthorizationEntry is an XDR Struct defined as:
 ///
 /// ```text
@@ -33797,6 +42285,28 @@ impl WriteXdr for SorobanAuthorizationEntry {
         w.with_limited_depth(|w| {
             self.credentials.write_xdr(w)?;
             self.root_invocation.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanAuthorizationEntry {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanCredentials::skip_xdr(r)?;
+            SorobanAuthorizedInvocation::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanAuthorizationEntry {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanCredentials::seekable_skip_xdr(r)?;
+            SorobanAuthorizedInvocation::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -33857,6 +42367,20 @@ impl WriteXdr for SorobanAuthorizationEntries {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for SorobanAuthorizationEntries {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<SorobanAuthorizationEntry>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SorobanAuthorizationEntries {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| VecM::<SorobanAuthorizationEntry>::seekable_skip_xdr(r))
     }
 }
 
@@ -33960,6 +42484,28 @@ impl WriteXdr for InvokeHostFunctionOp {
     }
 }
 
+impl SkipXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            HostFunction::skip_xdr(r)?;
+            VecM::<SorobanAuthorizationEntry>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            HostFunction::seekable_skip_xdr(r)?;
+            VecM::<SorobanAuthorizationEntry>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ExtendFootprintTtlOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -34009,6 +42555,28 @@ impl WriteXdr for ExtendFootprintTtlOp {
     }
 }
 
+impl SkipXdr for ExtendFootprintTtlOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ExtendFootprintTtlOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// RestoreFootprintOp is an XDR Struct defined as:
 ///
 /// ```text
@@ -34049,6 +42617,26 @@ impl WriteXdr for RestoreFootprintOp {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for RestoreFootprintOp {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for RestoreFootprintOp {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -34436,6 +43024,110 @@ impl WriteXdr for OperationBody {
     }
 }
 
+impl SkipXdr for OperationBody {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                OperationType::CreateAccount => CreateAccountOp::skip_xdr(r)?,
+                OperationType::Payment => PaymentOp::skip_xdr(r)?,
+                OperationType::PathPaymentStrictReceive => PathPaymentStrictReceiveOp::skip_xdr(r)?,
+                OperationType::ManageSellOffer => ManageSellOfferOp::skip_xdr(r)?,
+                OperationType::CreatePassiveSellOffer => CreatePassiveSellOfferOp::skip_xdr(r)?,
+                OperationType::SetOptions => SetOptionsOp::skip_xdr(r)?,
+                OperationType::ChangeTrust => ChangeTrustOp::skip_xdr(r)?,
+                OperationType::AllowTrust => AllowTrustOp::skip_xdr(r)?,
+                OperationType::AccountMerge => MuxedAccount::skip_xdr(r)?,
+                OperationType::Inflation => (),
+                OperationType::ManageData => ManageDataOp::skip_xdr(r)?,
+                OperationType::BumpSequence => BumpSequenceOp::skip_xdr(r)?,
+                OperationType::ManageBuyOffer => ManageBuyOfferOp::skip_xdr(r)?,
+                OperationType::PathPaymentStrictSend => PathPaymentStrictSendOp::skip_xdr(r)?,
+                OperationType::CreateClaimableBalance => CreateClaimableBalanceOp::skip_xdr(r)?,
+                OperationType::ClaimClaimableBalance => ClaimClaimableBalanceOp::skip_xdr(r)?,
+                OperationType::BeginSponsoringFutureReserves => {
+                    BeginSponsoringFutureReservesOp::skip_xdr(r)?
+                }
+                OperationType::EndSponsoringFutureReserves => (),
+                OperationType::RevokeSponsorship => RevokeSponsorshipOp::skip_xdr(r)?,
+                OperationType::Clawback => ClawbackOp::skip_xdr(r)?,
+                OperationType::ClawbackClaimableBalance => ClawbackClaimableBalanceOp::skip_xdr(r)?,
+                OperationType::SetTrustLineFlags => SetTrustLineFlagsOp::skip_xdr(r)?,
+                OperationType::LiquidityPoolDeposit => LiquidityPoolDepositOp::skip_xdr(r)?,
+                OperationType::LiquidityPoolWithdraw => LiquidityPoolWithdrawOp::skip_xdr(r)?,
+                OperationType::InvokeHostFunction => InvokeHostFunctionOp::skip_xdr(r)?,
+                OperationType::ExtendFootprintTtl => ExtendFootprintTtlOp::skip_xdr(r)?,
+                OperationType::RestoreFootprint => RestoreFootprintOp::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OperationBody {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                OperationType::CreateAccount => CreateAccountOp::seekable_skip_xdr(r)?,
+                OperationType::Payment => PaymentOp::seekable_skip_xdr(r)?,
+                OperationType::PathPaymentStrictReceive => {
+                    PathPaymentStrictReceiveOp::seekable_skip_xdr(r)?
+                }
+                OperationType::ManageSellOffer => ManageSellOfferOp::seekable_skip_xdr(r)?,
+                OperationType::CreatePassiveSellOffer => {
+                    CreatePassiveSellOfferOp::seekable_skip_xdr(r)?
+                }
+                OperationType::SetOptions => SetOptionsOp::seekable_skip_xdr(r)?,
+                OperationType::ChangeTrust => ChangeTrustOp::seekable_skip_xdr(r)?,
+                OperationType::AllowTrust => AllowTrustOp::seekable_skip_xdr(r)?,
+                OperationType::AccountMerge => MuxedAccount::seekable_skip_xdr(r)?,
+                OperationType::Inflation => (),
+                OperationType::ManageData => ManageDataOp::seekable_skip_xdr(r)?,
+                OperationType::BumpSequence => BumpSequenceOp::seekable_skip_xdr(r)?,
+                OperationType::ManageBuyOffer => ManageBuyOfferOp::seekable_skip_xdr(r)?,
+                OperationType::PathPaymentStrictSend => {
+                    PathPaymentStrictSendOp::seekable_skip_xdr(r)?
+                }
+                OperationType::CreateClaimableBalance => {
+                    CreateClaimableBalanceOp::seekable_skip_xdr(r)?
+                }
+                OperationType::ClaimClaimableBalance => {
+                    ClaimClaimableBalanceOp::seekable_skip_xdr(r)?
+                }
+                OperationType::BeginSponsoringFutureReserves => {
+                    BeginSponsoringFutureReservesOp::seekable_skip_xdr(r)?
+                }
+                OperationType::EndSponsoringFutureReserves => (),
+                OperationType::RevokeSponsorship => RevokeSponsorshipOp::seekable_skip_xdr(r)?,
+                OperationType::Clawback => ClawbackOp::seekable_skip_xdr(r)?,
+                OperationType::ClawbackClaimableBalance => {
+                    ClawbackClaimableBalanceOp::seekable_skip_xdr(r)?
+                }
+                OperationType::SetTrustLineFlags => SetTrustLineFlagsOp::seekable_skip_xdr(r)?,
+                OperationType::LiquidityPoolDeposit => {
+                    LiquidityPoolDepositOp::seekable_skip_xdr(r)?
+                }
+                OperationType::LiquidityPoolWithdraw => {
+                    LiquidityPoolWithdrawOp::seekable_skip_xdr(r)?
+                }
+                OperationType::InvokeHostFunction => InvokeHostFunctionOp::seekable_skip_xdr(r)?,
+                OperationType::ExtendFootprintTtl => ExtendFootprintTtlOp::seekable_skip_xdr(r)?,
+                OperationType::RestoreFootprint => RestoreFootprintOp::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// Operation is an XDR Struct defined as:
 ///
 /// ```text
@@ -34546,6 +43238,28 @@ impl WriteXdr for Operation {
     }
 }
 
+impl SkipXdr for Operation {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<MuxedAccount>::skip_xdr(r)?;
+            OperationBody::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Operation {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<MuxedAccount>::seekable_skip_xdr(r)?;
+            OperationBody::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// HashIdPreimageOperationId is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -34594,6 +43308,30 @@ impl WriteXdr for HashIdPreimageOperationId {
             self.source_account.write_xdr(w)?;
             self.seq_num.write_xdr(w)?;
             self.op_num.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for HashIdPreimageOperationId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HashIdPreimageOperationId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -34660,6 +43398,34 @@ impl WriteXdr for HashIdPreimageRevokeId {
     }
 }
 
+impl SkipXdr for HashIdPreimageRevokeId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            PoolId::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HashIdPreimageRevokeId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            PoolId::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// HashIdPreimageContractId is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -34704,6 +43470,28 @@ impl WriteXdr for HashIdPreimageContractId {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.contract_id_preimage.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for HashIdPreimageContractId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            ContractIdPreimage::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HashIdPreimageContractId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            ContractIdPreimage::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -34765,6 +43553,32 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
             self.nonce.write_xdr(w)?;
             self.signature_expiration_ledger.write_xdr(w)?;
             self.invocation.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for HashIdPreimageSorobanAuthorization {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            SorobanAuthorizedInvocation::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HashIdPreimageSorobanAuthorization {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            SorobanAuthorizedInvocation::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -34939,6 +43753,48 @@ impl WriteXdr for HashIdPreimage {
     }
 }
 
+impl SkipXdr for HashIdPreimage {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::OpId => HashIdPreimageOperationId::skip_xdr(r)?,
+                EnvelopeType::PoolRevokeOpId => HashIdPreimageRevokeId::skip_xdr(r)?,
+                EnvelopeType::ContractId => HashIdPreimageContractId::skip_xdr(r)?,
+                EnvelopeType::SorobanAuthorization => {
+                    HashIdPreimageSorobanAuthorization::skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HashIdPreimage {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::OpId => HashIdPreimageOperationId::seekable_skip_xdr(r)?,
+                EnvelopeType::PoolRevokeOpId => HashIdPreimageRevokeId::seekable_skip_xdr(r)?,
+                EnvelopeType::ContractId => HashIdPreimageContractId::seekable_skip_xdr(r)?,
+                EnvelopeType::SorobanAuthorization => {
+                    HashIdPreimageSorobanAuthorization::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// MemoType is an XDR Enum defined as:
 ///
 /// ```text
@@ -35062,6 +43918,20 @@ impl WriteXdr for MemoType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for MemoType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for MemoType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -35215,6 +44085,46 @@ impl WriteXdr for Memo {
     }
 }
 
+impl SkipXdr for Memo {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                MemoType::None => (),
+                MemoType::Text => StringM::<28>::skip_xdr(r)?,
+                MemoType::Id => u64::skip_xdr(r)?,
+                MemoType::Hash => Hash::skip_xdr(r)?,
+                MemoType::Return => Hash::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Memo {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                MemoType::None => (),
+                MemoType::Text => StringM::<28>::seekable_skip_xdr(r)?,
+                MemoType::Id => u64::seekable_skip_xdr(r)?,
+                MemoType::Hash => Hash::seekable_skip_xdr(r)?,
+                MemoType::Return => Hash::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TimeBounds is an XDR Struct defined as:
 ///
 /// ```text
@@ -35264,6 +44174,28 @@ impl WriteXdr for TimeBounds {
     }
 }
 
+impl SkipXdr for TimeBounds {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TimePoint::skip_xdr(r)?;
+            TimePoint::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TimeBounds {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TimePoint::seekable_skip_xdr(r)?;
+            TimePoint::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerBounds is an XDR Struct defined as:
 ///
 /// ```text
@@ -35308,6 +44240,28 @@ impl WriteXdr for LedgerBounds {
         w.with_limited_depth(|w| {
             self.min_ledger.write_xdr(w)?;
             self.max_ledger.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerBounds {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerBounds {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -35396,6 +44350,36 @@ impl WriteXdr for PreconditionsV2 {
             self.min_seq_age.write_xdr(w)?;
             self.min_seq_ledger_gap.write_xdr(w)?;
             self.extra_signers.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PreconditionsV2 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<TimeBounds>::skip_xdr(r)?;
+            Option::<LedgerBounds>::skip_xdr(r)?;
+            Option::<SequenceNumber>::skip_xdr(r)?;
+            Duration::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            VecM::<SignerKey, 2>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PreconditionsV2 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Option::<TimeBounds>::seekable_skip_xdr(r)?;
+            Option::<LedgerBounds>::seekable_skip_xdr(r)?;
+            Option::<SequenceNumber>::seekable_skip_xdr(r)?;
+            Duration::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            VecM::<SignerKey, 2>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -35514,6 +44498,20 @@ impl WriteXdr for PreconditionType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for PreconditionType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for PreconditionType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -35645,6 +44643,42 @@ impl WriteXdr for Preconditions {
     }
 }
 
+impl SkipXdr for Preconditions {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PreconditionType::None => (),
+                PreconditionType::Time => TimeBounds::skip_xdr(r)?,
+                PreconditionType::V2 => PreconditionsV2::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Preconditions {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PreconditionType::None => (),
+                PreconditionType::Time => TimeBounds::seekable_skip_xdr(r)?,
+                PreconditionType::V2 => PreconditionsV2::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LedgerFootprint is an XDR Struct defined as:
 ///
 /// ```text
@@ -35689,6 +44723,28 @@ impl WriteXdr for LedgerFootprint {
         w.with_limited_depth(|w| {
             self.read_only.write_xdr(w)?;
             self.read_write.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<LedgerKey>::skip_xdr(r)?;
+            VecM::<LedgerKey>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<LedgerKey>::seekable_skip_xdr(r)?;
+            VecM::<LedgerKey>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -35756,6 +44812,32 @@ impl WriteXdr for SorobanResources {
     }
 }
 
+impl SkipXdr for SorobanResources {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerFootprint::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanResources {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            LedgerFootprint::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// SorobanResourcesExtV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -35799,6 +44881,26 @@ impl WriteXdr for SorobanResourcesExtV0 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.archived_soroban_entries.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanResourcesExtV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<u32>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanResourcesExtV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<u32>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -35921,6 +45023,40 @@ impl WriteXdr for SorobanTransactionDataExt {
     }
 }
 
+impl SkipXdr for SorobanTransactionDataExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => SorobanResourcesExtV0::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanTransactionDataExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => SorobanResourcesExtV0::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SorobanTransactionData is an XDR Struct defined as:
 ///
 /// ```text
@@ -35988,6 +45124,30 @@ impl WriteXdr for SorobanTransactionData {
             self.ext.write_xdr(w)?;
             self.resources.write_xdr(w)?;
             self.resource_fee.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SorobanTransactionData {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanTransactionDataExt::skip_xdr(r)?;
+            SorobanResources::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SorobanTransactionData {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            SorobanTransactionDataExt::seekable_skip_xdr(r)?;
+            SorobanResources::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -36103,6 +45263,38 @@ impl WriteXdr for TransactionV0Ext {
     }
 }
 
+impl SkipXdr for TransactionV0Ext {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionV0Ext {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -36177,6 +45369,38 @@ impl WriteXdr for TransactionV0 {
     }
 }
 
+impl SkipXdr for TransactionV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Uint256::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            Option::<TimeBounds>::skip_xdr(r)?;
+            Memo::skip_xdr(r)?;
+            VecM::<Operation, 100>::skip_xdr(r)?;
+            TransactionV0Ext::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Uint256::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            Option::<TimeBounds>::seekable_skip_xdr(r)?;
+            Memo::seekable_skip_xdr(r)?;
+            VecM::<Operation, 100>::seekable_skip_xdr(r)?;
+            TransactionV0Ext::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TransactionV0Envelope is an XDR Struct defined as:
 ///
 /// ```text
@@ -36223,6 +45447,28 @@ impl WriteXdr for TransactionV0Envelope {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionV0Envelope {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TransactionV0::skip_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionV0Envelope {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            TransactionV0::seekable_skip_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -36345,6 +45591,40 @@ impl WriteXdr for TransactionExt {
     }
 }
 
+impl SkipXdr for TransactionExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => SorobanTransactionData::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                1 => SorobanTransactionData::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// Transaction is an XDR Struct defined as:
 ///
 /// ```text
@@ -36431,6 +45711,38 @@ impl WriteXdr for Transaction {
     }
 }
 
+impl SkipXdr for Transaction {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            Preconditions::skip_xdr(r)?;
+            Memo::skip_xdr(r)?;
+            VecM::<Operation, 100>::skip_xdr(r)?;
+            TransactionExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Transaction {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            Preconditions::seekable_skip_xdr(r)?;
+            Memo::seekable_skip_xdr(r)?;
+            VecM::<Operation, 100>::seekable_skip_xdr(r)?;
+            TransactionExt::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// TransactionV1Envelope is an XDR Struct defined as:
 ///
 /// ```text
@@ -36477,6 +45789,28 @@ impl WriteXdr for TransactionV1Envelope {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionV1Envelope {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Transaction::skip_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionV1Envelope {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Transaction::seekable_skip_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -36586,6 +45920,38 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::Tx(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for FeeBumpTransactionInnerTx {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::Tx => TransactionV1Envelope::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for FeeBumpTransactionInnerTx {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::Tx => TransactionV1Envelope::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -36702,6 +46068,38 @@ impl WriteXdr for FeeBumpTransactionExt {
     }
 }
 
+impl SkipXdr for FeeBumpTransactionExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for FeeBumpTransactionExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// FeeBumpTransaction is an XDR Struct defined as:
 ///
 /// ```text
@@ -36773,6 +46171,32 @@ impl WriteXdr for FeeBumpTransaction {
     }
 }
 
+impl SkipXdr for FeeBumpTransaction {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            FeeBumpTransactionInnerTx::skip_xdr(r)?;
+            FeeBumpTransactionExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for FeeBumpTransaction {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            FeeBumpTransactionInnerTx::seekable_skip_xdr(r)?;
+            FeeBumpTransactionExt::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// FeeBumpTransactionEnvelope is an XDR Struct defined as:
 ///
 /// ```text
@@ -36819,6 +46243,28 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for FeeBumpTransactionEnvelope {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            FeeBumpTransaction::skip_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for FeeBumpTransactionEnvelope {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            FeeBumpTransaction::seekable_skip_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -36947,6 +46393,42 @@ impl WriteXdr for TransactionEnvelope {
     }
 }
 
+impl SkipXdr for TransactionEnvelope {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::TxV0 => TransactionV0Envelope::skip_xdr(r)?,
+                EnvelopeType::Tx => TransactionV1Envelope::skip_xdr(r)?,
+                EnvelopeType::TxFeeBump => FeeBumpTransactionEnvelope::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionEnvelope {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::TxV0 => TransactionV0Envelope::seekable_skip_xdr(r)?,
+                EnvelopeType::Tx => TransactionV1Envelope::seekable_skip_xdr(r)?,
+                EnvelopeType::TxFeeBump => FeeBumpTransactionEnvelope::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionSignaturePayloadTaggedTransaction is an XDR NestedUnion defined as:
 ///
 /// ```text
@@ -37065,6 +46547,40 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     }
 }
 
+impl SkipXdr for TransactionSignaturePayloadTaggedTransaction {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::Tx => Transaction::skip_xdr(r)?,
+                EnvelopeType::TxFeeBump => FeeBumpTransaction::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionSignaturePayloadTaggedTransaction {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EnvelopeType::Tx => Transaction::seekable_skip_xdr(r)?,
+                EnvelopeType::TxFeeBump => FeeBumpTransaction::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionSignaturePayload is an XDR Struct defined as:
 ///
 /// ```text
@@ -37117,6 +46633,28 @@ impl WriteXdr for TransactionSignaturePayload {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.tagged_transaction.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionSignaturePayload {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            TransactionSignaturePayloadTaggedTransaction::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionSignaturePayload {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            TransactionSignaturePayloadTaggedTransaction::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -37238,6 +46776,20 @@ impl WriteXdr for ClaimAtomType {
     }
 }
 
+impl SkipXdr for ClaimAtomType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClaimAtomType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ClaimOfferAtomV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -37315,6 +46867,36 @@ impl WriteXdr for ClaimOfferAtomV0 {
             self.amount_sold.write_xdr(w)?;
             self.asset_bought.write_xdr(w)?;
             self.amount_bought.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClaimOfferAtomV0 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Uint256::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimOfferAtomV0 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Uint256::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -37402,6 +46984,36 @@ impl WriteXdr for ClaimOfferAtom {
     }
 }
 
+impl SkipXdr for ClaimOfferAtom {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimOfferAtom {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ClaimLiquidityAtom is an XDR Struct defined as:
 ///
 /// ```text
@@ -37470,6 +47082,34 @@ impl WriteXdr for ClaimLiquidityAtom {
             self.amount_sold.write_xdr(w)?;
             self.asset_bought.write_xdr(w)?;
             self.amount_bought.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClaimLiquidityAtom {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimLiquidityAtom {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            PoolId::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -37599,6 +47239,42 @@ impl WriteXdr for ClaimAtom {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::OrderBook(v) => v.write_xdr(w)?,
                 Self::LiquidityPool(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClaimAtom {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimAtomType::V0 => ClaimOfferAtomV0::skip_xdr(r)?,
+                ClaimAtomType::OrderBook => ClaimOfferAtom::skip_xdr(r)?,
+                ClaimAtomType::LiquidityPool => ClaimLiquidityAtom::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimAtom {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimAtomType::V0 => ClaimOfferAtomV0::seekable_skip_xdr(r)?,
+                ClaimAtomType::OrderBook => ClaimOfferAtom::seekable_skip_xdr(r)?,
+                ClaimAtomType::LiquidityPool => ClaimLiquidityAtom::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -37738,6 +47414,20 @@ impl WriteXdr for CreateAccountResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for CreateAccountResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for CreateAccountResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -37882,6 +47572,46 @@ impl WriteXdr for CreateAccountResult {
                 Self::Underfunded => ().write_xdr(w)?,
                 Self::LowReserve => ().write_xdr(w)?,
                 Self::AlreadyExist => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for CreateAccountResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                CreateAccountResultCode::Success => (),
+                CreateAccountResultCode::Malformed => (),
+                CreateAccountResultCode::Underfunded => (),
+                CreateAccountResultCode::LowReserve => (),
+                CreateAccountResultCode::AlreadyExist => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreateAccountResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                CreateAccountResultCode::Success => (),
+                CreateAccountResultCode::Malformed => (),
+                CreateAccountResultCode::Underfunded => (),
+                CreateAccountResultCode::LowReserve => (),
+                CreateAccountResultCode::AlreadyExist => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -38050,6 +47780,20 @@ impl WriteXdr for PaymentResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for PaymentResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for PaymentResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -38234,6 +47978,56 @@ impl WriteXdr for PaymentResult {
                 Self::NotAuthorized => ().write_xdr(w)?,
                 Self::LineFull => ().write_xdr(w)?,
                 Self::NoIssuer => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PaymentResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PaymentResultCode::Success => (),
+                PaymentResultCode::Malformed => (),
+                PaymentResultCode::Underfunded => (),
+                PaymentResultCode::SrcNoTrust => (),
+                PaymentResultCode::SrcNotAuthorized => (),
+                PaymentResultCode::NoDestination => (),
+                PaymentResultCode::NoTrust => (),
+                PaymentResultCode::NotAuthorized => (),
+                PaymentResultCode::LineFull => (),
+                PaymentResultCode::NoIssuer => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PaymentResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PaymentResultCode::Success => (),
+                PaymentResultCode::Malformed => (),
+                PaymentResultCode::Underfunded => (),
+                PaymentResultCode::SrcNoTrust => (),
+                PaymentResultCode::SrcNotAuthorized => (),
+                PaymentResultCode::NoDestination => (),
+                PaymentResultCode::NoTrust => (),
+                PaymentResultCode::NotAuthorized => (),
+                PaymentResultCode::LineFull => (),
+                PaymentResultCode::NoIssuer => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -38432,6 +48226,20 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
     }
 }
 
+impl SkipXdr for PathPaymentStrictReceiveResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictReceiveResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// SimplePaymentResult is an XDR Struct defined as:
 ///
 /// ```text
@@ -38489,6 +48297,30 @@ impl WriteXdr for SimplePaymentResult {
     }
 }
 
+impl SkipXdr for SimplePaymentResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            Asset::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SimplePaymentResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            Asset::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// PathPaymentStrictReceiveResultSuccess is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -38533,6 +48365,28 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
             self.last.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PathPaymentStrictReceiveResultSuccess {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ClaimAtom>::skip_xdr(r)?;
+            SimplePaymentResult::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictReceiveResultSuccess {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ClaimAtom>::seekable_skip_xdr(r)?;
+            SimplePaymentResult::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -38759,6 +48613,68 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
     }
 }
 
+impl SkipXdr for PathPaymentStrictReceiveResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PathPaymentStrictReceiveResultCode =
+                <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PathPaymentStrictReceiveResultCode::Success => {
+                    PathPaymentStrictReceiveResultSuccess::skip_xdr(r)?
+                }
+                PathPaymentStrictReceiveResultCode::Malformed => (),
+                PathPaymentStrictReceiveResultCode::Underfunded => (),
+                PathPaymentStrictReceiveResultCode::SrcNoTrust => (),
+                PathPaymentStrictReceiveResultCode::SrcNotAuthorized => (),
+                PathPaymentStrictReceiveResultCode::NoDestination => (),
+                PathPaymentStrictReceiveResultCode::NoTrust => (),
+                PathPaymentStrictReceiveResultCode::NotAuthorized => (),
+                PathPaymentStrictReceiveResultCode::LineFull => (),
+                PathPaymentStrictReceiveResultCode::NoIssuer => Asset::skip_xdr(r)?,
+                PathPaymentStrictReceiveResultCode::TooFewOffers => (),
+                PathPaymentStrictReceiveResultCode::OfferCrossSelf => (),
+                PathPaymentStrictReceiveResultCode::OverSendmax => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictReceiveResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PathPaymentStrictReceiveResultCode =
+                <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PathPaymentStrictReceiveResultCode::Success => {
+                    PathPaymentStrictReceiveResultSuccess::seekable_skip_xdr(r)?
+                }
+                PathPaymentStrictReceiveResultCode::Malformed => (),
+                PathPaymentStrictReceiveResultCode::Underfunded => (),
+                PathPaymentStrictReceiveResultCode::SrcNoTrust => (),
+                PathPaymentStrictReceiveResultCode::SrcNotAuthorized => (),
+                PathPaymentStrictReceiveResultCode::NoDestination => (),
+                PathPaymentStrictReceiveResultCode::NoTrust => (),
+                PathPaymentStrictReceiveResultCode::NotAuthorized => (),
+                PathPaymentStrictReceiveResultCode::LineFull => (),
+                PathPaymentStrictReceiveResultCode::NoIssuer => Asset::seekable_skip_xdr(r)?,
+                PathPaymentStrictReceiveResultCode::TooFewOffers => (),
+                PathPaymentStrictReceiveResultCode::OfferCrossSelf => (),
+                PathPaymentStrictReceiveResultCode::OverSendmax => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// PathPaymentStrictSendResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -38950,6 +48866,20 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
     }
 }
 
+impl SkipXdr for PathPaymentStrictSendResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictSendResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// PathPaymentStrictSendResultSuccess is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -38994,6 +48924,28 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
             self.last.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for PathPaymentStrictSendResultSuccess {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ClaimAtom>::skip_xdr(r)?;
+            SimplePaymentResult::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictSendResultSuccess {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ClaimAtom>::seekable_skip_xdr(r)?;
+            SimplePaymentResult::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -39219,6 +49171,68 @@ impl WriteXdr for PathPaymentStrictSendResult {
     }
 }
 
+impl SkipXdr for PathPaymentStrictSendResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PathPaymentStrictSendResultCode =
+                <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PathPaymentStrictSendResultCode::Success => {
+                    PathPaymentStrictSendResultSuccess::skip_xdr(r)?
+                }
+                PathPaymentStrictSendResultCode::Malformed => (),
+                PathPaymentStrictSendResultCode::Underfunded => (),
+                PathPaymentStrictSendResultCode::SrcNoTrust => (),
+                PathPaymentStrictSendResultCode::SrcNotAuthorized => (),
+                PathPaymentStrictSendResultCode::NoDestination => (),
+                PathPaymentStrictSendResultCode::NoTrust => (),
+                PathPaymentStrictSendResultCode::NotAuthorized => (),
+                PathPaymentStrictSendResultCode::LineFull => (),
+                PathPaymentStrictSendResultCode::NoIssuer => Asset::skip_xdr(r)?,
+                PathPaymentStrictSendResultCode::TooFewOffers => (),
+                PathPaymentStrictSendResultCode::OfferCrossSelf => (),
+                PathPaymentStrictSendResultCode::UnderDestmin => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PathPaymentStrictSendResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PathPaymentStrictSendResultCode =
+                <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PathPaymentStrictSendResultCode::Success => {
+                    PathPaymentStrictSendResultSuccess::seekable_skip_xdr(r)?
+                }
+                PathPaymentStrictSendResultCode::Malformed => (),
+                PathPaymentStrictSendResultCode::Underfunded => (),
+                PathPaymentStrictSendResultCode::SrcNoTrust => (),
+                PathPaymentStrictSendResultCode::SrcNotAuthorized => (),
+                PathPaymentStrictSendResultCode::NoDestination => (),
+                PathPaymentStrictSendResultCode::NoTrust => (),
+                PathPaymentStrictSendResultCode::NotAuthorized => (),
+                PathPaymentStrictSendResultCode::LineFull => (),
+                PathPaymentStrictSendResultCode::NoIssuer => Asset::seekable_skip_xdr(r)?,
+                PathPaymentStrictSendResultCode::TooFewOffers => (),
+                PathPaymentStrictSendResultCode::OfferCrossSelf => (),
+                PathPaymentStrictSendResultCode::UnderDestmin => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ManageSellOfferResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -39409,6 +49423,20 @@ impl WriteXdr for ManageSellOfferResultCode {
     }
 }
 
+impl SkipXdr for ManageSellOfferResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ManageSellOfferResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// ManageOfferEffect is an XDR Enum defined as:
 ///
 /// ```text
@@ -39522,6 +49550,20 @@ impl WriteXdr for ManageOfferEffect {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ManageOfferEffect {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ManageOfferEffect {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -39652,6 +49694,42 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
     }
 }
 
+impl SkipXdr for ManageOfferSuccessResultOffer {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageOfferEffect::Created => OfferEntry::skip_xdr(r)?,
+                ManageOfferEffect::Updated => OfferEntry::skip_xdr(r)?,
+                ManageOfferEffect::Deleted => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageOfferSuccessResultOffer {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageOfferEffect::Created => OfferEntry::seekable_skip_xdr(r)?,
+                ManageOfferEffect::Updated => OfferEntry::seekable_skip_xdr(r)?,
+                ManageOfferEffect::Deleted => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ManageOfferSuccessResult is an XDR Struct defined as:
 ///
 /// ```text
@@ -39706,6 +49784,28 @@ impl WriteXdr for ManageOfferSuccessResult {
         w.with_limited_depth(|w| {
             self.offers_claimed.write_xdr(w)?;
             self.offer.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ManageOfferSuccessResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ClaimAtom>::skip_xdr(r)?;
+            ManageOfferSuccessResultOffer::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageOfferSuccessResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            VecM::<ClaimAtom>::seekable_skip_xdr(r)?;
+            ManageOfferSuccessResultOffer::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -39925,6 +50025,66 @@ impl WriteXdr for ManageSellOfferResult {
     }
 }
 
+impl SkipXdr for ManageSellOfferResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageSellOfferResultCode =
+                <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageSellOfferResultCode::Success => ManageOfferSuccessResult::skip_xdr(r)?,
+                ManageSellOfferResultCode::Malformed => (),
+                ManageSellOfferResultCode::SellNoTrust => (),
+                ManageSellOfferResultCode::BuyNoTrust => (),
+                ManageSellOfferResultCode::SellNotAuthorized => (),
+                ManageSellOfferResultCode::BuyNotAuthorized => (),
+                ManageSellOfferResultCode::LineFull => (),
+                ManageSellOfferResultCode::Underfunded => (),
+                ManageSellOfferResultCode::CrossSelf => (),
+                ManageSellOfferResultCode::SellNoIssuer => (),
+                ManageSellOfferResultCode::BuyNoIssuer => (),
+                ManageSellOfferResultCode::NotFound => (),
+                ManageSellOfferResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageSellOfferResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageSellOfferResultCode =
+                <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageSellOfferResultCode::Success => {
+                    ManageOfferSuccessResult::seekable_skip_xdr(r)?
+                }
+                ManageSellOfferResultCode::Malformed => (),
+                ManageSellOfferResultCode::SellNoTrust => (),
+                ManageSellOfferResultCode::BuyNoTrust => (),
+                ManageSellOfferResultCode::SellNotAuthorized => (),
+                ManageSellOfferResultCode::BuyNotAuthorized => (),
+                ManageSellOfferResultCode::LineFull => (),
+                ManageSellOfferResultCode::Underfunded => (),
+                ManageSellOfferResultCode::CrossSelf => (),
+                ManageSellOfferResultCode::SellNoIssuer => (),
+                ManageSellOfferResultCode::BuyNoIssuer => (),
+                ManageSellOfferResultCode::NotFound => (),
+                ManageSellOfferResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ManageBuyOfferResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -40109,6 +50269,20 @@ impl WriteXdr for ManageBuyOfferResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ManageBuyOfferResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ManageBuyOfferResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -40325,6 +50499,64 @@ impl WriteXdr for ManageBuyOfferResult {
     }
 }
 
+impl SkipXdr for ManageBuyOfferResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageBuyOfferResultCode::Success => ManageOfferSuccessResult::skip_xdr(r)?,
+                ManageBuyOfferResultCode::Malformed => (),
+                ManageBuyOfferResultCode::SellNoTrust => (),
+                ManageBuyOfferResultCode::BuyNoTrust => (),
+                ManageBuyOfferResultCode::SellNotAuthorized => (),
+                ManageBuyOfferResultCode::BuyNotAuthorized => (),
+                ManageBuyOfferResultCode::LineFull => (),
+                ManageBuyOfferResultCode::Underfunded => (),
+                ManageBuyOfferResultCode::CrossSelf => (),
+                ManageBuyOfferResultCode::SellNoIssuer => (),
+                ManageBuyOfferResultCode::BuyNoIssuer => (),
+                ManageBuyOfferResultCode::NotFound => (),
+                ManageBuyOfferResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageBuyOfferResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageBuyOfferResultCode::Success => {
+                    ManageOfferSuccessResult::seekable_skip_xdr(r)?
+                }
+                ManageBuyOfferResultCode::Malformed => (),
+                ManageBuyOfferResultCode::SellNoTrust => (),
+                ManageBuyOfferResultCode::BuyNoTrust => (),
+                ManageBuyOfferResultCode::SellNotAuthorized => (),
+                ManageBuyOfferResultCode::BuyNotAuthorized => (),
+                ManageBuyOfferResultCode::LineFull => (),
+                ManageBuyOfferResultCode::Underfunded => (),
+                ManageBuyOfferResultCode::CrossSelf => (),
+                ManageBuyOfferResultCode::SellNoIssuer => (),
+                ManageBuyOfferResultCode::BuyNoIssuer => (),
+                ManageBuyOfferResultCode::NotFound => (),
+                ManageBuyOfferResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SetOptionsResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -40493,6 +50725,20 @@ impl WriteXdr for SetOptionsResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for SetOptionsResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SetOptionsResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -40691,6 +50937,58 @@ impl WriteXdr for SetOptionsResult {
     }
 }
 
+impl SkipXdr for SetOptionsResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SetOptionsResultCode::Success => (),
+                SetOptionsResultCode::LowReserve => (),
+                SetOptionsResultCode::TooManySigners => (),
+                SetOptionsResultCode::BadFlags => (),
+                SetOptionsResultCode::InvalidInflation => (),
+                SetOptionsResultCode::CantChange => (),
+                SetOptionsResultCode::UnknownFlag => (),
+                SetOptionsResultCode::ThresholdOutOfRange => (),
+                SetOptionsResultCode::BadSigner => (),
+                SetOptionsResultCode::InvalidHomeDomain => (),
+                SetOptionsResultCode::AuthRevocableRequired => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SetOptionsResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SetOptionsResultCode::Success => (),
+                SetOptionsResultCode::LowReserve => (),
+                SetOptionsResultCode::TooManySigners => (),
+                SetOptionsResultCode::BadFlags => (),
+                SetOptionsResultCode::InvalidInflation => (),
+                SetOptionsResultCode::CantChange => (),
+                SetOptionsResultCode::UnknownFlag => (),
+                SetOptionsResultCode::ThresholdOutOfRange => (),
+                SetOptionsResultCode::BadSigner => (),
+                SetOptionsResultCode::InvalidHomeDomain => (),
+                SetOptionsResultCode::AuthRevocableRequired => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ChangeTrustResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -40850,6 +51148,20 @@ impl WriteXdr for ChangeTrustResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ChangeTrustResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ChangeTrustResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -41034,6 +51346,54 @@ impl WriteXdr for ChangeTrustResult {
     }
 }
 
+impl SkipXdr for ChangeTrustResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ChangeTrustResultCode::Success => (),
+                ChangeTrustResultCode::Malformed => (),
+                ChangeTrustResultCode::NoIssuer => (),
+                ChangeTrustResultCode::InvalidLimit => (),
+                ChangeTrustResultCode::LowReserve => (),
+                ChangeTrustResultCode::SelfNotAllowed => (),
+                ChangeTrustResultCode::TrustLineMissing => (),
+                ChangeTrustResultCode::CannotDelete => (),
+                ChangeTrustResultCode::NotAuthMaintainLiabilities => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ChangeTrustResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ChangeTrustResultCode::Success => (),
+                ChangeTrustResultCode::Malformed => (),
+                ChangeTrustResultCode::NoIssuer => (),
+                ChangeTrustResultCode::InvalidLimit => (),
+                ChangeTrustResultCode::LowReserve => (),
+                ChangeTrustResultCode::SelfNotAllowed => (),
+                ChangeTrustResultCode::TrustLineMissing => (),
+                ChangeTrustResultCode::CannotDelete => (),
+                ChangeTrustResultCode::NotAuthMaintainLiabilities => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AllowTrustResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -41179,6 +51539,20 @@ impl WriteXdr for AllowTrustResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for AllowTrustResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AllowTrustResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -41345,6 +51719,50 @@ impl WriteXdr for AllowTrustResult {
     }
 }
 
+impl SkipXdr for AllowTrustResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AllowTrustResultCode::Success => (),
+                AllowTrustResultCode::Malformed => (),
+                AllowTrustResultCode::NoTrustLine => (),
+                AllowTrustResultCode::TrustNotRequired => (),
+                AllowTrustResultCode::CantRevoke => (),
+                AllowTrustResultCode::SelfNotAllowed => (),
+                AllowTrustResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AllowTrustResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AllowTrustResultCode::Success => (),
+                AllowTrustResultCode::Malformed => (),
+                AllowTrustResultCode::NoTrustLine => (),
+                AllowTrustResultCode::TrustNotRequired => (),
+                AllowTrustResultCode::CantRevoke => (),
+                AllowTrustResultCode::SelfNotAllowed => (),
+                AllowTrustResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// AccountMergeResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -41495,6 +51913,20 @@ impl WriteXdr for AccountMergeResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for AccountMergeResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AccountMergeResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -41675,6 +52107,52 @@ impl WriteXdr for AccountMergeResult {
     }
 }
 
+impl SkipXdr for AccountMergeResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AccountMergeResultCode::Success => i64::skip_xdr(r)?,
+                AccountMergeResultCode::Malformed => (),
+                AccountMergeResultCode::NoAccount => (),
+                AccountMergeResultCode::ImmutableSet => (),
+                AccountMergeResultCode::HasSubEntries => (),
+                AccountMergeResultCode::SeqnumTooFar => (),
+                AccountMergeResultCode::DestFull => (),
+                AccountMergeResultCode::IsSponsor => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for AccountMergeResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                AccountMergeResultCode::Success => i64::seekable_skip_xdr(r)?,
+                AccountMergeResultCode::Malformed => (),
+                AccountMergeResultCode::NoAccount => (),
+                AccountMergeResultCode::ImmutableSet => (),
+                AccountMergeResultCode::HasSubEntries => (),
+                AccountMergeResultCode::SeqnumTooFar => (),
+                AccountMergeResultCode::DestFull => (),
+                AccountMergeResultCode::IsSponsor => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// InflationResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -41786,6 +52264,20 @@ impl WriteXdr for InflationResultCode {
     }
 }
 
+impl SkipXdr for InflationResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for InflationResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// InflationPayout is an XDR Struct defined as:
 ///
 /// ```text
@@ -41834,6 +52326,28 @@ impl WriteXdr for InflationPayout {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.amount.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for InflationPayout {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InflationPayout {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            AccountId::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -41953,6 +52467,40 @@ impl WriteXdr for InflationResult {
             match self {
                 Self::Success(v) => v.write_xdr(w)?,
                 Self::NotTime => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for InflationResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                InflationResultCode::Success => VecM::<InflationPayout>::skip_xdr(r)?,
+                InflationResultCode::NotTime => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InflationResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                InflationResultCode::Success => VecM::<InflationPayout>::seekable_skip_xdr(r)?,
+                InflationResultCode::NotTime => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -42092,6 +52640,20 @@ impl WriteXdr for ManageDataResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ManageDataResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ManageDataResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -42242,6 +52804,46 @@ impl WriteXdr for ManageDataResult {
     }
 }
 
+impl SkipXdr for ManageDataResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageDataResultCode::Success => (),
+                ManageDataResultCode::NotSupportedYet => (),
+                ManageDataResultCode::NameNotFound => (),
+                ManageDataResultCode::LowReserve => (),
+                ManageDataResultCode::InvalidName => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ManageDataResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ManageDataResultCode::Success => (),
+                ManageDataResultCode::NotSupportedYet => (),
+                ManageDataResultCode::NameNotFound => (),
+                ManageDataResultCode::LowReserve => (),
+                ManageDataResultCode::InvalidName => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// BumpSequenceResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -42352,6 +52954,20 @@ impl WriteXdr for BumpSequenceResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for BumpSequenceResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for BumpSequenceResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -42469,6 +53085,40 @@ impl WriteXdr for BumpSequenceResult {
             match self {
                 Self::Success => ().write_xdr(w)?,
                 Self::BadSeq => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for BumpSequenceResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                BumpSequenceResultCode::Success => (),
+                BumpSequenceResultCode::BadSeq => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BumpSequenceResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                BumpSequenceResultCode::Success => (),
+                BumpSequenceResultCode::BadSeq => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -42610,6 +53260,20 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for CreateClaimableBalanceResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for CreateClaimableBalanceResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -42772,6 +53436,52 @@ impl WriteXdr for CreateClaimableBalanceResult {
     }
 }
 
+impl SkipXdr for CreateClaimableBalanceResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: CreateClaimableBalanceResultCode =
+                <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                CreateClaimableBalanceResultCode::Success => ClaimableBalanceId::skip_xdr(r)?,
+                CreateClaimableBalanceResultCode::Malformed => (),
+                CreateClaimableBalanceResultCode::LowReserve => (),
+                CreateClaimableBalanceResultCode::NoTrust => (),
+                CreateClaimableBalanceResultCode::NotAuthorized => (),
+                CreateClaimableBalanceResultCode::Underfunded => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for CreateClaimableBalanceResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: CreateClaimableBalanceResultCode =
+                <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                CreateClaimableBalanceResultCode::Success => {
+                    ClaimableBalanceId::seekable_skip_xdr(r)?
+                }
+                CreateClaimableBalanceResultCode::Malformed => (),
+                CreateClaimableBalanceResultCode::LowReserve => (),
+                CreateClaimableBalanceResultCode::NoTrust => (),
+                CreateClaimableBalanceResultCode::NotAuthorized => (),
+                CreateClaimableBalanceResultCode::Underfunded => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClaimClaimableBalanceResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -42907,6 +53617,20 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ClaimClaimableBalanceResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClaimClaimableBalanceResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -43066,6 +53790,50 @@ impl WriteXdr for ClaimClaimableBalanceResult {
     }
 }
 
+impl SkipXdr for ClaimClaimableBalanceResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimClaimableBalanceResultCode =
+                <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimClaimableBalanceResultCode::Success => (),
+                ClaimClaimableBalanceResultCode::DoesNotExist => (),
+                ClaimClaimableBalanceResultCode::CannotClaim => (),
+                ClaimClaimableBalanceResultCode::LineFull => (),
+                ClaimClaimableBalanceResultCode::NoTrust => (),
+                ClaimClaimableBalanceResultCode::NotAuthorized => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimClaimableBalanceResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimClaimableBalanceResultCode =
+                <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimClaimableBalanceResultCode::Success => (),
+                ClaimClaimableBalanceResultCode::DoesNotExist => (),
+                ClaimClaimableBalanceResultCode::CannotClaim => (),
+                ClaimClaimableBalanceResultCode::LineFull => (),
+                ClaimClaimableBalanceResultCode::NoTrust => (),
+                ClaimClaimableBalanceResultCode::NotAuthorized => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// BeginSponsoringFutureReservesResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -43188,6 +53956,20 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for BeginSponsoringFutureReservesResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for BeginSponsoringFutureReservesResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -43328,6 +54110,46 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
     }
 }
 
+impl SkipXdr for BeginSponsoringFutureReservesResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: BeginSponsoringFutureReservesResultCode =
+                <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                BeginSponsoringFutureReservesResultCode::Success => (),
+                BeginSponsoringFutureReservesResultCode::Malformed => (),
+                BeginSponsoringFutureReservesResultCode::AlreadySponsored => (),
+                BeginSponsoringFutureReservesResultCode::Recursive => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for BeginSponsoringFutureReservesResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: BeginSponsoringFutureReservesResultCode =
+                <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                BeginSponsoringFutureReservesResultCode::Success => (),
+                BeginSponsoringFutureReservesResultCode::Malformed => (),
+                BeginSponsoringFutureReservesResultCode::AlreadySponsored => (),
+                BeginSponsoringFutureReservesResultCode::Recursive => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// EndSponsoringFutureReservesResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -43439,6 +54261,20 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for EndSponsoringFutureReservesResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for EndSponsoringFutureReservesResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -43558,6 +54394,42 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
             match self {
                 Self::Success => ().write_xdr(w)?,
                 Self::NotSponsored => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for EndSponsoringFutureReservesResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EndSponsoringFutureReservesResultCode =
+                <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EndSponsoringFutureReservesResultCode::Success => (),
+                EndSponsoringFutureReservesResultCode::NotSponsored => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for EndSponsoringFutureReservesResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: EndSponsoringFutureReservesResultCode =
+                <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                EndSponsoringFutureReservesResultCode::Success => (),
+                EndSponsoringFutureReservesResultCode::NotSponsored => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -43702,6 +54574,20 @@ impl WriteXdr for RevokeSponsorshipResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for RevokeSponsorshipResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for RevokeSponsorshipResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -43861,6 +54747,50 @@ impl WriteXdr for RevokeSponsorshipResult {
     }
 }
 
+impl SkipXdr for RevokeSponsorshipResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: RevokeSponsorshipResultCode =
+                <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                RevokeSponsorshipResultCode::Success => (),
+                RevokeSponsorshipResultCode::DoesNotExist => (),
+                RevokeSponsorshipResultCode::NotSponsor => (),
+                RevokeSponsorshipResultCode::LowReserve => (),
+                RevokeSponsorshipResultCode::OnlyTransferable => (),
+                RevokeSponsorshipResultCode::Malformed => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for RevokeSponsorshipResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: RevokeSponsorshipResultCode =
+                <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                RevokeSponsorshipResultCode::Success => (),
+                RevokeSponsorshipResultCode::DoesNotExist => (),
+                RevokeSponsorshipResultCode::NotSponsor => (),
+                RevokeSponsorshipResultCode::LowReserve => (),
+                RevokeSponsorshipResultCode::OnlyTransferable => (),
+                RevokeSponsorshipResultCode::Malformed => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClawbackResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -43993,6 +54923,20 @@ impl WriteXdr for ClawbackResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ClawbackResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClawbackResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -44143,6 +55087,46 @@ impl WriteXdr for ClawbackResult {
     }
 }
 
+impl SkipXdr for ClawbackResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClawbackResultCode::Success => (),
+                ClawbackResultCode::Malformed => (),
+                ClawbackResultCode::NotClawbackEnabled => (),
+                ClawbackResultCode::NoTrust => (),
+                ClawbackResultCode::Underfunded => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClawbackResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClawbackResultCode::Success => (),
+                ClawbackResultCode::Malformed => (),
+                ClawbackResultCode::NotClawbackEnabled => (),
+                ClawbackResultCode::NoTrust => (),
+                ClawbackResultCode::Underfunded => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ClawbackClaimableBalanceResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -44265,6 +55249,20 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ClawbackClaimableBalanceResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClawbackClaimableBalanceResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -44399,6 +55397,46 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
                 Self::DoesNotExist => ().write_xdr(w)?,
                 Self::NotIssuer => ().write_xdr(w)?,
                 Self::NotClawbackEnabled => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClawbackClaimableBalanceResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClawbackClaimableBalanceResultCode =
+                <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClawbackClaimableBalanceResultCode::Success => (),
+                ClawbackClaimableBalanceResultCode::DoesNotExist => (),
+                ClawbackClaimableBalanceResultCode::NotIssuer => (),
+                ClawbackClaimableBalanceResultCode::NotClawbackEnabled => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClawbackClaimableBalanceResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClawbackClaimableBalanceResultCode =
+                <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClawbackClaimableBalanceResultCode::Success => (),
+                ClawbackClaimableBalanceResultCode::DoesNotExist => (),
+                ClawbackClaimableBalanceResultCode::NotIssuer => (),
+                ClawbackClaimableBalanceResultCode::NotClawbackEnabled => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -44544,6 +55582,20 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for SetTrustLineFlagsResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SetTrustLineFlagsResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -44697,6 +55749,50 @@ impl WriteXdr for SetTrustLineFlagsResult {
                 Self::CantRevoke => ().write_xdr(w)?,
                 Self::InvalidState => ().write_xdr(w)?,
                 Self::LowReserve => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SetTrustLineFlagsResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SetTrustLineFlagsResultCode =
+                <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SetTrustLineFlagsResultCode::Success => (),
+                SetTrustLineFlagsResultCode::Malformed => (),
+                SetTrustLineFlagsResultCode::NoTrustLine => (),
+                SetTrustLineFlagsResultCode::CantRevoke => (),
+                SetTrustLineFlagsResultCode::InvalidState => (),
+                SetTrustLineFlagsResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SetTrustLineFlagsResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SetTrustLineFlagsResultCode =
+                <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SetTrustLineFlagsResultCode::Success => (),
+                SetTrustLineFlagsResultCode::Malformed => (),
+                SetTrustLineFlagsResultCode::NoTrustLine => (),
+                SetTrustLineFlagsResultCode::CantRevoke => (),
+                SetTrustLineFlagsResultCode::InvalidState => (),
+                SetTrustLineFlagsResultCode::LowReserve => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -44857,6 +55953,20 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for LiquidityPoolDepositResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolDepositResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -45032,6 +56142,54 @@ impl WriteXdr for LiquidityPoolDepositResult {
     }
 }
 
+impl SkipXdr for LiquidityPoolDepositResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolDepositResultCode =
+                <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolDepositResultCode::Success => (),
+                LiquidityPoolDepositResultCode::Malformed => (),
+                LiquidityPoolDepositResultCode::NoTrust => (),
+                LiquidityPoolDepositResultCode::NotAuthorized => (),
+                LiquidityPoolDepositResultCode::Underfunded => (),
+                LiquidityPoolDepositResultCode::LineFull => (),
+                LiquidityPoolDepositResultCode::BadPrice => (),
+                LiquidityPoolDepositResultCode::PoolFull => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolDepositResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolDepositResultCode =
+                <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolDepositResultCode::Success => (),
+                LiquidityPoolDepositResultCode::Malformed => (),
+                LiquidityPoolDepositResultCode::NoTrust => (),
+                LiquidityPoolDepositResultCode::NotAuthorized => (),
+                LiquidityPoolDepositResultCode::Underfunded => (),
+                LiquidityPoolDepositResultCode::LineFull => (),
+                LiquidityPoolDepositResultCode::BadPrice => (),
+                LiquidityPoolDepositResultCode::PoolFull => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// LiquidityPoolWithdrawResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -45173,6 +56331,20 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for LiquidityPoolWithdrawResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolWithdrawResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -45332,6 +56504,50 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     }
 }
 
+impl SkipXdr for LiquidityPoolWithdrawResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolWithdrawResultCode =
+                <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolWithdrawResultCode::Success => (),
+                LiquidityPoolWithdrawResultCode::Malformed => (),
+                LiquidityPoolWithdrawResultCode::NoTrust => (),
+                LiquidityPoolWithdrawResultCode::Underfunded => (),
+                LiquidityPoolWithdrawResultCode::LineFull => (),
+                LiquidityPoolWithdrawResultCode::UnderMinimum => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for LiquidityPoolWithdrawResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolWithdrawResultCode =
+                <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                LiquidityPoolWithdrawResultCode::Success => (),
+                LiquidityPoolWithdrawResultCode::Malformed => (),
+                LiquidityPoolWithdrawResultCode::NoTrust => (),
+                LiquidityPoolWithdrawResultCode::Underfunded => (),
+                LiquidityPoolWithdrawResultCode::LineFull => (),
+                LiquidityPoolWithdrawResultCode::UnderMinimum => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// InvokeHostFunctionResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -45470,6 +56686,20 @@ impl WriteXdr for InvokeHostFunctionResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -45633,6 +56863,50 @@ impl WriteXdr for InvokeHostFunctionResult {
     }
 }
 
+impl SkipXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: InvokeHostFunctionResultCode =
+                <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                InvokeHostFunctionResultCode::Success => Hash::skip_xdr(r)?,
+                InvokeHostFunctionResultCode::Malformed => (),
+                InvokeHostFunctionResultCode::Trapped => (),
+                InvokeHostFunctionResultCode::ResourceLimitExceeded => (),
+                InvokeHostFunctionResultCode::EntryArchived => (),
+                InvokeHostFunctionResultCode::InsufficientRefundableFee => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: InvokeHostFunctionResultCode =
+                <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                InvokeHostFunctionResultCode::Success => Hash::seekable_skip_xdr(r)?,
+                InvokeHostFunctionResultCode::Malformed => (),
+                InvokeHostFunctionResultCode::Trapped => (),
+                InvokeHostFunctionResultCode::ResourceLimitExceeded => (),
+                InvokeHostFunctionResultCode::EntryArchived => (),
+                InvokeHostFunctionResultCode::InsufficientRefundableFee => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ExtendFootprintTtlResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -45759,6 +57033,20 @@ impl WriteXdr for ExtendFootprintTtlResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ExtendFootprintTtlResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ExtendFootprintTtlResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -45906,6 +57194,46 @@ impl WriteXdr for ExtendFootprintTtlResult {
     }
 }
 
+impl SkipXdr for ExtendFootprintTtlResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ExtendFootprintTtlResultCode =
+                <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ExtendFootprintTtlResultCode::Success => (),
+                ExtendFootprintTtlResultCode::Malformed => (),
+                ExtendFootprintTtlResultCode::ResourceLimitExceeded => (),
+                ExtendFootprintTtlResultCode::InsufficientRefundableFee => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ExtendFootprintTtlResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ExtendFootprintTtlResultCode =
+                <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ExtendFootprintTtlResultCode::Success => (),
+                ExtendFootprintTtlResultCode::Malformed => (),
+                ExtendFootprintTtlResultCode::ResourceLimitExceeded => (),
+                ExtendFootprintTtlResultCode::InsufficientRefundableFee => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// RestoreFootprintResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -46032,6 +57360,20 @@ impl WriteXdr for RestoreFootprintResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for RestoreFootprintResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for RestoreFootprintResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -46173,6 +57515,46 @@ impl WriteXdr for RestoreFootprintResult {
                 Self::Malformed => ().write_xdr(w)?,
                 Self::ResourceLimitExceeded => ().write_xdr(w)?,
                 Self::InsufficientRefundableFee => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for RestoreFootprintResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: RestoreFootprintResultCode =
+                <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                RestoreFootprintResultCode::Success => (),
+                RestoreFootprintResultCode::Malformed => (),
+                RestoreFootprintResultCode::ResourceLimitExceeded => (),
+                RestoreFootprintResultCode::InsufficientRefundableFee => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for RestoreFootprintResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: RestoreFootprintResultCode =
+                <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                RestoreFootprintResultCode::Success => (),
+                RestoreFootprintResultCode::Malformed => (),
+                RestoreFootprintResultCode::ResourceLimitExceeded => (),
+                RestoreFootprintResultCode::InsufficientRefundableFee => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -46321,6 +57703,20 @@ impl WriteXdr for OperationResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for OperationResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for OperationResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -46710,6 +58106,122 @@ impl WriteXdr for OperationResultTr {
     }
 }
 
+impl SkipXdr for OperationResultTr {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                OperationType::CreateAccount => CreateAccountResult::skip_xdr(r)?,
+                OperationType::Payment => PaymentResult::skip_xdr(r)?,
+                OperationType::PathPaymentStrictReceive => {
+                    PathPaymentStrictReceiveResult::skip_xdr(r)?
+                }
+                OperationType::ManageSellOffer => ManageSellOfferResult::skip_xdr(r)?,
+                OperationType::CreatePassiveSellOffer => ManageSellOfferResult::skip_xdr(r)?,
+                OperationType::SetOptions => SetOptionsResult::skip_xdr(r)?,
+                OperationType::ChangeTrust => ChangeTrustResult::skip_xdr(r)?,
+                OperationType::AllowTrust => AllowTrustResult::skip_xdr(r)?,
+                OperationType::AccountMerge => AccountMergeResult::skip_xdr(r)?,
+                OperationType::Inflation => InflationResult::skip_xdr(r)?,
+                OperationType::ManageData => ManageDataResult::skip_xdr(r)?,
+                OperationType::BumpSequence => BumpSequenceResult::skip_xdr(r)?,
+                OperationType::ManageBuyOffer => ManageBuyOfferResult::skip_xdr(r)?,
+                OperationType::PathPaymentStrictSend => PathPaymentStrictSendResult::skip_xdr(r)?,
+                OperationType::CreateClaimableBalance => CreateClaimableBalanceResult::skip_xdr(r)?,
+                OperationType::ClaimClaimableBalance => ClaimClaimableBalanceResult::skip_xdr(r)?,
+                OperationType::BeginSponsoringFutureReserves => {
+                    BeginSponsoringFutureReservesResult::skip_xdr(r)?
+                }
+                OperationType::EndSponsoringFutureReserves => {
+                    EndSponsoringFutureReservesResult::skip_xdr(r)?
+                }
+                OperationType::RevokeSponsorship => RevokeSponsorshipResult::skip_xdr(r)?,
+                OperationType::Clawback => ClawbackResult::skip_xdr(r)?,
+                OperationType::ClawbackClaimableBalance => {
+                    ClawbackClaimableBalanceResult::skip_xdr(r)?
+                }
+                OperationType::SetTrustLineFlags => SetTrustLineFlagsResult::skip_xdr(r)?,
+                OperationType::LiquidityPoolDeposit => LiquidityPoolDepositResult::skip_xdr(r)?,
+                OperationType::LiquidityPoolWithdraw => LiquidityPoolWithdrawResult::skip_xdr(r)?,
+                OperationType::InvokeHostFunction => InvokeHostFunctionResult::skip_xdr(r)?,
+                OperationType::ExtendFootprintTtl => ExtendFootprintTtlResult::skip_xdr(r)?,
+                OperationType::RestoreFootprint => RestoreFootprintResult::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OperationResultTr {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                OperationType::CreateAccount => CreateAccountResult::seekable_skip_xdr(r)?,
+                OperationType::Payment => PaymentResult::seekable_skip_xdr(r)?,
+                OperationType::PathPaymentStrictReceive => {
+                    PathPaymentStrictReceiveResult::seekable_skip_xdr(r)?
+                }
+                OperationType::ManageSellOffer => ManageSellOfferResult::seekable_skip_xdr(r)?,
+                OperationType::CreatePassiveSellOffer => {
+                    ManageSellOfferResult::seekable_skip_xdr(r)?
+                }
+                OperationType::SetOptions => SetOptionsResult::seekable_skip_xdr(r)?,
+                OperationType::ChangeTrust => ChangeTrustResult::seekable_skip_xdr(r)?,
+                OperationType::AllowTrust => AllowTrustResult::seekable_skip_xdr(r)?,
+                OperationType::AccountMerge => AccountMergeResult::seekable_skip_xdr(r)?,
+                OperationType::Inflation => InflationResult::seekable_skip_xdr(r)?,
+                OperationType::ManageData => ManageDataResult::seekable_skip_xdr(r)?,
+                OperationType::BumpSequence => BumpSequenceResult::seekable_skip_xdr(r)?,
+                OperationType::ManageBuyOffer => ManageBuyOfferResult::seekable_skip_xdr(r)?,
+                OperationType::PathPaymentStrictSend => {
+                    PathPaymentStrictSendResult::seekable_skip_xdr(r)?
+                }
+                OperationType::CreateClaimableBalance => {
+                    CreateClaimableBalanceResult::seekable_skip_xdr(r)?
+                }
+                OperationType::ClaimClaimableBalance => {
+                    ClaimClaimableBalanceResult::seekable_skip_xdr(r)?
+                }
+                OperationType::BeginSponsoringFutureReserves => {
+                    BeginSponsoringFutureReservesResult::seekable_skip_xdr(r)?
+                }
+                OperationType::EndSponsoringFutureReserves => {
+                    EndSponsoringFutureReservesResult::seekable_skip_xdr(r)?
+                }
+                OperationType::RevokeSponsorship => RevokeSponsorshipResult::seekable_skip_xdr(r)?,
+                OperationType::Clawback => ClawbackResult::seekable_skip_xdr(r)?,
+                OperationType::ClawbackClaimableBalance => {
+                    ClawbackClaimableBalanceResult::seekable_skip_xdr(r)?
+                }
+                OperationType::SetTrustLineFlags => SetTrustLineFlagsResult::seekable_skip_xdr(r)?,
+                OperationType::LiquidityPoolDeposit => {
+                    LiquidityPoolDepositResult::seekable_skip_xdr(r)?
+                }
+                OperationType::LiquidityPoolWithdraw => {
+                    LiquidityPoolWithdrawResult::seekable_skip_xdr(r)?
+                }
+                OperationType::InvokeHostFunction => {
+                    InvokeHostFunctionResult::seekable_skip_xdr(r)?
+                }
+                OperationType::ExtendFootprintTtl => {
+                    ExtendFootprintTtlResult::seekable_skip_xdr(r)?
+                }
+                OperationType::RestoreFootprint => RestoreFootprintResult::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// OperationResult is an XDR Union defined as:
 ///
 /// ```text
@@ -46924,6 +58436,50 @@ impl WriteXdr for OperationResult {
                 Self::OpTooManySubentries => ().write_xdr(w)?,
                 Self::OpExceededWorkLimit => ().write_xdr(w)?,
                 Self::OpTooManySponsoring => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for OperationResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                OperationResultCode::OpInner => OperationResultTr::skip_xdr(r)?,
+                OperationResultCode::OpBadAuth => (),
+                OperationResultCode::OpNoAccount => (),
+                OperationResultCode::OpNotSupported => (),
+                OperationResultCode::OpTooManySubentries => (),
+                OperationResultCode::OpExceededWorkLimit => (),
+                OperationResultCode::OpTooManySponsoring => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for OperationResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                OperationResultCode::OpInner => OperationResultTr::seekable_skip_xdr(r)?,
+                OperationResultCode::OpBadAuth => (),
+                OperationResultCode::OpNoAccount => (),
+                OperationResultCode::OpNotSupported => (),
+                OperationResultCode::OpTooManySubentries => (),
+                OperationResultCode::OpExceededWorkLimit => (),
+                OperationResultCode::OpTooManySponsoring => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -47147,6 +58703,20 @@ impl WriteXdr for TransactionResultCode {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for TransactionResultCode {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultCode {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -47399,6 +58969,70 @@ impl WriteXdr for InnerTransactionResultResult {
     }
 }
 
+impl SkipXdr for InnerTransactionResultResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                TransactionResultCode::TxSuccess => VecM::<OperationResult>::skip_xdr(r)?,
+                TransactionResultCode::TxFailed => VecM::<OperationResult>::skip_xdr(r)?,
+                TransactionResultCode::TxTooEarly => (),
+                TransactionResultCode::TxTooLate => (),
+                TransactionResultCode::TxMissingOperation => (),
+                TransactionResultCode::TxBadSeq => (),
+                TransactionResultCode::TxBadAuth => (),
+                TransactionResultCode::TxInsufficientBalance => (),
+                TransactionResultCode::TxNoAccount => (),
+                TransactionResultCode::TxInsufficientFee => (),
+                TransactionResultCode::TxBadAuthExtra => (),
+                TransactionResultCode::TxInternalError => (),
+                TransactionResultCode::TxNotSupported => (),
+                TransactionResultCode::TxBadSponsorship => (),
+                TransactionResultCode::TxBadMinSeqAgeOrGap => (),
+                TransactionResultCode::TxMalformed => (),
+                TransactionResultCode::TxSorobanInvalid => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InnerTransactionResultResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                TransactionResultCode::TxSuccess => VecM::<OperationResult>::seekable_skip_xdr(r)?,
+                TransactionResultCode::TxFailed => VecM::<OperationResult>::seekable_skip_xdr(r)?,
+                TransactionResultCode::TxTooEarly => (),
+                TransactionResultCode::TxTooLate => (),
+                TransactionResultCode::TxMissingOperation => (),
+                TransactionResultCode::TxBadSeq => (),
+                TransactionResultCode::TxBadAuth => (),
+                TransactionResultCode::TxInsufficientBalance => (),
+                TransactionResultCode::TxNoAccount => (),
+                TransactionResultCode::TxInsufficientFee => (),
+                TransactionResultCode::TxBadAuthExtra => (),
+                TransactionResultCode::TxInternalError => (),
+                TransactionResultCode::TxNotSupported => (),
+                TransactionResultCode::TxBadSponsorship => (),
+                TransactionResultCode::TxBadMinSeqAgeOrGap => (),
+                TransactionResultCode::TxMalformed => (),
+                TransactionResultCode::TxSorobanInvalid => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// InnerTransactionResultExt is an XDR NestedUnion defined as:
 ///
 /// ```text
@@ -47509,6 +59143,38 @@ impl WriteXdr for InnerTransactionResultExt {
     }
 }
 
+impl SkipXdr for InnerTransactionResultExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InnerTransactionResultExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// InnerTransactionResult is an XDR Struct defined as:
 ///
 /// ```text
@@ -47599,6 +59265,30 @@ impl WriteXdr for InnerTransactionResult {
     }
 }
 
+impl SkipXdr for InnerTransactionResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            InnerTransactionResultResult::skip_xdr(r)?;
+            InnerTransactionResultExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InnerTransactionResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            InnerTransactionResultResult::seekable_skip_xdr(r)?;
+            InnerTransactionResultExt::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// InnerTransactionResultPair is an XDR Struct defined as:
 ///
 /// ```text
@@ -47643,6 +59333,28 @@ impl WriteXdr for InnerTransactionResultPair {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
             self.result.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for InnerTransactionResultPair {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::skip_xdr(r)?;
+            InnerTransactionResult::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for InnerTransactionResultPair {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Hash::seekable_skip_xdr(r)?;
+            InnerTransactionResult::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -47917,6 +59629,82 @@ impl WriteXdr for TransactionResultResult {
     }
 }
 
+impl SkipXdr for TransactionResultResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                TransactionResultCode::TxFeeBumpInnerSuccess => {
+                    InnerTransactionResultPair::skip_xdr(r)?
+                }
+                TransactionResultCode::TxFeeBumpInnerFailed => {
+                    InnerTransactionResultPair::skip_xdr(r)?
+                }
+                TransactionResultCode::TxSuccess => VecM::<OperationResult>::skip_xdr(r)?,
+                TransactionResultCode::TxFailed => VecM::<OperationResult>::skip_xdr(r)?,
+                TransactionResultCode::TxTooEarly => (),
+                TransactionResultCode::TxTooLate => (),
+                TransactionResultCode::TxMissingOperation => (),
+                TransactionResultCode::TxBadSeq => (),
+                TransactionResultCode::TxBadAuth => (),
+                TransactionResultCode::TxInsufficientBalance => (),
+                TransactionResultCode::TxNoAccount => (),
+                TransactionResultCode::TxInsufficientFee => (),
+                TransactionResultCode::TxBadAuthExtra => (),
+                TransactionResultCode::TxInternalError => (),
+                TransactionResultCode::TxNotSupported => (),
+                TransactionResultCode::TxBadSponsorship => (),
+                TransactionResultCode::TxBadMinSeqAgeOrGap => (),
+                TransactionResultCode::TxMalformed => (),
+                TransactionResultCode::TxSorobanInvalid => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                TransactionResultCode::TxFeeBumpInnerSuccess => {
+                    InnerTransactionResultPair::seekable_skip_xdr(r)?
+                }
+                TransactionResultCode::TxFeeBumpInnerFailed => {
+                    InnerTransactionResultPair::seekable_skip_xdr(r)?
+                }
+                TransactionResultCode::TxSuccess => VecM::<OperationResult>::seekable_skip_xdr(r)?,
+                TransactionResultCode::TxFailed => VecM::<OperationResult>::seekable_skip_xdr(r)?,
+                TransactionResultCode::TxTooEarly => (),
+                TransactionResultCode::TxTooLate => (),
+                TransactionResultCode::TxMissingOperation => (),
+                TransactionResultCode::TxBadSeq => (),
+                TransactionResultCode::TxBadAuth => (),
+                TransactionResultCode::TxInsufficientBalance => (),
+                TransactionResultCode::TxNoAccount => (),
+                TransactionResultCode::TxInsufficientFee => (),
+                TransactionResultCode::TxBadAuthExtra => (),
+                TransactionResultCode::TxInternalError => (),
+                TransactionResultCode::TxNotSupported => (),
+                TransactionResultCode::TxBadSponsorship => (),
+                TransactionResultCode::TxBadMinSeqAgeOrGap => (),
+                TransactionResultCode::TxMalformed => (),
+                TransactionResultCode::TxSorobanInvalid => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionResultExt is an XDR NestedUnion defined as:
 ///
 /// ```text
@@ -48027,6 +59815,38 @@ impl WriteXdr for TransactionResultExt {
     }
 }
 
+impl SkipXdr for TransactionResultExt {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResultExt {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// TransactionResult is an XDR Struct defined as:
 ///
 /// ```text
@@ -48113,6 +59933,30 @@ impl WriteXdr for TransactionResult {
             self.fee_charged.write_xdr(w)?;
             self.result.write_xdr(w)?;
             self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for TransactionResult {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::skip_xdr(r)?;
+            TransactionResultResult::skip_xdr(r)?;
+            TransactionResultExt::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for TransactionResult {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            i64::seekable_skip_xdr(r)?;
+            TransactionResultResult::seekable_skip_xdr(r)?;
+            TransactionResultExt::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -48231,6 +60075,20 @@ impl WriteXdr for Hash {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for Hash {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 32]>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for Hash {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 32]>::seekable_skip_xdr(r))
     }
 }
 
@@ -48387,6 +60245,20 @@ impl WriteXdr for Uint256 {
     }
 }
 
+impl SkipXdr for Uint256 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 32]>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for Uint256 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 32]>::seekable_skip_xdr(r))
+    }
+}
+
 impl Uint256 {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
@@ -48521,6 +60393,20 @@ impl WriteXdr for TimePoint {
     }
 }
 
+impl SkipXdr for TimePoint {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| u64::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for TimePoint {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| u64::seekable_skip_xdr(r))
+    }
+}
+
 /// Duration is an XDR Typedef defined as:
 ///
 /// ```text
@@ -48583,6 +60469,20 @@ impl WriteXdr for Duration {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for Duration {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| u64::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for Duration {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| u64::seekable_skip_xdr(r))
     }
 }
 
@@ -48690,6 +60590,38 @@ impl WriteXdr for ExtensionPoint {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ExtensionPoint {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ExtensionPoint {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                0 => (),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
             };
             Ok(())
         })
@@ -48830,6 +60762,20 @@ impl WriteXdr for CryptoKeyType {
     }
 }
 
+impl SkipXdr for CryptoKeyType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for CryptoKeyType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// PublicKeyType is an XDR Enum defined as:
 ///
 /// ```text
@@ -48931,6 +60877,20 @@ impl WriteXdr for PublicKeyType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for PublicKeyType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for PublicKeyType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -49056,6 +61016,20 @@ impl WriteXdr for SignerKeyType {
     }
 }
 
+impl SkipXdr for SignerKeyType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SignerKeyType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// PublicKey is an XDR Union defined as:
 ///
 /// ```text
@@ -49165,6 +61139,38 @@ impl WriteXdr for PublicKey {
     }
 }
 
+impl SkipXdr for PublicKey {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PublicKeyType::PublicKeyTypeEd25519 => Uint256::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for PublicKey {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                PublicKeyType::PublicKeyTypeEd25519 => Uint256::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SignerKeyEd25519SignedPayload is an XDR NestedStruct defined as:
 ///
 /// ```text
@@ -49208,6 +61214,28 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
         w.with_limited_depth(|w| {
             self.ed25519.write_xdr(w)?;
             self.payload.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SignerKeyEd25519SignedPayload {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Uint256::skip_xdr(r)?;
+            BytesM::<64>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SignerKeyEd25519SignedPayload {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            Uint256::seekable_skip_xdr(r)?;
+            BytesM::<64>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -49389,6 +61417,46 @@ impl WriteXdr for SignerKey {
     }
 }
 
+impl SkipXdr for SignerKey {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SignerKeyType::Ed25519 => Uint256::skip_xdr(r)?,
+                SignerKeyType::PreAuthTx => Uint256::skip_xdr(r)?,
+                SignerKeyType::HashX => Uint256::skip_xdr(r)?,
+                SignerKeyType::Ed25519SignedPayload => SignerKeyEd25519SignedPayload::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SignerKey {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                SignerKeyType::Ed25519 => Uint256::seekable_skip_xdr(r)?,
+                SignerKeyType::PreAuthTx => Uint256::seekable_skip_xdr(r)?,
+                SignerKeyType::HashX => Uint256::seekable_skip_xdr(r)?,
+                SignerKeyType::Ed25519SignedPayload => {
+                    SignerKeyEd25519SignedPayload::seekable_skip_xdr(r)?
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
 /// Signature is an XDR Typedef defined as:
 ///
 /// ```text
@@ -49444,6 +61512,20 @@ impl WriteXdr for Signature {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for Signature {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<64>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for Signature {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| BytesM::<64>::seekable_skip_xdr(r))
     }
 }
 
@@ -49612,6 +61694,20 @@ impl WriteXdr for SignatureHint {
     }
 }
 
+impl SkipXdr for SignatureHint {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 4]>::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for SignatureHint {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| <[u8; 4]>::seekable_skip_xdr(r))
+    }
+}
+
 impl SignatureHint {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
@@ -49705,6 +61801,20 @@ impl WriteXdr for NodeId {
     }
 }
 
+impl SkipXdr for NodeId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| PublicKey::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for NodeId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| PublicKey::seekable_skip_xdr(r))
+    }
+}
+
 /// AccountId is an XDR Typedef defined as:
 ///
 /// ```text
@@ -49758,6 +61868,20 @@ impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| PublicKey::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| PublicKey::seekable_skip_xdr(r))
     }
 }
 
@@ -49817,6 +61941,20 @@ impl WriteXdr for ContractId {
     }
 }
 
+impl SkipXdr for ContractId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| Hash::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ContractId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| Hash::seekable_skip_xdr(r))
+    }
+}
+
 /// Curve25519Secret is an XDR Struct defined as:
 ///
 /// ```text
@@ -49857,6 +61995,26 @@ impl WriteXdr for Curve25519Secret {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for Curve25519Secret {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Curve25519Secret {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -49907,6 +62065,26 @@ impl WriteXdr for Curve25519Public {
     }
 }
 
+impl SkipXdr for Curve25519Public {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for Curve25519Public {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// HmacSha256Key is an XDR Struct defined as:
 ///
 /// ```text
@@ -49947,6 +62125,26 @@ impl WriteXdr for HmacSha256Key {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for HmacSha256Key {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HmacSha256Key {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -49997,6 +62195,26 @@ impl WriteXdr for HmacSha256Mac {
     }
 }
 
+impl SkipXdr for HmacSha256Mac {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for HmacSha256Mac {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 32]>::seekable_skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
 /// ShortHashSeed is an XDR Struct defined as:
 ///
 /// ```text
@@ -50037,6 +62255,26 @@ impl WriteXdr for ShortHashSeed {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.seed.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ShortHashSeed {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 16]>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ShortHashSeed {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            <[u8; 16]>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -50158,6 +62396,20 @@ impl WriteXdr for BinaryFuseFilterType {
     }
 }
 
+impl SkipXdr for BinaryFuseFilterType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for BinaryFuseFilterType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
+    }
+}
+
 /// SerializedBinaryFuseFilter is an XDR Struct defined as:
 ///
 /// ```text
@@ -50217,7 +62469,7 @@ impl ReadXdr for SerializedBinaryFuseFilter {
                 segment_count: u32::read_xdr(r)?,
                 segment_count_length: u32::read_xdr(r)?,
                 fingerprint_length: u32::read_xdr(r)?,
-                fingerprints: BytesM::read_xdr(r)?,
+                fingerprints: BytesM::<{ u32::MAX }>::read_xdr(r)?,
             })
         })
     }
@@ -50236,6 +62488,42 @@ impl WriteXdr for SerializedBinaryFuseFilter {
             self.segment_count_length.write_xdr(w)?;
             self.fingerprint_length.write_xdr(w)?;
             self.fingerprints.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+impl SkipXdr for SerializedBinaryFuseFilter {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            BinaryFuseFilterType::skip_xdr(r)?;
+            ShortHashSeed::skip_xdr(r)?;
+            ShortHashSeed::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            BytesM::<{ u32::MAX }>::skip_xdr(r)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for SerializedBinaryFuseFilter {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            BinaryFuseFilterType::seekable_skip_xdr(r)?;
+            ShortHashSeed::seekable_skip_xdr(r)?;
+            ShortHashSeed::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            BytesM::<{ u32::MAX }>::seekable_skip_xdr(r)?;
             Ok(())
         })
     }
@@ -50294,6 +62582,20 @@ impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl SkipXdr for PoolId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| Hash::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for PoolId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| Hash::seekable_skip_xdr(r))
     }
 }
 
@@ -50399,6 +62701,20 @@ impl WriteXdr for ClaimableBalanceIdType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for ClaimableBalanceIdType {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::skip_xdr(r))
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceIdType {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| i32::seekable_skip_xdr(r))
     }
 }
 
@@ -50508,6 +62824,675 @@ impl WriteXdr for ClaimableBalanceId {
                 Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
             };
             Ok(())
+        })
+    }
+}
+
+impl SkipXdr for ClaimableBalanceId {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => Hash::skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for ClaimableBalanceId {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            match dv {
+                ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => Hash::seekable_skip_xdr(r)?,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(())
+        })
+    }
+}
+
+// ============================================================================
+// Sparse type: TransactionEnvelopeSparse
+// Base type: TransactionEnvelope
+// Extracts: Tx.tx.operations, TxV0.tx.operations, TxFeeBump.tx.innerTx.Tx.tx.operations
+// ============================================================================
+
+/// Sparse type for TransactionEnvelope extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum TransactionEnvelopeSparse {
+    TxV0(TransactionEnvelopeSparse_TxV0),
+    Tx(TransactionEnvelopeSparse_Tx),
+    TxFeeBump(TransactionEnvelopeSparse_TxFeeBump),
+}
+
+impl ReadXdr for TransactionEnvelopeSparse {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EnvelopeType::TxV0 => Self::TxV0(TransactionEnvelopeSparse_TxV0::read_xdr(r)?),
+                EnvelopeType::Tx => Self::Tx(TransactionEnvelopeSparse_Tx::read_xdr(r)?),
+                EnvelopeType::TxFeeBump => {
+                    Self::TxFeeBump(TransactionEnvelopeSparse_TxFeeBump::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EnvelopeType::TxV0 => {
+                    Self::TxV0(TransactionEnvelopeSparse_TxV0::seekable_read_xdr(r)?)
+                }
+                EnvelopeType::Tx => Self::Tx(TransactionEnvelopeSparse_Tx::seekable_read_xdr(r)?),
+                EnvelopeType::TxFeeBump => {
+                    Self::TxFeeBump(TransactionEnvelopeSparse_TxFeeBump::seekable_read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+/// Sparse type for TransactionV0Envelope extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEnvelopeSparse_TxV0 {
+    pub tx: TransactionEnvelopeSparse_TransactionV0Envelope_Tx,
+}
+
+impl ReadXdr for TransactionEnvelopeSparse_TxV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let tx = TransactionEnvelopeSparse_TransactionV0Envelope_Tx::read_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::skip_xdr(r)?;
+            Ok(Self { tx })
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse_TxV0 {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let tx = TransactionEnvelopeSparse_TransactionV0Envelope_Tx::seekable_read_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::seekable_skip_xdr(r)?;
+            Ok(Self { tx })
+        })
+    }
+}
+
+/// Sparse type for TransactionV0 extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
+    pub operations: VecM<Operation, 100>,
+}
+
+impl ReadXdr for TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Uint256::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            Option::<TimeBounds>::skip_xdr(r)?;
+            Memo::skip_xdr(r)?;
+            let operations = VecM::<Operation, 100>::read_xdr(r)?;
+            TransactionV0Ext::skip_xdr(r)?;
+            Ok(Self { operations })
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Uint256::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            Option::<TimeBounds>::seekable_skip_xdr(r)?;
+            Memo::seekable_skip_xdr(r)?;
+            let operations = VecM::<Operation, 100>::read_xdr(r)?;
+            TransactionV0Ext::seekable_skip_xdr(r)?;
+            Ok(Self { operations })
+        })
+    }
+}
+
+/// Sparse type for TransactionV1Envelope extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEnvelopeSparse_Tx {
+    pub tx: TransactionEnvelopeSparse_TransactionV1Envelope_Tx,
+}
+
+impl ReadXdr for TransactionEnvelopeSparse_Tx {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let tx = TransactionEnvelopeSparse_TransactionV1Envelope_Tx::read_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::skip_xdr(r)?;
+            Ok(Self { tx })
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse_Tx {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let tx = TransactionEnvelopeSparse_TransactionV1Envelope_Tx::seekable_read_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::seekable_skip_xdr(r)?;
+            Ok(Self { tx })
+        })
+    }
+}
+
+/// Sparse type for Transaction extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
+    pub operations: VecM<Operation, 100>,
+}
+
+impl ReadXdr for TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::skip_xdr(r)?;
+            u32::skip_xdr(r)?;
+            SequenceNumber::skip_xdr(r)?;
+            Preconditions::skip_xdr(r)?;
+            Memo::skip_xdr(r)?;
+            let operations = VecM::<Operation, 100>::read_xdr(r)?;
+            TransactionExt::skip_xdr(r)?;
+            Ok(Self { operations })
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::seekable_skip_xdr(r)?;
+            u32::seekable_skip_xdr(r)?;
+            SequenceNumber::seekable_skip_xdr(r)?;
+            Preconditions::seekable_skip_xdr(r)?;
+            Memo::seekable_skip_xdr(r)?;
+            let operations = VecM::<Operation, 100>::read_xdr(r)?;
+            TransactionExt::seekable_skip_xdr(r)?;
+            Ok(Self { operations })
+        })
+    }
+}
+
+/// Sparse type for FeeBumpTransactionEnvelope extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEnvelopeSparse_TxFeeBump {
+    pub tx: TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx,
+}
+
+impl ReadXdr for TransactionEnvelopeSparse_TxFeeBump {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let tx = TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx::read_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::skip_xdr(r)?;
+            Ok(Self { tx })
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse_TxFeeBump {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let tx = TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx::seekable_read_xdr(r)?;
+            VecM::<DecoratedSignature, 20>::seekable_skip_xdr(r)?;
+            Ok(Self { tx })
+        })
+    }
+}
+
+/// Sparse type for FeeBumpTransaction extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx {}
+
+impl ReadXdr for TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::skip_xdr(r)?;
+            i64::skip_xdr(r)?;
+            FeeBumpTransactionInnerTx::skip_xdr(r)?;
+            FeeBumpTransactionExt::skip_xdr(r)?;
+            Ok(Self {})
+        })
+    }
+}
+
+impl SeekableReadXdr for TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            MuxedAccount::seekable_skip_xdr(r)?;
+            i64::seekable_skip_xdr(r)?;
+            FeeBumpTransactionInnerTx::seekable_skip_xdr(r)?;
+            FeeBumpTransactionExt::seekable_skip_xdr(r)?;
+            Ok(Self {})
+        })
+    }
+}
+
+// ============================================================================
+// Sparse type: LedgerCloseMetaTxHashes
+// Base type: LedgerCloseMeta
+// Extracts: V0.tx_processing[].result.transaction_hash, V1.tx_processing[].result.transaction_hash, V2.tx_processing[].result.transaction_hash
+// ============================================================================
+
+/// Sparse type for LedgerCloseMeta extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum LedgerCloseMetaTxHashes {
+    V0(LedgerCloseMetaTxHashes_V0),
+    V1(LedgerCloseMetaTxHashes_V1),
+    V2(LedgerCloseMetaTxHashes_V2),
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(LedgerCloseMetaTxHashes_V0::read_xdr(r)?),
+                1 => Self::V1(LedgerCloseMetaTxHashes_V1::read_xdr(r)?),
+                2 => Self::V2(LedgerCloseMetaTxHashes_V2::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(LedgerCloseMetaTxHashes_V0::seekable_read_xdr(r)?),
+                1 => Self::V1(LedgerCloseMetaTxHashes_V1::seekable_read_xdr(r)?),
+                2 => Self::V2(LedgerCloseMetaTxHashes_V2::seekable_read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+/// Sparse type for LedgerCloseMetaV0 extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_V0 {
+    pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_V0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            LedgerHeaderHistoryEntry::skip_xdr(r)?;
+            TransactionSet::skip_xdr(r)?;
+            let tx_processing = {
+                let len = u32::read_xdr(r)?;
+                if len > { u32::MAX } {
+                    return Err(Error::LengthExceedsMax);
+                }
+                let mut vec = Vec::new();
+                for _ in 0..len {
+                    vec.push(LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing::read_xdr(r)?);
+                }
+                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?
+            };
+            VecM::<UpgradeEntryMeta>::skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::skip_xdr(r)?;
+            Ok(Self { tx_processing })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_V0 {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            LedgerHeaderHistoryEntry::seekable_skip_xdr(r)?;
+            TransactionSet::seekable_skip_xdr(r)?;
+            let tx_processing = {
+                let len = u32::read_xdr(r)?;
+                if len > { u32::MAX } {
+                    return Err(Error::LengthExceedsMax);
+                }
+                let mut vec = Vec::new();
+                for _ in 0..len {
+                    vec.push(
+                        LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing::seekable_read_xdr(
+                            r,
+                        )?,
+                    );
+                }
+                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?
+            };
+            VecM::<UpgradeEntryMeta>::seekable_skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::seekable_skip_xdr(r)?;
+            Ok(Self { tx_processing })
+        })
+    }
+}
+
+/// Sparse type for TransactionResultMeta extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing {
+    pub result: LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let result = LedgerCloseMetaTxHashes_TransactionResultMeta_Result::read_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            TransactionMeta::skip_xdr(r)?;
+            Ok(Self { result })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let result =
+                LedgerCloseMetaTxHashes_TransactionResultMeta_Result::seekable_read_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            TransactionMeta::seekable_skip_xdr(r)?;
+            Ok(Self { result })
+        })
+    }
+}
+
+/// Sparse type for TransactionResultPair extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
+    pub transaction_hash: Hash,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let transaction_hash = Hash::read_xdr(r)?;
+            TransactionResult::skip_xdr(r)?;
+            Ok(Self { transaction_hash })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let transaction_hash = Hash::read_xdr(r)?;
+            TransactionResult::seekable_skip_xdr(r)?;
+            Ok(Self { transaction_hash })
+        })
+    }
+}
+
+/// Sparse type for LedgerCloseMetaV1 extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_V1 {
+    pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_V1 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::skip_xdr(r)?;
+            GeneralizedTransactionSet::skip_xdr(r)?;
+            let tx_processing = {
+                let len = u32::read_xdr(r)?;
+                if len > { u32::MAX } {
+                    return Err(Error::LengthExceedsMax);
+                }
+                let mut vec = Vec::new();
+                for _ in 0..len {
+                    vec.push(LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing::read_xdr(r)?);
+                }
+                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?
+            };
+            VecM::<UpgradeEntryMeta>::skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            VecM::<LedgerKey>::skip_xdr(r)?;
+            VecM::<LedgerEntry>::skip_xdr(r)?;
+            Ok(Self { tx_processing })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_V1 {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::seekable_skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::seekable_skip_xdr(r)?;
+            GeneralizedTransactionSet::seekable_skip_xdr(r)?;
+            let tx_processing = {
+                let len = u32::read_xdr(r)?;
+                if len > { u32::MAX } {
+                    return Err(Error::LengthExceedsMax);
+                }
+                let mut vec = Vec::new();
+                for _ in 0..len {
+                    vec.push(
+                        LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing::seekable_read_xdr(
+                            r,
+                        )?,
+                    );
+                }
+                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?
+            };
+            VecM::<UpgradeEntryMeta>::seekable_skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            VecM::<LedgerKey>::seekable_skip_xdr(r)?;
+            VecM::<LedgerEntry>::seekable_skip_xdr(r)?;
+            Ok(Self { tx_processing })
+        })
+    }
+}
+
+/// Sparse type for TransactionResultMeta extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing {
+    pub result: LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let result = LedgerCloseMetaTxHashes_TransactionResultMeta_Result::read_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            TransactionMeta::skip_xdr(r)?;
+            Ok(Self { result })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let result =
+                LedgerCloseMetaTxHashes_TransactionResultMeta_Result::seekable_read_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            TransactionMeta::seekable_skip_xdr(r)?;
+            Ok(Self { result })
+        })
+    }
+}
+
+/// Sparse type for LedgerCloseMetaV2 extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_V2 {
+    pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_V2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::skip_xdr(r)?;
+            GeneralizedTransactionSet::skip_xdr(r)?;
+            let tx_processing = {
+                let len = u32::read_xdr(r)?;
+                if len > { u32::MAX } {
+                    return Err(Error::LengthExceedsMax);
+                }
+                let mut vec = Vec::new();
+                for _ in 0..len {
+                    vec.push(LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing::read_xdr(r)?);
+                }
+                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?
+            };
+            VecM::<UpgradeEntryMeta>::skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::skip_xdr(r)?;
+            u64::skip_xdr(r)?;
+            VecM::<LedgerKey>::skip_xdr(r)?;
+            Ok(Self { tx_processing })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_V2 {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            LedgerCloseMetaExt::seekable_skip_xdr(r)?;
+            LedgerHeaderHistoryEntry::seekable_skip_xdr(r)?;
+            GeneralizedTransactionSet::seekable_skip_xdr(r)?;
+            let tx_processing = {
+                let len = u32::read_xdr(r)?;
+                if len > { u32::MAX } {
+                    return Err(Error::LengthExceedsMax);
+                }
+                let mut vec = Vec::new();
+                for _ in 0..len {
+                    vec.push(
+                        LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing::seekable_read_xdr(
+                            r,
+                        )?,
+                    );
+                }
+                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?
+            };
+            VecM::<UpgradeEntryMeta>::seekable_skip_xdr(r)?;
+            VecM::<ScpHistoryEntry>::seekable_skip_xdr(r)?;
+            u64::seekable_skip_xdr(r)?;
+            VecM::<LedgerKey>::seekable_skip_xdr(r)?;
+            Ok(Self { tx_processing })
+        })
+    }
+}
+
+/// Sparse type for TransactionResultMetaV1 extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing {
+    pub result: LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::skip_xdr(r)?;
+            let result = LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result::read_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            TransactionMeta::skip_xdr(r)?;
+            LedgerEntryChanges::skip_xdr(r)?;
+            Ok(Self { result })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            ExtensionPoint::seekable_skip_xdr(r)?;
+            let result =
+                LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result::seekable_read_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            TransactionMeta::seekable_skip_xdr(r)?;
+            LedgerEntryChanges::seekable_skip_xdr(r)?;
+            Ok(Self { result })
+        })
+    }
+}
+
+/// Sparse type for TransactionResultPair extracting only specified paths
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result {
+    pub transaction_hash: Hash,
+}
+
+impl ReadXdr for LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let transaction_hash = Hash::read_xdr(r)?;
+            TransactionResult::skip_xdr(r)?;
+            Ok(Self { transaction_hash })
+        })
+    }
+}
+
+impl SeekableReadXdr for LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result {
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let transaction_hash = Hash::read_xdr(r)?;
+            TransactionResult::seekable_skip_xdr(r)?;
+            Ok(Self { transaction_hash })
         })
     }
 }

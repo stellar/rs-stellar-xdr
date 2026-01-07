@@ -33,17 +33,17 @@ use std::string::FromUtf8Error;
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
 
-#[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
-use std::borrow::Cow;
 #[cfg(all(feature = "schemars", feature = "alloc", not(feature = "std")))]
 use alloc::borrow::Cow;
+#[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
+use std::borrow::Cow;
 
 // TODO: Add support for read/write xdr fns when std not available.
 
 #[cfg(feature = "std")]
 use std::{
     error, io,
-    io::{BufRead, BufReader, Cursor, Read, Write},
+    io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom, Write},
 };
 
 /// Error contains all errors returned by functions in this crate. It can be
@@ -72,11 +72,11 @@ pub enum Error {
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Invalid,          Self::Invalid)
-            | (Self::Unsupported,      Self::Unsupported)
+            (Self::Invalid, Self::Invalid)
+            | (Self::Unsupported, Self::Unsupported)
             | (Self::LengthExceedsMax, Self::LengthExceedsMax)
-            | (Self::LengthMismatch,   Self::LengthMismatch)
-            | (Self::NonZeroPadding,   Self::NonZeroPadding) => true,
+            | (Self::LengthMismatch, Self::LengthMismatch)
+            | (Self::NonZeroPadding, Self::NonZeroPadding) => true,
 
             (Self::Utf8Error(l), Self::Utf8Error(r)) => l == r,
 
@@ -382,6 +382,14 @@ impl<W: Write> Write for Limited<W> {
 }
 
 #[cfg(feature = "std")]
+impl<S: Seek> Seek for Limited<S> {
+    /// Forwards the seek operation to the wrapped object.
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        self.inner.seek(pos)
+    }
+}
+
+#[cfg(feature = "std")]
 pub struct ReadXdrIter<R: Read, S: ReadXdr> {
     reader: Limited<BufReader<R>>,
     _s: PhantomData<S>,
@@ -605,7 +613,7 @@ where
             base64::engine::general_purpose::GeneralPurpose,
             SkipWhitespace<&mut R>,
         >,
-        Self
+        Self,
     > {
         let dec = base64::read::DecoderReader::new(
             SkipWhitespace::new(&mut r.inner),
@@ -668,6 +676,92 @@ pub trait WriteXdr {
     }
 }
 
+/// `SkipXdr` allows types to skip their XDR representation without fully
+/// decoding them. This is useful for sparse decoding where only specific
+/// nested fields need to be extracted.
+pub trait SkipXdr
+where
+    Self: Sized,
+{
+    /// Skip the XDR representation of this type.
+    ///
+    /// Read and discard just enough bytes from the given read implementation
+    /// to skip past this type's XDR encoding.
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error>;
+}
+
+/// Helper function to skip a fixed number of bytes from a reader.
+/// This reads and discards the bytes efficiently using a small buffer.
+#[cfg(feature = "std")]
+fn skip_bytes<R: Read>(r: &mut Limited<R>, n: usize) -> Result<(), Error> {
+    r.consume_len(n)?;
+    let mut remaining = n;
+    let mut buf = [0u8; 1024];
+    while remaining > 0 {
+        let to_read = remaining.min(buf.len());
+        r.read_exact(&mut buf[..to_read])?;
+        remaining -= to_read;
+    }
+    Ok(())
+}
+
+/// `SeekableSkipXdr` allows types to skip their XDR representation using seek
+/// operations instead of reading bytes. This is more performant for seekable
+/// readers (like files) because it avoids actually reading and discarding data.
+pub trait SeekableSkipXdr
+where
+    Self: Sized,
+{
+    /// Skip the XDR representation of this type using seek.
+    ///
+    /// Uses seek to skip past this type's XDR encoding without reading the bytes.
+    /// More efficient than `SkipXdr` for file-backed readers.
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error>;
+}
+
+/// Helper function to skip a fixed number of bytes from a seekable reader.
+/// Uses seek instead of read for better performance on file-backed readers.
+#[cfg(feature = "std")]
+fn seek_skip_bytes<R: Seek>(r: &mut Limited<R>, n: usize) -> Result<(), Error> {
+    r.consume_len(n)?;
+    r.seek(SeekFrom::Current(n as i64))?;
+    Ok(())
+}
+
+/// `SeekableReadXdr` allows types to read their XDR representation from a
+/// seekable reader, using seek to skip over fields rather than reading them.
+/// This is more performant for file-backed readers when doing sparse decoding.
+pub trait SeekableReadXdr
+where
+    Self: Sized,
+{
+    /// Read the XDR and construct the type from a seekable reader.
+    ///
+    /// This is similar to `ReadXdr::read_xdr` but uses seek operations to
+    /// skip over fields, which is more efficient for file-backed readers.
+    #[cfg(feature = "std")]
+    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error>;
+
+    /// Construct the type from the XDR bytes using a seekable cursor.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "std")]
+    fn from_xdr_seekable(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self, Error> {
+        let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
+        let t = Self::seekable_read_xdr(&mut cursor)?;
+        // Check that any further reads, such as this read of one byte, read no
+        // data, indicating EOF. If a byte is read the data is invalid.
+        if cursor.read(&mut [0u8; 1])? == 0 {
+            Ok(t)
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
 /// `Pad_len` returns the number of bytes to pad an XDR value of the given
 /// length to make the final serialized size a multiple of 4.
 #[cfg(feature = "std")]
@@ -698,6 +792,25 @@ impl WriteXdr for i32 {
     }
 }
 
+impl SkipXdr for i32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 4];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for i32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
+    }
+}
+
 impl ReadXdr for u32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -718,6 +831,25 @@ impl WriteXdr for u32 {
             w.consume_len(b.len())?;
             Ok(w.write_all(&b)?)
         })
+    }
+}
+
+impl SkipXdr for u32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 4];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for u32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
     }
 }
 
@@ -744,6 +876,25 @@ impl WriteXdr for i64 {
     }
 }
 
+impl SkipXdr for i64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 8];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for i64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 8))
+    }
+}
+
 impl ReadXdr for u64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -767,6 +918,25 @@ impl WriteXdr for u64 {
     }
 }
 
+impl SkipXdr for u64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        let mut b = [0u8; 8];
+        r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
+            r.read_exact(&mut b)?;
+            Ok(())
+        })
+    }
+}
+
+impl SeekableSkipXdr for u64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 8))
+    }
+}
+
 impl ReadXdr for f32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -781,6 +951,20 @@ impl WriteXdr for f32 {
     }
 }
 
+impl SkipXdr for f32 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| skip_bytes(r, 4))
+    }
+}
+
+impl SeekableSkipXdr for f32 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
+    }
+}
+
 impl ReadXdr for f64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -792,6 +976,20 @@ impl WriteXdr for f64 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
         todo!()
+    }
+}
+
+impl SkipXdr for f64 {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| skip_bytes(r, 8))
+    }
+}
+
+impl SeekableSkipXdr for f64 {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 8))
     }
 }
 
@@ -813,6 +1011,20 @@ impl WriteXdr for bool {
             let i = u32::from(*self); // true = 1, false = 0
             i.write_xdr(w)
         })
+    }
+}
+
+impl SkipXdr for bool {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| skip_bytes(r, 4))
+    }
+}
+
+impl SeekableSkipXdr for bool {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| seek_skip_bytes(r, 4))
     }
 }
 
@@ -848,6 +1060,34 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
     }
 }
 
+impl<T: SkipXdr> SkipXdr for Option<T> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            match i {
+                0 => Ok(()),
+                1 => T::skip_xdr(r),
+                _ => Err(Error::Invalid),
+            }
+        })
+    }
+}
+
+impl<T: SeekableSkipXdr> SeekableSkipXdr for Option<T> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            match i {
+                0 => Ok(()),
+                1 => T::seekable_skip_xdr(r),
+                _ => Err(Error::Invalid),
+            }
+        })
+    }
+}
+
 impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -862,6 +1102,20 @@ impl<T: WriteXdr> WriteXdr for Box<T> {
     }
 }
 
+impl<T: SkipXdr> SkipXdr for Box<T> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| T::skip_xdr(r))
+    }
+}
+
+impl<T: SeekableSkipXdr> SeekableSkipXdr for Box<T> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| T::seekable_skip_xdr(r))
+    }
+}
+
 impl ReadXdr for () {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -872,6 +1126,20 @@ impl ReadXdr for () {
 impl WriteXdr for () {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl SkipXdr for () {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(_r: &mut Limited<R>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl SeekableSkipXdr for () {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(_r: &mut Limited<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -909,6 +1177,26 @@ impl<const N: usize> WriteXdr for [u8; N] {
     }
 }
 
+impl<const N: usize> SkipXdr for [u8; N] {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let padding = pad_len(N);
+            skip_bytes(r, N + padding)
+        })
+    }
+}
+
+impl<const N: usize> SeekableSkipXdr for [u8; N] {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let padding = pad_len(N);
+            seek_skip_bytes(r, N + padding)
+        })
+    }
+}
+
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -936,11 +1224,39 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     }
 }
 
+impl<T: SkipXdr, const N: usize> SkipXdr for [T; N] {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            for _ in 0..N {
+                T::skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: SeekableSkipXdr, const N: usize> SeekableSkipXdr for [T; N] {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            for _ in 0..N {
+                T::seekable_skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
 // VecM ------------------------------------------------------------------------
 
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", serde_with::serde_as, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize)
+)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 
@@ -1022,7 +1338,11 @@ where
     where
         S: serde::Serializer,
     {
-        serializer.collect_seq(source.iter().map(|item| serde_with::ser::SerializeAsWrap::<T, U>::new(item)))
+        serializer.collect_seq(
+            source
+                .iter()
+                .map(|item| serde_with::ser::SerializeAsWrap::<T, U>::new(item)),
+        )
     }
 }
 
@@ -1395,6 +1715,34 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
     }
 }
 
+impl<const MAX: u32> SkipXdr for VecM<u8, MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> SeekableSkipXdr for VecM<u8, MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            seek_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1426,6 +1774,38 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
                 t.write_xdr(w)?;
             }
 
+            Ok(())
+        })
+    }
+}
+
+impl<T: SkipXdr, const MAX: u32> SkipXdr for VecM<T, MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            for _ in 0..len {
+                T::skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: SeekableSkipXdr, const MAX: u32> SeekableSkipXdr for VecM<T, MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            for _ in 0..len {
+                T::seekable_skip_xdr(r)?;
+            }
             Ok(())
         })
     }
@@ -1835,6 +2215,34 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     }
 }
 
+impl<const MAX: u32> SkipXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> SeekableSkipXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            seek_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
 // StringM ------------------------------------------------------------------------
 
 /// A string type that contains arbitrary bytes.
@@ -2234,6 +2642,34 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
             w.write_all(&[0u8; 3][..padding])?;
 
             Ok(())
+        })
+    }
+}
+
+impl<const MAX: u32> SkipXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> SeekableSkipXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            seek_skip_bytes(r, len as usize + padding)
         })
     }
 }
@@ -3156,7 +3592,10 @@ mod tests_for_number_or_string {
     fn deserialize_i64_from_json_reader() {
         let json = r#"{"val": "123"}"#;
         let expected = TestI64 { val: 123 };
-        assert_eq!(serde_json::from_reader::<_, TestI64>(Cursor::new(json)).unwrap(), expected);
+        assert_eq!(
+            serde_json::from_reader::<_, TestI64>(Cursor::new(json)).unwrap(),
+            expected
+        );
     }
 
     #[test]
@@ -3455,7 +3894,10 @@ mod tests_for_number_or_string {
     fn deserialize_u64_from_json_reader() {
         let json = r#"{"val": "123"}"#;
         let expected = TestU64 { val: 123 };
-        assert_eq!(serde_json::from_reader::<_, TestU64>(Cursor::new(json)).unwrap(), expected);
+        assert_eq!(
+            serde_json::from_reader::<_, TestU64>(Cursor::new(json)).unwrap(),
+            expected
+        );
     }
 
     #[test]

@@ -58,6 +58,14 @@ rand = ["dep:rand"]
 # Features for the CLI.
 cli = ["std", "curr", "next", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum"]
 
+[[bench]]
+name = "sparse_decode"
+harness = false
+
+[dev-dependencies.criterion]
+version = "0.5"
+default-features = false
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docs"]

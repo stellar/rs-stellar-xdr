@@ -11,10 +11,12 @@ class Generator < Xdrgen::Generators::Base
 
     @types = build_type_list(@top)
     @type_field_types = build_type_field_types(@top)
+    @type_definitions = build_type_definitions_map(@top)
 
     render_top_matter(out)
     render_lib(out)
     render_definitions(out, @top)
+    render_sparse_types(out)
     render_enum_of_all_types(out, @types)
     out.break
   end
@@ -67,6 +69,21 @@ class Generator < Xdrgen::Generators::Base
         is_type_in_type_field_types(field_type, type, seen)
       end
     end
+  end
+
+  # Build a map of type name -> definition for quick lookup
+  def build_type_definitions_map(node)
+    definitions = {}
+    ingest_node = lambda do |n|
+      case n
+      when AST::Definitions::Struct, AST::Definitions::Enum, AST::Definitions::Union, AST::Definitions::Typedef
+        definitions[name(n)] = n
+      end
+      n.definitions.each{ |nn| ingest_node.call(nn) } if n.respond_to?(:definitions)
+      n.nested_definitions.each{ |nn| ingest_node.call(nn) } if n.respond_to?(:nested_definitions)
+    end
+    ingest_node.call(node)
+    definitions
   end
 
   def render_top_matter(out)
@@ -469,6 +486,30 @@ class Generator < Xdrgen::Generators::Base
             })
         }
     }
+
+    impl SkipXdr for #{name struct} {
+        #[cfg(feature = "std")]
+        fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                #{struct.members.map do |m|
+                  "#{reference_to_call(struct, m.declaration.type)}::skip_xdr(r)?;"
+                end.join("\n")}
+                Ok(())
+            })
+        }
+    }
+
+    impl SeekableSkipXdr for #{name struct} {
+        #[cfg(feature = "std")]
+        fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                #{struct.members.map do |m|
+                  "#{reference_to_call(struct, m.declaration.type)}::seekable_skip_xdr(r)?;"
+                end.join("\n")}
+                Ok(())
+            })
+        }
+    }
     EOS
     # Include a deserializer that will deserialize via the FromStr
     # implementation, but also deserialize the original struct, present in
@@ -613,6 +654,24 @@ class Generator < Xdrgen::Generators::Base
             w.with_limited_depth(|w| {
                 let i: i32 = (*self).into();
                 i.write_xdr(w)
+            })
+        }
+    }
+
+    impl SkipXdr for #{name enum} {
+        #[cfg(feature = "std")]
+        fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                i32::skip_xdr(r)
+            })
+        }
+    }
+
+    impl SeekableSkipXdr for #{name enum} {
+        #[cfg(feature = "std")]
+        fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                i32::seekable_skip_xdr(r)
             })
         }
     }
@@ -798,6 +857,50 @@ class Generator < Xdrgen::Generators::Base
             })
         }
     }
+
+    impl SkipXdr for #{name union} {
+        #[cfg(feature = "std")]
+        fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                let dv: #{discriminant_type} = <#{discriminant_type} as ReadXdr>::read_xdr(r)?;
+                #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+                match dv {
+                    #{union_cases(union) do |case_name, arm, value|
+                      "#{
+                        value.nil? ? "#{discriminant_type}::#{case_name}" : "#{value}"
+                      } => #{
+                        arm.void? ? "()" : "#{reference_to_call(union, arm.type)}::skip_xdr(r)?"
+                      },"
+                    end.join("\n")}
+                    #[allow(unreachable_patterns)]
+                    _ => return Err(Error::Invalid),
+                };
+                Ok(())
+            })
+        }
+    }
+
+    impl SeekableSkipXdr for #{name union} {
+        #[cfg(feature = "std")]
+        fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                let dv: #{discriminant_type} = <#{discriminant_type} as ReadXdr>::read_xdr(r)?;
+                #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+                match dv {
+                    #{union_cases(union) do |case_name, arm, value|
+                      "#{
+                        value.nil? ? "#{discriminant_type}::#{case_name}" : "#{value}"
+                      } => #{
+                        arm.void? ? "()" : "#{reference_to_call(union, arm.type)}::seekable_skip_xdr(r)?"
+                      },"
+                    end.join("\n")}
+                    #[allow(unreachable_patterns)]
+                    _ => return Err(Error::Invalid),
+                };
+                Ok(())
+            })
+        }
+    }
     EOS
     out.break
   end
@@ -942,6 +1045,20 @@ class Generator < Xdrgen::Generators::Base
           #[cfg(feature = "std")]
           fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
               w.with_limited_depth(|w|{ self.0.write_xdr(w) })
+          }
+      }
+
+      impl SkipXdr for #{name typedef} {
+          #[cfg(feature = "std")]
+          fn skip_xdr<R: Read>(r: &mut Limited<R>) -> Result<(), Error> {
+              r.with_limited_depth(|r| #{reference_to_call(typedef, typedef.type)}::skip_xdr(r))
+          }
+      }
+
+      impl SeekableSkipXdr for #{name typedef} {
+          #[cfg(feature = "std")]
+          fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
+              r.with_limited_depth(|r| #{reference_to_call(typedef, typedef.type)}::seekable_skip_xdr(r))
           }
       }
       EOS
@@ -1190,7 +1307,7 @@ class Generator < Xdrgen::Generators::Base
       if !type.decl.resolved_size.nil?
         "StringM::<#{type.decl.resolved_size}>"
       else
-        "StringM"
+        "StringM::<{ u32::MAX }>"
       end
     when AST::Typespecs::Opaque
       if type.fixed?
@@ -1198,7 +1315,7 @@ class Generator < Xdrgen::Generators::Base
       elsif !type.decl.resolved_size.nil?
         "BytesM::<#{type.decl.resolved_size}>"
       else
-        "BytesM"
+        "BytesM::<{ u32::MAX }>"
       end
     when AST::Typespecs::Simple, AST::Definitions::Base, AST::Concerns::NestedDefinition
       if type.respond_to?(:resolved_type) && AST::Definitions::Typedef === type.resolved_type && is_builtin_type(type.resolved_type.type)
@@ -1276,6 +1393,441 @@ class Generator < Xdrgen::Generators::Base
     when 'type' then 'type_'
     when 'Error' then 'SError'
     else name
+    end
+  end
+
+  # ============================================================================
+  # Sparse Type Generation
+  # ============================================================================
+  #
+  # Sparse types are decode-only types that extract only specific nested fields
+  # from an XDR type, skipping over unneeded data during decode.
+
+  def render_sparse_types(out)
+    return unless @options[:sparse_types]
+
+    @options[:sparse_types].each do |config|
+      @rendered_sparse_types = Set.new  # Track rendered sparse types per base type
+      render_sparse_type(out, config)
+    end
+  end
+
+  def render_sparse_type(out, config)
+    base_type_name = config[:base_type]
+    sparse_name = config[:name]
+    paths = config[:paths]
+
+    base_defn = @type_definitions[base_type_name]
+    unless base_defn
+      $stderr.puts "warn: sparse type base '#{base_type_name}' not found, skipping"
+      return
+    end
+
+    # Build a tree structure representing which paths to extract
+    # The tree maps: variant/field name -> subtree or :leaf (for target fields)
+    path_tree = build_path_tree(paths)
+
+    out.break
+    out.puts "// ============================================================================"
+    out.puts "// Sparse type: #{sparse_name}"
+    out.puts "// Base type: #{base_type_name}"
+    out.puts "// Extracts: #{paths.join(', ')}"
+    out.puts "// ============================================================================"
+    out.break
+
+    # Generate the sparse type and all nested sparse types
+    render_sparse_type_recursive(out, base_defn, sparse_name, path_tree, sparse_name)
+  end
+
+  # Build a tree from paths like ["Tx.tx.operations", "TxV0.tx.operations"]
+  # Result: { "Tx" => { "tx" => { "operations" => :leaf } }, "TxV0" => { "tx" => { "operations" => :leaf } } }
+  def build_path_tree(paths)
+    tree = {}
+    paths.each do |path|
+      parts = path.split('.')
+      current = tree
+      parts.each_with_index do |part, i|
+        # Check for array traversal marker
+        is_array_traversal = part.end_with?('[]')
+        part = part.chomp('[]') if is_array_traversal
+
+        if i == parts.length - 1
+          # Leaf node - this is the target field to extract
+          current[part] = { _leaf: true, _array: is_array_traversal }
+        else
+          current[part] ||= {}
+          current[part][:_array] = true if is_array_traversal
+          current = current[part]
+        end
+      end
+    end
+    tree
+  end
+
+  def render_sparse_type_recursive(out, defn, sparse_type_name, path_tree, prefix)
+    # Skip if we've already rendered this sparse type
+    if @rendered_sparse_types.include?(sparse_type_name)
+      return
+    end
+    @rendered_sparse_types << sparse_type_name
+
+    case defn
+    when AST::Definitions::Union
+      render_sparse_union(out, defn, sparse_type_name, path_tree, prefix)
+    when AST::Definitions::Struct
+      render_sparse_struct(out, defn, sparse_type_name, path_tree, prefix)
+    when AST::Definitions::Typedef
+      # For typedef, unwrap and process the underlying type
+      render_sparse_typedef(out, defn, sparse_type_name, path_tree, prefix)
+    when AST::Definitions::Enum
+      # Enums don't have nested fields, just reference the original
+      $stderr.puts "warn: sparse type path leads to enum '#{name(defn)}', using original type"
+    end
+  end
+
+  def render_sparse_union(out, union, sparse_type_name, path_tree, prefix)
+    discriminant_type = reference(nil, union.discriminant.type)
+
+    # Collect all cases and determine which have paths
+    cases_info = []
+    union_cases(union) do |case_name, arm, value|
+      subtree = path_tree[case_name]
+      cases_info << {
+        case_name: case_name,
+        arm: arm,
+        value: value,
+        subtree: subtree,
+        has_path: !subtree.nil?
+      }
+    end
+
+    out.puts "/// Sparse type for #{name(union)} extracting only specified paths"
+    out.puts "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"
+    out.puts "pub enum #{sparse_type_name} {"
+    out.indent do
+      cases_info.each do |info|
+        if info[:has_path] && !info[:arm].void?
+          # This variant has a path - generate a nested sparse type
+          nested_type_name = "#{prefix}_#{info[:case_name]}"
+          out.puts "#{info[:case_name]}(#{nested_type_name}),"
+        else
+          # No path through this variant - make it a unit variant
+          out.puts "#{info[:case_name]},"
+        end
+      end
+    end
+    out.puts "}"
+    out.puts ""
+
+    # Generate ReadXdr for the sparse union
+    out.puts <<-EOS.strip_heredoc
+    impl ReadXdr for #{sparse_type_name} {
+        #[cfg(feature = "std")]
+        fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+            r.with_limited_depth(|r| {
+                let dv: #{discriminant_type} = <#{discriminant_type} as ReadXdr>::read_xdr(r)?;
+                #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+                let v = match dv {
+    EOS
+
+    out.indent(5) do
+      cases_info.each do |info|
+        discriminant_match = info[:value].nil? ? "#{discriminant_type}::#{info[:case_name]}" : "#{info[:value]}"
+
+        if info[:has_path] && !info[:arm].void?
+          nested_type_name = "#{prefix}_#{info[:case_name]}"
+          out.puts "#{discriminant_match} => Self::#{info[:case_name]}(#{nested_type_name}::read_xdr(r)?),"
+        else
+          # Skip the arm's data if it's not void
+          unless info[:arm].void?
+            out.puts "#{discriminant_match} => { #{reference_to_call(union, info[:arm].type)}::skip_xdr(r)?; Self::#{info[:case_name]} },"
+          else
+            out.puts "#{discriminant_match} => Self::#{info[:case_name]},"
+          end
+        end
+      end
+      out.puts "#[allow(unreachable_patterns)]"
+      out.puts "_ => return Err(Error::Invalid),"
+    end
+
+    out.puts <<-EOS.strip_heredoc
+                };
+                Ok(v)
+            })
+        }
+    }
+    EOS
+    out.break
+
+    # Generate SeekableReadXdr for the sparse union
+    out.puts <<-EOS.strip_heredoc
+    impl SeekableReadXdr for #{sparse_type_name} {
+        #[cfg(feature = "std")]
+        fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {
+            r.with_limited_depth(|r| {
+                let dv: #{discriminant_type} = <#{discriminant_type} as ReadXdr>::read_xdr(r)?;
+                #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+                let v = match dv {
+    EOS
+
+    out.indent(5) do
+      cases_info.each do |info|
+        discriminant_match = info[:value].nil? ? "#{discriminant_type}::#{info[:case_name]}" : "#{info[:value]}"
+
+        if info[:has_path] && !info[:arm].void?
+          nested_type_name = "#{prefix}_#{info[:case_name]}"
+          out.puts "#{discriminant_match} => Self::#{info[:case_name]}(#{nested_type_name}::seekable_read_xdr(r)?),"
+        else
+          # Skip the arm's data if it's not void
+          unless info[:arm].void?
+            out.puts "#{discriminant_match} => { #{reference_to_call(union, info[:arm].type)}::seekable_skip_xdr(r)?; Self::#{info[:case_name]} },"
+          else
+            out.puts "#{discriminant_match} => Self::#{info[:case_name]},"
+          end
+        end
+      end
+      out.puts "#[allow(unreachable_patterns)]"
+      out.puts "_ => return Err(Error::Invalid),"
+    end
+
+    out.puts <<-EOS.strip_heredoc
+                };
+                Ok(v)
+            })
+        }
+    }
+    EOS
+    out.break
+
+    # Now generate nested sparse types for variants with paths
+    cases_info.each do |info|
+      next unless info[:has_path] && !info[:arm].void?
+
+      nested_type_name = "#{prefix}_#{info[:case_name]}"
+      # Get the actual type definition for this arm
+      arm_type_ref = base_reference(info[:arm].type)
+      arm_defn = @type_definitions[arm_type_ref]
+
+      if arm_defn
+        # Remove the _leaf and _array markers when passing subtree down
+        clean_subtree = info[:subtree].reject { |k, _| k.is_a?(Symbol) }
+        render_sparse_type_recursive(out, arm_defn, nested_type_name, clean_subtree, prefix)
+      else
+        $stderr.puts "warn: could not find definition for arm type '#{arm_type_ref}'"
+      end
+    end
+  end
+
+  def render_sparse_struct(out, struct, sparse_type_name, path_tree, prefix)
+    # Determine which fields to include and which to skip
+    fields_info = struct.members.map do |m|
+      field_n = field_name(m)
+      subtree = path_tree[field_n]
+      {
+        member: m,
+        field_name: field_n,
+        subtree: subtree,
+        is_leaf: subtree && subtree[:_leaf],
+        is_array_traversal: subtree && subtree[:_array],
+        has_path: !subtree.nil?
+      }
+    end
+
+    # Fields to include in the sparse struct
+    included_fields = fields_info.select { |f| f[:has_path] }
+
+    out.puts "/// Sparse type for #{name(struct)} extracting only specified paths"
+    out.puts "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"
+    out.puts "pub struct #{sparse_type_name} {"
+    out.indent do
+      included_fields.each do |info|
+        m = info[:member]
+        if info[:is_leaf]
+          # This is a target field - use the original type
+          if info[:is_array_traversal]
+            # For array traversal, we keep the Vec but with sparse inner type
+            # For now, just keep the full type at the leaf
+            out.puts "pub #{info[:field_name]}: #{reference(struct, m.declaration.type)},"
+          else
+            out.puts "pub #{info[:field_name]}: #{reference(struct, m.declaration.type)},"
+          end
+        else
+          # This is an intermediate field - use a nested sparse type
+          nested_type_name = "#{prefix}_#{name(struct).gsub(prefix + '_', '')}_#{info[:field_name].camelize}"
+          if info[:is_array_traversal]
+            # This is an array traversal - the sparse type wraps each element
+            inner_type = element_type_for_sparse_array(m.declaration.type)
+            vec_max = get_vec_max(m.declaration.type)
+            if vec_max
+              out.puts "pub #{info[:field_name]}: VecM<#{nested_type_name}, #{vec_max}>,"
+            else
+              out.puts "pub #{info[:field_name]}: VecM<#{nested_type_name}>,"
+            end
+          else
+            out.puts "pub #{info[:field_name]}: #{nested_type_name},"
+          end
+        end
+      end
+    end
+    out.puts "}"
+    out.puts ""
+
+    # Generate ReadXdr for the sparse struct
+    out.puts "impl ReadXdr for #{sparse_type_name} {"
+    out.puts "    #[cfg(feature = \"std\")]"
+    out.puts "    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {"
+    out.puts "        r.with_limited_depth(|r| {"
+
+    # Process each field in order
+    fields_info.each do |info|
+      m = info[:member]
+      if info[:has_path]
+        if info[:is_leaf]
+          # Read the target field
+          out.puts "            let #{info[:field_name]} = #{reference_to_call(struct, m.declaration.type)}::read_xdr(r)?;"
+        else
+          # Read through a nested sparse type
+          nested_type_name = "#{prefix}_#{name(struct).gsub(prefix + '_', '')}_#{info[:field_name].camelize}"
+          if info[:is_array_traversal]
+            # Read array length, then read each element with sparse type
+            vec_max = get_vec_max(m.declaration.type) || "{ u32::MAX }"
+            out.puts "            let #{info[:field_name]} = {"
+            out.puts "                let len = u32::read_xdr(r)?;"
+            out.puts "                if len > #{vec_max} { return Err(Error::LengthExceedsMax); }"
+            out.puts "                let mut vec = Vec::new();"
+            out.puts "                for _ in 0..len {"
+            out.puts "                    vec.push(#{nested_type_name}::read_xdr(r)?);"
+            out.puts "                }"
+            out.puts "                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?"
+            out.puts "            };"
+          else
+            out.puts "            let #{info[:field_name]} = #{nested_type_name}::read_xdr(r)?;"
+          end
+        end
+      else
+        # Skip this field
+        out.puts "            #{reference_to_call(struct, m.declaration.type)}::skip_xdr(r)?;"
+      end
+    end
+
+    out.puts "            Ok(Self {"
+    included_fields.each do |info|
+      out.puts "                #{info[:field_name]},"
+    end
+    out.puts "            })"
+    out.puts "        })"
+    out.puts "    }"
+    out.puts "}"
+    out.break
+
+    # Generate SeekableReadXdr for the sparse struct
+    out.puts "impl SeekableReadXdr for #{sparse_type_name} {"
+    out.puts "    #[cfg(feature = \"std\")]"
+    out.puts "    fn seekable_read_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<Self, Error> {"
+    out.puts "        r.with_limited_depth(|r| {"
+
+    # Process each field in order
+    fields_info.each do |info|
+      m = info[:member]
+      if info[:has_path]
+        if info[:is_leaf]
+          # Read the target field
+          out.puts "            let #{info[:field_name]} = #{reference_to_call(struct, m.declaration.type)}::read_xdr(r)?;"
+        else
+          # Read through a nested sparse type
+          nested_type_name = "#{prefix}_#{name(struct).gsub(prefix + '_', '')}_#{info[:field_name].camelize}"
+          if info[:is_array_traversal]
+            # Read array length, then read each element with sparse type
+            vec_max = get_vec_max(m.declaration.type) || "{ u32::MAX }"
+            out.puts "            let #{info[:field_name]} = {"
+            out.puts "                let len = u32::read_xdr(r)?;"
+            out.puts "                if len > #{vec_max} { return Err(Error::LengthExceedsMax); }"
+            out.puts "                let mut vec = Vec::new();"
+            out.puts "                for _ in 0..len {"
+            out.puts "                    vec.push(#{nested_type_name}::seekable_read_xdr(r)?);"
+            out.puts "                }"
+            out.puts "                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?"
+            out.puts "            };"
+          else
+            out.puts "            let #{info[:field_name]} = #{nested_type_name}::seekable_read_xdr(r)?;"
+          end
+        end
+      else
+        # Skip this field using seek
+        out.puts "            #{reference_to_call(struct, m.declaration.type)}::seekable_skip_xdr(r)?;"
+      end
+    end
+
+    out.puts "            Ok(Self {"
+    included_fields.each do |info|
+      out.puts "                #{info[:field_name]},"
+    end
+    out.puts "            })"
+    out.puts "        })"
+    out.puts "    }"
+    out.puts "}"
+    out.break
+
+    # Generate nested sparse types for intermediate fields
+    included_fields.each do |info|
+      next if info[:is_leaf]
+
+      m = info[:member]
+      nested_type_name = "#{prefix}_#{name(struct).gsub(prefix + '_', '')}_#{info[:field_name].camelize}"
+
+      # Get the type definition for this field
+      if info[:is_array_traversal]
+        # Get the element type of the array
+        field_type_ref = element_type_for_sparse_array(m.declaration.type)
+      else
+        field_type_ref = base_reference(m.declaration.type)
+      end
+
+      field_defn = @type_definitions[field_type_ref]
+
+      if field_defn
+        # Remove the _leaf and _array markers when passing subtree down
+        clean_subtree = info[:subtree].reject { |k, _| k.is_a?(Symbol) }
+        render_sparse_type_recursive(out, field_defn, nested_type_name, clean_subtree, prefix)
+      else
+        $stderr.puts "warn: could not find definition for field type '#{field_type_ref}'"
+      end
+    end
+  end
+
+  def render_sparse_typedef(out, typedef, sparse_type_name, path_tree, prefix)
+    # For typedef, we need to look at the underlying type
+    underlying_type_ref = base_reference(typedef.type)
+    underlying_defn = @type_definitions[underlying_type_ref]
+
+    if underlying_defn
+      render_sparse_type_recursive(out, underlying_defn, sparse_type_name, path_tree, prefix)
+    else
+      # The underlying type might be a primitive - just generate a wrapper
+      out.puts "/// Sparse type for #{name(typedef)}"
+      out.puts "pub type #{sparse_type_name} = #{underlying_type_ref};"
+      out.break
+    end
+  end
+
+  # Get the element type for a VecM or array type
+  def element_type_for_sparse_array(type)
+    case type.sub_type
+    when :var_array
+      base_reference(type)
+    when :array
+      base_reference(type)
+    else
+      base_reference(type)
+    end
+  end
+
+  # Get the max size for a VecM type
+  def get_vec_max(type)
+    if type.sub_type == :var_array && !type.decl.resolved_size.nil?
+      type.decl.resolved_size.to_s
+    else
+      nil
     end
   end
 

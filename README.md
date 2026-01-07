@@ -67,6 +67,82 @@ If a single channel is enabled the types are available at the root of the
 crate. If multiple channels are enabled they are available in modules at
 the root of the crate.
 
+#### Sparse Types
+
+Sparse types are decode-only types that extract specific nested fields from
+XDR data while skipping over unneeded fields during decoding. This can
+significantly improve performance when you only need to access certain
+fields from large XDR structures.
+
+For example, `TransactionEnvelopeSparse` extracts only the `operations`
+field from transaction envelopes:
+
+```rust
+use stellar_xdr::curr::{TransactionEnvelopeSparse, ReadXdr, Limits};
+
+let xdr_data: &[u8] = /* ... */;
+let sparse = TransactionEnvelopeSparse::from_xdr(xdr_data, Limits::none())?;
+
+// Access operations without fully decoding the entire envelope
+let operations = match sparse {
+    TransactionEnvelopeSparse::Tx(e) => e.tx.operations,
+    TransactionEnvelopeSparse::TxV0(e) => e.tx.operations,
+    TransactionEnvelopeSparse::TxFeeBump(e) => {
+        // Access nested operations through fee bump
+        // ...
+    }
+};
+```
+
+Sparse types preserve the structure of the original types (enums remain
+enums with all variants), but only include the fields along the extraction
+paths. All other fields are skipped during decoding.
+
+To configure additional sparse types, modify the `sparse_types` array in
+`xdr-generator/generate.rb`:
+
+```ruby
+sparse_types: [
+  {
+    base_type: "TransactionEnvelope",
+    name: "TransactionEnvelopeSparse",
+    paths: [
+      "Tx.tx.operations",
+      "TxV0.tx.operations",
+      "TxFeeBump.tx.innerTx.Tx.tx.operations",
+    ],
+  },
+]
+```
+
+Path format:
+- Dot-separated segments for navigating through types
+- Use variant names for unions (e.g., `Tx`, `TxV0`)
+- Use field names for structs (e.g., `tx`, `operations`)
+- Use `[]` suffix for array/Vec traversal (e.g., `tx_processing[].result.hash`)
+
+##### Seekable Sparse Decoding
+
+For file-backed readers or other seekable sources, sparse types also implement
+`SeekableReadXdr` which uses `seek` operations instead of reading and discarding
+bytes. This is more efficient for large files:
+
+```rust
+use stellar_xdr::curr::{TransactionEnvelopeSparse, SeekableReadXdr, Limits};
+use std::fs::File;
+use std::io::BufReader;
+
+let file = File::open("transaction.xdr")?;
+let mut reader = Limited::new(BufReader::new(file), Limits::none());
+let sparse = TransactionEnvelopeSparse::seekable_read_xdr(&mut reader)?;
+```
+
+Or for in-memory byte slices:
+
+```rust
+let sparse = TransactionEnvelopeSparse::from_xdr_seekable(&xdr_data, Limits::none())?;
+```
+
 ### CLI
 
 To use the CLI:

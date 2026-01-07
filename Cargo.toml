@@ -20,7 +20,7 @@ crate-git-revision = "0.0.6"
 
 [dependencies]
 cfg_eval = { version = "0.1.2" }
-stellar-strkey = { version = "0.0.13", optional = true }
+stellar-strkey = { version = "0.0.15", optional = true }
 base64 = { version = "0.22.1", optional = true }
 serde = { version = "1.0.139", features = ["derive"], optional = true }
 serde_with = { version = "3.12.0", features = ["schemars_0_8"], optional = true }

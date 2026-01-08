@@ -20,7 +20,8 @@
     clippy::absurd_extreme_comparisons,
     clippy::derivable_impls,
     clippy::cast_possible_wrap,
-    clippy::len_zero
+    clippy::len_zero,
+    clippy::unnecessary_semicolon
 )]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.

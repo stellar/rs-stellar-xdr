@@ -95,7 +95,7 @@ class Generator < Xdrgen::Generators::Base
       //  #{@output.relative_source_paths.join("\n//  ")}
     EOS
     out.break
-    out.puts "#![allow(clippy::missing_errors_doc, clippy::unreadable_literal, clippy::semicolon_if_nothing_returned, clippy::absurd_extreme_comparisons, clippy::derivable_impls, clippy::cast_possible_wrap, clippy::len_zero)]"
+    out.puts "#![allow(clippy::missing_errors_doc, clippy::unreadable_literal, clippy::semicolon_if_nothing_returned, clippy::absurd_extreme_comparisons, clippy::derivable_impls, clippy::cast_possible_wrap, clippy::len_zero, clippy::unnecessary_semicolon)]"
     out.break
     source_paths_sha256_hashes = @output.relative_source_path_sha256_hashes
     out.puts <<-EOS.strip_heredoc

@@ -1,3 +1,5 @@
+#![allow(clippy::derivable_impls)]
+
 pub mod compare;
 pub mod decode;
 pub mod encode;

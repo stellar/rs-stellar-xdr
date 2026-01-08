@@ -4,14 +4,24 @@
 //! for extracting specific fields from XDR data.
 //!
 //! To run these benchmarks:
-//! ```
+//! ```text
 //! cargo bench --features curr
 //! ```
 //!
 //! To use real ledger data from the AWS Public Blockchain Dataset:
-//! 1. Download a ledger close meta file from s3://sdf-stellar-pubnet-public-blockchain-data/ledgers/
-//! 2. Place it at benches/fixtures/ledger_close_meta.xdr
+//! 1. Download a ledger close meta file from `s3://sdf-stellar-pubnet-public-blockchain-data/ledgers/`
+//! 2. Place it at `benches/fixtures/ledger_close_meta.xdr`
 //! 3. Run the benchmarks
+
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::too_many_lines,
+    clippy::redundant_closure_for_method_calls,
+    clippy::uninlined_format_args,
+    clippy::doc_markdown,
+    clippy::semicolon_if_nothing_returned
+)]
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
@@ -22,7 +32,7 @@ use stellar_xdr::curr::{
     TransactionExt, TransactionV1Envelope, Uint256, WriteXdr,
 };
 
-/// Create a test TransactionEnvelope with the specified number of operations
+/// Create a test `TransactionEnvelope` with the specified number of operations
 fn create_test_envelope(num_ops: usize) -> TransactionEnvelope {
     let operations: Vec<Operation> = (0..num_ops)
         .map(|i| Operation {
@@ -117,12 +127,12 @@ fn benchmark_transaction_envelope(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark LedgerCloseMeta decoding using real or synthetic data.
+/// Benchmark `LedgerCloseMeta` decoding using real or synthetic data.
 ///
 /// For real data, download from the AWS Public Blockchain Dataset:
-/// https://aws-public-blockchain.s3.us-east-2.amazonaws.com/v1.1/stellar/ledgers/pubnet/
+/// <https://aws-public-blockchain.s3.us-east-2.amazonaws.com/v1.1/stellar/ledgers/pubnet/>
 ///
-/// The files are in Frame<LedgerCloseMeta> format with zstd compression.
+/// The files are in `Frame<LedgerCloseMeta>` format with zstd compression.
 fn benchmark_ledger_close_meta(c: &mut Criterion) {
     // Try to load real ledger data, or skip this benchmark if not available
     // Look for any .xdr file in the fixtures directory

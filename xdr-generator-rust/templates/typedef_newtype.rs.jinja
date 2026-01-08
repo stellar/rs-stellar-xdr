@@ -1,0 +1,212 @@
+/// {{ t.name }} {{ t.source_comment }}
+#[cfg_eval::cfg_eval]
+{{ t.derive_attrs }}
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+{{ t.serde_attrs }}
+{% if let Some(attr) = t.schemars_attr %}{{ attr }}
+{% endif %}
+pub struct {{ t.name }}(
+{% if let Some(attr) = t.serde_field_attr %}    {{ attr }}
+{% endif %}
+    pub {{ t.type_ref }}
+);
+{% if t.custom_debug %}
+
+impl core::fmt::Debug for {{ t.name }} {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "{{ t.name }}(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+{% endif %}
+{% if t.custom_display_fromstr %}
+
+impl core::fmt::Display for {{ t.name }} {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for {{ t.name }} {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
+{% endif %}
+{% if t.custom_schemars %}
+
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for {{ t.name }} {
+    fn schema_name() -> String {
+        "{{ t.name }}".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: {{ t.size.as_ref().unwrap() }}_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                min_length: {{ t.size.as_ref().unwrap() }}_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
+    }
+}
+{% endif %}
+
+impl From<{{ t.name }}> for {{ t.type_ref }} {
+    #[must_use]
+    fn from(x: {{ t.name }}) -> Self {
+        x.0
+    }
+}
+
+impl From<{{ t.type_ref }}> for {{ t.name }} {
+    #[must_use]
+    fn from(x: {{ t.type_ref }}) -> Self {
+        {{ t.name }}(x)
+    }
+}
+
+impl AsRef<{{ t.type_ref }}> for {{ t.name }} {
+    #[must_use]
+    fn as_ref(&self) -> &{{ t.type_ref }} {
+        &self.0
+    }
+}
+
+impl ReadXdr for {{ t.name }} {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let i = {{ t.read_call }}::read_xdr(r)?;
+            let v = {{ t.name }}(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for {{ t.name }} {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w|{ self.0.write_xdr(w) })
+    }
+}
+{% if t.is_fixed_array %}
+
+impl {{ t.name }} {
+    #[must_use]
+    pub fn as_slice(&self) -> &[{{ t.element_type }}] {
+        &self.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<{{ t.element_type }}>> for {{ t.name }} {
+    type Error = Error;
+    fn try_from(x: Vec<{{ t.element_type }}>) -> Result<Self, Error> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
+    type Error = Error;
+    fn try_from(x: &Vec<{{ t.element_type }}>) -> Result<Self, Error> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[{{ t.element_type }}]> for {{ t.name }} {
+    type Error = Error;
+    fn try_from(x: &[{{ t.element_type }}]) -> Result<Self, Error> {
+        Ok({{ t.name }}(x.try_into()?))
+    }
+}
+
+impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
+    #[must_use]
+    fn as_ref(&self) -> &[{{ t.element_type }}] {
+        &self.0
+    }
+}
+{% endif %}
+{% if t.is_var_array %}
+
+impl Deref for {{ t.name }} {
+    type Target = {{ t.type_ref }};
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<{{ t.name }}> for Vec<{{ t.element_type }}> {
+    #[must_use]
+    fn from(x: {{ t.name }}) -> Self {
+        x.0.0
+    }
+}
+
+impl TryFrom<Vec<{{ t.element_type }}>> for {{ t.name }} {
+    type Error = Error;
+    fn try_from(x: Vec<{{ t.element_type }}>) -> Result<Self, Error> {
+        Ok({{ t.name }}(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
+    type Error = Error;
+    fn try_from(x: &Vec<{{ t.element_type }}>) -> Result<Self, Error> {
+        Ok({{ t.name }}(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<{{ t.element_type }}>> for {{ t.name }} {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<{{ t.element_type }}> {
+        &self.0.0
+    }
+}
+
+impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[{{ t.element_type }}] {
+        &self.0.0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[{{ t.element_type }}] {
+        self.0.0
+    }
+}
+{% endif %}
+

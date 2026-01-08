@@ -1,0 +1,43 @@
+/// {{ s.name }} {{ s.source_comment }}
+{{ s.derive_attrs }}
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+{{ s.serde_attrs }}
+{% if let Some(attr) = s.schemars_attr %}{{ attr }}
+{% endif %}
+pub struct {{ s.name }} {
+{% for m in s.members %}
+{% if let Some(attr) = m.serde_attr %}    {{ attr }}
+{% endif %}
+    pub {{ m.name }}: {{ m.type_ref }},
+{% endfor %}
+}
+
+impl ReadXdr for {{ s.name }} {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self{
+{% for m in s.members %}
+                {{ m.name }}: {{ m.read_call }}::read_xdr(r)?,
+{% endfor %}
+            })
+        })
+    }
+}
+
+impl WriteXdr for {{ s.name }} {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+{% for m in s.members %}
+            self.{{ m.name }}.write_xdr(w)?;
+{% endfor %}
+            Ok(())
+        })
+    }
+}
+{% if let Some(impl_code) = s.custom_deserialize_impl %}
+{{ impl_code }}
+{% endif %}
+

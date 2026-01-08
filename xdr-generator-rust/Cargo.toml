@@ -1,0 +1,20 @@
+[package]
+name = "xdr-generator-rust"
+description = "XDR to Rust code generator for Stellar"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.84.0"
+
+[[bin]]
+name = "xdr-generator-rust"
+path = "src/main.rs"
+
+[dependencies]
+askama = "0.14"
+clap = { version = "4", features = ["derive"] }
+sha2 = "0.10"
+heck = "0.5"
+thiserror = "2"
+
+[dev-dependencies]
+pretty_assertions = "1"

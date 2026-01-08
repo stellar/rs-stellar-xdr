@@ -1,0 +1,101 @@
+/// {{ e.name }} {{ e.source_comment }}
+// enum
+{{ e.derive_attrs }}
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+{{ e.serde_attrs }}
+{% if let Some(attr) = e.schemars_attr %}{{ attr }}
+{% endif %}
+#[repr(i32)]
+pub enum {{ e.name }} {
+{% for m in e.members %}
+{% if m.is_first %}    #[cfg_attr(feature = "alloc", default)]
+{% endif %}
+    {{ m.name }} = {{ m.value }},
+{% endfor %}
+}
+
+impl {{ e.name }} {
+    pub const VARIANTS: [{{ e.name }}; {{ e.members.len() }}] = [ {% for m in e.members %}{{ e.name }}::{{ m.name }},
+{% endfor %} ];
+    pub const VARIANTS_STR: [&'static str; {{ e.members.len() }}] = [ {% for m in e.members %}"{{ m.name }}",
+{% endfor %} ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+{% for m in e.members %}
+            Self::{{ m.name }} => "{{ m.name }}",
+{% endfor %}
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [{{ e.name }}; {{ e.members.len() }}] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for {{ e.name }} {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<{{ e.name }}> for {{ e.name }} {
+    fn variants() -> slice::Iter<'static, {{ e.name }}> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for {{ e.name }} {}
+
+impl fmt::Display for {{ e.name }} {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for {{ e.name }} {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self, Error> {
+        let e = match i {
+{% for m in e.members %}
+            {{ m.value }} => {{ e.name }}::{{ m.name }},
+{% endfor %}
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<{{ e.name }}> for i32 {
+    #[must_use]
+    fn from(e: {{ e.name }}) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for {{ e.name }} {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for {{ e.name }} {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+

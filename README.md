@@ -77,7 +77,7 @@ fields from large XDR structures.
 For example, `TransactionEnvelopeSparse` extracts only the `operations`
 field from transaction envelopes:
 
-```rust
+```ignore
 use stellar_xdr::curr::{TransactionEnvelopeSparse, ReadXdr, Limits};
 
 let xdr_data: &[u8] = /* ... */;
@@ -127,7 +127,7 @@ For file-backed readers or other seekable sources, sparse types also implement
 `SeekableReadXdr` which uses `seek` operations instead of reading and discarding
 bytes. This is more efficient for large files:
 
-```rust
+```ignore
 use stellar_xdr::curr::{TransactionEnvelopeSparse, SeekableReadXdr, Limits};
 use std::fs::File;
 use std::io::BufReader;
@@ -139,7 +139,7 @@ let sparse = TransactionEnvelopeSparse::seekable_read_xdr(&mut reader)?;
 
 Or for in-memory byte slices:
 
-```rust
+```ignore
 let sparse = TransactionEnvelopeSparse::from_xdr_seekable(&xdr_data, Limits::none())?;
 ```
 

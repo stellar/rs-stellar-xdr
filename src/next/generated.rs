@@ -62878,6 +62878,13 @@ impl SeekableSkipXdr for ClaimableBalanceId {
 /// Sparse type for TransactionEnvelope extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum TransactionEnvelopeSparse {
     TxV0(TransactionEnvelopeSparse_TxV0),
     Tx(TransactionEnvelopeSparse_Tx),
@@ -62929,6 +62936,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse {
 /// Sparse type for TransactionV0Envelope extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionEnvelopeSparse_TxV0 {
     pub tx: TransactionEnvelopeSparse_TransactionV0Envelope_Tx,
 }
@@ -62958,6 +62972,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TxV0 {
 /// Sparse type for TransactionV0 extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
     pub operations: VecM<Operation, 100>,
 }
@@ -62997,6 +63018,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TransactionV0Envelope_Tx {
 /// Sparse type for TransactionV1Envelope extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionEnvelopeSparse_Tx {
     pub tx: TransactionEnvelopeSparse_TransactionV1Envelope_Tx,
 }
@@ -63026,6 +63054,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_Tx {
 /// Sparse type for Transaction extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
     pub operations: VecM<Operation, 100>,
 }
@@ -63065,6 +63100,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TransactionV1Envelope_Tx {
 /// Sparse type for FeeBumpTransactionEnvelope extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionEnvelopeSparse_TxFeeBump {
     pub tx: TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx,
 }
@@ -63094,6 +63136,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_TxFeeBump {
 /// Sparse type for FeeBumpTransaction extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx {}
 
 impl ReadXdr for TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx {
@@ -63131,6 +63180,13 @@ impl SeekableReadXdr for TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx
 /// Sparse type for LedgerCloseMeta extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum LedgerCloseMetaTxHashes {
     V0(LedgerCloseMetaTxHashes_V0),
     V1(LedgerCloseMetaTxHashes_V1),
@@ -63176,6 +63232,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes {
 /// Sparse type for LedgerCloseMetaV0 extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_V0 {
     pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>,
 }
@@ -63235,6 +63298,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_V0 {
 /// Sparse type for TransactionResultMeta extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing {
     pub result: LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
 }
@@ -63267,6 +63337,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing 
 /// Sparse type for TransactionResultPair extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
     pub transaction_hash: Hash,
 }
@@ -63296,6 +63373,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_TransactionResultMeta_Result {
 /// Sparse type for LedgerCloseMetaV1 extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_V1 {
     pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>,
 }
@@ -63363,6 +63447,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_V1 {
 /// Sparse type for TransactionResultMeta extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing {
     pub result: LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
 }
@@ -63395,6 +63486,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing 
 /// Sparse type for LedgerCloseMetaV2 extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_V2 {
     pub tx_processing: VecM<LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>,
 }
@@ -63460,6 +63558,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_V2 {
 /// Sparse type for TransactionResultMetaV1 extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing {
     pub result: LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result,
 }
@@ -63496,6 +63601,13 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing 
 /// Sparse type for TransactionResultPair extracting only specified paths
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result {
     pub transaction_hash: Hash,
 }
@@ -63529,6 +63641,7 @@ impl SeekableReadXdr for LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result 
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(non_camel_case_types)]
 pub enum TypeVariant {
     Value,
     ScpBallot,
@@ -63993,10 +64106,26 @@ pub enum TypeVariant {
     PoolId,
     ClaimableBalanceIdType,
     ClaimableBalanceId,
+    TransactionEnvelopeSparse,
+    TransactionEnvelopeSparse_TxV0,
+    TransactionEnvelopeSparse_TransactionV0Envelope_Tx,
+    TransactionEnvelopeSparse_Tx,
+    TransactionEnvelopeSparse_TransactionV1Envelope_Tx,
+    TransactionEnvelopeSparse_TxFeeBump,
+    TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx,
+    LedgerCloseMetaTxHashes,
+    LedgerCloseMetaTxHashes_V0,
+    LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing,
+    LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
+    LedgerCloseMetaTxHashes_V1,
+    LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing,
+    LedgerCloseMetaTxHashes_V2,
+    LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing,
+    LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result,
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: [TypeVariant; 479] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -64460,8 +64589,24 @@ impl TypeVariant {
         TypeVariant::PoolId,
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
+        TypeVariant::TransactionEnvelopeSparse,
+        TypeVariant::TransactionEnvelopeSparse_TxV0,
+        TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx,
+        TypeVariant::TransactionEnvelopeSparse_Tx,
+        TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx,
+        TypeVariant::TransactionEnvelopeSparse_TxFeeBump,
+        TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx,
+        TypeVariant::LedgerCloseMetaTxHashes,
+        TypeVariant::LedgerCloseMetaTxHashes_V0,
+        TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing,
+        TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
+        TypeVariant::LedgerCloseMetaTxHashes_V1,
+        TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing,
+        TypeVariant::LedgerCloseMetaTxHashes_V2,
+        TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing,
+        TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: [&'static str; 479] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -64925,6 +65070,22 @@ impl TypeVariant {
         "PoolId",
         "ClaimableBalanceIdType",
         "ClaimableBalanceId",
+        "TransactionEnvelopeSparse",
+        "TransactionEnvelopeSparse_TxV0",
+        "TransactionEnvelopeSparse_TransactionV0Envelope_Tx",
+        "TransactionEnvelopeSparse_Tx",
+        "TransactionEnvelopeSparse_TransactionV1Envelope_Tx",
+        "TransactionEnvelopeSparse_TxFeeBump",
+        "TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx",
+        "LedgerCloseMetaTxHashes",
+        "LedgerCloseMetaTxHashes_V0",
+        "LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing",
+        "LedgerCloseMetaTxHashes_TransactionResultMeta_Result",
+        "LedgerCloseMetaTxHashes_V1",
+        "LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing",
+        "LedgerCloseMetaTxHashes_V2",
+        "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing",
+        "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result",
     ];
 
     #[must_use]
@@ -65408,12 +65569,44 @@ impl TypeVariant {
             Self::PoolId => "PoolId",
             Self::ClaimableBalanceIdType => "ClaimableBalanceIdType",
             Self::ClaimableBalanceId => "ClaimableBalanceId",
+            Self::TransactionEnvelopeSparse => "TransactionEnvelopeSparse",
+            Self::TransactionEnvelopeSparse_TxV0 => "TransactionEnvelopeSparse_TxV0",
+            Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => {
+                "TransactionEnvelopeSparse_TransactionV0Envelope_Tx"
+            }
+            Self::TransactionEnvelopeSparse_Tx => "TransactionEnvelopeSparse_Tx",
+            Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => {
+                "TransactionEnvelopeSparse_TransactionV1Envelope_Tx"
+            }
+            Self::TransactionEnvelopeSparse_TxFeeBump => "TransactionEnvelopeSparse_TxFeeBump",
+            Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => {
+                "TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx"
+            }
+            Self::LedgerCloseMetaTxHashes => "LedgerCloseMetaTxHashes",
+            Self::LedgerCloseMetaTxHashes_V0 => "LedgerCloseMetaTxHashes_V0",
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => {
+                "LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing"
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => {
+                "LedgerCloseMetaTxHashes_TransactionResultMeta_Result"
+            }
+            Self::LedgerCloseMetaTxHashes_V1 => "LedgerCloseMetaTxHashes_V1",
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => {
+                "LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing"
+            }
+            Self::LedgerCloseMetaTxHashes_V2 => "LedgerCloseMetaTxHashes_V2",
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => {
+                "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing"
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => {
+                "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result"
+            }
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> [TypeVariant; 479] {
         Self::VARIANTS
     }
 
@@ -66101,6 +66294,53 @@ impl TypeVariant {
             Self::PoolId => gen.into_root_schema_for::<PoolId>(),
             Self::ClaimableBalanceIdType => gen.into_root_schema_for::<ClaimableBalanceIdType>(),
             Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
+            Self::TransactionEnvelopeSparse => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse>()
+            }
+            Self::TransactionEnvelopeSparse_TxV0 => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse_TxV0>()
+            }
+            Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse_TransactionV0Envelope_Tx>()
+            }
+            Self::TransactionEnvelopeSparse_Tx => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse_Tx>()
+            }
+            Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse_TransactionV1Envelope_Tx>()
+            }
+            Self::TransactionEnvelopeSparse_TxFeeBump => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse_TxFeeBump>()
+            }
+            Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => {
+                gen.into_root_schema_for::<TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx>(
+                )
+            }
+            Self::LedgerCloseMetaTxHashes => gen.into_root_schema_for::<LedgerCloseMetaTxHashes>(),
+            Self::LedgerCloseMetaTxHashes_V0 => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_V0>()
+            }
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>()
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_TransactionResultMeta_Result>()
+            }
+            Self::LedgerCloseMetaTxHashes_V1 => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_V1>()
+            }
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>()
+            }
+            Self::LedgerCloseMetaTxHashes_V2 => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_V2>()
+            }
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>()
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => {
+                gen.into_root_schema_for::<LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result>()
+            }
         }
     }
 }
@@ -66616,6 +66856,38 @@ impl core::str::FromStr for TypeVariant {
             "PoolId" => Ok(Self::PoolId),
             "ClaimableBalanceIdType" => Ok(Self::ClaimableBalanceIdType),
             "ClaimableBalanceId" => Ok(Self::ClaimableBalanceId),
+            "TransactionEnvelopeSparse" => Ok(Self::TransactionEnvelopeSparse),
+            "TransactionEnvelopeSparse_TxV0" => Ok(Self::TransactionEnvelopeSparse_TxV0),
+            "TransactionEnvelopeSparse_TransactionV0Envelope_Tx" => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx)
+            }
+            "TransactionEnvelopeSparse_Tx" => Ok(Self::TransactionEnvelopeSparse_Tx),
+            "TransactionEnvelopeSparse_TransactionV1Envelope_Tx" => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx)
+            }
+            "TransactionEnvelopeSparse_TxFeeBump" => Ok(Self::TransactionEnvelopeSparse_TxFeeBump),
+            "TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx" => {
+                Ok(Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx)
+            }
+            "LedgerCloseMetaTxHashes" => Ok(Self::LedgerCloseMetaTxHashes),
+            "LedgerCloseMetaTxHashes_V0" => Ok(Self::LedgerCloseMetaTxHashes_V0),
+            "LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing" => {
+                Ok(Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing)
+            }
+            "LedgerCloseMetaTxHashes_TransactionResultMeta_Result" => {
+                Ok(Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result)
+            }
+            "LedgerCloseMetaTxHashes_V1" => Ok(Self::LedgerCloseMetaTxHashes_V1),
+            "LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing" => {
+                Ok(Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing)
+            }
+            "LedgerCloseMetaTxHashes_V2" => Ok(Self::LedgerCloseMetaTxHashes_V2),
+            "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing" => {
+                Ok(Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing)
+            }
+            "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result" => {
+                Ok(Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result)
+            }
             _ => Err(Error::Invalid),
         }
     }
@@ -66629,6 +66901,7 @@ impl core::str::FromStr for TypeVariant {
     serde(untagged)
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(non_camel_case_types)]
 pub enum Type {
     Value(Box<Value>),
     ScpBallot(Box<ScpBallot>),
@@ -67093,10 +67366,42 @@ pub enum Type {
     PoolId(Box<PoolId>),
     ClaimableBalanceIdType(Box<ClaimableBalanceIdType>),
     ClaimableBalanceId(Box<ClaimableBalanceId>),
+    TransactionEnvelopeSparse(Box<TransactionEnvelopeSparse>),
+    TransactionEnvelopeSparse_TxV0(Box<TransactionEnvelopeSparse_TxV0>),
+    TransactionEnvelopeSparse_TransactionV0Envelope_Tx(
+        Box<TransactionEnvelopeSparse_TransactionV0Envelope_Tx>,
+    ),
+    TransactionEnvelopeSparse_Tx(Box<TransactionEnvelopeSparse_Tx>),
+    TransactionEnvelopeSparse_TransactionV1Envelope_Tx(
+        Box<TransactionEnvelopeSparse_TransactionV1Envelope_Tx>,
+    ),
+    TransactionEnvelopeSparse_TxFeeBump(Box<TransactionEnvelopeSparse_TxFeeBump>),
+    TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(
+        Box<TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx>,
+    ),
+    LedgerCloseMetaTxHashes(Box<LedgerCloseMetaTxHashes>),
+    LedgerCloseMetaTxHashes_V0(Box<LedgerCloseMetaTxHashes_V0>),
+    LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(
+        Box<LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>,
+    ),
+    LedgerCloseMetaTxHashes_TransactionResultMeta_Result(
+        Box<LedgerCloseMetaTxHashes_TransactionResultMeta_Result>,
+    ),
+    LedgerCloseMetaTxHashes_V1(Box<LedgerCloseMetaTxHashes_V1>),
+    LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(
+        Box<LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>,
+    ),
+    LedgerCloseMetaTxHashes_V2(Box<LedgerCloseMetaTxHashes_V2>),
+    LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(
+        Box<LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>,
+    ),
+    LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(
+        Box<LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result>,
+    ),
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: [TypeVariant; 479] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -67560,8 +67865,24 @@ impl Type {
         TypeVariant::PoolId,
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
+        TypeVariant::TransactionEnvelopeSparse,
+        TypeVariant::TransactionEnvelopeSparse_TxV0,
+        TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx,
+        TypeVariant::TransactionEnvelopeSparse_Tx,
+        TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx,
+        TypeVariant::TransactionEnvelopeSparse_TxFeeBump,
+        TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx,
+        TypeVariant::LedgerCloseMetaTxHashes,
+        TypeVariant::LedgerCloseMetaTxHashes_V0,
+        TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing,
+        TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result,
+        TypeVariant::LedgerCloseMetaTxHashes_V1,
+        TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing,
+        TypeVariant::LedgerCloseMetaTxHashes_V2,
+        TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing,
+        TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: [&'static str; 479] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -68025,6 +68346,22 @@ impl Type {
         "PoolId",
         "ClaimableBalanceIdType",
         "ClaimableBalanceId",
+        "TransactionEnvelopeSparse",
+        "TransactionEnvelopeSparse_TxV0",
+        "TransactionEnvelopeSparse_TransactionV0Envelope_Tx",
+        "TransactionEnvelopeSparse_Tx",
+        "TransactionEnvelopeSparse_TransactionV1Envelope_Tx",
+        "TransactionEnvelopeSparse_TxFeeBump",
+        "TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx",
+        "LedgerCloseMetaTxHashes",
+        "LedgerCloseMetaTxHashes_V0",
+        "LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing",
+        "LedgerCloseMetaTxHashes_TransactionResultMeta_Result",
+        "LedgerCloseMetaTxHashes_V1",
+        "LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing",
+        "LedgerCloseMetaTxHashes_V2",
+        "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing",
+        "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result",
     ];
 
     #[cfg(feature = "std")]
@@ -70050,6 +70387,106 @@ impl Type {
                     ClaimableBalanceId::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::TransactionEnvelopeSparse => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEnvelopeSparse(Box::new(
+                    TransactionEnvelopeSparse::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionEnvelopeSparse_TxV0 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEnvelopeSparse_TxV0(Box::new(
+                    TransactionEnvelopeSparse_TxV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => r
+                .with_limited_depth(|r| {
+                    Ok(Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(
+                        Box::new(TransactionEnvelopeSparse_TransactionV0Envelope_Tx::read_xdr(r)?),
+                    ))
+                }),
+            TypeVariant::TransactionEnvelopeSparse_Tx => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEnvelopeSparse_Tx(Box::new(
+                    TransactionEnvelopeSparse_Tx::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => r
+                .with_limited_depth(|r| {
+                    Ok(Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(
+                        Box::new(TransactionEnvelopeSparse_TransactionV1Envelope_Tx::read_xdr(r)?),
+                    ))
+                }),
+            TypeVariant::TransactionEnvelopeSparse_TxFeeBump => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEnvelopeSparse_TxFeeBump(Box::new(
+                    TransactionEnvelopeSparse_TxFeeBump::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => r
+                .with_limited_depth(|r| {
+                    Ok(
+                        Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(Box::new(
+                            TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx::read_xdr(r)?,
+                        )),
+                    )
+                }),
+            TypeVariant::LedgerCloseMetaTxHashes => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaTxHashes(Box::new(
+                    LedgerCloseMetaTxHashes::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaTxHashes_V0 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaTxHashes_V0(Box::new(
+                    LedgerCloseMetaTxHashes_V0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => r
+                .with_limited_depth(|r| {
+                    Ok(
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(Box::new(
+                            LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing::read_xdr(r)?,
+                        )),
+                    )
+                }),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => r
+                .with_limited_depth(|r| {
+                    Ok(Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(
+                        Box::new(
+                            LedgerCloseMetaTxHashes_TransactionResultMeta_Result::read_xdr(r)?,
+                        ),
+                    ))
+                }),
+            TypeVariant::LedgerCloseMetaTxHashes_V1 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaTxHashes_V1(Box::new(
+                    LedgerCloseMetaTxHashes_V1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => r
+                .with_limited_depth(|r| {
+                    Ok(
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(Box::new(
+                            LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing::read_xdr(r)?,
+                        )),
+                    )
+                }),
+            TypeVariant::LedgerCloseMetaTxHashes_V2 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaTxHashes_V2(Box::new(
+                    LedgerCloseMetaTxHashes_V2::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => r
+                .with_limited_depth(|r| {
+                    Ok(
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(Box::new(
+                            LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing::read_xdr(r)?,
+                        )),
+                    )
+                }),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => r
+                .with_limited_depth(|r| {
+                    Ok(
+                        Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(Box::new(
+                            LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result::read_xdr(r)?,
+                        )),
+                    )
+                }),
         }
     }
 
@@ -72097,6 +72534,128 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Box::new(
                 ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEnvelopeSparse(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TxV0 => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TxV0>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TransactionEnvelopeSparse_TxV0(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TransactionV0Envelope_Tx>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(Box::new(t)))
+                }),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_Tx>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEnvelopeSparse_Tx(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TransactionV1Envelope_Tx>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(Box::new(t)))
+                }),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TxFeeBump => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TxFeeBump>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TransactionEnvelopeSparse_TxFeeBump(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V0 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_V0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes_V0(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_TransactionResultMeta_Result>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V1 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_V1>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes_V1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_V2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes_V2(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(Box::new(t))
+                    })
+                }),
             ),
         }
     }
@@ -74407,6 +74966,7 @@ impl Type {
                 ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
             ),
+            _ => Box::new(core::iter::once(Err(Error::Invalid))),
         }
     }
 
@@ -76298,6 +76858,122 @@ impl Type {
                 ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
+            TypeVariant::TransactionEnvelopeSparse => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEnvelopeSparse(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TxV0 => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TxV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEnvelopeSparse_TxV0(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TransactionV0Envelope_Tx>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(Box::new(t)))
+                }),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_Tx>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEnvelopeSparse_Tx(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TransactionV1Envelope_Tx>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(Box::new(t)))
+                }),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TxFeeBump => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_TxFeeBump>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionEnvelopeSparse_TxFeeBump(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => Box::new(
+                ReadXdrIter::<_, TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V0 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_V0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes_V0(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_TransactionResultMeta_Result>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V1 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_V1>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes_V1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_V2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaTxHashes_V2(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(Box::new(t))
+                    })
+                }),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| {
+                        Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(Box::new(t))
+                    })
+                }),
+            ),
         }
     }
 
@@ -77606,6 +78282,70 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::TransactionEnvelopeSparse => Ok(Self::TransactionEnvelopeSparse(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionEnvelopeSparse_TxV0 => Ok(
+                Self::TransactionEnvelopeSparse_TxV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(
+                    Box::new(serde_json::from_reader(r)?),
+                ))
+            }
+            TypeVariant::TransactionEnvelopeSparse_Tx => Ok(Self::TransactionEnvelopeSparse_Tx(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(
+                    Box::new(serde_json::from_reader(r)?),
+                ))
+            }
+            TypeVariant::TransactionEnvelopeSparse_TxFeeBump => Ok(
+                Self::TransactionEnvelopeSparse_TxFeeBump(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => Ok(
+                Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(Box::new(
+                    serde_json::from_reader(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes => Ok(Self::LedgerCloseMetaTxHashes(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaTxHashes_V0 => Ok(Self::LedgerCloseMetaTxHashes_V0(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(Box::new(
+                    serde_json::from_reader(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => {
+                Ok(Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(
+                    Box::new(serde_json::from_reader(r)?),
+                ))
+            }
+            TypeVariant::LedgerCloseMetaTxHashes_V1 => Ok(Self::LedgerCloseMetaTxHashes_V1(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(Box::new(
+                    serde_json::from_reader(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V2 => Ok(Self::LedgerCloseMetaTxHashes_V2(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(Box::new(
+                    serde_json::from_reader(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => Ok(
+                Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(Box::new(
+                    serde_json::from_reader(r)?,
+                )),
+            ),
         }
     }
 
@@ -79087,6 +79827,74 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::TransactionEnvelopeSparse => Ok(Self::TransactionEnvelopeSparse(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::TransactionEnvelopeSparse_TxV0 => {
+                Ok(Self::TransactionEnvelopeSparse_TxV0(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
+            TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(
+                    Box::new(serde::de::Deserialize::deserialize(r)?),
+                ))
+            }
+            TypeVariant::TransactionEnvelopeSparse_Tx => Ok(Self::TransactionEnvelopeSparse_Tx(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(
+                    Box::new(serde::de::Deserialize::deserialize(r)?),
+                ))
+            }
+            TypeVariant::TransactionEnvelopeSparse_TxFeeBump => {
+                Ok(Self::TransactionEnvelopeSparse_TxFeeBump(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
+            TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => Ok(
+                Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes => Ok(Self::LedgerCloseMetaTxHashes(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaTxHashes_V0 => Ok(Self::LedgerCloseMetaTxHashes_V0(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => {
+                Ok(Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(
+                    Box::new(serde::de::Deserialize::deserialize(r)?),
+                ))
+            }
+            TypeVariant::LedgerCloseMetaTxHashes_V1 => Ok(Self::LedgerCloseMetaTxHashes_V1(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V2 => Ok(Self::LedgerCloseMetaTxHashes_V2(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => Ok(
+                Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )),
+            ),
         }
     }
 
@@ -80401,12 +81209,80 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 ClaimableBalanceId::arbitrary(u)?,
             ))),
+            TypeVariant::TransactionEnvelopeSparse => Ok(Self::TransactionEnvelopeSparse(
+                Box::new(TransactionEnvelopeSparse::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionEnvelopeSparse_TxV0 => {
+                Ok(Self::TransactionEnvelopeSparse_TxV0(Box::new(
+                    TransactionEnvelopeSparse_TxV0::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(
+                    Box::new(TransactionEnvelopeSparse_TransactionV0Envelope_Tx::arbitrary(u)?),
+                ))
+            }
+            TypeVariant::TransactionEnvelopeSparse_Tx => Ok(Self::TransactionEnvelopeSparse_Tx(
+                Box::new(TransactionEnvelopeSparse_Tx::arbitrary(u)?),
+            )),
+            TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx => {
+                Ok(Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(
+                    Box::new(TransactionEnvelopeSparse_TransactionV1Envelope_Tx::arbitrary(u)?),
+                ))
+            }
+            TypeVariant::TransactionEnvelopeSparse_TxFeeBump => {
+                Ok(Self::TransactionEnvelopeSparse_TxFeeBump(Box::new(
+                    TransactionEnvelopeSparse_TxFeeBump::arbitrary(u)?,
+                )))
+            }
+            TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx => Ok(
+                Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(Box::new(
+                    TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx::arbitrary(u)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes => Ok(Self::LedgerCloseMetaTxHashes(Box::new(
+                LedgerCloseMetaTxHashes::arbitrary(u)?,
+            ))),
+            TypeVariant::LedgerCloseMetaTxHashes_V0 => Ok(Self::LedgerCloseMetaTxHashes_V0(
+                Box::new(LedgerCloseMetaTxHashes_V0::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(Box::new(
+                    LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing::arbitrary(u)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result => {
+                Ok(Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(
+                    Box::new(LedgerCloseMetaTxHashes_TransactionResultMeta_Result::arbitrary(u)?),
+                ))
+            }
+            TypeVariant::LedgerCloseMetaTxHashes_V1 => Ok(Self::LedgerCloseMetaTxHashes_V1(
+                Box::new(LedgerCloseMetaTxHashes_V1::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(Box::new(
+                    LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing::arbitrary(u)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_V2 => Ok(Self::LedgerCloseMetaTxHashes_V2(
+                Box::new(LedgerCloseMetaTxHashes_V2::arbitrary(u)?),
+            )),
+            TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing => Ok(
+                Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(Box::new(
+                    LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing::arbitrary(u)?,
+                )),
+            ),
+            TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result => Ok(
+                Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(Box::new(
+                    LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result::arbitrary(u)?,
+                )),
+            ),
         }
     }
 
     #[cfg(feature = "alloc")]
     #[must_use]
-    #[allow(clippy::too_many_lines)]
+    #[allow(clippy::too_many_lines, clippy::missing_panics_doc)]
     pub fn default(v: TypeVariant) -> Self {
         match v {
             TypeVariant::Value => Self::Value(Box::default()),
@@ -81058,6 +81934,7 @@ impl Type {
             TypeVariant::PoolId => Self::PoolId(Box::default()),
             TypeVariant::ClaimableBalanceIdType => Self::ClaimableBalanceIdType(Box::default()),
             TypeVariant::ClaimableBalanceId => Self::ClaimableBalanceId(Box::default()),
+            _ => panic!("sparse types do not support default"),
         }
     }
 
@@ -81530,6 +82407,22 @@ impl Type {
             Self::PoolId(ref v) => v.as_ref(),
             Self::ClaimableBalanceIdType(ref v) => v.as_ref(),
             Self::ClaimableBalanceId(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse_TxV0(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse_Tx(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse_TxFeeBump(ref v) => v.as_ref(),
+            Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_V0(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_V1(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_V2(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(ref v) => v.as_ref(),
         }
     }
 
@@ -82026,12 +82919,44 @@ impl Type {
             Self::PoolId(_) => "PoolId",
             Self::ClaimableBalanceIdType(_) => "ClaimableBalanceIdType",
             Self::ClaimableBalanceId(_) => "ClaimableBalanceId",
+            Self::TransactionEnvelopeSparse(_) => "TransactionEnvelopeSparse",
+            Self::TransactionEnvelopeSparse_TxV0(_) => "TransactionEnvelopeSparse_TxV0",
+            Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(_) => {
+                "TransactionEnvelopeSparse_TransactionV0Envelope_Tx"
+            }
+            Self::TransactionEnvelopeSparse_Tx(_) => "TransactionEnvelopeSparse_Tx",
+            Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(_) => {
+                "TransactionEnvelopeSparse_TransactionV1Envelope_Tx"
+            }
+            Self::TransactionEnvelopeSparse_TxFeeBump(_) => "TransactionEnvelopeSparse_TxFeeBump",
+            Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(_) => {
+                "TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx"
+            }
+            Self::LedgerCloseMetaTxHashes(_) => "LedgerCloseMetaTxHashes",
+            Self::LedgerCloseMetaTxHashes_V0(_) => "LedgerCloseMetaTxHashes_V0",
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(_) => {
+                "LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing"
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(_) => {
+                "LedgerCloseMetaTxHashes_TransactionResultMeta_Result"
+            }
+            Self::LedgerCloseMetaTxHashes_V1(_) => "LedgerCloseMetaTxHashes_V1",
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(_) => {
+                "LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing"
+            }
+            Self::LedgerCloseMetaTxHashes_V2(_) => "LedgerCloseMetaTxHashes_V2",
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(_) => {
+                "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing"
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(_) => {
+                "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result"
+            }
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> [TypeVariant; 479] {
         Self::VARIANTS
     }
 
@@ -82572,6 +83497,40 @@ impl Type {
             Self::PoolId(_) => TypeVariant::PoolId,
             Self::ClaimableBalanceIdType(_) => TypeVariant::ClaimableBalanceIdType,
             Self::ClaimableBalanceId(_) => TypeVariant::ClaimableBalanceId,
+            Self::TransactionEnvelopeSparse(_) => TypeVariant::TransactionEnvelopeSparse,
+            Self::TransactionEnvelopeSparse_TxV0(_) => TypeVariant::TransactionEnvelopeSparse_TxV0,
+            Self::TransactionEnvelopeSparse_TransactionV0Envelope_Tx(_) => {
+                TypeVariant::TransactionEnvelopeSparse_TransactionV0Envelope_Tx
+            }
+            Self::TransactionEnvelopeSparse_Tx(_) => TypeVariant::TransactionEnvelopeSparse_Tx,
+            Self::TransactionEnvelopeSparse_TransactionV1Envelope_Tx(_) => {
+                TypeVariant::TransactionEnvelopeSparse_TransactionV1Envelope_Tx
+            }
+            Self::TransactionEnvelopeSparse_TxFeeBump(_) => {
+                TypeVariant::TransactionEnvelopeSparse_TxFeeBump
+            }
+            Self::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx(_) => {
+                TypeVariant::TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx
+            }
+            Self::LedgerCloseMetaTxHashes(_) => TypeVariant::LedgerCloseMetaTxHashes,
+            Self::LedgerCloseMetaTxHashes_V0(_) => TypeVariant::LedgerCloseMetaTxHashes_V0,
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing(_) => {
+                TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV0_TxProcessing
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMeta_Result(_) => {
+                TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMeta_Result
+            }
+            Self::LedgerCloseMetaTxHashes_V1(_) => TypeVariant::LedgerCloseMetaTxHashes_V1,
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing(_) => {
+                TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV1_TxProcessing
+            }
+            Self::LedgerCloseMetaTxHashes_V2(_) => TypeVariant::LedgerCloseMetaTxHashes_V2,
+            Self::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing(_) => {
+                TypeVariant::LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing
+            }
+            Self::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result(_) => {
+                TypeVariant::LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result
+            }
         }
     }
 }
@@ -83057,6 +84016,7 @@ impl WriteXdr for Type {
             Self::PoolId(v) => v.write_xdr(w),
             Self::ClaimableBalanceIdType(v) => v.write_xdr(w),
             Self::ClaimableBalanceId(v) => v.write_xdr(w),
+            _ => Err(Error::Invalid),
         }
     }
 }

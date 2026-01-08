@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerCloseMetaTxHashes_V2",
+  "description": "Sparse type for LedgerCloseMetaV2 extracting only specified paths",
+  "type": "object",
+  "required": [
+    "tx_processing"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "tx_processing": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing"
+      },
+      "maxItems": 4294967295
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing": {
+      "description": "Sparse type for TransactionResultMetaV1 extracting only specified paths",
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result"
+        }
+      }
+    },
+    "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result": {
+      "description": "Sparse type for TransactionResultPair extracting only specified paths",
+      "type": "object",
+      "required": [
+        "transaction_hash"
+      ],
+      "properties": {
+        "transaction_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    }
+  }
+}

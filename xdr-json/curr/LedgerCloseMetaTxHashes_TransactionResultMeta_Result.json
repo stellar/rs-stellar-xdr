@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerCloseMetaTxHashes_TransactionResultMeta_Result",
+  "description": "Sparse type for TransactionResultPair extracting only specified paths",
+  "type": "object",
+  "required": [
+    "transaction_hash"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "transaction_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  },
+  "unevaluatedProperties": false
+}

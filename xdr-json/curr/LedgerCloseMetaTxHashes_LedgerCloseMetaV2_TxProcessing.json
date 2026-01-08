@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerCloseMetaTxHashes_LedgerCloseMetaV2_TxProcessing",
+  "description": "Sparse type for TransactionResultMetaV1 extracting only specified paths",
+  "type": "object",
+  "required": [
+    "result"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "result": {
+      "$ref": "#/definitions/LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "LedgerCloseMetaTxHashes_TransactionResultMetaV1_Result": {
+      "description": "Sparse type for TransactionResultPair extracting only specified paths",
+      "type": "object",
+      "required": [
+        "transaction_hash"
+      ],
+      "properties": {
+        "transaction_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    }
+  }
+}

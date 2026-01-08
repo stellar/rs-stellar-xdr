@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TransactionEnvelopeSparse_TxFeeBump",
+  "description": "Sparse type for FeeBumpTransactionEnvelope extracting only specified paths",
+  "type": "object",
+  "required": [
+    "tx"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "tx": {
+      "$ref": "#/definitions/TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "TransactionEnvelopeSparse_FeeBumpTransactionEnvelope_Tx": {
+      "description": "Sparse type for FeeBumpTransaction extracting only specified paths",
+      "type": "object"
+    }
+  }
+}

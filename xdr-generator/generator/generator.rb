@@ -12,11 +12,14 @@ class Generator < Xdrgen::Generators::Base
     @types = build_type_list(@top)
     @type_field_types = build_type_field_types(@top)
     @type_definitions = build_type_definitions_map(@top)
+    @sparse_types = Set.new  # Track all sparse type names globally
 
     render_top_matter(out)
     render_lib(out)
     render_definitions(out, @top)
     render_sparse_types(out)
+    # Add sparse types to the types list
+    @types.merge(@sparse_types)
     render_enum_of_all_types(out, @types)
     out.break
   end
@@ -111,6 +114,9 @@ class Generator < Xdrgen::Generators::Base
   end
 
   def render_enum_of_all_types(out, types)
+    # Separate sparse types from regular types for methods that don't support sparse
+    non_sparse_types = types.reject { |t| @sparse_types.include?(t) }
+
     out.puts <<-EOS.strip_heredoc
     #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
     #[cfg_attr(
@@ -119,6 +125,7 @@ class Generator < Xdrgen::Generators::Base
       serde(rename_all = "snake_case")
     )]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[allow(non_camel_case_types)]
     pub enum TypeVariant {
         #{types.map { |t| "#{t}," }.join("\n")}
     }
@@ -183,6 +190,7 @@ class Generator < Xdrgen::Generators::Base
       serde(untagged),
     )]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[allow(non_camel_case_types)]
     pub enum Type {
         #{types.map { |t| "#{t}(Box<#{t}>)," }.join("\n")}
     }
@@ -249,7 +257,8 @@ class Generator < Xdrgen::Generators::Base
         #[allow(clippy::too_many_lines)]
         pub fn read_xdr_framed_iter<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Box<dyn Iterator<Item=Result<Self, Error>> + '_> {
             match v {
-                #{types.map { |t| "TypeVariant::#{t} => Box::new(ReadXdrIter::<_, Frame<#{t}>>::new(&mut r.inner, r.limits.clone()).map(|r| r.map(|t| Self::#{t}(Box::new(t.0)))))," }.join("\n")}
+                #{non_sparse_types.map { |t| "TypeVariant::#{t} => Box::new(ReadXdrIter::<_, Frame<#{t}>>::new(&mut r.inner, r.limits.clone()).map(|r| r.map(|t| Self::#{t}(Box::new(t.0)))))," }.join("\n")}
+                #{@sparse_types.empty? ? "" : "_ => Box::new(core::iter::once(Err(Error::Invalid))),"}
             }
         }
 
@@ -317,10 +326,11 @@ class Generator < Xdrgen::Generators::Base
 
         #[cfg(feature = "alloc")]
         #[must_use]
-        #[allow(clippy::too_many_lines)]
+        #[allow(clippy::too_many_lines, clippy::missing_panics_doc)]
         pub fn default(v: TypeVariant) -> Self {
             match v {
-                #{types.map { |t| "TypeVariant::#{t} => Self::#{t}(Box::default())," }.join("\n")}
+                #{non_sparse_types.map { |t| "TypeVariant::#{t} => Self::#{t}(Box::default())," }.join("\n")}
+                #{@sparse_types.empty? ? "" : "_ => panic!(\"sparse types do not support default\"),"}
             }
         }
 
@@ -375,7 +385,8 @@ class Generator < Xdrgen::Generators::Base
         #[allow(clippy::too_many_lines)]
         fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
             match self {
-                #{types.map { |t| "Self::#{t}(v) => v.write_xdr(w)," }.join("\n")}
+                #{non_sparse_types.map { |t| "Self::#{t}(v) => v.write_xdr(w)," }.join("\n")}
+                #{@sparse_types.empty? ? "" : "_ => Err(Error::Invalid),"}
             }
         }
     }
@@ -1470,6 +1481,7 @@ class Generator < Xdrgen::Generators::Base
       return
     end
     @rendered_sparse_types << sparse_type_name
+    @sparse_types << sparse_type_name  # Add to global sparse types set
 
     case defn
     when AST::Definitions::Union
@@ -1504,6 +1516,9 @@ class Generator < Xdrgen::Generators::Base
     out.puts "/// Sparse type for #{name(union)} extracting only specified paths"
     out.puts "#[allow(non_camel_case_types)]"
     out.puts "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"
+    out.puts %{#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]}
+    out.puts %{#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde::Serialize, serde::Deserialize), serde(rename_all = "snake_case"))]}
+    out.puts %{#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]}
     out.puts "pub enum #{sparse_type_name} {"
     out.indent do
       cases_info.each do |info|
@@ -1640,6 +1655,9 @@ class Generator < Xdrgen::Generators::Base
     out.puts "/// Sparse type for #{name(struct)} extracting only specified paths"
     out.puts "#[allow(non_camel_case_types)]"
     out.puts "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"
+    out.puts %{#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]}
+    out.puts %{#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde::Serialize, serde::Deserialize), serde(rename_all = "snake_case"))]}
+    out.puts %{#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]}
     out.puts "pub struct #{sparse_type_name} {"
     out.indent do
       included_fields.each do |info|

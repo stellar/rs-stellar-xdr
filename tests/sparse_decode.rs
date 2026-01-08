@@ -8,6 +8,12 @@
     any(feature = "curr", feature = "next"),
     not(all(feature = "curr", feature = "next"))
 ))]
+#![allow(
+    clippy::doc_markdown,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::uninlined_format_args
+)]
 
 #[cfg(feature = "curr")]
 use stellar_xdr::curr as stellar_xdr;

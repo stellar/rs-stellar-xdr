@@ -4,6 +4,7 @@
 //! from XDR data, skipping over unneeded fields during decode.
 
 #![cfg(all(
+    feature = "std",
     any(feature = "curr", feature = "next"),
     not(all(feature = "curr", feature = "next"))
 ))]

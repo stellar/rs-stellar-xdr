@@ -61,7 +61,7 @@ cli = ["std", "curr", "next", "base64", "serde", "serde_json", "schemars", "arbi
 [[bench]]
 name = "sparse_decode"
 harness = false
-required-features = ["curr"]
+required-features = ["std", "curr"]
 
 [dev-dependencies.criterion]
 version = "0.5"

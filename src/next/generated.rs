@@ -19,7 +19,6 @@
     clippy::semicolon_if_nothing_returned,
     clippy::absurd_extreme_comparisons,
     clippy::derivable_impls,
-    clippy::unnecessary_semicolon,
     clippy::cast_possible_wrap,
     clippy::len_zero
 )]

@@ -256,9 +256,9 @@ fn benchmark_ledger_close_meta(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(
-    benches,
-    benchmark_transaction_envelope,
-    benchmark_ledger_close_meta
-);
+criterion_group! {
+    name = benches;
+    config = Criterion::default().measurement_time(std::time::Duration::from_secs(20));
+    targets = benchmark_transaction_envelope, benchmark_ledger_close_meta
+}
 criterion_main!(benches);

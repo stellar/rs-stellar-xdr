@@ -13,7 +13,16 @@
 //  xdr/next/Stellar-transaction.x
 //  xdr/next/Stellar-types.x
 
-#![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
+#![allow(
+    clippy::missing_errors_doc,
+    clippy::unreadable_literal,
+    clippy::semicolon_if_nothing_returned,
+    clippy::absurd_extreme_comparisons,
+    clippy::derivable_impls,
+    clippy::unnecessary_semicolon,
+    clippy::cast_possible_wrap,
+    clippy::len_zero
+)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
 pub const XDR_FILES_SHA256: [(&str, &str); 13] = [

@@ -14,6 +14,7 @@
 //  xdr/curr/Stellar-types.x
 
 #![allow(
+    unknown_lints,
     clippy::missing_errors_doc,
     clippy::unreadable_literal,
     clippy::semicolon_if_nothing_returned,

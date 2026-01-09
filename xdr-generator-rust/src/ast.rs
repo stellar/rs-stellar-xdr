@@ -138,6 +138,8 @@ pub struct Typedef {
 pub struct Const {
     pub name: String,
     pub value: i64,
+    /// Whether the value was written in hex format in the source.
+    pub is_hex: bool,
 }
 
 /// A top-level definition.

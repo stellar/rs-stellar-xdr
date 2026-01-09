@@ -1,7 +1,7 @@
 //! XDR parser (recursive descent).
 
 use crate::ast::*;
-use crate::lexer::{LexError, Lexer, Token};
+use crate::lexer::{LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
 use thiserror::Error;
 
@@ -27,13 +27,12 @@ pub enum ParseError {
 }
 
 pub struct Parser {
-    tokens: Vec<Token>,
+    tokens: Vec<SpannedToken>,
     pos: usize,
     /// The original source text, for extracting source snippets
-    #[allow(dead_code)]
     source: String,
-    /// Track the start position of the current definition for source extraction
-    def_start: usize,
+    /// Track the token position of the current definition start for source extraction
+    def_start_pos: usize,
     /// Extracted nested type definitions (anonymous unions, inline structs)
     extracted_definitions: Vec<Definition>,
     /// Root parent type name for generating nested type names
@@ -43,25 +42,40 @@ pub struct Parser {
 impl Parser {
     pub fn new(source: &str) -> Result<Self, ParseError> {
         let lexer = Lexer::new(source);
-        let tokens = lexer.tokenize()?;
+        let (tokens, source) = lexer.tokenize_with_spans()?;
         Ok(Self {
             tokens,
             pos: 0,
-            source: source.to_string(),
-            def_start: 0,
+            source,
+            def_start_pos: 0,
             extracted_definitions: Vec::new(),
             root_parent: None,
         })
     }
 
     fn peek(&self) -> &Token {
-        self.tokens.get(self.pos).unwrap_or(&Token::Eof)
+        self.tokens
+            .get(self.pos)
+            .map(|st| &st.token)
+            .unwrap_or(&Token::Eof)
     }
 
     fn advance(&mut self) -> &Token {
-        let token = self.tokens.get(self.pos).unwrap_or(&Token::Eof);
+        let token = self
+            .tokens
+            .get(self.pos)
+            .map(|st| &st.token)
+            .unwrap_or(&Token::Eof);
         self.pos += 1;
         token
+    }
+
+    /// Get the byte offset of the current token's start.
+    fn current_byte_offset(&self) -> usize {
+        self.tokens
+            .get(self.pos)
+            .map(|st| st.start)
+            .unwrap_or(self.source.len())
     }
 
     fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
@@ -90,7 +104,19 @@ impl Parser {
     fn expect_int(&mut self) -> Result<i64, ParseError> {
         let token = self.advance().clone();
         match token {
-            Token::IntLiteral(n) => Ok(n),
+            Token::IntLiteral { value, .. } => Ok(value),
+            _ => Err(ParseError::UnexpectedToken {
+                expected: "integer literal".to_string(),
+                got: token,
+            }),
+        }
+    }
+
+    /// Parse an integer literal, returning both the value and whether it was in hex format.
+    fn expect_int_with_hex(&mut self) -> Result<(i64, bool), ParseError> {
+        let token = self.advance().clone();
+        match token {
+            Token::IntLiteral { value, is_hex } => Ok((value, is_hex)),
             _ => Err(ParseError::UnexpectedToken {
                 expected: "integer literal".to_string(),
                 got: token,
@@ -116,17 +142,26 @@ impl Parser {
                     spec.namespaces.push(ns);
                 }
                 _ => {
+                    // Track extracted definitions before parsing this definition
+                    let extract_start = self.extracted_definitions.len();
+
                     let def = self.parse_definition()?;
+
+                    // Insert any newly extracted definitions before this definition
+                    // This ensures nested types appear just before their parent
+                    for extracted in self.extracted_definitions.drain(extract_start..) {
+                        spec.definitions.push(extracted);
+                    }
+
                     spec.definitions.push(def);
                 }
             }
         }
 
-        // Insert extracted nested definitions before the main definitions
-        // They need to come first since they are referenced by other types
-        let mut all_definitions = std::mem::take(&mut self.extracted_definitions);
-        all_definitions.append(&mut spec.definitions);
-        spec.definitions = all_definitions;
+        // Any remaining extracted definitions (shouldn't be any, but just in case)
+        for extracted in self.extracted_definitions.drain(..) {
+            spec.definitions.push(extracted);
+        }
 
         Ok(spec)
     }
@@ -145,7 +180,18 @@ impl Parser {
             if *self.peek() == Token::RBrace {
                 break;
             }
+
+            // Track extracted definitions before parsing this definition
+            let extract_start = self.extracted_definitions.len();
+
             let def = self.parse_definition()?;
+
+            // Insert any newly extracted definitions before this definition
+            // This ensures nested types appear just before their parent
+            for extracted in self.extracted_definitions.drain(extract_start..) {
+                definitions.push(extracted);
+            }
+
             definitions.push(def);
         }
 
@@ -156,7 +202,7 @@ impl Parser {
 
     fn parse_definition(&mut self) -> Result<Definition, ParseError> {
         // Mark the start of this definition for source extraction
-        self.def_start = self.pos;
+        self.def_start_pos = self.pos;
 
         match self.peek() {
             Token::Struct => self.parse_struct().map(Definition::Struct),
@@ -446,9 +492,9 @@ impl Parser {
 
     fn parse_size(&mut self) -> Result<Size, ParseError> {
         match self.peek().clone() {
-            Token::IntLiteral(n) => {
+            Token::IntLiteral { value, .. } => {
                 self.advance();
-                Ok(Size::Literal(n as u32))
+                Ok(Size::Literal(value as u32))
             }
             Token::Ident(name) => {
                 self.advance();
@@ -473,9 +519,9 @@ impl Parser {
 
             // Value can be integer or identifier (reference to another enum value)
             let value = match self.peek().clone() {
-                Token::IntLiteral(n) => {
+                Token::IntLiteral { value, .. } => {
                     self.advance();
-                    n as i32
+                    value as i32
                 }
                 Token::Ident(ref_name) => {
                     self.advance();
@@ -601,9 +647,9 @@ impl Parser {
                             self.advance();
                             CaseValue::Ident(name)
                         }
-                        Token::IntLiteral(n) => {
+                        Token::IntLiteral { value, .. } => {
                             self.advance();
-                            CaseValue::Literal(n as i32)
+                            CaseValue::Literal(value as i32)
                         }
                         other => {
                             return Err(ParseError::UnexpectedToken {
@@ -764,17 +810,41 @@ impl Parser {
         self.expect(Token::Const)?;
         let name = self.expect_ident()?;
         self.expect(Token::Eq)?;
-        let value = self.expect_int()?;
+        let (value, is_hex) = self.expect_int_with_hex()?;
         self.expect(Token::Semi)?;
 
-        Ok(Const { name, value })
+        Ok(Const {
+            name,
+            value,
+            is_hex,
+        })
     }
 
-    /// Extract the source text for a definition (simplified).
-    /// In practice, we'd track line positions to extract exact source.
+    /// Extract the source text for a definition using the tracked start position.
     fn extract_definition_source(&self, _name: &str) -> String {
-        // For now, return empty - we'll implement proper source tracking later
-        String::new()
+        // Get the byte range from the start token to the current token
+        let start_byte = self
+            .tokens
+            .get(self.def_start_pos)
+            .map(|st| st.start)
+            .unwrap_or(0);
+
+        // The end is the current position's end (previous token's end after parsing)
+        let end_byte = if self.pos > 0 {
+            self.tokens
+                .get(self.pos - 1)
+                .map(|st| st.end)
+                .unwrap_or(self.source.len())
+        } else {
+            start_byte
+        };
+
+        // Extract and return the source text
+        if start_byte < end_byte && end_byte <= self.source.len() {
+            self.source[start_byte..end_byte].to_string()
+        } else {
+            String::new()
+        }
     }
 }
 

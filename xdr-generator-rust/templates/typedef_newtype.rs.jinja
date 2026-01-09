@@ -1,15 +1,20 @@
-/// {{ t.name }} {{ t.source_comment }}
+/// {{ t.name }}{{ t.source_comment }}
 #[cfg_eval::cfg_eval]
 {{ t.derive_attrs }}
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 {{ t.serde_attrs }}
-{% if let Some(attr) = t.schemars_attr %}{{ attr }}
-{% endif %}
-{% if let Some(attr) = t.serde_field_attr %}pub struct {{ t.name }}(
+{%- if let Some(attr) = t.schemars_attr %}
+{{ attr }}
+{%- endif %}
+{%- if let Some(attr) = t.serde_field_attr %}
+pub struct {{ t.name }}(
     {{ attr }}
     pub {{ t.type_ref }},
-);{% else %}pub struct {{ t.name }}(pub {{ t.type_ref }});{% endif %}
-{% if t.custom_debug %}
+);
+{%- else %}
+pub struct {{ t.name }}(pub {{ t.type_ref }});
+{%- endif %}
+{%- if t.custom_debug %}
 
 impl core::fmt::Debug for {{ t.name }} {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -22,8 +27,8 @@ impl core::fmt::Debug for {{ t.name }} {
         Ok(())
     }
 }
-{% endif %}
-{% if t.custom_display_fromstr %}
+{%- endif %}
+{%- if t.custom_display_fromstr %}
 
 impl core::fmt::Display for {{ t.name }} {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -42,8 +47,8 @@ impl core::str::FromStr for {{ t.name }} {
         hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
     }
 }
-{% endif %}
-{% if t.custom_schemars %}
+{%- endif %}
+{%- if t.custom_schemars %}
 
 #[cfg(feature = "schemars")]
 impl schemars::JsonSchema for {{ t.name }} {
@@ -78,7 +83,7 @@ impl schemars::JsonSchema for {{ t.name }} {
         }
     }
 }
-{% endif %}
+{%- endif %}
 
 impl From<{{ t.name }}> for {{ t.type_ref }} {
     #[must_use]
@@ -118,7 +123,7 @@ impl WriteXdr for {{ t.name }} {
         w.with_limited_depth(|w|{ self.0.write_xdr(w) })
     }
 }
-{% if t.is_fixed_array %}
+{%- if t.is_fixed_array %}
 
 impl {{ t.name }} {
     #[must_use]
@@ -156,8 +161,8 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
         &self.0
     }
 }
-{% endif %}
-{% if t.is_var_array %}
+{%- endif %}
+{%- if t.is_var_array %}
 
 impl Deref for {{ t.name }} {
     type Target = {{ t.type_ref }};
@@ -207,5 +212,5 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
         self.0.0
     }
 }
-{% endif %}
+{%- endif %}
 

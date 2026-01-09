@@ -12,6 +12,54 @@ use crate::types::{
 use askama::Template;
 use sha2::{Digest, Sha256};
 
+/// Find the common prefix to strip from enum member names.
+/// Returns the prefix up to and including the last underscore that is common to all names.
+fn find_common_prefix<'a>(names: &[&'a str]) -> &'a str {
+    if names.is_empty() || names.len() == 1 {
+        return "";
+    }
+
+    let first = names[0];
+
+    // Find longest common prefix among all names
+    let common_len = names.iter().skip(1).fold(first.len(), |len, name| {
+        first
+            .bytes()
+            .zip(name.bytes())
+            .take(len)
+            .take_while(|(a, b)| a == b)
+            .count()
+    });
+
+    let common = &first[..common_len];
+
+    // Find the last underscore in the common prefix
+    // If found, strip up to and including the underscore
+    if let Some(last_underscore) = common.rfind('_') {
+        &first[..=last_underscore]
+    } else {
+        ""
+    }
+}
+
+/// Strip common prefix from an enum member name.
+/// If the result would start with a digit, keep the first letter of the prefix.
+fn strip_prefix(name: &str, prefix: &str) -> String {
+    if !prefix.is_empty() && name.starts_with(prefix) {
+        let stripped = &name[prefix.len()..];
+        // If result starts with digit, keep the first letter of the prefix
+        // e.g., "BINARY_FUSE_FILTER_8_BIT" with prefix "BINARY_FUSE_FILTER_" -> "B8_BIT"
+        if stripped.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+            if let Some(first_char) = prefix.chars().next() {
+                return format!("{first_char}{stripped}");
+            }
+        }
+        stripped.to_string()
+    } else {
+        name.to_string()
+    }
+}
+
 /// Data for rendering the main generated file.
 #[derive(Template)]
 #[template(path = "generated.rs.jinja", escape = "none")]
@@ -116,7 +164,8 @@ pub struct TypedefNewtypeOutput {
 /// Data for a const.
 pub struct ConstOutput {
     pub name: String,
-    pub value: i64,
+    /// The formatted value string (decimal or hex).
+    pub value_str: String,
 }
 
 /// Data for the TypeVariant and Type enums.
@@ -324,14 +373,21 @@ impl<'de> serde::Deserialize<'de> for {name} {{
             Some(r#"#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]"#.to_string())
         };
 
+        // Find common prefix to strip from member names
+        let member_names: Vec<&str> = e.members.iter().map(|m| m.name.as_str()).collect();
+        let prefix = find_common_prefix(&member_names);
+
         let members: Vec<EnumMemberOutput> = e
             .members
             .iter()
             .enumerate()
-            .map(|(i, m)| EnumMemberOutput {
-                name: rust_type_name(&m.name),
-                value: m.value,
-                is_first: i == 0,
+            .map(|(i, m)| {
+                let stripped = strip_prefix(&m.name, prefix);
+                EnumMemberOutput {
+                    name: rust_type_name(&stripped),
+                    value: m.value,
+                    is_first: i == 0,
+                }
             })
             .collect();
 
@@ -359,6 +415,25 @@ impl<'de> serde::Deserialize<'de> for {name} {{
                     .unwrap_or(false)
             });
 
+        // Find the discriminant enum's common prefix for stripping case names
+        let discriminant_prefix = if !discriminant_is_builtin {
+            if let Type::Ident(enum_name) = &u.discriminant.type_ {
+                if let Some(Definition::Enum(enum_def)) =
+                    self.type_info.definitions.get(&rust_type_name(enum_name))
+                {
+                    let member_names: Vec<&str> =
+                        enum_def.members.iter().map(|m| m.name.as_str()).collect();
+                    find_common_prefix(&member_names).to_string()
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        };
+
         let derive_attrs =
             "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]".to_string();
 
@@ -378,7 +453,13 @@ impl<'de> serde::Deserialize<'de> for {name} {{
             .arms
             .iter()
             .flat_map(|arm| {
-                self.generate_union_arm(arm, &name, &discriminant_type, discriminant_is_builtin)
+                self.generate_union_arm(
+                    arm,
+                    &name,
+                    &discriminant_type,
+                    discriminant_is_builtin,
+                    &discriminant_prefix,
+                )
             })
             .collect();
 
@@ -429,13 +510,16 @@ impl Default for {name} {{
         parent: &str,
         discriminant_type: &str,
         discriminant_is_builtin: bool,
+        discriminant_prefix: &str,
     ) -> Vec<UnionArmOutput> {
         arm.cases
             .iter()
             .map(|case| {
                 let (case_name, case_value) = match &case.value {
                     CaseValue::Ident(name) => {
-                        let rust_name = rust_type_name(name);
+                        // Strip common prefix from case name
+                        let stripped = strip_prefix(name, discriminant_prefix);
+                        let rust_name = rust_type_name(&stripped);
                         let value = if discriminant_is_builtin {
                             rust_name.clone()
                         } else {
@@ -571,9 +655,15 @@ impl Default for {name} {{
     }
 
     fn generate_const(&self, c: &Const) -> ConstOutput {
+        let value_str = if c.is_hex {
+            // Format as 0x + uppercase hex digits
+            format!("0x{:X}", c.value)
+        } else {
+            c.value.to_string()
+        };
         ConstOutput {
             name: rust_field_name(&c.name).to_uppercase(),
-            value: c.value,
+            value_str,
         }
     }
 }
@@ -582,10 +672,13 @@ fn format_source_comment(source: &str, kind: &str) -> String {
     if source.is_empty() {
         return String::new();
     }
-    let lines: Vec<&str> = source.lines().collect();
+    // Filter out empty lines at the start and trim the source
+    let trimmed = source.trim();
+    let lines: Vec<&str> = trimmed.lines().collect();
     let formatted: Vec<String> = lines.iter().map(|l| format!("/// {l}")).collect();
+    // The template outputs `/// {name}` so we start with ` is an XDR` (note the space)
     format!(
-        "/// is an XDR {kind} defined as:\n///\n/// ```text\n{}\n/// ```\n///",
+        " is an XDR {kind} defined as:\n///\n/// ```text\n{}\n/// ```\n///",
         formatted.join("\n")
     )
 }

@@ -21,6 +21,8 @@ pub struct TypeInfo {
     pub definitions: HashMap<String, Definition>,
     /// Map from type name to the types it references in its fields
     pub type_field_types: HashMap<String, Vec<String>>,
+    /// Map from const name to its value
+    pub const_values: HashMap<String, i64>,
 }
 
 impl TypeInfo {
@@ -29,6 +31,7 @@ impl TypeInfo {
         let mut type_names = HashSet::new();
         let mut definitions = HashMap::new();
         let mut type_field_types: HashMap<String, Vec<String>> = HashMap::new();
+        let mut const_values = HashMap::new();
 
         // Collect all definitions
         for def in spec.all_definitions() {
@@ -39,18 +42,40 @@ impl TypeInfo {
             // Collect field types for cyclic detection
             let field_types = collect_field_types(def);
             type_field_types.insert(name, field_types);
+
+            // Collect const values
+            if let Definition::Const(c) = def {
+                const_values.insert(c.name.clone(), c.value);
+            }
         }
 
         Self {
             type_names,
             definitions,
             type_field_types,
+            const_values,
         }
     }
 
     /// Check if `type_with_fields` has a cyclic reference to `target_type`.
     pub fn is_cyclic(&self, type_with_fields: &str, target_type: &str) -> bool {
         self.is_cyclic_inner(type_with_fields, target_type, &mut HashSet::new())
+    }
+
+    /// Resolve a size to a string, using const values for named sizes.
+    pub fn size_to_literal(&self, size: &Size) -> String {
+        match size {
+            Size::Literal(n) => n.to_string(),
+            Size::Named(name) => {
+                // Look up the const value and return the literal
+                if let Some(&value) = self.const_values.get(name) {
+                    value.to_string()
+                } else {
+                    // Fallback to the name if not found (shouldn't happen)
+                    rust_type_name(name)
+                }
+            }
+        }
     }
 
     fn is_cyclic_inner(
@@ -171,7 +196,7 @@ pub fn is_var_array(type_: &Type) -> bool {
 
 /// Get the Rust type reference for an XDR type.
 pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> String {
-    let base = base_rust_type_ref(type_);
+    let base = base_rust_type_ref_with_info(type_, type_info);
 
     // Check for cyclic reference
     let is_cyclic = if let Some(parent) = parent_type {
@@ -186,7 +211,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
 
     match type_ {
         Type::Optional(inner) => {
-            let inner_ref = base_rust_type_ref(inner);
+            let inner_ref = base_rust_type_ref_with_info(inner, type_info);
             if is_cyclic {
                 format!("Option<Box<{inner_ref}>>")
             } else {
@@ -194,17 +219,17 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
             }
         }
         Type::Array { element_type, size } => {
-            let elem = base_rust_type_ref(element_type);
-            let size = size_to_rust(size);
+            let elem = base_rust_type_ref_with_info(element_type, type_info);
+            let size = type_info.size_to_literal(size);
             format!("[{elem}; {size}]")
         }
         Type::VarArray {
             element_type,
             max_size,
         } => {
-            let elem = base_rust_type_ref(element_type);
+            let elem = base_rust_type_ref_with_info(element_type, type_info);
             match max_size {
-                Some(size) => format!("VecM<{elem}, {}>", size_to_rust(size)),
+                Some(size) => format!("VecM<{elem}, {}>", type_info.size_to_literal(size)),
                 None => format!("VecM<{elem}>"),
             }
         }
@@ -219,6 +244,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
 }
 
 /// Get the base Rust type reference (without Box/Option wrapping).
+/// Uses const names for sizes - use base_rust_type_ref_with_info for literal sizes.
 pub fn base_rust_type_ref(type_: &Type) -> String {
     match type_ {
         Type::Int => "i32".to_string(),
@@ -260,6 +286,59 @@ pub fn base_rust_type_ref(type_: &Type) -> String {
             discriminant, arms, ..
         } => {
             // This should never happen - anonymous unions are extracted during parsing
+            panic!(
+                "AnonymousUnion should have been extracted during parsing. \
+                 Discriminant: {:?}, Arms count: {}",
+                discriminant.name,
+                arms.len()
+            )
+        }
+    }
+}
+
+/// Get the base Rust type reference with type_info for resolving const sizes to literals.
+fn base_rust_type_ref_with_info(type_: &Type, type_info: &TypeInfo) -> String {
+    match type_ {
+        Type::Int => "i32".to_string(),
+        Type::UnsignedInt => "u32".to_string(),
+        Type::Hyper => "i64".to_string(),
+        Type::UnsignedHyper => "u64".to_string(),
+        Type::Float => "f32".to_string(),
+        Type::Double => "f64".to_string(),
+        Type::Bool => "bool".to_string(),
+        Type::OpaqueFixed(size) => format!("[u8; {}]", type_info.size_to_literal(size)),
+        Type::OpaqueVar(max) => match max {
+            Some(size) => format!("BytesM::<{}>", type_info.size_to_literal(size)),
+            None => "BytesM".to_string(),
+        },
+        Type::String(max) => match max {
+            Some(size) => format!("StringM::<{}>", type_info.size_to_literal(size)),
+            None => "StringM".to_string(),
+        },
+        Type::Ident(name) => rust_type_name(name),
+        Type::Optional(inner) => {
+            format!("Option<{}>", base_rust_type_ref_with_info(inner, type_info))
+        }
+        Type::Array { element_type, size } => {
+            format!(
+                "[{}; {}]",
+                base_rust_type_ref_with_info(element_type, type_info),
+                type_info.size_to_literal(size)
+            )
+        }
+        Type::VarArray {
+            element_type,
+            max_size,
+        } => {
+            let elem = base_rust_type_ref_with_info(element_type, type_info);
+            match max_size {
+                Some(size) => format!("VecM<{elem}, {}>", type_info.size_to_literal(size)),
+                None => format!("VecM<{elem}>"),
+            }
+        }
+        Type::AnonymousUnion {
+            discriminant, arms, ..
+        } => {
             panic!(
                 "AnonymousUnion should have been extracted during parsing. \
                  Discriminant: {:?}, Arms count: {}",

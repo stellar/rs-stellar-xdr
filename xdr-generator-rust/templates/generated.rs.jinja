@@ -1,7 +1,7 @@
 // Module  is generated from:
-{% for (file, _) in xdr_files_sha256 %}
+{%- for (file, _) in xdr_files_sha256 %}
 //  {{ file }}
-{% endfor %}
+{%- endfor %}
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 

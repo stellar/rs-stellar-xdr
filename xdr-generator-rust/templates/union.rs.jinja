@@ -1,20 +1,20 @@
-/// {{ u.name }} {{ u.source_comment }}
-// union with discriminant {{ u.discriminant_type }}
+/// {{ u.name }}{{ u.source_comment }}
 #[cfg_eval::cfg_eval]
 {{ u.derive_attrs }}
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 {{ u.serde_attrs }}
-{% if let Some(attr) = u.schemars_attr %}{{ attr }}
-{% endif %}
+{%- if let Some(attr) = u.schemars_attr %}
+{{ attr }}
+{%- endif %}
 #[allow(clippy::large_enum_variant)]
 pub enum {{ u.name }} {
-{% for arm in u.arms %}
-{% if arm.is_void %}
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
     {{ arm.case_name }},
-{% else %}
+{%- else %}
     {{ arm.case_name }}({{ arm.type_ref.as_ref().unwrap() }}),
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}
 }
 {% if let Some(impl_code) = u.default_impl %}
 
@@ -23,26 +23,22 @@ pub enum {{ u.name }} {
 
 impl {{ u.name }} {
     pub const VARIANTS: [{{ u.discriminant_type }}; {{ u.arms.len() }}] = [
-{% for arm in u.arms %}
+{%- for arm in u.arms %}
         {{ arm.case_value }},
-{% endfor %}
+{%- endfor %}
     ];
-    pub const VARIANTS_STR: [&'static str; {{ u.arms.len() }}] = [
-{% for arm in u.arms %}
-        "{{ arm.case_name }}",
-{% endfor %}
-    ];
+    pub const VARIANTS_STR: [&'static str; {{ u.arms.len() }}] = [{% for arm in u.arms %}"{{ arm.case_name }}", {% endfor %}];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-{% for arm in u.arms %}
-{% if arm.is_void %}
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
             Self::{{ arm.case_name }} => "{{ arm.case_name }}",
-{% else %}
+{%- else %}
             Self::{{ arm.case_name }}(_) => "{{ arm.case_name }}",
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}
         }
     }
 
@@ -50,13 +46,13 @@ impl {{ u.name }} {
     pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
         #[allow(clippy::match_same_arms)]
         match self {
-{% for arm in u.arms %}
-{% if arm.is_void %}
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
             Self::{{ arm.case_name }} => {{ arm.case_value }},
-{% else %}
+{%- else %}
             Self::{{ arm.case_name }}(_) => {{ arm.case_value }},
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}
         }
     }
 
@@ -95,13 +91,13 @@ impl ReadXdr for {{ u.name }} {
             let dv: {{ u.discriminant_type }} = <{{ u.discriminant_type }} as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-{% for arm in u.arms %}
-{% if arm.is_void %}
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
                 {{ arm.case_value }} => Self::{{ arm.case_name }},
-{% else %}
+{%- else %}
                 {{ arm.case_value }} => Self::{{ arm.case_name }}({{ arm.read_call.as_ref().unwrap() }}::read_xdr(r)?),
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -117,13 +113,13 @@ impl WriteXdr for {{ u.name }} {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
             match self {
-{% for arm in u.arms %}
-{% if arm.is_void %}
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
                 Self::{{ arm.case_name }} => ().write_xdr(w)?,
-{% else %}
+{%- else %}
                 Self::{{ arm.case_name }}(v) => v.write_xdr(w)?,
-{% endif %}
-{% endfor %}
+{%- endif %}
+{%- endfor %}
             };
             Ok(())
         })

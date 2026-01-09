@@ -1,13 +1,30 @@
 /// {{ t.name }}{{ t.source_comment }}
 #[cfg_eval::cfg_eval]
-{{ t.derive_attrs }}
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-{{ t.serde_attrs }}
-{%- if let Some(attr) = t.schemars_attr %}
-{{ attr }}
+{%- if t.has_default && !t.is_var_array %}
+#[cfg_attr(feature = "alloc", derive(Default))]
 {%- endif %}
-{%- if let Some(debug) = t.derive_debug %}
-{{ debug }}
+{%- if t.has_default && t.is_var_array %}
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+{%- else %}
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+{%- endif %}
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+{%- if t.is_custom_str || t.custom_display_fromstr %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+{%- else %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+{%- endif %}
+{%- if !t.is_fixed_opaque %}
+#[derive(Debug)]
 {%- endif %}
 {%- if let Some(serde_as) = t.serde_as_type %}
 pub struct {{ t.name }}(

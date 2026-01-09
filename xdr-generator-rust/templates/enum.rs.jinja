@@ -1,10 +1,22 @@
 /// {{ e.name }}{{ e.source_comment }}
 // enum
-{{ e.derive_attrs }}
+{%- if e.has_default %}
+#[cfg_attr(feature = "alloc", derive(Default))]
+{%- endif %}
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-{{ e.serde_attrs }}
-{%- if let Some(attr) = e.schemars_attr %}
-{{ attr }}
+{%- if e.is_custom_str %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+{%- else %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 {%- endif %}
 #[repr(i32)]
 pub enum {{ e.name }} {

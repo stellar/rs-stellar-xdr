@@ -1,11 +1,21 @@
 /// {{ u.name }}{{ u.source_comment }}
 // union with discriminant {{ u.discriminant_type }}
 #[cfg_eval::cfg_eval]
-{{ u.derive_attrs }}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-{{ u.serde_attrs }}
-{%- if let Some(attr) = u.schemars_attr %}
-{{ attr }}
+{%- if u.is_custom_str %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+{%- else %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 {%- endif %}
 #[allow(clippy::large_enum_variant)]
 pub enum {{ u.name }} {
@@ -13,23 +23,30 @@ pub enum {{ u.name }} {
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
-{%- if let Some(serde_as) = arm.serde_as_type %}
     {{ arm.case_name }}(
+{%- if let Some(serde_as) = arm.serde_as_type %}
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
             serde_as(as = "{{ serde_as }}")
         )]
+{%- endif %}
         {{ arm.type_ref.as_ref().unwrap() }},
     ),
-{%- else %}
-    {{ arm.case_name }}({{ arm.type_ref.as_ref().unwrap() }}),
-{%- endif %}
 {%- endif %}
 {%- endfor %}
 }
-{%- if let Some(impl_code) = u.default_impl %}
+{%- if u.has_default %}
 
-{{ impl_code }}
+#[cfg(feature = "alloc")]
+impl Default for {{ u.name }} {
+    fn default() -> Self {
+{%- if let Some(first_type) = u.first_arm_type %}
+        Self::{{ u.first_arm_case_name }}({{ first_type }}::default())
+{%- else %}
+        Self::{{ u.first_arm_case_name }}
+{%- endif %}
+    }
+}
 {%- endif %}
 
 impl {{ u.name }} {

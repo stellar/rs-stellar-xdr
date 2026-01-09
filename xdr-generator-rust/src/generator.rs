@@ -103,9 +103,8 @@ pub struct MemberOutput {
 pub struct EnumOutput {
     pub name: String,
     pub source_comment: String,
-    pub derive_attrs: String,
-    pub serde_attrs: String,
-    pub schemars_attr: Option<String>,
+    pub has_default: bool,
+    pub is_custom_str: bool,
     pub members: Vec<EnumMemberOutput>,
 }
 
@@ -119,13 +118,15 @@ pub struct EnumMemberOutput {
 pub struct UnionOutput {
     pub name: String,
     pub source_comment: String,
-    pub derive_attrs: String,
-    pub serde_attrs: String,
-    pub schemars_attr: Option<String>,
+    pub has_default: bool,
+    pub is_custom_str: bool,
     pub discriminant_type: String,
     pub discriminant_is_builtin: bool,
     pub arms: Vec<UnionArmOutput>,
-    pub default_impl: Option<String>,
+    /// For default impl: case name of the first arm.
+    pub first_arm_case_name: String,
+    /// For default impl: type to call ::default() on (read_call of first arm, if non-void)
+    pub first_arm_type: Option<String>,
 }
 
 pub struct UnionArmOutput {
@@ -149,19 +150,18 @@ pub struct TypedefAliasOutput {
 pub struct TypedefNewtypeOutput {
     pub name: String,
     pub source_comment: String,
-    pub derive_attrs: String,
-    pub derive_debug: Option<String>,
-    pub serde_attrs: String,
-    pub schemars_attr: Option<String>,
+    pub has_default: bool,
+    pub is_var_array: bool,
+    pub is_fixed_opaque: bool,
+    pub is_fixed_array: bool,
+    pub is_custom_str: bool,
     pub type_ref: String,
     pub read_call: String,
     /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
     pub serde_as_type: Option<String>,
-    pub is_fixed_opaque: bool,
-    pub is_fixed_array: bool,
-    pub is_var_array: bool,
     pub element_type: String,
     pub size: Option<String>,
+    /// Fixed opaque types have custom Debug impl (hex format).
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
@@ -359,26 +359,6 @@ impl Generator {
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
 
-        let derive_attrs = if custom_default {
-            "#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]".to_string()
-        } else {
-            r#"#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"#
-                .to_string()
-        };
-
-        let serde_attrs = if custom_str {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]"#.to_string()
-        } else {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde::Serialize, serde::Deserialize), serde(rename_all = "snake_case"))]"#.to_string()
-        };
-
-        let schemars_attr = if custom_str {
-            None
-        } else {
-            Some(r#"#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]"#.to_string())
-        };
-
         // Find common prefix to strip from member names
         let member_names: Vec<&str> = e.members.iter().map(|m| m.name.as_str()).collect();
         let prefix = find_common_prefix(&member_names);
@@ -400,9 +380,8 @@ impl Generator {
         EnumOutput {
             name,
             source_comment: format_source_comment(&e.source, "Enum"),
-            derive_attrs,
-            serde_attrs,
-            schemars_attr,
+            has_default: !custom_default,
+            is_custom_str: custom_str,
             members,
         }
     }
@@ -440,21 +419,6 @@ impl Generator {
             String::new()
         };
 
-        let derive_attrs =
-            "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]".to_string();
-
-        let serde_attrs = if custom_str {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]"#.to_string()
-        } else {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), serde_with::serde_as, derive(serde::Serialize, serde::Deserialize), serde(rename_all = "snake_case"))]"#.to_string()
-        };
-
-        let schemars_attr = if custom_str {
-            None
-        } else {
-            Some(r#"#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]"#.to_string())
-        };
-
         let arms: Vec<UnionArmOutput> = u
             .arms
             .iter()
@@ -470,30 +434,14 @@ impl Generator {
             })
             .collect();
 
-        let default_impl = if !custom_default && !arms.is_empty() {
-            let first_arm = &arms[0];
-            if first_arm.is_void {
-                Some(format!(
-                    r#"#[cfg(feature = "alloc")]
-impl Default for {name} {{
-    fn default() -> Self {{
-        Self::{}
-    }}
-}}"#,
-                    first_arm.case_name
-                ))
-            } else {
-                Some(format!(
-                    r#"#[cfg(feature = "alloc")]
-impl Default for {name} {{
-    fn default() -> Self {{
-        Self::{}({}::default())
-    }}
-}}"#,
-                    first_arm.case_name,
-                    first_arm.read_call.as_ref().unwrap()
-                ))
-            }
+        // For default impl: get the case name and type of the first arm
+        let first_arm_case_name = if !arms.is_empty() {
+            arms[0].case_name.clone()
+        } else {
+            String::new()
+        };
+        let first_arm_type = if !arms.is_empty() && !arms[0].is_void {
+            arms[0].read_call.clone()
         } else {
             None
         };
@@ -503,13 +451,13 @@ impl Default for {name} {{
         UnionOutput {
             name,
             source_comment: format_source_comment(&u.source, type_kind),
-            derive_attrs,
-            serde_attrs,
-            schemars_attr,
+            has_default: !custom_default,
+            is_custom_str: custom_str,
             discriminant_type,
             discriminant_is_builtin,
             arms,
-            default_impl,
+            first_arm_case_name,
+            first_arm_type,
         }
     }
 
@@ -594,47 +542,6 @@ impl Default for {name} {{
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        // Derive attributes (Default and Clone/Hash/etc, but NOT Debug)
-        let derive_attrs = if custom_default {
-            if is_var_array_type {
-                "#[derive(Default)]".to_string()
-            } else {
-                String::new()
-            }
-        } else if is_var_array_type {
-            "#[derive(Default)]".to_string()
-        } else {
-            r#"#[cfg_attr(feature = "alloc", derive(Default))]"#.to_string()
-        };
-
-        let base_derives = "#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]";
-        let derive_attrs = if derive_attrs.is_empty() {
-            base_derives.to_string()
-        } else {
-            format!("{derive_attrs}\n{base_derives}")
-        };
-
-        // Debug derive comes after serde/schemars attrs (separate from derive_attrs)
-        let derive_debug = if is_fixed_opaque_type {
-            None
-        } else {
-            Some("#[derive(Debug)]".to_string())
-        };
-
-        // Serde attributes
-        let serde_attrs = if is_fixed_opaque_type || custom_str {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]"#.to_string()
-        } else {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), serde_with::serde_as, derive(serde::Serialize, serde::Deserialize), serde(rename_all = "snake_case"))]"#.to_string()
-        };
-
-        // Schemars
-        let schemars_attr = if is_fixed_opaque_type || custom_str {
-            None
-        } else {
-            Some(r#"#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]"#.to_string())
-        };
-
         let type_ref = rust_type_ref(&t.type_, None, &self.type_info);
         let read_call = rust_read_call_type(&t.type_, None, &self.type_info);
         let serde_as = if custom_str {
@@ -652,16 +559,14 @@ impl Default for {name} {{
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
             name,
             source_comment: format_source_comment(&t.source, "Typedef"),
-            derive_attrs,
-            derive_debug,
-            serde_attrs,
-            schemars_attr,
+            has_default: !custom_default,
+            is_var_array: is_var_array_type,
+            is_fixed_opaque: is_fixed_opaque_type,
+            is_fixed_array: is_fixed_array_type,
+            is_custom_str: custom_str,
             type_ref,
             read_call,
             serde_as_type: serde_as,
-            is_fixed_opaque: is_fixed_opaque_type,
-            is_fixed_array: is_fixed_array_type,
-            is_var_array: is_var_array_type,
             element_type,
             size,
             custom_debug: is_fixed_opaque_type,

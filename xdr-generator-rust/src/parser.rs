@@ -91,6 +91,13 @@ impl Parser {
         let mut spec = XdrSpec::default();
 
         while *self.peek() != Token::Eof {
+            // Skip any extra semicolons at the top level
+            while *self.peek() == Token::Semi {
+                self.advance();
+            }
+            if *self.peek() == Token::Eof {
+                break;
+            }
             match self.peek() {
                 Token::Namespace => {
                     let ns = self.parse_namespace()?;
@@ -113,6 +120,13 @@ impl Parser {
 
         let mut definitions = Vec::new();
         while *self.peek() != Token::RBrace && *self.peek() != Token::Eof {
+            // Skip any extra semicolons
+            while *self.peek() == Token::Semi {
+                self.advance();
+            }
+            if *self.peek() == Token::RBrace {
+                break;
+            }
             let def = self.parse_definition()?;
             definitions.push(def);
         }
@@ -221,9 +235,58 @@ impl Parser {
                 self.advance();
                 self.parse_string_suffix()
             }
+            Token::Union => {
+                // Anonymous union inside struct
+                // union switch (type name) { ... }
+                self.advance();
+                self.expect(Token::Switch)?;
+                self.expect(Token::LParen)?;
+                let disc_type = self.parse_type()?;
+                let disc_name = self.expect_ident()?;
+                self.expect(Token::RParen)?;
+                self.expect(Token::LBrace)?;
+
+                let mut arms = Vec::new();
+                let mut default_arm = None;
+
+                while *self.peek() != Token::RBrace {
+                    let arm = self.parse_union_arm()?;
+                    if arm.cases.is_empty() {
+                        default_arm = Some(Box::new(arm));
+                    } else {
+                        arms.push(arm);
+                    }
+                }
+                self.expect(Token::RBrace)?;
+
+                // Store anonymous union with a placeholder name
+                // The actual name will come from the field name
+                // For now, use the discriminant name as a marker
+                let anon_name = format!("__anon_union_{}", disc_name);
+
+                // We need to return a type identifier that we'll resolve later
+                // Store the union data somewhere and return a reference
+                // For simplicity, let's just return an Ident that will be handled specially
+                Ok(Type::Ident(anon_name))
+            }
             Token::Ident(name) => {
                 self.advance();
-                Ok(Type::Ident(name))
+                // Handle built-in type aliases
+                let base_type = match name.as_str() {
+                    "uint64" => Type::UnsignedHyper,
+                    "int64" => Type::Hyper,
+                    "uint32" => Type::UnsignedInt,
+                    "int32" => Type::Int,
+                    "TRUE" | "FALSE" => Type::Bool,
+                    _ => Type::Ident(name),
+                };
+                // Check for optional type suffix (Type* field)
+                if *self.peek() == Token::Star {
+                    self.advance();
+                    Ok(Type::Optional(Box::new(base_type)))
+                } else {
+                    Ok(base_type)
+                }
             }
             other => Err(ParseError::UnexpectedToken {
                 expected: "type".to_string(),
@@ -278,17 +341,22 @@ impl Parser {
     fn parse_type_suffix(&mut self, base: Type) -> Result<Type, ParseError> {
         match self.peek() {
             Token::LBracket => {
-                // Fixed array: type name[size]
                 self.advance();
                 let size = self.parse_size()?;
                 self.expect(Token::RBracket)?;
-                Ok(Type::Array {
-                    element_type: Box::new(base),
-                    size,
-                })
+
+                // Special case: opaque name[size] or string name[size]
+                // means fixed opaque/string, not an array of opaque/string
+                match base {
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
+                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
+                    _ => Ok(Type::Array {
+                        element_type: Box::new(base),
+                        size,
+                    }),
+                }
             }
             Token::LAngle => {
-                // Variable array: type name<max> or name<>
                 self.advance();
                 let max = if *self.peek() == Token::RAngle {
                     None
@@ -296,10 +364,17 @@ impl Parser {
                     Some(self.parse_size()?)
                 };
                 self.expect(Token::RAngle)?;
-                Ok(Type::VarArray {
-                    element_type: Box::new(base),
-                    max_size: max,
-                })
+
+                // Special case: opaque name<max> or string name<max>
+                // means variable opaque/string with max, not a var array
+                match base {
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
+                    Type::String(None) => Ok(Type::String(max)),
+                    _ => Ok(Type::VarArray {
+                        element_type: Box::new(base),
+                        max_size: max,
+                    }),
+                }
             }
             Token::Star => {
                 // Optional: type *name

@@ -115,15 +115,24 @@ pub fn rust_type_name(name: &str) -> String {
 
 /// Convert an XDR name to a Rust field name (snake_case).
 pub fn rust_field_name(name: &str) -> String {
-    let name = escape_name(name);
-    name.to_snake_case()
+    let snake = name.to_snake_case();
+    // Apply escape AFTER snake_case since to_snake_case strips trailing underscores
+    escape_field_name(&snake)
 }
 
-/// Escape reserved names.
+/// Escape reserved names for type names.
 fn escape_name(name: &str) -> String {
     match name {
         "type" => "type_".to_string(),
         "Error" => "SError".to_string(),
+        _ => name.to_string(),
+    }
+}
+
+/// Escape reserved names for field names (after snake_case conversion).
+fn escape_field_name(name: &str) -> String {
+    match name {
+        "type" => "type_".to_string(),
         _ => name.to_string(),
     }
 }
@@ -267,6 +276,17 @@ pub fn rust_read_call_type(
         format!("Option::<Box<{}>>", &ref_type[11..ref_type.len() - 2])
     } else if ref_type.starts_with("Option<") {
         format!("Option::<{}>", &ref_type[7..ref_type.len() - 1])
+    } else if ref_type.starts_with("VecM<") {
+        // VecM<T> -> VecM::<T> or VecM<T, N> -> VecM::<T, N>
+        format!("VecM::{}", &ref_type[4..])
+    } else if ref_type.starts_with("BytesM<") {
+        format!("BytesM::{}", &ref_type[6..])
+    } else if ref_type.starts_with("BytesM") && ref_type.len() == 6 {
+        ref_type
+    } else if ref_type.starts_with("StringM<") {
+        format!("StringM::{}", &ref_type[7..])
+    } else if ref_type.starts_with("StringM") && ref_type.len() == 7 {
+        ref_type
     } else {
         ref_type
     }

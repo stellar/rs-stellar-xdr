@@ -110,6 +110,17 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    fn skip_preprocessor(&mut self) {
+        // Skip the entire line starting with %
+        while let Some(&c) = self.peek() {
+            if c == '\n' {
+                self.advance();
+                break;
+            }
+            self.advance();
+        }
+    }
+
     fn skip_block_comment(&mut self) -> Result<(), LexError> {
         loop {
             match self.advance() {
@@ -192,6 +203,11 @@ impl<'a> Lexer<'a> {
                         }
                         _ => return Err(LexError::UnexpectedChar('/')),
                     }
+                }
+                Some(&'%') => {
+                    // Preprocessor directive - skip the entire line
+                    self.skip_preprocessor();
+                    continue;
                 }
                 _ => break,
             }

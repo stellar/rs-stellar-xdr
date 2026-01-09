@@ -476,8 +476,13 @@ impl Default for {name} {{
     fn generate_typedef(&self, t: &Typedef) -> DefinitionOutput {
         let name = rust_type_name(&t.name);
 
-        // Simple type alias for builtins
-        if is_builtin_type(&t.type_) {
+        // Simple type alias only for exact primitive type names (Uint64, Int64, etc.)
+        // Other typedefs to primitives (like Duration, TimePoint) become newtypes
+        let is_primitive_alias = matches!(
+            name.as_str(),
+            "Uint64" | "Int64" | "Uint32" | "Int32" | "Float" | "Double"
+        );
+        if is_primitive_alias && is_builtin_type(&t.type_) {
             return DefinitionOutput::TypedefAlias(TypedefAliasOutput {
                 name,
                 type_ref: base_rust_type_ref(&t.type_),

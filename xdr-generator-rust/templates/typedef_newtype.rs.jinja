@@ -5,11 +5,10 @@
 {{ t.serde_attrs }}
 {% if let Some(attr) = t.schemars_attr %}{{ attr }}
 {% endif %}
-pub struct {{ t.name }}(
-{% if let Some(attr) = t.serde_field_attr %}    {{ attr }}
-{% endif %}
-    pub {{ t.type_ref }}
-);
+{% if let Some(attr) = t.serde_field_attr %}pub struct {{ t.name }}(
+    {{ attr }}
+    pub {{ t.type_ref }},
+);{% else %}pub struct {{ t.name }}(pub {{ t.type_ref }});{% endif %}
 {% if t.custom_debug %}
 
 impl core::fmt::Debug for {{ t.name }} {

@@ -521,6 +521,18 @@ class Generator < Xdrgen::Generators::Base
             })
         }
     }
+
+    impl BufferedSkipXdr for #{name struct} {
+        #[cfg(feature = "std")]
+        fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                #{struct.members.map do |m|
+                  "#{reference_to_call(struct, m.declaration.type)}::buffered_skip_xdr(r)?;"
+                end.join("\n")}
+                Ok(())
+            })
+        }
+    }
     EOS
     # Include a deserializer that will deserialize via the FromStr
     # implementation, but also deserialize the original struct, present in
@@ -683,6 +695,15 @@ class Generator < Xdrgen::Generators::Base
         fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
             r.with_limited_depth(|r| {
                 i32::seekable_skip_xdr(r)
+            })
+        }
+    }
+
+    impl BufferedSkipXdr for #{name enum} {
+        #[cfg(feature = "std")]
+        fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                i32::buffered_skip_xdr(r)
             })
         }
     }
@@ -912,6 +933,28 @@ class Generator < Xdrgen::Generators::Base
             })
         }
     }
+
+    impl BufferedSkipXdr for #{name union} {
+        #[cfg(feature = "std")]
+        fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+            r.with_limited_depth(|r| {
+                let dv: #{discriminant_type} = <#{discriminant_type} as ReadXdr>::read_xdr(r)?;
+                #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+                match dv {
+                    #{union_cases(union) do |case_name, arm, value|
+                      "#{
+                        value.nil? ? "#{discriminant_type}::#{case_name}" : "#{value}"
+                      } => #{
+                        arm.void? ? "()" : "#{reference_to_call(union, arm.type)}::buffered_skip_xdr(r)?"
+                      },"
+                    end.join("\n")}
+                    #[allow(unreachable_patterns)]
+                    _ => return Err(Error::Invalid),
+                };
+                Ok(())
+            })
+        }
+    }
     EOS
     out.break
   end
@@ -1070,6 +1113,13 @@ class Generator < Xdrgen::Generators::Base
           #[cfg(feature = "std")]
           fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
               r.with_limited_depth(|r| #{reference_to_call(typedef, typedef.type)}::seekable_skip_xdr(r))
+          }
+      }
+
+      impl BufferedSkipXdr for #{name typedef} {
+          #[cfg(feature = "std")]
+          fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+              r.with_limited_depth(|r| #{reference_to_call(typedef, typedef.type)}::buffered_skip_xdr(r))
           }
       }
       EOS
@@ -1615,6 +1665,46 @@ class Generator < Xdrgen::Generators::Base
     EOS
     out.break
 
+    # Generate BufferedReadXdr for the sparse union
+    out.puts <<-EOS.strip_heredoc
+    impl BufferedReadXdr for #{sparse_type_name} {
+        #[cfg(feature = "std")]
+        fn buffered_read_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<Self, Error> {
+            r.with_limited_depth(|r| {
+                let dv: #{discriminant_type} = <#{discriminant_type} as ReadXdr>::read_xdr(r)?;
+                #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+                let v = match dv {
+    EOS
+
+    out.indent(5) do
+      cases_info.each do |info|
+        discriminant_match = info[:value].nil? ? "#{discriminant_type}::#{info[:case_name]}" : "#{info[:value]}"
+
+        if info[:has_path] && !info[:arm].void?
+          nested_type_name = "#{prefix}_#{info[:case_name]}"
+          out.puts "#{discriminant_match} => Self::#{info[:case_name]}(#{nested_type_name}::buffered_read_xdr(r)?),"
+        else
+          # Skip the arm's data if it's not void
+          unless info[:arm].void?
+            out.puts "#{discriminant_match} => { #{reference_to_call(union, info[:arm].type)}::buffered_skip_xdr(r)?; Self::#{info[:case_name]} },"
+          else
+            out.puts "#{discriminant_match} => Self::#{info[:case_name]},"
+          end
+        end
+      end
+      out.puts "#[allow(unreachable_patterns)]"
+      out.puts "_ => return Err(Error::Invalid),"
+    end
+
+    out.puts <<-EOS.strip_heredoc
+                };
+                Ok(v)
+            })
+        }
+    }
+    EOS
+    out.break
+
     # Now generate nested sparse types for variants with paths
     cases_info.each do |info|
       next unless info[:has_path] && !info[:arm].void?
@@ -1775,6 +1865,54 @@ class Generator < Xdrgen::Generators::Base
       else
         # Skip this field using seek
         out.puts "            #{reference_to_call(struct, m.declaration.type)}::seekable_skip_xdr(r)?;"
+      end
+    end
+
+    out.puts "            Ok(Self {"
+    included_fields.each do |info|
+      out.puts "                #{info[:field_name]},"
+    end
+    out.puts "            })"
+    out.puts "        })"
+    out.puts "    }"
+    out.puts "}"
+    out.break
+
+    # Generate BufferedReadXdr for the sparse struct
+    out.puts "impl BufferedReadXdr for #{sparse_type_name} {"
+    out.puts "    #[cfg(feature = \"std\")]"
+    out.puts "    fn buffered_read_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<Self, Error> {"
+    out.puts "        r.with_limited_depth(|r| {"
+
+    # Process each field in order
+    fields_info.each do |info|
+      m = info[:member]
+      if info[:has_path]
+        if info[:is_leaf]
+          # Read the target field
+          out.puts "            let #{info[:field_name]} = #{reference_to_call(struct, m.declaration.type)}::read_xdr(r)?;"
+        else
+          # Read through a nested sparse type
+          nested_type_name = "#{prefix}_#{name(struct).gsub(prefix + '_', '')}_#{info[:field_name].camelize}"
+          if info[:is_array_traversal]
+            # Read array length, then read each element with sparse type
+            vec_max = get_vec_max(m.declaration.type) || "{ u32::MAX }"
+            out.puts "            let #{info[:field_name]} = {"
+            out.puts "                let len = u32::read_xdr(r)?;"
+            out.puts "                if len > #{vec_max} { return Err(Error::LengthExceedsMax); }"
+            out.puts "                let mut vec = Vec::new();"
+            out.puts "                for _ in 0..len {"
+            out.puts "                    vec.push(#{nested_type_name}::buffered_read_xdr(r)?);"
+            out.puts "                }"
+            out.puts "                VecM::try_from(vec).map_err(|_| Error::LengthExceedsMax)?"
+            out.puts "            };"
+          else
+            out.puts "            let #{info[:field_name]} = #{nested_type_name}::buffered_read_xdr(r)?;"
+          end
+        end
+      else
+        # Skip this field using buffered consume
+        out.puts "            #{reference_to_call(struct, m.declaration.type)}::buffered_skip_xdr(r)?;"
       end
     end
 

@@ -762,6 +762,80 @@ where
     }
 }
 
+/// `BufferedSkipXdr` allows types to skip their XDR representation using
+/// buffered reads. Uses `BufRead::fill_buf()` and `consume()` to skip data
+/// without copying it, which is efficient for any buffered stream.
+///
+/// This provides a middle ground between:
+/// - `SkipXdr` - reads and discards bytes (wasteful copying)
+/// - `SeekableSkipXdr` - uses seek (only works for seekable sources)
+///
+/// Buffered variants work with any `BufRead` wrapper (like `BufReader<TcpStream>`).
+pub trait BufferedSkipXdr
+where
+    Self: Sized,
+{
+    /// Skip the XDR representation of this type using buffered consume.
+    ///
+    /// Uses `fill_buf()` and `consume()` to skip past this type's XDR encoding
+    /// without copying the data. Efficient for any `BufRead` wrapper.
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error>;
+}
+
+/// Helper function to skip bytes from a buffered reader using `consume()`.
+/// Does not copy bytes - just advances the buffer position.
+#[cfg(feature = "std")]
+fn buffered_skip_bytes<R: BufRead>(r: &mut Limited<R>, n: usize) -> Result<(), Error> {
+    r.consume_len(n)?;
+    let mut remaining = n;
+    while remaining > 0 {
+        let buf = r.fill_buf()?;
+        if buf.is_empty() {
+            return Err(Error::Io(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "unexpected end of stream",
+            )));
+        }
+        let to_consume = remaining.min(buf.len());
+        r.consume(to_consume);
+        remaining -= to_consume;
+    }
+    Ok(())
+}
+
+/// `BufferedReadXdr` allows types to read their XDR representation from a
+/// buffered reader, using `consume()` to skip over fields rather than reading them.
+/// This is efficient for sparse decoding from any buffered stream.
+pub trait BufferedReadXdr
+where
+    Self: Sized,
+{
+    /// Read the XDR and construct the type from a buffered reader.
+    ///
+    /// This is similar to `ReadXdr::read_xdr` but uses buffered consume
+    /// to skip over fields, which is efficient for any `BufRead` wrapper.
+    #[cfg(feature = "std")]
+    fn buffered_read_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<Self, Error>;
+
+    /// Construct the type from XDR bytes using a buffered cursor.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "std")]
+    fn from_xdr_buffered(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self, Error> {
+        let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
+        let t = Self::buffered_read_xdr(&mut cursor)?;
+        // Check that any further reads, such as this read of one byte, read no
+        // data, indicating EOF. If a byte is read the data is invalid.
+        if cursor.read(&mut [0u8; 1])? == 0 {
+            Ok(t)
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
 /// `Pad_len` returns the number of bytes to pad an XDR value of the given
 /// length to make the final serialized size a multiple of 4.
 #[cfg(feature = "std")]
@@ -811,6 +885,13 @@ impl SeekableSkipXdr for i32 {
     }
 }
 
+impl BufferedSkipXdr for i32 {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 4))
+    }
+}
+
 impl ReadXdr for u32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -850,6 +931,13 @@ impl SeekableSkipXdr for u32 {
     #[cfg(feature = "std")]
     fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
         r.with_limited_depth(|r| seek_skip_bytes(r, 4))
+    }
+}
+
+impl BufferedSkipXdr for u32 {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 4))
     }
 }
 
@@ -895,6 +983,13 @@ impl SeekableSkipXdr for i64 {
     }
 }
 
+impl BufferedSkipXdr for i64 {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 8))
+    }
+}
+
 impl ReadXdr for u64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -937,6 +1032,13 @@ impl SeekableSkipXdr for u64 {
     }
 }
 
+impl BufferedSkipXdr for u64 {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 8))
+    }
+}
+
 impl ReadXdr for f32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -965,6 +1067,13 @@ impl SeekableSkipXdr for f32 {
     }
 }
 
+impl BufferedSkipXdr for f32 {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 4))
+    }
+}
+
 impl ReadXdr for f64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -990,6 +1099,13 @@ impl SeekableSkipXdr for f64 {
     #[cfg(feature = "std")]
     fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
         r.with_limited_depth(|r| seek_skip_bytes(r, 8))
+    }
+}
+
+impl BufferedSkipXdr for f64 {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 8))
     }
 }
 
@@ -1025,6 +1141,13 @@ impl SeekableSkipXdr for bool {
     #[cfg(feature = "std")]
     fn seekable_skip_xdr<R: Read + Seek>(r: &mut Limited<R>) -> Result<(), Error> {
         r.with_limited_depth(|r| seek_skip_bytes(r, 4))
+    }
+}
+
+impl BufferedSkipXdr for bool {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| buffered_skip_bytes(r, 4))
     }
 }
 
@@ -1088,6 +1211,20 @@ impl<T: SeekableSkipXdr> SeekableSkipXdr for Option<T> {
     }
 }
 
+impl<T: BufferedSkipXdr> BufferedSkipXdr for Option<T> {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            match i {
+                0 => Ok(()),
+                1 => T::buffered_skip_xdr(r),
+                _ => Err(Error::Invalid),
+            }
+        })
+    }
+}
+
 impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1116,6 +1253,13 @@ impl<T: SeekableSkipXdr> SeekableSkipXdr for Box<T> {
     }
 }
 
+impl<T: BufferedSkipXdr> BufferedSkipXdr for Box<T> {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| T::buffered_skip_xdr(r))
+    }
+}
+
 impl ReadXdr for () {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1140,6 +1284,13 @@ impl SkipXdr for () {
 impl SeekableSkipXdr for () {
     #[cfg(feature = "std")]
     fn seekable_skip_xdr<R: Read + Seek>(_r: &mut Limited<R>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl BufferedSkipXdr for () {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(_r: &mut Limited<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -1197,6 +1348,16 @@ impl<const N: usize> SeekableSkipXdr for [u8; N] {
     }
 }
 
+impl<const N: usize> BufferedSkipXdr for [u8; N] {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let padding = pad_len(N);
+            buffered_skip_bytes(r, N + padding)
+        })
+    }
+}
+
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1242,6 +1403,18 @@ impl<T: SeekableSkipXdr, const N: usize> SeekableSkipXdr for [T; N] {
         r.with_limited_depth(|r| {
             for _ in 0..N {
                 T::seekable_skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: BufferedSkipXdr, const N: usize> BufferedSkipXdr for [T; N] {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            for _ in 0..N {
+                T::buffered_skip_xdr(r)?;
             }
             Ok(())
         })
@@ -1743,6 +1916,20 @@ impl<const MAX: u32> SeekableSkipXdr for VecM<u8, MAX> {
     }
 }
 
+impl<const MAX: u32> BufferedSkipXdr for VecM<u8, MAX> {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            buffered_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1805,6 +1992,22 @@ impl<T: SeekableSkipXdr, const MAX: u32> SeekableSkipXdr for VecM<T, MAX> {
             }
             for _ in 0..len {
                 T::seekable_skip_xdr(r)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+impl<T: BufferedSkipXdr, const MAX: u32> BufferedSkipXdr for VecM<T, MAX> {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            for _ in 0..len {
+                T::buffered_skip_xdr(r)?;
             }
             Ok(())
         })
@@ -2243,6 +2446,20 @@ impl<const MAX: u32> SeekableSkipXdr for BytesM<MAX> {
     }
 }
 
+impl<const MAX: u32> BufferedSkipXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            buffered_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
 // StringM ------------------------------------------------------------------------
 
 /// A string type that contains arbitrary bytes.
@@ -2670,6 +2887,20 @@ impl<const MAX: u32> SeekableSkipXdr for StringM<MAX> {
             }
             let padding = pad_len(len as usize);
             seek_skip_bytes(r, len as usize + padding)
+        })
+    }
+}
+
+impl<const MAX: u32> BufferedSkipXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn buffered_skip_xdr<R: BufRead>(r: &mut Limited<R>) -> Result<(), Error> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
+            let padding = pad_len(len as usize);
+            buffered_skip_bytes(r, len as usize + padding)
         })
     }
 }

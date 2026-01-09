@@ -21,8 +21,8 @@ use stellar_xdr::curr as stellar_xdr;
 use stellar_xdr::next as stellar_xdr;
 
 use stellar_xdr::{
-    AccountId, CreateAccountOp, Error, Limits, Memo, MuxedAccount, Operation, OperationBody,
-    Preconditions, PublicKey, ReadXdr, SeekableReadXdr, SequenceNumber, Transaction,
+    AccountId, BufferedReadXdr, CreateAccountOp, Error, Limits, Memo, MuxedAccount, Operation,
+    OperationBody, Preconditions, PublicKey, ReadXdr, SeekableReadXdr, SequenceNumber, Transaction,
     TransactionEnvelope, TransactionEnvelopeSparse, TransactionExt, TransactionV1Envelope, Uint256,
     WriteXdr,
 };
@@ -179,6 +179,38 @@ fn test_seekable_sparse_decode_matches_standard() -> Result<(), Error> {
     assert_eq!(standard_ops.len(), 5);
     for (i, (std_op, seek_op)) in standard_ops.iter().zip(seekable_ops.iter()).enumerate() {
         assert_eq!(std_op, seek_op, "Operation {} mismatch", i);
+    }
+
+    Ok(())
+}
+
+#[test]
+fn test_buffered_sparse_decode_matches_standard() -> Result<(), Error> {
+    // Create a transaction envelope with operations
+    let envelope = create_test_envelope(5);
+    let xdr = envelope.to_xdr(Limits::none())?;
+
+    // Decode using standard ReadXdr
+    let standard = TransactionEnvelopeSparse::from_xdr(&xdr, Limits::none())?;
+
+    // Decode using BufferedReadXdr
+    let buffered = TransactionEnvelopeSparse::from_xdr_buffered(&xdr, Limits::none())?;
+
+    // Extract operations from both
+    let standard_ops = match standard {
+        TransactionEnvelopeSparse::Tx(e) => e.tx.operations,
+        _ => panic!("expected Tx variant"),
+    };
+    let buffered_ops = match buffered {
+        TransactionEnvelopeSparse::Tx(e) => e.tx.operations,
+        _ => panic!("expected Tx variant"),
+    };
+
+    // Verify they match
+    assert_eq!(standard_ops.len(), buffered_ops.len());
+    assert_eq!(standard_ops.len(), 5);
+    for (i, (std_op, buf_op)) in standard_ops.iter().zip(buffered_ops.iter()).enumerate() {
+        assert_eq!(std_op, buf_op, "Operation {} mismatch", i);
     }
 
     Ok(())

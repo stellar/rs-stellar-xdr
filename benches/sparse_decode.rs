@@ -26,10 +26,10 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 use stellar_xdr::curr::{
-    AccountId, CreateAccountOp, LedgerCloseMeta, LedgerCloseMetaBatch, LedgerCloseMetaTxHashes,
-    Limits, Memo, MuxedAccount, Operation, OperationBody, Preconditions, PublicKey, ReadXdr,
-    SeekableReadXdr, SequenceNumber, Transaction, TransactionEnvelope, TransactionEnvelopeSparse,
-    TransactionExt, TransactionV1Envelope, Uint256, WriteXdr,
+    AccountId, BufferedReadXdr, CreateAccountOp, LedgerCloseMeta, LedgerCloseMetaBatch,
+    LedgerCloseMetaTxHashes, Limits, Memo, MuxedAccount, Operation, OperationBody, Preconditions,
+    PublicKey, ReadXdr, SeekableReadXdr, SequenceNumber, Transaction, TransactionEnvelope,
+    TransactionEnvelopeSparse, TransactionExt, TransactionV1Envelope, Uint256, WriteXdr,
 };
 
 /// Create a test `TransactionEnvelope` with the specified number of operations
@@ -110,6 +110,26 @@ fn benchmark_transaction_envelope(c: &mut Criterion) {
             |b, data| {
                 b.iter(|| {
                     let sparse = TransactionEnvelopeSparse::from_xdr_seekable(
+                        black_box(data),
+                        Limits::none(),
+                    )
+                    .expect("decode");
+                    let ops = match &sparse {
+                        TransactionEnvelopeSparse::Tx(e) => &e.tx.operations,
+                        _ => panic!("expected Tx variant"),
+                    };
+                    black_box(ops.len())
+                })
+            },
+        );
+
+        // Benchmark buffered sparse decode (using BufRead consume to skip)
+        group.bench_with_input(
+            BenchmarkId::new("buffered_sparse_decode", num_ops),
+            &xdr_data,
+            |b, data| {
+                b.iter(|| {
+                    let sparse = TransactionEnvelopeSparse::from_xdr_buffered(
                         black_box(data),
                         Limits::none(),
                     )
@@ -238,6 +258,35 @@ fn benchmark_ledger_close_meta(c: &mut Criterion) {
     group.bench_function("seekable_sparse_decode_tx_hashes", |b| {
         b.iter(|| {
             let sparse = LedgerCloseMetaTxHashes::from_xdr_seekable(
+                black_box(&ledger_meta_xdr),
+                Limits::none(),
+            )
+            .expect("decode");
+            let hashes: Vec<_> = match &sparse {
+                LedgerCloseMetaTxHashes::V0(v) => v
+                    .tx_processing
+                    .iter()
+                    .map(|t| t.result.transaction_hash.clone())
+                    .collect(),
+                LedgerCloseMetaTxHashes::V1(v) => v
+                    .tx_processing
+                    .iter()
+                    .map(|t| t.result.transaction_hash.clone())
+                    .collect(),
+                LedgerCloseMetaTxHashes::V2(v) => v
+                    .tx_processing
+                    .iter()
+                    .map(|t| t.result.transaction_hash.clone())
+                    .collect(),
+            };
+            black_box(hashes.len())
+        })
+    });
+
+    // Benchmark buffered sparse decode for tx hashes
+    group.bench_function("buffered_sparse_decode_tx_hashes", |b| {
+        b.iter(|| {
+            let sparse = LedgerCloseMetaTxHashes::from_xdr_buffered(
                 black_box(&ledger_meta_xdr),
                 Limits::none(),
             )

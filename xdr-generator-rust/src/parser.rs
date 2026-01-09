@@ -70,14 +70,6 @@ impl Parser {
         token
     }
 
-    /// Get the byte offset of the current token's start.
-    fn current_byte_offset(&self) -> usize {
-        self.tokens
-            .get(self.pos)
-            .map(|st| st.start)
-            .unwrap_or(self.source.len())
-    }
-
     fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
         let token = self.advance().clone();
         if token == expected {
@@ -96,17 +88,6 @@ impl Parser {
             Token::Ident(s) => Ok(s),
             _ => Err(ParseError::UnexpectedToken {
                 expected: "identifier".to_string(),
-                got: token,
-            }),
-        }
-    }
-
-    fn expect_int(&mut self) -> Result<i64, ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::IntLiteral { value, .. } => Ok(value),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "integer literal".to_string(),
                 got: token,
             }),
         }

@@ -37,6 +37,27 @@ generate-xdrgen-files: src/curr/generated.rs src/next/generated.rs
 		'cd xdr-generator && bundle install --quiet && bundle exec ruby generate.rb'
 	rustfmt $^
 
+CUSTOM_DEFAULT_IMPL=TransactionEnvelope
+CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
+
+generate-rust: src/curr/generated-rust.rs src/next/generated-rust.rs
+
+src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
+	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
+		--input $(sort $(wildcard xdr/curr/*.x)) \
+		--output $@ \
+		--custom-default $(CUSTOM_DEFAULT_IMPL) \
+		--custom-str $(CUSTOM_STR_IMPL)
+	rustfmt $@
+
+src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
+	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
+		--input $(sort $(wildcard xdr/next/*.x)) \
+		--output $@ \
+		--custom-default $(CUSTOM_DEFAULT_IMPL) \
+		--custom-str $(CUSTOM_STR_IMPL)
+	rustfmt $@
+
 src/next/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
 
@@ -59,6 +80,7 @@ xdr-json/next: src/next/generated.rs
 
 clean:
 	rm -f src/*/generated.rs
+	rm -f src/*/generated-rust.rs
 	rm -f xdr/*-version
 	rm -fr xdr-json/curr
 	rm -fr xdr-json/next

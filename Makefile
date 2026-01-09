@@ -30,7 +30,7 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: generate-xdrgen-files xdr/curr-version xdr/next-version xdr-json/curr xdr-json/next
+generate: generate-xdrgen-files generate-rust-files xdr/curr-version xdr/next-version xdr-json/curr xdr-json/next
 
 generate-xdrgen-files: src/curr/generated.rs src/next/generated.rs
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:3.1 /bin/bash -c \
@@ -40,7 +40,7 @@ generate-xdrgen-files: src/curr/generated.rs src/next/generated.rs
 CUSTOM_DEFAULT_IMPL=TransactionEnvelope
 CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
 
-generate-rust: src/curr/generated-rust.rs src/next/generated-rust.rs
+generate-rust-files: src/curr/generated-rust.rs src/next/generated-rust.rs
 
 src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
 	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \

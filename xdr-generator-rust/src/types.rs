@@ -409,16 +409,12 @@ pub fn element_type_for_vec(type_: &Type) -> String {
     }
 }
 
-/// Generate serde field attributes for i64/u64 fields.
-pub fn serde_field_attr(type_: &Type) -> Option<String> {
+/// Get the serde_as type for i64/u64 fields (e.g., "NumberOrString", "Option<NumberOrString>").
+/// Returns None if no serde_as is needed.
+pub fn serde_as_type(type_: &Type) -> Option<String> {
     let base = get_base_numeric_type(type_);
     match base.as_deref() {
-        Some("i64") | Some("u64") => {
-            let ref_type = rust_type_ref_for_serde(type_, "NumberOrString");
-            Some(format!(
-                r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), serde_as(as = "{ref_type}"))]"#
-            ))
-        }
+        Some("i64") | Some("u64") => Some(rust_type_ref_for_serde(type_, "NumberOrString")),
         _ => None,
     }
 }

@@ -13,9 +13,12 @@ pub enum {{ u.name }} {
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
-{%- if let Some(attr) = arm.serde_attr %}
+{%- if let Some(serde_as) = arm.serde_as_type %}
     {{ arm.case_name }}(
-        {{ attr }}
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "{{ serde_as }}")
+        )]
         {{ arm.type_ref.as_ref().unwrap() }},
     ),
 {%- else %}

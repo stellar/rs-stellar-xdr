@@ -1,15 +1,31 @@
 /// {{ s.name }}{{ s.source_comment }}
-{{ s.derive_attrs }}
+{%- if s.has_default %}
+#[cfg_attr(feature = "alloc", derive(Default))]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_eval::cfg_eval]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-{{ s.serde_attrs }}
-{%- if let Some(attr) = s.schemars_attr %}
-{{ attr }}
+{%- if s.is_custom_str %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay)
+)]
+{%- else %}
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 {%- endif %}
 pub struct {{ s.name }} {
 {%- for m in s.members %}
-{%- if let Some(attr) = m.serde_attr %}
-    {{ attr }}
+{%- if let Some(serde_as) = m.serde_as_type %}
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "{{ serde_as }}")
+    )]
 {%- endif %}
     pub {{ m.name }}: {{ m.type_ref }},
 {%- endfor %}
@@ -19,7 +35,7 @@ impl ReadXdr for {{ s.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            Ok(Self{
+            Ok(Self {
 {%- for m in s.members %}
                 {{ m.name }}: {{ m.read_call }}::read_xdr(r)?,
 {%- endfor %}
@@ -39,7 +55,34 @@ impl WriteXdr for {{ s.name }} {
         })
     }
 }
-{%- if let Some(impl_code) = s.custom_deserialize_impl %}
-{{ impl_code }}
+{%- if s.is_custom_str %}
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for {{ s.name }} {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct {{ s.name }} {
+{%- for m in s.members %}
+            {{ m.name }}: {{ m.type_ref }},
+{%- endfor %}
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum {{ s.name }}OrString<'a> {
+            Str(&'a str),
+            String(String),
+            {{ s.name }}({{ s.name }}),
+        }
+        match {{ s.name }}OrString::deserialize(deserializer)? {
+            {{ s.name }}OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            {{ s.name }}OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            {{ s.name }}OrString::{{ s.name }}({{ s.name }} {
+                {{ s.member_names }},
+            }) => Ok(self::{{ s.name }} {
+                {{ s.member_names }},
+            }),
+        }
+    }
+}
 {%- endif %}
 

@@ -7,7 +7,7 @@ use crate::ast::{
 use crate::types::{
     base_rust_type_ref, element_type_for_vec, is_builtin_type, is_fixed_array, is_fixed_opaque,
     is_var_array, rust_field_name, rust_read_call_type, rust_type_name, rust_type_ref,
-    serde_field_attr, Options, TypeInfo,
+    serde_as_type, Options, TypeInfo,
 };
 use askama::Template;
 use sha2::{Digest, Sha256};
@@ -84,18 +84,19 @@ pub enum DefinitionOutput {
 pub struct StructOutput {
     pub name: String,
     pub source_comment: String,
-    pub derive_attrs: String,
-    pub serde_attrs: String,
-    pub schemars_attr: Option<String>,
+    pub has_default: bool,
+    pub is_custom_str: bool,
     pub members: Vec<MemberOutput>,
-    pub custom_deserialize_impl: Option<String>,
+    /// Comma-separated list of member names for destructuring (e.g., "id, ed25519,")
+    pub member_names: String,
 }
 
 pub struct MemberOutput {
     pub name: String,
     pub type_ref: String,
     pub read_call: String,
-    pub serde_attr: Option<String>,
+    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
+    pub serde_as_type: Option<String>,
 }
 
 /// Data for rendering an enum.
@@ -133,8 +134,8 @@ pub struct UnionArmOutput {
     pub is_void: bool,
     pub type_ref: Option<String>,
     pub read_call: Option<String>,
-    /// Serde attribute for i64/u64 types (NumberOrString)
-    pub serde_attr: Option<String>,
+    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
+    pub serde_as_type: Option<String>,
 }
 
 /// Data for a typedef that's a simple type alias.
@@ -154,7 +155,8 @@ pub struct TypedefNewtypeOutput {
     pub schemars_attr: Option<String>,
     pub type_ref: String,
     pub read_call: String,
-    pub serde_field_attr: Option<String>,
+    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
+    pub serde_as_type: Option<String>,
     pub is_fixed_opaque: bool,
     pub is_fixed_array: bool,
     pub is_var_array: bool,
@@ -306,37 +308,17 @@ impl Generator {
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
 
-        let derive_attrs = if custom_default {
-            "#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]".to_string()
-        } else {
-            r#"#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]"#
-                .to_string()
-        };
-
-        let serde_attrs = if custom_str {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), derive(serde_with::SerializeDisplay))]"#.to_string()
-        } else {
-            r#"#[cfg_attr(all(feature = "serde", feature = "alloc"), serde_with::serde_as, derive(serde::Serialize, serde::Deserialize), serde(rename_all = "snake_case"))]"#.to_string()
-        };
-
-        let schemars_attr = if custom_str {
-            None
-        } else {
-            Some(r#"#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]"#.to_string())
-        };
-
         let members: Vec<MemberOutput> = s
             .members
             .iter()
             .map(|m| self.generate_member(m, &name, custom_str))
             .collect();
 
-        let custom_deserialize_impl = if custom_str {
-            Some(self.generate_custom_deserialize(&name, &s.members))
-        } else {
-            None
-        };
+        let member_names: String = members
+            .iter()
+            .map(|m| m.name.as_str())
+            .collect::<Vec<_>>()
+            .join(", ");
 
         let type_kind = if s.is_nested {
             "NestedStruct"
@@ -346,11 +328,10 @@ impl Generator {
         StructOutput {
             name,
             source_comment: format_source_comment(&s.source, type_kind),
-            derive_attrs,
-            serde_attrs,
-            schemars_attr,
+            has_default: !custom_default,
+            is_custom_str: custom_str,
             members,
-            custom_deserialize_impl,
+            member_names,
         }
     }
 
@@ -358,63 +339,19 @@ impl Generator {
         let name = rust_field_name(&m.name);
         let type_ref = rust_type_ref(&m.type_, Some(parent), &self.type_info);
         let read_call = rust_read_call_type(&m.type_, Some(parent), &self.type_info);
-        let serde_attr = if custom_str {
+        // For custom_str types, we skip serde_as since they use SerializeDisplay
+        let serde_as = if custom_str {
             None
         } else {
-            serde_field_attr(&m.type_)
+            serde_as_type(&m.type_)
         };
 
         MemberOutput {
             name,
             type_ref,
             read_call,
-            serde_attr,
+            serde_as_type: serde_as,
         }
-    }
-
-    fn generate_custom_deserialize(&self, name: &str, members: &[Member]) -> String {
-        let fields: Vec<String> = members
-            .iter()
-            .map(|m| {
-                let field_name = rust_field_name(&m.name);
-                let type_ref = rust_type_ref(&m.type_, Some(name), &self.type_info);
-                format!("                {field_name}: {type_ref},")
-            })
-            .collect();
-
-        let field_names: Vec<String> = members.iter().map(|m| rust_field_name(&m.name)).collect();
-
-        format!(
-            r#"#[cfg(all(feature = "serde", feature = "alloc"))]
-impl<'de> serde::Deserialize<'de> for {name} {{
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {{
-        use serde::Deserialize;
-        #[derive(Deserialize)]
-        struct {name} {{
-{fields}
-        }}
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum {name}OrString<'a> {{
-            Str(&'a str),
-            String(String),
-            {name}({name}),
-        }}
-        match {name}OrString::deserialize(deserializer)? {{
-            {name}OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
-            {name}OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
-            {name}OrString::{name}({name} {{
-                {field_list}
-            }}) => Ok(self::{name} {{
-                {field_list}
-            }}),
-        }}
-    }}
-}}"#,
-            name = name,
-            fields = fields.join("\n"),
-            field_list = field_names.join(", ") + ","
-        )
     }
 
     fn generate_enum(&self, e: &Enum) -> EnumOutput {
@@ -611,16 +548,12 @@ impl Default for {name} {{
                     }
                 };
 
-                let (type_ref, read_call, serde_attr) = if let Some(t) = &arm.type_ {
+                let (type_ref, read_call, serde_as) = if let Some(t) = &arm.type_ {
                     let type_ref = rust_type_ref(t, Some(parent), &self.type_info);
                     let read_call = rust_read_call_type(t, Some(parent), &self.type_info);
-                    // Generate serde attr for i64/u64 types (unless custom_str)
-                    let serde_attr = if custom_str {
-                        None
-                    } else {
-                        serde_field_attr(t)
-                    };
-                    (Some(type_ref), Some(read_call), serde_attr)
+                    // Get serde_as type for i64/u64 types (unless custom_str)
+                    let serde_as = if custom_str { None } else { serde_as_type(t) };
+                    (Some(type_ref), Some(read_call), serde_as)
                 } else {
                     (None, None, None)
                 };
@@ -631,7 +564,7 @@ impl Default for {name} {{
                     is_void: arm.type_.is_none(),
                     type_ref,
                     read_call,
-                    serde_attr,
+                    serde_as_type: serde_as,
                 }
             })
             .collect()
@@ -704,10 +637,10 @@ impl Default for {name} {{
 
         let type_ref = rust_type_ref(&t.type_, None, &self.type_info);
         let read_call = rust_read_call_type(&t.type_, None, &self.type_info);
-        let serde_field_attr = if custom_str {
+        let serde_as = if custom_str {
             None
         } else {
-            serde_field_attr(&t.type_)
+            serde_as_type(&t.type_)
         };
 
         let element_type = element_type_for_vec(&t.type_);
@@ -725,7 +658,7 @@ impl Default for {name} {{
             schemars_attr,
             type_ref,
             read_call,
-            serde_field_attr,
+            serde_as_type: serde_as,
             is_fixed_opaque: is_fixed_opaque_type,
             is_fixed_array: is_fixed_array_type,
             is_var_array: is_var_array_type,

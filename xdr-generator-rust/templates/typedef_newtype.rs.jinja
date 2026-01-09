@@ -9,9 +9,12 @@
 {%- if let Some(debug) = t.derive_debug %}
 {{ debug }}
 {%- endif %}
-{%- if let Some(attr) = t.serde_field_attr %}
+{%- if let Some(serde_as) = t.serde_as_type %}
 pub struct {{ t.name }}(
-    {{ attr }}
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "{{ serde_as }}")
+    )]
     pub {{ t.type_ref }},
 );
 {%- else %}

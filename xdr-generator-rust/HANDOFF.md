@@ -8,7 +8,9 @@ This project is rewriting XDR-to-Rust code generation from Ruby to Rust. The goa
 
 **Working:** The generator successfully parses all XDR files and produces valid Rust code.
 
-**Type Count Gap:** 419 types generated vs 477 in the original (missing ~58 types).
+**Type Count:** 477 types generated - matches the original exactly!
+
+**Completed:** Anonymous union/inline struct extraction is now working.
 
 ## Architecture
 
@@ -33,38 +35,25 @@ xdr-generator-rust/
     └── type_enum.rs.jinja        # TypeVariant/Type enum
 ```
 
-## Key Issues to Fix
+## Completed Fixes
 
-### 1. Missing Nested/Anonymous Types (~58 missing)
+### 1. Anonymous Union/Inline Struct Extraction (FIXED)
 
-The Ruby generator extracts anonymous union definitions and gives them generated names. For example:
+The generator now correctly extracts:
+- **Anonymous unions in struct members:** `struct Foo { union switch (...) { ... } ext; }` → extracts `FooExt`
+- **Inline structs in union arms:** `union Foo { case X: struct { ... } bar; }` → extracts `FooBar`
+- **Anonymous unions in union arms:** `union Foo { case X: union switch (...) { ... } tr; }` → extracts `FooTr`
+- **Nested types:** Correctly handles deeply nested anonymous types with proper naming
 
-```xdr
-struct AccountEntry {
-    // ...
-    union switch (int v) {
-        case 0: void;
-        case 1: AccountEntryExtensionV1 ext;
-    } ext;
-};
-```
+**Implementation details (in parser.rs):**
+- Added `root_parent` field to track the current top-level type being parsed
+- Added `extracted_definitions` to collect nested type definitions
+- Uses look-ahead parsing for inline structs to get field name before parsing body
+- Added `Type::AnonymousUnion` variant to AST for deferred extraction
 
-Generates both `AccountEntry` AND `AccountEntryExt` as separate types. Our parser sees the anonymous union but doesn't extract it as a standalone type.
+## Remaining Issues to Fix
 
-**Missing types include:**
-- `AccountEntryExt`, `AccountEntryExtensionV1Ext`, `AccountEntryExtensionV2Ext`
-- `AuthenticatedMessageV0`, `ClaimantV0`, `ContractEventV0`, `ContractEventBody`
-- `LedgerKeyAccount`, `LedgerKeyClaimableBalance`, `LedgerKeyContractCode`, etc.
-- `FeeBumpTransactionExt`, `FeeBumpTransactionInnerTx`
-- `InnerTransactionResultExt`, `InnerTransactionResultResult`
-- And more...
-
-**Solution approach:**
-1. When parsing a struct member that contains an anonymous union, extract it as a separate definition
-2. Generate a name for it (e.g., field name + parent struct name pattern)
-3. Replace the inline union with a reference to the extracted type
-
-### 2. Attribute Formatting Differences
+### 1. Attribute Formatting Differences
 
 The Ruby generator formats multi-line attributes differently:
 ```rust
@@ -159,7 +148,7 @@ comm -23 /tmp/claude/old_types.txt /tmp/claude/new_types.txt  # Shows missing ty
 
 ## Next Steps
 
-1. **Fix anonymous union extraction** - Most important, accounts for most missing types
+1. ~~**Fix anonymous union extraction** - DONE~~
 2. **Add header.rs embedding** - Copy content from Ruby generator's header.rs
 3. **Match attribute formatting** - Multi-line attributes need to match exactly
 4. **Verify exact output match** - Run diff and fix remaining differences

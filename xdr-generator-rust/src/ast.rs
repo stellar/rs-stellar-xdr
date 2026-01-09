@@ -41,6 +41,13 @@ pub enum Type {
         element_type: Box<Type>,
         max_size: Option<Size>,
     },
+    /// Anonymous union inline in a struct - will be extracted during parsing
+    /// Note: Uses Box to avoid recursive type issues
+    AnonymousUnion {
+        discriminant: Box<Discriminant>,
+        arms: Vec<UnionArm>,
+        default_arm: Option<Box<UnionArm>>,
+    },
 }
 
 /// A member of a struct.
@@ -76,14 +83,14 @@ pub struct Enum {
 }
 
 /// A case in a union.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionCase {
     /// The case value - either an identifier (enum variant) or a literal.
     pub value: CaseValue,
 }
 
 /// Value for a union case.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CaseValue {
     /// Named identifier (typically an enum variant)
     Ident(String),
@@ -92,17 +99,15 @@ pub enum CaseValue {
 }
 
 /// An arm of a union (one or more cases with the same type).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
-    /// For inline struct definitions in unions, this holds the struct.
-    pub inline_struct: Option<Struct>,
 }
 
 /// The discriminant of a union.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Discriminant {
     pub name: String,
     pub type_: Type,

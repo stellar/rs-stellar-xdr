@@ -2,7 +2,13 @@
 
 use crate::ast::*;
 use crate::lexer::{LexError, Lexer, Token};
+use heck::ToUpperCamelCase;
 use thiserror::Error;
+
+/// Generate a nested type name from parent and field name.
+fn generate_nested_type_name(parent: &str, field: &str) -> String {
+    format!("{}{}", parent, field.to_upper_camel_case())
+}
 
 /// Parse XDR source text into an AST.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
@@ -28,6 +34,10 @@ pub struct Parser {
     source: String,
     /// Track the start position of the current definition for source extraction
     def_start: usize,
+    /// Extracted nested type definitions (anonymous unions, inline structs)
+    extracted_definitions: Vec<Definition>,
+    /// Root parent type name for generating nested type names
+    root_parent: Option<String>,
 }
 
 impl Parser {
@@ -39,6 +49,8 @@ impl Parser {
             pos: 0,
             source: source.to_string(),
             def_start: 0,
+            extracted_definitions: Vec::new(),
+            root_parent: None,
         })
     }
 
@@ -110,6 +122,12 @@ impl Parser {
             }
         }
 
+        // Insert extracted nested definitions before the main definitions
+        // They need to come first since they are referenced by other types
+        let mut all_definitions = std::mem::take(&mut self.extracted_definitions);
+        all_definitions.append(&mut spec.definitions);
+        spec.definitions = all_definitions;
+
         Ok(spec)
     }
 
@@ -158,12 +176,19 @@ impl Parser {
         let name = self.expect_ident()?;
         self.expect(Token::LBrace)?;
 
+        // Set root_parent for nested type name generation
+        let prev_root = self.root_parent.take();
+        self.root_parent = Some(name.clone());
+
         let mut members = Vec::new();
         while *self.peek() != Token::RBrace {
             let member = self.parse_member()?;
             members.push(member);
             self.expect(Token::Semi)?;
         }
+
+        // Restore previous root_parent
+        self.root_parent = prev_root;
 
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
@@ -184,6 +209,40 @@ impl Parser {
 
         // Handle array suffix: name[size] or name<max>
         let type_ = self.parse_type_suffix(type_)?;
+
+        // If this is an anonymous union, extract it as a separate definition
+        let type_ = match type_ {
+            Type::AnonymousUnion {
+                discriminant,
+                arms,
+                default_arm,
+            } => {
+                // Generate the name: root_parent + field_name
+                let union_name = if let Some(ref parent) = self.root_parent {
+                    generate_nested_type_name(parent, &name)
+                } else {
+                    // Fallback: use field name with "Union" suffix
+                    generate_nested_type_name(&name, "Union")
+                };
+
+                // Create the Union definition (unbox the discriminant)
+                let union_def = Union {
+                    name: union_name.clone(),
+                    discriminant: *discriminant,
+                    arms,
+                    default_arm,
+                    source: String::new(),
+                };
+
+                // Add to extracted definitions
+                self.extracted_definitions
+                    .push(Definition::Union(union_def));
+
+                // Return a reference to the extracted type
+                Type::Ident(union_name)
+            }
+            other => other,
+        };
 
         Ok(Member { name, type_ })
     }
@@ -259,15 +318,15 @@ impl Parser {
                 }
                 self.expect(Token::RBrace)?;
 
-                // Store anonymous union with a placeholder name
-                // The actual name will come from the field name
-                // For now, use the discriminant name as a marker
-                let anon_name = format!("__anon_union_{}", disc_name);
-
-                // We need to return a type identifier that we'll resolve later
-                // Store the union data somewhere and return a reference
-                // For simplicity, let's just return an Ident that will be handled specially
-                Ok(Type::Ident(anon_name))
+                // Return an AnonymousUnion that will be extracted in parse_member
+                Ok(Type::AnonymousUnion {
+                    discriminant: Box::new(Discriminant {
+                        name: disc_name,
+                        type_: disc_type,
+                    }),
+                    arms,
+                    default_arm,
+                })
             }
             Token::Ident(name) => {
                 self.advance();
@@ -492,6 +551,10 @@ impl Parser {
         self.expect(Token::RParen)?;
         self.expect(Token::LBrace)?;
 
+        // Set root_parent for inline struct extraction
+        let prev_root = self.root_parent.take();
+        self.root_parent = Some(name.clone());
+
         let mut arms = Vec::new();
         let mut default_arm = None;
 
@@ -504,6 +567,9 @@ impl Parser {
                 arms.push(arm);
             }
         }
+
+        // Restore previous root_parent
+        self.root_parent = prev_root;
 
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
@@ -560,14 +626,47 @@ impl Parser {
         }
 
         // Parse the arm type
-        let (type_, inline_struct) = if *self.peek() == Token::Void {
+        let type_ = if *self.peek() == Token::Void {
             self.advance();
             self.expect(Token::Semi)?;
-            (None, None)
+            None
         } else if *self.peek() == Token::Struct {
-            // Inline struct definition
+            // Inline struct definition - extract as a separate type
+            // We need to find the field name first to set root_parent correctly
+            // for any nested anonymous unions inside the struct
             self.advance();
             self.expect(Token::LBrace)?;
+
+            // Skip ahead to find the field name (count braces to find end of struct)
+            let start_pos = self.pos;
+            let mut brace_depth = 1;
+            while brace_depth > 0 {
+                match self.advance() {
+                    Token::LBrace => brace_depth += 1,
+                    Token::RBrace => brace_depth -= 1,
+                    Token::Eof => break,
+                    _ => {}
+                }
+            }
+            // Now we should be after the closing brace, next is the field name
+            let field_name = self.expect_ident()?;
+            self.expect(Token::Semi)?;
+            let end_pos = self.pos;
+
+            // Go back to parse the struct body properly
+            self.pos = start_pos;
+
+            // Generate the struct name: root_parent + field_name
+            let struct_name = if let Some(ref parent) = self.root_parent {
+                generate_nested_type_name(parent, &field_name)
+            } else {
+                // Fallback: use field name with capitalization
+                field_name.to_upper_camel_case()
+            };
+
+            // Set root_parent to the struct name for any nested types
+            let prev_root = self.root_parent.take();
+            self.root_parent = Some(struct_name.clone());
 
             let mut members = Vec::new();
             while *self.peek() != Token::RBrace {
@@ -577,29 +676,68 @@ impl Parser {
             }
             self.expect(Token::RBrace)?;
 
-            let struct_name = self.expect_ident()?;
-            self.expect(Token::Semi)?;
+            // Restore root_parent
+            self.root_parent = prev_root;
 
-            let inline = Struct {
+            // Skip the field name and semicolon we already parsed
+            self.pos = end_pos;
+
+            // Create the struct definition
+            let struct_def = Struct {
                 name: struct_name.clone(),
                 members,
                 source: String::new(),
             };
 
-            (Some(Type::Ident(struct_name)), Some(inline))
+            // Add to extracted definitions
+            self.extracted_definitions
+                .push(Definition::Struct(struct_def));
+
+            Some(Type::Ident(struct_name))
         } else {
             let type_ = self.parse_type()?;
-            let _field_name = self.expect_ident()?;
+            let field_name = self.expect_ident()?;
             let type_ = self.parse_type_suffix(type_)?;
             self.expect(Token::Semi)?;
-            (Some(type_), None)
+
+            // If this is an anonymous union, extract it as a separate definition
+            let type_ = match type_ {
+                Type::AnonymousUnion {
+                    discriminant,
+                    arms,
+                    default_arm,
+                } => {
+                    // Generate the name: root_parent + field_name
+                    let union_name = if let Some(ref parent) = self.root_parent {
+                        generate_nested_type_name(parent, &field_name)
+                    } else {
+                        // Fallback: use field name with capitalization
+                        field_name.to_upper_camel_case()
+                    };
+
+                    // Create the Union definition (unbox the discriminant)
+                    let union_def = Union {
+                        name: union_name.clone(),
+                        discriminant: *discriminant,
+                        arms,
+                        default_arm,
+                        source: String::new(),
+                    };
+
+                    // Add to extracted definitions
+                    self.extracted_definitions
+                        .push(Definition::Union(union_def));
+
+                    // Return a reference to the extracted type
+                    Type::Ident(union_name)
+                }
+                other => other,
+            };
+
+            Some(type_)
         };
 
-        Ok(UnionArm {
-            cases,
-            type_,
-            inline_struct,
-        })
+        Ok(UnionArm { cases, type_ })
     }
 
     fn parse_typedef(&mut self) -> Result<Typedef, ParseError> {

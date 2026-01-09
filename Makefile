@@ -44,7 +44,7 @@ generate-rust: src/curr/generated-rust.rs src/next/generated-rust.rs
 
 src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
 	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
-		--input $(sort $(wildcard xdr/curr/*.x)) \
+		$(addprefix --input ,$(sort $(wildcard xdr/curr/*.x))) \
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)
@@ -52,7 +52,7 @@ src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
 
 src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
 	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
-		--input $(sort $(wildcard xdr/next/*.x)) \
+		$(addprefix --input ,$(sort $(wildcard xdr/next/*.x))) \
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)

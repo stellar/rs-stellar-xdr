@@ -133,11 +133,14 @@ pub struct UnionArmOutput {
     pub is_void: bool,
     pub type_ref: Option<String>,
     pub read_call: Option<String>,
+    /// Serde attribute for i64/u64 types (NumberOrString)
+    pub serde_attr: Option<String>,
 }
 
 /// Data for a typedef that's a simple type alias.
 pub struct TypedefAliasOutput {
     pub name: String,
+    pub source_comment: String,
     pub type_ref: String,
 }
 
@@ -146,6 +149,7 @@ pub struct TypedefNewtypeOutput {
     pub name: String,
     pub source_comment: String,
     pub derive_attrs: String,
+    pub derive_debug: Option<String>,
     pub serde_attrs: String,
     pub schemars_attr: Option<String>,
     pub type_ref: String,
@@ -163,7 +167,11 @@ pub struct TypedefNewtypeOutput {
 
 /// Data for a const.
 pub struct ConstOutput {
+    /// The Rust const name (SCREAMING_SNAKE_CASE).
     pub name: String,
+    /// The name for the doc comment (UpperCamelCase).
+    pub doc_name: String,
+    pub source_comment: String,
     /// The formatted value string (decimal or hex).
     pub value_str: String,
 }
@@ -203,20 +211,76 @@ impl Generator {
             })
             .collect();
 
-        // Collect all type names for the type enum
-        let mut types: Vec<String> = Vec::new();
+        // Collect all type names for the type enum.
+        // The types list needs to be in "parent before nested" order for TypeVariant,
+        // but definitions stay in "nested before parent" order for file output.
+        //
+        // Build parent-child relationships and then traverse parent-first.
+        use std::collections::HashMap;
+
+        // First pass: collect definitions and build parent-child map
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
+        let mut children_of: HashMap<String, Vec<String>> = HashMap::new();
+        let mut all_type_names: Vec<(String, Option<String>)> = Vec::new(); // (name, parent)
 
         for def in spec.all_definitions() {
             let name = rust_type_name(def.name());
 
             // Only add non-const types to the type enum
             if !matches!(def, Definition::Const(_)) {
-                types.push(name.clone());
+                let parent = def.parent().map(|p| rust_type_name(p));
+                all_type_names.push((name.clone(), parent.clone()));
+
+                if let Some(ref parent_name) = parent {
+                    children_of
+                        .entry(parent_name.clone())
+                        .or_default()
+                        .push(name.clone());
+                }
             }
 
             let output = self.generate_definition(def);
             definitions.push(output);
+        }
+
+        // Second pass: build types list with parent-before-children ordering
+        // Use a recursive helper to add each type and then its children
+        let mut types: Vec<String> = Vec::new();
+        let mut added: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+        fn add_type_and_children(
+            name: &str,
+            types: &mut Vec<String>,
+            added: &mut std::collections::HashSet<String>,
+            children_of: &HashMap<String, Vec<String>>,
+        ) {
+            if added.contains(name) {
+                return;
+            }
+            added.insert(name.to_string());
+            types.push(name.to_string());
+
+            // Add children in the order they appear in children_of
+            if let Some(children) = children_of.get(name) {
+                for child in children {
+                    add_type_and_children(child, types, added, children_of);
+                }
+            }
+        }
+
+        // Process types in definition order, but only add root types (no parent)
+        // and let recursion handle adding children
+        for (name, parent) in &all_type_names {
+            if parent.is_none() {
+                add_type_and_children(name, &mut types, &mut added, &children_of);
+            }
+        }
+
+        // Add any remaining types that weren't reached (shouldn't happen, but just in case)
+        for (name, _) in &all_type_names {
+            if !added.contains(name) {
+                types.push(name.clone());
+            }
         }
 
         GeneratedTemplate {
@@ -274,9 +338,14 @@ impl Generator {
             None
         };
 
+        let type_kind = if s.is_nested {
+            "NestedStruct"
+        } else {
+            "Struct"
+        };
         StructOutput {
             name,
-            source_comment: format_source_comment(&s.source, "Struct"),
+            source_comment: format_source_comment(&s.source, type_kind),
             derive_attrs,
             serde_attrs,
             schemars_attr,
@@ -459,6 +528,7 @@ impl<'de> serde::Deserialize<'de> for {name} {{
                     &discriminant_type,
                     discriminant_is_builtin,
                     &discriminant_prefix,
+                    custom_str,
                 )
             })
             .collect();
@@ -491,9 +561,11 @@ impl Default for {name} {{
             None
         };
 
+        let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
+
         UnionOutput {
             name,
-            source_comment: format_source_comment(&u.source, "Union"),
+            source_comment: format_source_comment(&u.source, type_kind),
             derive_attrs,
             serde_attrs,
             schemars_attr,
@@ -511,6 +583,7 @@ impl Default for {name} {{
         discriminant_type: &str,
         discriminant_is_builtin: bool,
         discriminant_prefix: &str,
+        custom_str: bool,
     ) -> Vec<UnionArmOutput> {
         arm.cases
             .iter()
@@ -538,12 +611,18 @@ impl Default for {name} {{
                     }
                 };
 
-                let (type_ref, read_call) = if let Some(t) = &arm.type_ {
+                let (type_ref, read_call, serde_attr) = if let Some(t) = &arm.type_ {
                     let type_ref = rust_type_ref(t, Some(parent), &self.type_info);
                     let read_call = rust_read_call_type(t, Some(parent), &self.type_info);
-                    (Some(type_ref), Some(read_call))
+                    // Generate serde attr for i64/u64 types (unless custom_str)
+                    let serde_attr = if custom_str {
+                        None
+                    } else {
+                        serde_field_attr(t)
+                    };
+                    (Some(type_ref), Some(read_call), serde_attr)
                 } else {
-                    (None, None)
+                    (None, None, None)
                 };
 
                 UnionArmOutput {
@@ -552,6 +631,7 @@ impl Default for {name} {{
                     is_void: arm.type_.is_none(),
                     type_ref,
                     read_call,
+                    serde_attr,
                 }
             })
             .collect()
@@ -569,17 +649,19 @@ impl Default for {name} {{
         if is_primitive_alias && is_builtin_type(&t.type_) {
             return DefinitionOutput::TypedefAlias(TypedefAliasOutput {
                 name,
+                source_comment: format_source_comment(&t.source, "Typedef"),
                 type_ref: base_rust_type_ref(&t.type_),
             });
         }
 
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
+        let no_display_fromstr = self.options.no_display_fromstr.contains(&name);
         let is_fixed_opaque_type = is_fixed_opaque(&t.type_);
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        // Derive attributes
+        // Derive attributes (Default and Clone/Hash/etc, but NOT Debug)
         let derive_attrs = if custom_default {
             if is_var_array_type {
                 "#[derive(Default)]".to_string()
@@ -599,11 +681,11 @@ impl Default for {name} {{
             format!("{derive_attrs}\n{base_derives}")
         };
 
-        // Add Debug unless it's fixed opaque (custom Debug)
-        let derive_attrs = if is_fixed_opaque_type {
-            derive_attrs
+        // Debug derive comes after serde/schemars attrs (separate from derive_attrs)
+        let derive_debug = if is_fixed_opaque_type {
+            None
         } else {
-            format!("{derive_attrs}\n#[derive(Debug)]")
+            Some("#[derive(Debug)]".to_string())
         };
 
         // Serde attributes
@@ -638,6 +720,7 @@ impl Default for {name} {{
             name,
             source_comment: format_source_comment(&t.source, "Typedef"),
             derive_attrs,
+            derive_debug,
             serde_attrs,
             schemars_attr,
             type_ref,
@@ -649,8 +732,8 @@ impl Default for {name} {{
             element_type,
             size,
             custom_debug: is_fixed_opaque_type,
-            custom_display_fromstr: is_fixed_opaque_type && !custom_str,
-            custom_schemars: is_fixed_opaque_type && !custom_str,
+            custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+            custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
         })
     }
 
@@ -663,6 +746,8 @@ impl Default for {name} {{
         };
         ConstOutput {
             name: rust_field_name(&c.name).to_uppercase(),
+            doc_name: rust_type_name(&c.name),
+            source_comment: format_source_comment(&c.source, "Const"),
             value_str,
         }
     }

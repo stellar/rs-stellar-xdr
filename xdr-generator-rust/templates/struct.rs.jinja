@@ -39,7 +39,7 @@ impl WriteXdr for {{ s.name }} {
         })
     }
 }
-{% if let Some(impl_code) = s.custom_deserialize_impl %}
+{%- if let Some(impl_code) = s.custom_deserialize_impl %}
 {{ impl_code }}
-{% endif %}
+{%- endif %}
 

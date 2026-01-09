@@ -37,6 +37,8 @@ pub struct Parser {
     extracted_definitions: Vec<Definition>,
     /// Root parent type name for generating nested type names
     root_parent: Option<String>,
+    /// Global map of enum member names and const names to their values
+    global_values: std::collections::HashMap<String, i64>,
 }
 
 impl Parser {
@@ -50,6 +52,7 @@ impl Parser {
             def_start_pos: 0,
             extracted_definitions: Vec::new(),
             root_parent: None,
+            global_values: std::collections::HashMap::new(),
         })
     }
 
@@ -144,6 +147,14 @@ impl Parser {
             spec.definitions.push(extracted);
         }
 
+        // Post-process to fix parent relationships for nested types.
+        // For types whose name starts with another type's name, update parent to be that type.
+        // This fixes cases where inline structs inside unions have nested unions.
+        fix_parent_relationships(&mut spec.definitions);
+        for ns in &mut spec.namespaces {
+            fix_parent_relationships(&mut ns.definitions);
+        }
+
         Ok(spec)
     }
 
@@ -227,11 +238,30 @@ impl Parser {
             name,
             members,
             source,
+            is_nested: false,
+            parent: None,
         })
     }
 
     fn parse_member(&mut self) -> Result<Member, ParseError> {
+        // Record start position for source extraction (for anonymous unions)
+        let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+
+        // Track extracted definitions before parsing type (for fixing parent relationships)
+        let extract_start_idx = self.extracted_definitions.len();
+
         let type_ = self.parse_type()?;
+
+        // Record end position (after parsing type, before field name)
+        let type_end_byte = if self.pos > 0 {
+            self.tokens
+                .get(self.pos - 1)
+                .map(|st| st.end)
+                .unwrap_or(self.source.len())
+        } else {
+            type_start_byte
+        };
+
         let name = self.expect_ident()?;
 
         // Handle array suffix: name[size] or name<max>
@@ -252,14 +282,39 @@ impl Parser {
                     generate_nested_type_name(&name, "Union")
                 };
 
+                // Extract source text for the anonymous union
+                let source =
+                    if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
+                        self.source[type_start_byte..type_end_byte].to_string()
+                    } else {
+                        String::new()
+                    };
+
                 // Create the Union definition (unbox the discriminant)
                 let union_def = Union {
                     name: union_name.clone(),
                     discriminant: *discriminant,
                     arms,
                     default_arm,
-                    source: String::new(),
+                    source,
+                    is_nested: true,
+                    parent: self.root_parent.clone(),
                 };
+
+                // Fix up parent relationships for any definitions extracted during union parsing
+                // (e.g., inline structs inside union arms should have this union as their parent)
+                // Only update if current parent is the root_parent (not already a more specific parent)
+                for def in &mut self.extracted_definitions[extract_start_idx..] {
+                    match def {
+                        Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
+                            s.parent = Some(union_name.clone());
+                        }
+                        Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
+                            u.parent = Some(union_name.clone());
+                        }
+                        _ => {}
+                    }
+                }
 
                 // Add to extracted definitions
                 self.extracted_definitions
@@ -546,6 +601,11 @@ impl Parser {
 
         let source = self.extract_definition_source(&name);
 
+        // Add all members to global_values for cross-enum resolution
+        for m in &members {
+            self.global_values.insert(m.name.clone(), m.value as i64);
+        }
+
         Ok(Enum {
             name,
             members,
@@ -553,7 +613,7 @@ impl Parser {
         })
     }
 
-    /// Try to resolve an enum value reference within the current enum
+    /// Try to resolve an enum value reference
     fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
         // First check if it's in the current enum being parsed
         for m in members {
@@ -561,7 +621,11 @@ impl Parser {
                 return m.value;
             }
         }
-        // Return 0 as placeholder - will need global resolution later
+        // Check global values (previously parsed enums and consts)
+        if let Some(&value) = self.global_values.get(name) {
+            return value as i32;
+        }
+        // Return 0 as fallback
         0
     }
 
@@ -612,6 +676,8 @@ impl Parser {
             arms,
             default_arm,
             source,
+            is_nested: false,
+            parent: None,
         })
     }
 
@@ -661,6 +727,10 @@ impl Parser {
             // Inline struct definition - extract as a separate type
             // We need to find the field name first to set root_parent correctly
             // for any nested anonymous unions inside the struct
+
+            // Record position before 'struct' keyword for source extraction
+            let source_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+
             self.advance();
             self.expect(Token::LBrace)?;
 
@@ -675,6 +745,17 @@ impl Parser {
                     _ => {}
                 }
             }
+
+            // Record end position (after closing brace, before field name)
+            let source_end_byte = if self.pos > 0 {
+                self.tokens
+                    .get(self.pos - 1)
+                    .map(|st| st.end)
+                    .unwrap_or(self.source.len())
+            } else {
+                source_start_byte
+            };
+
             // Now we should be after the closing brace, next is the field name
             let field_name = self.expect_ident()?;
             self.expect(Token::Semi)?;
@@ -709,11 +790,21 @@ impl Parser {
             // Skip the field name and semicolon we already parsed
             self.pos = end_pos;
 
+            // Extract source text
+            let source =
+                if source_start_byte < source_end_byte && source_end_byte <= self.source.len() {
+                    self.source[source_start_byte..source_end_byte].to_string()
+                } else {
+                    String::new()
+                };
+
             // Create the struct definition
             let struct_def = Struct {
                 name: struct_name.clone(),
                 members,
-                source: String::new(),
+                source,
+                is_nested: true,
+                parent: self.root_parent.clone(),
             };
 
             // Add to extracted definitions
@@ -722,7 +813,24 @@ impl Parser {
 
             Some(Type::Ident(struct_name))
         } else {
+            // Record start position for source extraction
+            let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+
+            // Track extracted definitions before parsing type (for fixing parent relationships)
+            let extract_start_idx = self.extracted_definitions.len();
+
             let type_ = self.parse_type()?;
+
+            // Record end position after parsing type
+            let type_end_byte = if self.pos > 0 {
+                self.tokens
+                    .get(self.pos - 1)
+                    .map(|st| st.end)
+                    .unwrap_or(self.source.len())
+            } else {
+                type_start_byte
+            };
+
             let field_name = self.expect_ident()?;
             let type_ = self.parse_type_suffix(type_)?;
             self.expect(Token::Semi)?;
@@ -742,14 +850,41 @@ impl Parser {
                         field_name.to_upper_camel_case()
                     };
 
+                    // Extract source text for the anonymous union
+                    let source =
+                        if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
+                            self.source[type_start_byte..type_end_byte].to_string()
+                        } else {
+                            String::new()
+                        };
+
                     // Create the Union definition (unbox the discriminant)
                     let union_def = Union {
                         name: union_name.clone(),
                         discriminant: *discriminant,
                         arms,
                         default_arm,
-                        source: String::new(),
+                        source,
+                        is_nested: true,
+                        parent: self.root_parent.clone(),
                     };
+
+                    // Fix up parent relationships for any definitions extracted during union parsing
+                    // (e.g., inline structs inside union arms should have this union as their parent)
+                    // Only update if current parent is the root_parent (not already a more specific parent)
+                    for def in &mut self.extracted_definitions[extract_start_idx..] {
+                        match def {
+                            Definition::Struct(s)
+                                if s.is_nested && s.parent == self.root_parent =>
+                            {
+                                s.parent = Some(union_name.clone());
+                            }
+                            Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
+                                u.parent = Some(union_name.clone());
+                            }
+                            _ => {}
+                        }
+                    }
 
                     // Add to extracted definitions
                     self.extracted_definitions
@@ -794,10 +929,16 @@ impl Parser {
         let (value, is_hex) = self.expect_int_with_hex()?;
         self.expect(Token::Semi)?;
 
+        let source = self.extract_definition_source(&name);
+
+        // Add const value to global_values for enum reference resolution
+        self.global_values.insert(name.clone(), value);
+
         Ok(Const {
             name,
             value,
             is_hex,
+            source,
         })
     }
 
@@ -825,6 +966,53 @@ impl Parser {
             self.source[start_byte..end_byte].to_string()
         } else {
             String::new()
+        }
+    }
+}
+
+/// Fix parent relationships for nested types based on naming patterns.
+/// For a nested type whose name starts with another nested type's name, update parent.
+fn fix_parent_relationships(definitions: &mut [Definition]) {
+    // Collect all nested type names
+    let nested_names: Vec<String> = definitions
+        .iter()
+        .filter_map(|def| {
+            if def.is_nested() {
+                Some(def.name().to_string())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // For each nested type, find if there's a "better" parent
+    // (a nested type whose name is a prefix and longer than current parent)
+    for def in definitions.iter_mut() {
+        if !def.is_nested() {
+            continue;
+        }
+        let name = def.name().to_string();
+        let current_parent = def.parent().map(|s| s.to_string());
+
+        // Find the longest prefix match among nested types (excluding self)
+        let best_parent = nested_names
+            .iter()
+            .filter(|&candidate| {
+                candidate != &name
+                    && name.starts_with(candidate)
+                    && current_parent
+                        .as_ref()
+                        .map(|p| candidate.len() > p.len())
+                        .unwrap_or(true)
+            })
+            .max_by_key(|s| s.len());
+
+        if let Some(new_parent) = best_parent {
+            match def {
+                Definition::Struct(s) => s.parent = Some(new_parent.clone()),
+                Definition::Union(u) => u.parent = Some(new_parent.clone()),
+                _ => {}
+            }
         }
     }
 }

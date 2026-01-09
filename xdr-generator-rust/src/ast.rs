@@ -64,6 +64,10 @@ pub struct Struct {
     pub members: Vec<Member>,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// True if this is a nested/inline struct extracted from a union arm.
+    pub is_nested: bool,
+    /// Name of the parent type if this is nested, for ordering purposes.
+    pub parent: Option<String>,
 }
 
 /// A member of an enum.
@@ -122,6 +126,10 @@ pub struct Union {
     pub default_arm: Option<Box<UnionArm>>,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// True if this is a nested/inline union extracted from a struct field.
+    pub is_nested: bool,
+    /// Name of the parent type if this is nested, for ordering purposes.
+    pub parent: Option<String>,
 }
 
 /// A typedef definition.
@@ -140,6 +148,8 @@ pub struct Const {
     pub value: i64,
     /// Whether the value was written in hex format in the source.
     pub is_hex: bool,
+    /// Original XDR source text for documentation.
+    pub source: String,
 }
 
 /// A top-level definition.
@@ -161,6 +171,26 @@ impl Definition {
             Definition::Union(u) => &u.name,
             Definition::Typedef(t) => &t.name,
             Definition::Const(c) => &c.name,
+        }
+    }
+
+    /// Check if this definition is nested (inline struct/union extracted from parent).
+    pub fn is_nested(&self) -> bool {
+        match self {
+            Definition::Struct(s) => s.is_nested,
+            Definition::Union(u) => u.is_nested,
+            // Enums, typedefs, and consts are never nested
+            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => false,
+        }
+    }
+
+    /// Get the parent type name if this is a nested definition.
+    pub fn parent(&self) -> Option<&str> {
+        match self {
+            Definition::Struct(s) => s.parent.as_deref(),
+            Definition::Union(u) => u.parent.as_deref(),
+            // Enums, typedefs, and consts have no parent
+            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => None,
         }
     }
 }

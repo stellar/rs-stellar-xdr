@@ -11,6 +11,8 @@ pub struct Options {
     pub custom_default_impl: HashSet<String>,
     /// Types that have custom FromStr/Display implementations (use SerializeDisplay)
     pub custom_str_impl: HashSet<String>,
+    /// Types that should NOT have Display/FromStr/schemars generated (have special handling elsewhere)
+    pub no_display_fromstr: HashSet<String>,
 }
 
 /// Type information collected from the XDR spec.
@@ -116,8 +118,9 @@ fn collect_field_types(def: &Definition) -> Vec<String> {
             .iter()
             .filter_map(|arm| arm.type_.as_ref().and_then(base_type_name))
             .collect(),
-        Definition::Typedef(t) => base_type_name(&t.type_).into_iter().collect(),
-        Definition::Enum(_) | Definition::Const(_) => vec![],
+        // Note: Typedefs are NOT included in cycle detection, matching Ruby behavior.
+        // Only structs and unions have their field types tracked for cycle detection.
+        Definition::Typedef(_) | Definition::Enum(_) | Definition::Const(_) => vec![],
     }
 }
 
@@ -195,10 +198,12 @@ pub fn is_var_array(type_: &Type) -> bool {
 }
 
 /// Get the Rust type reference for an XDR type.
+/// Wraps in Box for cyclic :simple and :optional types (matching Ruby behavior).
+/// Does NOT wrap arrays/var_arrays even if cyclic.
 pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> String {
     let base = base_rust_type_ref_with_info(type_, type_info);
 
-    // Check for cyclic reference
+    // Check for cyclic reference (only for simple and optional types)
     let is_cyclic = if let Some(parent) = parent_type {
         if let Some(base_name) = base_type_name(type_) {
             type_info.is_cyclic(&base_name, parent)
@@ -219,6 +224,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
             }
         }
         Type::Array { element_type, size } => {
+            // Arrays are NOT wrapped in Box even if cyclic
             let elem = base_rust_type_ref_with_info(element_type, type_info);
             let size = type_info.size_to_literal(size);
             format!("[{elem}; {size}]")
@@ -227,6 +233,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
             element_type,
             max_size,
         } => {
+            // VarArrays are NOT wrapped in Box even if cyclic
             let elem = base_rust_type_ref_with_info(element_type, type_info);
             match max_size {
                 Some(size) => format!("VecM<{elem}, {}>", type_info.size_to_literal(size)),
@@ -234,6 +241,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
             }
         }
         _ => {
+            // Simple types: wrap in Box if cyclic
             if is_cyclic {
                 format!("Box<{base}>")
             } else {

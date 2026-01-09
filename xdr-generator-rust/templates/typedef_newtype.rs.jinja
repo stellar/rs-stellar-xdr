@@ -6,6 +6,9 @@
 {%- if let Some(attr) = t.schemars_attr %}
 {{ attr }}
 {%- endif %}
+{%- if let Some(debug) = t.derive_debug %}
+{{ debug }}
+{%- endif %}
 {%- if let Some(attr) = t.serde_field_attr %}
 pub struct {{ t.name }}(
     {{ attr }}
@@ -14,8 +17,8 @@ pub struct {{ t.name }}(
 {%- else %}
 pub struct {{ t.name }}(pub {{ t.type_ref }});
 {%- endif %}
-{%- if t.custom_debug %}
 
+{% if t.custom_debug -%}
 impl core::fmt::Debug for {{ t.name }} {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -29,7 +32,6 @@ impl core::fmt::Debug for {{ t.name }} {
 }
 {%- endif %}
 {%- if t.custom_display_fromstr %}
-
 impl core::fmt::Display for {{ t.name }} {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -49,7 +51,6 @@ impl core::str::FromStr for {{ t.name }} {
 }
 {%- endif %}
 {%- if t.custom_schemars %}
-
 #[cfg(feature = "schemars")]
 impl schemars::JsonSchema for {{ t.name }} {
     fn schema_name() -> String {
@@ -84,7 +85,6 @@ impl schemars::JsonSchema for {{ t.name }} {
     }
 }
 {%- endif %}
-
 impl From<{{ t.name }}> for {{ t.type_ref }} {
     #[must_use]
     fn from(x: {{ t.name }}) -> Self {

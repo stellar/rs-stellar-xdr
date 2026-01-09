@@ -1,4 +1,5 @@
 /// {{ u.name }}{{ u.source_comment }}
+// union with discriminant {{ u.discriminant_type }}
 #[cfg_eval::cfg_eval]
 {{ u.derive_attrs }}
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -12,14 +13,21 @@ pub enum {{ u.name }} {
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
+{%- if let Some(attr) = arm.serde_attr %}
+    {{ arm.case_name }}(
+        {{ attr }}
+        {{ arm.type_ref.as_ref().unwrap() }},
+    ),
+{%- else %}
     {{ arm.case_name }}({{ arm.type_ref.as_ref().unwrap() }}),
+{%- endif %}
 {%- endif %}
 {%- endfor %}
 }
-{% if let Some(impl_code) = u.default_impl %}
+{%- if let Some(impl_code) = u.default_impl %}
 
 {{ impl_code }}
-{% endif %}
+{%- endif %}
 
 impl {{ u.name }} {
     pub const VARIANTS: [{{ u.discriminant_type }}; {{ u.arms.len() }}] = [

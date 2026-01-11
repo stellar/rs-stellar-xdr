@@ -4,8 +4,6 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-.PHONY: all test build doc install readme watch generate generate-xdrgen-files generate-rust-files check-generated-match clean fmt publish
-
 all: build test
 
 test:

@@ -59,11 +59,6 @@ impl TypeInfo {
         }
     }
 
-    /// Check if `type_with_fields` has a cyclic reference to `target_type`.
-    pub fn is_cyclic(&self, type_with_fields: &str, target_type: &str) -> bool {
-        self.is_cyclic_inner(type_with_fields, target_type, &mut HashSet::new())
-    }
-
     /// Resolve a size to a string, using const values for named sizes.
     pub fn size_to_literal(&self, size: &Size) -> String {
         match size {
@@ -78,6 +73,11 @@ impl TypeInfo {
                 }
             }
         }
+    }
+
+    /// Check if `type_with_fields` has a cyclic reference to `target_type`.
+    pub fn is_cyclic(&self, type_with_fields: &str, target_type: &str) -> bool {
+        self.is_cyclic_inner(type_with_fields, target_type, &mut HashSet::new())
     }
 
     fn is_cyclic_inner(
@@ -105,35 +105,9 @@ impl TypeInfo {
     }
 }
 
-/// Collect the base type names referenced in a definition's fields.
-fn collect_field_types(def: &Definition) -> Vec<String> {
-    match def {
-        Definition::Struct(s) => s
-            .members
-            .iter()
-            .filter_map(|m| base_type_name(&m.type_))
-            .collect(),
-        Definition::Union(u) => u
-            .arms
-            .iter()
-            .filter_map(|arm| arm.type_.as_ref().and_then(base_type_name))
-            .collect(),
-        // Note: Typedefs are NOT included in cycle detection, matching Ruby behavior.
-        // Only structs and unions have their field types tracked for cycle detection.
-        Definition::Typedef(_) | Definition::Enum(_) | Definition::Const(_) => vec![],
-    }
-}
-
-/// Get the base type name from a Type (for cyclic detection).
-fn base_type_name(type_: &Type) -> Option<String> {
-    match type_ {
-        Type::Ident(name) => Some(rust_type_name(name)),
-        Type::Optional(inner) => base_type_name(inner),
-        Type::Array { element_type, .. } => base_type_name(element_type),
-        Type::VarArray { element_type, .. } => base_type_name(element_type),
-        _ => None,
-    }
-}
+// =============================================================================
+// Public API functions - main exports used by generator
+// =============================================================================
 
 /// Convert an XDR name to a Rust type name (UpperCamelCase).
 pub fn rust_type_name(name: &str) -> String {
@@ -146,55 +120,6 @@ pub fn rust_field_name(name: &str) -> String {
     let snake = name.to_snake_case();
     // Apply escape AFTER snake_case since to_snake_case strips trailing underscores
     escape_field_name(&snake)
-}
-
-/// Escape reserved names for type names.
-fn escape_name(name: &str) -> String {
-    match name {
-        "type" => "type_".to_string(),
-        "Error" => "SError".to_string(),
-        _ => name.to_string(),
-    }
-}
-
-/// Escape reserved names for field names (after snake_case conversion).
-fn escape_field_name(name: &str) -> String {
-    match name {
-        "type" => "type_".to_string(),
-        _ => name.to_string(),
-    }
-}
-
-/// Check if a type is a builtin (maps directly to a Rust primitive).
-pub fn is_builtin_type(type_: &Type) -> bool {
-    matches!(
-        type_,
-        Type::Int
-            | Type::UnsignedInt
-            | Type::Hyper
-            | Type::UnsignedHyper
-            | Type::Float
-            | Type::Double
-            | Type::Bool
-    )
-}
-
-/// Check if a type is a fixed-length opaque array.
-pub fn is_fixed_opaque(type_: &Type) -> bool {
-    matches!(type_, Type::OpaqueFixed(_))
-}
-
-/// Check if a type is a fixed-length array (including fixed opaque).
-pub fn is_fixed_array(type_: &Type) -> bool {
-    matches!(type_, Type::OpaqueFixed(_) | Type::Array { .. })
-}
-
-/// Check if a type is a variable-length array.
-pub fn is_var_array(type_: &Type) -> bool {
-    matches!(
-        type_,
-        Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. }
-    )
 }
 
 /// Get the Rust type reference for an XDR type.
@@ -304,6 +229,131 @@ pub fn base_rust_type_ref(type_: &Type) -> String {
     }
 }
 
+/// Get the type to use in a read_xdr call (handles turbofish syntax).
+pub fn rust_read_call_type(
+    type_: &Type,
+    parent_type: Option<&str>,
+    type_info: &TypeInfo,
+) -> String {
+    let ref_type = rust_type_ref(type_, parent_type, type_info);
+
+    // Handle special cases for turbofish
+    if ref_type.starts_with('[') && ref_type.ends_with(']') {
+        format!("<{ref_type}>")
+    } else if ref_type.starts_with("Box<") {
+        format!("Box::{}", &ref_type[3..])
+    } else if ref_type.starts_with("Option<Box<") {
+        format!("Option::<Box<{}>>", &ref_type[11..ref_type.len() - 2])
+    } else if ref_type.starts_with("Option<") {
+        format!("Option::<{}>", &ref_type[7..ref_type.len() - 1])
+    } else if ref_type.starts_with("VecM<") {
+        // VecM<T> -> VecM::<T> or VecM<T, N> -> VecM::<T, N>
+        format!("VecM::{}", &ref_type[4..])
+    } else if ref_type.starts_with("BytesM<") {
+        format!("BytesM::{}", &ref_type[6..])
+    } else if ref_type.starts_with("BytesM") && ref_type.len() == 6 {
+        ref_type
+    } else if ref_type.starts_with("StringM<") {
+        format!("StringM::{}", &ref_type[7..])
+    } else if ref_type.starts_with("StringM") && ref_type.len() == 7 {
+        ref_type
+    } else {
+        ref_type
+    }
+}
+
+/// Get the element type for a VecM/array (for conversion impls).
+pub fn element_type_for_vec(type_: &Type) -> String {
+    match type_ {
+        Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
+        Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
+            base_rust_type_ref(element_type)
+        }
+        Type::Ident(name) => rust_type_name(name),
+        _ => "u8".to_string(),
+    }
+}
+
+/// Get the serde_as type for i64/u64 fields (e.g., "NumberOrString", "Option<NumberOrString>").
+/// Returns None if no serde_as is needed.
+pub fn serde_as_type(type_: &Type) -> Option<String> {
+    let base = get_base_numeric_type(type_);
+    match base.as_deref() {
+        Some("i64") | Some("u64") => Some(rust_type_ref_for_serde(type_, "NumberOrString")),
+        _ => None,
+    }
+}
+
+// =============================================================================
+// Type classification utilities
+// =============================================================================
+
+/// Check if a type is a builtin (maps directly to a Rust primitive).
+pub fn is_builtin_type(type_: &Type) -> bool {
+    matches!(
+        type_,
+        Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+    )
+}
+
+/// Check if a type is a fixed-length opaque array.
+pub fn is_fixed_opaque(type_: &Type) -> bool {
+    matches!(type_, Type::OpaqueFixed(_))
+}
+
+/// Check if a type is a fixed-length array (including fixed opaque).
+pub fn is_fixed_array(type_: &Type) -> bool {
+    matches!(type_, Type::OpaqueFixed(_) | Type::Array { .. })
+}
+
+/// Check if a type is a variable-length array.
+pub fn is_var_array(type_: &Type) -> bool {
+    matches!(
+        type_,
+        Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. }
+    )
+}
+
+// =============================================================================
+// Internal utilities
+// =============================================================================
+
+/// Collect the base type names referenced in a definition's fields.
+fn collect_field_types(def: &Definition) -> Vec<String> {
+    match def {
+        Definition::Struct(s) => s
+            .members
+            .iter()
+            .filter_map(|m| base_type_name(&m.type_))
+            .collect(),
+        Definition::Union(u) => u
+            .arms
+            .iter()
+            .filter_map(|arm| arm.type_.as_ref().and_then(base_type_name))
+            .collect(),
+        // Note: Typedefs are NOT included in cycle detection, matching Ruby behavior.
+        // Only structs and unions have their field types tracked for cycle detection.
+        Definition::Typedef(_) | Definition::Enum(_) | Definition::Const(_) => vec![],
+    }
+}
+
+/// Get the base type name from a Type (for cyclic detection).
+fn base_type_name(type_: &Type) -> Option<String> {
+    match type_ {
+        Type::Ident(name) => Some(rust_type_name(name)),
+        Type::Optional(inner) => base_type_name(inner),
+        Type::Array { element_type, .. } => base_type_name(element_type),
+        Type::VarArray { element_type, .. } => base_type_name(element_type),
+        _ => None,
+    }
+}
+
 /// Get the base Rust type reference with type_info for resolving const sizes to literals.
 fn base_rust_type_ref_with_info(type_: &Type, type_info: &TypeInfo) -> String {
     match type_ {
@@ -357,39 +407,6 @@ fn base_rust_type_ref_with_info(type_: &Type, type_info: &TypeInfo) -> String {
     }
 }
 
-/// Get the type to use in a read_xdr call (handles turbofish syntax).
-pub fn rust_read_call_type(
-    type_: &Type,
-    parent_type: Option<&str>,
-    type_info: &TypeInfo,
-) -> String {
-    let ref_type = rust_type_ref(type_, parent_type, type_info);
-
-    // Handle special cases for turbofish
-    if ref_type.starts_with('[') && ref_type.ends_with(']') {
-        format!("<{ref_type}>")
-    } else if ref_type.starts_with("Box<") {
-        format!("Box::{}", &ref_type[3..])
-    } else if ref_type.starts_with("Option<Box<") {
-        format!("Option::<Box<{}>>", &ref_type[11..ref_type.len() - 2])
-    } else if ref_type.starts_with("Option<") {
-        format!("Option::<{}>", &ref_type[7..ref_type.len() - 1])
-    } else if ref_type.starts_with("VecM<") {
-        // VecM<T> -> VecM::<T> or VecM<T, N> -> VecM::<T, N>
-        format!("VecM::{}", &ref_type[4..])
-    } else if ref_type.starts_with("BytesM<") {
-        format!("BytesM::{}", &ref_type[6..])
-    } else if ref_type.starts_with("BytesM") && ref_type.len() == 6 {
-        ref_type
-    } else if ref_type.starts_with("StringM<") {
-        format!("StringM::{}", &ref_type[7..])
-    } else if ref_type.starts_with("StringM") && ref_type.len() == 7 {
-        ref_type
-    } else {
-        ref_type
-    }
-}
-
 fn size_to_rust(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),
@@ -397,25 +414,20 @@ fn size_to_rust(size: &Size) -> String {
     }
 }
 
-/// Get the element type for a VecM/array (for conversion impls).
-pub fn element_type_for_vec(type_: &Type) -> String {
-    match type_ {
-        Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
-        Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
-            base_rust_type_ref(element_type)
-        }
-        Type::Ident(name) => rust_type_name(name),
-        _ => "u8".to_string(),
+/// Escape reserved names for type names.
+fn escape_name(name: &str) -> String {
+    match name {
+        "type" => "type_".to_string(),
+        "Error" => "SError".to_string(),
+        _ => name.to_string(),
     }
 }
 
-/// Get the serde_as type for i64/u64 fields (e.g., "NumberOrString", "Option<NumberOrString>").
-/// Returns None if no serde_as is needed.
-pub fn serde_as_type(type_: &Type) -> Option<String> {
-    let base = get_base_numeric_type(type_);
-    match base.as_deref() {
-        Some("i64") | Some("u64") => Some(rust_type_ref_for_serde(type_, "NumberOrString")),
-        _ => None,
+/// Escape reserved names for field names (after snake_case conversion).
+fn escape_field_name(name: &str) -> String {
+    match name {
+        "type" => "type_".to_string(),
+        _ => name.to_string(),
     }
 }
 

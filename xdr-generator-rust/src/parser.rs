@@ -5,25 +5,10 @@ use crate::lexer::{LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
 use thiserror::Error;
 
-/// Generate a nested type name from parent and field name.
-fn generate_nested_type_name(parent: &str, field: &str) -> String {
-    format!("{}{}", parent, field.to_upper_camel_case())
-}
-
 /// Parse XDR source text into an AST.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     let mut parser = Parser::new(source)?;
     parser.parse()
-}
-
-#[derive(Debug, Error)]
-pub enum ParseError {
-    #[error("lexer error: {0}")]
-    Lex(#[from] LexError),
-    #[error("unexpected token: expected {expected}, got {got:?}")]
-    UnexpectedToken { expected: String, got: Token },
-    #[error("unexpected end of file")]
-    UnexpectedEof,
 }
 
 pub struct Parser {
@@ -54,58 +39,6 @@ impl Parser {
             root_parent: None,
             global_values: std::collections::HashMap::new(),
         })
-    }
-
-    fn peek(&self) -> &Token {
-        self.tokens
-            .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof)
-    }
-
-    fn advance(&mut self) -> &Token {
-        let token = self
-            .tokens
-            .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof);
-        self.pos += 1;
-        token
-    }
-
-    fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
-        let token = self.advance().clone();
-        if token == expected {
-            Ok(())
-        } else {
-            Err(ParseError::UnexpectedToken {
-                expected: format!("{expected:?}"),
-                got: token,
-            })
-        }
-    }
-
-    fn expect_ident(&mut self) -> Result<String, ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::Ident(s) => Ok(s),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "identifier".to_string(),
-                got: token,
-            }),
-        }
-    }
-
-    /// Parse an integer literal, returning both the value and whether it was in hex format.
-    fn expect_int_with_hex(&mut self) -> Result<(i64, bool), ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::IntLiteral { value, is_hex } => Ok((value, is_hex)),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "integer literal".to_string(),
-                got: token,
-            }),
-        }
     }
 
     /// Parse the entire input.
@@ -243,6 +176,168 @@ impl Parser {
         })
     }
 
+    fn parse_enum(&mut self) -> Result<Enum, ParseError> {
+        self.expect(Token::Enum)?;
+        let name = self.expect_ident()?;
+        self.expect(Token::LBrace)?;
+
+        let mut members = Vec::new();
+        loop {
+            let member_name = self.expect_ident()?;
+            self.expect(Token::Eq)?;
+
+            // Value can be integer or identifier (reference to another enum value)
+            let value = match self.peek().clone() {
+                Token::IntLiteral { value, .. } => {
+                    self.advance();
+                    value as i32
+                }
+                Token::Ident(ref_name) => {
+                    self.advance();
+                    // For now, we'll store 0 and resolve later
+                    // In practice, we'd need to resolve this reference
+                    // The Ruby generator handles this via the xdrgen gem
+                    self.resolve_enum_value(&ref_name, &members)
+                }
+                other => {
+                    return Err(ParseError::UnexpectedToken {
+                        expected: "integer or identifier".to_string(),
+                        got: other,
+                    })
+                }
+            };
+
+            members.push(EnumMember {
+                name: member_name,
+                value,
+            });
+
+            match self.peek() {
+                Token::Comma => {
+                    self.advance();
+                    if *self.peek() == Token::RBrace {
+                        break;
+                    }
+                }
+                Token::RBrace => break,
+                other => {
+                    return Err(ParseError::UnexpectedToken {
+                        expected: ", or }".to_string(),
+                        got: other.clone(),
+                    })
+                }
+            }
+        }
+
+        self.expect(Token::RBrace)?;
+        self.expect(Token::Semi)?;
+
+        let source = self.extract_definition_source(&name);
+
+        // Add all members to global_values for cross-enum resolution
+        for m in &members {
+            self.global_values.insert(m.name.clone(), m.value as i64);
+        }
+
+        Ok(Enum {
+            name,
+            members,
+            source,
+        })
+    }
+
+    fn parse_union(&mut self) -> Result<Union, ParseError> {
+        self.expect(Token::Union)?;
+        let name = self.expect_ident()?;
+        self.expect(Token::Switch)?;
+        self.expect(Token::LParen)?;
+
+        // Parse discriminant
+        let disc_type = self.parse_type()?;
+        let disc_name = self.expect_ident()?;
+
+        self.expect(Token::RParen)?;
+        self.expect(Token::LBrace)?;
+
+        // Set root_parent for inline struct extraction
+        let prev_root = self.root_parent.take();
+        self.root_parent = Some(name.clone());
+
+        let mut arms = Vec::new();
+        let mut default_arm = None;
+
+        while *self.peek() != Token::RBrace {
+            let arm = self.parse_union_arm()?;
+            if arm.cases.is_empty() {
+                // This is a default arm
+                default_arm = Some(Box::new(arm));
+            } else {
+                arms.push(arm);
+            }
+        }
+
+        // Restore previous root_parent
+        self.root_parent = prev_root;
+
+        self.expect(Token::RBrace)?;
+        self.expect(Token::Semi)?;
+
+        let source = self.extract_definition_source(&name);
+
+        Ok(Union {
+            name,
+            discriminant: Discriminant {
+                name: disc_name,
+                type_: disc_type,
+            },
+            arms,
+            default_arm,
+            source,
+            is_nested: false,
+            parent: None,
+        })
+    }
+
+    fn parse_typedef(&mut self) -> Result<Typedef, ParseError> {
+        self.expect(Token::Typedef)?;
+
+        let type_ = self.parse_type()?;
+        let name = self.expect_ident()?;
+
+        // Handle array suffix on typedef name
+        let type_ = self.parse_type_suffix(type_)?;
+
+        self.expect(Token::Semi)?;
+
+        let source = self.extract_definition_source(&name);
+
+        Ok(Typedef {
+            name,
+            type_,
+            source,
+        })
+    }
+
+    fn parse_const(&mut self) -> Result<Const, ParseError> {
+        self.expect(Token::Const)?;
+        let name = self.expect_ident()?;
+        self.expect(Token::Eq)?;
+        let (value, is_hex) = self.expect_int_with_hex()?;
+        self.expect(Token::Semi)?;
+
+        let source = self.extract_definition_source(&name);
+
+        // Add const value to global_values for enum reference resolution
+        self.global_values.insert(name.clone(), value);
+
+        Ok(Const {
+            name,
+            value,
+            is_hex,
+            source,
+        })
+    }
+
     fn parse_member(&mut self) -> Result<Member, ParseError> {
         // Record start position for source extraction (for anonymous unions)
         let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
@@ -327,358 +422,6 @@ impl Parser {
         };
 
         Ok(Member { name, type_ })
-    }
-
-    fn parse_type(&mut self) -> Result<Type, ParseError> {
-        match self.peek().clone() {
-            Token::Int => {
-                self.advance();
-                Ok(Type::Int)
-            }
-            Token::Unsigned => {
-                self.advance();
-                match self.peek() {
-                    Token::Int => {
-                        self.advance();
-                        Ok(Type::UnsignedInt)
-                    }
-                    Token::Hyper => {
-                        self.advance();
-                        Ok(Type::UnsignedHyper)
-                    }
-                    other => Err(ParseError::UnexpectedToken {
-                        expected: "int or hyper".to_string(),
-                        got: other.clone(),
-                    }),
-                }
-            }
-            Token::Hyper => {
-                self.advance();
-                Ok(Type::Hyper)
-            }
-            Token::Float => {
-                self.advance();
-                Ok(Type::Float)
-            }
-            Token::Double => {
-                self.advance();
-                Ok(Type::Double)
-            }
-            Token::Bool => {
-                self.advance();
-                Ok(Type::Bool)
-            }
-            Token::Opaque => {
-                self.advance();
-                self.parse_opaque_suffix()
-            }
-            Token::String => {
-                self.advance();
-                self.parse_string_suffix()
-            }
-            Token::Union => {
-                // Anonymous union inside struct
-                // union switch (type name) { ... }
-                self.advance();
-                self.expect(Token::Switch)?;
-                self.expect(Token::LParen)?;
-                let disc_type = self.parse_type()?;
-                let disc_name = self.expect_ident()?;
-                self.expect(Token::RParen)?;
-                self.expect(Token::LBrace)?;
-
-                let mut arms = Vec::new();
-                let mut default_arm = None;
-
-                while *self.peek() != Token::RBrace {
-                    let arm = self.parse_union_arm()?;
-                    if arm.cases.is_empty() {
-                        default_arm = Some(Box::new(arm));
-                    } else {
-                        arms.push(arm);
-                    }
-                }
-                self.expect(Token::RBrace)?;
-
-                // Return an AnonymousUnion that will be extracted in parse_member
-                Ok(Type::AnonymousUnion {
-                    discriminant: Box::new(Discriminant {
-                        name: disc_name,
-                        type_: disc_type,
-                    }),
-                    arms,
-                    default_arm,
-                })
-            }
-            Token::Ident(name) => {
-                self.advance();
-                // Handle built-in type aliases
-                let base_type = match name.as_str() {
-                    "uint64" => Type::UnsignedHyper,
-                    "int64" => Type::Hyper,
-                    "uint32" => Type::UnsignedInt,
-                    "int32" => Type::Int,
-                    "TRUE" | "FALSE" => Type::Bool,
-                    _ => Type::Ident(name),
-                };
-                // Check for optional type suffix (Type* field)
-                if *self.peek() == Token::Star {
-                    self.advance();
-                    Ok(Type::Optional(Box::new(base_type)))
-                } else {
-                    Ok(base_type)
-                }
-            }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "type".to_string(),
-                got: other,
-            }),
-        }
-    }
-
-    fn parse_opaque_suffix(&mut self) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LBracket => {
-                // Fixed: opaque[size]
-                self.advance();
-                let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
-                Ok(Type::OpaqueFixed(size))
-            }
-            Token::LAngle => {
-                // Variable: opaque<max> or opaque<>
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-                Ok(Type::OpaqueVar(max))
-            }
-            _ => {
-                // Bare opaque - variable with no max (rare)
-                Ok(Type::OpaqueVar(None))
-            }
-        }
-    }
-
-    fn parse_string_suffix(&mut self) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LAngle => {
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-                Ok(Type::String(max))
-            }
-            _ => Ok(Type::String(None)),
-        }
-    }
-
-    fn parse_type_suffix(&mut self, base: Type) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LBracket => {
-                self.advance();
-                let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
-
-                // Special case: opaque name[size] or string name[size]
-                // means fixed opaque/string, not an array of opaque/string
-                match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
-                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
-                    _ => Ok(Type::Array {
-                        element_type: Box::new(base),
-                        size,
-                    }),
-                }
-            }
-            Token::LAngle => {
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-
-                // Special case: opaque name<max> or string name<max>
-                // means variable opaque/string with max, not a var array
-                match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
-                    Type::String(None) => Ok(Type::String(max)),
-                    _ => Ok(Type::VarArray {
-                        element_type: Box::new(base),
-                        max_size: max,
-                    }),
-                }
-            }
-            Token::Star => {
-                // Optional: type *name
-                self.advance();
-                Ok(Type::Optional(Box::new(base)))
-            }
-            _ => Ok(base),
-        }
-    }
-
-    fn parse_size(&mut self) -> Result<Size, ParseError> {
-        match self.peek().clone() {
-            Token::IntLiteral { value, .. } => {
-                self.advance();
-                Ok(Size::Literal(value as u32))
-            }
-            Token::Ident(name) => {
-                self.advance();
-                Ok(Size::Named(name))
-            }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "size (integer or identifier)".to_string(),
-                got: other,
-            }),
-        }
-    }
-
-    fn parse_enum(&mut self) -> Result<Enum, ParseError> {
-        self.expect(Token::Enum)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
-
-        let mut members = Vec::new();
-        loop {
-            let member_name = self.expect_ident()?;
-            self.expect(Token::Eq)?;
-
-            // Value can be integer or identifier (reference to another enum value)
-            let value = match self.peek().clone() {
-                Token::IntLiteral { value, .. } => {
-                    self.advance();
-                    value as i32
-                }
-                Token::Ident(ref_name) => {
-                    self.advance();
-                    // For now, we'll store 0 and resolve later
-                    // In practice, we'd need to resolve this reference
-                    // The Ruby generator handles this via the xdrgen gem
-                    self.resolve_enum_value(&ref_name, &members)
-                }
-                other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: "integer or identifier".to_string(),
-                        got: other,
-                    })
-                }
-            };
-
-            members.push(EnumMember {
-                name: member_name,
-                value,
-            });
-
-            match self.peek() {
-                Token::Comma => {
-                    self.advance();
-                    if *self.peek() == Token::RBrace {
-                        break;
-                    }
-                }
-                Token::RBrace => break,
-                other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: ", or }".to_string(),
-                        got: other.clone(),
-                    })
-                }
-            }
-        }
-
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
-
-        let source = self.extract_definition_source(&name);
-
-        // Add all members to global_values for cross-enum resolution
-        for m in &members {
-            self.global_values.insert(m.name.clone(), m.value as i64);
-        }
-
-        Ok(Enum {
-            name,
-            members,
-            source,
-        })
-    }
-
-    /// Try to resolve an enum value reference
-    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
-        // First check if it's in the current enum being parsed
-        for m in members {
-            if m.name == name {
-                return m.value;
-            }
-        }
-        // Check global values (previously parsed enums and consts)
-        if let Some(&value) = self.global_values.get(name) {
-            return value as i32;
-        }
-        // Return 0 as fallback
-        0
-    }
-
-    fn parse_union(&mut self) -> Result<Union, ParseError> {
-        self.expect(Token::Union)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::Switch)?;
-        self.expect(Token::LParen)?;
-
-        // Parse discriminant
-        let disc_type = self.parse_type()?;
-        let disc_name = self.expect_ident()?;
-
-        self.expect(Token::RParen)?;
-        self.expect(Token::LBrace)?;
-
-        // Set root_parent for inline struct extraction
-        let prev_root = self.root_parent.take();
-        self.root_parent = Some(name.clone());
-
-        let mut arms = Vec::new();
-        let mut default_arm = None;
-
-        while *self.peek() != Token::RBrace {
-            let arm = self.parse_union_arm()?;
-            if arm.cases.is_empty() {
-                // This is a default arm
-                default_arm = Some(Box::new(arm));
-            } else {
-                arms.push(arm);
-            }
-        }
-
-        // Restore previous root_parent
-        self.root_parent = prev_root;
-
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
-
-        let source = self.extract_definition_source(&name);
-
-        Ok(Union {
-            name,
-            discriminant: Discriminant {
-                name: disc_name,
-                type_: disc_type,
-            },
-            arms,
-            default_arm,
-            source,
-            is_nested: false,
-            parent: None,
-        })
     }
 
     fn parse_union_arm(&mut self) -> Result<UnionArm, ParseError> {
@@ -902,44 +645,286 @@ impl Parser {
         Ok(UnionArm { cases, type_ })
     }
 
-    fn parse_typedef(&mut self) -> Result<Typedef, ParseError> {
-        self.expect(Token::Typedef)?;
+    fn parse_type(&mut self) -> Result<Type, ParseError> {
+        match self.peek().clone() {
+            Token::Int => {
+                self.advance();
+                Ok(Type::Int)
+            }
+            Token::Unsigned => {
+                self.advance();
+                match self.peek() {
+                    Token::Int => {
+                        self.advance();
+                        Ok(Type::UnsignedInt)
+                    }
+                    Token::Hyper => {
+                        self.advance();
+                        Ok(Type::UnsignedHyper)
+                    }
+                    other => Err(ParseError::UnexpectedToken {
+                        expected: "int or hyper".to_string(),
+                        got: other.clone(),
+                    }),
+                }
+            }
+            Token::Hyper => {
+                self.advance();
+                Ok(Type::Hyper)
+            }
+            Token::Float => {
+                self.advance();
+                Ok(Type::Float)
+            }
+            Token::Double => {
+                self.advance();
+                Ok(Type::Double)
+            }
+            Token::Bool => {
+                self.advance();
+                Ok(Type::Bool)
+            }
+            Token::Opaque => {
+                self.advance();
+                self.parse_opaque_suffix()
+            }
+            Token::String => {
+                self.advance();
+                self.parse_string_suffix()
+            }
+            Token::Union => {
+                // Anonymous union inside struct
+                // union switch (type name) { ... }
+                self.advance();
+                self.expect(Token::Switch)?;
+                self.expect(Token::LParen)?;
+                let disc_type = self.parse_type()?;
+                let disc_name = self.expect_ident()?;
+                self.expect(Token::RParen)?;
+                self.expect(Token::LBrace)?;
 
-        let type_ = self.parse_type()?;
-        let name = self.expect_ident()?;
+                let mut arms = Vec::new();
+                let mut default_arm = None;
 
-        // Handle array suffix on typedef name
-        let type_ = self.parse_type_suffix(type_)?;
+                while *self.peek() != Token::RBrace {
+                    let arm = self.parse_union_arm()?;
+                    if arm.cases.is_empty() {
+                        default_arm = Some(Box::new(arm));
+                    } else {
+                        arms.push(arm);
+                    }
+                }
+                self.expect(Token::RBrace)?;
 
-        self.expect(Token::Semi)?;
-
-        let source = self.extract_definition_source(&name);
-
-        Ok(Typedef {
-            name,
-            type_,
-            source,
-        })
+                // Return an AnonymousUnion that will be extracted in parse_member
+                Ok(Type::AnonymousUnion {
+                    discriminant: Box::new(Discriminant {
+                        name: disc_name,
+                        type_: disc_type,
+                    }),
+                    arms,
+                    default_arm,
+                })
+            }
+            Token::Ident(name) => {
+                self.advance();
+                // Handle built-in type aliases
+                let base_type = match name.as_str() {
+                    "uint64" => Type::UnsignedHyper,
+                    "int64" => Type::Hyper,
+                    "uint32" => Type::UnsignedInt,
+                    "int32" => Type::Int,
+                    "TRUE" | "FALSE" => Type::Bool,
+                    _ => Type::Ident(name),
+                };
+                // Check for optional type suffix (Type* field)
+                if *self.peek() == Token::Star {
+                    self.advance();
+                    Ok(Type::Optional(Box::new(base_type)))
+                } else {
+                    Ok(base_type)
+                }
+            }
+            other => Err(ParseError::UnexpectedToken {
+                expected: "type".to_string(),
+                got: other,
+            }),
+        }
     }
 
-    fn parse_const(&mut self) -> Result<Const, ParseError> {
-        self.expect(Token::Const)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::Eq)?;
-        let (value, is_hex) = self.expect_int_with_hex()?;
-        self.expect(Token::Semi)?;
+    fn parse_type_suffix(&mut self, base: Type) -> Result<Type, ParseError> {
+        match self.peek() {
+            Token::LBracket => {
+                self.advance();
+                let size = self.parse_size()?;
+                self.expect(Token::RBracket)?;
 
-        let source = self.extract_definition_source(&name);
+                // Special case: opaque name[size] or string name[size]
+                // means fixed opaque/string, not an array of opaque/string
+                match base {
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
+                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
+                    _ => Ok(Type::Array {
+                        element_type: Box::new(base),
+                        size,
+                    }),
+                }
+            }
+            Token::LAngle => {
+                self.advance();
+                let max = if *self.peek() == Token::RAngle {
+                    None
+                } else {
+                    Some(self.parse_size()?)
+                };
+                self.expect(Token::RAngle)?;
 
-        // Add const value to global_values for enum reference resolution
-        self.global_values.insert(name.clone(), value);
+                // Special case: opaque name<max> or string name<max>
+                // means variable opaque/string with max, not a var array
+                match base {
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
+                    Type::String(None) => Ok(Type::String(max)),
+                    _ => Ok(Type::VarArray {
+                        element_type: Box::new(base),
+                        max_size: max,
+                    }),
+                }
+            }
+            Token::Star => {
+                // Optional: type *name
+                self.advance();
+                Ok(Type::Optional(Box::new(base)))
+            }
+            _ => Ok(base),
+        }
+    }
 
-        Ok(Const {
-            name,
-            value,
-            is_hex,
-            source,
-        })
+    fn parse_opaque_suffix(&mut self) -> Result<Type, ParseError> {
+        match self.peek() {
+            Token::LBracket => {
+                // Fixed: opaque[size]
+                self.advance();
+                let size = self.parse_size()?;
+                self.expect(Token::RBracket)?;
+                Ok(Type::OpaqueFixed(size))
+            }
+            Token::LAngle => {
+                // Variable: opaque<max> or opaque<>
+                self.advance();
+                let max = if *self.peek() == Token::RAngle {
+                    None
+                } else {
+                    Some(self.parse_size()?)
+                };
+                self.expect(Token::RAngle)?;
+                Ok(Type::OpaqueVar(max))
+            }
+            _ => {
+                // Bare opaque - variable with no max (rare)
+                Ok(Type::OpaqueVar(None))
+            }
+        }
+    }
+
+    fn parse_string_suffix(&mut self) -> Result<Type, ParseError> {
+        match self.peek() {
+            Token::LAngle => {
+                self.advance();
+                let max = if *self.peek() == Token::RAngle {
+                    None
+                } else {
+                    Some(self.parse_size()?)
+                };
+                self.expect(Token::RAngle)?;
+                Ok(Type::String(max))
+            }
+            _ => Ok(Type::String(None)),
+        }
+    }
+
+    fn parse_size(&mut self) -> Result<Size, ParseError> {
+        match self.peek().clone() {
+            Token::IntLiteral { value, .. } => {
+                self.advance();
+                Ok(Size::Literal(value as u32))
+            }
+            Token::Ident(name) => {
+                self.advance();
+                Ok(Size::Named(name))
+            }
+            other => Err(ParseError::UnexpectedToken {
+                expected: "size (integer or identifier)".to_string(),
+                got: other,
+            }),
+        }
+    }
+
+    fn peek(&self) -> &Token {
+        self.tokens
+            .get(self.pos)
+            .map(|st| &st.token)
+            .unwrap_or(&Token::Eof)
+    }
+
+    fn advance(&mut self) -> &Token {
+        let token = self
+            .tokens
+            .get(self.pos)
+            .map(|st| &st.token)
+            .unwrap_or(&Token::Eof);
+        self.pos += 1;
+        token
+    }
+
+    fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
+        let token = self.advance().clone();
+        if token == expected {
+            Ok(())
+        } else {
+            Err(ParseError::UnexpectedToken {
+                expected: format!("{expected:?}"),
+                got: token,
+            })
+        }
+    }
+
+    fn expect_ident(&mut self) -> Result<String, ParseError> {
+        let token = self.advance().clone();
+        match token {
+            Token::Ident(s) => Ok(s),
+            _ => Err(ParseError::UnexpectedToken {
+                expected: "identifier".to_string(),
+                got: token,
+            }),
+        }
+    }
+
+    /// Parse an integer literal, returning both the value and whether it was in hex format.
+    fn expect_int_with_hex(&mut self) -> Result<(i64, bool), ParseError> {
+        let token = self.advance().clone();
+        match token {
+            Token::IntLiteral { value, is_hex } => Ok((value, is_hex)),
+            _ => Err(ParseError::UnexpectedToken {
+                expected: "integer literal".to_string(),
+                got: token,
+            }),
+        }
+    }
+
+    /// Try to resolve an enum value reference
+    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
+        // First check if it's in the current enum being parsed
+        for m in members {
+            if m.name == name {
+                return m.value;
+            }
+        }
+        // Check global values (previously parsed enums and consts)
+        if let Some(&value) = self.global_values.get(name) {
+            return value as i32;
+        }
+        // Return 0 as fallback
+        0
     }
 
     /// Extract the source text for a definition using the tracked start position.
@@ -968,6 +953,16 @@ impl Parser {
             String::new()
         }
     }
+}
+
+#[derive(Debug, Error)]
+pub enum ParseError {
+    #[error("lexer error: {0}")]
+    Lex(#[from] LexError),
+    #[error("unexpected token: expected {expected}, got {got:?}")]
+    UnexpectedToken { expected: String, got: Token },
+    #[error("unexpected end of file")]
+    UnexpectedEof,
 }
 
 /// Fix parent relationships for nested types based on naming patterns.
@@ -1015,6 +1010,11 @@ fn fix_parent_relationships(definitions: &mut [Definition]) {
             }
         }
     }
+}
+
+/// Generate a nested type name from parent and field name.
+fn generate_nested_type_name(parent: &str, field: &str) -> String {
+    format!("{}{}", parent, field.to_upper_camel_case())
 }
 
 #[cfg(test)]

@@ -1,10 +1,126 @@
 //! AST types for XDR definitions.
 
-/// A size specification, either a literal number or a named constant.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Size {
-    Literal(u32),
-    Named(String),
+/// The root of a parsed XDR file or collection of files.
+#[derive(Debug, Clone, Default)]
+pub struct XdrSpec {
+    pub namespaces: Vec<Namespace>,
+    pub definitions: Vec<Definition>,
+}
+
+impl XdrSpec {
+    /// Get all definitions, including those in namespaces.
+    pub fn all_definitions(&self) -> impl Iterator<Item = &Definition> {
+        self.definitions
+            .iter()
+            .chain(self.namespaces.iter().flat_map(|ns| &ns.definitions))
+    }
+}
+
+/// A namespace containing definitions.
+#[derive(Debug, Clone)]
+pub struct Namespace {
+    pub name: String,
+    pub definitions: Vec<Definition>,
+}
+
+/// A top-level definition.
+#[derive(Debug, Clone)]
+pub enum Definition {
+    Struct(Struct),
+    Enum(Enum),
+    Union(Union),
+    Typedef(Typedef),
+    Const(Const),
+}
+
+impl Definition {
+    /// Get the name of this definition.
+    pub fn name(&self) -> &str {
+        match self {
+            Definition::Struct(s) => &s.name,
+            Definition::Enum(e) => &e.name,
+            Definition::Union(u) => &u.name,
+            Definition::Typedef(t) => &t.name,
+            Definition::Const(c) => &c.name,
+        }
+    }
+
+    /// Check if this definition is nested (inline struct/union extracted from parent).
+    pub fn is_nested(&self) -> bool {
+        match self {
+            Definition::Struct(s) => s.is_nested,
+            Definition::Union(u) => u.is_nested,
+            // Enums, typedefs, and consts are never nested
+            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => false,
+        }
+    }
+
+    /// Get the parent type name if this is a nested definition.
+    pub fn parent(&self) -> Option<&str> {
+        match self {
+            Definition::Struct(s) => s.parent.as_deref(),
+            Definition::Union(u) => u.parent.as_deref(),
+            // Enums, typedefs, and consts have no parent
+            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => None,
+        }
+    }
+}
+
+/// A struct definition.
+#[derive(Debug, Clone)]
+pub struct Struct {
+    pub name: String,
+    pub members: Vec<Member>,
+    /// Original XDR source text for documentation.
+    pub source: String,
+    /// True if this is a nested/inline struct extracted from a union arm.
+    pub is_nested: bool,
+    /// Name of the parent type if this is nested, for ordering purposes.
+    pub parent: Option<String>,
+}
+
+/// An enum definition.
+#[derive(Debug, Clone)]
+pub struct Enum {
+    pub name: String,
+    pub members: Vec<EnumMember>,
+    /// Original XDR source text for documentation.
+    pub source: String,
+}
+
+/// A union definition.
+#[derive(Debug, Clone)]
+pub struct Union {
+    pub name: String,
+    pub discriminant: Discriminant,
+    pub arms: Vec<UnionArm>,
+    pub default_arm: Option<Box<UnionArm>>,
+    /// Original XDR source text for documentation.
+    pub source: String,
+    /// True if this is a nested/inline union extracted from a struct field.
+    pub is_nested: bool,
+    /// Name of the parent type if this is nested, for ordering purposes.
+    pub parent: Option<String>,
+}
+
+/// A typedef definition.
+#[derive(Debug, Clone)]
+pub struct Typedef {
+    pub name: String,
+    pub type_: Type,
+    /// Original XDR source text for documentation.
+    pub source: String,
+}
+
+/// A const definition.
+#[derive(Debug, Clone)]
+pub struct Const {
+    pub name: String,
+    pub value: i64,
+    /// Whether the value was written in hex format in the source.
+    pub is_hex: bool,
+    /// Original XDR source text for documentation.
+    pub source: String,
 }
 
 /// XDR type specification.
@@ -57,19 +173,6 @@ pub struct Member {
     pub type_: Type,
 }
 
-/// A struct definition.
-#[derive(Debug, Clone)]
-pub struct Struct {
-    pub name: String,
-    pub members: Vec<Member>,
-    /// Original XDR source text for documentation.
-    pub source: String,
-    /// True if this is a nested/inline struct extracted from a union arm.
-    pub is_nested: bool,
-    /// Name of the parent type if this is nested, for ordering purposes.
-    pub parent: Option<String>,
-}
-
 /// A member of an enum.
 #[derive(Debug, Clone)]
 pub struct EnumMember {
@@ -77,13 +180,19 @@ pub struct EnumMember {
     pub value: i32,
 }
 
-/// An enum definition.
-#[derive(Debug, Clone)]
-pub struct Enum {
+/// The discriminant of a union.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Discriminant {
     pub name: String,
-    pub members: Vec<EnumMember>,
-    /// Original XDR source text for documentation.
-    pub source: String,
+    pub type_: Type,
+}
+
+/// An arm of a union (one or more cases with the same type).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnionArm {
+    pub cases: Vec<UnionCase>,
+    /// The type for this arm. None means `void`.
+    pub type_: Option<Type>,
 }
 
 /// A case in a union.
@@ -102,118 +211,9 @@ pub enum CaseValue {
     Literal(i32),
 }
 
-/// An arm of a union (one or more cases with the same type).
+/// A size specification, either a literal number or a named constant.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnionArm {
-    pub cases: Vec<UnionCase>,
-    /// The type for this arm. None means `void`.
-    pub type_: Option<Type>,
-}
-
-/// The discriminant of a union.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Discriminant {
-    pub name: String,
-    pub type_: Type,
-}
-
-/// A union definition.
-#[derive(Debug, Clone)]
-pub struct Union {
-    pub name: String,
-    pub discriminant: Discriminant,
-    pub arms: Vec<UnionArm>,
-    pub default_arm: Option<Box<UnionArm>>,
-    /// Original XDR source text for documentation.
-    pub source: String,
-    /// True if this is a nested/inline union extracted from a struct field.
-    pub is_nested: bool,
-    /// Name of the parent type if this is nested, for ordering purposes.
-    pub parent: Option<String>,
-}
-
-/// A typedef definition.
-#[derive(Debug, Clone)]
-pub struct Typedef {
-    pub name: String,
-    pub type_: Type,
-    /// Original XDR source text for documentation.
-    pub source: String,
-}
-
-/// A const definition.
-#[derive(Debug, Clone)]
-pub struct Const {
-    pub name: String,
-    pub value: i64,
-    /// Whether the value was written in hex format in the source.
-    pub is_hex: bool,
-    /// Original XDR source text for documentation.
-    pub source: String,
-}
-
-/// A top-level definition.
-#[derive(Debug, Clone)]
-pub enum Definition {
-    Struct(Struct),
-    Enum(Enum),
-    Union(Union),
-    Typedef(Typedef),
-    Const(Const),
-}
-
-impl Definition {
-    /// Get the name of this definition.
-    pub fn name(&self) -> &str {
-        match self {
-            Definition::Struct(s) => &s.name,
-            Definition::Enum(e) => &e.name,
-            Definition::Union(u) => &u.name,
-            Definition::Typedef(t) => &t.name,
-            Definition::Const(c) => &c.name,
-        }
-    }
-
-    /// Check if this definition is nested (inline struct/union extracted from parent).
-    pub fn is_nested(&self) -> bool {
-        match self {
-            Definition::Struct(s) => s.is_nested,
-            Definition::Union(u) => u.is_nested,
-            // Enums, typedefs, and consts are never nested
-            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => false,
-        }
-    }
-
-    /// Get the parent type name if this is a nested definition.
-    pub fn parent(&self) -> Option<&str> {
-        match self {
-            Definition::Struct(s) => s.parent.as_deref(),
-            Definition::Union(u) => u.parent.as_deref(),
-            // Enums, typedefs, and consts have no parent
-            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => None,
-        }
-    }
-}
-
-/// A namespace containing definitions.
-#[derive(Debug, Clone)]
-pub struct Namespace {
-    pub name: String,
-    pub definitions: Vec<Definition>,
-}
-
-/// The root of a parsed XDR file or collection of files.
-#[derive(Debug, Clone, Default)]
-pub struct XdrSpec {
-    pub namespaces: Vec<Namespace>,
-    pub definitions: Vec<Definition>,
-}
-
-impl XdrSpec {
-    /// Get all definitions, including those in namespaces.
-    pub fn all_definitions(&self) -> impl Iterator<Item = &Definition> {
-        self.definitions
-            .iter()
-            .chain(self.namespaces.iter().flat_map(|ns| &ns.definitions))
-    }
+pub enum Size {
+    Literal(u32),
+    Named(String),
 }

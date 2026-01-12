@@ -12,177 +12,6 @@ use crate::types::{
 use askama::Template;
 use sha2::{Digest, Sha256};
 
-/// Find the common prefix to strip from enum member names.
-/// Returns the prefix up to and including the last underscore that is common to all names.
-fn find_common_prefix<'a>(names: &[&'a str]) -> &'a str {
-    if names.is_empty() || names.len() == 1 {
-        return "";
-    }
-
-    let first = names[0];
-
-    // Find longest common prefix among all names
-    let common_len = names.iter().skip(1).fold(first.len(), |len, name| {
-        first
-            .bytes()
-            .zip(name.bytes())
-            .take(len)
-            .take_while(|(a, b)| a == b)
-            .count()
-    });
-
-    let common = &first[..common_len];
-
-    // Find the last underscore in the common prefix
-    // If found, strip up to and including the underscore
-    if let Some(last_underscore) = common.rfind('_') {
-        &first[..=last_underscore]
-    } else {
-        ""
-    }
-}
-
-/// Strip common prefix from an enum member name.
-/// If the result would start with a digit, keep the first letter of the prefix.
-fn strip_prefix(name: &str, prefix: &str) -> String {
-    if !prefix.is_empty() && name.starts_with(prefix) {
-        let stripped = &name[prefix.len()..];
-        // If result starts with digit, keep the first letter of the prefix
-        // e.g., "BINARY_FUSE_FILTER_8_BIT" with prefix "BINARY_FUSE_FILTER_" -> "B8_BIT"
-        if stripped.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-            if let Some(first_char) = prefix.chars().next() {
-                return format!("{first_char}{stripped}");
-            }
-        }
-        stripped.to_string()
-    } else {
-        name.to_string()
-    }
-}
-
-/// Data for rendering the main generated file.
-#[derive(Template)]
-#[template(path = "generated.rs.jinja", escape = "none")]
-pub struct GeneratedTemplate {
-    pub xdr_files_sha256: Vec<(String, String)>,
-    pub header: String,
-    pub definitions: Vec<DefinitionOutput>,
-    pub type_variant_enum: TypeEnumOutput,
-}
-
-/// Output for a single definition.
-pub enum DefinitionOutput {
-    Struct(StructOutput),
-    Enum(EnumOutput),
-    Union(UnionOutput),
-    TypedefAlias(TypedefAliasOutput),
-    TypedefNewtype(TypedefNewtypeOutput),
-    Const(ConstOutput),
-}
-
-/// Data for rendering a struct.
-pub struct StructOutput {
-    pub name: String,
-    pub source_comment: String,
-    pub has_default: bool,
-    pub is_custom_str: bool,
-    pub members: Vec<MemberOutput>,
-    /// Comma-separated list of member names for destructuring (e.g., "id, ed25519,")
-    pub member_names: String,
-}
-
-pub struct MemberOutput {
-    pub name: String,
-    pub type_ref: String,
-    pub read_call: String,
-    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
-    pub serde_as_type: Option<String>,
-}
-
-/// Data for rendering an enum.
-pub struct EnumOutput {
-    pub name: String,
-    pub source_comment: String,
-    pub has_default: bool,
-    pub is_custom_str: bool,
-    pub members: Vec<EnumMemberOutput>,
-}
-
-pub struct EnumMemberOutput {
-    pub name: String,
-    pub value: i32,
-    pub is_first: bool,
-}
-
-/// Data for rendering a union.
-pub struct UnionOutput {
-    pub name: String,
-    pub source_comment: String,
-    pub has_default: bool,
-    pub is_custom_str: bool,
-    pub discriminant_type: String,
-    pub discriminant_is_builtin: bool,
-    pub arms: Vec<UnionArmOutput>,
-    /// For default impl: case name of the first arm.
-    pub first_arm_case_name: String,
-    /// For default impl: type to call ::default() on (read_call of first arm, if non-void)
-    pub first_arm_type: Option<String>,
-}
-
-pub struct UnionArmOutput {
-    pub case_name: String,
-    pub case_value: String,
-    pub is_void: bool,
-    pub type_ref: Option<String>,
-    pub read_call: Option<String>,
-    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
-    pub serde_as_type: Option<String>,
-}
-
-/// Data for a typedef that's a simple type alias.
-pub struct TypedefAliasOutput {
-    pub name: String,
-    pub source_comment: String,
-    pub type_ref: String,
-}
-
-/// Data for a typedef that's a newtype struct.
-pub struct TypedefNewtypeOutput {
-    pub name: String,
-    pub source_comment: String,
-    pub has_default: bool,
-    pub is_var_array: bool,
-    pub is_fixed_opaque: bool,
-    pub is_fixed_array: bool,
-    pub is_custom_str: bool,
-    pub type_ref: String,
-    pub read_call: String,
-    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
-    pub serde_as_type: Option<String>,
-    pub element_type: String,
-    pub size: Option<String>,
-    /// Fixed opaque types have custom Debug impl (hex format).
-    pub custom_debug: bool,
-    pub custom_display_fromstr: bool,
-    pub custom_schemars: bool,
-}
-
-/// Data for a const.
-pub struct ConstOutput {
-    /// The Rust const name (SCREAMING_SNAKE_CASE).
-    pub name: String,
-    /// The name for the doc comment (UpperCamelCase).
-    pub doc_name: String,
-    pub source_comment: String,
-    /// The formatted value string (decimal or hex).
-    pub value_str: String,
-}
-
-/// Data for the TypeVariant and Type enums.
-pub struct TypeEnumOutput {
-    pub types: Vec<String>,
-}
-
 /// Generator for producing Rust code from XDR specs.
 pub struct Generator {
     pub options: Options,
@@ -335,25 +164,6 @@ impl Generator {
         }
     }
 
-    fn generate_member(&self, m: &Member, parent: &str, custom_str: bool) -> MemberOutput {
-        let name = rust_field_name(&m.name);
-        let type_ref = rust_type_ref(&m.type_, Some(parent), &self.type_info);
-        let read_call = rust_read_call_type(&m.type_, Some(parent), &self.type_info);
-        // For custom_str types, we skip serde_as since they use SerializeDisplay
-        let serde_as = if custom_str {
-            None
-        } else {
-            serde_as_type(&m.type_)
-        };
-
-        MemberOutput {
-            name,
-            type_ref,
-            read_call,
-            serde_as_type: serde_as,
-        }
-    }
-
     fn generate_enum(&self, e: &Enum) -> EnumOutput {
         let name = rust_type_name(&e.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
@@ -461,63 +271,6 @@ impl Generator {
         }
     }
 
-    fn generate_union_arm(
-        &self,
-        arm: &UnionArm,
-        parent: &str,
-        discriminant_type: &str,
-        discriminant_is_builtin: bool,
-        discriminant_prefix: &str,
-        custom_str: bool,
-    ) -> Vec<UnionArmOutput> {
-        arm.cases
-            .iter()
-            .map(|case| {
-                let (case_name, case_value) = match &case.value {
-                    CaseValue::Ident(name) => {
-                        // Strip common prefix from case name
-                        let stripped = strip_prefix(name, discriminant_prefix);
-                        let rust_name = rust_type_name(&stripped);
-                        let value = if discriminant_is_builtin {
-                            rust_name.clone()
-                        } else {
-                            format!("{discriminant_type}::{rust_name}")
-                        };
-                        (rust_name, value)
-                    }
-                    CaseValue::Literal(n) => {
-                        let case_name = format!("V{n}");
-                        let value = if discriminant_is_builtin {
-                            n.to_string()
-                        } else {
-                            format!("{discriminant_type}({n})")
-                        };
-                        (case_name, value)
-                    }
-                };
-
-                let (type_ref, read_call, serde_as) = if let Some(t) = &arm.type_ {
-                    let type_ref = rust_type_ref(t, Some(parent), &self.type_info);
-                    let read_call = rust_read_call_type(t, Some(parent), &self.type_info);
-                    // Get serde_as type for i64/u64 types (unless custom_str)
-                    let serde_as = if custom_str { None } else { serde_as_type(t) };
-                    (Some(type_ref), Some(read_call), serde_as)
-                } else {
-                    (None, None, None)
-                };
-
-                UnionArmOutput {
-                    case_name,
-                    case_value,
-                    is_void: arm.type_.is_none(),
-                    type_ref,
-                    read_call,
-                    serde_as_type: serde_as,
-                }
-            })
-            .collect()
-    }
-
     fn generate_typedef(&self, t: &Typedef) -> DefinitionOutput {
         let name = rust_type_name(&t.name);
 
@@ -589,6 +342,205 @@ impl Generator {
             value_str,
         }
     }
+
+    fn generate_member(&self, m: &Member, parent: &str, custom_str: bool) -> MemberOutput {
+        let name = rust_field_name(&m.name);
+        let type_ref = rust_type_ref(&m.type_, Some(parent), &self.type_info);
+        let read_call = rust_read_call_type(&m.type_, Some(parent), &self.type_info);
+        // For custom_str types, we skip serde_as since they use SerializeDisplay
+        let serde_as = if custom_str {
+            None
+        } else {
+            serde_as_type(&m.type_)
+        };
+
+        MemberOutput {
+            name,
+            type_ref,
+            read_call,
+            serde_as_type: serde_as,
+        }
+    }
+
+    fn generate_union_arm(
+        &self,
+        arm: &UnionArm,
+        parent: &str,
+        discriminant_type: &str,
+        discriminant_is_builtin: bool,
+        discriminant_prefix: &str,
+        custom_str: bool,
+    ) -> Vec<UnionArmOutput> {
+        arm.cases
+            .iter()
+            .map(|case| {
+                let (case_name, case_value) = match &case.value {
+                    CaseValue::Ident(name) => {
+                        // Strip common prefix from case name
+                        let stripped = strip_prefix(name, discriminant_prefix);
+                        let rust_name = rust_type_name(&stripped);
+                        let value = if discriminant_is_builtin {
+                            rust_name.clone()
+                        } else {
+                            format!("{discriminant_type}::{rust_name}")
+                        };
+                        (rust_name, value)
+                    }
+                    CaseValue::Literal(n) => {
+                        let case_name = format!("V{n}");
+                        let value = if discriminant_is_builtin {
+                            n.to_string()
+                        } else {
+                            format!("{discriminant_type}({n})")
+                        };
+                        (case_name, value)
+                    }
+                };
+
+                let (type_ref, read_call, serde_as) = if let Some(t) = &arm.type_ {
+                    let type_ref = rust_type_ref(t, Some(parent), &self.type_info);
+                    let read_call = rust_read_call_type(t, Some(parent), &self.type_info);
+                    // Get serde_as type for i64/u64 types (unless custom_str)
+                    let serde_as = if custom_str { None } else { serde_as_type(t) };
+                    (Some(type_ref), Some(read_call), serde_as)
+                } else {
+                    (None, None, None)
+                };
+
+                UnionArmOutput {
+                    case_name,
+                    case_value,
+                    is_void: arm.type_.is_none(),
+                    type_ref,
+                    read_call,
+                    serde_as_type: serde_as,
+                }
+            })
+            .collect()
+    }
+}
+
+/// Data for rendering the main generated file.
+#[derive(Template)]
+#[template(path = "generated.rs.jinja", escape = "none")]
+pub struct GeneratedTemplate {
+    pub xdr_files_sha256: Vec<(String, String)>,
+    pub header: String,
+    pub definitions: Vec<DefinitionOutput>,
+    pub type_variant_enum: TypeEnumOutput,
+}
+
+/// Output for a single definition.
+pub enum DefinitionOutput {
+    Struct(StructOutput),
+    Enum(EnumOutput),
+    Union(UnionOutput),
+    TypedefAlias(TypedefAliasOutput),
+    TypedefNewtype(TypedefNewtypeOutput),
+    Const(ConstOutput),
+}
+
+/// Data for rendering a struct.
+pub struct StructOutput {
+    pub name: String,
+    pub source_comment: String,
+    pub has_default: bool,
+    pub is_custom_str: bool,
+    pub members: Vec<MemberOutput>,
+    /// Comma-separated list of member names for destructuring (e.g., "id, ed25519,")
+    pub member_names: String,
+}
+
+pub struct MemberOutput {
+    pub name: String,
+    pub type_ref: String,
+    pub read_call: String,
+    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
+    pub serde_as_type: Option<String>,
+}
+
+/// Data for rendering an enum.
+pub struct EnumOutput {
+    pub name: String,
+    pub source_comment: String,
+    pub has_default: bool,
+    pub is_custom_str: bool,
+    pub members: Vec<EnumMemberOutput>,
+}
+
+pub struct EnumMemberOutput {
+    pub name: String,
+    pub value: i32,
+    pub is_first: bool,
+}
+
+/// Data for rendering a union.
+pub struct UnionOutput {
+    pub name: String,
+    pub source_comment: String,
+    pub has_default: bool,
+    pub is_custom_str: bool,
+    pub discriminant_type: String,
+    pub discriminant_is_builtin: bool,
+    pub arms: Vec<UnionArmOutput>,
+    /// For default impl: case name of the first arm.
+    pub first_arm_case_name: String,
+    /// For default impl: type to call ::default() on (read_call of first arm, if non-void)
+    pub first_arm_type: Option<String>,
+}
+
+pub struct UnionArmOutput {
+    pub case_name: String,
+    pub case_value: String,
+    pub is_void: bool,
+    pub type_ref: Option<String>,
+    pub read_call: Option<String>,
+    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
+    pub serde_as_type: Option<String>,
+}
+
+/// Data for a typedef that's a simple type alias.
+pub struct TypedefAliasOutput {
+    pub name: String,
+    pub source_comment: String,
+    pub type_ref: String,
+}
+
+/// Data for a typedef that's a newtype struct.
+pub struct TypedefNewtypeOutput {
+    pub name: String,
+    pub source_comment: String,
+    pub has_default: bool,
+    pub is_var_array: bool,
+    pub is_fixed_opaque: bool,
+    pub is_fixed_array: bool,
+    pub is_custom_str: bool,
+    pub type_ref: String,
+    pub read_call: String,
+    /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
+    pub serde_as_type: Option<String>,
+    pub element_type: String,
+    pub size: Option<String>,
+    /// Fixed opaque types have custom Debug impl (hex format).
+    pub custom_debug: bool,
+    pub custom_display_fromstr: bool,
+    pub custom_schemars: bool,
+}
+
+/// Data for a const.
+pub struct ConstOutput {
+    /// The Rust const name (SCREAMING_SNAKE_CASE).
+    pub name: String,
+    /// The name for the doc comment (UpperCamelCase).
+    pub doc_name: String,
+    pub source_comment: String,
+    /// The formatted value string (decimal or hex).
+    pub value_str: String,
+}
+
+/// Data for the TypeVariant and Type enums.
+pub struct TypeEnumOutput {
+    pub types: Vec<String>,
 }
 
 fn format_source_comment(source: &str, kind: &str) -> String {
@@ -610,5 +562,53 @@ fn size_to_string(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),
         Size::Named(name) => rust_type_name(name),
+    }
+}
+
+/// Find the common prefix to strip from enum member names.
+/// Returns the prefix up to and including the last underscore that is common to all names.
+fn find_common_prefix<'a>(names: &[&'a str]) -> &'a str {
+    if names.is_empty() || names.len() == 1 {
+        return "";
+    }
+
+    let first = names[0];
+
+    // Find longest common prefix among all names
+    let common_len = names.iter().skip(1).fold(first.len(), |len, name| {
+        first
+            .bytes()
+            .zip(name.bytes())
+            .take(len)
+            .take_while(|(a, b)| a == b)
+            .count()
+    });
+
+    let common = &first[..common_len];
+
+    // Find the last underscore in the common prefix
+    // If found, strip up to and including the underscore
+    if let Some(last_underscore) = common.rfind('_') {
+        &first[..=last_underscore]
+    } else {
+        ""
+    }
+}
+
+/// Strip common prefix from an enum member name.
+/// If the result would start with a digit, keep the first letter of the prefix.
+fn strip_prefix(name: &str, prefix: &str) -> String {
+    if !prefix.is_empty() && name.starts_with(prefix) {
+        let stripped = &name[prefix.len()..];
+        // If result starts with digit, keep the first letter of the prefix
+        // e.g., "BINARY_FUSE_FILTER_8_BIT" with prefix "BINARY_FUSE_FILTER_" -> "B8_BIT"
+        if stripped.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+            if let Some(first_char) = prefix.chars().next() {
+                return format!("{first_char}{stripped}");
+            }
+        }
+        stripped.to_string()
+    } else {
+        name.to_string()
     }
 }

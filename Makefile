@@ -58,7 +58,7 @@ src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
 		--custom-str $(CUSTOM_STR_IMPL)
 	rustfmt $@
 
-check-generated-match: generate-xdrgen-files generate-rust-files
+check-generated-match:
 	@echo "Checking that Ruby and Rust generators produce identical output..."
 	@diff -q src/curr/generated.rs src/curr/generated-rust.rs || \
 		(echo "ERROR: src/curr/generated.rs and src/curr/generated-rust.rs differ" && exit 1)

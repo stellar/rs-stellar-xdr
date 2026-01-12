@@ -304,20 +304,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Tokenize the entire input.
-    pub fn tokenize(mut self) -> Result<Vec<Token>, LexError> {
-        let mut tokens = Vec::new();
-        loop {
-            let token = self.next_token()?;
-            if token == Token::Eof {
-                tokens.push(token);
-                break;
-            }
-            tokens.push(token);
-        }
-        Ok(tokens)
-    }
-
     /// Tokenize with span information for each token.
     pub fn tokenize_with_spans(mut self) -> Result<(Vec<SpannedToken>, String), LexError> {
         let source = self.source.to_string();
@@ -458,7 +444,8 @@ mod tests {
     fn test_simple() {
         let input = "struct Foo { int x; };";
         let lexer = Lexer::new(input);
-        let tokens = lexer.tokenize().unwrap();
+        let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
+        let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
         assert_eq!(
             tokens,
             vec![
@@ -482,7 +469,8 @@ mod tests {
         struct /* block comment */ Foo { };
         "#;
         let lexer = Lexer::new(input);
-        let tokens = lexer.tokenize().unwrap();
+        let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
+        let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
         assert_eq!(
             tokens,
             vec![
@@ -500,7 +488,8 @@ mod tests {
     fn test_hex() {
         let input = "KEY_TYPE_MUXED_ED25519 = 0x100";
         let lexer = Lexer::new(input);
-        let tokens = lexer.tokenize().unwrap();
+        let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
+        let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
         assert_eq!(
             tokens,
             vec![

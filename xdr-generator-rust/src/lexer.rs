@@ -3,24 +3,6 @@
 use logos::{Logos, SpannedIter};
 use thiserror::Error;
 
-/// The base (radix) of an integer literal.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IntBase {
-    Decimal,
-    Hexadecimal,
-}
-
-fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
-    let slice = lex.slice();
-    i64::from_str_radix(&slice[2..], 16)
-        .ok()
-        .map(|v| (v, IntBase::Hexadecimal))
-}
-
-fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
-    lex.slice().parse().ok().map(|v| (v, IntBase::Decimal))
-}
-
 /// Token type for XDR lexing.
 #[derive(Logos, Debug, Clone, PartialEq, Eq)]
 #[logos(skip r"[ \t\n\r\f]+")]  // Skip whitespace
@@ -105,6 +87,24 @@ pub enum Token {
 
     // End of file (not produced by Logos, added manually)
     Eof,
+}
+
+/// The base (radix) of an integer literal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntBase {
+    Decimal,
+    Hexadecimal,
+}
+
+fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
+    let slice = lex.slice();
+    i64::from_str_radix(&slice[2..], 16)
+        .ok()
+        .map(|v| (v, IntBase::Hexadecimal))
+}
+
+fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
+    lex.slice().parse().ok().map(|v| (v, IntBase::Decimal))
 }
 
 /// A token with its byte span in the source.

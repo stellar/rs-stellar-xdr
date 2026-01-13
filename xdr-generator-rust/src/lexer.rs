@@ -3,14 +3,22 @@
 use logos::{Logos, SpannedIter};
 use thiserror::Error;
 
-/// Internal token type used by Logos for lexing.
-/// This handles the raw tokenization including keywords.
+fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, bool)> {
+    let slice = lex.slice();
+    i64::from_str_radix(&slice[2..], 16).ok().map(|v| (v, true))
+}
+
+fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, bool)> {
+    lex.slice().parse().ok().map(|v| (v, false))
+}
+
+/// Token type for XDR lexing.
 #[derive(Logos, Debug, Clone, PartialEq, Eq)]
 #[logos(skip r"[ \t\n\r\f]+")]  // Skip whitespace
 #[logos(skip r"//[^\n]*")]      // Skip line comments
 #[logos(skip r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/")] // Skip block comments
 #[logos(skip r"%[^\n]*\n?")]    // Skip preprocessor directives
-enum RawToken {
+pub enum Token {
     // Keywords
     #[token("struct")]
     Struct,
@@ -49,17 +57,14 @@ enum RawToken {
     #[token("string")]
     String,
 
-    // Identifiers (must come after keywords due to priority)
+    // Identifiers
     #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*", |lex| lex.slice().to_string())]
     Ident(std::string::String),
 
-    // Integer literals - hex (must come before decimal for priority)
-    #[regex(r"0x[0-9a-fA-F]+", parse_hex)]
-    HexLiteral(i64),
-
-    // Integer literals - decimal (including negative)
-    #[regex(r"-?[0-9]+", parse_decimal)]
-    DecLiteral(i64),
+    // Integer literals - hex must have higher priority than decimal
+    #[regex(r"0x[0-9a-fA-F]+", parse_hex, priority = 2)]
+    #[regex(r"-?[0-9]+", parse_decimal, priority = 1)]
+    IntLiteral((i64, bool)),
 
     // Symbols
     #[token("{")]
@@ -88,62 +93,24 @@ enum RawToken {
     Star,
     #[token("=")]
     Eq,
-}
 
-fn parse_hex(lex: &logos::Lexer<RawToken>) -> Option<i64> {
-    let slice = lex.slice();
-    i64::from_str_radix(&slice[2..], 16).ok()
-}
-
-fn parse_decimal(lex: &logos::Lexer<RawToken>) -> Option<i64> {
-    lex.slice().parse().ok()
-}
-
-/// The public token type matching the original lexer's interface.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Token {
-    // Keywords
-    Struct,
-    Enum,
-    Union,
-    Typedef,
-    Const,
-    Namespace,
-    Switch,
-    Case,
-    Default,
-    Void,
-    Unsigned,
-    Int,
-    Hyper,
-    Float,
-    Double,
-    Bool,
-    Opaque,
-    String,
-
-    // Identifiers and literals
-    Ident(std::string::String),
-    /// Integer literal with value and whether it was in hex format
-    IntLiteral { value: i64, is_hex: bool },
-
-    // Symbols
-    LBrace,   // {
-    RBrace,   // }
-    LBracket, // [
-    RBracket, // ]
-    LAngle,   // <
-    RAngle,   // >
-    LParen,   // (
-    RParen,   // )
-    Semi,     // ;
-    Colon,    // :
-    Comma,    // ,
-    Star,     // *
-    Eq,       // =
-
-    // End of file
+    // End of file (not produced by Logos, added manually)
     Eof,
+}
+
+impl Token {
+    /// Helper to create an IntLiteral with named fields for readability.
+    pub fn int_literal(value: i64, is_hex: bool) -> Self {
+        Token::IntLiteral((value, is_hex))
+    }
+
+    /// Extract value and is_hex from an IntLiteral token.
+    pub fn as_int_literal(&self) -> Option<(i64, bool)> {
+        match self {
+            Token::IntLiteral((value, is_hex)) => Some((*value, *is_hex)),
+            _ => None,
+        }
+    }
 }
 
 /// A token with its byte span in the source.
@@ -158,10 +125,6 @@ pub struct SpannedToken {
 pub enum LexError {
     #[error("unexpected character: {0}")]
     UnexpectedChar(char),
-    #[error("unterminated block comment")]
-    UnterminatedComment,
-    #[error("invalid integer literal: {0}")]
-    InvalidInt(std::string::String),
     #[error("lexer error at position {0}")]
     LexerError(usize),
 }
@@ -169,14 +132,14 @@ pub enum LexError {
 /// The main lexer for tokenizing XDR source text.
 pub struct Lexer<'a> {
     source: &'a str,
-    inner: SpannedIter<'a, RawToken>,
+    inner: SpannedIter<'a, Token>,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
             source: input,
-            inner: RawToken::lexer(input).spanned(),
+            inner: Token::lexer(input).spanned(),
         }
     }
 
@@ -188,9 +151,8 @@ impl<'a> Lexer<'a> {
 
         for (result, span) in self.inner {
             let token = match result {
-                Ok(raw) => convert_token(raw),
+                Ok(t) => t,
                 Err(()) => {
-                    // Try to get the problematic character for a better error message
                     if let Some(c) = self.source[span.start..].chars().next() {
                         return Err(LexError::UnexpectedChar(c));
                     }
@@ -213,52 +175,6 @@ impl<'a> Lexer<'a> {
         });
 
         Ok((tokens, source))
-    }
-}
-
-/// Convert a RawToken to the public Token type.
-fn convert_token(raw: RawToken) -> Token {
-    match raw {
-        RawToken::Struct => Token::Struct,
-        RawToken::Enum => Token::Enum,
-        RawToken::Union => Token::Union,
-        RawToken::Typedef => Token::Typedef,
-        RawToken::Const => Token::Const,
-        RawToken::Namespace => Token::Namespace,
-        RawToken::Switch => Token::Switch,
-        RawToken::Case => Token::Case,
-        RawToken::Default => Token::Default,
-        RawToken::Void => Token::Void,
-        RawToken::Unsigned => Token::Unsigned,
-        RawToken::Int => Token::Int,
-        RawToken::Hyper => Token::Hyper,
-        RawToken::Float => Token::Float,
-        RawToken::Double => Token::Double,
-        RawToken::Bool => Token::Bool,
-        RawToken::Opaque => Token::Opaque,
-        RawToken::String => Token::String,
-        RawToken::Ident(s) => Token::Ident(s),
-        RawToken::HexLiteral(v) => Token::IntLiteral {
-            value: v,
-            is_hex: true,
-        },
-        RawToken::DecLiteral(v) => Token::IntLiteral {
-            value: v,
-            is_hex: false,
-        },
-        RawToken::LBrace => Token::LBrace,
-        RawToken::RBrace => Token::RBrace,
-        RawToken::LBracket => Token::LBracket,
-        RawToken::RBracket => Token::RBracket,
-        RawToken::LAngle => Token::LAngle,
-        RawToken::RAngle => Token::RAngle,
-        RawToken::LParen => Token::LParen,
-        RawToken::RParen => Token::RParen,
-        RawToken::Semi => Token::Semi,
-        RawToken::Colon => Token::Colon,
-        RawToken::Comma => Token::Comma,
-        RawToken::Star => Token::Star,
-        RawToken::Eq => Token::Eq,
     }
 }
 
@@ -321,10 +237,7 @@ mod tests {
             vec![
                 Token::Ident("KEY_TYPE_MUXED_ED25519".into()),
                 Token::Eq,
-                Token::IntLiteral {
-                    value: 256,
-                    is_hex: true
-                },
+                Token::IntLiteral((256, true)),
                 Token::Eof,
             ]
         );
@@ -342,10 +255,7 @@ mod tests {
                 Token::Const,
                 Token::Ident("FOO".into()),
                 Token::Eq,
-                Token::IntLiteral {
-                    value: -1,
-                    is_hex: false
-                },
+                Token::IntLiteral((-1, false)),
                 Token::Semi,
                 Token::Eof,
             ]

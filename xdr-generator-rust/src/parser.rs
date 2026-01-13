@@ -188,7 +188,7 @@ impl Parser {
 
             // Value can be integer or identifier (reference to another enum value)
             let value = match self.peek().clone() {
-                Token::IntLiteral { value, .. } => {
+                Token::IntLiteral((value, _)) => {
                     self.advance();
                     value as i32
                 }
@@ -437,7 +437,7 @@ impl Parser {
                             self.advance();
                             CaseValue::Ident(name)
                         }
-                        Token::IntLiteral { value, .. } => {
+                        Token::IntLiteral((value, _)) => {
                             self.advance();
                             CaseValue::Literal(value as i32)
                         }
@@ -844,7 +844,7 @@ impl Parser {
 
     fn parse_size(&mut self) -> Result<Size, ParseError> {
         match self.peek().clone() {
-            Token::IntLiteral { value, .. } => {
+            Token::IntLiteral((value, _)) => {
                 self.advance();
                 Ok(Size::Literal(value as u32))
             }
@@ -903,7 +903,7 @@ impl Parser {
     fn expect_int_with_hex(&mut self) -> Result<(i64, bool), ParseError> {
         let token = self.advance().clone();
         match token {
-            Token::IntLiteral { value, is_hex } => Ok((value, is_hex)),
+            Token::IntLiteral((value, is_hex)) => Ok((value, is_hex)),
             _ => Err(ParseError::UnexpectedToken {
                 expected: "integer literal".to_string(),
                 got: token,

@@ -4,6 +4,7 @@ use crate::ast::{
     CaseValue, Const, Definition, Enum, Member, Size, Struct, Type, Typedef, Union, UnionArm,
     XdrSpec,
 };
+use crate::lexer::IntBase;
 use crate::types::{
     base_rust_type_ref, element_type_for_vec, is_builtin_type, is_fixed_array, is_fixed_opaque,
     is_var_array, rust_field_name, rust_read_call_type, rust_type_name, rust_type_ref,
@@ -329,11 +330,9 @@ impl Generator {
     }
 
     fn generate_const(&self, c: &Const) -> ConstOutput {
-        let value_str = if c.is_hex {
-            // Format as 0x + uppercase hex digits
-            format!("0x{:X}", c.value)
-        } else {
-            c.value.to_string()
+        let value_str = match c.base {
+            IntBase::Hexadecimal => format!("0x{:X}", c.value),
+            IntBase::Decimal => c.value.to_string(),
         };
         ConstOutput {
             name: rust_field_name(&c.name).to_uppercase(),

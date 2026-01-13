@@ -1,5 +1,7 @@
 //! AST types for XDR definitions.
 
+use crate::lexer::IntBase;
+
 /// The root of a parsed XDR file or collection of files.
 #[derive(Debug, Clone, Default)]
 pub struct XdrSpec {
@@ -117,8 +119,8 @@ pub struct Typedef {
 pub struct Const {
     pub name: String,
     pub value: i64,
-    /// Whether the value was written in hex format in the source.
-    pub is_hex: bool,
+    /// The base (radix) of the literal in the source.
+    pub base: IntBase,
     /// Original XDR source text for documentation.
     pub source: String,
 }

@@ -3,13 +3,22 @@
 use logos::{Logos, SpannedIter};
 use thiserror::Error;
 
-fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, bool)> {
-    let slice = lex.slice();
-    i64::from_str_radix(&slice[2..], 16).ok().map(|v| (v, true))
+/// The base (radix) of an integer literal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntBase {
+    Decimal,
+    Hexadecimal,
 }
 
-fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, bool)> {
-    lex.slice().parse().ok().map(|v| (v, false))
+fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
+    let slice = lex.slice();
+    i64::from_str_radix(&slice[2..], 16)
+        .ok()
+        .map(|v| (v, IntBase::Hexadecimal))
+}
+
+fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
+    lex.slice().parse().ok().map(|v| (v, IntBase::Decimal))
 }
 
 /// Token type for XDR lexing.
@@ -64,7 +73,7 @@ pub enum Token {
     // Integer literals - hex must have higher priority than decimal
     #[regex(r"0x[0-9a-fA-F]+", parse_hex, priority = 2)]
     #[regex(r"-?[0-9]+", parse_decimal, priority = 1)]
-    IntLiteral((i64, bool)),
+    IntLiteral((i64, IntBase)),
 
     // Symbols
     #[token("{")]
@@ -96,21 +105,6 @@ pub enum Token {
 
     // End of file (not produced by Logos, added manually)
     Eof,
-}
-
-impl Token {
-    /// Helper to create an IntLiteral with named fields for readability.
-    pub fn int_literal(value: i64, is_hex: bool) -> Self {
-        Token::IntLiteral((value, is_hex))
-    }
-
-    /// Extract value and is_hex from an IntLiteral token.
-    pub fn as_int_literal(&self) -> Option<(i64, bool)> {
-        match self {
-            Token::IntLiteral((value, is_hex)) => Some((*value, *is_hex)),
-            _ => None,
-        }
-    }
 }
 
 /// A token with its byte span in the source.
@@ -237,7 +231,7 @@ mod tests {
             vec![
                 Token::Ident("KEY_TYPE_MUXED_ED25519".into()),
                 Token::Eq,
-                Token::IntLiteral((256, true)),
+                Token::IntLiteral((256, IntBase::Hexadecimal)),
                 Token::Eof,
             ]
         );
@@ -255,7 +249,7 @@ mod tests {
                 Token::Const,
                 Token::Ident("FOO".into()),
                 Token::Eq,
-                Token::IntLiteral((-1, false)),
+                Token::IntLiteral((-1, IntBase::Decimal)),
                 Token::Semi,
                 Token::Eof,
             ]

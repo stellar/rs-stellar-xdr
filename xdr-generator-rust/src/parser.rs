@@ -1,7 +1,7 @@
 //! XDR parser (recursive descent).
 
 use crate::ast::*;
-use crate::lexer::{LexError, Lexer, SpannedToken, Token};
+use crate::lexer::{IntBase, LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
 use thiserror::Error;
 
@@ -322,7 +322,7 @@ impl Parser {
         self.expect(Token::Const)?;
         let name = self.expect_ident()?;
         self.expect(Token::Eq)?;
-        let (value, is_hex) = self.expect_int_with_hex()?;
+        let (value, base) = self.expect_int_with_base()?;
         self.expect(Token::Semi)?;
 
         let source = self.extract_definition_source(&name);
@@ -333,7 +333,7 @@ impl Parser {
         Ok(Const {
             name,
             value,
-            is_hex,
+            base,
             source,
         })
     }
@@ -900,10 +900,10 @@ impl Parser {
     }
 
     /// Parse an integer literal, returning both the value and whether it was in hex format.
-    fn expect_int_with_hex(&mut self) -> Result<(i64, bool), ParseError> {
+    fn expect_int_with_base(&mut self) -> Result<(i64, IntBase), ParseError> {
         let token = self.advance().clone();
         match token {
-            Token::IntLiteral((value, is_hex)) => Ok((value, is_hex)),
+            Token::IntLiteral((value, base)) => Ok((value, base)),
             _ => Err(ParseError::UnexpectedToken {
                 expected: "integer literal".to_string(),
                 got: token,

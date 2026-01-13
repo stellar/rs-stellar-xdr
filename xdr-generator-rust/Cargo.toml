@@ -15,7 +15,8 @@ clap = { version = "4", features = ["derive"] }
 sha2 = "0.10"
 heck = "0.5"
 thiserror = "2"
-logos = "0.15"
+pest = "2.7"
+pest_derive = "2.7"
 
 [dev-dependencies]
 pretty_assertions = "1"

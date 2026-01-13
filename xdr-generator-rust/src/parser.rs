@@ -1,88 +1,84 @@
-//! XDR parser (recursive descent).
+//! XDR parser using pest.
 
 use crate::ast::*;
-use crate::lexer::{IntBase, LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
+use pest::Parser;
+use pest_derive::Parser;
+use std::collections::HashMap;
 use thiserror::Error;
+
+#[derive(Parser)]
+#[grammar = "xdr.pest"]
+struct XdrParser;
+
+/// The base (radix) of an integer literal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntBase {
+    Decimal,
+    Hexadecimal,
+}
 
 /// Parse XDR source text into an AST.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
-    let mut parser = Parser::new(source)?;
-    parser.parse()
+    let mut pairs = XdrParser::parse(Rule::spec, source)?;
+    let spec_pair = pairs.next().ok_or(ParseError::UnexpectedEof)?;
+
+    let mut builder = AstBuilder::new(source);
+    builder.build_spec(spec_pair)
 }
 
-pub struct Parser {
-    tokens: Vec<SpannedToken>,
-    pos: usize,
-    /// The original source text, for extracting source snippets
-    source: String,
-    /// Track the token position of the current definition start for source extraction
-    def_start_pos: usize,
+struct AstBuilder<'a> {
+    source: &'a str,
     /// Extracted nested type definitions (anonymous unions, inline structs)
     extracted_definitions: Vec<Definition>,
     /// Root parent type name for generating nested type names
     root_parent: Option<String>,
     /// Global map of enum member names and const names to their values
-    global_values: std::collections::HashMap<String, i64>,
+    global_values: HashMap<String, i64>,
 }
 
-impl Parser {
-    pub fn new(source: &str) -> Result<Self, ParseError> {
-        let lexer = Lexer::new(source);
-        let (tokens, source) = lexer.tokenize_with_spans()?;
-        Ok(Self {
-            tokens,
-            pos: 0,
+impl<'a> AstBuilder<'a> {
+    fn new(source: &'a str) -> Self {
+        Self {
             source,
-            def_start_pos: 0,
             extracted_definitions: Vec::new(),
             root_parent: None,
-            global_values: std::collections::HashMap::new(),
-        })
+            global_values: HashMap::new(),
+        }
     }
 
-    /// Parse the entire input.
-    pub fn parse(&mut self) -> Result<XdrSpec, ParseError> {
+    fn build_spec(&mut self, pair: pest::iterators::Pair<'a, Rule>) -> Result<XdrSpec, ParseError> {
         let mut spec = XdrSpec::default();
 
-        while *self.peek() != Token::Eof {
-            // Skip any extra semicolons at the top level
-            while *self.peek() == Token::Semi {
-                self.advance();
-            }
-            if *self.peek() == Token::Eof {
-                break;
-            }
-            match self.peek() {
-                Token::Namespace => {
-                    let ns = self.parse_namespace()?;
+        for inner in pair.into_inner() {
+            match inner.as_rule() {
+                Rule::namespace => {
+                    let ns = self.build_namespace(inner)?;
                     spec.namespaces.push(ns);
                 }
-                _ => {
+                Rule::definition => {
                     // Track extracted definitions before parsing this definition
                     let extract_start = self.extracted_definitions.len();
 
-                    let def = self.parse_definition()?;
-
-                    // Insert any newly extracted definitions before this definition
-                    // This ensures nested types appear just before their parent
-                    for extracted in self.extracted_definitions.drain(extract_start..) {
-                        spec.definitions.push(extracted);
+                    if let Some(def) = self.build_definition(inner)? {
+                        // Insert any newly extracted definitions before this definition
+                        for extracted in self.extracted_definitions.drain(extract_start..) {
+                            spec.definitions.push(extracted);
+                        }
+                        spec.definitions.push(def);
                     }
-
-                    spec.definitions.push(def);
                 }
+                Rule::EOI => {}
+                _ => {}
             }
         }
 
-        // Any remaining extracted definitions (shouldn't be any, but just in case)
+        // Any remaining extracted definitions
         for extracted in self.extracted_definitions.drain(..) {
             spec.definitions.push(extracted);
         }
 
-        // Post-process to fix parent relationships for nested types.
-        // For types whose name starts with another type's name, update parent to be that type.
-        // This fixes cases where inline structs inside unions have nested unions.
+        // Post-process to fix parent relationships for nested types
         fix_parent_relationships(&mut spec.definitions);
         for ns in &mut spec.namespaces {
             fix_parent_relationships(&mut ns.definitions);
@@ -91,81 +87,81 @@ impl Parser {
         Ok(spec)
     }
 
-    fn parse_namespace(&mut self) -> Result<Namespace, ParseError> {
-        self.expect(Token::Namespace)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+    fn build_namespace(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Namespace, ParseError> {
+        let mut inner = pair.into_inner();
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
 
         let mut definitions = Vec::new();
-        while *self.peek() != Token::RBrace && *self.peek() != Token::Eof {
-            // Skip any extra semicolons
-            while *self.peek() == Token::Semi {
-                self.advance();
+        for def_pair in inner {
+            if def_pair.as_rule() == Rule::definition {
+                let extract_start = self.extracted_definitions.len();
+                if let Some(def) = self.build_definition(def_pair)? {
+                    for extracted in self.extracted_definitions.drain(extract_start..) {
+                        definitions.push(extracted);
+                    }
+                    definitions.push(def);
+                }
             }
-            if *self.peek() == Token::RBrace {
-                break;
-            }
-
-            // Track extracted definitions before parsing this definition
-            let extract_start = self.extracted_definitions.len();
-
-            let def = self.parse_definition()?;
-
-            // Insert any newly extracted definitions before this definition
-            // This ensures nested types appear just before their parent
-            for extracted in self.extracted_definitions.drain(extract_start..) {
-                definitions.push(extracted);
-            }
-
-            definitions.push(def);
         }
-
-        self.expect(Token::RBrace)?;
 
         Ok(Namespace { name, definitions })
     }
 
-    fn parse_definition(&mut self) -> Result<Definition, ParseError> {
-        // Mark the start of this definition for source extraction
-        self.def_start_pos = self.pos;
+    fn build_definition(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Option<Definition>, ParseError> {
+        let inner = pair.into_inner().next();
+        let inner = match inner {
+            Some(p) => p,
+            None => return Ok(None), // Empty definition (just semicolon)
+        };
 
-        match self.peek() {
-            Token::Struct => self.parse_struct().map(Definition::Struct),
-            Token::Enum => self.parse_enum().map(Definition::Enum),
-            Token::Union => self.parse_union().map(Definition::Union),
-            Token::Typedef => self.parse_typedef().map(Definition::Typedef),
-            Token::Const => self.parse_const().map(Definition::Const),
-            other => Err(ParseError::UnexpectedToken {
-                expected: "struct, enum, union, typedef, or const".to_string(),
-                got: other.clone(),
-            }),
-        }
+        let def = match inner.as_rule() {
+            Rule::struct_def => Definition::Struct(self.build_struct(inner)?),
+            Rule::enum_def => Definition::Enum(self.build_enum(inner)?),
+            Rule::union_def => Definition::Union(self.build_union(inner)?),
+            Rule::typedef_def => Definition::Typedef(self.build_typedef(inner)?),
+            Rule::const_def => Definition::Const(self.build_const(inner)?),
+            _ => return Ok(None),
+        };
+
+        Ok(Some(def))
     }
 
-    fn parse_struct(&mut self) -> Result<Struct, ParseError> {
-        self.expect(Token::Struct)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+    fn build_struct(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Struct, ParseError> {
+        let source = pair.as_str().to_string();
+        let mut inner = pair.into_inner();
+
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
 
         // Set root_parent for nested type name generation
         let prev_root = self.root_parent.take();
         self.root_parent = Some(name.clone());
 
         let mut members = Vec::new();
-        while *self.peek() != Token::RBrace {
-            let member = self.parse_member()?;
-            members.push(member);
-            self.expect(Token::Semi)?;
+        for member_pair in inner {
+            if member_pair.as_rule() == Rule::struct_member {
+                members.push(self.build_struct_member(member_pair)?);
+            }
         }
 
         // Restore previous root_parent
         self.root_parent = prev_root;
-
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
-
-        // Extract source text (simplified - just use the name for now)
-        let source = self.extract_definition_source(&name);
 
         Ok(Struct {
             name,
@@ -176,63 +172,63 @@ impl Parser {
         })
     }
 
-    fn parse_enum(&mut self) -> Result<Enum, ParseError> {
-        self.expect(Token::Enum)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+    fn build_struct_member(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Member, ParseError> {
+        let source_start = pair.as_span().start();
+        let mut inner = pair.into_inner();
+
+        // Track extracted definitions before parsing type
+        let extract_start_idx = self.extracted_definitions.len();
+
+        let type_pair = inner.next().ok_or(ParseError::UnexpectedEof)?;
+        let type_source_end = type_pair.as_span().end();
+        let mut type_ = self.build_type(type_pair)?;
+
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+
+        // Handle type suffix if present
+        if let Some(suffix_pair) = inner.next() {
+            type_ = self.apply_type_suffix(type_, suffix_pair)?;
+        }
+
+        // If this is an anonymous union, extract it as a separate definition
+        let type_ = self.extract_anonymous_union_if_needed(
+            type_,
+            &name,
+            source_start,
+            type_source_end,
+            extract_start_idx,
+        );
+
+        Ok(Member { name, type_ })
+    }
+
+    fn build_enum(&mut self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Enum, ParseError> {
+        let source = pair.as_str().to_string();
+        let mut inner = pair.into_inner();
+
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
 
         let mut members = Vec::new();
-        loop {
-            let member_name = self.expect_ident()?;
-            self.expect(Token::Eq)?;
-
-            // Value can be integer or identifier (reference to another enum value)
-            let value = match self.peek().clone() {
-                Token::IntLiteral((value, _)) => {
-                    self.advance();
-                    value as i32
-                }
-                Token::Ident(ref_name) => {
-                    self.advance();
-                    // For now, we'll store 0 and resolve later
-                    // In practice, we'd need to resolve this reference
-                    // The Ruby generator handles this via the xdrgen gem
-                    self.resolve_enum_value(&ref_name, &members)
-                }
-                other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: "integer or identifier".to_string(),
-                        got: other,
-                    })
-                }
-            };
-
-            members.push(EnumMember {
-                name: member_name,
-                value,
-            });
-
-            match self.peek() {
-                Token::Comma => {
-                    self.advance();
-                    if *self.peek() == Token::RBrace {
-                        break;
+        for members_pair in inner {
+            if members_pair.as_rule() == Rule::enum_members {
+                for member_pair in members_pair.into_inner() {
+                    if member_pair.as_rule() == Rule::enum_member {
+                        members.push(self.build_enum_member(member_pair, &members)?);
                     }
-                }
-                Token::RBrace => break,
-                other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: ", or }".to_string(),
-                        got: other.clone(),
-                    })
                 }
             }
         }
-
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
-
-        let source = self.extract_definition_source(&name);
 
         // Add all members to global_values for cross-enum resolution
         for m in &members {
@@ -246,18 +242,80 @@ impl Parser {
         })
     }
 
-    fn parse_union(&mut self) -> Result<Union, ParseError> {
-        self.expect(Token::Union)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::Switch)?;
-        self.expect(Token::LParen)?;
+    fn build_enum_member(
+        &self,
+        pair: pest::iterators::Pair<'a, Rule>,
+        existing_members: &[EnumMember],
+    ) -> Result<EnumMember, ParseError> {
+        let mut inner = pair.into_inner();
 
-        // Parse discriminant
-        let disc_type = self.parse_type()?;
-        let disc_name = self.expect_ident()?;
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+        let value_pair = inner.next().ok_or(ParseError::UnexpectedEof)?;
 
-        self.expect(Token::RParen)?;
-        self.expect(Token::LBrace)?;
+        let value = self.parse_enum_value(value_pair, existing_members)?;
+
+        Ok(EnumMember { name, value })
+    }
+
+    fn parse_enum_value(
+        &self,
+        pair: pest::iterators::Pair<'a, Rule>,
+        existing_members: &[EnumMember],
+    ) -> Result<i32, ParseError> {
+        let inner = pair.into_inner().next().ok_or(ParseError::UnexpectedEof)?;
+
+        match inner.as_rule() {
+            Rule::int_literal => {
+                let (value, _) = parse_int_literal(inner.as_str());
+                Ok(value as i32)
+            }
+            Rule::ident => {
+                let ref_name = inner.as_str();
+                Ok(self.resolve_enum_value(ref_name, existing_members))
+            }
+            _ => Err(ParseError::UnexpectedRule(format!("{:?}", inner.as_rule()))),
+        }
+    }
+
+    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
+        // First check if it's in the current enum being parsed
+        for m in members {
+            if m.name == name {
+                return m.value;
+            }
+        }
+        // Check global values (previously parsed enums and consts)
+        if let Some(&value) = self.global_values.get(name) {
+            return value as i32;
+        }
+        // Return 0 as fallback
+        0
+    }
+
+    fn build_union(&mut self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Union, ParseError> {
+        let source = pair.as_str().to_string();
+        let mut inner = pair.into_inner();
+
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+
+        // Parse discriminant type
+        let disc_type_pair = inner.next().ok_or(ParseError::UnexpectedEof)?;
+        let disc_type = self.build_type(disc_type_pair)?;
+
+        // Parse discriminant name
+        let disc_name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
 
         // Set root_parent for inline struct extraction
         let prev_root = self.root_parent.take();
@@ -266,23 +324,19 @@ impl Parser {
         let mut arms = Vec::new();
         let mut default_arm = None;
 
-        while *self.peek() != Token::RBrace {
-            let arm = self.parse_union_arm()?;
-            if arm.cases.is_empty() {
-                // This is a default arm
-                default_arm = Some(Box::new(arm));
-            } else {
-                arms.push(arm);
+        for arm_pair in inner {
+            if arm_pair.as_rule() == Rule::union_arm {
+                let arm = self.build_union_arm(arm_pair)?;
+                if arm.cases.is_empty() {
+                    default_arm = Some(Box::new(arm));
+                } else {
+                    arms.push(arm);
+                }
             }
         }
 
         // Restore previous root_parent
         self.root_parent = prev_root;
-
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
-
-        let source = self.extract_definition_source(&name);
 
         Ok(Union {
             name,
@@ -298,18 +352,180 @@ impl Parser {
         })
     }
 
-    fn parse_typedef(&mut self) -> Result<Typedef, ParseError> {
-        self.expect(Token::Typedef)?;
+    fn build_union_arm(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<UnionArm, ParseError> {
+        let mut cases = Vec::new();
+        let mut arm_type = None;
 
-        let type_ = self.parse_type()?;
-        let name = self.expect_ident()?;
+        for inner in pair.into_inner() {
+            match inner.as_rule() {
+                Rule::union_cases => {
+                    for case_pair in inner.into_inner() {
+                        match case_pair.as_rule() {
+                            Rule::case_clause => {
+                                let value_pair = case_pair
+                                    .into_inner()
+                                    .next()
+                                    .ok_or(ParseError::UnexpectedEof)?;
+                                let value = self.build_case_value(value_pair)?;
+                                cases.push(UnionCase { value });
+                            }
+                            Rule::default_clause => {
+                                // Default has no cases - cases stays empty
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                Rule::union_arm_type => {
+                    arm_type = Some(self.build_union_arm_type(inner)?);
+                }
+                _ => {}
+            }
+        }
 
-        // Handle array suffix on typedef name
-        let type_ = self.parse_type_suffix(type_)?;
+        Ok(UnionArm {
+            cases,
+            type_: arm_type.flatten(),
+        })
+    }
 
-        self.expect(Token::Semi)?;
+    fn build_case_value(
+        &self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<CaseValue, ParseError> {
+        let inner = pair.into_inner().next().ok_or(ParseError::UnexpectedEof)?;
 
-        let source = self.extract_definition_source(&name);
+        match inner.as_rule() {
+            Rule::int_literal => {
+                let (value, _) = parse_int_literal(inner.as_str());
+                Ok(CaseValue::Literal(value as i32))
+            }
+            Rule::ident => Ok(CaseValue::Ident(inner.as_str().to_string())),
+            _ => Err(ParseError::UnexpectedRule(format!("{:?}", inner.as_rule()))),
+        }
+    }
+
+    fn build_union_arm_type(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Option<Type>, ParseError> {
+        let inner = pair.into_inner().next().ok_or(ParseError::UnexpectedEof)?;
+
+        match inner.as_rule() {
+            Rule::void_arm => Ok(None),
+            Rule::inline_struct_arm => {
+                let source = inner.as_str();
+                let arm_inner = inner.into_inner();
+
+                // Collect members first
+                let mut member_pairs: Vec<pest::iterators::Pair<'a, Rule>> = Vec::new();
+                let mut field_name = String::new();
+
+                for p in arm_inner {
+                    match p.as_rule() {
+                        Rule::struct_member => member_pairs.push(p),
+                        Rule::ident => field_name = p.as_str().to_string(),
+                        _ => {}
+                    }
+                }
+
+                // Generate the struct name
+                let struct_name = if let Some(ref parent) = self.root_parent {
+                    generate_nested_type_name(parent, &field_name)
+                } else {
+                    field_name.to_upper_camel_case()
+                };
+
+                // Set root_parent to the struct name for any nested types
+                let prev_root = self.root_parent.take();
+                self.root_parent = Some(struct_name.clone());
+
+                // Parse members
+                let mut members = Vec::new();
+                for member_pair in member_pairs {
+                    members.push(self.build_struct_member(member_pair)?);
+                }
+
+                // Restore root_parent
+                self.root_parent = prev_root;
+
+                // Extract source text (approximate - from struct keyword to closing brace)
+                let struct_source = extract_inline_struct_source(source);
+
+                // Create the struct definition
+                let struct_def = Struct {
+                    name: struct_name.clone(),
+                    members,
+                    source: struct_source,
+                    is_nested: true,
+                    parent: self.root_parent.clone(),
+                };
+
+                self.extracted_definitions
+                    .push(Definition::Struct(struct_def));
+
+                Ok(Some(Type::Ident(struct_name)))
+            }
+            Rule::type_arm => {
+                let source_start = inner.as_span().start();
+                let mut arm_inner = inner.into_inner();
+
+                // Track extracted definitions before parsing type
+                let extract_start_idx = self.extracted_definitions.len();
+
+                let type_pair = arm_inner.next().ok_or(ParseError::UnexpectedEof)?;
+                let type_source_end = type_pair.as_span().end();
+                let mut type_ = self.build_type(type_pair)?;
+
+                let field_name = arm_inner
+                    .next()
+                    .ok_or(ParseError::UnexpectedEof)?
+                    .as_str()
+                    .to_string();
+
+                // Handle type suffix if present
+                if let Some(suffix_pair) = arm_inner.next() {
+                    type_ = self.apply_type_suffix(type_, suffix_pair)?;
+                }
+
+                // Extract anonymous union if needed
+                let type_ = self.extract_anonymous_union_if_needed(
+                    type_,
+                    &field_name,
+                    source_start,
+                    type_source_end,
+                    extract_start_idx,
+                );
+
+                Ok(Some(type_))
+            }
+            _ => Err(ParseError::UnexpectedRule(format!("{:?}", inner.as_rule()))),
+        }
+    }
+
+    fn build_typedef(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Typedef, ParseError> {
+        let source = pair.as_str().to_string();
+        let mut inner = pair.into_inner();
+
+        let type_pair = inner.next().ok_or(ParseError::UnexpectedEof)?;
+        let mut type_ = self.build_type(type_pair)?;
+
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+
+        // Handle type suffix if present
+        if let Some(suffix_pair) = inner.next() {
+            type_ = self.apply_type_suffix(type_, suffix_pair)?;
+        }
 
         Ok(Typedef {
             name,
@@ -318,14 +534,18 @@ impl Parser {
         })
     }
 
-    fn parse_const(&mut self) -> Result<Const, ParseError> {
-        self.expect(Token::Const)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::Eq)?;
-        let (value, base) = self.expect_int_with_base()?;
-        self.expect(Token::Semi)?;
+    fn build_const(&mut self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Const, ParseError> {
+        let source = pair.as_str().to_string();
+        let mut inner = pair.into_inner();
 
-        let source = self.extract_definition_source(&name);
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+
+        let value_pair = inner.next().ok_or(ParseError::UnexpectedEof)?;
+        let (value, base) = parse_int_literal(value_pair.as_str());
 
         // Add const value to global_values for enum reference resolution
         self.global_values.insert(name.clone(), value);
@@ -338,32 +558,211 @@ impl Parser {
         })
     }
 
-    fn parse_member(&mut self) -> Result<Member, ParseError> {
-        // Record start position for source extraction (for anonymous unions)
-        let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+    fn build_type(&mut self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Type, ParseError> {
+        let inner = pair.into_inner().next().ok_or(ParseError::UnexpectedEof)?;
 
-        // Track extracted definitions before parsing type (for fixing parent relationships)
-        let extract_start_idx = self.extracted_definitions.len();
+        match inner.as_rule() {
+            Rule::int_type => Ok(Type::Int),
+            Rule::unsigned_type => {
+                let type_keyword = inner.as_str();
+                if type_keyword.contains("hyper") {
+                    Ok(Type::UnsignedHyper)
+                } else {
+                    Ok(Type::UnsignedInt)
+                }
+            }
+            Rule::hyper_type => Ok(Type::Hyper),
+            Rule::float_type => Ok(Type::Float),
+            Rule::double_type => Ok(Type::Double),
+            Rule::bool_type => Ok(Type::Bool),
+            Rule::opaque_type => self.build_opaque_type(inner),
+            Rule::string_type => self.build_string_type(inner),
+            Rule::anonymous_union => self.build_anonymous_union(inner),
+            Rule::ident_type => self.build_ident_type(inner),
+            _ => Err(ParseError::UnexpectedRule(format!("{:?}", inner.as_rule()))),
+        }
+    }
 
-        let type_ = self.parse_type()?;
+    fn build_opaque_type(&self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Type, ParseError> {
+        let inner = pair.into_inner().next();
 
-        // Record end position (after parsing type, before field name)
-        let type_end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            type_start_byte
+        match inner {
+            Some(suffix) => match suffix.as_rule() {
+                Rule::fixed_size => {
+                    let size = self.build_size(
+                        suffix
+                            .into_inner()
+                            .next()
+                            .ok_or(ParseError::UnexpectedEof)?,
+                    )?;
+                    Ok(Type::OpaqueFixed(size))
+                }
+                Rule::var_size => {
+                    let size = suffix
+                        .into_inner()
+                        .next()
+                        .map(|p| self.build_size(p))
+                        .transpose()?;
+                    Ok(Type::OpaqueVar(size))
+                }
+                _ => Ok(Type::OpaqueVar(None)),
+            },
+            None => Ok(Type::OpaqueVar(None)),
+        }
+    }
+
+    fn build_string_type(&self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Type, ParseError> {
+        let inner = pair.into_inner().next();
+
+        match inner {
+            Some(suffix) if suffix.as_rule() == Rule::var_size => {
+                let size = suffix
+                    .into_inner()
+                    .next()
+                    .map(|p| self.build_size(p))
+                    .transpose()?;
+                Ok(Type::String(size))
+            }
+            _ => Ok(Type::String(None)),
+        }
+    }
+
+    fn build_anonymous_union(
+        &mut self,
+        pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Type, ParseError> {
+        let mut inner = pair.into_inner();
+
+        // Parse discriminant type
+        let disc_type_pair = inner.next().ok_or(ParseError::UnexpectedEof)?;
+        let disc_type = self.build_type(disc_type_pair)?;
+
+        // Parse discriminant name
+        let disc_name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+
+        let mut arms = Vec::new();
+        let mut default_arm = None;
+
+        for arm_pair in inner {
+            if arm_pair.as_rule() == Rule::union_arm {
+                let arm = self.build_union_arm(arm_pair)?;
+                if arm.cases.is_empty() {
+                    default_arm = Some(Box::new(arm));
+                } else {
+                    arms.push(arm);
+                }
+            }
+        }
+
+        Ok(Type::AnonymousUnion {
+            discriminant: Box::new(Discriminant {
+                name: disc_name,
+                type_: disc_type,
+            }),
+            arms,
+            default_arm,
+        })
+    }
+
+    fn build_ident_type(&self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Type, ParseError> {
+        let mut inner = pair.into_inner();
+        let name = inner
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?
+            .as_str()
+            .to_string();
+
+        // Handle built-in type aliases
+        let base_type = match name.as_str() {
+            "uint64" => Type::UnsignedHyper,
+            "int64" => Type::Hyper,
+            "uint32" => Type::UnsignedInt,
+            "int32" => Type::Int,
+            "TRUE" | "FALSE" => Type::Bool,
+            _ => Type::Ident(name),
         };
 
-        let name = self.expect_ident()?;
+        // Check for optional marker (*)
+        if inner.next().is_some() {
+            Ok(Type::Optional(Box::new(base_type)))
+        } else {
+            Ok(base_type)
+        }
+    }
 
-        // Handle array suffix: name[size] or name<max>
-        let type_ = self.parse_type_suffix(type_)?;
+    fn apply_type_suffix(
+        &self,
+        base: Type,
+        suffix_pair: pest::iterators::Pair<'a, Rule>,
+    ) -> Result<Type, ParseError> {
+        let inner = suffix_pair
+            .into_inner()
+            .next()
+            .ok_or(ParseError::UnexpectedEof)?;
 
-        // If this is an anonymous union, extract it as a separate definition
-        let type_ = match type_ {
+        match inner.as_rule() {
+            Rule::fixed_size => {
+                let size =
+                    self.build_size(inner.into_inner().next().ok_or(ParseError::UnexpectedEof)?)?;
+
+                // Special case: opaque name[size] or string name[size]
+                match base {
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
+                    Type::String(None) => Ok(Type::OpaqueFixed(size)),
+                    _ => Ok(Type::Array {
+                        element_type: Box::new(base),
+                        size,
+                    }),
+                }
+            }
+            Rule::var_size => {
+                let max = inner
+                    .into_inner()
+                    .next()
+                    .map(|p| self.build_size(p))
+                    .transpose()?;
+
+                // Special case: opaque name<max> or string name<max>
+                match base {
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
+                    Type::String(None) => Ok(Type::String(max)),
+                    _ => Ok(Type::VarArray {
+                        element_type: Box::new(base),
+                        max_size: max,
+                    }),
+                }
+            }
+            Rule::optional_marker => Ok(Type::Optional(Box::new(base))),
+            _ => Ok(base),
+        }
+    }
+
+    fn build_size(&self, pair: pest::iterators::Pair<'a, Rule>) -> Result<Size, ParseError> {
+        let inner = pair.into_inner().next().ok_or(ParseError::UnexpectedEof)?;
+
+        match inner.as_rule() {
+            Rule::int_literal => {
+                let (value, _) = parse_int_literal(inner.as_str());
+                Ok(Size::Literal(value as u32))
+            }
+            Rule::ident => Ok(Size::Named(inner.as_str().to_string())),
+            _ => Err(ParseError::UnexpectedRule(format!("{:?}", inner.as_rule()))),
+        }
+    }
+
+    fn extract_anonymous_union_if_needed(
+        &mut self,
+        type_: Type,
+        field_name: &str,
+        source_start: usize,
+        source_end: usize,
+        extract_start_idx: usize,
+    ) -> Type {
+        match type_ {
             Type::AnonymousUnion {
                 discriminant,
                 arms,
@@ -371,21 +770,19 @@ impl Parser {
             } => {
                 // Generate the name: root_parent + field_name
                 let union_name = if let Some(ref parent) = self.root_parent {
-                    generate_nested_type_name(parent, &name)
+                    generate_nested_type_name(parent, field_name)
                 } else {
-                    // Fallback: use field name with "Union" suffix
-                    generate_nested_type_name(&name, "Union")
+                    generate_nested_type_name(field_name, "Union")
                 };
 
                 // Extract source text for the anonymous union
-                let source =
-                    if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                        self.source[type_start_byte..type_end_byte].to_string()
-                    } else {
-                        String::new()
-                    };
+                let source = if source_start < source_end && source_end <= self.source.len() {
+                    self.source[source_start..source_end].to_string()
+                } else {
+                    String::new()
+                };
 
-                // Create the Union definition (unbox the discriminant)
+                // Create the Union definition
                 let union_def = Union {
                     name: union_name.clone(),
                     discriminant: *discriminant,
@@ -397,8 +794,6 @@ impl Parser {
                 };
 
                 // Fix up parent relationships for any definitions extracted during union parsing
-                // (e.g., inline structs inside union arms should have this union as their parent)
-                // Only update if current parent is the root_parent (not already a more specific parent)
                 for def in &mut self.extracted_definitions[extract_start_idx..] {
                     match def {
                         Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
@@ -419,554 +814,38 @@ impl Parser {
                 Type::Ident(union_name)
             }
             other => other,
-        };
-
-        Ok(Member { name, type_ })
-    }
-
-    fn parse_union_arm(&mut self) -> Result<UnionArm, ParseError> {
-        let mut cases = Vec::new();
-
-        // Parse case(s) - multiple cases can share the same arm
-        loop {
-            match self.peek() {
-                Token::Case => {
-                    self.advance();
-                    let value = match self.peek().clone() {
-                        Token::Ident(name) => {
-                            self.advance();
-                            CaseValue::Ident(name)
-                        }
-                        Token::IntLiteral((value, _)) => {
-                            self.advance();
-                            CaseValue::Literal(value as i32)
-                        }
-                        other => {
-                            return Err(ParseError::UnexpectedToken {
-                                expected: "case value".to_string(),
-                                got: other,
-                            })
-                        }
-                    };
-                    self.expect(Token::Colon)?;
-                    cases.push(UnionCase { value });
-                }
-                Token::Default => {
-                    self.advance();
-                    self.expect(Token::Colon)?;
-                    // Default has no cases
-                    break;
-                }
-                _ => break,
-            }
-        }
-
-        // Parse the arm type
-        let type_ = if *self.peek() == Token::Void {
-            self.advance();
-            self.expect(Token::Semi)?;
-            None
-        } else if *self.peek() == Token::Struct {
-            // Inline struct definition - extract as a separate type
-            // We need to find the field name first to set root_parent correctly
-            // for any nested anonymous unions inside the struct
-
-            // Record position before 'struct' keyword for source extraction
-            let source_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
-
-            self.advance();
-            self.expect(Token::LBrace)?;
-
-            // Skip ahead to find the field name (count braces to find end of struct)
-            let start_pos = self.pos;
-            let mut brace_depth = 1;
-            while brace_depth > 0 {
-                match self.advance() {
-                    Token::LBrace => brace_depth += 1,
-                    Token::RBrace => brace_depth -= 1,
-                    Token::Eof => break,
-                    _ => {}
-                }
-            }
-
-            // Record end position (after closing brace, before field name)
-            let source_end_byte = if self.pos > 0 {
-                self.tokens
-                    .get(self.pos - 1)
-                    .map(|st| st.end)
-                    .unwrap_or(self.source.len())
-            } else {
-                source_start_byte
-            };
-
-            // Now we should be after the closing brace, next is the field name
-            let field_name = self.expect_ident()?;
-            self.expect(Token::Semi)?;
-            let end_pos = self.pos;
-
-            // Go back to parse the struct body properly
-            self.pos = start_pos;
-
-            // Generate the struct name: root_parent + field_name
-            let struct_name = if let Some(ref parent) = self.root_parent {
-                generate_nested_type_name(parent, &field_name)
-            } else {
-                // Fallback: use field name with capitalization
-                field_name.to_upper_camel_case()
-            };
-
-            // Set root_parent to the struct name for any nested types
-            let prev_root = self.root_parent.take();
-            self.root_parent = Some(struct_name.clone());
-
-            let mut members = Vec::new();
-            while *self.peek() != Token::RBrace {
-                let member = self.parse_member()?;
-                members.push(member);
-                self.expect(Token::Semi)?;
-            }
-            self.expect(Token::RBrace)?;
-
-            // Restore root_parent
-            self.root_parent = prev_root;
-
-            // Skip the field name and semicolon we already parsed
-            self.pos = end_pos;
-
-            // Extract source text
-            let source =
-                if source_start_byte < source_end_byte && source_end_byte <= self.source.len() {
-                    self.source[source_start_byte..source_end_byte].to_string()
-                } else {
-                    String::new()
-                };
-
-            // Create the struct definition
-            let struct_def = Struct {
-                name: struct_name.clone(),
-                members,
-                source,
-                is_nested: true,
-                parent: self.root_parent.clone(),
-            };
-
-            // Add to extracted definitions
-            self.extracted_definitions
-                .push(Definition::Struct(struct_def));
-
-            Some(Type::Ident(struct_name))
-        } else {
-            // Record start position for source extraction
-            let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
-
-            // Track extracted definitions before parsing type (for fixing parent relationships)
-            let extract_start_idx = self.extracted_definitions.len();
-
-            let type_ = self.parse_type()?;
-
-            // Record end position after parsing type
-            let type_end_byte = if self.pos > 0 {
-                self.tokens
-                    .get(self.pos - 1)
-                    .map(|st| st.end)
-                    .unwrap_or(self.source.len())
-            } else {
-                type_start_byte
-            };
-
-            let field_name = self.expect_ident()?;
-            let type_ = self.parse_type_suffix(type_)?;
-            self.expect(Token::Semi)?;
-
-            // If this is an anonymous union, extract it as a separate definition
-            let type_ = match type_ {
-                Type::AnonymousUnion {
-                    discriminant,
-                    arms,
-                    default_arm,
-                } => {
-                    // Generate the name: root_parent + field_name
-                    let union_name = if let Some(ref parent) = self.root_parent {
-                        generate_nested_type_name(parent, &field_name)
-                    } else {
-                        // Fallback: use field name with capitalization
-                        field_name.to_upper_camel_case()
-                    };
-
-                    // Extract source text for the anonymous union
-                    let source =
-                        if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                            self.source[type_start_byte..type_end_byte].to_string()
-                        } else {
-                            String::new()
-                        };
-
-                    // Create the Union definition (unbox the discriminant)
-                    let union_def = Union {
-                        name: union_name.clone(),
-                        discriminant: *discriminant,
-                        arms,
-                        default_arm,
-                        source,
-                        is_nested: true,
-                        parent: self.root_parent.clone(),
-                    };
-
-                    // Fix up parent relationships for any definitions extracted during union parsing
-                    // (e.g., inline structs inside union arms should have this union as their parent)
-                    // Only update if current parent is the root_parent (not already a more specific parent)
-                    for def in &mut self.extracted_definitions[extract_start_idx..] {
-                        match def {
-                            Definition::Struct(s)
-                                if s.is_nested && s.parent == self.root_parent =>
-                            {
-                                s.parent = Some(union_name.clone());
-                            }
-                            Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
-                                u.parent = Some(union_name.clone());
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    // Add to extracted definitions
-                    self.extracted_definitions
-                        .push(Definition::Union(union_def));
-
-                    // Return a reference to the extracted type
-                    Type::Ident(union_name)
-                }
-                other => other,
-            };
-
-            Some(type_)
-        };
-
-        Ok(UnionArm { cases, type_ })
-    }
-
-    fn parse_type(&mut self) -> Result<Type, ParseError> {
-        match self.peek().clone() {
-            Token::Int => {
-                self.advance();
-                Ok(Type::Int)
-            }
-            Token::Unsigned => {
-                self.advance();
-                match self.peek() {
-                    Token::Int => {
-                        self.advance();
-                        Ok(Type::UnsignedInt)
-                    }
-                    Token::Hyper => {
-                        self.advance();
-                        Ok(Type::UnsignedHyper)
-                    }
-                    other => Err(ParseError::UnexpectedToken {
-                        expected: "int or hyper".to_string(),
-                        got: other.clone(),
-                    }),
-                }
-            }
-            Token::Hyper => {
-                self.advance();
-                Ok(Type::Hyper)
-            }
-            Token::Float => {
-                self.advance();
-                Ok(Type::Float)
-            }
-            Token::Double => {
-                self.advance();
-                Ok(Type::Double)
-            }
-            Token::Bool => {
-                self.advance();
-                Ok(Type::Bool)
-            }
-            Token::Opaque => {
-                self.advance();
-                self.parse_opaque_suffix()
-            }
-            Token::String => {
-                self.advance();
-                self.parse_string_suffix()
-            }
-            Token::Union => {
-                // Anonymous union inside struct
-                // union switch (type name) { ... }
-                self.advance();
-                self.expect(Token::Switch)?;
-                self.expect(Token::LParen)?;
-                let disc_type = self.parse_type()?;
-                let disc_name = self.expect_ident()?;
-                self.expect(Token::RParen)?;
-                self.expect(Token::LBrace)?;
-
-                let mut arms = Vec::new();
-                let mut default_arm = None;
-
-                while *self.peek() != Token::RBrace {
-                    let arm = self.parse_union_arm()?;
-                    if arm.cases.is_empty() {
-                        default_arm = Some(Box::new(arm));
-                    } else {
-                        arms.push(arm);
-                    }
-                }
-                self.expect(Token::RBrace)?;
-
-                // Return an AnonymousUnion that will be extracted in parse_member
-                Ok(Type::AnonymousUnion {
-                    discriminant: Box::new(Discriminant {
-                        name: disc_name,
-                        type_: disc_type,
-                    }),
-                    arms,
-                    default_arm,
-                })
-            }
-            Token::Ident(name) => {
-                self.advance();
-                // Handle built-in type aliases
-                let base_type = match name.as_str() {
-                    "uint64" => Type::UnsignedHyper,
-                    "int64" => Type::Hyper,
-                    "uint32" => Type::UnsignedInt,
-                    "int32" => Type::Int,
-                    "TRUE" | "FALSE" => Type::Bool,
-                    _ => Type::Ident(name),
-                };
-                // Check for optional type suffix (Type* field)
-                if *self.peek() == Token::Star {
-                    self.advance();
-                    Ok(Type::Optional(Box::new(base_type)))
-                } else {
-                    Ok(base_type)
-                }
-            }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "type".to_string(),
-                got: other,
-            }),
-        }
-    }
-
-    fn parse_type_suffix(&mut self, base: Type) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LBracket => {
-                self.advance();
-                let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
-
-                // Special case: opaque name[size] or string name[size]
-                // means fixed opaque/string, not an array of opaque/string
-                match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
-                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
-                    _ => Ok(Type::Array {
-                        element_type: Box::new(base),
-                        size,
-                    }),
-                }
-            }
-            Token::LAngle => {
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-
-                // Special case: opaque name<max> or string name<max>
-                // means variable opaque/string with max, not a var array
-                match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
-                    Type::String(None) => Ok(Type::String(max)),
-                    _ => Ok(Type::VarArray {
-                        element_type: Box::new(base),
-                        max_size: max,
-                    }),
-                }
-            }
-            Token::Star => {
-                // Optional: type *name
-                self.advance();
-                Ok(Type::Optional(Box::new(base)))
-            }
-            _ => Ok(base),
-        }
-    }
-
-    fn parse_opaque_suffix(&mut self) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LBracket => {
-                // Fixed: opaque[size]
-                self.advance();
-                let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
-                Ok(Type::OpaqueFixed(size))
-            }
-            Token::LAngle => {
-                // Variable: opaque<max> or opaque<>
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-                Ok(Type::OpaqueVar(max))
-            }
-            _ => {
-                // Bare opaque - variable with no max (rare)
-                Ok(Type::OpaqueVar(None))
-            }
-        }
-    }
-
-    fn parse_string_suffix(&mut self) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LAngle => {
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-                Ok(Type::String(max))
-            }
-            _ => Ok(Type::String(None)),
-        }
-    }
-
-    fn parse_size(&mut self) -> Result<Size, ParseError> {
-        match self.peek().clone() {
-            Token::IntLiteral((value, _)) => {
-                self.advance();
-                Ok(Size::Literal(value as u32))
-            }
-            Token::Ident(name) => {
-                self.advance();
-                Ok(Size::Named(name))
-            }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "size (integer or identifier)".to_string(),
-                got: other,
-            }),
-        }
-    }
-
-    fn peek(&self) -> &Token {
-        self.tokens
-            .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof)
-    }
-
-    fn advance(&mut self) -> &Token {
-        let token = self
-            .tokens
-            .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof);
-        self.pos += 1;
-        token
-    }
-
-    fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
-        let token = self.advance().clone();
-        if token == expected {
-            Ok(())
-        } else {
-            Err(ParseError::UnexpectedToken {
-                expected: format!("{expected:?}"),
-                got: token,
-            })
-        }
-    }
-
-    fn expect_ident(&mut self) -> Result<String, ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::Ident(s) => Ok(s),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "identifier".to_string(),
-                got: token,
-            }),
-        }
-    }
-
-    /// Parse an integer literal, returning both the value and whether it was in hex format.
-    fn expect_int_with_base(&mut self) -> Result<(i64, IntBase), ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::IntLiteral((value, base)) => Ok((value, base)),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "integer literal".to_string(),
-                got: token,
-            }),
-        }
-    }
-
-    /// Try to resolve an enum value reference
-    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
-        // First check if it's in the current enum being parsed
-        for m in members {
-            if m.name == name {
-                return m.value;
-            }
-        }
-        // Check global values (previously parsed enums and consts)
-        if let Some(&value) = self.global_values.get(name) {
-            return value as i32;
-        }
-        // Return 0 as fallback
-        0
-    }
-
-    /// Extract the source text for a definition using the tracked start position.
-    fn extract_definition_source(&self, _name: &str) -> String {
-        // Get the byte range from the start token to the current token
-        let start_byte = self
-            .tokens
-            .get(self.def_start_pos)
-            .map(|st| st.start)
-            .unwrap_or(0);
-
-        // The end is the current position's end (previous token's end after parsing)
-        let end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            start_byte
-        };
-
-        // Extract and return the source text
-        if start_byte < end_byte && end_byte <= self.source.len() {
-            self.source[start_byte..end_byte].to_string()
-        } else {
-            String::new()
         }
     }
 }
 
-#[derive(Debug, Error)]
-pub enum ParseError {
-    #[error("lexer error: {0}")]
-    Lex(#[from] LexError),
-    #[error("unexpected token: expected {expected}, got {got:?}")]
-    UnexpectedToken { expected: String, got: Token },
-    #[error("unexpected end of file")]
-    UnexpectedEof,
+/// Parse an integer literal, returning both the value and whether it was in hex format.
+fn parse_int_literal(s: &str) -> (i64, IntBase) {
+    if s.starts_with("0x") || s.starts_with("0X") {
+        let value = i64::from_str_radix(&s[2..], 16).unwrap_or(0);
+        (value, IntBase::Hexadecimal)
+    } else {
+        let value = s.parse::<i64>().unwrap_or(0);
+        (value, IntBase::Decimal)
+    }
+}
+
+/// Extract source text for an inline struct (approximate).
+fn extract_inline_struct_source(full_source: &str) -> String {
+    // Find the "struct {" part and extract up to the closing "}"
+    if let Some(start) = full_source.find("struct") {
+        if let Some(end) = full_source.rfind('}') {
+            return full_source[start..=end].to_string();
+        }
+    }
+    String::new()
+}
+
+/// Generate a nested type name from parent and field name.
+fn generate_nested_type_name(parent: &str, field: &str) -> String {
+    format!("{}{}", parent, field.to_upper_camel_case())
 }
 
 /// Fix parent relationships for nested types based on naming patterns.
-/// For a nested type whose name starts with another nested type's name, update parent.
 fn fix_parent_relationships(definitions: &mut [Definition]) {
     // Collect all nested type names
     let nested_names: Vec<String> = definitions
@@ -981,7 +860,6 @@ fn fix_parent_relationships(definitions: &mut [Definition]) {
         .collect();
 
     // For each nested type, find if there's a "better" parent
-    // (a nested type whose name is a prefix and longer than current parent)
     for def in definitions.iter_mut() {
         if !def.is_nested() {
             continue;
@@ -1012,9 +890,14 @@ fn fix_parent_relationships(definitions: &mut [Definition]) {
     }
 }
 
-/// Generate a nested type name from parent and field name.
-fn generate_nested_type_name(parent: &str, field: &str) -> String {
-    format!("{}{}", parent, field.to_upper_camel_case())
+#[derive(Debug, Error)]
+pub enum ParseError {
+    #[error("pest parse error: {0}")]
+    Pest(#[from] pest::error::Error<Rule>),
+    #[error("unexpected end of file")]
+    UnexpectedEof,
+    #[error("unexpected rule: {0}")]
+    UnexpectedRule(String),
 }
 
 #[cfg(test)]
@@ -1024,8 +907,7 @@ mod tests {
     #[test]
     fn test_parse_struct() {
         let input = "struct Foo { int x; unsigned hyper y; };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.definitions.len(), 1);
         if let Definition::Struct(s) = &spec.definitions[0] {
@@ -1043,8 +925,7 @@ mod tests {
     #[test]
     fn test_parse_enum() {
         let input = "enum Color { RED = 0, GREEN = 1, BLUE = 2 };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.definitions.len(), 1);
         if let Definition::Enum(e) = &spec.definitions[0] {
@@ -1060,8 +941,7 @@ mod tests {
     #[test]
     fn test_parse_typedef() {
         let input = "typedef opaque Hash[32];";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.definitions.len(), 1);
         if let Definition::Typedef(t) = &spec.definitions[0] {
@@ -1075,11 +955,40 @@ mod tests {
     #[test]
     fn test_parse_namespace() {
         let input = "namespace stellar { struct Foo { int x; }; };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.namespaces.len(), 1);
         assert_eq!(spec.namespaces[0].name, "stellar");
         assert_eq!(spec.namespaces[0].definitions.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_const_hex() {
+        let input = "const FOO = 0x100;";
+        let spec = parse(input).unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Const(c) = &spec.definitions[0] {
+            assert_eq!(c.name, "FOO");
+            assert_eq!(c.value, 256);
+            assert_eq!(c.base, IntBase::Hexadecimal);
+        } else {
+            panic!("Expected const");
+        }
+    }
+
+    #[test]
+    fn test_parse_const_negative() {
+        let input = "const FOO = -1;";
+        let spec = parse(input).unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Const(c) = &spec.definitions[0] {
+            assert_eq!(c.name, "FOO");
+            assert_eq!(c.value, -1);
+            assert_eq!(c.base, IntBase::Decimal);
+        } else {
+            panic!("Expected const");
+        }
     }
 }

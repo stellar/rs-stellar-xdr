@@ -1,0 +1,98 @@
+// XDR grammar for pest parser
+
+// Entry point
+spec = { SOI ~ (namespace | definition)* ~ EOI }
+
+// Whitespace and comments (silent - automatically skipped)
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+COMMENT = _{ line_comment | block_comment | preprocessor }
+line_comment = _{ "//" ~ (!"\n" ~ ANY)* }
+block_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+preprocessor = _{ "%" ~ (!"\n" ~ ANY)* ~ "\n"? }
+
+// Namespace
+namespace = { "namespace" ~ ident ~ "{" ~ definition* ~ "}" }
+
+// Top-level definitions
+definition = { struct_def | enum_def | union_def | typedef_def | const_def | ";" }
+
+// Struct definition
+struct_def = { "struct" ~ ident ~ "{" ~ struct_member* ~ "}" ~ ";" }
+struct_member = { type_spec ~ ident ~ type_suffix? ~ ";" }
+
+// Enum definition
+enum_def = { "enum" ~ ident ~ "{" ~ enum_members ~ "}" ~ ";" }
+enum_members = { enum_member ~ ("," ~ enum_member)* ~ ","? }
+enum_member = { ident ~ "=" ~ enum_value }
+enum_value = { int_literal | ident }
+
+// Union definition
+union_def = { "union" ~ ident ~ "switch" ~ "(" ~ type_spec ~ ident ~ ")" ~ "{" ~ union_arm* ~ "}" ~ ";" }
+union_arm = { union_cases ~ union_arm_type }
+union_cases = { (case_clause | default_clause)+ }
+case_clause = { "case" ~ case_value ~ ":" }
+default_clause = { "default" ~ ":" }
+case_value = { int_literal | ident }
+union_arm_type = { void_arm | inline_struct_arm | type_arm }
+void_arm = { "void" ~ ";" }
+inline_struct_arm = { "struct" ~ "{" ~ struct_member* ~ "}" ~ ident ~ ";" }
+type_arm = { type_spec ~ ident ~ type_suffix? ~ ";" }
+
+// Typedef definition
+typedef_def = { "typedef" ~ type_spec ~ ident ~ type_suffix? ~ ";" }
+
+// Const definition
+const_def = { "const" ~ ident ~ "=" ~ int_literal ~ ";" }
+
+// Type specifications
+type_spec = {
+    unsigned_type |
+    int_type |
+    hyper_type |
+    float_type |
+    double_type |
+    bool_type |
+    opaque_type |
+    string_type |
+    anonymous_union |
+    ident_type
+}
+
+// Keyword matching - atomic rules to prevent partial matches like "int" matching "int64"
+unsigned_int_kw = @{ "unsigned" ~ WHITESPACE+ ~ "int" ~ !(ASCII_ALPHANUMERIC | "_") }
+unsigned_hyper_kw = @{ "unsigned" ~ WHITESPACE+ ~ "hyper" ~ !(ASCII_ALPHANUMERIC | "_") }
+int_kw = @{ "int" ~ !(ASCII_ALPHANUMERIC | "_") }
+hyper_kw = @{ "hyper" ~ !(ASCII_ALPHANUMERIC | "_") }
+float_kw = @{ "float" ~ !(ASCII_ALPHANUMERIC | "_") }
+double_kw = @{ "double" ~ !(ASCII_ALPHANUMERIC | "_") }
+bool_kw = @{ "bool" ~ !(ASCII_ALPHANUMERIC | "_") }
+opaque_kw = @{ "opaque" ~ !(ASCII_ALPHANUMERIC | "_") }
+string_kw = @{ "string" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+unsigned_type = { unsigned_int_kw | unsigned_hyper_kw }
+int_type = { int_kw }
+hyper_type = { hyper_kw }
+float_type = { float_kw }
+double_type = { double_kw }
+bool_type = { bool_kw }
+opaque_type = { opaque_kw ~ (fixed_size | var_size)? }
+string_type = { string_kw ~ var_size? }
+ident_type = { ident ~ optional_marker? }
+optional_marker = { "*" }
+
+// Anonymous union (inline in struct)
+anonymous_union = { "union" ~ "switch" ~ "(" ~ type_spec ~ ident ~ ")" ~ "{" ~ union_arm* ~ "}" }
+
+// Type suffixes (for arrays)
+type_suffix = { fixed_size | var_size | optional_marker }
+fixed_size = { "[" ~ size_spec ~ "]" }
+var_size = { "<" ~ size_spec? ~ ">" }
+size_spec = { int_literal | ident }
+
+// Identifiers
+ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Integer literals
+int_literal = @{ hex_literal | decimal_literal }
+hex_literal = @{ "0x" ~ ASCII_HEX_DIGIT+ }
+decimal_literal = @{ "-"? ~ ASCII_DIGIT+ }

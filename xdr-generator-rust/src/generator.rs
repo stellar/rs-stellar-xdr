@@ -4,7 +4,7 @@ use crate::ast::{
     CaseValue, Const, Definition, Enum, Member, Size, Struct, Type, Typedef, Union, UnionArm,
     XdrSpec,
 };
-use crate::lexer::IntBase;
+use crate::parser::IntBase;
 use crate::types::{
     base_rust_type_ref, element_type_for_vec, is_builtin_type, is_fixed_array, is_fixed_opaque,
     is_var_array, rust_field_name, rust_read_call_type, rust_type_name, rust_type_ref,

@@ -1,6 +1,6 @@
 //! AST types for XDR definitions.
 
-use crate::lexer::IntBase;
+use crate::parser::IntBase;
 
 /// The root of a parsed XDR file or collection of files.
 #[derive(Debug, Clone, Default)]

@@ -1,118 +1,144 @@
-//! XDR parser (recursive descent).
+//! XDR parser using nom combinators.
 
 use crate::ast::*;
-use crate::lexer::{IntBase, LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
+use nom::{
+    bytes::complete::{tag, take_until, take_while, take_while1},
+    character::complete::char,
+    combinator::{opt, recognize},
+    multi::many0,
+    sequence::{pair, preceded},
+    IResult, Parser,
+};
+use std::collections::HashMap;
 use thiserror::Error;
 
 /// Parse XDR source text into an AST.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
-    let mut parser = Parser::new(source)?;
-    parser.parse()
+    let mut ctx = ParseContext::new(source);
+    ctx.parse()
 }
 
-pub struct Parser {
-    tokens: Vec<SpannedToken>,
-    pos: usize,
-    /// The original source text, for extracting source snippets
-    source: String,
-    /// Track the token position of the current definition start for source extraction
-    def_start_pos: usize,
-    /// Extracted nested type definitions (anonymous unions, inline structs)
+#[derive(Debug, Error)]
+pub enum ParseError {
+    #[error("parse error: {0}")]
+    Nom(String),
+}
+
+/// Context for parsing, tracking extracted nested definitions and global values.
+struct ParseContext<'a> {
+    source: &'a str,
     extracted_definitions: Vec<Definition>,
-    /// Root parent type name for generating nested type names
     root_parent: Option<String>,
-    /// Global map of enum member names and const names to their values
-    global_values: std::collections::HashMap<String, i64>,
+    global_values: HashMap<String, i64>,
 }
 
-impl Parser {
-    pub fn new(source: &str) -> Result<Self, ParseError> {
-        let lexer = Lexer::new(source);
-        let (tokens, source) = lexer.tokenize_with_spans()?;
-        Ok(Self {
-            tokens,
-            pos: 0,
+impl<'a> ParseContext<'a> {
+    fn new(source: &'a str) -> Self {
+        Self {
             source,
-            def_start_pos: 0,
             extracted_definitions: Vec::new(),
             root_parent: None,
-            global_values: std::collections::HashMap::new(),
-        })
+            global_values: HashMap::new(),
+        }
     }
 
-    /// Parse the entire input.
-    pub fn parse(&mut self) -> Result<XdrSpec, ParseError> {
-        let mut spec = XdrSpec::default();
-
-        while *self.peek() != Token::Eof {
-            // Skip any extra semicolons at the top level
-            while *self.peek() == Token::Semi {
-                self.advance();
+    fn parse(&mut self) -> Result<XdrSpec, ParseError> {
+        let input = self.source;
+        match self.parse_spec(input) {
+            Ok((_, mut spec)) => {
+                // Post-process to fix parent relationships for nested types.
+                fix_parent_relationships(&mut spec.definitions);
+                for ns in &mut spec.namespaces {
+                    fix_parent_relationships(&mut ns.definitions);
+                }
+                Ok(spec)
             }
-            if *self.peek() == Token::Eof {
+            Err(e) => Err(ParseError::Nom(format!("{:?}", e))),
+        }
+    }
+
+    fn parse_spec<'b>(&mut self, input: &'b str) -> IResult<&'b str, XdrSpec> {
+        let mut spec = XdrSpec::default();
+        let mut remaining = input;
+
+        // Skip leading whitespace
+        let (rest, _) = ws(remaining)?;
+        remaining = rest;
+
+        while !remaining.is_empty() {
+            // Skip extra semicolons at top level
+            let (rest, _) = many0(preceded(ws, char(';'))).parse(remaining)?;
+            remaining = rest;
+
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            if remaining.is_empty() {
                 break;
             }
-            match self.peek() {
-                Token::Namespace => {
-                    let ns = self.parse_namespace()?;
-                    spec.namespaces.push(ns);
+
+            // Check for namespace
+            if remaining.starts_with("namespace") {
+                let (rest, ns) = self.parse_namespace(remaining)?;
+                spec.namespaces.push(ns);
+                remaining = rest;
+            } else {
+                // Track extracted definitions before parsing this definition
+                let extract_start = self.extracted_definitions.len();
+
+                let (rest, def) = self.parse_definition(remaining)?;
+                remaining = rest;
+
+                // Insert any newly extracted definitions before this definition
+                for extracted in self.extracted_definitions.drain(extract_start..) {
+                    spec.definitions.push(extracted);
                 }
-                _ => {
-                    // Track extracted definitions before parsing this definition
-                    let extract_start = self.extracted_definitions.len();
 
-                    let def = self.parse_definition()?;
-
-                    // Insert any newly extracted definitions before this definition
-                    // This ensures nested types appear just before their parent
-                    for extracted in self.extracted_definitions.drain(extract_start..) {
-                        spec.definitions.push(extracted);
-                    }
-
-                    spec.definitions.push(def);
-                }
+                spec.definitions.push(def);
             }
         }
 
-        // Any remaining extracted definitions (shouldn't be any, but just in case)
+        // Any remaining extracted definitions
         for extracted in self.extracted_definitions.drain(..) {
             spec.definitions.push(extracted);
         }
 
-        // Post-process to fix parent relationships for nested types.
-        // For types whose name starts with another type's name, update parent to be that type.
-        // This fixes cases where inline structs inside unions have nested unions.
-        fix_parent_relationships(&mut spec.definitions);
-        for ns in &mut spec.namespaces {
-            fix_parent_relationships(&mut ns.definitions);
-        }
-
-        Ok(spec)
+        Ok((remaining, spec))
     }
 
-    fn parse_namespace(&mut self) -> Result<Namespace, ParseError> {
-        self.expect(Token::Namespace)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+    fn parse_namespace<'b>(&mut self, input: &'b str) -> IResult<&'b str, Namespace> {
+        let (rest, _) = tag("namespace")(input)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char('{')(rest)?;
 
         let mut definitions = Vec::new();
-        while *self.peek() != Token::RBrace && *self.peek() != Token::Eof {
-            // Skip any extra semicolons
-            while *self.peek() == Token::Semi {
-                self.advance();
-            }
-            if *self.peek() == Token::RBrace {
+        let mut remaining = rest;
+
+        loop {
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            // Skip extra semicolons
+            let (rest, _) = many0(preceded(ws, char(';'))).parse(remaining)?;
+            remaining = rest;
+
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            if remaining.starts_with('}') {
                 break;
             }
 
-            // Track extracted definitions before parsing this definition
+            // Track extracted definitions
             let extract_start = self.extracted_definitions.len();
 
-            let def = self.parse_definition()?;
+            let (rest, def) = self.parse_definition(remaining)?;
+            remaining = rest;
 
-            // Insert any newly extracted definitions before this definition
-            // This ensures nested types appear just before their parent
+            // Insert extracted definitions before this definition
             for extracted in self.extracted_definitions.drain(extract_start..) {
                 definitions.push(extracted);
             }
@@ -120,144 +146,200 @@ impl Parser {
             definitions.push(def);
         }
 
-        self.expect(Token::RBrace)?;
+        let (rest, _) = char('}')(remaining)?;
 
-        Ok(Namespace { name, definitions })
+        Ok((
+            rest,
+            Namespace {
+                name: name.to_string(),
+                definitions,
+            },
+        ))
     }
 
-    fn parse_definition(&mut self) -> Result<Definition, ParseError> {
-        // Mark the start of this definition for source extraction
-        self.def_start_pos = self.pos;
+    fn parse_definition<'b>(&mut self, input: &'b str) -> IResult<&'b str, Definition> {
+        let (rest, _) = ws(input)?;
+        let source_start = self.source.len() - rest.len();
 
-        match self.peek() {
-            Token::Struct => self.parse_struct().map(Definition::Struct),
-            Token::Enum => self.parse_enum().map(Definition::Enum),
-            Token::Union => self.parse_union().map(Definition::Union),
-            Token::Typedef => self.parse_typedef().map(Definition::Typedef),
-            Token::Const => self.parse_const().map(Definition::Const),
-            other => Err(ParseError::UnexpectedToken {
-                expected: "struct, enum, union, typedef, or const".to_string(),
-                got: other.clone(),
-            }),
+        // Check which definition type
+        if rest.starts_with("struct") {
+            let (rest, def) = self.parse_struct(rest, source_start)?;
+            Ok((rest, Definition::Struct(def)))
+        } else if rest.starts_with("enum") {
+            let (rest, def) = self.parse_enum(rest, source_start)?;
+            Ok((rest, Definition::Enum(def)))
+        } else if rest.starts_with("union") {
+            let (rest, def) = self.parse_union(rest, source_start)?;
+            Ok((rest, Definition::Union(def)))
+        } else if rest.starts_with("typedef") {
+            let (rest, def) = self.parse_typedef(rest, source_start)?;
+            Ok((rest, Definition::Typedef(def)))
+        } else if rest.starts_with("const") {
+            let (rest, def) = self.parse_const(rest, source_start)?;
+            Ok((rest, Definition::Const(def)))
+        } else {
+            Err(nom::Err::Error(nom::error::Error::new(
+                rest,
+                nom::error::ErrorKind::Alt,
+            )))
         }
     }
 
-    fn parse_struct(&mut self) -> Result<Struct, ParseError> {
-        self.expect(Token::Struct)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+    fn parse_struct<'b>(
+        &mut self,
+        input: &'b str,
+        source_start: usize,
+    ) -> IResult<&'b str, Struct> {
+        let (rest, _) = tag("struct")(input)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let name = name.to_string();
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char('{')(rest)?;
 
         // Set root_parent for nested type name generation
         let prev_root = self.root_parent.take();
         self.root_parent = Some(name.clone());
 
         let mut members = Vec::new();
-        while *self.peek() != Token::RBrace {
-            let member = self.parse_member()?;
+        let mut remaining = rest;
+
+        loop {
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            if remaining.starts_with('}') {
+                break;
+            }
+
+            let (rest, member) = self.parse_member(remaining)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char(';')(rest)?;
+            remaining = rest;
             members.push(member);
-            self.expect(Token::Semi)?;
         }
 
         // Restore previous root_parent
         self.root_parent = prev_root;
 
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
+        let (rest, _) = char('}')(remaining)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char(';')(rest)?;
 
-        // Extract source text (simplified - just use the name for now)
-        let source = self.extract_definition_source(&name);
+        let source_end = self.source.len() - rest.len();
+        let source = self.source[source_start..source_end].to_string();
 
-        Ok(Struct {
-            name,
-            members,
-            source,
-            is_nested: false,
-            parent: None,
-        })
+        Ok((
+            rest,
+            Struct {
+                name,
+                members,
+                source,
+                is_nested: false,
+                parent: None,
+            },
+        ))
     }
 
-    fn parse_enum(&mut self) -> Result<Enum, ParseError> {
-        self.expect(Token::Enum)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+    fn parse_enum<'b>(&mut self, input: &'b str, source_start: usize) -> IResult<&'b str, Enum> {
+        let (rest, _) = tag("enum")(input)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let name = name.to_string();
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char('{')(rest)?;
 
         let mut members = Vec::new();
-        loop {
-            let member_name = self.expect_ident()?;
-            self.expect(Token::Eq)?;
+        let mut remaining = rest;
 
-            // Value can be integer or identifier (reference to another enum value)
-            let value = match self.peek().clone() {
-                Token::IntLiteral((value, _)) => {
-                    self.advance();
-                    value as i32
-                }
-                Token::Ident(ref_name) => {
-                    self.advance();
-                    // For now, we'll store 0 and resolve later
-                    // In practice, we'd need to resolve this reference
-                    // The Ruby generator handles this via the xdrgen gem
-                    self.resolve_enum_value(&ref_name, &members)
-                }
-                other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: "integer or identifier".to_string(),
-                        got: other,
-                    })
-                }
+        loop {
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            if remaining.starts_with('}') {
+                break;
+            }
+
+            let (rest, member_name) = ident(remaining)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('=')(rest)?;
+            let (rest, _) = ws(rest)?;
+
+            // Value can be integer or identifier reference
+            let (rest, value) = if let Ok((rest, (val, _))) = int_literal(rest) {
+                (rest, val as i32)
+            } else {
+                let (rest, ref_name) = ident(rest)?;
+                let val = self.resolve_enum_value(ref_name, &members);
+                (rest, val)
             };
 
             members.push(EnumMember {
-                name: member_name,
+                name: member_name.to_string(),
                 value,
             });
 
-            match self.peek() {
-                Token::Comma => {
-                    self.advance();
-                    if *self.peek() == Token::RBrace {
-                        break;
-                    }
+            remaining = rest;
+
+            // Check for comma
+            let (rest, _) = ws(remaining)?;
+            if rest.starts_with(',') {
+                let (rest, _) = char(',')(rest)?;
+                remaining = rest;
+                // Check if next is closing brace (trailing comma)
+                let (rest, _) = ws(remaining)?;
+                if rest.starts_with('}') {
+                    remaining = rest;
+                    break;
                 }
-                Token::RBrace => break,
-                other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: ", or }".to_string(),
-                        got: other.clone(),
-                    })
-                }
+                remaining = rest;
+            } else {
+                remaining = rest;
+                break;
             }
         }
 
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
+        let (rest, _) = char('}')(remaining)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char(';')(rest)?;
 
-        let source = self.extract_definition_source(&name);
+        let source_end = self.source.len() - rest.len();
+        let source = self.source[source_start..source_end].to_string();
 
         // Add all members to global_values for cross-enum resolution
         for m in &members {
             self.global_values.insert(m.name.clone(), m.value as i64);
         }
 
-        Ok(Enum {
-            name,
-            members,
-            source,
-        })
+        Ok((
+            rest,
+            Enum {
+                name,
+                members,
+                source,
+            },
+        ))
     }
 
-    fn parse_union(&mut self) -> Result<Union, ParseError> {
-        self.expect(Token::Union)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::Switch)?;
-        self.expect(Token::LParen)?;
+    fn parse_union<'b>(&mut self, input: &'b str, source_start: usize) -> IResult<&'b str, Union> {
+        let (rest, _) = tag("union")(input)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let name = name.to_string();
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = tag("switch")(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char('(')(rest)?;
+        let (rest, _) = ws(rest)?;
 
-        // Parse discriminant
-        let disc_type = self.parse_type()?;
-        let disc_name = self.expect_ident()?;
-
-        self.expect(Token::RParen)?;
-        self.expect(Token::LBrace)?;
+        // Parse discriminant type and name
+        let (rest, disc_type) = self.parse_type(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, disc_name) = ident(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char(')')(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char('{')(rest)?;
 
         // Set root_parent for inline struct extraction
         let prev_root = self.root_parent.take();
@@ -265,11 +347,20 @@ impl Parser {
 
         let mut arms = Vec::new();
         let mut default_arm = None;
+        let mut remaining = rest;
 
-        while *self.peek() != Token::RBrace {
-            let arm = self.parse_union_arm()?;
+        loop {
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            if remaining.starts_with('}') {
+                break;
+            }
+
+            let (rest, arm) = self.parse_union_arm(remaining)?;
+            remaining = rest;
+
             if arm.cases.is_empty() {
-                // This is a default arm
                 default_arm = Some(Box::new(arm));
             } else {
                 arms.push(arm);
@@ -279,88 +370,101 @@ impl Parser {
         // Restore previous root_parent
         self.root_parent = prev_root;
 
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
+        let (rest, _) = char('}')(remaining)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char(';')(rest)?;
 
-        let source = self.extract_definition_source(&name);
+        let source_end = self.source.len() - rest.len();
+        let source = self.source[source_start..source_end].to_string();
 
-        Ok(Union {
-            name,
-            discriminant: Discriminant {
-                name: disc_name,
-                type_: disc_type,
+        Ok((
+            rest,
+            Union {
+                name,
+                discriminant: Discriminant {
+                    name: disc_name.to_string(),
+                    type_: disc_type,
+                },
+                arms,
+                default_arm,
+                source,
+                is_nested: false,
+                parent: None,
             },
-            arms,
-            default_arm,
-            source,
-            is_nested: false,
-            parent: None,
-        })
+        ))
     }
 
-    fn parse_typedef(&mut self) -> Result<Typedef, ParseError> {
-        self.expect(Token::Typedef)?;
-
-        let type_ = self.parse_type()?;
-        let name = self.expect_ident()?;
+    fn parse_typedef<'b>(
+        &mut self,
+        input: &'b str,
+        source_start: usize,
+    ) -> IResult<&'b str, Typedef> {
+        let (rest, _) = tag("typedef")(input)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, type_) = self.parse_type(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let name = name.to_string();
 
         // Handle array suffix on typedef name
-        let type_ = self.parse_type_suffix(type_)?;
+        let (rest, type_) = self.parse_type_suffix(rest, type_)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char(';')(rest)?;
 
-        self.expect(Token::Semi)?;
+        let source_end = self.source.len() - rest.len();
+        let source = self.source[source_start..source_end].to_string();
 
-        let source = self.extract_definition_source(&name);
-
-        Ok(Typedef {
-            name,
-            type_,
-            source,
-        })
+        Ok((
+            rest,
+            Typedef {
+                name,
+                type_,
+                source,
+            },
+        ))
     }
 
-    fn parse_const(&mut self) -> Result<Const, ParseError> {
-        self.expect(Token::Const)?;
-        let name = self.expect_ident()?;
-        self.expect(Token::Eq)?;
-        let (value, base) = self.expect_int_with_base()?;
-        self.expect(Token::Semi)?;
+    fn parse_const<'b>(&mut self, input: &'b str, source_start: usize) -> IResult<&'b str, Const> {
+        let (rest, _) = tag("const")(input)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let name = name.to_string();
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char('=')(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, (value, base)) = int_literal(rest)?;
+        let (rest, _) = ws(rest)?;
+        let (rest, _) = char(';')(rest)?;
 
-        let source = self.extract_definition_source(&name);
+        let source_end = self.source.len() - rest.len();
+        let source = self.source[source_start..source_end].to_string();
 
         // Add const value to global_values for enum reference resolution
         self.global_values.insert(name.clone(), value);
 
-        Ok(Const {
-            name,
-            value,
-            base,
-            source,
-        })
+        Ok((
+            rest,
+            Const {
+                name,
+                value,
+                base,
+                source,
+            },
+        ))
     }
 
-    fn parse_member(&mut self) -> Result<Member, ParseError> {
-        // Record start position for source extraction (for anonymous unions)
-        let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
-
-        // Track extracted definitions before parsing type (for fixing parent relationships)
+    fn parse_member<'b>(&mut self, input: &'b str) -> IResult<&'b str, Member> {
+        let source_start = self.source.len() - input.len();
         let extract_start_idx = self.extracted_definitions.len();
 
-        let type_ = self.parse_type()?;
+        let (rest, type_) = self.parse_type(input)?;
+        let type_end = self.source.len() - rest.len();
+        let (rest, _) = ws(rest)?;
+        let (rest, name) = ident(rest)?;
+        let name = name.to_string();
 
-        // Record end position (after parsing type, before field name)
-        let type_end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            type_start_byte
-        };
-
-        let name = self.expect_ident()?;
-
-        // Handle array suffix: name[size] or name<max>
-        let type_ = self.parse_type_suffix(type_)?;
+        // Handle array suffix
+        let (rest, type_) = self.parse_type_suffix(rest, type_)?;
 
         // If this is an anonymous union, extract it as a separate definition
         let type_ = match type_ {
@@ -369,23 +473,14 @@ impl Parser {
                 arms,
                 default_arm,
             } => {
-                // Generate the name: root_parent + field_name
                 let union_name = if let Some(ref parent) = self.root_parent {
                     generate_nested_type_name(parent, &name)
                 } else {
-                    // Fallback: use field name with "Union" suffix
                     generate_nested_type_name(&name, "Union")
                 };
 
-                // Extract source text for the anonymous union
-                let source =
-                    if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                        self.source[type_start_byte..type_end_byte].to_string()
-                    } else {
-                        String::new()
-                    };
+                let source = self.source[source_start..type_end].to_string();
 
-                // Create the Union definition (unbox the discriminant)
                 let union_def = Union {
                     name: union_name.clone(),
                     discriminant: *discriminant,
@@ -396,9 +491,7 @@ impl Parser {
                     parent: self.root_parent.clone(),
                 };
 
-                // Fix up parent relationships for any definitions extracted during union parsing
-                // (e.g., inline structs inside union arms should have this union as their parent)
-                // Only update if current parent is the root_parent (not already a more specific parent)
+                // Fix up parent relationships for definitions extracted during union parsing
                 for def in &mut self.extracted_definitions[extract_start_idx..] {
                     match def {
                         Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
@@ -411,107 +504,96 @@ impl Parser {
                     }
                 }
 
-                // Add to extracted definitions
                 self.extracted_definitions
                     .push(Definition::Union(union_def));
-
-                // Return a reference to the extracted type
                 Type::Ident(union_name)
             }
             other => other,
         };
 
-        Ok(Member { name, type_ })
+        Ok((rest, Member { name, type_ }))
     }
 
-    fn parse_union_arm(&mut self) -> Result<UnionArm, ParseError> {
+    fn parse_union_arm<'b>(&mut self, input: &'b str) -> IResult<&'b str, UnionArm> {
         let mut cases = Vec::new();
+        let mut remaining = input;
 
         // Parse case(s) - multiple cases can share the same arm
         loop {
-            match self.peek() {
-                Token::Case => {
-                    self.advance();
-                    let value = match self.peek().clone() {
-                        Token::Ident(name) => {
-                            self.advance();
-                            CaseValue::Ident(name)
-                        }
-                        Token::IntLiteral((value, _)) => {
-                            self.advance();
-                            CaseValue::Literal(value as i32)
-                        }
-                        other => {
-                            return Err(ParseError::UnexpectedToken {
-                                expected: "case value".to_string(),
-                                got: other,
-                            })
-                        }
-                    };
-                    self.expect(Token::Colon)?;
-                    cases.push(UnionCase { value });
-                }
-                Token::Default => {
-                    self.advance();
-                    self.expect(Token::Colon)?;
-                    // Default has no cases
-                    break;
-                }
-                _ => break,
+            let (rest, _) = ws(remaining)?;
+            remaining = rest;
+
+            if remaining.starts_with("case") {
+                let (rest, _) = tag("case")(remaining)?;
+                let (rest, _) = ws(rest)?;
+
+                let (rest, value) = if let Ok((rest, (val, _))) = int_literal(rest) {
+                    (rest, CaseValue::Literal(val as i32))
+                } else {
+                    let (rest, name) = ident(rest)?;
+                    (rest, CaseValue::Ident(name.to_string()))
+                };
+
+                let (rest, _) = ws(rest)?;
+                let (rest, _) = char(':')(rest)?;
+                remaining = rest;
+                cases.push(UnionCase { value });
+            } else if remaining.starts_with("default") {
+                let (rest, _) = tag("default")(remaining)?;
+                let (rest, _) = ws(rest)?;
+                let (rest, _) = char(':')(rest)?;
+                remaining = rest;
+                break;
+            } else {
+                break;
             }
         }
 
         // Parse the arm type
-        let type_ = if *self.peek() == Token::Void {
-            self.advance();
-            self.expect(Token::Semi)?;
-            None
-        } else if *self.peek() == Token::Struct {
+        let (rest, _) = ws(remaining)?;
+        remaining = rest;
+
+        let (rest, type_) = if remaining.starts_with("void") {
+            let (rest, _) = tag("void")(remaining)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char(';')(rest)?;
+            (rest, None)
+        } else if remaining.starts_with("struct") {
             // Inline struct definition - extract as a separate type
-            // We need to find the field name first to set root_parent correctly
-            // for any nested anonymous unions inside the struct
+            let source_start = self.source.len() - remaining.len();
+            let (rest, _) = tag("struct")(remaining)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('{')(rest)?;
 
-            // Record position before 'struct' keyword for source extraction
-            let source_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
-
-            self.advance();
-            self.expect(Token::LBrace)?;
-
-            // Skip ahead to find the field name (count braces to find end of struct)
-            let start_pos = self.pos;
+            // Find the field name by skipping the struct body first
+            let start_rest = rest;
             let mut brace_depth = 1;
+            let mut scan_rest = rest;
             while brace_depth > 0 {
-                match self.advance() {
-                    Token::LBrace => brace_depth += 1,
-                    Token::RBrace => brace_depth -= 1,
-                    Token::Eof => break,
-                    _ => {}
+                if scan_rest.starts_with('{') {
+                    brace_depth += 1;
+                    scan_rest = &scan_rest[1..];
+                } else if scan_rest.starts_with('}') {
+                    brace_depth -= 1;
+                    scan_rest = &scan_rest[1..];
+                } else if scan_rest.is_empty() {
+                    break;
+                } else {
+                    scan_rest = &scan_rest[1..];
                 }
             }
 
-            // Record end position (after closing brace, before field name)
-            let source_end_byte = if self.pos > 0 {
-                self.tokens
-                    .get(self.pos - 1)
-                    .map(|st| st.end)
-                    .unwrap_or(self.source.len())
-            } else {
-                source_start_byte
-            };
+            let source_end = self.source.len() - scan_rest.len();
+            let (rest2, _) = ws(scan_rest)?;
+            let (rest2, field_name) = ident(rest2)?;
+            let field_name = field_name.to_string();
+            let (rest2, _) = ws(rest2)?;
+            let (rest2, _) = char(';')(rest2)?;
 
-            // Now we should be after the closing brace, next is the field name
-            let field_name = self.expect_ident()?;
-            self.expect(Token::Semi)?;
-            let end_pos = self.pos;
-
-            // Go back to parse the struct body properly
-            self.pos = start_pos;
-
-            // Generate the struct name: root_parent + field_name
+            // Generate the struct name
             let struct_name = if let Some(ref parent) = self.root_parent {
                 generate_nested_type_name(parent, &field_name)
             } else {
-                // Fallback: use field name with capitalization
                 field_name.to_upper_camel_case()
             };
 
@@ -519,29 +601,33 @@ impl Parser {
             let prev_root = self.root_parent.take();
             self.root_parent = Some(struct_name.clone());
 
+            // Now parse the members
             let mut members = Vec::new();
-            while *self.peek() != Token::RBrace {
-                let member = self.parse_member()?;
+            let mut remaining = start_rest;
+
+            loop {
+                let (rest, _) = ws(remaining)?;
+                remaining = rest;
+
+                if remaining.starts_with('}') {
+                    break;
+                }
+
+                let (rest, member) = self.parse_member(remaining)?;
+                let (rest, _) = ws(rest)?;
+                let (rest, _) = char(';')(rest)?;
+                remaining = rest;
                 members.push(member);
-                self.expect(Token::Semi)?;
             }
-            self.expect(Token::RBrace)?;
+
+            // Skip the closing brace
+            let (_, _) = char('}')(remaining)?;
 
             // Restore root_parent
             self.root_parent = prev_root;
 
-            // Skip the field name and semicolon we already parsed
-            self.pos = end_pos;
+            let source = self.source[source_start..source_end].to_string();
 
-            // Extract source text
-            let source =
-                if source_start_byte < source_end_byte && source_end_byte <= self.source.len() {
-                    self.source[source_start_byte..source_end_byte].to_string()
-                } else {
-                    String::new()
-                };
-
-            // Create the struct definition
             let struct_def = Struct {
                 name: struct_name.clone(),
                 members,
@@ -550,58 +636,37 @@ impl Parser {
                 parent: self.root_parent.clone(),
             };
 
-            // Add to extracted definitions
             self.extracted_definitions
                 .push(Definition::Struct(struct_def));
-
-            Some(Type::Ident(struct_name))
+            (rest2, Some(Type::Ident(struct_name)))
         } else {
-            // Record start position for source extraction
-            let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
-
-            // Track extracted definitions before parsing type (for fixing parent relationships)
+            let source_start = self.source.len() - remaining.len();
             let extract_start_idx = self.extracted_definitions.len();
 
-            let type_ = self.parse_type()?;
+            let (rest, type_) = self.parse_type(remaining)?;
+            let type_end = self.source.len() - rest.len();
+            let (rest, _) = ws(rest)?;
+            let (rest, field_name) = ident(rest)?;
+            let field_name = field_name.to_string();
+            let (rest, type_) = self.parse_type_suffix(rest, type_)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char(';')(rest)?;
 
-            // Record end position after parsing type
-            let type_end_byte = if self.pos > 0 {
-                self.tokens
-                    .get(self.pos - 1)
-                    .map(|st| st.end)
-                    .unwrap_or(self.source.len())
-            } else {
-                type_start_byte
-            };
-
-            let field_name = self.expect_ident()?;
-            let type_ = self.parse_type_suffix(type_)?;
-            self.expect(Token::Semi)?;
-
-            // If this is an anonymous union, extract it as a separate definition
+            // If this is an anonymous union, extract it
             let type_ = match type_ {
                 Type::AnonymousUnion {
                     discriminant,
                     arms,
                     default_arm,
                 } => {
-                    // Generate the name: root_parent + field_name
                     let union_name = if let Some(ref parent) = self.root_parent {
                         generate_nested_type_name(parent, &field_name)
                     } else {
-                        // Fallback: use field name with capitalization
                         field_name.to_upper_camel_case()
                     };
 
-                    // Extract source text for the anonymous union
-                    let source =
-                        if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                            self.source[type_start_byte..type_end_byte].to_string()
-                        } else {
-                            String::new()
-                        };
+                    let source = self.source[source_start..type_end].to_string();
 
-                    // Create the Union definition (unbox the discriminant)
                     let union_def = Union {
                         name: union_name.clone(),
                         discriminant: *discriminant,
@@ -612,9 +677,6 @@ impl Parser {
                         parent: self.root_parent.clone(),
                     };
 
-                    // Fix up parent relationships for any definitions extracted during union parsing
-                    // (e.g., inline structs inside union arms should have this union as their parent)
-                    // Only update if current parent is the root_parent (not already a more specific parent)
                     for def in &mut self.extracted_definitions[extract_start_idx..] {
                         match def {
                             Definition::Struct(s)
@@ -629,289 +691,264 @@ impl Parser {
                         }
                     }
 
-                    // Add to extracted definitions
                     self.extracted_definitions
                         .push(Definition::Union(union_def));
-
-                    // Return a reference to the extracted type
                     Type::Ident(union_name)
                 }
                 other => other,
             };
 
-            Some(type_)
+            (rest, Some(type_))
         };
 
-        Ok(UnionArm { cases, type_ })
+        Ok((rest, UnionArm { cases, type_ }))
     }
 
-    fn parse_type(&mut self) -> Result<Type, ParseError> {
-        match self.peek().clone() {
-            Token::Int => {
-                self.advance();
-                Ok(Type::Int)
+    fn parse_type<'b>(&mut self, input: &'b str) -> IResult<&'b str, Type> {
+        let (rest, _) = ws(input)?;
+
+        if rest.starts_with("int")
+            && !rest[3..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("int")(rest)?;
+            Ok((rest, Type::Int))
+        } else if rest.starts_with("unsigned") {
+            let (rest, _) = tag("unsigned")(rest)?;
+            let (rest, _) = ws(rest)?;
+            if rest.starts_with("int")
+                && !rest[3..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+            {
+                let (rest, _) = tag("int")(rest)?;
+                Ok((rest, Type::UnsignedInt))
+            } else if rest.starts_with("hyper")
+                && !rest[5..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+            {
+                let (rest, _) = tag("hyper")(rest)?;
+                Ok((rest, Type::UnsignedHyper))
+            } else {
+                Err(nom::Err::Error(nom::error::Error::new(
+                    rest,
+                    nom::error::ErrorKind::Alt,
+                )))
             }
-            Token::Unsigned => {
-                self.advance();
-                match self.peek() {
-                    Token::Int => {
-                        self.advance();
-                        Ok(Type::UnsignedInt)
-                    }
-                    Token::Hyper => {
-                        self.advance();
-                        Ok(Type::UnsignedHyper)
-                    }
-                    other => Err(ParseError::UnexpectedToken {
-                        expected: "int or hyper".to_string(),
-                        got: other.clone(),
-                    }),
+        } else if rest.starts_with("hyper")
+            && !rest[5..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("hyper")(rest)?;
+            Ok((rest, Type::Hyper))
+        } else if rest.starts_with("float")
+            && !rest[5..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("float")(rest)?;
+            Ok((rest, Type::Float))
+        } else if rest.starts_with("double")
+            && !rest[6..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("double")(rest)?;
+            Ok((rest, Type::Double))
+        } else if rest.starts_with("bool")
+            && !rest[4..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("bool")(rest)?;
+            Ok((rest, Type::Bool))
+        } else if rest.starts_with("opaque")
+            && !rest[6..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("opaque")(rest)?;
+            self.parse_opaque_suffix(rest)
+        } else if rest.starts_with("string")
+            && !rest[6..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            let (rest, _) = tag("string")(rest)?;
+            self.parse_string_suffix(rest)
+        } else if rest.starts_with("union")
+            && !rest[5..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            // Anonymous union inside struct
+            let (rest, _) = tag("union")(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = tag("switch")(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('(')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, disc_type) = self.parse_type(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, disc_name) = ident(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char(')')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('{')(rest)?;
+
+            let mut arms = Vec::new();
+            let mut default_arm = None;
+            let mut remaining = rest;
+
+            loop {
+                let (rest, _) = ws(remaining)?;
+                remaining = rest;
+
+                if remaining.starts_with('}') {
+                    break;
+                }
+
+                let (rest, arm) = self.parse_union_arm(remaining)?;
+                remaining = rest;
+
+                if arm.cases.is_empty() {
+                    default_arm = Some(Box::new(arm));
+                } else {
+                    arms.push(arm);
                 }
             }
-            Token::Hyper => {
-                self.advance();
-                Ok(Type::Hyper)
-            }
-            Token::Float => {
-                self.advance();
-                Ok(Type::Float)
-            }
-            Token::Double => {
-                self.advance();
-                Ok(Type::Double)
-            }
-            Token::Bool => {
-                self.advance();
-                Ok(Type::Bool)
-            }
-            Token::Opaque => {
-                self.advance();
-                self.parse_opaque_suffix()
-            }
-            Token::String => {
-                self.advance();
-                self.parse_string_suffix()
-            }
-            Token::Union => {
-                // Anonymous union inside struct
-                // union switch (type name) { ... }
-                self.advance();
-                self.expect(Token::Switch)?;
-                self.expect(Token::LParen)?;
-                let disc_type = self.parse_type()?;
-                let disc_name = self.expect_ident()?;
-                self.expect(Token::RParen)?;
-                self.expect(Token::LBrace)?;
 
-                let mut arms = Vec::new();
-                let mut default_arm = None;
+            let (rest, _) = char('}')(remaining)?;
 
-                while *self.peek() != Token::RBrace {
-                    let arm = self.parse_union_arm()?;
-                    if arm.cases.is_empty() {
-                        default_arm = Some(Box::new(arm));
-                    } else {
-                        arms.push(arm);
-                    }
-                }
-                self.expect(Token::RBrace)?;
-
-                // Return an AnonymousUnion that will be extracted in parse_member
-                Ok(Type::AnonymousUnion {
+            Ok((
+                rest,
+                Type::AnonymousUnion {
                     discriminant: Box::new(Discriminant {
-                        name: disc_name,
+                        name: disc_name.to_string(),
                         type_: disc_type,
                     }),
                     arms,
                     default_arm,
-                })
+                },
+            ))
+        } else {
+            // Try identifier
+            let (rest, name) = ident(rest)?;
+            // Handle built-in type aliases
+            let base_type = match name {
+                "uint64" => Type::UnsignedHyper,
+                "int64" => Type::Hyper,
+                "uint32" => Type::UnsignedInt,
+                "int32" => Type::Int,
+                "TRUE" | "FALSE" => Type::Bool,
+                _ => Type::Ident(name.to_string()),
+            };
+
+            // Check for optional type suffix (Type* field)
+            let (rest, _) = ws(rest)?;
+            if rest.starts_with('*') {
+                let (rest, _) = char('*')(rest)?;
+                Ok((rest, Type::Optional(Box::new(base_type))))
+            } else {
+                Ok((rest, base_type))
             }
-            Token::Ident(name) => {
-                self.advance();
-                // Handle built-in type aliases
-                let base_type = match name.as_str() {
-                    "uint64" => Type::UnsignedHyper,
-                    "int64" => Type::Hyper,
-                    "uint32" => Type::UnsignedInt,
-                    "int32" => Type::Int,
-                    "TRUE" | "FALSE" => Type::Bool,
-                    _ => Type::Ident(name),
-                };
-                // Check for optional type suffix (Type* field)
-                if *self.peek() == Token::Star {
-                    self.advance();
-                    Ok(Type::Optional(Box::new(base_type)))
-                } else {
-                    Ok(base_type)
-                }
-            }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "type".to_string(),
-                got: other,
-            }),
         }
     }
 
-    fn parse_type_suffix(&mut self, base: Type) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LBracket => {
-                self.advance();
-                let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
+    fn parse_type_suffix<'b>(&mut self, input: &'b str, base: Type) -> IResult<&'b str, Type> {
+        let (rest, _) = ws(input)?;
 
-                // Special case: opaque name[size] or string name[size]
-                // means fixed opaque/string, not an array of opaque/string
-                match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
-                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
-                    _ => Ok(Type::Array {
+        if rest.starts_with('[') {
+            let (rest, _) = char('[')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, size) = self.parse_size(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char(']')(rest)?;
+
+            // Special case: opaque name[size] or string name[size]
+            match base {
+                Type::OpaqueVar(None) => Ok((rest, Type::OpaqueFixed(size))),
+                Type::String(None) => Ok((rest, Type::OpaqueFixed(size))),
+                _ => Ok((
+                    rest,
+                    Type::Array {
                         element_type: Box::new(base),
                         size,
-                    }),
-                }
+                    },
+                )),
             }
-            Token::LAngle => {
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
+        } else if rest.starts_with('<') {
+            let (rest, _) = char('<')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, max) = if rest.starts_with('>') {
+                (rest, None)
+            } else {
+                let (rest, size) = self.parse_size(rest)?;
+                (rest, Some(size))
+            };
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('>')(rest)?;
 
-                // Special case: opaque name<max> or string name<max>
-                // means variable opaque/string with max, not a var array
-                match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
-                    Type::String(None) => Ok(Type::String(max)),
-                    _ => Ok(Type::VarArray {
+            // Special case: opaque name<max> or string name<max>
+            match base {
+                Type::OpaqueVar(None) => Ok((rest, Type::OpaqueVar(max))),
+                Type::String(None) => Ok((rest, Type::String(max))),
+                _ => Ok((
+                    rest,
+                    Type::VarArray {
                         element_type: Box::new(base),
                         max_size: max,
-                    }),
-                }
+                    },
+                )),
             }
-            Token::Star => {
-                // Optional: type *name
-                self.advance();
-                Ok(Type::Optional(Box::new(base)))
-            }
-            _ => Ok(base),
-        }
-    }
-
-    fn parse_opaque_suffix(&mut self) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LBracket => {
-                // Fixed: opaque[size]
-                self.advance();
-                let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
-                Ok(Type::OpaqueFixed(size))
-            }
-            Token::LAngle => {
-                // Variable: opaque<max> or opaque<>
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-                Ok(Type::OpaqueVar(max))
-            }
-            _ => {
-                // Bare opaque - variable with no max (rare)
-                Ok(Type::OpaqueVar(None))
-            }
-        }
-    }
-
-    fn parse_string_suffix(&mut self) -> Result<Type, ParseError> {
-        match self.peek() {
-            Token::LAngle => {
-                self.advance();
-                let max = if *self.peek() == Token::RAngle {
-                    None
-                } else {
-                    Some(self.parse_size()?)
-                };
-                self.expect(Token::RAngle)?;
-                Ok(Type::String(max))
-            }
-            _ => Ok(Type::String(None)),
-        }
-    }
-
-    fn parse_size(&mut self) -> Result<Size, ParseError> {
-        match self.peek().clone() {
-            Token::IntLiteral((value, _)) => {
-                self.advance();
-                Ok(Size::Literal(value as u32))
-            }
-            Token::Ident(name) => {
-                self.advance();
-                Ok(Size::Named(name))
-            }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "size (integer or identifier)".to_string(),
-                got: other,
-            }),
-        }
-    }
-
-    fn peek(&self) -> &Token {
-        self.tokens
-            .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof)
-    }
-
-    fn advance(&mut self) -> &Token {
-        let token = self
-            .tokens
-            .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof);
-        self.pos += 1;
-        token
-    }
-
-    fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
-        let token = self.advance().clone();
-        if token == expected {
-            Ok(())
+        } else if rest.starts_with('*') {
+            let (rest, _) = char('*')(rest)?;
+            Ok((rest, Type::Optional(Box::new(base))))
         } else {
-            Err(ParseError::UnexpectedToken {
-                expected: format!("{expected:?}"),
-                got: token,
-            })
+            Ok((rest, base))
         }
     }
 
-    fn expect_ident(&mut self) -> Result<String, ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::Ident(s) => Ok(s),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "identifier".to_string(),
-                got: token,
-            }),
+    fn parse_opaque_suffix<'b>(&mut self, input: &'b str) -> IResult<&'b str, Type> {
+        let (rest, _) = ws(input)?;
+
+        if rest.starts_with('[') {
+            let (rest, _) = char('[')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, size) = self.parse_size(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char(']')(rest)?;
+            Ok((rest, Type::OpaqueFixed(size)))
+        } else if rest.starts_with('<') {
+            let (rest, _) = char('<')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, max) = if rest.starts_with('>') {
+                (rest, None)
+            } else {
+                let (rest, size) = self.parse_size(rest)?;
+                (rest, Some(size))
+            };
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('>')(rest)?;
+            Ok((rest, Type::OpaqueVar(max)))
+        } else {
+            // Bare opaque - variable with no max
+            Ok((rest, Type::OpaqueVar(None)))
         }
     }
 
-    /// Parse an integer literal, returning both the value and whether it was in hex format.
-    fn expect_int_with_base(&mut self) -> Result<(i64, IntBase), ParseError> {
-        let token = self.advance().clone();
-        match token {
-            Token::IntLiteral((value, base)) => Ok((value, base)),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "integer literal".to_string(),
-                got: token,
-            }),
+    fn parse_string_suffix<'b>(&mut self, input: &'b str) -> IResult<&'b str, Type> {
+        let (rest, _) = ws(input)?;
+
+        if rest.starts_with('<') {
+            let (rest, _) = char('<')(rest)?;
+            let (rest, _) = ws(rest)?;
+            let (rest, max) = if rest.starts_with('>') {
+                (rest, None)
+            } else {
+                let (rest, size) = self.parse_size(rest)?;
+                (rest, Some(size))
+            };
+            let (rest, _) = ws(rest)?;
+            let (rest, _) = char('>')(rest)?;
+            Ok((rest, Type::String(max)))
+        } else {
+            Ok((rest, Type::String(None)))
         }
     }
 
-    /// Try to resolve an enum value reference
+    fn parse_size<'b>(&mut self, input: &'b str) -> IResult<&'b str, Size> {
+        if let Ok((rest, (value, _))) = int_literal(input) {
+            Ok((rest, Size::Literal(value as u32)))
+        } else {
+            let (rest, name) = ident(input)?;
+            Ok((rest, Size::Named(name.to_string())))
+        }
+    }
+
     fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
         // First check if it's in the current enum being parsed
         for m in members {
@@ -926,47 +963,91 @@ impl Parser {
         // Return 0 as fallback
         0
     }
+}
 
-    /// Extract the source text for a definition using the tracked start position.
-    fn extract_definition_source(&self, _name: &str) -> String {
-        // Get the byte range from the start token to the current token
-        let start_byte = self
-            .tokens
-            .get(self.def_start_pos)
-            .map(|st| st.start)
-            .unwrap_or(0);
+// ============================================================================
+// Basic parsers
+// ============================================================================
 
-        // The end is the current position's end (previous token's end after parsing)
-        let end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            start_byte
-        };
+/// Skip whitespace and comments (line, block, and preprocessor directives).
+fn ws(input: &str) -> IResult<&str, ()> {
+    let mut rest = input;
 
-        // Extract and return the source text
-        if start_byte < end_byte && end_byte <= self.source.len() {
-            self.source[start_byte..end_byte].to_string()
-        } else {
-            String::new()
+    loop {
+        // Skip whitespace
+        let (remaining, _) = take_while(|c: char| c.is_whitespace())(rest)?;
+        rest = remaining;
+
+        if rest.is_empty() {
+            break;
         }
+
+        // Line comment
+        if rest.starts_with("//") {
+            let (remaining, _) = take_while(|c| c != '\n')(rest)?;
+            rest = remaining;
+            continue;
+        }
+
+        // Block comment
+        if rest.starts_with("/*") {
+            let (remaining, _) = tag("/*")(rest)?;
+            let (remaining, _) = take_until("*/")(remaining)?;
+            let (remaining, _) = tag("*/")(remaining)?;
+            rest = remaining;
+            continue;
+        }
+
+        // Preprocessor directive
+        if rest.starts_with('%') {
+            let (remaining, _) = take_while(|c| c != '\n')(rest)?;
+            rest = remaining;
+            continue;
+        }
+
+        break;
+    }
+
+    Ok((rest, ()))
+}
+
+/// Parse an identifier.
+fn ident(input: &str) -> IResult<&str, &str> {
+    recognize(pair(
+        take_while1(|c: char| c.is_alphabetic() || c == '_'),
+        take_while(|c: char| c.is_alphanumeric() || c == '_'),
+    ))
+    .parse(input)
+}
+
+/// Parse an integer literal (decimal or hex), returning value and base.
+fn int_literal(input: &str) -> IResult<&str, (i64, IntBase)> {
+    if input.starts_with("0x") || input.starts_with("0X") {
+        // Hex
+        let (rest, _) =
+            tag("0x")(input).or_else(|_: nom::Err<nom::error::Error<&str>>| tag("0X")(input))?;
+        let (rest, digits) = take_while1(|c: char| c.is_ascii_hexdigit())(rest)?;
+        let value = i64::from_str_radix(digits, 16).map_err(|_| {
+            nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Digit))
+        })?;
+        Ok((rest, (value, IntBase::Hexadecimal)))
+    } else {
+        // Decimal (possibly negative)
+        let (rest, neg) = opt(char('-')).parse(input)?;
+        let (rest, digits) = take_while1(|c: char| c.is_ascii_digit())(rest)?;
+        let value: i64 = digits.parse().map_err(|_| {
+            nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Digit))
+        })?;
+        let value = if neg.is_some() { -value } else { value };
+        Ok((rest, (value, IntBase::Decimal)))
     }
 }
 
-#[derive(Debug, Error)]
-pub enum ParseError {
-    #[error("lexer error: {0}")]
-    Lex(#[from] LexError),
-    #[error("unexpected token: expected {expected}, got {got:?}")]
-    UnexpectedToken { expected: String, got: Token },
-    #[error("unexpected end of file")]
-    UnexpectedEof,
-}
+// ============================================================================
+// Helper functions
+// ============================================================================
 
 /// Fix parent relationships for nested types based on naming patterns.
-/// For a nested type whose name starts with another nested type's name, update parent.
 fn fix_parent_relationships(definitions: &mut [Definition]) {
     // Collect all nested type names
     let nested_names: Vec<String> = definitions
@@ -981,7 +1062,6 @@ fn fix_parent_relationships(definitions: &mut [Definition]) {
         .collect();
 
     // For each nested type, find if there's a "better" parent
-    // (a nested type whose name is a prefix and longer than current parent)
     for def in definitions.iter_mut() {
         if !def.is_nested() {
             continue;
@@ -1017,6 +1097,10 @@ fn generate_nested_type_name(parent: &str, field: &str) -> String {
     format!("{}{}", parent, field.to_upper_camel_case())
 }
 
+// ============================================================================
+// Tests
+// ============================================================================
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1024,8 +1108,7 @@ mod tests {
     #[test]
     fn test_parse_struct() {
         let input = "struct Foo { int x; unsigned hyper y; };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.definitions.len(), 1);
         if let Definition::Struct(s) = &spec.definitions[0] {
@@ -1043,8 +1126,7 @@ mod tests {
     #[test]
     fn test_parse_enum() {
         let input = "enum Color { RED = 0, GREEN = 1, BLUE = 2 };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.definitions.len(), 1);
         if let Definition::Enum(e) = &spec.definitions[0] {
@@ -1060,8 +1142,7 @@ mod tests {
     #[test]
     fn test_parse_typedef() {
         let input = "typedef opaque Hash[32];";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.definitions.len(), 1);
         if let Definition::Typedef(t) = &spec.definitions[0] {
@@ -1075,11 +1156,69 @@ mod tests {
     #[test]
     fn test_parse_namespace() {
         let input = "namespace stellar { struct Foo { int x; }; };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
+        let spec = parse(input).unwrap();
 
         assert_eq!(spec.namespaces.len(), 1);
         assert_eq!(spec.namespaces[0].name, "stellar");
         assert_eq!(spec.namespaces[0].definitions.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_hex() {
+        let input = "const KEY_TYPE_MUXED = 0x100;";
+        let spec = parse(input).unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Const(c) = &spec.definitions[0] {
+            assert_eq!(c.name, "KEY_TYPE_MUXED");
+            assert_eq!(c.value, 256);
+            assert_eq!(c.base, IntBase::Hexadecimal);
+        } else {
+            panic!("Expected const");
+        }
+    }
+
+    #[test]
+    fn test_parse_negative_number() {
+        let input = "const FOO = -1;";
+        let spec = parse(input).unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Const(c) = &spec.definitions[0] {
+            assert_eq!(c.name, "FOO");
+            assert_eq!(c.value, -1);
+            assert_eq!(c.base, IntBase::Decimal);
+        } else {
+            panic!("Expected const");
+        }
+    }
+
+    #[test]
+    fn test_comments() {
+        let input = r#"
+        // line comment
+        struct /* block comment */ Foo { };
+        "#;
+        let spec = parse(input).unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Struct(s) = &spec.definitions[0] {
+            assert_eq!(s.name, "Foo");
+        } else {
+            panic!("Expected struct");
+        }
+    }
+
+    #[test]
+    fn test_preprocessor() {
+        let input = "%#include \"xdr.h\"\nstruct Foo {};";
+        let spec = parse(input).unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Struct(s) = &spec.definitions[0] {
+            assert_eq!(s.name, "Foo");
+        } else {
+            panic!("Expected struct");
+        }
     }
 }

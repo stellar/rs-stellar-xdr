@@ -1,6 +1,11 @@
 //! AST types for XDR definitions.
 
-use crate::lexer::IntBase;
+/// The base (radix) of an integer literal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntBase {
+    Decimal,
+    Hexadecimal,
+}
 
 /// The root of a parsed XDR file or collection of files.
 #[derive(Debug, Clone, Default)]

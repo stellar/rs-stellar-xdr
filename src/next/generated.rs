@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "26c2c761d5e175c8b2f373611c942ef4484a6cd33f142f69638b2df82be85313",
+        "345da402e77ba122ad0bf0997755b3945156c593a4d0526ead003196323c8611",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -5658,7 +5658,9 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // Cost of performing BN254 scalar element exponentiation
 ///     Bn254FrPow = 83,
 ///      // Cost of performing BN254 scalar element inversion
-///     Bn254FrInv = 84
+///     Bn254FrInv = 84,
+///     // Cost of performing BN254 G1 multi-scalar multiplication (MSM)
+///     Bn254G1Msm = 85
 /// };
 /// ```
 ///
@@ -5760,10 +5762,11 @@ pub enum ContractCostType {
     Bn254FrMul = 82,
     Bn254FrPow = 83,
     Bn254FrInv = 84,
+    Bn254G1Msm = 85,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 85] = [
+    pub const VARIANTS: [ContractCostType; 86] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -5849,8 +5852,9 @@ impl ContractCostType {
         ContractCostType::Bn254FrMul,
         ContractCostType::Bn254FrPow,
         ContractCostType::Bn254FrInv,
+        ContractCostType::Bn254G1Msm,
     ];
-    pub const VARIANTS_STR: [&'static str; 85] = [
+    pub const VARIANTS_STR: [&'static str; 86] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -5936,6 +5940,7 @@ impl ContractCostType {
         "Bn254FrMul",
         "Bn254FrPow",
         "Bn254FrInv",
+        "Bn254G1Msm",
     ];
 
     #[must_use]
@@ -6026,11 +6031,12 @@ impl ContractCostType {
             Self::Bn254FrMul => "Bn254FrMul",
             Self::Bn254FrPow => "Bn254FrPow",
             Self::Bn254FrInv => "Bn254FrInv",
+            Self::Bn254G1Msm => "Bn254G1Msm",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 85] {
+    pub const fn variants() -> [ContractCostType; 86] {
         Self::VARIANTS
     }
 }
@@ -6146,6 +6152,7 @@ impl TryFrom<i32> for ContractCostType {
             82 => ContractCostType::Bn254FrMul,
             83 => ContractCostType::Bn254FrPow,
             84 => ContractCostType::Bn254FrInv,
+            85 => ContractCostType::Bn254G1Msm,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

@@ -13,7 +13,7 @@ pub enum Error {
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// XDR type to decode
+    /// XDR type to generate schema for
     #[arg(long)]
     pub r#type: String,
 

@@ -1,3 +1,6 @@
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 /// {{ u.name }}{{ u.source_comment }}
 // union with discriminant {{ u.discriminant_type }}
 #[cfg_eval::cfg_eval]
@@ -20,6 +23,9 @@
 #[allow(clippy::large_enum_variant)]
 pub enum {{ u.name }} {
 {%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+    #[cfg({{ f }})]
+{%- endif %}
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
@@ -37,6 +43,9 @@ pub enum {{ u.name }} {
 }
 {%- if u.has_default %}
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(feature = "alloc")]
 impl Default for {{ u.name }} {
     fn default() -> Self {
@@ -49,18 +58,34 @@ impl Default for {{ u.name }} {
 }
 {%- endif %}
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl {{ u.name }} {
-    pub const VARIANTS: [{{ u.discriminant_type }}; {{ u.arms.len() }}] = [
+    pub const VARIANTS: &[{{ u.discriminant_type }}] = &[
 {%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
         {{ arm.case_value }},
 {%- endfor %}
     ];
-    pub const VARIANTS_STR: [&'static str; {{ u.arms.len() }}] = [{% for arm in u.arms %}"{{ arm.case_name }}", {% endfor %}];
+    pub const VARIANTS_STR: &[&str] = &[
+{%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
+        "{{ arm.case_name }}",
+{%- endfor %}
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
 {%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
 {%- if arm.is_void %}
             Self::{{ arm.case_name }} => "{{ arm.case_name }}",
 {%- else %}
@@ -75,6 +100,9 @@ impl {{ u.name }} {
         #[allow(clippy::match_same_arms)]
         match self {
 {%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
 {%- if arm.is_void %}
             Self::{{ arm.case_name }} => {{ arm.case_value }},
 {%- else %}
@@ -85,11 +113,14 @@ impl {{ u.name }} {
     }
 
     #[must_use]
-    pub const fn variants() -> [{{ u.discriminant_type }}; {{ u.arms.len() }}] {
+    pub const fn variants() -> &'static [{{ u.discriminant_type }}] {
         Self::VARIANTS
     }
 }
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Name for {{ u.name }} {
     #[must_use]
     fn name(&self) -> &'static str {
@@ -97,6 +128,9 @@ impl Name for {{ u.name }} {
     }
 }
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Discriminant<{{ u.discriminant_type }}> for {{ u.name }} {
     #[must_use]
     fn discriminant(&self) -> {{ u.discriminant_type }} {
@@ -104,14 +138,23 @@ impl Discriminant<{{ u.discriminant_type }}> for {{ u.name }} {
     }
 }
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Variants<{{ u.discriminant_type }}> for {{ u.name }} {
     fn variants() -> slice::Iter<'static, {{ u.discriminant_type }}> {
         Self::VARIANTS.iter()
     }
 }
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Union<{{ u.discriminant_type }}> for {{ u.name }} {}
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl ReadXdr for {{ u.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -120,6 +163,9 @@ impl ReadXdr for {{ u.name }} {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
 {%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+                #[cfg({{ f }})]
+{%- endif %}
 {%- if arm.is_void %}
                 {{ arm.case_value }} => Self::{{ arm.case_name }},
 {%- else %}
@@ -134,6 +180,9 @@ impl ReadXdr for {{ u.name }} {
     }
 }
 
+{%- if let Some(f) = u.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl WriteXdr for {{ u.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -142,6 +191,9 @@ impl WriteXdr for {{ u.name }} {
             #[allow(clippy::match_same_arms)]
             match self {
 {%- for arm in u.arms %}
+{%- if let Some(f) = arm.feature %}
+                #[cfg({{ f }})]
+{%- endif %}
 {%- if arm.is_void %}
                 Self::{{ arm.case_name }} => ().write_xdr(w)?,
 {%- else %}

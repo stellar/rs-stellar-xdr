@@ -24,6 +24,8 @@ pub struct Parser {
     root_parent: Option<String>,
     /// Global map of enum member names and const names to their values
     global_values: std::collections::HashMap<String, i64>,
+    /// Stack of active `#ifdef` conditions at the current parse position
+    ifdef_stack: Vec<IfdefCondition>,
 }
 
 impl Parser {
@@ -38,6 +40,7 @@ impl Parser {
             extracted_definitions: Vec::new(),
             root_parent: None,
             global_values: std::collections::HashMap::new(),
+            ifdef_stack: Vec::new(),
         })
     }
 
@@ -53,7 +56,24 @@ impl Parser {
             if *self.peek() == Token::Eof {
                 break;
             }
-            match self.peek() {
+            match self.peek().clone() {
+                Token::Ifdef(name) => {
+                    self.advance();
+                    self.ifdef_stack.push(IfdefCondition {
+                        name,
+                        negated: false,
+                    });
+                }
+                Token::Else => {
+                    self.advance();
+                    if let Some(top) = self.ifdef_stack.last_mut() {
+                        top.negated = !top.negated;
+                    }
+                }
+                Token::Endif => {
+                    self.advance();
+                    self.ifdef_stack.pop();
+                }
                 Token::Namespace => {
                     let ns = self.parse_namespace()?;
                     spec.namespaces.push(ns);
@@ -106,6 +126,30 @@ impl Parser {
                 break;
             }
 
+            match self.peek().clone() {
+                Token::Ifdef(ifdef_name) => {
+                    self.advance();
+                    self.ifdef_stack.push(IfdefCondition {
+                        name: ifdef_name,
+                        negated: false,
+                    });
+                    continue;
+                }
+                Token::Else => {
+                    self.advance();
+                    if let Some(top) = self.ifdef_stack.last_mut() {
+                        top.negated = !top.negated;
+                    }
+                    continue;
+                }
+                Token::Endif => {
+                    self.advance();
+                    self.ifdef_stack.pop();
+                    continue;
+                }
+                _ => {}
+            }
+
             // Track extracted definitions before parsing this definition
             let extract_start = self.extracted_definitions.len();
 
@@ -129,7 +173,10 @@ impl Parser {
         // Mark the start of this definition for source extraction
         self.def_start_pos = self.pos;
 
-        match self.peek() {
+        // Capture the current ifdef stack for this definition
+        let def_ifdefs = self.ifdef_stack.clone();
+
+        let mut def = match self.peek() {
             Token::Struct => self.parse_struct().map(Definition::Struct),
             Token::Enum => self.parse_enum().map(Definition::Enum),
             Token::Union => self.parse_union().map(Definition::Union),
@@ -139,7 +186,18 @@ impl Parser {
                 expected: "struct, enum, union, typedef, or const".to_string(),
                 got: other.clone(),
             }),
+        }?;
+
+        // Assign the captured ifdefs to the parsed definition
+        match &mut def {
+            Definition::Struct(s) => s.ifdefs = def_ifdefs,
+            Definition::Enum(e) => e.ifdefs = def_ifdefs,
+            Definition::Union(u) => u.ifdefs = def_ifdefs,
+            Definition::Typedef(t) => t.ifdefs = def_ifdefs,
+            Definition::Const(c) => c.ifdefs = def_ifdefs,
         }
+
+        Ok(def)
     }
 
     fn parse_struct(&mut self) -> Result<Struct, ParseError> {
@@ -151,12 +209,43 @@ impl Parser {
         let prev_root = self.root_parent.take();
         self.root_parent = Some(name.clone());
 
+        // Save and clear the ifdef stack so inner ifdefs are independent
+        let saved_ifdef_stack = std::mem::take(&mut self.ifdef_stack);
+
         let mut members = Vec::new();
         while *self.peek() != Token::RBrace {
-            let member = self.parse_member()?;
+            match self.peek().clone() {
+                Token::Ifdef(ifdef_name) => {
+                    self.advance();
+                    self.ifdef_stack.push(IfdefCondition {
+                        name: ifdef_name,
+                        negated: false,
+                    });
+                    continue;
+                }
+                Token::Else => {
+                    self.advance();
+                    if let Some(top) = self.ifdef_stack.last_mut() {
+                        top.negated = !top.negated;
+                    }
+                    continue;
+                }
+                Token::Endif => {
+                    self.advance();
+                    self.ifdef_stack.pop();
+                    continue;
+                }
+                _ => {}
+            }
+            let member_ifdefs = self.ifdef_stack.clone();
+            let mut member = self.parse_member()?;
+            member.ifdefs = member_ifdefs;
             members.push(member);
             self.expect(Token::Semi)?;
         }
+
+        // Restore the ifdef stack
+        self.ifdef_stack = saved_ifdef_stack;
 
         // Restore previous root_parent
         self.root_parent = prev_root;
@@ -173,6 +262,7 @@ impl Parser {
             source,
             is_nested: false,
             parent: None,
+            ifdefs: vec![],
         })
     }
 
@@ -181,8 +271,41 @@ impl Parser {
         let name = self.expect_ident()?;
         self.expect(Token::LBrace)?;
 
+        // Save and clear the ifdef stack so inner ifdefs are independent
+        let saved_ifdef_stack = std::mem::take(&mut self.ifdef_stack);
+
         let mut members = Vec::new();
         loop {
+            // Handle ifdef directives within enum body
+            loop {
+                match self.peek().clone() {
+                    Token::Ifdef(ifdef_name) => {
+                        self.advance();
+                        self.ifdef_stack.push(IfdefCondition {
+                            name: ifdef_name,
+                            negated: false,
+                        });
+                    }
+                    Token::Else => {
+                        self.advance();
+                        if let Some(top) = self.ifdef_stack.last_mut() {
+                            top.negated = !top.negated;
+                        }
+                    }
+                    Token::Endif => {
+                        self.advance();
+                        self.ifdef_stack.pop();
+                    }
+                    _ => break,
+                }
+            }
+
+            // Check for end of enum after processing directives
+            if *self.peek() == Token::RBrace {
+                break;
+            }
+
+            let member_ifdefs = self.ifdef_stack.clone();
             let member_name = self.expect_ident()?;
             self.expect(Token::Eq)?;
 
@@ -210,6 +333,7 @@ impl Parser {
             members.push(EnumMember {
                 name: member_name,
                 value,
+                ifdefs: member_ifdefs,
             });
 
             match self.peek() {
@@ -229,6 +353,9 @@ impl Parser {
             }
         }
 
+        // Restore the ifdef stack
+        self.ifdef_stack = saved_ifdef_stack;
+
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
 
@@ -243,6 +370,7 @@ impl Parser {
             name,
             members,
             source,
+            ifdefs: vec![],
         })
     }
 
@@ -263,11 +391,41 @@ impl Parser {
         let prev_root = self.root_parent.take();
         self.root_parent = Some(name.clone());
 
+        // Save and clear the ifdef stack so inner ifdefs are independent
+        let saved_ifdef_stack = std::mem::take(&mut self.ifdef_stack);
+
         let mut arms = Vec::new();
         let mut default_arm = None;
 
         while *self.peek() != Token::RBrace {
-            let arm = self.parse_union_arm()?;
+            // Handle ifdef directives within union body
+            match self.peek().clone() {
+                Token::Ifdef(ifdef_name) => {
+                    self.advance();
+                    self.ifdef_stack.push(IfdefCondition {
+                        name: ifdef_name,
+                        negated: false,
+                    });
+                    continue;
+                }
+                Token::Else => {
+                    self.advance();
+                    if let Some(top) = self.ifdef_stack.last_mut() {
+                        top.negated = !top.negated;
+                    }
+                    continue;
+                }
+                Token::Endif => {
+                    self.advance();
+                    self.ifdef_stack.pop();
+                    continue;
+                }
+                _ => {}
+            }
+
+            let arm_ifdefs = self.ifdef_stack.clone();
+            let mut arm = self.parse_union_arm()?;
+            arm.ifdefs = arm_ifdefs;
             if arm.cases.is_empty() {
                 // This is a default arm
                 default_arm = Some(Box::new(arm));
@@ -275,6 +433,9 @@ impl Parser {
                 arms.push(arm);
             }
         }
+
+        // Restore the ifdef stack
+        self.ifdef_stack = saved_ifdef_stack;
 
         // Restore previous root_parent
         self.root_parent = prev_root;
@@ -295,6 +456,7 @@ impl Parser {
             source,
             is_nested: false,
             parent: None,
+            ifdefs: vec![],
         })
     }
 
@@ -315,6 +477,7 @@ impl Parser {
             name,
             type_,
             source,
+            ifdefs: vec![],
         })
     }
 
@@ -335,6 +498,7 @@ impl Parser {
             value,
             base,
             source,
+            ifdefs: vec![],
         })
     }
 
@@ -394,6 +558,7 @@ impl Parser {
                     source,
                     is_nested: true,
                     parent: self.root_parent.clone(),
+                    ifdefs: vec![],
                 };
 
                 // Fix up parent relationships for any definitions extracted during union parsing
@@ -421,7 +586,11 @@ impl Parser {
             other => other,
         };
 
-        Ok(Member { name, type_ })
+        Ok(Member {
+            name,
+            type_,
+            ifdefs: vec![],
+        })
     }
 
     fn parse_union_arm(&mut self) -> Result<UnionArm, ParseError> {
@@ -548,6 +717,7 @@ impl Parser {
                 source,
                 is_nested: true,
                 parent: self.root_parent.clone(),
+                ifdefs: vec![],
             };
 
             // Add to extracted definitions
@@ -610,6 +780,7 @@ impl Parser {
                         source,
                         is_nested: true,
                         parent: self.root_parent.clone(),
+                        ifdefs: vec![],
                     };
 
                     // Fix up parent relationships for any definitions extracted during union parsing
@@ -642,7 +813,11 @@ impl Parser {
             Some(type_)
         };
 
-        Ok(UnionArm { cases, type_ })
+        Ok(UnionArm {
+            cases,
+            type_,
+            ifdefs: vec![],
+        })
     }
 
     fn parse_type(&mut self) -> Result<Type, ParseError> {
@@ -1081,5 +1256,131 @@ mod tests {
         assert_eq!(spec.namespaces.len(), 1);
         assert_eq!(spec.namespaces[0].name, "stellar");
         assert_eq!(spec.namespaces[0].definitions.len(), 1);
+    }
+
+    #[test]
+    fn test_ifdef_around_definition() {
+        let input = "#ifdef NEW_COST_TYPE\nenum Foo { A = 0 };\n#endif";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Enum(e) = &spec.definitions[0] {
+            assert_eq!(e.name, "Foo");
+            assert_eq!(e.ifdefs.len(), 1);
+            assert_eq!(e.ifdefs[0].name, "NEW_COST_TYPE");
+            assert!(!e.ifdefs[0].negated);
+            // Members inside the ifdef'd definition have no inner ifdefs
+            assert!(e.members[0].ifdefs.is_empty());
+        } else {
+            panic!("Expected enum");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_else_endif() {
+        let input = "\
+            #ifdef FEATURE_A\n\
+            struct Foo { int x; };\n\
+            #else\n\
+            struct Bar { int y; };\n\
+            #endif\n";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        assert_eq!(spec.definitions.len(), 2);
+        if let Definition::Struct(s) = &spec.definitions[0] {
+            assert_eq!(s.name, "Foo");
+            assert_eq!(s.ifdefs.len(), 1);
+            assert_eq!(s.ifdefs[0].name, "FEATURE_A");
+            assert!(!s.ifdefs[0].negated);
+        } else {
+            panic!("Expected struct Foo");
+        }
+        if let Definition::Struct(s) = &spec.definitions[1] {
+            assert_eq!(s.name, "Bar");
+            assert_eq!(s.ifdefs.len(), 1);
+            assert_eq!(s.ifdefs[0].name, "FEATURE_A");
+            assert!(s.ifdefs[0].negated);
+        } else {
+            panic!("Expected struct Bar");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_nested() {
+        let input = "\
+            #ifdef A\n\
+            #ifdef B\n\
+            struct Foo { int x; };\n\
+            #endif\n\
+            #endif\n";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Struct(s) = &spec.definitions[0] {
+            assert_eq!(s.name, "Foo");
+            assert_eq!(s.ifdefs.len(), 2);
+            assert_eq!(s.ifdefs[0].name, "A");
+            assert_eq!(s.ifdefs[1].name, "B");
+        } else {
+            panic!("Expected struct");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_inside_enum() {
+        let input = "\
+            enum Foo {\n\
+                A = 0,\n\
+                #ifdef NEW_COST_TYPE\n\
+                B = 1,\n\
+                #endif\n\
+                C = 2\n\
+            };";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Enum(e) = &spec.definitions[0] {
+            assert_eq!(e.name, "Foo");
+            assert!(e.ifdefs.is_empty());
+            assert_eq!(e.members.len(), 3);
+            assert!(e.members[0].ifdefs.is_empty());
+            assert_eq!(e.members[1].ifdefs.len(), 1);
+            assert_eq!(e.members[1].ifdefs[0].name, "NEW_COST_TYPE");
+            assert!(e.members[2].ifdefs.is_empty());
+        } else {
+            panic!("Expected enum");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_around_struct_with_inner_ifdef() {
+        let input = "\
+            #ifdef A\n\
+            struct Foo {\n\
+                int x;\n\
+                #ifdef B\n\
+                int y;\n\
+                #endif\n\
+            };\n\
+            #endif\n";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Struct(s) = &spec.definitions[0] {
+            assert_eq!(s.name, "Foo");
+            assert_eq!(s.ifdefs.len(), 1);
+            assert_eq!(s.ifdefs[0].name, "A");
+            assert_eq!(s.members.len(), 2);
+            assert!(s.members[0].ifdefs.is_empty());
+            assert_eq!(s.members[1].ifdefs.len(), 1);
+            assert_eq!(s.members[1].ifdefs[0].name, "B");
+        } else {
+            panic!("Expected struct");
+        }
     }
 }

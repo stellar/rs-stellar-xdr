@@ -1,3 +1,6 @@
+{%- if let Some(f) = s.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 /// {{ s.name }}{{ s.source_comment }}
 {%- if s.has_default %}
 #[cfg_attr(feature = "alloc", derive(Default))]
@@ -21,6 +24,9 @@
 {%- endif %}
 pub struct {{ s.name }} {
 {%- for m in s.members %}
+{%- if let Some(f) = m.feature %}
+    #[cfg({{ f }})]
+{%- endif %}
 {%- if let Some(serde_as) = m.serde_as_type %}
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
@@ -31,12 +37,18 @@ pub struct {{ s.name }} {
 {%- endfor %}
 }
 
+{%- if let Some(f) = s.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl ReadXdr for {{ s.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
 {%- for m in s.members %}
+{%- if let Some(f) = m.feature %}
+                #[cfg({{ f }})]
+{%- endif %}
                 {{ m.name }}: {{ m.read_call }}::read_xdr(r)?,
 {%- endfor %}
             })
@@ -44,11 +56,17 @@ impl ReadXdr for {{ s.name }} {
     }
 }
 
+{%- if let Some(f) = s.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl WriteXdr for {{ s.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
 {%- for m in s.members %}
+{%- if let Some(f) = m.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
             self.{{ m.name }}.write_xdr(w)?;
 {%- endfor %}
             Ok(())
@@ -56,6 +74,9 @@ impl WriteXdr for {{ s.name }} {
     }
 }
 {%- if s.is_custom_str %}
+{%- if let Some(f) = s.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(all(feature = "serde", feature = "alloc"))]
 impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
@@ -63,6 +84,9 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
         #[derive(Deserialize)]
         struct {{ s.name }} {
 {%- for m in s.members %}
+{%- if let Some(f) = m.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
             {{ m.name }}: {{ m.type_ref }},
 {%- endfor %}
         }

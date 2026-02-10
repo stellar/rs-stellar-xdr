@@ -115,7 +115,14 @@ impl Generator {
             }
         }
 
+        let namespace = spec
+            .namespaces
+            .first()
+            .map(|ns| ns.name.clone())
+            .unwrap_or_default();
+
         GeneratedTemplate {
+            namespace,
             xdr_files_sha256,
             header: header.to_string(),
             definitions,
@@ -423,6 +430,7 @@ impl Generator {
 #[derive(Template)]
 #[template(path = "generated.rs.jinja", escape = "none")]
 pub struct GeneratedTemplate {
+    pub namespace: String,
     pub xdr_files_sha256: Vec<(String, String)>,
     pub header: String,
     pub definitions: Vec<DefinitionOutput>,

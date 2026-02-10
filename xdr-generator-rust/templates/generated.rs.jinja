@@ -1,0 +1,35 @@
+// Module {# namespace - temporarily disabled because the original ruby generator has a bug where it renders the namespace as an empty string #} is generated from:
+{%- for (file, _) in xdr_files_sha256 %}
+//  {{ file }}
+{%- endfor %}
+
+#![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
+
+/// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
+pub const XDR_FILES_SHA256: [(&str, &str); {{ xdr_files_sha256.len() }}] = [
+{%- for (file, hash) in xdr_files_sha256 %}
+    (
+        "{{ file }}",
+        "{{ hash }}",
+    ),
+{%- endfor %}
+];
+
+{{ header }}
+{%- for def in definitions %}
+{%- match def %}
+{%- when DefinitionOutput::Struct(s) %}
+{% include "struct.rs.jinja" %}
+{%- when DefinitionOutput::Enum(e) %}
+{% include "enum.rs.jinja" %}
+{%- when DefinitionOutput::Union(u) %}
+{% include "union.rs.jinja" %}
+{%- when DefinitionOutput::TypedefAlias(t) %}
+{% include "typedef_alias.rs.jinja" %}
+{%- when DefinitionOutput::TypedefNewtype(t) %}
+{% include "typedef_newtype.rs.jinja" %}
+{%- when DefinitionOutput::Const(c) %}
+{% include "const.rs.jinja" %}
+{%- endmatch %}
+{%- endfor %}
+{% include "type_enum.rs.jinja" %}

@@ -344,6 +344,9 @@ impl Parser {
                     }
                 }
                 Token::RBrace => break,
+                // Allow ifdef directives to appear after a member value
+                // without a trailing comma (e.g., "NewCostType = 85\n#else")
+                Token::Ifdef(_) | Token::Else | Token::Endif => {}
                 other => {
                     return Err(ParseError::UnexpectedToken {
                         expected: ", or }".to_string(),
@@ -1351,6 +1354,37 @@ mod tests {
             assert_eq!(e.members[1].ifdefs.len(), 1);
             assert_eq!(e.members[1].ifdefs[0].name, "NEW_COST_TYPE");
             assert!(e.members[2].ifdefs.is_empty());
+        } else {
+            panic!("Expected enum");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_else_inside_enum_no_trailing_comma() {
+        let input = "\
+            enum Foo {\n\
+                A = 0,\n\
+                #ifdef NEW_COST_TYPE\n\
+                B = 1,\n\
+                C = 2\n\
+                #else\n\
+                B = 1\n\
+                #endif\n\
+            };";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        assert_eq!(spec.definitions.len(), 1);
+        if let Definition::Enum(e) = &spec.definitions[0] {
+            assert_eq!(e.name, "Foo");
+            assert_eq!(e.members.len(), 4);
+            assert!(e.members[0].ifdefs.is_empty()); // A
+            assert_eq!(e.members[1].ifdefs[0].name, "NEW_COST_TYPE"); // B (ifdef)
+            assert!(!e.members[1].ifdefs[0].negated);
+            assert_eq!(e.members[2].ifdefs[0].name, "NEW_COST_TYPE"); // C (ifdef)
+            assert!(!e.members[2].ifdefs[0].negated);
+            assert_eq!(e.members[3].ifdefs[0].name, "NEW_COST_TYPE"); // B (else)
+            assert!(e.members[3].ifdefs[0].negated);
         } else {
             panic!("Expected enum");
         }

@@ -1,3 +1,6 @@
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 /// {{ e.name }}{{ e.source_comment }}
 // enum
 {%- if e.has_default %}
@@ -21,6 +24,9 @@
 #[repr(i32)]
 pub enum {{ e.name }} {
 {%- for m in e.members %}
+{%- if let Some(f) = m.feature %}
+    #[cfg({{ f }})]
+{%- endif %}
 {%- if m.is_first %}
     #[cfg_attr(feature = "alloc", default)]
 {%- endif %}
@@ -28,29 +34,48 @@ pub enum {{ e.name }} {
 {%- endfor %}
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl {{ e.name }} {
-    pub const VARIANTS: [{{ e.name }}; {{ e.members.len() }}] = [
+    pub const VARIANTS: &[{{ e.name }}] = &[
 {%- for m in e.members %}
+{%- if let Some(f) = m.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
         {{ e.name }}::{{ m.name }},
 {%- endfor %}
     ];
-    pub const VARIANTS_STR: [&'static str; {{ e.members.len() }}] = [{% for m in e.members %}"{{ m.name }}", {% endfor %}];
+    pub const VARIANTS_STR: &[&str] = &[
+{%- for m in e.members %}
+{%- if let Some(f) = m.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
+        "{{ m.name }}",
+{%- endfor %}
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
 {%- for m in e.members %}
+{%- if let Some(f) = m.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
             Self::{{ m.name }} => "{{ m.name }}",
 {%- endfor %}
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [{{ e.name }}; {{ e.members.len() }}] {
+    pub const fn variants() -> &'static [{{ e.name }}] {
         Self::VARIANTS
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Name for {{ e.name }} {
     #[must_use]
     fn name(&self) -> &'static str {
@@ -58,26 +83,41 @@ impl Name for {{ e.name }} {
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Variants<{{ e.name }}> for {{ e.name }} {
     fn variants() -> slice::Iter<'static, {{ e.name }}> {
         Self::VARIANTS.iter()
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Enum for {{ e.name }} {}
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl fmt::Display for {{ e.name }} {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl TryFrom<i32> for {{ e.name }} {
     type Error = Error;
 
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
 {%- for m in e.members %}
+{%- if let Some(f) = m.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
             {{ m.value }} => {{ e.name }}::{{ m.name }},
 {%- endfor %}
             #[allow(unreachable_patterns)]
@@ -87,6 +127,9 @@ impl TryFrom<i32> for {{ e.name }} {
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl From<{{ e.name }}> for i32 {
     #[must_use]
     fn from(e: {{ e.name }}) -> Self {
@@ -94,6 +137,9 @@ impl From<{{ e.name }}> for i32 {
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl ReadXdr for {{ e.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -105,6 +151,9 @@ impl ReadXdr for {{ e.name }} {
     }
 }
 
+{%- if let Some(f) = e.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl WriteXdr for {{ e.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

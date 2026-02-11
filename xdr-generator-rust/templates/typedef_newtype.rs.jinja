@@ -1,3 +1,6 @@
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 /// {{ t.name }}{{ t.source_comment }}
 #[cfg_eval::cfg_eval]
 {%- if t.has_default && !t.is_var_array %}
@@ -39,6 +42,9 @@ pub struct {{ t.name }}(pub {{ t.type_ref }});
 {%- endif %}
 
 {% if t.custom_debug -%}
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl core::fmt::Debug for {{ t.name }} {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -52,6 +58,9 @@ impl core::fmt::Debug for {{ t.name }} {
 }
 {%- endif %}
 {%- if t.custom_display_fromstr %}
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl core::fmt::Display for {{ t.name }} {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -62,6 +71,9 @@ impl core::fmt::Display for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(feature = "alloc")]
 impl core::str::FromStr for {{ t.name }} {
     type Err = Error;
@@ -71,6 +83,9 @@ impl core::str::FromStr for {{ t.name }} {
 }
 {%- endif %}
 {%- if t.custom_schemars %}
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(feature = "schemars")]
 impl schemars::JsonSchema for {{ t.name }} {
     fn schema_name() -> String {
@@ -105,6 +120,9 @@ impl schemars::JsonSchema for {{ t.name }} {
     }
 }
 {%- endif %}
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl From<{{ t.name }}> for {{ t.type_ref }} {
     #[must_use]
     fn from(x: {{ t.name }}) -> Self {
@@ -112,6 +130,9 @@ impl From<{{ t.name }}> for {{ t.type_ref }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl From<{{ t.type_ref }}> for {{ t.name }} {
     #[must_use]
     fn from(x: {{ t.type_ref }}) -> Self {
@@ -119,6 +140,9 @@ impl From<{{ t.type_ref }}> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl AsRef<{{ t.type_ref }}> for {{ t.name }} {
     #[must_use]
     fn as_ref(&self) -> &{{ t.type_ref }} {
@@ -126,6 +150,9 @@ impl AsRef<{{ t.type_ref }}> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl ReadXdr for {{ t.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -137,6 +164,9 @@ impl ReadXdr for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl WriteXdr for {{ t.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -145,6 +175,9 @@ impl WriteXdr for {{ t.name }} {
 }
 {%- if t.is_fixed_array %}
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl {{ t.name }} {
     #[must_use]
     pub fn as_slice(&self) -> &[{{ t.element_type }}] {
@@ -152,6 +185,9 @@ impl {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<{{ t.element_type }}>> for {{ t.name }} {
     type Error = Error;
@@ -160,6 +196,9 @@ impl TryFrom<Vec<{{ t.element_type }}>> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
     type Error = Error;
@@ -168,6 +207,9 @@ impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl TryFrom<&[{{ t.element_type }}]> for {{ t.name }} {
     type Error = Error;
     fn try_from(x: &[{{ t.element_type }}]) -> Result<Self, Error> {
@@ -175,6 +217,9 @@ impl TryFrom<&[{{ t.element_type }}]> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     #[must_use]
     fn as_ref(&self) -> &[{{ t.element_type }}] {
@@ -184,6 +229,9 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
 {%- endif %}
 {%- if t.is_var_array %}
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl Deref for {{ t.name }} {
     type Target = {{ t.type_ref }};
     fn deref(&self) -> &Self::Target {
@@ -191,6 +239,9 @@ impl Deref for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl From<{{ t.name }}> for Vec<{{ t.element_type }}> {
     #[must_use]
     fn from(x: {{ t.name }}) -> Self {
@@ -198,6 +249,9 @@ impl From<{{ t.name }}> for Vec<{{ t.element_type }}> {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl TryFrom<Vec<{{ t.element_type }}>> for {{ t.name }} {
     type Error = Error;
     fn try_from(x: Vec<{{ t.element_type }}>) -> Result<Self, Error> {
@@ -205,6 +259,9 @@ impl TryFrom<Vec<{{ t.element_type }}>> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
     type Error = Error;
@@ -213,6 +270,9 @@ impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl AsRef<Vec<{{ t.element_type }}>> for {{ t.name }} {
     #[must_use]
     fn as_ref(&self) -> &Vec<{{ t.element_type }}> {
@@ -220,6 +280,9 @@ impl AsRef<Vec<{{ t.element_type }}>> for {{ t.name }} {
     }
 }
 
+{%- if let Some(f) = t.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     #[cfg(feature = "alloc")]
     #[must_use]

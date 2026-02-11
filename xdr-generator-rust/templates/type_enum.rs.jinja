@@ -7,29 +7,47 @@
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum TypeVariant {
 {%- for t in type_variant_enum.types %}
-    {{ t }},
+{%- if let Some(f) = t.feature %}
+    #[cfg({{ f }})]
+{%- endif %}
+    {{ t.name }},
 {%- endfor %}
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; {{ type_variant_enum.types.len() }}] = [ {%- for t in type_variant_enum.types %}TypeVariant::{{ t }},
-{%- endfor %} ];
-    pub const VARIANTS_STR: [&'static str; {{ type_variant_enum.types.len() }}] = [ {%- for t in type_variant_enum.types %}"{{ t }}",
-{%- endfor %} ];
+    pub const VARIANTS: &[TypeVariant] = &[
+{%- for t in type_variant_enum.types %}
+{%- if let Some(f) = t.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
+        TypeVariant::{{ t.name }},
+{%- endfor %}
+    ];
+    pub const VARIANTS_STR: &[&str] = &[
+{%- for t in type_variant_enum.types %}
+{%- if let Some(f) = t.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
+        "{{ t.name }}",
+{%- endfor %}
+    ];
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
 {%- for t in type_variant_enum.types %}
-            Self::{{ t }} => "{{ t }}",
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            Self::{{ t.name }} => "{{ t.name }}",
 {%- endfor %}
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; {{ type_variant_enum.types.len() }}] {
+    pub const fn variants() -> &'static [TypeVariant] {
         Self::VARIANTS
     }
 
@@ -39,7 +57,10 @@ impl TypeVariant {
     pub fn json_schema(&self, gen: schemars::gen::SchemaGenerator) -> schemars::schema::RootSchema {
         match self {
 {%- for t in type_variant_enum.types %}
-            Self::{{ t }} => gen.into_root_schema_for::<{{ t }}>(),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            Self::{{ t.name }} => gen.into_root_schema_for::<{{ t.name }}>(),
 {%- endfor %}
         }
     }
@@ -64,7 +85,10 @@ impl core::str::FromStr for TypeVariant {
     fn from_str(s: &str) -> Result<Self, Error> {
         match s {
 {%- for t in type_variant_enum.types %}
-            "{{ t }}" => Ok(Self::{{ t }}),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            "{{ t.name }}" => Ok(Self::{{ t.name }}),
 {%- endfor %}
             _ => Err(Error::Invalid),
         }
@@ -81,22 +105,40 @@ impl core::str::FromStr for TypeVariant {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum Type {
 {%- for t in type_variant_enum.types %}
-    {{ t }}(Box<{{ t }}>),
+{%- if let Some(f) = t.feature %}
+    #[cfg({{ f }})]
+{%- endif %}
+    {{ t.name }}(Box<{{ t.name }}>),
 {%- endfor %}
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; {{ type_variant_enum.types.len() }}] = [ {%- for t in type_variant_enum.types %}TypeVariant::{{ t }},
-{%- endfor %} ];
-    pub const VARIANTS_STR: [&'static str; {{ type_variant_enum.types.len() }}] = [ {%- for t in type_variant_enum.types %}"{{ t }}",
-{%- endfor %} ];
+    pub const VARIANTS: &[TypeVariant] = &[
+{%- for t in type_variant_enum.types %}
+{%- if let Some(f) = t.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
+        TypeVariant::{{ t.name }},
+{%- endfor %}
+    ];
+    pub const VARIANTS_STR: &[&str] = &[
+{%- for t in type_variant_enum.types %}
+{%- if let Some(f) = t.feature %}
+        #[cfg({{ f }})]
+{%- endif %}
+        "{{ t.name }}",
+{%- endfor %}
+    ];
 
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self, Error> {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => r.with_limited_depth(|r| Ok(Self::{{ t }}(Box::new({{ t }}::read_xdr(r)?)))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => r.with_limited_depth(|r| Ok(Self::{{ t.name }}(Box::new({{ t.name }}::read_xdr(r)?)))),
 {%- endfor %}
         }
     }
@@ -144,7 +186,10 @@ impl Type {
     pub fn read_xdr_iter<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Box<dyn Iterator<Item=Result<Self, Error>> + '_> {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Box::new(ReadXdrIter::<_, {{ t }}>::new(&mut r.inner, r.limits.clone()).map(|r| r.map(|t| Self::{{ t }}(Box::new(t))))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Box::new(ReadXdrIter::<_, {{ t.name }}>::new(&mut r.inner, r.limits.clone()).map(|r| r.map(|t| Self::{{ t.name }}(Box::new(t))))),
 {%- endfor %}
         }
     }
@@ -154,7 +199,10 @@ impl Type {
     pub fn read_xdr_framed_iter<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Box<dyn Iterator<Item=Result<Self, Error>> + '_> {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Box::new(ReadXdrIter::<_, Frame<{{ t }}>>::new(&mut r.inner, r.limits.clone()).map(|r| r.map(|t| Self::{{ t }}(Box::new(t.0))))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Box::new(ReadXdrIter::<_, Frame<{{ t.name }}>>::new(&mut r.inner, r.limits.clone()).map(|r| r.map(|t| Self::{{ t.name }}(Box::new(t.0))))),
 {%- endfor %}
         }
     }
@@ -168,7 +216,10 @@ impl Type {
         );
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Box::new(ReadXdrIter::<_, {{ t }}>::new(dec, r.limits.clone()).map(|r| r.map(|t| Self::{{ t }}(Box::new(t))))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Box::new(ReadXdrIter::<_, {{ t.name }}>::new(dec, r.limits.clone()).map(|r| r.map(|t| Self::{{ t.name }}(Box::new(t))))),
 {%- endfor %}
         }
     }
@@ -204,7 +255,10 @@ impl Type {
     pub fn from_json(v: TypeVariant, r: impl Read) -> Result<Self, Error> {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Ok(Self::{{ t }}(Box::new(serde_json::from_reader(r)?))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Ok(Self::{{ t.name }}(Box::new(serde_json::from_reader(r)?))),
 {%- endfor %}
         }
     }
@@ -214,7 +268,10 @@ impl Type {
     pub fn deserialize_json<'r, R: serde_json::de::Read<'r>>(v: TypeVariant, r: &mut serde_json::de::Deserializer<R>) -> Result<Self, Error> {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Ok(Self::{{ t }}(Box::new(serde::de::Deserialize::deserialize(r)?))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Ok(Self::{{ t.name }}(Box::new(serde::de::Deserialize::deserialize(r)?))),
 {%- endfor %}
         }
     }
@@ -224,7 +281,10 @@ impl Type {
     pub fn arbitrary(v: TypeVariant, u: &mut arbitrary::Unstructured<'_>) -> Result<Self, Error> {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Ok(Self::{{ t }}(Box::new({{ t }}::arbitrary(u)?))),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Ok(Self::{{ t.name }}(Box::new({{ t.name }}::arbitrary(u)?))),
 {%- endfor %}
         }
     }
@@ -235,7 +295,10 @@ impl Type {
     pub fn default(v: TypeVariant) -> Self {
         match v {
 {%- for t in type_variant_enum.types %}
-            TypeVariant::{{ t }} => Self::{{ t }}(Box::default()),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Self::{{ t.name }}(Box::default()),
 {%- endfor %}
         }
     }
@@ -247,7 +310,10 @@ impl Type {
         #[allow(clippy::match_same_arms)]
         match self {
 {%- for t in type_variant_enum.types %}
-            Self::{{ t }}(ref v) => v.as_ref(),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            Self::{{ t.name }}(ref v) => v.as_ref(),
 {%- endfor %}
         }
     }
@@ -257,14 +323,17 @@ impl Type {
     pub const fn name(&self) -> &'static str {
         match self {
 {%- for t in type_variant_enum.types %}
-            Self::{{ t }}(_) => "{{ t }}",
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            Self::{{ t.name }}(_) => "{{ t.name }}",
 {%- endfor %}
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; {{ type_variant_enum.types.len() }}] {
+    pub const fn variants() -> &'static [TypeVariant] {
         Self::VARIANTS
     }
 
@@ -273,7 +342,10 @@ impl Type {
     pub const fn variant(&self) -> TypeVariant {
         match self {
 {%- for t in type_variant_enum.types %}
-            Self::{{ t }}(_) => TypeVariant::{{ t }},
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            Self::{{ t.name }}(_) => TypeVariant::{{ t.name }},
 {%- endfor %}
         }
     }
@@ -298,7 +370,10 @@ impl WriteXdr for Type {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         match self {
 {%- for t in type_variant_enum.types %}
-            Self::{{ t }}(v) => v.write_xdr(w),
+{%- if let Some(f) = t.feature %}
+            #[cfg({{ f }})]
+{%- endif %}
+            Self::{{ t.name }}(v) => v.write_xdr(w),
 {%- endfor %}
         }
     }

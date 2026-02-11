@@ -1,3 +1,6 @@
+{%- if let Some(f) = c.feature %}
+#[cfg({{ f }})]
+{%- endif %}
 /// {{ c.doc_name }}{{ c.source_comment }}
 pub const {{ c.name }}: u64 = {{ c.value_str }};
 

@@ -5,11 +5,21 @@ use thiserror::Error;
 
 /// Token type for XDR lexing.
 #[derive(Logos, Debug, Clone, PartialEq, Eq)]
-#[logos(skip r"[ \t\n\r\f]+")]  // Skip whitespace
-#[logos(skip r"//[^\n]*")]      // Skip line comments
+#[logos(skip r"[ \t\n\r\f]+")] // Skip whitespace
+#[logos(skip r"//[^\n]*")] // Skip line comments
 #[logos(skip r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/")] // Skip block comments
-#[logos(skip r"%[^\n]*\n?")]    // Skip preprocessor directives
+#[logos(skip r"%[^\n]*\n?")] // Skip preprocessor directives
 pub enum Token {
+    // Preprocessor directives
+    #[regex(r"#ifdef\s+\w+", parse_ifdef)]
+    Ifdef(std::string::String),
+
+    #[regex(r"#else[^\n]*")]
+    Else,
+
+    #[regex(r"#endif[^\n]*")]
+    Endif,
+
     // Keywords
     #[token("struct")]
     Struct,
@@ -105,6 +115,12 @@ fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
 
 fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
     lex.slice().parse().ok().map(|v| (v, IntBase::Decimal))
+}
+
+fn parse_ifdef(lex: &logos::Lexer<Token>) -> Option<String> {
+    // Input is "#ifdef IDENT", extract the identifier after whitespace
+    let slice = lex.slice();
+    slice.strip_prefix("#ifdef").map(|s| s.trim().to_string())
 }
 
 /// A token with its byte span in the source.
@@ -270,6 +286,31 @@ mod tests {
                 Token::LBrace,
                 Token::RBrace,
                 Token::Semi,
+                Token::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_ifdef_tokens() {
+        let input = "#ifdef NEW_COST_TYPE\nenum Foo { A = 0 };\n#else\n#endif\n";
+        let lexer = Lexer::new(input);
+        let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
+        let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Ifdef("NEW_COST_TYPE".into()),
+                Token::Enum,
+                Token::Ident("Foo".into()),
+                Token::LBrace,
+                Token::Ident("A".into()),
+                Token::Eq,
+                Token::IntLiteral((0, IntBase::Decimal)),
+                Token::RBrace,
+                Token::Semi,
+                Token::Else,
+                Token::Endif,
                 Token::Eof,
             ]
         );

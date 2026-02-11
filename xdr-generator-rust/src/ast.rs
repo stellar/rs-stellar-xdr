@@ -2,6 +2,13 @@
 
 use crate::lexer::IntBase;
 
+/// An `#ifdef` condition from the XDR source.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IfdefCondition {
+    pub name: String,
+    pub negated: bool, // true when in #else branch
+}
+
 /// The root of a parsed XDR file or collection of files.
 #[derive(Debug, Clone, Default)]
 pub struct XdrSpec {
@@ -66,6 +73,17 @@ impl Definition {
             Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => None,
         }
     }
+
+    /// Get the ifdef conditions for this definition.
+    pub fn ifdefs(&self) -> &[IfdefCondition] {
+        match self {
+            Definition::Struct(s) => &s.ifdefs,
+            Definition::Enum(e) => &e.ifdefs,
+            Definition::Union(u) => &u.ifdefs,
+            Definition::Typedef(t) => &t.ifdefs,
+            Definition::Const(c) => &c.ifdefs,
+        }
+    }
 }
 
 /// A struct definition.
@@ -79,6 +97,8 @@ pub struct Struct {
     pub is_nested: bool,
     /// Name of the parent type if this is nested, for ordering purposes.
     pub parent: Option<String>,
+    /// `#ifdef` conditions wrapping this definition.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// An enum definition.
@@ -88,6 +108,8 @@ pub struct Enum {
     pub members: Vec<EnumMember>,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// `#ifdef` conditions wrapping this definition.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// A union definition.
@@ -103,6 +125,8 @@ pub struct Union {
     pub is_nested: bool,
     /// Name of the parent type if this is nested, for ordering purposes.
     pub parent: Option<String>,
+    /// `#ifdef` conditions wrapping this definition.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// A typedef definition.
@@ -112,6 +136,8 @@ pub struct Typedef {
     pub type_: Type,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// `#ifdef` conditions wrapping this definition.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// A const definition.
@@ -123,6 +149,8 @@ pub struct Const {
     pub base: IntBase,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// `#ifdef` conditions wrapping this definition.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// XDR type specification.
@@ -173,6 +201,8 @@ pub enum Type {
 pub struct Member {
     pub name: String,
     pub type_: Type,
+    /// `#ifdef` conditions wrapping this member.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// A member of an enum.
@@ -180,6 +210,8 @@ pub struct Member {
 pub struct EnumMember {
     pub name: String,
     pub value: i32,
+    /// `#ifdef` conditions wrapping this member.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// The discriminant of a union.
@@ -195,6 +227,8 @@ pub struct UnionArm {
     pub cases: Vec<UnionCase>,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
+    /// `#ifdef` conditions wrapping this arm.
+    pub ifdefs: Vec<IfdefCondition>,
 }
 
 /// A case in a union.

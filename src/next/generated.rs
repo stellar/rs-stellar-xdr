@@ -2321,6 +2321,18 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
 
 // Frame ------------------------------------------------------------------------
 
+/// Frame wraps an XDR object with the framing defined by the Record Marking
+/// Standard in [RFC 5531 Section 11].
+///
+/// Each frame begins with a 4-byte big-endian header where:
+///  - Bit 31 (high bit) is the last-fragment flag (`1` = last fragment).
+///  - Bits 0-30 contain the byte length of the fragment data that follows.
+///
+/// A record is composed of one or more fragments. In Stellar's usage each
+/// record contains exactly one XDR object encoded as a single fragment with
+/// the last-fragment bit set.
+///
+/// [RFC 5531 Section 11]: https://www.rfc-editor.org/rfc/rfc5531#section-11
 #[derive(Default, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -2348,10 +2360,13 @@ where
 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
-        // Read the frame header value that contains 1 flag-bit and a 33-bit length.
-        //  - The 1 flag bit is 0 when there are more frames for the same record.
-        //  - The 31-bit length is the length of the bytes within the frame that
-        //  follow the frame header.
+        // Read the 4-byte fragment header defined by the Record Marking
+        // Standard in RFC 5531 Section 11
+        // (https://www.rfc-editor.org/rfc/rfc5531#section-11).
+        //  - Bit 31 (high bit) is the last-fragment flag: 1 if this is the
+        //    last fragment of the record, 0 if more fragments follow.
+        //  - Bits 0-30 contain the byte length of the fragment data that
+        //    follows the header.
         let header = u32::read_xdr(r)?;
         // TODO: Use the length and cap the length we'll read from `r`.
         let last_record = header >> 31 == 1;

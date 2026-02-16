@@ -4107,21 +4107,18 @@ impl From<Value> for BytesM {
         x.0
     }
 }
-
 impl From<BytesM> for Value {
     #[must_use]
     fn from(x: BytesM) -> Self {
         Value(x)
     }
 }
-
 impl AsRef<BytesM> for Value {
     #[must_use]
     fn as_ref(&self) -> &BytesM {
         &self.0
     }
 }
-
 impl ReadXdr for Value {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4132,35 +4129,30 @@ impl ReadXdr for Value {
         })
     }
 }
-
 impl WriteXdr for Value {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for Value {
     type Target = BytesM;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<Value> for Vec<u8> {
     #[must_use]
     fn from(x: Value) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for Value {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(Value(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Value {
     type Error = Error;
@@ -4168,14 +4160,12 @@ impl TryFrom<&Vec<u8>> for Value {
         Ok(Value(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for Value {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for Value {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -4214,7 +4204,6 @@ pub struct ScpBallot {
     pub counter: u32,
     pub value: Value,
 }
-
 impl ReadXdr for ScpBallot {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4226,7 +4215,6 @@ impl ReadXdr for ScpBallot {
         })
     }
 }
-
 impl WriteXdr for ScpBallot {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4268,15 +4256,14 @@ pub enum ScpStatementType {
     Externalize = 2,
     Nominate = 3,
 }
-
 impl ScpStatementType {
-    pub const VARIANTS: [ScpStatementType; 4] = [
+    pub const VARIANTS: &[ScpStatementType] = &[
         ScpStatementType::Prepare,
         ScpStatementType::Confirm,
         ScpStatementType::Externalize,
         ScpStatementType::Nominate,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Prepare", "Confirm", "Externalize", "Nominate"];
+    pub const VARIANTS_STR: &[&str] = &["Prepare", "Confirm", "Externalize", "Nominate"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -4289,32 +4276,27 @@ impl ScpStatementType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScpStatementType; 4] {
+    pub const fn variants() -> &'static [ScpStatementType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScpStatementType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScpStatementType> for ScpStatementType {
     fn variants() -> slice::Iter<'static, ScpStatementType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScpStatementType {}
-
 impl fmt::Display for ScpStatementType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScpStatementType {
     type Error = Error;
 
@@ -4330,14 +4312,12 @@ impl TryFrom<i32> for ScpStatementType {
         Ok(e)
     }
 }
-
 impl From<ScpStatementType> for i32 {
     #[must_use]
     fn from(e: ScpStatementType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScpStatementType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4348,7 +4328,6 @@ impl ReadXdr for ScpStatementType {
         })
     }
 }
-
 impl WriteXdr for ScpStatementType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4386,7 +4365,6 @@ pub struct ScpNomination {
     pub votes: VecM<Value>,
     pub accepted: VecM<Value>,
 }
-
 impl ReadXdr for ScpNomination {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4399,7 +4377,6 @@ impl ReadXdr for ScpNomination {
         })
     }
 }
-
 impl WriteXdr for ScpNomination {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4445,7 +4422,6 @@ pub struct ScpStatementPrepare {
     pub n_c: u32,
     pub n_h: u32,
 }
-
 impl ReadXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4461,7 +4437,6 @@ impl ReadXdr for ScpStatementPrepare {
         })
     }
 }
-
 impl WriteXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4508,7 +4483,6 @@ pub struct ScpStatementConfirm {
     pub n_h: u32,
     pub quorum_set_hash: Hash,
 }
-
 impl ReadXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4523,7 +4497,6 @@ impl ReadXdr for ScpStatementConfirm {
         })
     }
 }
-
 impl WriteXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4565,7 +4538,6 @@ pub struct ScpStatementExternalize {
     pub n_h: u32,
     pub commit_quorum_set_hash: Hash,
 }
-
 impl ReadXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4578,7 +4550,6 @@ impl ReadXdr for ScpStatementExternalize {
         })
     }
 }
-
 impl WriteXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4645,22 +4616,20 @@ pub enum ScpStatementPledges {
     Externalize(ScpStatementExternalize),
     Nominate(ScpNomination),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScpStatementPledges {
     fn default() -> Self {
         Self::Prepare(ScpStatementPrepare::default())
     }
 }
-
 impl ScpStatementPledges {
-    pub const VARIANTS: [ScpStatementType; 4] = [
+    pub const VARIANTS: &[ScpStatementType] = &[
         ScpStatementType::Prepare,
         ScpStatementType::Confirm,
         ScpStatementType::Externalize,
         ScpStatementType::Nominate,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Prepare", "Confirm", "Externalize", "Nominate"];
+    pub const VARIANTS_STR: &[&str] = &["Prepare", "Confirm", "Externalize", "Nominate"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -4684,33 +4653,28 @@ impl ScpStatementPledges {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScpStatementType; 4] {
+    pub const fn variants() -> &'static [ScpStatementType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScpStatementPledges {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScpStatementType> for ScpStatementPledges {
     #[must_use]
     fn discriminant(&self) -> ScpStatementType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScpStatementType> for ScpStatementPledges {
     fn variants() -> slice::Iter<'static, ScpStatementType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScpStatementType> for ScpStatementPledges {}
-
 impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4731,7 +4695,6 @@ impl ReadXdr for ScpStatementPledges {
         })
     }
 }
-
 impl WriteXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4812,7 +4775,6 @@ pub struct ScpStatement {
     pub slot_index: u64,
     pub pledges: ScpStatementPledges,
 }
-
 impl ReadXdr for ScpStatement {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4825,7 +4787,6 @@ impl ReadXdr for ScpStatement {
         })
     }
 }
-
 impl WriteXdr for ScpStatement {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4863,7 +4824,6 @@ pub struct ScpEnvelope {
     pub statement: ScpStatement,
     pub signature: Signature,
 }
-
 impl ReadXdr for ScpEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4875,7 +4835,6 @@ impl ReadXdr for ScpEnvelope {
         })
     }
 }
-
 impl WriteXdr for ScpEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4914,7 +4873,6 @@ pub struct ScpQuorumSet {
     pub validators: VecM<NodeId>,
     pub inner_sets: VecM<ScpQuorumSet>,
 }
-
 impl ReadXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4927,7 +4885,6 @@ impl ReadXdr for ScpQuorumSet {
         })
     }
 }
-
 impl WriteXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -4964,7 +4921,6 @@ impl WriteXdr for ScpQuorumSet {
 pub struct ConfigSettingContractExecutionLanesV0 {
     pub ledger_max_tx_count: u32,
 }
-
 impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -4975,7 +4931,6 @@ impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5033,7 +4988,6 @@ pub struct ConfigSettingContractComputeV0 {
     pub fee_rate_per_instructions_increment: i64,
     pub tx_memory_limit: u32,
 }
-
 impl ReadXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5047,7 +5001,6 @@ impl ReadXdr for ConfigSettingContractComputeV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5088,7 +5041,6 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 pub struct ConfigSettingContractParallelComputeV0 {
     pub ledger_max_dependent_tx_clusters: u32,
 }
-
 impl ReadXdr for ConfigSettingContractParallelComputeV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5099,7 +5051,6 @@ impl ReadXdr for ConfigSettingContractParallelComputeV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractParallelComputeV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5202,7 +5153,6 @@ pub struct ConfigSettingContractLedgerCostV0 {
     pub rent_fee1_kb_soroban_state_size_high: i64,
     pub soroban_state_rent_fee_growth_factor: u32,
 }
-
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5227,7 +5177,6 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5285,7 +5234,6 @@ pub struct ConfigSettingContractLedgerCostExtV0 {
     )]
     pub fee_write1_kb: i64,
 }
-
 impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5297,7 +5245,6 @@ impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5336,7 +5283,6 @@ pub struct ConfigSettingContractHistoricalDataV0 {
     )]
     pub fee_historical1_kb: i64,
 }
-
 impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5347,7 +5293,6 @@ impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5389,7 +5334,6 @@ pub struct ConfigSettingContractEventsV0 {
     )]
     pub fee_contract_events1_kb: i64,
 }
-
 impl ReadXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5401,7 +5345,6 @@ impl ReadXdr for ConfigSettingContractEventsV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5448,7 +5391,6 @@ pub struct ConfigSettingContractBandwidthV0 {
     )]
     pub fee_tx_size1_kb: i64,
 }
-
 impl ReadXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -5461,7 +5403,6 @@ impl ReadXdr for ConfigSettingContractBandwidthV0 {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -5764,9 +5705,8 @@ pub enum ContractCostType {
     Bn254FrInv = 84,
     Bn254G1Msm = 85,
 }
-
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 86] = [
+    pub const VARIANTS: &[ContractCostType] = &[
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -5854,7 +5794,7 @@ impl ContractCostType {
         ContractCostType::Bn254FrInv,
         ContractCostType::Bn254G1Msm,
     ];
-    pub const VARIANTS_STR: [&'static str; 86] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -6036,32 +5976,27 @@ impl ContractCostType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 86] {
+    pub const fn variants() -> &'static [ContractCostType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractCostType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ContractCostType> for ContractCostType {
     fn variants() -> slice::Iter<'static, ContractCostType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ContractCostType {}
-
 impl fmt::Display for ContractCostType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ContractCostType {
     type Error = Error;
 
@@ -6159,14 +6094,12 @@ impl TryFrom<i32> for ContractCostType {
         Ok(e)
     }
 }
-
 impl From<ContractCostType> for i32 {
     #[must_use]
     fn from(e: ContractCostType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ContractCostType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6177,7 +6110,6 @@ impl ReadXdr for ContractCostType {
         })
     }
 }
-
 impl WriteXdr for ContractCostType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -6224,7 +6156,6 @@ pub struct ContractCostParamEntry {
     )]
     pub linear_term: i64,
 }
-
 impl ReadXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6237,7 +6168,6 @@ impl ReadXdr for ContractCostParamEntry {
         })
     }
 }
-
 impl WriteXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -6310,7 +6240,6 @@ pub struct StateArchivalSettings {
     pub eviction_scan_size: u32,
     pub starting_eviction_scan_level: u32,
 }
-
 impl ReadXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6330,7 +6259,6 @@ impl ReadXdr for StateArchivalSettings {
         })
     }
 }
-
 impl WriteXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -6382,7 +6310,6 @@ pub struct EvictionIterator {
     )]
     pub bucket_file_offset: u64,
 }
-
 impl ReadXdr for EvictionIterator {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6395,7 +6322,6 @@ impl ReadXdr for EvictionIterator {
         })
     }
 }
-
 impl WriteXdr for EvictionIterator {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -6438,7 +6364,6 @@ pub struct ConfigSettingScpTiming {
     pub ballot_timeout_initial_milliseconds: u32,
     pub ballot_timeout_increment_milliseconds: u32,
 }
-
 impl ReadXdr for ConfigSettingScpTiming {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6453,7 +6378,6 @@ impl ReadXdr for ConfigSettingScpTiming {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingScpTiming {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -6502,21 +6426,18 @@ impl From<ContractCostParams> for VecM<ContractCostParamEntry, 1024> {
         x.0
     }
 }
-
 impl From<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
     #[must_use]
     fn from(x: VecM<ContractCostParamEntry, 1024>) -> Self {
         ContractCostParams(x)
     }
 }
-
 impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
     #[must_use]
     fn as_ref(&self) -> &VecM<ContractCostParamEntry, 1024> {
         &self.0
     }
 }
-
 impl ReadXdr for ContractCostParams {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6527,35 +6448,30 @@ impl ReadXdr for ContractCostParams {
         })
     }
 }
-
 impl WriteXdr for ContractCostParams {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ContractCostParams {
     type Target = VecM<ContractCostParamEntry, 1024>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ContractCostParams> for Vec<ContractCostParamEntry> {
     #[must_use]
     fn from(x: ContractCostParams) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<ContractCostParamEntry>> for ContractCostParams {
     type Error = Error;
     fn try_from(x: Vec<ContractCostParamEntry>) -> Result<Self, Error> {
         Ok(ContractCostParams(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
     type Error = Error;
@@ -6563,14 +6479,12 @@ impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
         Ok(ContractCostParams(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<ContractCostParamEntry>> for ContractCostParams {
     #[must_use]
     fn as_ref(&self) -> &Vec<ContractCostParamEntry> {
         &self.0 .0
     }
 }
-
 impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -6640,9 +6554,8 @@ pub enum ConfigSettingId {
     ContractLedgerCostExtV0 = 15,
     ScpTiming = 16,
 }
-
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 17] = [
+    pub const VARIANTS: &[ConfigSettingId] = &[
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -6661,7 +6574,7 @@ impl ConfigSettingId {
         ConfigSettingId::ContractLedgerCostExtV0,
         ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 17] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -6705,32 +6618,27 @@ impl ConfigSettingId {
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 17] {
+    pub const fn variants() -> &'static [ConfigSettingId] {
         Self::VARIANTS
     }
 }
-
 impl Name for ConfigSettingId {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ConfigSettingId> for ConfigSettingId {
     fn variants() -> slice::Iter<'static, ConfigSettingId> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ConfigSettingId {}
-
 impl fmt::Display for ConfigSettingId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ConfigSettingId {
     type Error = Error;
 
@@ -6759,14 +6667,12 @@ impl TryFrom<i32> for ConfigSettingId {
         Ok(e)
     }
 }
-
 impl From<ConfigSettingId> for i32 {
     #[must_use]
     fn from(e: ConfigSettingId) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ConfigSettingId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -6777,7 +6683,6 @@ impl ReadXdr for ConfigSettingId {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -6867,16 +6772,14 @@ pub enum ConfigSettingEntry {
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
     ScpTiming(ConfigSettingScpTiming),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ConfigSettingEntry {
     fn default() -> Self {
         Self::ContractMaxSizeBytes(u32::default())
     }
 }
-
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 17] = [
+    pub const VARIANTS: &[ConfigSettingId] = &[
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -6895,7 +6798,7 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractLedgerCostExtV0,
         ConfigSettingId::ScpTiming,
     ];
-    pub const VARIANTS_STR: [&'static str; 17] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -6967,33 +6870,28 @@ impl ConfigSettingEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 17] {
+    pub const fn variants() -> &'static [ConfigSettingId] {
         Self::VARIANTS
     }
 }
-
 impl Name for ConfigSettingEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
     #[must_use]
     fn discriminant(&self) -> ConfigSettingId {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ConfigSettingId> for ConfigSettingEntry {
     fn variants() -> slice::Iter<'static, ConfigSettingId> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ConfigSettingId> for ConfigSettingEntry {}
-
 impl ReadXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7057,7 +6955,6 @@ impl ReadXdr for ConfigSettingEntry {
         })
     }
 }
-
 impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7112,10 +7009,9 @@ pub enum ScEnvMetaKind {
     #[cfg_attr(feature = "alloc", default)]
     ScEnvMetaKindInterfaceVersion = 0,
 }
-
 impl ScEnvMetaKind {
-    pub const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ScEnvMetaKindInterfaceVersion"];
+    pub const VARIANTS: &[ScEnvMetaKind] = &[ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    pub const VARIANTS_STR: &[&str] = &["ScEnvMetaKindInterfaceVersion"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -7125,32 +7021,27 @@ impl ScEnvMetaKind {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScEnvMetaKind; 1] {
+    pub const fn variants() -> &'static [ScEnvMetaKind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScEnvMetaKind {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScEnvMetaKind> for ScEnvMetaKind {
     fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScEnvMetaKind {}
-
 impl fmt::Display for ScEnvMetaKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScEnvMetaKind {
     type Error = Error;
 
@@ -7163,14 +7054,12 @@ impl TryFrom<i32> for ScEnvMetaKind {
         Ok(e)
     }
 }
-
 impl From<ScEnvMetaKind> for i32 {
     #[must_use]
     fn from(e: ScEnvMetaKind) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScEnvMetaKind {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7181,7 +7070,6 @@ impl ReadXdr for ScEnvMetaKind {
         })
     }
 }
-
 impl WriteXdr for ScEnvMetaKind {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7216,7 +7104,6 @@ pub struct ScEnvMetaEntryInterfaceVersion {
     pub protocol: u32,
     pub pre_release: u32,
 }
-
 impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7228,7 +7115,6 @@ impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
         })
     }
 }
-
 impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7268,17 +7154,15 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
 pub enum ScEnvMetaEntry {
     ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScEnvMetaEntry {
     fn default() -> Self {
         Self::ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion::default())
     }
 }
-
 impl ScEnvMetaEntry {
-    pub const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ScEnvMetaKindInterfaceVersion"];
+    pub const VARIANTS: &[ScEnvMetaKind] = &[ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    pub const VARIANTS_STR: &[&str] = &["ScEnvMetaKindInterfaceVersion"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -7296,33 +7180,28 @@ impl ScEnvMetaEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScEnvMetaKind; 1] {
+    pub const fn variants() -> &'static [ScEnvMetaKind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScEnvMetaEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScEnvMetaKind> for ScEnvMetaEntry {
     #[must_use]
     fn discriminant(&self) -> ScEnvMetaKind {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScEnvMetaKind> for ScEnvMetaEntry {
     fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
-
 impl ReadXdr for ScEnvMetaEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7342,7 +7221,6 @@ impl ReadXdr for ScEnvMetaEntry {
         })
     }
 }
-
 impl WriteXdr for ScEnvMetaEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7382,7 +7260,6 @@ pub struct ScMetaV0 {
     pub key: StringM,
     pub val: StringM,
 }
-
 impl ReadXdr for ScMetaV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7394,7 +7271,6 @@ impl ReadXdr for ScMetaV0 {
         })
     }
 }
-
 impl WriteXdr for ScMetaV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7430,10 +7306,9 @@ pub enum ScMetaKind {
     #[cfg_attr(feature = "alloc", default)]
     ScMetaV0 = 0,
 }
-
 impl ScMetaKind {
-    pub const VARIANTS: [ScMetaKind; 1] = [ScMetaKind::ScMetaV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ScMetaV0"];
+    pub const VARIANTS: &[ScMetaKind] = &[ScMetaKind::ScMetaV0];
+    pub const VARIANTS_STR: &[&str] = &["ScMetaV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -7443,32 +7318,27 @@ impl ScMetaKind {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScMetaKind; 1] {
+    pub const fn variants() -> &'static [ScMetaKind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScMetaKind {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScMetaKind> for ScMetaKind {
     fn variants() -> slice::Iter<'static, ScMetaKind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScMetaKind {}
-
 impl fmt::Display for ScMetaKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScMetaKind {
     type Error = Error;
 
@@ -7481,14 +7351,12 @@ impl TryFrom<i32> for ScMetaKind {
         Ok(e)
     }
 }
-
 impl From<ScMetaKind> for i32 {
     #[must_use]
     fn from(e: ScMetaKind) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScMetaKind {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7499,7 +7367,6 @@ impl ReadXdr for ScMetaKind {
         })
     }
 }
-
 impl WriteXdr for ScMetaKind {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7535,17 +7402,15 @@ impl WriteXdr for ScMetaKind {
 pub enum ScMetaEntry {
     ScMetaV0(ScMetaV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScMetaEntry {
     fn default() -> Self {
         Self::ScMetaV0(ScMetaV0::default())
     }
 }
-
 impl ScMetaEntry {
-    pub const VARIANTS: [ScMetaKind; 1] = [ScMetaKind::ScMetaV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ScMetaV0"];
+    pub const VARIANTS: &[ScMetaKind] = &[ScMetaKind::ScMetaV0];
+    pub const VARIANTS_STR: &[&str] = &["ScMetaV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -7563,33 +7428,28 @@ impl ScMetaEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScMetaKind; 1] {
+    pub const fn variants() -> &'static [ScMetaKind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScMetaEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScMetaKind> for ScMetaEntry {
     #[must_use]
     fn discriminant(&self) -> ScMetaKind {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScMetaKind> for ScMetaEntry {
     fn variants() -> slice::Iter<'static, ScMetaKind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScMetaKind> for ScMetaEntry {}
-
 impl ReadXdr for ScMetaEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7605,7 +7465,6 @@ impl ReadXdr for ScMetaEntry {
         })
     }
 }
-
 impl WriteXdr for ScMetaEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7708,9 +7567,8 @@ pub enum ScSpecType {
     BytesN = 1006,
     Udt = 2000,
 }
-
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 26] = [
+    pub const VARIANTS: &[ScSpecType] = &[
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -7738,7 +7596,7 @@ impl ScSpecType {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 26] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Val",
         "Bool",
         "Void",
@@ -7800,32 +7658,27 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 26] {
+    pub const fn variants() -> &'static [ScSpecType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScSpecType> for ScSpecType {
     fn variants() -> slice::Iter<'static, ScSpecType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScSpecType {}
-
 impl fmt::Display for ScSpecType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScSpecType {
     type Error = Error;
 
@@ -7863,14 +7716,12 @@ impl TryFrom<i32> for ScSpecType {
         Ok(e)
     }
 }
-
 impl From<ScSpecType> for i32 {
     #[must_use]
     fn from(e: ScSpecType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScSpecType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7881,7 +7732,6 @@ impl ReadXdr for ScSpecType {
         })
     }
 }
-
 impl WriteXdr for ScSpecType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7915,7 +7765,6 @@ impl WriteXdr for ScSpecType {
 pub struct ScSpecTypeOption {
     pub value_type: Box<ScSpecTypeDef>,
 }
-
 impl ReadXdr for ScSpecTypeOption {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7926,7 +7775,6 @@ impl ReadXdr for ScSpecTypeOption {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeOption {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -7962,7 +7810,6 @@ pub struct ScSpecTypeResult {
     pub ok_type: Box<ScSpecTypeDef>,
     pub error_type: Box<ScSpecTypeDef>,
 }
-
 impl ReadXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -7974,7 +7821,6 @@ impl ReadXdr for ScSpecTypeResult {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8009,7 +7855,6 @@ impl WriteXdr for ScSpecTypeResult {
 pub struct ScSpecTypeVec {
     pub element_type: Box<ScSpecTypeDef>,
 }
-
 impl ReadXdr for ScSpecTypeVec {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8020,7 +7865,6 @@ impl ReadXdr for ScSpecTypeVec {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeVec {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8056,7 +7900,6 @@ pub struct ScSpecTypeMap {
     pub key_type: Box<ScSpecTypeDef>,
     pub value_type: Box<ScSpecTypeDef>,
 }
-
 impl ReadXdr for ScSpecTypeMap {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8068,7 +7911,6 @@ impl ReadXdr for ScSpecTypeMap {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeMap {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8103,7 +7945,6 @@ impl WriteXdr for ScSpecTypeMap {
 pub struct ScSpecTypeTuple {
     pub value_types: VecM<ScSpecTypeDef, 12>,
 }
-
 impl ReadXdr for ScSpecTypeTuple {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8114,7 +7955,6 @@ impl ReadXdr for ScSpecTypeTuple {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeTuple {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8148,7 +7988,6 @@ impl WriteXdr for ScSpecTypeTuple {
 pub struct ScSpecTypeBytesN {
     pub n: u32,
 }
-
 impl ReadXdr for ScSpecTypeBytesN {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8159,7 +7998,6 @@ impl ReadXdr for ScSpecTypeBytesN {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeBytesN {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8193,7 +8031,6 @@ impl WriteXdr for ScSpecTypeBytesN {
 pub struct ScSpecTypeUdt {
     pub name: StringM<60>,
 }
-
 impl ReadXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8204,7 +8041,6 @@ impl ReadXdr for ScSpecTypeUdt {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8297,16 +8133,14 @@ pub enum ScSpecTypeDef {
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdt),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScSpecTypeDef {
     fn default() -> Self {
         Self::Val
     }
 }
-
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 26] = [
+    pub const VARIANTS: &[ScSpecType] = &[
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -8334,7 +8168,7 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 26] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Val",
         "Bool",
         "Void",
@@ -8429,33 +8263,28 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 26] {
+    pub const fn variants() -> &'static [ScSpecType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecTypeDef {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScSpecType> for ScSpecTypeDef {
     #[must_use]
     fn discriminant(&self) -> ScSpecType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScSpecType> for ScSpecTypeDef {
     fn variants() -> slice::Iter<'static, ScSpecType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScSpecType> for ScSpecTypeDef {}
-
 impl ReadXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8496,7 +8325,6 @@ impl ReadXdr for ScSpecTypeDef {
         })
     }
 }
-
 impl WriteXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8563,7 +8391,6 @@ pub struct ScSpecUdtStructFieldV0 {
     pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
-
 impl ReadXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8576,7 +8403,6 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8618,7 +8444,6 @@ pub struct ScSpecUdtStructV0 {
     pub name: StringM<60>,
     pub fields: VecM<ScSpecUdtStructFieldV0>,
 }
-
 impl ReadXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8632,7 +8457,6 @@ impl ReadXdr for ScSpecUdtStructV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8671,7 +8495,6 @@ pub struct ScSpecUdtUnionCaseVoidV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
 }
-
 impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8683,7 +8506,6 @@ impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8722,7 +8544,6 @@ pub struct ScSpecUdtUnionCaseTupleV0 {
     pub name: StringM<60>,
     pub type_: VecM<ScSpecTypeDef>,
 }
-
 impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8735,7 +8556,6 @@ impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8774,13 +8594,12 @@ pub enum ScSpecUdtUnionCaseV0Kind {
     VoidV0 = 0,
     TupleV0 = 1,
 }
-
 impl ScSpecUdtUnionCaseV0Kind {
-    pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
+    pub const VARIANTS: &[ScSpecUdtUnionCaseV0Kind] = &[
         ScSpecUdtUnionCaseV0Kind::VoidV0,
         ScSpecUdtUnionCaseV0Kind::TupleV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["VoidV0", "TupleV0"];
+    pub const VARIANTS_STR: &[&str] = &["VoidV0", "TupleV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -8791,32 +8610,27 @@ impl ScSpecUdtUnionCaseV0Kind {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecUdtUnionCaseV0Kind; 2] {
+    pub const fn variants() -> &'static [ScSpecUdtUnionCaseV0Kind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecUdtUnionCaseV0Kind {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0Kind {
     fn variants() -> slice::Iter<'static, ScSpecUdtUnionCaseV0Kind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScSpecUdtUnionCaseV0Kind {}
-
 impl fmt::Display for ScSpecUdtUnionCaseV0Kind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
     type Error = Error;
 
@@ -8830,14 +8644,12 @@ impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
         Ok(e)
     }
 }
-
 impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
     #[must_use]
     fn from(e: ScSpecUdtUnionCaseV0Kind) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8848,7 +8660,6 @@ impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -8887,20 +8698,18 @@ pub enum ScSpecUdtUnionCaseV0 {
     VoidV0(ScSpecUdtUnionCaseVoidV0),
     TupleV0(ScSpecUdtUnionCaseTupleV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScSpecUdtUnionCaseV0 {
     fn default() -> Self {
         Self::VoidV0(ScSpecUdtUnionCaseVoidV0::default())
     }
 }
-
 impl ScSpecUdtUnionCaseV0 {
-    pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
+    pub const VARIANTS: &[ScSpecUdtUnionCaseV0Kind] = &[
         ScSpecUdtUnionCaseV0Kind::VoidV0,
         ScSpecUdtUnionCaseV0Kind::TupleV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["VoidV0", "TupleV0"];
+    pub const VARIANTS_STR: &[&str] = &["VoidV0", "TupleV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -8920,33 +8729,28 @@ impl ScSpecUdtUnionCaseV0 {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecUdtUnionCaseV0Kind; 2] {
+    pub const fn variants() -> &'static [ScSpecUdtUnionCaseV0Kind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecUdtUnionCaseV0 {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
     #[must_use]
     fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
     fn variants() -> slice::Iter<'static, ScSpecUdtUnionCaseV0Kind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {}
-
 impl ReadXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -8967,7 +8771,6 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9012,7 +8815,6 @@ pub struct ScSpecUdtUnionV0 {
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtUnionCaseV0>,
 }
-
 impl ReadXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9026,7 +8828,6 @@ impl ReadXdr for ScSpecUdtUnionV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9067,7 +8868,6 @@ pub struct ScSpecUdtEnumCaseV0 {
     pub name: StringM<60>,
     pub value: u32,
 }
-
 impl ReadXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9080,7 +8880,6 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9122,7 +8921,6 @@ pub struct ScSpecUdtEnumV0 {
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtEnumCaseV0>,
 }
-
 impl ReadXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9136,7 +8934,6 @@ impl ReadXdr for ScSpecUdtEnumV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9177,7 +8974,6 @@ pub struct ScSpecUdtErrorEnumCaseV0 {
     pub name: StringM<60>,
     pub value: u32,
 }
-
 impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9190,7 +8986,6 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9232,7 +9027,6 @@ pub struct ScSpecUdtErrorEnumV0 {
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtErrorEnumCaseV0>,
 }
-
 impl ReadXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9246,7 +9040,6 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9287,7 +9080,6 @@ pub struct ScSpecFunctionInputV0 {
     pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
-
 impl ReadXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9300,7 +9092,6 @@ impl ReadXdr for ScSpecFunctionInputV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9342,7 +9133,6 @@ pub struct ScSpecFunctionV0 {
     pub inputs: VecM<ScSpecFunctionInputV0>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
 }
-
 impl ReadXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9356,7 +9146,6 @@ impl ReadXdr for ScSpecFunctionV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9396,13 +9185,12 @@ pub enum ScSpecEventParamLocationV0 {
     Data = 0,
     TopicList = 1,
 }
-
 impl ScSpecEventParamLocationV0 {
-    pub const VARIANTS: [ScSpecEventParamLocationV0; 2] = [
+    pub const VARIANTS: &[ScSpecEventParamLocationV0] = &[
         ScSpecEventParamLocationV0::Data,
         ScSpecEventParamLocationV0::TopicList,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Data", "TopicList"];
+    pub const VARIANTS_STR: &[&str] = &["Data", "TopicList"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -9413,32 +9201,27 @@ impl ScSpecEventParamLocationV0 {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEventParamLocationV0; 2] {
+    pub const fn variants() -> &'static [ScSpecEventParamLocationV0] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecEventParamLocationV0 {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScSpecEventParamLocationV0> for ScSpecEventParamLocationV0 {
     fn variants() -> slice::Iter<'static, ScSpecEventParamLocationV0> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScSpecEventParamLocationV0 {}
-
 impl fmt::Display for ScSpecEventParamLocationV0 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScSpecEventParamLocationV0 {
     type Error = Error;
 
@@ -9452,14 +9235,12 @@ impl TryFrom<i32> for ScSpecEventParamLocationV0 {
         Ok(e)
     }
 }
-
 impl From<ScSpecEventParamLocationV0> for i32 {
     #[must_use]
     fn from(e: ScSpecEventParamLocationV0) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScSpecEventParamLocationV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9470,7 +9251,6 @@ impl ReadXdr for ScSpecEventParamLocationV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecEventParamLocationV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9510,7 +9290,6 @@ pub struct ScSpecEventParamV0 {
     pub type_: ScSpecTypeDef,
     pub location: ScSpecEventParamLocationV0,
 }
-
 impl ReadXdr for ScSpecEventParamV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9524,7 +9303,6 @@ impl ReadXdr for ScSpecEventParamV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecEventParamV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9566,14 +9344,13 @@ pub enum ScSpecEventDataFormat {
     Vec = 1,
     Map = 2,
 }
-
 impl ScSpecEventDataFormat {
-    pub const VARIANTS: [ScSpecEventDataFormat; 3] = [
+    pub const VARIANTS: &[ScSpecEventDataFormat] = &[
         ScSpecEventDataFormat::SingleValue,
         ScSpecEventDataFormat::Vec,
         ScSpecEventDataFormat::Map,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SingleValue", "Vec", "Map"];
+    pub const VARIANTS_STR: &[&str] = &["SingleValue", "Vec", "Map"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -9585,32 +9362,27 @@ impl ScSpecEventDataFormat {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEventDataFormat; 3] {
+    pub const fn variants() -> &'static [ScSpecEventDataFormat] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecEventDataFormat {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScSpecEventDataFormat> for ScSpecEventDataFormat {
     fn variants() -> slice::Iter<'static, ScSpecEventDataFormat> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScSpecEventDataFormat {}
-
 impl fmt::Display for ScSpecEventDataFormat {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScSpecEventDataFormat {
     type Error = Error;
 
@@ -9625,14 +9397,12 @@ impl TryFrom<i32> for ScSpecEventDataFormat {
         Ok(e)
     }
 }
-
 impl From<ScSpecEventDataFormat> for i32 {
     #[must_use]
     fn from(e: ScSpecEventDataFormat) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScSpecEventDataFormat {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9643,7 +9413,6 @@ impl ReadXdr for ScSpecEventDataFormat {
         })
     }
 }
-
 impl WriteXdr for ScSpecEventDataFormat {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9687,7 +9456,6 @@ pub struct ScSpecEventV0 {
     pub params: VecM<ScSpecEventParamV0>,
     pub data_format: ScSpecEventDataFormat,
 }
-
 impl ReadXdr for ScSpecEventV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9703,7 +9471,6 @@ impl ReadXdr for ScSpecEventV0 {
         })
     }
 }
-
 impl WriteXdr for ScSpecEventV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9753,9 +9520,8 @@ pub enum ScSpecEntryKind {
     UdtErrorEnumV0 = 4,
     EventV0 = 5,
 }
-
 impl ScSpecEntryKind {
-    pub const VARIANTS: [ScSpecEntryKind; 6] = [
+    pub const VARIANTS: &[ScSpecEntryKind] = &[
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
@@ -9763,7 +9529,7 @@ impl ScSpecEntryKind {
         ScSpecEntryKind::UdtErrorEnumV0,
         ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
@@ -9785,32 +9551,27 @@ impl ScSpecEntryKind {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 6] {
+    pub const fn variants() -> &'static [ScSpecEntryKind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecEntryKind {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScSpecEntryKind> for ScSpecEntryKind {
     fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScSpecEntryKind {}
-
 impl fmt::Display for ScSpecEntryKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScSpecEntryKind {
     type Error = Error;
 
@@ -9828,14 +9589,12 @@ impl TryFrom<i32> for ScSpecEntryKind {
         Ok(e)
     }
 }
-
 impl From<ScSpecEntryKind> for i32 {
     #[must_use]
     fn from(e: ScSpecEntryKind) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScSpecEntryKind {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9846,7 +9605,6 @@ impl ReadXdr for ScSpecEntryKind {
         })
     }
 }
-
 impl WriteXdr for ScSpecEntryKind {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -9897,16 +9655,14 @@ pub enum ScSpecEntry {
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
     EventV0(ScSpecEventV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScSpecEntry {
     fn default() -> Self {
         Self::FunctionV0(ScSpecFunctionV0::default())
     }
 }
-
 impl ScSpecEntry {
-    pub const VARIANTS: [ScSpecEntryKind; 6] = [
+    pub const VARIANTS: &[ScSpecEntryKind] = &[
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
         ScSpecEntryKind::UdtUnionV0,
@@ -9914,7 +9670,7 @@ impl ScSpecEntry {
         ScSpecEntryKind::UdtErrorEnumV0,
         ScSpecEntryKind::EventV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "FunctionV0",
         "UdtStructV0",
         "UdtUnionV0",
@@ -9949,33 +9705,28 @@ impl ScSpecEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 6] {
+    pub const fn variants() -> &'static [ScSpecEntryKind] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScSpecEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
     #[must_use]
     fn discriminant(&self) -> ScSpecEntryKind {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScSpecEntryKind> for ScSpecEntry {
     fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScSpecEntryKind> for ScSpecEntry {}
-
 impl ReadXdr for ScSpecEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -9998,7 +9749,6 @@ impl ReadXdr for ScSpecEntry {
         })
     }
 }
-
 impl WriteXdr for ScSpecEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10113,9 +9863,8 @@ pub enum ScValType {
     LedgerKeyContractInstance = 20,
     LedgerKeyNonce = 21,
 }
-
 impl ScValType {
-    pub const VARIANTS: [ScValType; 22] = [
+    pub const VARIANTS: &[ScValType] = &[
         ScValType::Bool,
         ScValType::Void,
         ScValType::Error,
@@ -10139,7 +9888,7 @@ impl ScValType {
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
     ];
-    pub const VARIANTS_STR: [&'static str; 22] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Bool",
         "Void",
         "Error",
@@ -10193,32 +9942,27 @@ impl ScValType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScValType; 22] {
+    pub const fn variants() -> &'static [ScValType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScValType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScValType> for ScValType {
     fn variants() -> slice::Iter<'static, ScValType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScValType {}
-
 impl fmt::Display for ScValType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScValType {
     type Error = Error;
 
@@ -10252,14 +9996,12 @@ impl TryFrom<i32> for ScValType {
         Ok(e)
     }
 }
-
 impl From<ScValType> for i32 {
     #[must_use]
     fn from(e: ScValType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScValType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10270,7 +10012,6 @@ impl ReadXdr for ScValType {
         })
     }
 }
-
 impl WriteXdr for ScValType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10323,9 +10064,8 @@ pub enum ScErrorType {
     Value = 8,
     Auth = 9,
 }
-
 impl ScErrorType {
-    pub const VARIANTS: [ScErrorType; 10] = [
+    pub const VARIANTS: &[ScErrorType] = &[
         ScErrorType::Contract,
         ScErrorType::WasmVm,
         ScErrorType::Context,
@@ -10337,7 +10077,7 @@ impl ScErrorType {
         ScErrorType::Value,
         ScErrorType::Auth,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Contract", "WasmVm", "Context", "Storage", "Object", "Crypto", "Events", "Budget",
         "Value", "Auth",
     ];
@@ -10359,32 +10099,27 @@ impl ScErrorType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScErrorType; 10] {
+    pub const fn variants() -> &'static [ScErrorType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScErrorType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScErrorType> for ScErrorType {
     fn variants() -> slice::Iter<'static, ScErrorType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScErrorType {}
-
 impl fmt::Display for ScErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScErrorType {
     type Error = Error;
 
@@ -10406,14 +10141,12 @@ impl TryFrom<i32> for ScErrorType {
         Ok(e)
     }
 }
-
 impl From<ScErrorType> for i32 {
     #[must_use]
     fn from(e: ScErrorType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScErrorType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10424,7 +10157,6 @@ impl ReadXdr for ScErrorType {
         })
     }
 }
-
 impl WriteXdr for ScErrorType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10477,9 +10209,8 @@ pub enum ScErrorCode {
     UnexpectedType = 8,
     UnexpectedSize = 9,
 }
-
 impl ScErrorCode {
-    pub const VARIANTS: [ScErrorCode; 10] = [
+    pub const VARIANTS: &[ScErrorCode] = &[
         ScErrorCode::ArithDomain,
         ScErrorCode::IndexBounds,
         ScErrorCode::InvalidInput,
@@ -10491,7 +10222,7 @@ impl ScErrorCode {
         ScErrorCode::UnexpectedType,
         ScErrorCode::UnexpectedSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ArithDomain",
         "IndexBounds",
         "InvalidInput",
@@ -10521,32 +10252,27 @@ impl ScErrorCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScErrorCode; 10] {
+    pub const fn variants() -> &'static [ScErrorCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScErrorCode> for ScErrorCode {
     fn variants() -> slice::Iter<'static, ScErrorCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScErrorCode {}
-
 impl fmt::Display for ScErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScErrorCode {
     type Error = Error;
 
@@ -10568,14 +10294,12 @@ impl TryFrom<i32> for ScErrorCode {
         Ok(e)
     }
 }
-
 impl From<ScErrorCode> for i32 {
     #[must_use]
     fn from(e: ScErrorCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScErrorCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10586,7 +10310,6 @@ impl ReadXdr for ScErrorCode {
         })
     }
 }
-
 impl WriteXdr for ScErrorCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10641,16 +10364,14 @@ pub enum ScError {
     Value(ScErrorCode),
     Auth(ScErrorCode),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScError {
     fn default() -> Self {
         Self::Contract(u32::default())
     }
 }
-
 impl ScError {
-    pub const VARIANTS: [ScErrorType; 10] = [
+    pub const VARIANTS: &[ScErrorType] = &[
         ScErrorType::Contract,
         ScErrorType::WasmVm,
         ScErrorType::Context,
@@ -10662,7 +10383,7 @@ impl ScError {
         ScErrorType::Value,
         ScErrorType::Auth,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Contract", "WasmVm", "Context", "Storage", "Object", "Crypto", "Events", "Budget",
         "Value", "Auth",
     ];
@@ -10701,33 +10422,28 @@ impl ScError {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScErrorType; 10] {
+    pub const fn variants() -> &'static [ScErrorType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScError {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScErrorType> for ScError {
     #[must_use]
     fn discriminant(&self) -> ScErrorType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScErrorType> for ScError {
     fn variants() -> slice::Iter<'static, ScErrorType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScErrorType> for ScError {}
-
 impl ReadXdr for ScError {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10752,7 +10468,6 @@ impl ReadXdr for ScError {
         })
     }
 }
-
 impl WriteXdr for ScError {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10797,7 +10512,6 @@ pub struct UInt128Parts {
     pub hi: u64,
     pub lo: u64,
 }
-
 impl ReadXdr for UInt128Parts {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10809,7 +10523,6 @@ impl ReadXdr for UInt128Parts {
         })
     }
 }
-
 impl WriteXdr for UInt128Parts {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10870,7 +10583,6 @@ pub struct Int128Parts {
     pub hi: i64,
     pub lo: u64,
 }
-
 impl ReadXdr for Int128Parts {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10882,7 +10594,6 @@ impl ReadXdr for Int128Parts {
         })
     }
 }
-
 impl WriteXdr for Int128Parts {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -10947,7 +10658,6 @@ pub struct UInt256Parts {
     pub lo_hi: u64,
     pub lo_lo: u64,
 }
-
 impl ReadXdr for UInt256Parts {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -10961,7 +10671,6 @@ impl ReadXdr for UInt256Parts {
         })
     }
 }
-
 impl WriteXdr for UInt256Parts {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11038,7 +10747,6 @@ pub struct Int256Parts {
     pub lo_hi: u64,
     pub lo_lo: u64,
 }
-
 impl ReadXdr for Int256Parts {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11052,7 +10760,6 @@ impl ReadXdr for Int256Parts {
         })
     }
 }
-
 impl WriteXdr for Int256Parts {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11130,13 +10837,12 @@ pub enum ContractExecutableType {
     Wasm = 0,
     StellarAsset = 1,
 }
-
 impl ContractExecutableType {
-    pub const VARIANTS: [ContractExecutableType; 2] = [
+    pub const VARIANTS: &[ContractExecutableType] = &[
         ContractExecutableType::Wasm,
         ContractExecutableType::StellarAsset,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "StellarAsset"];
+    pub const VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -11147,32 +10853,27 @@ impl ContractExecutableType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractExecutableType; 2] {
+    pub const fn variants() -> &'static [ContractExecutableType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractExecutableType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ContractExecutableType> for ContractExecutableType {
     fn variants() -> slice::Iter<'static, ContractExecutableType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ContractExecutableType {}
-
 impl fmt::Display for ContractExecutableType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ContractExecutableType {
     type Error = Error;
 
@@ -11186,14 +10887,12 @@ impl TryFrom<i32> for ContractExecutableType {
         Ok(e)
     }
 }
-
 impl From<ContractExecutableType> for i32 {
     #[must_use]
     fn from(e: ContractExecutableType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ContractExecutableType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11204,7 +10903,6 @@ impl ReadXdr for ContractExecutableType {
         })
     }
 }
-
 impl WriteXdr for ContractExecutableType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11243,20 +10941,18 @@ pub enum ContractExecutable {
     Wasm(Hash),
     StellarAsset,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ContractExecutable {
     fn default() -> Self {
         Self::Wasm(Hash::default())
     }
 }
-
 impl ContractExecutable {
-    pub const VARIANTS: [ContractExecutableType; 2] = [
+    pub const VARIANTS: &[ContractExecutableType] = &[
         ContractExecutableType::Wasm,
         ContractExecutableType::StellarAsset,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "StellarAsset"];
+    pub const VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -11276,33 +10972,28 @@ impl ContractExecutable {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractExecutableType; 2] {
+    pub const fn variants() -> &'static [ContractExecutableType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractExecutable {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ContractExecutableType> for ContractExecutable {
     #[must_use]
     fn discriminant(&self) -> ContractExecutableType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ContractExecutableType> for ContractExecutable {
     fn variants() -> slice::Iter<'static, ContractExecutableType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ContractExecutableType> for ContractExecutable {}
-
 impl ReadXdr for ContractExecutable {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11319,7 +11010,6 @@ impl ReadXdr for ContractExecutable {
         })
     }
 }
-
 impl WriteXdr for ContractExecutable {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11367,16 +11057,15 @@ pub enum ScAddressType {
     ClaimableBalance = 3,
     LiquidityPool = 4,
 }
-
 impl ScAddressType {
-    pub const VARIANTS: [ScAddressType; 5] = [
+    pub const VARIANTS: &[ScAddressType] = &[
         ScAddressType::Account,
         ScAddressType::Contract,
         ScAddressType::MuxedAccount,
         ScAddressType::ClaimableBalance,
         ScAddressType::LiquidityPool,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Account",
         "Contract",
         "MuxedAccount",
@@ -11396,32 +11085,27 @@ impl ScAddressType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScAddressType; 5] {
+    pub const fn variants() -> &'static [ScAddressType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScAddressType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ScAddressType> for ScAddressType {
     fn variants() -> slice::Iter<'static, ScAddressType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ScAddressType {}
-
 impl fmt::Display for ScAddressType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ScAddressType {
     type Error = Error;
 
@@ -11438,14 +11122,12 @@ impl TryFrom<i32> for ScAddressType {
         Ok(e)
     }
 }
-
 impl From<ScAddressType> for i32 {
     #[must_use]
     fn from(e: ScAddressType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ScAddressType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11456,7 +11138,6 @@ impl ReadXdr for ScAddressType {
         })
     }
 }
-
 impl WriteXdr for ScAddressType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11489,7 +11170,6 @@ pub struct MuxedEd25519Account {
     pub id: u64,
     pub ed25519: Uint256,
 }
-
 impl ReadXdr for MuxedEd25519Account {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11501,7 +11181,6 @@ impl ReadXdr for MuxedEd25519Account {
         })
     }
 }
-
 impl WriteXdr for MuxedEd25519Account {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11576,23 +11255,21 @@ pub enum ScAddress {
     ClaimableBalance(ClaimableBalanceId),
     LiquidityPool(PoolId),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScAddress {
     fn default() -> Self {
         Self::Account(AccountId::default())
     }
 }
-
 impl ScAddress {
-    pub const VARIANTS: [ScAddressType; 5] = [
+    pub const VARIANTS: &[ScAddressType] = &[
         ScAddressType::Account,
         ScAddressType::Contract,
         ScAddressType::MuxedAccount,
         ScAddressType::ClaimableBalance,
         ScAddressType::LiquidityPool,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Account",
         "Contract",
         "MuxedAccount",
@@ -11624,33 +11301,28 @@ impl ScAddress {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScAddressType; 5] {
+    pub const fn variants() -> &'static [ScAddressType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScAddress {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScAddressType> for ScAddress {
     #[must_use]
     fn discriminant(&self) -> ScAddressType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScAddressType> for ScAddress {
     fn variants() -> slice::Iter<'static, ScAddressType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScAddressType> for ScAddress {}
-
 impl ReadXdr for ScAddress {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11674,7 +11346,6 @@ impl ReadXdr for ScAddress {
         })
     }
 }
-
 impl WriteXdr for ScAddress {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -11726,21 +11397,18 @@ impl From<ScVec> for VecM<ScVal> {
         x.0
     }
 }
-
 impl From<VecM<ScVal>> for ScVec {
     #[must_use]
     fn from(x: VecM<ScVal>) -> Self {
         ScVec(x)
     }
 }
-
 impl AsRef<VecM<ScVal>> for ScVec {
     #[must_use]
     fn as_ref(&self) -> &VecM<ScVal> {
         &self.0
     }
 }
-
 impl ReadXdr for ScVec {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11751,35 +11419,30 @@ impl ReadXdr for ScVec {
         })
     }
 }
-
 impl WriteXdr for ScVec {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ScVec {
     type Target = VecM<ScVal>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ScVec> for Vec<ScVal> {
     #[must_use]
     fn from(x: ScVec) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<ScVal>> for ScVec {
     type Error = Error;
     fn try_from(x: Vec<ScVal>) -> Result<Self, Error> {
         Ok(ScVec(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<ScVal>> for ScVec {
     type Error = Error;
@@ -11787,14 +11450,12 @@ impl TryFrom<&Vec<ScVal>> for ScVec {
         Ok(ScVec(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<ScVal>> for ScVec {
     #[must_use]
     fn as_ref(&self) -> &Vec<ScVal> {
         &self.0 .0
     }
 }
-
 impl AsRef<[ScVal]> for ScVec {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -11833,21 +11494,18 @@ impl From<ScMap> for VecM<ScMapEntry> {
         x.0
     }
 }
-
 impl From<VecM<ScMapEntry>> for ScMap {
     #[must_use]
     fn from(x: VecM<ScMapEntry>) -> Self {
         ScMap(x)
     }
 }
-
 impl AsRef<VecM<ScMapEntry>> for ScMap {
     #[must_use]
     fn as_ref(&self) -> &VecM<ScMapEntry> {
         &self.0
     }
 }
-
 impl ReadXdr for ScMap {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11858,35 +11516,30 @@ impl ReadXdr for ScMap {
         })
     }
 }
-
 impl WriteXdr for ScMap {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ScMap {
     type Target = VecM<ScMapEntry>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ScMap> for Vec<ScMapEntry> {
     #[must_use]
     fn from(x: ScMap) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<ScMapEntry>> for ScMap {
     type Error = Error;
     fn try_from(x: Vec<ScMapEntry>) -> Result<Self, Error> {
         Ok(ScMap(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<ScMapEntry>> for ScMap {
     type Error = Error;
@@ -11894,14 +11547,12 @@ impl TryFrom<&Vec<ScMapEntry>> for ScMap {
         Ok(ScMap(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<ScMapEntry>> for ScMap {
     #[must_use]
     fn as_ref(&self) -> &Vec<ScMapEntry> {
         &self.0 .0
     }
 }
-
 impl AsRef<[ScMapEntry]> for ScMap {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -11940,21 +11591,18 @@ impl From<ScBytes> for BytesM {
         x.0
     }
 }
-
 impl From<BytesM> for ScBytes {
     #[must_use]
     fn from(x: BytesM) -> Self {
         ScBytes(x)
     }
 }
-
 impl AsRef<BytesM> for ScBytes {
     #[must_use]
     fn as_ref(&self) -> &BytesM {
         &self.0
     }
 }
-
 impl ReadXdr for ScBytes {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -11965,35 +11613,30 @@ impl ReadXdr for ScBytes {
         })
     }
 }
-
 impl WriteXdr for ScBytes {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ScBytes {
     type Target = BytesM;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ScBytes> for Vec<u8> {
     #[must_use]
     fn from(x: ScBytes) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for ScBytes {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(ScBytes(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScBytes {
     type Error = Error;
@@ -12001,14 +11644,12 @@ impl TryFrom<&Vec<u8>> for ScBytes {
         Ok(ScBytes(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for ScBytes {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for ScBytes {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -12047,21 +11688,18 @@ impl From<ScString> for StringM {
         x.0
     }
 }
-
 impl From<StringM> for ScString {
     #[must_use]
     fn from(x: StringM) -> Self {
         ScString(x)
     }
 }
-
 impl AsRef<StringM> for ScString {
     #[must_use]
     fn as_ref(&self) -> &StringM {
         &self.0
     }
 }
-
 impl ReadXdr for ScString {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12072,35 +11710,30 @@ impl ReadXdr for ScString {
         })
     }
 }
-
 impl WriteXdr for ScString {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ScString {
     type Target = StringM;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ScString> for Vec<u8> {
     #[must_use]
     fn from(x: ScString) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for ScString {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(ScString(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScString {
     type Error = Error;
@@ -12108,14 +11741,12 @@ impl TryFrom<&Vec<u8>> for ScString {
         Ok(ScString(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for ScString {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for ScString {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -12154,21 +11785,18 @@ impl From<ScSymbol> for StringM<32> {
         x.0
     }
 }
-
 impl From<StringM<32>> for ScSymbol {
     #[must_use]
     fn from(x: StringM<32>) -> Self {
         ScSymbol(x)
     }
 }
-
 impl AsRef<StringM<32>> for ScSymbol {
     #[must_use]
     fn as_ref(&self) -> &StringM<32> {
         &self.0
     }
 }
-
 impl ReadXdr for ScSymbol {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12179,35 +11807,30 @@ impl ReadXdr for ScSymbol {
         })
     }
 }
-
 impl WriteXdr for ScSymbol {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ScSymbol {
     type Target = StringM<32>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ScSymbol> for Vec<u8> {
     #[must_use]
     fn from(x: ScSymbol) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for ScSymbol {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(ScSymbol(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScSymbol {
     type Error = Error;
@@ -12215,14 +11838,12 @@ impl TryFrom<&Vec<u8>> for ScSymbol {
         Ok(ScSymbol(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for ScSymbol {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for ScSymbol {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -12262,7 +11883,6 @@ pub struct ScNonceKey {
     )]
     pub nonce: i64,
 }
-
 impl ReadXdr for ScNonceKey {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12273,7 +11893,6 @@ impl ReadXdr for ScNonceKey {
         })
     }
 }
-
 impl WriteXdr for ScNonceKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12308,7 +11927,6 @@ pub struct ScContractInstance {
     pub executable: ContractExecutable,
     pub storage: Option<ScMap>,
 }
-
 impl ReadXdr for ScContractInstance {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12320,7 +11938,6 @@ impl ReadXdr for ScContractInstance {
         })
     }
 }
-
 impl WriteXdr for ScContractInstance {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12445,16 +12062,14 @@ pub enum ScVal {
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScVal {
     fn default() -> Self {
         Self::Bool(bool::default())
     }
 }
-
 impl ScVal {
-    pub const VARIANTS: [ScValType; 22] = [
+    pub const VARIANTS: &[ScValType] = &[
         ScValType::Bool,
         ScValType::Void,
         ScValType::Error,
@@ -12478,7 +12093,7 @@ impl ScVal {
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
     ];
-    pub const VARIANTS_STR: [&'static str; 22] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Bool",
         "Void",
         "Error",
@@ -12561,33 +12176,28 @@ impl ScVal {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScValType; 22] {
+    pub const fn variants() -> &'static [ScValType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScVal {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ScValType> for ScVal {
     #[must_use]
     fn discriminant(&self) -> ScValType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ScValType> for ScVal {
     fn variants() -> slice::Iter<'static, ScValType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ScValType> for ScVal {}
-
 impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12626,7 +12236,6 @@ impl ReadXdr for ScVal {
         })
     }
 }
-
 impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12687,7 +12296,6 @@ pub struct ScMapEntry {
     pub key: ScVal,
     pub val: ScVal,
 }
-
 impl ReadXdr for ScMapEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12699,7 +12307,6 @@ impl ReadXdr for ScMapEntry {
         })
     }
 }
-
 impl WriteXdr for ScMapEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12743,7 +12350,6 @@ pub struct LedgerCloseMetaBatch {
     pub end_sequence: u32,
     pub ledger_close_metas: VecM<LedgerCloseMeta>,
 }
-
 impl ReadXdr for LedgerCloseMetaBatch {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12756,7 +12362,6 @@ impl ReadXdr for LedgerCloseMetaBatch {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMetaBatch {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12797,17 +12402,15 @@ pub enum StoredTransactionSet {
     V0(TransactionSet),
     V1(GeneralizedTransactionSet),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for StoredTransactionSet {
     fn default() -> Self {
         Self::V0(TransactionSet::default())
     }
 }
-
 impl StoredTransactionSet {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -12827,33 +12430,28 @@ impl StoredTransactionSet {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for StoredTransactionSet {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for StoredTransactionSet {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for StoredTransactionSet {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for StoredTransactionSet {}
-
 impl ReadXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12870,7 +12468,6 @@ impl ReadXdr for StoredTransactionSet {
         })
     }
 }
-
 impl WriteXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12913,7 +12510,6 @@ pub struct StoredDebugTransactionSet {
     pub ledger_seq: u32,
     pub scp_value: StellarValue,
 }
-
 impl ReadXdr for StoredDebugTransactionSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12926,7 +12522,6 @@ impl ReadXdr for StoredDebugTransactionSet {
         })
     }
 }
-
 impl WriteXdr for StoredDebugTransactionSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -12966,7 +12561,6 @@ pub struct PersistedScpStateV0 {
     pub quorum_sets: VecM<ScpQuorumSet>,
     pub tx_sets: VecM<StoredTransactionSet>,
 }
-
 impl ReadXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -12979,7 +12573,6 @@ impl ReadXdr for PersistedScpStateV0 {
         })
     }
 }
-
 impl WriteXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -13018,7 +12611,6 @@ pub struct PersistedScpStateV1 {
     pub scp_envelopes: VecM<ScpEnvelope>,
     pub quorum_sets: VecM<ScpQuorumSet>,
 }
-
 impl ReadXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13030,7 +12622,6 @@ impl ReadXdr for PersistedScpStateV1 {
         })
     }
 }
-
 impl WriteXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -13070,17 +12661,15 @@ pub enum PersistedScpState {
     V0(PersistedScpStateV0),
     V1(PersistedScpStateV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for PersistedScpState {
     fn default() -> Self {
         Self::V0(PersistedScpStateV0::default())
     }
 }
-
 impl PersistedScpState {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -13100,33 +12689,28 @@ impl PersistedScpState {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for PersistedScpState {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for PersistedScpState {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for PersistedScpState {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for PersistedScpState {}
-
 impl ReadXdr for PersistedScpState {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13143,7 +12727,6 @@ impl ReadXdr for PersistedScpState {
         })
     }
 }
-
 impl WriteXdr for PersistedScpState {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -13195,7 +12778,6 @@ impl core::fmt::Display for Thresholds {
         Ok(())
     }
 }
-
 #[cfg(feature = "alloc")]
 impl core::str::FromStr for Thresholds {
     type Err = Error;
@@ -13242,21 +12824,18 @@ impl From<Thresholds> for [u8; 4] {
         x.0
     }
 }
-
 impl From<[u8; 4]> for Thresholds {
     #[must_use]
     fn from(x: [u8; 4]) -> Self {
         Thresholds(x)
     }
 }
-
 impl AsRef<[u8; 4]> for Thresholds {
     #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
 }
-
 impl ReadXdr for Thresholds {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13267,21 +12846,18 @@ impl ReadXdr for Thresholds {
         })
     }
 }
-
 impl WriteXdr for Thresholds {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Thresholds {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Thresholds {
     type Error = Error;
@@ -13289,7 +12865,6 @@ impl TryFrom<Vec<u8>> for Thresholds {
         x.as_slice().try_into()
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Thresholds {
     type Error = Error;
@@ -13297,14 +12872,12 @@ impl TryFrom<&Vec<u8>> for Thresholds {
         x.as_slice().try_into()
     }
 }
-
 impl TryFrom<&[u8]> for Thresholds {
     type Error = Error;
     fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(Thresholds(x.try_into()?))
     }
 }
-
 impl AsRef<[u8]> for Thresholds {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -13337,21 +12910,18 @@ impl From<String32> for StringM<32> {
         x.0
     }
 }
-
 impl From<StringM<32>> for String32 {
     #[must_use]
     fn from(x: StringM<32>) -> Self {
         String32(x)
     }
 }
-
 impl AsRef<StringM<32>> for String32 {
     #[must_use]
     fn as_ref(&self) -> &StringM<32> {
         &self.0
     }
 }
-
 impl ReadXdr for String32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13362,35 +12932,30 @@ impl ReadXdr for String32 {
         })
     }
 }
-
 impl WriteXdr for String32 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for String32 {
     type Target = StringM<32>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<String32> for Vec<u8> {
     #[must_use]
     fn from(x: String32) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for String32 {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(String32(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for String32 {
     type Error = Error;
@@ -13398,14 +12963,12 @@ impl TryFrom<&Vec<u8>> for String32 {
         Ok(String32(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for String32 {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for String32 {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -13444,21 +13007,18 @@ impl From<String64> for StringM<64> {
         x.0
     }
 }
-
 impl From<StringM<64>> for String64 {
     #[must_use]
     fn from(x: StringM<64>) -> Self {
         String64(x)
     }
 }
-
 impl AsRef<StringM<64>> for String64 {
     #[must_use]
     fn as_ref(&self) -> &StringM<64> {
         &self.0
     }
 }
-
 impl ReadXdr for String64 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13469,35 +13029,30 @@ impl ReadXdr for String64 {
         })
     }
 }
-
 impl WriteXdr for String64 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for String64 {
     type Target = StringM<64>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<String64> for Vec<u8> {
     #[must_use]
     fn from(x: String64) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for String64 {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(String64(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for String64 {
     type Error = Error;
@@ -13505,14 +13060,12 @@ impl TryFrom<&Vec<u8>> for String64 {
         Ok(String64(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for String64 {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for String64 {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -13558,21 +13111,18 @@ impl From<SequenceNumber> for i64 {
         x.0
     }
 }
-
 impl From<i64> for SequenceNumber {
     #[must_use]
     fn from(x: i64) -> Self {
         SequenceNumber(x)
     }
 }
-
 impl AsRef<i64> for SequenceNumber {
     #[must_use]
     fn as_ref(&self) -> &i64 {
         &self.0
     }
 }
-
 impl ReadXdr for SequenceNumber {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13583,7 +13133,6 @@ impl ReadXdr for SequenceNumber {
         })
     }
 }
-
 impl WriteXdr for SequenceNumber {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -13616,21 +13165,18 @@ impl From<DataValue> for BytesM<64> {
         x.0
     }
 }
-
 impl From<BytesM<64>> for DataValue {
     #[must_use]
     fn from(x: BytesM<64>) -> Self {
         DataValue(x)
     }
 }
-
 impl AsRef<BytesM<64>> for DataValue {
     #[must_use]
     fn as_ref(&self) -> &BytesM<64> {
         &self.0
     }
 }
-
 impl ReadXdr for DataValue {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13641,35 +13187,30 @@ impl ReadXdr for DataValue {
         })
     }
 }
-
 impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for DataValue {
     type Target = BytesM<64>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<DataValue> for Vec<u8> {
     #[must_use]
     fn from(x: DataValue) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for DataValue {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(DataValue(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for DataValue {
     type Error = Error;
@@ -13677,14 +13218,12 @@ impl TryFrom<&Vec<u8>> for DataValue {
         Ok(DataValue(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for DataValue {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for DataValue {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -13731,21 +13270,18 @@ impl From<AssetCode4> for [u8; 4] {
         x.0
     }
 }
-
 impl From<[u8; 4]> for AssetCode4 {
     #[must_use]
     fn from(x: [u8; 4]) -> Self {
         AssetCode4(x)
     }
 }
-
 impl AsRef<[u8; 4]> for AssetCode4 {
     #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
 }
-
 impl ReadXdr for AssetCode4 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13756,21 +13292,18 @@ impl ReadXdr for AssetCode4 {
         })
     }
 }
-
 impl WriteXdr for AssetCode4 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl AssetCode4 {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for AssetCode4 {
     type Error = Error;
@@ -13778,7 +13311,6 @@ impl TryFrom<Vec<u8>> for AssetCode4 {
         x.as_slice().try_into()
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for AssetCode4 {
     type Error = Error;
@@ -13786,14 +13318,12 @@ impl TryFrom<&Vec<u8>> for AssetCode4 {
         x.as_slice().try_into()
     }
 }
-
 impl TryFrom<&[u8]> for AssetCode4 {
     type Error = Error;
     fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(AssetCode4(x.try_into()?))
     }
 }
-
 impl AsRef<[u8]> for AssetCode4 {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -13834,21 +13364,18 @@ impl From<AssetCode12> for [u8; 12] {
         x.0
     }
 }
-
 impl From<[u8; 12]> for AssetCode12 {
     #[must_use]
     fn from(x: [u8; 12]) -> Self {
         AssetCode12(x)
     }
 }
-
 impl AsRef<[u8; 12]> for AssetCode12 {
     #[must_use]
     fn as_ref(&self) -> &[u8; 12] {
         &self.0
     }
 }
-
 impl ReadXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -13859,21 +13386,18 @@ impl ReadXdr for AssetCode12 {
         })
     }
 }
-
 impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl AssetCode12 {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for AssetCode12 {
     type Error = Error;
@@ -13881,7 +13405,6 @@ impl TryFrom<Vec<u8>> for AssetCode12 {
         x.as_slice().try_into()
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for AssetCode12 {
     type Error = Error;
@@ -13889,14 +13412,12 @@ impl TryFrom<&Vec<u8>> for AssetCode12 {
         x.as_slice().try_into()
     }
 }
-
 impl TryFrom<&[u8]> for AssetCode12 {
     type Error = Error;
     fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(AssetCode12(x.try_into()?))
     }
 }
-
 impl AsRef<[u8]> for AssetCode12 {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -13934,16 +13455,15 @@ pub enum AssetType {
     CreditAlphanum12 = 2,
     PoolShare = 3,
 }
-
 impl AssetType {
-    pub const VARIANTS: [AssetType; 4] = [
+    pub const VARIANTS: &[AssetType] = &[
         AssetType::Native,
         AssetType::CreditAlphanum4,
         AssetType::CreditAlphanum12,
         AssetType::PoolShare,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
+    pub const VARIANTS_STR: &[&str] =
+        &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -13956,32 +13476,27 @@ impl AssetType {
     }
 
     #[must_use]
-    pub const fn variants() -> [AssetType; 4] {
+    pub const fn variants() -> &'static [AssetType] {
         Self::VARIANTS
     }
 }
-
 impl Name for AssetType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<AssetType> for AssetType {
     fn variants() -> slice::Iter<'static, AssetType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for AssetType {}
-
 impl fmt::Display for AssetType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for AssetType {
     type Error = Error;
 
@@ -13997,14 +13512,12 @@ impl TryFrom<i32> for AssetType {
         Ok(e)
     }
 }
-
 impl From<AssetType> for i32 {
     #[must_use]
     fn from(e: AssetType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for AssetType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14015,7 +13528,6 @@ impl ReadXdr for AssetType {
         })
     }
 }
-
 impl WriteXdr for AssetType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14054,17 +13566,15 @@ pub enum AssetCode {
     CreditAlphanum4(AssetCode4),
     CreditAlphanum12(AssetCode12),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AssetCode {
     fn default() -> Self {
         Self::CreditAlphanum4(AssetCode4::default())
     }
 }
-
 impl AssetCode {
-    pub const VARIANTS: [AssetType; 2] = [AssetType::CreditAlphanum4, AssetType::CreditAlphanum12];
-    pub const VARIANTS_STR: [&'static str; 2] = ["CreditAlphanum4", "CreditAlphanum12"];
+    pub const VARIANTS: &[AssetType] = &[AssetType::CreditAlphanum4, AssetType::CreditAlphanum12];
+    pub const VARIANTS_STR: &[&str] = &["CreditAlphanum4", "CreditAlphanum12"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -14084,33 +13594,28 @@ impl AssetCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [AssetType; 2] {
+    pub const fn variants() -> &'static [AssetType] {
         Self::VARIANTS
     }
 }
-
 impl Name for AssetCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<AssetType> for AssetCode {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<AssetType> for AssetCode {
     fn variants() -> slice::Iter<'static, AssetType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<AssetType> for AssetCode {}
-
 impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14127,7 +13632,6 @@ impl ReadXdr for AssetCode {
         })
     }
 }
-
 impl WriteXdr for AssetCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14168,7 +13672,6 @@ pub struct AlphaNum4 {
     pub asset_code: AssetCode4,
     pub issuer: AccountId,
 }
-
 impl ReadXdr for AlphaNum4 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14180,7 +13683,6 @@ impl ReadXdr for AlphaNum4 {
         })
     }
 }
-
 impl WriteXdr for AlphaNum4 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14217,7 +13719,6 @@ pub struct AlphaNum12 {
     pub asset_code: AssetCode12,
     pub issuer: AccountId,
 }
-
 impl ReadXdr for AlphaNum12 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14229,7 +13730,6 @@ impl ReadXdr for AlphaNum12 {
         })
     }
 }
-
 impl WriteXdr for AlphaNum12 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14276,21 +13776,19 @@ pub enum Asset {
     CreditAlphanum4(AlphaNum4),
     CreditAlphanum12(AlphaNum12),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for Asset {
     fn default() -> Self {
         Self::Native
     }
 }
-
 impl Asset {
-    pub const VARIANTS: [AssetType; 3] = [
+    pub const VARIANTS: &[AssetType] = &[
         AssetType::Native,
         AssetType::CreditAlphanum4,
         AssetType::CreditAlphanum12,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Native", "CreditAlphanum4", "CreditAlphanum12"];
+    pub const VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -14312,33 +13810,28 @@ impl Asset {
     }
 
     #[must_use]
-    pub const fn variants() -> [AssetType; 3] {
+    pub const fn variants() -> &'static [AssetType] {
         Self::VARIANTS
     }
 }
-
 impl Name for Asset {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<AssetType> for Asset {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<AssetType> for Asset {
     fn variants() -> slice::Iter<'static, AssetType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<AssetType> for Asset {}
-
 impl ReadXdr for Asset {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14356,7 +13849,6 @@ impl ReadXdr for Asset {
         })
     }
 }
-
 impl WriteXdr for Asset {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14398,7 +13890,6 @@ pub struct Price {
     pub n: i32,
     pub d: i32,
 }
-
 impl ReadXdr for Price {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14410,7 +13901,6 @@ impl ReadXdr for Price {
         })
     }
 }
-
 impl WriteXdr for Price {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14455,7 +13945,6 @@ pub struct Liabilities {
     )]
     pub selling: i64,
 }
-
 impl ReadXdr for Liabilities {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14467,7 +13956,6 @@ impl ReadXdr for Liabilities {
         })
     }
 }
-
 impl WriteXdr for Liabilities {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14509,15 +13997,14 @@ pub enum ThresholdIndexes {
     Med = 2,
     High = 3,
 }
-
 impl ThresholdIndexes {
-    pub const VARIANTS: [ThresholdIndexes; 4] = [
+    pub const VARIANTS: &[ThresholdIndexes] = &[
         ThresholdIndexes::MasterWeight,
         ThresholdIndexes::Low,
         ThresholdIndexes::Med,
         ThresholdIndexes::High,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["MasterWeight", "Low", "Med", "High"];
+    pub const VARIANTS_STR: &[&str] = &["MasterWeight", "Low", "Med", "High"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -14530,32 +14017,27 @@ impl ThresholdIndexes {
     }
 
     #[must_use]
-    pub const fn variants() -> [ThresholdIndexes; 4] {
+    pub const fn variants() -> &'static [ThresholdIndexes] {
         Self::VARIANTS
     }
 }
-
 impl Name for ThresholdIndexes {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ThresholdIndexes> for ThresholdIndexes {
     fn variants() -> slice::Iter<'static, ThresholdIndexes> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ThresholdIndexes {}
-
 impl fmt::Display for ThresholdIndexes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ThresholdIndexes {
     type Error = Error;
 
@@ -14571,14 +14053,12 @@ impl TryFrom<i32> for ThresholdIndexes {
         Ok(e)
     }
 }
-
 impl From<ThresholdIndexes> for i32 {
     #[must_use]
     fn from(e: ThresholdIndexes) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14589,7 +14069,6 @@ impl ReadXdr for ThresholdIndexes {
         })
     }
 }
-
 impl WriteXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14642,9 +14121,8 @@ pub enum LedgerEntryType {
     ConfigSetting = 8,
     Ttl = 9,
 }
-
 impl LedgerEntryType {
-    pub const VARIANTS: [LedgerEntryType; 10] = [
+    pub const VARIANTS: &[LedgerEntryType] = &[
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -14656,7 +14134,7 @@ impl LedgerEntryType {
         LedgerEntryType::ConfigSetting,
         LedgerEntryType::Ttl,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Account",
         "Trustline",
         "Offer",
@@ -14686,32 +14164,27 @@ impl LedgerEntryType {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 10] {
+    pub const fn variants() -> &'static [LedgerEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerEntryType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LedgerEntryType> for LedgerEntryType {
     fn variants() -> slice::Iter<'static, LedgerEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LedgerEntryType {}
-
 impl fmt::Display for LedgerEntryType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LedgerEntryType {
     type Error = Error;
 
@@ -14733,14 +14206,12 @@ impl TryFrom<i32> for LedgerEntryType {
         Ok(e)
     }
 }
-
 impl From<LedgerEntryType> for i32 {
     #[must_use]
     fn from(e: LedgerEntryType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LedgerEntryType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14751,7 +14222,6 @@ impl ReadXdr for LedgerEntryType {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14787,7 +14257,6 @@ pub struct Signer {
     pub key: SignerKey,
     pub weight: u32,
 }
-
 impl ReadXdr for Signer {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14799,7 +14268,6 @@ impl ReadXdr for Signer {
         })
     }
 }
-
 impl WriteXdr for Signer {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14851,15 +14319,14 @@ pub enum AccountFlags {
     ImmutableFlag = 4,
     ClawbackEnabledFlag = 8,
 }
-
 impl AccountFlags {
-    pub const VARIANTS: [AccountFlags; 4] = [
+    pub const VARIANTS: &[AccountFlags] = &[
         AccountFlags::RequiredFlag,
         AccountFlags::RevocableFlag,
         AccountFlags::ImmutableFlag,
         AccountFlags::ClawbackEnabledFlag,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "RequiredFlag",
         "RevocableFlag",
         "ImmutableFlag",
@@ -14877,32 +14344,27 @@ impl AccountFlags {
     }
 
     #[must_use]
-    pub const fn variants() -> [AccountFlags; 4] {
+    pub const fn variants() -> &'static [AccountFlags] {
         Self::VARIANTS
     }
 }
-
 impl Name for AccountFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<AccountFlags> for AccountFlags {
     fn variants() -> slice::Iter<'static, AccountFlags> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for AccountFlags {}
-
 impl fmt::Display for AccountFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for AccountFlags {
     type Error = Error;
 
@@ -14918,14 +14380,12 @@ impl TryFrom<i32> for AccountFlags {
         Ok(e)
     }
 }
-
 impl From<AccountFlags> for i32 {
     #[must_use]
     fn from(e: AccountFlags) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for AccountFlags {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -14936,7 +14396,6 @@ impl ReadXdr for AccountFlags {
         })
     }
 }
-
 impl WriteXdr for AccountFlags {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -14997,21 +14456,18 @@ impl From<SponsorshipDescriptor> for Option<AccountId> {
         x.0
     }
 }
-
 impl From<Option<AccountId>> for SponsorshipDescriptor {
     #[must_use]
     fn from(x: Option<AccountId>) -> Self {
         SponsorshipDescriptor(x)
     }
 }
-
 impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
     #[must_use]
     fn as_ref(&self) -> &Option<AccountId> {
         &self.0
     }
 }
-
 impl ReadXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15022,7 +14478,6 @@ impl ReadXdr for SponsorshipDescriptor {
         })
     }
 }
-
 impl WriteXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15063,7 +14518,6 @@ pub struct AccountEntryExtensionV3 {
     pub seq_ledger: u32,
     pub seq_time: TimePoint,
 }
-
 impl ReadXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15076,7 +14530,6 @@ impl ReadXdr for AccountEntryExtensionV3 {
         })
     }
 }
-
 impl WriteXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15117,17 +14570,15 @@ pub enum AccountEntryExtensionV2Ext {
     V0,
     V3(AccountEntryExtensionV3),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AccountEntryExtensionV2Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl AccountEntryExtensionV2Ext {
-    pub const VARIANTS: [i32; 2] = [0, 3];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V3"];
+    pub const VARIANTS: &[i32] = &[0, 3];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V3"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -15147,33 +14598,28 @@ impl AccountEntryExtensionV2Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for AccountEntryExtensionV2Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for AccountEntryExtensionV2Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for AccountEntryExtensionV2Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for AccountEntryExtensionV2Ext {}
-
 impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15190,7 +14636,6 @@ impl ReadXdr for AccountEntryExtensionV2Ext {
         })
     }
 }
-
 impl WriteXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15243,7 +14688,6 @@ pub struct AccountEntryExtensionV2 {
     pub signer_sponsoring_i_ds: VecM<SponsorshipDescriptor, 20>,
     pub ext: AccountEntryExtensionV2Ext,
 }
-
 impl ReadXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15257,7 +14701,6 @@ impl ReadXdr for AccountEntryExtensionV2 {
         })
     }
 }
-
 impl WriteXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15299,17 +14742,15 @@ pub enum AccountEntryExtensionV1Ext {
     V0,
     V2(AccountEntryExtensionV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AccountEntryExtensionV1Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl AccountEntryExtensionV1Ext {
-    pub const VARIANTS: [i32; 2] = [0, 2];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V2"];
+    pub const VARIANTS: &[i32] = &[0, 2];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -15329,33 +14770,28 @@ impl AccountEntryExtensionV1Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for AccountEntryExtensionV1Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for AccountEntryExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for AccountEntryExtensionV1Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for AccountEntryExtensionV1Ext {}
-
 impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15372,7 +14808,6 @@ impl ReadXdr for AccountEntryExtensionV1Ext {
         })
     }
 }
-
 impl WriteXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15421,7 +14856,6 @@ pub struct AccountEntryExtensionV1 {
     pub liabilities: Liabilities,
     pub ext: AccountEntryExtensionV1Ext,
 }
-
 impl ReadXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15433,7 +14867,6 @@ impl ReadXdr for AccountEntryExtensionV1 {
         })
     }
 }
-
 impl WriteXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15473,17 +14906,15 @@ pub enum AccountEntryExt {
     V0,
     V1(AccountEntryExtensionV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AccountEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl AccountEntryExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -15503,33 +14934,28 @@ impl AccountEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for AccountEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for AccountEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for AccountEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for AccountEntryExt {}
-
 impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15546,7 +14972,6 @@ impl ReadXdr for AccountEntryExt {
         })
     }
 }
-
 impl WriteXdr for AccountEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15622,7 +15047,6 @@ pub struct AccountEntry {
     pub signers: VecM<Signer, 20>,
     pub ext: AccountEntryExt,
 }
-
 impl ReadXdr for AccountEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15642,7 +15066,6 @@ impl ReadXdr for AccountEntry {
         })
     }
 }
-
 impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15695,14 +15118,13 @@ pub enum TrustLineFlags {
     AuthorizedToMaintainLiabilitiesFlag = 2,
     TrustlineClawbackEnabledFlag = 4,
 }
-
 impl TrustLineFlags {
-    pub const VARIANTS: [TrustLineFlags; 3] = [
+    pub const VARIANTS: &[TrustLineFlags] = &[
         TrustLineFlags::AuthorizedFlag,
         TrustLineFlags::AuthorizedToMaintainLiabilitiesFlag,
         TrustLineFlags::TrustlineClawbackEnabledFlag,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "AuthorizedFlag",
         "AuthorizedToMaintainLiabilitiesFlag",
         "TrustlineClawbackEnabledFlag",
@@ -15718,32 +15140,27 @@ impl TrustLineFlags {
     }
 
     #[must_use]
-    pub const fn variants() -> [TrustLineFlags; 3] {
+    pub const fn variants() -> &'static [TrustLineFlags] {
         Self::VARIANTS
     }
 }
-
 impl Name for TrustLineFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<TrustLineFlags> for TrustLineFlags {
     fn variants() -> slice::Iter<'static, TrustLineFlags> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for TrustLineFlags {}
-
 impl fmt::Display for TrustLineFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for TrustLineFlags {
     type Error = Error;
 
@@ -15758,14 +15175,12 @@ impl TryFrom<i32> for TrustLineFlags {
         Ok(e)
     }
 }
-
 impl From<TrustLineFlags> for i32 {
     #[must_use]
     fn from(e: TrustLineFlags) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for TrustLineFlags {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15776,7 +15191,6 @@ impl ReadXdr for TrustLineFlags {
         })
     }
 }
-
 impl WriteXdr for TrustLineFlags {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15835,10 +15249,9 @@ pub enum LiquidityPoolType {
     #[cfg_attr(feature = "alloc", default)]
     LiquidityPoolConstantProduct = 0,
 }
-
 impl LiquidityPoolType {
-    pub const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
-    pub const VARIANTS_STR: [&'static str; 1] = ["LiquidityPoolConstantProduct"];
+    pub const VARIANTS: &[LiquidityPoolType] = &[LiquidityPoolType::LiquidityPoolConstantProduct];
+    pub const VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -15848,32 +15261,27 @@ impl LiquidityPoolType {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolType; 1] {
+    pub const fn variants() -> &'static [LiquidityPoolType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LiquidityPoolType> for LiquidityPoolType {
     fn variants() -> slice::Iter<'static, LiquidityPoolType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LiquidityPoolType {}
-
 impl fmt::Display for LiquidityPoolType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LiquidityPoolType {
     type Error = Error;
 
@@ -15886,14 +15294,12 @@ impl TryFrom<i32> for LiquidityPoolType {
         Ok(e)
     }
 }
-
 impl From<LiquidityPoolType> for i32 {
     #[must_use]
     fn from(e: LiquidityPoolType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -15904,7 +15310,6 @@ impl ReadXdr for LiquidityPoolType {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -15954,23 +15359,21 @@ pub enum TrustLineAsset {
     CreditAlphanum12(AlphaNum12),
     PoolShare(PoolId),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TrustLineAsset {
     fn default() -> Self {
         Self::Native
     }
 }
-
 impl TrustLineAsset {
-    pub const VARIANTS: [AssetType; 4] = [
+    pub const VARIANTS: &[AssetType] = &[
         AssetType::Native,
         AssetType::CreditAlphanum4,
         AssetType::CreditAlphanum12,
         AssetType::PoolShare,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
+    pub const VARIANTS_STR: &[&str] =
+        &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -15994,33 +15397,28 @@ impl TrustLineAsset {
     }
 
     #[must_use]
-    pub const fn variants() -> [AssetType; 4] {
+    pub const fn variants() -> &'static [AssetType] {
         Self::VARIANTS
     }
 }
-
 impl Name for TrustLineAsset {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<AssetType> for TrustLineAsset {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<AssetType> for TrustLineAsset {
     fn variants() -> slice::Iter<'static, AssetType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<AssetType> for TrustLineAsset {}
-
 impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16039,7 +15437,6 @@ impl ReadXdr for TrustLineAsset {
         })
     }
 }
-
 impl WriteXdr for TrustLineAsset {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16082,17 +15479,15 @@ impl WriteXdr for TrustLineAsset {
 pub enum TrustLineEntryExtensionV2Ext {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TrustLineEntryExtensionV2Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TrustLineEntryExtensionV2Ext {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -16110,33 +15505,28 @@ impl TrustLineEntryExtensionV2Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TrustLineEntryExtensionV2Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TrustLineEntryExtensionV2Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TrustLineEntryExtensionV2Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TrustLineEntryExtensionV2Ext {}
-
 impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16152,7 +15542,6 @@ impl ReadXdr for TrustLineEntryExtensionV2Ext {
         })
     }
 }
-
 impl WriteXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16198,7 +15587,6 @@ pub struct TrustLineEntryExtensionV2 {
     pub liquidity_pool_use_count: i32,
     pub ext: TrustLineEntryExtensionV2Ext,
 }
-
 impl ReadXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16210,7 +15598,6 @@ impl ReadXdr for TrustLineEntryExtensionV2 {
         })
     }
 }
-
 impl WriteXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16250,17 +15637,15 @@ pub enum TrustLineEntryV1Ext {
     V0,
     V2(TrustLineEntryExtensionV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TrustLineEntryV1Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TrustLineEntryV1Ext {
-    pub const VARIANTS: [i32; 2] = [0, 2];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V2"];
+    pub const VARIANTS: &[i32] = &[0, 2];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -16280,33 +15665,28 @@ impl TrustLineEntryV1Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TrustLineEntryV1Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TrustLineEntryV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TrustLineEntryV1Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TrustLineEntryV1Ext {}
-
 impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16323,7 +15703,6 @@ impl ReadXdr for TrustLineEntryV1Ext {
         })
     }
 }
-
 impl WriteXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16372,7 +15751,6 @@ pub struct TrustLineEntryV1 {
     pub liabilities: Liabilities,
     pub ext: TrustLineEntryV1Ext,
 }
-
 impl ReadXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16384,7 +15762,6 @@ impl ReadXdr for TrustLineEntryV1 {
         })
     }
 }
-
 impl WriteXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16436,17 +15813,15 @@ pub enum TrustLineEntryExt {
     V0,
     V1(TrustLineEntryV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TrustLineEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TrustLineEntryExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -16466,33 +15841,28 @@ impl TrustLineEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TrustLineEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TrustLineEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TrustLineEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TrustLineEntryExt {}
-
 impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16509,7 +15879,6 @@ impl ReadXdr for TrustLineEntryExt {
         })
     }
 }
-
 impl WriteXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16589,7 +15958,6 @@ pub struct TrustLineEntry {
     pub flags: u32,
     pub ext: TrustLineEntryExt,
 }
-
 impl ReadXdr for TrustLineEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16605,7 +15973,6 @@ impl ReadXdr for TrustLineEntry {
         })
     }
 }
-
 impl WriteXdr for TrustLineEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16647,10 +16014,9 @@ pub enum OfferEntryFlags {
     #[cfg_attr(feature = "alloc", default)]
     PassiveFlag = 1,
 }
-
 impl OfferEntryFlags {
-    pub const VARIANTS: [OfferEntryFlags; 1] = [OfferEntryFlags::PassiveFlag];
-    pub const VARIANTS_STR: [&'static str; 1] = ["PassiveFlag"];
+    pub const VARIANTS: &[OfferEntryFlags] = &[OfferEntryFlags::PassiveFlag];
+    pub const VARIANTS_STR: &[&str] = &["PassiveFlag"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -16660,32 +16026,27 @@ impl OfferEntryFlags {
     }
 
     #[must_use]
-    pub const fn variants() -> [OfferEntryFlags; 1] {
+    pub const fn variants() -> &'static [OfferEntryFlags] {
         Self::VARIANTS
     }
 }
-
 impl Name for OfferEntryFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<OfferEntryFlags> for OfferEntryFlags {
     fn variants() -> slice::Iter<'static, OfferEntryFlags> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for OfferEntryFlags {}
-
 impl fmt::Display for OfferEntryFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for OfferEntryFlags {
     type Error = Error;
 
@@ -16698,14 +16059,12 @@ impl TryFrom<i32> for OfferEntryFlags {
         Ok(e)
     }
 }
-
 impl From<OfferEntryFlags> for i32 {
     #[must_use]
     fn from(e: OfferEntryFlags) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16716,7 +16075,6 @@ impl ReadXdr for OfferEntryFlags {
         })
     }
 }
-
 impl WriteXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16760,17 +16118,15 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 pub enum OfferEntryExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for OfferEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl OfferEntryExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -16788,33 +16144,28 @@ impl OfferEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for OfferEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for OfferEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for OfferEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for OfferEntryExt {}
-
 impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16830,7 +16181,6 @@ impl ReadXdr for OfferEntryExt {
         })
     }
 }
-
 impl WriteXdr for OfferEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16903,7 +16253,6 @@ pub struct OfferEntry {
     pub flags: u32,
     pub ext: OfferEntryExt,
 }
-
 impl ReadXdr for OfferEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -16921,7 +16270,6 @@ impl ReadXdr for OfferEntry {
         })
     }
 }
-
 impl WriteXdr for OfferEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -16964,17 +16312,15 @@ impl WriteXdr for OfferEntry {
 pub enum DataEntryExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for DataEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl DataEntryExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -16992,33 +16338,28 @@ impl DataEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for DataEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for DataEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for DataEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for DataEntryExt {}
-
 impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17034,7 +16375,6 @@ impl ReadXdr for DataEntryExt {
         })
     }
 }
-
 impl WriteXdr for DataEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17085,7 +16425,6 @@ pub struct DataEntry {
     pub data_value: DataValue,
     pub ext: DataEntryExt,
 }
-
 impl ReadXdr for DataEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17099,7 +16438,6 @@ impl ReadXdr for DataEntry {
         })
     }
 }
-
 impl WriteXdr for DataEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17147,9 +16485,8 @@ pub enum ClaimPredicateType {
     BeforeAbsoluteTime = 4,
     BeforeRelativeTime = 5,
 }
-
 impl ClaimPredicateType {
-    pub const VARIANTS: [ClaimPredicateType; 6] = [
+    pub const VARIANTS: &[ClaimPredicateType] = &[
         ClaimPredicateType::Unconditional,
         ClaimPredicateType::And,
         ClaimPredicateType::Or,
@@ -17157,7 +16494,7 @@ impl ClaimPredicateType {
         ClaimPredicateType::BeforeAbsoluteTime,
         ClaimPredicateType::BeforeRelativeTime,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Unconditional",
         "And",
         "Or",
@@ -17179,32 +16516,27 @@ impl ClaimPredicateType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimPredicateType; 6] {
+    pub const fn variants() -> &'static [ClaimPredicateType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimPredicateType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClaimPredicateType> for ClaimPredicateType {
     fn variants() -> slice::Iter<'static, ClaimPredicateType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClaimPredicateType {}
-
 impl fmt::Display for ClaimPredicateType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClaimPredicateType {
     type Error = Error;
 
@@ -17222,14 +16554,12 @@ impl TryFrom<i32> for ClaimPredicateType {
         Ok(e)
     }
 }
-
 impl From<ClaimPredicateType> for i32 {
     #[must_use]
     fn from(e: ClaimPredicateType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17240,7 +16570,6 @@ impl ReadXdr for ClaimPredicateType {
         })
     }
 }
-
 impl WriteXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17304,16 +16633,14 @@ pub enum ClaimPredicate {
         i64,
     ),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClaimPredicate {
     fn default() -> Self {
         Self::Unconditional
     }
 }
-
 impl ClaimPredicate {
-    pub const VARIANTS: [ClaimPredicateType; 6] = [
+    pub const VARIANTS: &[ClaimPredicateType] = &[
         ClaimPredicateType::Unconditional,
         ClaimPredicateType::And,
         ClaimPredicateType::Or,
@@ -17321,7 +16648,7 @@ impl ClaimPredicate {
         ClaimPredicateType::BeforeAbsoluteTime,
         ClaimPredicateType::BeforeRelativeTime,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Unconditional",
         "And",
         "Or",
@@ -17356,33 +16683,28 @@ impl ClaimPredicate {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimPredicateType; 6] {
+    pub const fn variants() -> &'static [ClaimPredicateType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimPredicate {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClaimPredicateType> for ClaimPredicate {
     #[must_use]
     fn discriminant(&self) -> ClaimPredicateType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClaimPredicateType> for ClaimPredicate {
     fn variants() -> slice::Iter<'static, ClaimPredicateType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClaimPredicateType> for ClaimPredicate {}
-
 impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17407,7 +16729,6 @@ impl ReadXdr for ClaimPredicate {
         })
     }
 }
-
 impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17451,10 +16772,9 @@ pub enum ClaimantType {
     #[cfg_attr(feature = "alloc", default)]
     ClaimantTypeV0 = 0,
 }
-
 impl ClaimantType {
-    pub const VARIANTS: [ClaimantType; 1] = [ClaimantType::ClaimantTypeV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimantTypeV0"];
+    pub const VARIANTS: &[ClaimantType] = &[ClaimantType::ClaimantTypeV0];
+    pub const VARIANTS_STR: &[&str] = &["ClaimantTypeV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -17464,32 +16784,27 @@ impl ClaimantType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimantType; 1] {
+    pub const fn variants() -> &'static [ClaimantType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimantType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClaimantType> for ClaimantType {
     fn variants() -> slice::Iter<'static, ClaimantType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClaimantType {}
-
 impl fmt::Display for ClaimantType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClaimantType {
     type Error = Error;
 
@@ -17502,14 +16817,12 @@ impl TryFrom<i32> for ClaimantType {
         Ok(e)
     }
 }
-
 impl From<ClaimantType> for i32 {
     #[must_use]
     fn from(e: ClaimantType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClaimantType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17520,7 +16833,6 @@ impl ReadXdr for ClaimantType {
         })
     }
 }
-
 impl WriteXdr for ClaimantType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17556,7 +16868,6 @@ pub struct ClaimantV0 {
     pub destination: AccountId,
     pub predicate: ClaimPredicate,
 }
-
 impl ReadXdr for ClaimantV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17568,7 +16879,6 @@ impl ReadXdr for ClaimantV0 {
         })
     }
 }
-
 impl WriteXdr for ClaimantV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17609,17 +16919,15 @@ impl WriteXdr for ClaimantV0 {
 pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for Claimant {
     fn default() -> Self {
         Self::ClaimantTypeV0(ClaimantV0::default())
     }
 }
-
 impl Claimant {
-    pub const VARIANTS: [ClaimantType; 1] = [ClaimantType::ClaimantTypeV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimantTypeV0"];
+    pub const VARIANTS: &[ClaimantType] = &[ClaimantType::ClaimantTypeV0];
+    pub const VARIANTS_STR: &[&str] = &["ClaimantTypeV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -17637,33 +16945,28 @@ impl Claimant {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimantType; 1] {
+    pub const fn variants() -> &'static [ClaimantType] {
         Self::VARIANTS
     }
 }
-
 impl Name for Claimant {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClaimantType> for Claimant {
     #[must_use]
     fn discriminant(&self) -> ClaimantType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClaimantType> for Claimant {
     fn variants() -> slice::Iter<'static, ClaimantType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClaimantType> for Claimant {}
-
 impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17679,7 +16982,6 @@ impl ReadXdr for Claimant {
         })
     }
 }
-
 impl WriteXdr for Claimant {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17720,11 +17022,10 @@ pub enum ClaimableBalanceFlags {
     #[cfg_attr(feature = "alloc", default)]
     ClaimableBalanceClawbackEnabledFlag = 1,
 }
-
 impl ClaimableBalanceFlags {
-    pub const VARIANTS: [ClaimableBalanceFlags; 1] =
-        [ClaimableBalanceFlags::ClaimableBalanceClawbackEnabledFlag];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceClawbackEnabledFlag"];
+    pub const VARIANTS: &[ClaimableBalanceFlags] =
+        &[ClaimableBalanceFlags::ClaimableBalanceClawbackEnabledFlag];
+    pub const VARIANTS_STR: &[&str] = &["ClaimableBalanceClawbackEnabledFlag"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -17734,32 +17035,27 @@ impl ClaimableBalanceFlags {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimableBalanceFlags; 1] {
+    pub const fn variants() -> &'static [ClaimableBalanceFlags] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimableBalanceFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClaimableBalanceFlags> for ClaimableBalanceFlags {
     fn variants() -> slice::Iter<'static, ClaimableBalanceFlags> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClaimableBalanceFlags {}
-
 impl fmt::Display for ClaimableBalanceFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClaimableBalanceFlags {
     type Error = Error;
 
@@ -17772,14 +17068,12 @@ impl TryFrom<i32> for ClaimableBalanceFlags {
         Ok(e)
     }
 }
-
 impl From<ClaimableBalanceFlags> for i32 {
     #[must_use]
     fn from(e: ClaimableBalanceFlags) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17790,7 +17084,6 @@ impl ReadXdr for ClaimableBalanceFlags {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17834,17 +17127,15 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 pub enum ClaimableBalanceEntryExtensionV1Ext {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClaimableBalanceEntryExtensionV1Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl ClaimableBalanceEntryExtensionV1Ext {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -17862,33 +17153,28 @@ impl ClaimableBalanceEntryExtensionV1Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimableBalanceEntryExtensionV1Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for ClaimableBalanceEntryExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for ClaimableBalanceEntryExtensionV1Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for ClaimableBalanceEntryExtensionV1Ext {}
-
 impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17904,7 +17190,6 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -17950,7 +17235,6 @@ pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
     pub flags: u32,
 }
-
 impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -17962,7 +17246,6 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18002,17 +17285,15 @@ pub enum ClaimableBalanceEntryExt {
     V0,
     V1(ClaimableBalanceEntryExtensionV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClaimableBalanceEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl ClaimableBalanceEntryExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -18032,33 +17313,28 @@ impl ClaimableBalanceEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimableBalanceEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for ClaimableBalanceEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for ClaimableBalanceEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for ClaimableBalanceEntryExt {}
-
 impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18075,7 +17351,6 @@ impl ReadXdr for ClaimableBalanceEntryExt {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18142,7 +17417,6 @@ pub struct ClaimableBalanceEntry {
     pub amount: i64,
     pub ext: ClaimableBalanceEntryExt,
 }
-
 impl ReadXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18157,7 +17431,6 @@ impl ReadXdr for ClaimableBalanceEntry {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18199,7 +17472,6 @@ pub struct LiquidityPoolConstantProductParameters {
     pub asset_b: Asset,
     pub fee: i32,
 }
-
 impl ReadXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18212,7 +17484,6 @@ impl ReadXdr for LiquidityPoolConstantProductParameters {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18274,7 +17545,6 @@ pub struct LiquidityPoolEntryConstantProduct {
     )]
     pub pool_shares_trust_line_count: i64,
 }
-
 impl ReadXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18289,7 +17559,6 @@ impl ReadXdr for LiquidityPoolEntryConstantProduct {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18338,17 +17607,15 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 pub enum LiquidityPoolEntryBody {
     LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LiquidityPoolEntryBody {
     fn default() -> Self {
         Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::default())
     }
 }
-
 impl LiquidityPoolEntryBody {
-    pub const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
-    pub const VARIANTS_STR: [&'static str; 1] = ["LiquidityPoolConstantProduct"];
+    pub const VARIANTS: &[LiquidityPoolType] = &[LiquidityPoolType::LiquidityPoolConstantProduct];
+    pub const VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -18368,33 +17635,28 @@ impl LiquidityPoolEntryBody {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolType; 1] {
+    pub const fn variants() -> &'static [LiquidityPoolType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolEntryBody {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LiquidityPoolType> for LiquidityPoolEntryBody {
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LiquidityPoolType> for LiquidityPoolEntryBody {
     fn variants() -> slice::Iter<'static, LiquidityPoolType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LiquidityPoolType> for LiquidityPoolEntryBody {}
-
 impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18414,7 +17676,6 @@ impl ReadXdr for LiquidityPoolEntryBody {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18469,7 +17730,6 @@ pub struct LiquidityPoolEntry {
     pub liquidity_pool_id: PoolId,
     pub body: LiquidityPoolEntryBody,
 }
-
 impl ReadXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18481,7 +17741,6 @@ impl ReadXdr for LiquidityPoolEntry {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18518,13 +17777,12 @@ pub enum ContractDataDurability {
     Temporary = 0,
     Persistent = 1,
 }
-
 impl ContractDataDurability {
-    pub const VARIANTS: [ContractDataDurability; 2] = [
+    pub const VARIANTS: &[ContractDataDurability] = &[
         ContractDataDurability::Temporary,
         ContractDataDurability::Persistent,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Temporary", "Persistent"];
+    pub const VARIANTS_STR: &[&str] = &["Temporary", "Persistent"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -18535,32 +17793,27 @@ impl ContractDataDurability {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractDataDurability; 2] {
+    pub const fn variants() -> &'static [ContractDataDurability] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractDataDurability {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ContractDataDurability> for ContractDataDurability {
     fn variants() -> slice::Iter<'static, ContractDataDurability> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ContractDataDurability {}
-
 impl fmt::Display for ContractDataDurability {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ContractDataDurability {
     type Error = Error;
 
@@ -18574,14 +17827,12 @@ impl TryFrom<i32> for ContractDataDurability {
         Ok(e)
     }
 }
-
 impl From<ContractDataDurability> for i32 {
     #[must_use]
     fn from(e: ContractDataDurability) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ContractDataDurability {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18592,7 +17843,6 @@ impl ReadXdr for ContractDataDurability {
         })
     }
 }
-
 impl WriteXdr for ContractDataDurability {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18634,7 +17884,6 @@ pub struct ContractDataEntry {
     pub durability: ContractDataDurability,
     pub val: ScVal,
 }
-
 impl ReadXdr for ContractDataEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18649,7 +17898,6 @@ impl ReadXdr for ContractDataEntry {
         })
     }
 }
-
 impl WriteXdr for ContractDataEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18706,7 +17954,6 @@ pub struct ContractCodeCostInputs {
     pub n_exports: u32,
     pub n_data_segment_bytes: u32,
 }
-
 impl ReadXdr for ContractCodeCostInputs {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18727,7 +17974,6 @@ impl ReadXdr for ContractCodeCostInputs {
         })
     }
 }
-
 impl WriteXdr for ContractCodeCostInputs {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18773,7 +18019,6 @@ pub struct ContractCodeEntryV1 {
     pub ext: ExtensionPoint,
     pub cost_inputs: ContractCodeCostInputs,
 }
-
 impl ReadXdr for ContractCodeEntryV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18785,7 +18030,6 @@ impl ReadXdr for ContractCodeEntryV1 {
         })
     }
 }
-
 impl WriteXdr for ContractCodeEntryV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18829,17 +18073,15 @@ pub enum ContractCodeEntryExt {
     V0,
     V1(ContractCodeEntryV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ContractCodeEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl ContractCodeEntryExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -18859,33 +18101,28 @@ impl ContractCodeEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractCodeEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for ContractCodeEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for ContractCodeEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for ContractCodeEntryExt {}
-
 impl ReadXdr for ContractCodeEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18902,7 +18139,6 @@ impl ReadXdr for ContractCodeEntryExt {
         })
     }
 }
-
 impl WriteXdr for ContractCodeEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -18955,7 +18191,6 @@ pub struct ContractCodeEntry {
     pub hash: Hash,
     pub code: BytesM,
 }
-
 impl ReadXdr for ContractCodeEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -18968,7 +18203,6 @@ impl ReadXdr for ContractCodeEntry {
         })
     }
 }
-
 impl WriteXdr for ContractCodeEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19006,7 +18240,6 @@ pub struct TtlEntry {
     pub key_hash: Hash,
     pub live_until_ledger_seq: u32,
 }
-
 impl ReadXdr for TtlEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19018,7 +18251,6 @@ impl ReadXdr for TtlEntry {
         })
     }
 }
-
 impl WriteXdr for TtlEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19055,17 +18287,15 @@ impl WriteXdr for TtlEntry {
 pub enum LedgerEntryExtensionV1Ext {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryExtensionV1Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl LedgerEntryExtensionV1Ext {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -19083,33 +18313,28 @@ impl LedgerEntryExtensionV1Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerEntryExtensionV1Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerEntryExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerEntryExtensionV1Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerEntryExtensionV1Ext {}
-
 impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19125,7 +18350,6 @@ impl ReadXdr for LedgerEntryExtensionV1Ext {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19171,7 +18395,6 @@ pub struct LedgerEntryExtensionV1 {
     pub sponsoring_id: SponsorshipDescriptor,
     pub ext: LedgerEntryExtensionV1Ext,
 }
-
 impl ReadXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19183,7 +18406,6 @@ impl ReadXdr for LedgerEntryExtensionV1 {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19247,16 +18469,14 @@ pub enum LedgerEntryData {
     ConfigSetting(ConfigSettingEntry),
     Ttl(TtlEntry),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryData {
     fn default() -> Self {
         Self::Account(AccountEntry::default())
     }
 }
-
 impl LedgerEntryData {
-    pub const VARIANTS: [LedgerEntryType; 10] = [
+    pub const VARIANTS: &[LedgerEntryType] = &[
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -19268,7 +18488,7 @@ impl LedgerEntryData {
         LedgerEntryType::ConfigSetting,
         LedgerEntryType::Ttl,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Account",
         "Trustline",
         "Offer",
@@ -19315,33 +18535,28 @@ impl LedgerEntryData {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 10] {
+    pub const fn variants() -> &'static [LedgerEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerEntryData {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LedgerEntryType> for LedgerEntryData {
     #[must_use]
     fn discriminant(&self) -> LedgerEntryType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LedgerEntryType> for LedgerEntryData {
     fn variants() -> slice::Iter<'static, LedgerEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LedgerEntryType> for LedgerEntryData {}
-
 impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19376,7 +18591,6 @@ impl ReadXdr for LedgerEntryData {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19428,17 +18642,15 @@ pub enum LedgerEntryExt {
     V0,
     V1(LedgerEntryExtensionV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl LedgerEntryExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -19458,33 +18670,28 @@ impl LedgerEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerEntryExt {}
-
 impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19501,7 +18708,6 @@ impl ReadXdr for LedgerEntryExt {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19577,7 +18783,6 @@ pub struct LedgerEntry {
     pub data: LedgerEntryData,
     pub ext: LedgerEntryExt,
 }
-
 impl ReadXdr for LedgerEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19590,7 +18795,6 @@ impl ReadXdr for LedgerEntry {
         })
     }
 }
-
 impl WriteXdr for LedgerEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19626,7 +18830,6 @@ impl WriteXdr for LedgerEntry {
 pub struct LedgerKeyAccount {
     pub account_id: AccountId,
 }
-
 impl ReadXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19637,7 +18840,6 @@ impl ReadXdr for LedgerKeyAccount {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19673,7 +18875,6 @@ pub struct LedgerKeyTrustLine {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
 }
-
 impl ReadXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19685,7 +18886,6 @@ impl ReadXdr for LedgerKeyTrustLine {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19726,7 +18926,6 @@ pub struct LedgerKeyOffer {
     )]
     pub offer_id: i64,
 }
-
 impl ReadXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19738,7 +18937,6 @@ impl ReadXdr for LedgerKeyOffer {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19775,7 +18973,6 @@ pub struct LedgerKeyData {
     pub account_id: AccountId,
     pub data_name: String64,
 }
-
 impl ReadXdr for LedgerKeyData {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19787,7 +18984,6 @@ impl ReadXdr for LedgerKeyData {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19822,7 +19018,6 @@ impl WriteXdr for LedgerKeyData {
 pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
 }
-
 impl ReadXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19833,7 +19028,6 @@ impl ReadXdr for LedgerKeyClaimableBalance {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19867,7 +19061,6 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 pub struct LedgerKeyLiquidityPool {
     pub liquidity_pool_id: PoolId,
 }
-
 impl ReadXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19878,7 +19071,6 @@ impl ReadXdr for LedgerKeyLiquidityPool {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19916,7 +19108,6 @@ pub struct LedgerKeyContractData {
     pub key: ScVal,
     pub durability: ContractDataDurability,
 }
-
 impl ReadXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19929,7 +19120,6 @@ impl ReadXdr for LedgerKeyContractData {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -19965,7 +19155,6 @@ impl WriteXdr for LedgerKeyContractData {
 pub struct LedgerKeyContractCode {
     pub hash: Hash,
 }
-
 impl ReadXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -19976,7 +19165,6 @@ impl ReadXdr for LedgerKeyContractCode {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20010,7 +19198,6 @@ impl WriteXdr for LedgerKeyContractCode {
 pub struct LedgerKeyConfigSetting {
     pub config_setting_id: ConfigSettingId,
 }
-
 impl ReadXdr for LedgerKeyConfigSetting {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20021,7 +19208,6 @@ impl ReadXdr for LedgerKeyConfigSetting {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyConfigSetting {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20056,7 +19242,6 @@ impl WriteXdr for LedgerKeyConfigSetting {
 pub struct LedgerKeyTtl {
     pub key_hash: Hash,
 }
-
 impl ReadXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20067,7 +19252,6 @@ impl ReadXdr for LedgerKeyTtl {
         })
     }
 }
-
 impl WriteXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20171,16 +19355,14 @@ pub enum LedgerKey {
     ConfigSetting(LedgerKeyConfigSetting),
     Ttl(LedgerKeyTtl),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerKey {
     fn default() -> Self {
         Self::Account(LedgerKeyAccount::default())
     }
 }
-
 impl LedgerKey {
-    pub const VARIANTS: [LedgerEntryType; 10] = [
+    pub const VARIANTS: &[LedgerEntryType] = &[
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -20192,7 +19374,7 @@ impl LedgerKey {
         LedgerEntryType::ConfigSetting,
         LedgerEntryType::Ttl,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Account",
         "Trustline",
         "Offer",
@@ -20239,33 +19421,28 @@ impl LedgerKey {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 10] {
+    pub const fn variants() -> &'static [LedgerEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerKey {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LedgerEntryType> for LedgerKey {
     #[must_use]
     fn discriminant(&self) -> LedgerEntryType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LedgerEntryType> for LedgerKey {
     fn variants() -> slice::Iter<'static, LedgerEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LedgerEntryType> for LedgerKey {}
-
 impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20300,7 +19477,6 @@ impl ReadXdr for LedgerKey {
         })
     }
 }
-
 impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20366,9 +19542,8 @@ pub enum EnvelopeType {
     ContractId = 8,
     SorobanAuthorization = 9,
 }
-
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 10] = [
+    pub const VARIANTS: &[EnvelopeType] = &[
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -20380,7 +19555,7 @@ impl EnvelopeType {
         EnvelopeType::ContractId,
         EnvelopeType::SorobanAuthorization,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "TxV0",
         "Scp",
         "Tx",
@@ -20410,32 +19585,27 @@ impl EnvelopeType {
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 10] {
+    pub const fn variants() -> &'static [EnvelopeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for EnvelopeType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<EnvelopeType> for EnvelopeType {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for EnvelopeType {}
-
 impl fmt::Display for EnvelopeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for EnvelopeType {
     type Error = Error;
 
@@ -20457,14 +19627,12 @@ impl TryFrom<i32> for EnvelopeType {
         Ok(e)
     }
 }
-
 impl From<EnvelopeType> for i32 {
     #[must_use]
     fn from(e: EnvelopeType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for EnvelopeType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20475,7 +19643,6 @@ impl ReadXdr for EnvelopeType {
         })
     }
 }
-
 impl WriteXdr for EnvelopeType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20512,10 +19679,9 @@ pub enum BucketListType {
     Live = 0,
     HotArchive = 1,
 }
-
 impl BucketListType {
-    pub const VARIANTS: [BucketListType; 2] = [BucketListType::Live, BucketListType::HotArchive];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Live", "HotArchive"];
+    pub const VARIANTS: &[BucketListType] = &[BucketListType::Live, BucketListType::HotArchive];
+    pub const VARIANTS_STR: &[&str] = &["Live", "HotArchive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -20526,32 +19692,27 @@ impl BucketListType {
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketListType; 2] {
+    pub const fn variants() -> &'static [BucketListType] {
         Self::VARIANTS
     }
 }
-
 impl Name for BucketListType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<BucketListType> for BucketListType {
     fn variants() -> slice::Iter<'static, BucketListType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for BucketListType {}
-
 impl fmt::Display for BucketListType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for BucketListType {
     type Error = Error;
 
@@ -20565,14 +19726,12 @@ impl TryFrom<i32> for BucketListType {
         Ok(e)
     }
 }
-
 impl From<BucketListType> for i32 {
     #[must_use]
     fn from(e: BucketListType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for BucketListType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20583,7 +19742,6 @@ impl ReadXdr for BucketListType {
         })
     }
 }
-
 impl WriteXdr for BucketListType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20626,16 +19784,14 @@ pub enum BucketEntryType {
     Deadentry = 1,
     Initentry = 2,
 }
-
 impl BucketEntryType {
-    pub const VARIANTS: [BucketEntryType; 4] = [
+    pub const VARIANTS: &[BucketEntryType] = &[
         BucketEntryType::Metaentry,
         BucketEntryType::Liveentry,
         BucketEntryType::Deadentry,
         BucketEntryType::Initentry,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Metaentry", "Liveentry", "Deadentry", "Initentry"];
+    pub const VARIANTS_STR: &[&str] = &["Metaentry", "Liveentry", "Deadentry", "Initentry"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -20648,32 +19804,27 @@ impl BucketEntryType {
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketEntryType; 4] {
+    pub const fn variants() -> &'static [BucketEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for BucketEntryType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<BucketEntryType> for BucketEntryType {
     fn variants() -> slice::Iter<'static, BucketEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for BucketEntryType {}
-
 impl fmt::Display for BucketEntryType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for BucketEntryType {
     type Error = Error;
 
@@ -20689,14 +19840,12 @@ impl TryFrom<i32> for BucketEntryType {
         Ok(e)
     }
 }
-
 impl From<BucketEntryType> for i32 {
     #[must_use]
     fn from(e: BucketEntryType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for BucketEntryType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20707,7 +19856,6 @@ impl ReadXdr for BucketEntryType {
         })
     }
 }
-
 impl WriteXdr for BucketEntryType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20748,14 +19896,13 @@ pub enum HotArchiveBucketEntryType {
     Archived = 0,
     Live = 1,
 }
-
 impl HotArchiveBucketEntryType {
-    pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
+    pub const VARIANTS: &[HotArchiveBucketEntryType] = &[
         HotArchiveBucketEntryType::Metaentry,
         HotArchiveBucketEntryType::Archived,
         HotArchiveBucketEntryType::Live,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Metaentry", "Archived", "Live"];
+    pub const VARIANTS_STR: &[&str] = &["Metaentry", "Archived", "Live"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -20767,32 +19914,27 @@ impl HotArchiveBucketEntryType {
     }
 
     #[must_use]
-    pub const fn variants() -> [HotArchiveBucketEntryType; 3] {
+    pub const fn variants() -> &'static [HotArchiveBucketEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for HotArchiveBucketEntryType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<HotArchiveBucketEntryType> for HotArchiveBucketEntryType {
     fn variants() -> slice::Iter<'static, HotArchiveBucketEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for HotArchiveBucketEntryType {}
-
 impl fmt::Display for HotArchiveBucketEntryType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for HotArchiveBucketEntryType {
     type Error = Error;
 
@@ -20807,14 +19949,12 @@ impl TryFrom<i32> for HotArchiveBucketEntryType {
         Ok(e)
     }
 }
-
 impl From<HotArchiveBucketEntryType> for i32 {
     #[must_use]
     fn from(e: HotArchiveBucketEntryType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for HotArchiveBucketEntryType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20825,7 +19965,6 @@ impl ReadXdr for HotArchiveBucketEntryType {
         })
     }
 }
-
 impl WriteXdr for HotArchiveBucketEntryType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20864,17 +20003,15 @@ pub enum BucketMetadataExt {
     V0,
     V1(BucketListType),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for BucketMetadataExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl BucketMetadataExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -20894,33 +20031,28 @@ impl BucketMetadataExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for BucketMetadataExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for BucketMetadataExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for BucketMetadataExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for BucketMetadataExt {}
-
 impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -20937,7 +20069,6 @@ impl ReadXdr for BucketMetadataExt {
         })
     }
 }
-
 impl WriteXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -20988,7 +20119,6 @@ pub struct BucketMetadata {
     pub ledger_version: u32,
     pub ext: BucketMetadataExt,
 }
-
 impl ReadXdr for BucketMetadata {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21000,7 +20130,6 @@ impl ReadXdr for BucketMetadata {
         })
     }
 }
-
 impl WriteXdr for BucketMetadata {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21046,23 +20175,20 @@ pub enum BucketEntry {
     Deadentry(LedgerKey),
     Metaentry(BucketMetadata),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for BucketEntry {
     fn default() -> Self {
         Self::Liveentry(LedgerEntry::default())
     }
 }
-
 impl BucketEntry {
-    pub const VARIANTS: [BucketEntryType; 4] = [
+    pub const VARIANTS: &[BucketEntryType] = &[
         BucketEntryType::Liveentry,
         BucketEntryType::Initentry,
         BucketEntryType::Deadentry,
         BucketEntryType::Metaentry,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Liveentry", "Initentry", "Deadentry", "Metaentry"];
+    pub const VARIANTS_STR: &[&str] = &["Liveentry", "Initentry", "Deadentry", "Metaentry"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21086,33 +20212,28 @@ impl BucketEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketEntryType; 4] {
+    pub const fn variants() -> &'static [BucketEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for BucketEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<BucketEntryType> for BucketEntry {
     #[must_use]
     fn discriminant(&self) -> BucketEntryType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<BucketEntryType> for BucketEntry {
     fn variants() -> slice::Iter<'static, BucketEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<BucketEntryType> for BucketEntry {}
-
 impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21131,7 +20252,6 @@ impl ReadXdr for BucketEntry {
         })
     }
 }
-
 impl WriteXdr for BucketEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21181,21 +20301,19 @@ pub enum HotArchiveBucketEntry {
     Live(LedgerKey),
     Metaentry(BucketMetadata),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for HotArchiveBucketEntry {
     fn default() -> Self {
         Self::Archived(LedgerEntry::default())
     }
 }
-
 impl HotArchiveBucketEntry {
-    pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
+    pub const VARIANTS: &[HotArchiveBucketEntryType] = &[
         HotArchiveBucketEntryType::Archived,
         HotArchiveBucketEntryType::Live,
         HotArchiveBucketEntryType::Metaentry,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Archived", "Live", "Metaentry"];
+    pub const VARIANTS_STR: &[&str] = &["Archived", "Live", "Metaentry"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21217,33 +20335,28 @@ impl HotArchiveBucketEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [HotArchiveBucketEntryType; 3] {
+    pub const fn variants() -> &'static [HotArchiveBucketEntryType] {
         Self::VARIANTS
     }
 }
-
 impl Name for HotArchiveBucketEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<HotArchiveBucketEntryType> for HotArchiveBucketEntry {
     #[must_use]
     fn discriminant(&self) -> HotArchiveBucketEntryType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<HotArchiveBucketEntryType> for HotArchiveBucketEntry {
     fn variants() -> slice::Iter<'static, HotArchiveBucketEntryType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<HotArchiveBucketEntryType> for HotArchiveBucketEntry {}
-
 impl ReadXdr for HotArchiveBucketEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21264,7 +20377,6 @@ impl ReadXdr for HotArchiveBucketEntry {
         })
     }
 }
-
 impl WriteXdr for HotArchiveBucketEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21306,21 +20418,18 @@ impl From<UpgradeType> for BytesM<128> {
         x.0
     }
 }
-
 impl From<BytesM<128>> for UpgradeType {
     #[must_use]
     fn from(x: BytesM<128>) -> Self {
         UpgradeType(x)
     }
 }
-
 impl AsRef<BytesM<128>> for UpgradeType {
     #[must_use]
     fn as_ref(&self) -> &BytesM<128> {
         &self.0
     }
 }
-
 impl ReadXdr for UpgradeType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21331,35 +20440,30 @@ impl ReadXdr for UpgradeType {
         })
     }
 }
-
 impl WriteXdr for UpgradeType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for UpgradeType {
     type Target = BytesM<128>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<UpgradeType> for Vec<u8> {
     #[must_use]
     fn from(x: UpgradeType) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for UpgradeType {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(UpgradeType(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for UpgradeType {
     type Error = Error;
@@ -21367,14 +20471,12 @@ impl TryFrom<&Vec<u8>> for UpgradeType {
         Ok(UpgradeType(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for UpgradeType {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for UpgradeType {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -21414,10 +20516,9 @@ pub enum StellarValueType {
     Basic = 0,
     Signed = 1,
 }
-
 impl StellarValueType {
-    pub const VARIANTS: [StellarValueType; 2] = [StellarValueType::Basic, StellarValueType::Signed];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Basic", "Signed"];
+    pub const VARIANTS: &[StellarValueType] = &[StellarValueType::Basic, StellarValueType::Signed];
+    pub const VARIANTS_STR: &[&str] = &["Basic", "Signed"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21428,32 +20529,27 @@ impl StellarValueType {
     }
 
     #[must_use]
-    pub const fn variants() -> [StellarValueType; 2] {
+    pub const fn variants() -> &'static [StellarValueType] {
         Self::VARIANTS
     }
 }
-
 impl Name for StellarValueType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<StellarValueType> for StellarValueType {
     fn variants() -> slice::Iter<'static, StellarValueType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for StellarValueType {}
-
 impl fmt::Display for StellarValueType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for StellarValueType {
     type Error = Error;
 
@@ -21467,14 +20563,12 @@ impl TryFrom<i32> for StellarValueType {
         Ok(e)
     }
 }
-
 impl From<StellarValueType> for i32 {
     #[must_use]
     fn from(e: StellarValueType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for StellarValueType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21485,7 +20579,6 @@ impl ReadXdr for StellarValueType {
         })
     }
 }
-
 impl WriteXdr for StellarValueType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21521,7 +20614,6 @@ pub struct LedgerCloseValueSignature {
     pub node_id: NodeId,
     pub signature: Signature,
 }
-
 impl ReadXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21533,7 +20625,6 @@ impl ReadXdr for LedgerCloseValueSignature {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21573,17 +20664,15 @@ pub enum StellarValueExt {
     Basic,
     Signed(LedgerCloseValueSignature),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for StellarValueExt {
     fn default() -> Self {
         Self::Basic
     }
 }
-
 impl StellarValueExt {
-    pub const VARIANTS: [StellarValueType; 2] = [StellarValueType::Basic, StellarValueType::Signed];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Basic", "Signed"];
+    pub const VARIANTS: &[StellarValueType] = &[StellarValueType::Basic, StellarValueType::Signed];
+    pub const VARIANTS_STR: &[&str] = &["Basic", "Signed"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21603,33 +20692,28 @@ impl StellarValueExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [StellarValueType; 2] {
+    pub const fn variants() -> &'static [StellarValueType] {
         Self::VARIANTS
     }
 }
-
 impl Name for StellarValueExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<StellarValueType> for StellarValueExt {
     #[must_use]
     fn discriminant(&self) -> StellarValueType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<StellarValueType> for StellarValueExt {
     fn variants() -> slice::Iter<'static, StellarValueType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<StellarValueType> for StellarValueExt {}
-
 impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21646,7 +20730,6 @@ impl ReadXdr for StellarValueExt {
         })
     }
 }
-
 impl WriteXdr for StellarValueExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21706,7 +20789,6 @@ pub struct StellarValue {
     pub upgrades: VecM<UpgradeType, 6>,
     pub ext: StellarValueExt,
 }
-
 impl ReadXdr for StellarValue {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21720,7 +20802,6 @@ impl ReadXdr for StellarValue {
         })
     }
 }
-
 impl WriteXdr for StellarValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21770,14 +20851,13 @@ pub enum LedgerHeaderFlags {
     DepositFlag = 2,
     WithdrawalFlag = 4,
 }
-
 impl LedgerHeaderFlags {
-    pub const VARIANTS: [LedgerHeaderFlags; 3] = [
+    pub const VARIANTS: &[LedgerHeaderFlags] = &[
         LedgerHeaderFlags::TradingFlag,
         LedgerHeaderFlags::DepositFlag,
         LedgerHeaderFlags::WithdrawalFlag,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["TradingFlag", "DepositFlag", "WithdrawalFlag"];
+    pub const VARIANTS_STR: &[&str] = &["TradingFlag", "DepositFlag", "WithdrawalFlag"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21789,32 +20869,27 @@ impl LedgerHeaderFlags {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerHeaderFlags; 3] {
+    pub const fn variants() -> &'static [LedgerHeaderFlags] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerHeaderFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LedgerHeaderFlags> for LedgerHeaderFlags {
     fn variants() -> slice::Iter<'static, LedgerHeaderFlags> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LedgerHeaderFlags {}
-
 impl fmt::Display for LedgerHeaderFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LedgerHeaderFlags {
     type Error = Error;
 
@@ -21829,14 +20904,12 @@ impl TryFrom<i32> for LedgerHeaderFlags {
         Ok(e)
     }
 }
-
 impl From<LedgerHeaderFlags> for i32 {
     #[must_use]
     fn from(e: LedgerHeaderFlags) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21847,7 +20920,6 @@ impl ReadXdr for LedgerHeaderFlags {
         })
     }
 }
-
 impl WriteXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21883,17 +20955,15 @@ impl WriteXdr for LedgerHeaderFlags {
 pub enum LedgerHeaderExtensionV1Ext {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerHeaderExtensionV1Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl LedgerHeaderExtensionV1Ext {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21911,33 +20981,28 @@ impl LedgerHeaderExtensionV1Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerHeaderExtensionV1Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerHeaderExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerHeaderExtensionV1Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerHeaderExtensionV1Ext {}
-
 impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -21953,7 +21018,6 @@ impl ReadXdr for LedgerHeaderExtensionV1Ext {
         })
     }
 }
-
 impl WriteXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -21999,7 +21063,6 @@ pub struct LedgerHeaderExtensionV1 {
     pub flags: u32,
     pub ext: LedgerHeaderExtensionV1Ext,
 }
-
 impl ReadXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22011,7 +21074,6 @@ impl ReadXdr for LedgerHeaderExtensionV1 {
         })
     }
 }
-
 impl WriteXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22051,17 +21113,15 @@ pub enum LedgerHeaderExt {
     V0,
     V1(LedgerHeaderExtensionV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerHeaderExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl LedgerHeaderExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -22081,33 +21141,28 @@ impl LedgerHeaderExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerHeaderExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerHeaderExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerHeaderExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerHeaderExt {}
-
 impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22124,7 +21179,6 @@ impl ReadXdr for LedgerHeaderExt {
         })
     }
 }
-
 impl WriteXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22224,7 +21278,6 @@ pub struct LedgerHeader {
     pub skip_list: [Hash; 4],
     pub ext: LedgerHeaderExt,
 }
-
 impl ReadXdr for LedgerHeader {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22249,7 +21302,6 @@ impl ReadXdr for LedgerHeader {
         })
     }
 }
-
 impl WriteXdr for LedgerHeader {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22310,9 +21362,8 @@ pub enum LedgerUpgradeType {
     Config = 6,
     MaxSorobanTxSetSize = 7,
 }
-
 impl LedgerUpgradeType {
-    pub const VARIANTS: [LedgerUpgradeType; 7] = [
+    pub const VARIANTS: &[LedgerUpgradeType] = &[
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
@@ -22321,7 +21372,7 @@ impl LedgerUpgradeType {
         LedgerUpgradeType::Config,
         LedgerUpgradeType::MaxSorobanTxSetSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Version",
         "BaseFee",
         "MaxTxSetSize",
@@ -22345,32 +21396,27 @@ impl LedgerUpgradeType {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 7] {
+    pub const fn variants() -> &'static [LedgerUpgradeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerUpgradeType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LedgerUpgradeType> for LedgerUpgradeType {
     fn variants() -> slice::Iter<'static, LedgerUpgradeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LedgerUpgradeType {}
-
 impl fmt::Display for LedgerUpgradeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LedgerUpgradeType {
     type Error = Error;
 
@@ -22389,14 +21435,12 @@ impl TryFrom<i32> for LedgerUpgradeType {
         Ok(e)
     }
 }
-
 impl From<LedgerUpgradeType> for i32 {
     #[must_use]
     fn from(e: LedgerUpgradeType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22407,7 +21451,6 @@ impl ReadXdr for LedgerUpgradeType {
         })
     }
 }
-
 impl WriteXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22442,7 +21485,6 @@ pub struct ConfigUpgradeSetKey {
     pub contract_id: ContractId,
     pub content_hash: Hash,
 }
-
 impl ReadXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22454,7 +21496,6 @@ impl ReadXdr for ConfigUpgradeSetKey {
         })
     }
 }
-
 impl WriteXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22512,16 +21553,14 @@ pub enum LedgerUpgrade {
     Config(ConfigUpgradeSetKey),
     MaxSorobanTxSetSize(u32),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerUpgrade {
     fn default() -> Self {
         Self::Version(u32::default())
     }
 }
-
 impl LedgerUpgrade {
-    pub const VARIANTS: [LedgerUpgradeType; 7] = [
+    pub const VARIANTS: &[LedgerUpgradeType] = &[
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
@@ -22530,7 +21569,7 @@ impl LedgerUpgrade {
         LedgerUpgradeType::Config,
         LedgerUpgradeType::MaxSorobanTxSetSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Version",
         "BaseFee",
         "MaxTxSetSize",
@@ -22568,33 +21607,28 @@ impl LedgerUpgrade {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 7] {
+    pub const fn variants() -> &'static [LedgerUpgradeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerUpgrade {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LedgerUpgradeType> for LedgerUpgrade {
     #[must_use]
     fn discriminant(&self) -> LedgerUpgradeType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LedgerUpgradeType> for LedgerUpgrade {
     fn variants() -> slice::Iter<'static, LedgerUpgradeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LedgerUpgradeType> for LedgerUpgrade {}
-
 impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22618,7 +21652,6 @@ impl ReadXdr for LedgerUpgrade {
         })
     }
 }
-
 impl WriteXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22661,7 +21694,6 @@ impl WriteXdr for LedgerUpgrade {
 pub struct ConfigUpgradeSet {
     pub updated_entry: VecM<ConfigSettingEntry>,
 }
-
 impl ReadXdr for ConfigUpgradeSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22672,7 +21704,6 @@ impl ReadXdr for ConfigUpgradeSet {
         })
     }
 }
-
 impl WriteXdr for ConfigUpgradeSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22709,11 +21740,10 @@ pub enum TxSetComponentType {
     #[cfg_attr(feature = "alloc", default)]
     TxsetCompTxsMaybeDiscountedFee = 0,
 }
-
 impl TxSetComponentType {
-    pub const VARIANTS: [TxSetComponentType; 1] =
-        [TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
-    pub const VARIANTS_STR: [&'static str; 1] = ["TxsetCompTxsMaybeDiscountedFee"];
+    pub const VARIANTS: &[TxSetComponentType] =
+        &[TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
+    pub const VARIANTS_STR: &[&str] = &["TxsetCompTxsMaybeDiscountedFee"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -22723,32 +21753,27 @@ impl TxSetComponentType {
     }
 
     #[must_use]
-    pub const fn variants() -> [TxSetComponentType; 1] {
+    pub const fn variants() -> &'static [TxSetComponentType] {
         Self::VARIANTS
     }
 }
-
 impl Name for TxSetComponentType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<TxSetComponentType> for TxSetComponentType {
     fn variants() -> slice::Iter<'static, TxSetComponentType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for TxSetComponentType {}
-
 impl fmt::Display for TxSetComponentType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for TxSetComponentType {
     type Error = Error;
 
@@ -22761,14 +21786,12 @@ impl TryFrom<i32> for TxSetComponentType {
         Ok(e)
     }
 }
-
 impl From<TxSetComponentType> for i32 {
     #[must_use]
     fn from(e: TxSetComponentType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for TxSetComponentType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22779,7 +21802,6 @@ impl ReadXdr for TxSetComponentType {
         })
     }
 }
-
 impl WriteXdr for TxSetComponentType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -22815,21 +21837,18 @@ impl From<DependentTxCluster> for VecM<TransactionEnvelope> {
         x.0
     }
 }
-
 impl From<VecM<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn from(x: VecM<TransactionEnvelope>) -> Self {
         DependentTxCluster(x)
     }
 }
-
 impl AsRef<VecM<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn as_ref(&self) -> &VecM<TransactionEnvelope> {
         &self.0
     }
 }
-
 impl ReadXdr for DependentTxCluster {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22840,35 +21859,30 @@ impl ReadXdr for DependentTxCluster {
         })
     }
 }
-
 impl WriteXdr for DependentTxCluster {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for DependentTxCluster {
     type Target = VecM<TransactionEnvelope>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<DependentTxCluster> for Vec<TransactionEnvelope> {
     #[must_use]
     fn from(x: DependentTxCluster) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<TransactionEnvelope>> for DependentTxCluster {
     type Error = Error;
     fn try_from(x: Vec<TransactionEnvelope>) -> Result<Self, Error> {
         Ok(DependentTxCluster(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
     type Error = Error;
@@ -22876,14 +21890,12 @@ impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
         Ok(DependentTxCluster(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn as_ref(&self) -> &Vec<TransactionEnvelope> {
         &self.0 .0
     }
 }
-
 impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -22922,21 +21934,18 @@ impl From<ParallelTxExecutionStage> for VecM<DependentTxCluster> {
         x.0
     }
 }
-
 impl From<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
     fn from(x: VecM<DependentTxCluster>) -> Self {
         ParallelTxExecutionStage(x)
     }
 }
-
 impl AsRef<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
     fn as_ref(&self) -> &VecM<DependentTxCluster> {
         &self.0
     }
 }
-
 impl ReadXdr for ParallelTxExecutionStage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -22947,35 +21956,30 @@ impl ReadXdr for ParallelTxExecutionStage {
         })
     }
 }
-
 impl WriteXdr for ParallelTxExecutionStage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for ParallelTxExecutionStage {
     type Target = VecM<DependentTxCluster>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<ParallelTxExecutionStage> for Vec<DependentTxCluster> {
     #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     type Error = Error;
     fn try_from(x: Vec<DependentTxCluster>) -> Result<Self, Error> {
         Ok(ParallelTxExecutionStage(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     type Error = Error;
@@ -22983,14 +21987,12 @@ impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
         Ok(ParallelTxExecutionStage(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
     fn as_ref(&self) -> &Vec<DependentTxCluster> {
         &self.0 .0
     }
 }
-
 impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -23036,7 +22038,6 @@ pub struct ParallelTxsComponent {
     pub base_fee: Option<i64>,
     pub execution_stages: VecM<ParallelTxExecutionStage>,
 }
-
 impl ReadXdr for ParallelTxsComponent {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23048,7 +22049,6 @@ impl ReadXdr for ParallelTxsComponent {
         })
     }
 }
-
 impl WriteXdr for ParallelTxsComponent {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23089,7 +22089,6 @@ pub struct TxSetComponentTxsMaybeDiscountedFee {
     pub base_fee: Option<i64>,
     pub txs: VecM<TransactionEnvelope>,
 }
-
 impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23101,7 +22100,6 @@ impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
         })
     }
 }
-
 impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23142,18 +22140,16 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 pub enum TxSetComponent {
     TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TxSetComponent {
     fn default() -> Self {
         Self::TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee::default())
     }
 }
-
 impl TxSetComponent {
-    pub const VARIANTS: [TxSetComponentType; 1] =
-        [TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
-    pub const VARIANTS_STR: [&'static str; 1] = ["TxsetCompTxsMaybeDiscountedFee"];
+    pub const VARIANTS: &[TxSetComponentType] =
+        &[TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
+    pub const VARIANTS_STR: &[&str] = &["TxsetCompTxsMaybeDiscountedFee"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -23173,33 +22169,28 @@ impl TxSetComponent {
     }
 
     #[must_use]
-    pub const fn variants() -> [TxSetComponentType; 1] {
+    pub const fn variants() -> &'static [TxSetComponentType] {
         Self::VARIANTS
     }
 }
-
 impl Name for TxSetComponent {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<TxSetComponentType> for TxSetComponent {
     #[must_use]
     fn discriminant(&self) -> TxSetComponentType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<TxSetComponentType> for TxSetComponent {
     fn variants() -> slice::Iter<'static, TxSetComponentType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<TxSetComponentType> for TxSetComponent {}
-
 impl ReadXdr for TxSetComponent {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23219,7 +22210,6 @@ impl ReadXdr for TxSetComponent {
         })
     }
 }
-
 impl WriteXdr for TxSetComponent {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23262,17 +22252,15 @@ pub enum TransactionPhase {
     V0(VecM<TxSetComponent>),
     V1(ParallelTxsComponent),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionPhase {
     fn default() -> Self {
         Self::V0(VecM::<TxSetComponent>::default())
     }
 }
-
 impl TransactionPhase {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -23292,33 +22280,28 @@ impl TransactionPhase {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionPhase {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionPhase {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionPhase {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionPhase {}
-
 impl ReadXdr for TransactionPhase {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23335,7 +22318,6 @@ impl ReadXdr for TransactionPhase {
         })
     }
 }
-
 impl WriteXdr for TransactionPhase {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23376,7 +22358,6 @@ pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
     pub txs: VecM<TransactionEnvelope>,
 }
-
 impl ReadXdr for TransactionSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23388,7 +22369,6 @@ impl ReadXdr for TransactionSet {
         })
     }
 }
-
 impl WriteXdr for TransactionSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23425,7 +22405,6 @@ pub struct TransactionSetV1 {
     pub previous_ledger_hash: Hash,
     pub phases: VecM<TransactionPhase>,
 }
-
 impl ReadXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23437,7 +22416,6 @@ impl ReadXdr for TransactionSetV1 {
         })
     }
 }
-
 impl WriteXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23475,17 +22453,15 @@ impl WriteXdr for TransactionSetV1 {
 pub enum GeneralizedTransactionSet {
     V1(TransactionSetV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for GeneralizedTransactionSet {
     fn default() -> Self {
         Self::V1(TransactionSetV1::default())
     }
 }
-
 impl GeneralizedTransactionSet {
-    pub const VARIANTS: [i32; 1] = [1];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V1"];
+    pub const VARIANTS: &[i32] = &[1];
+    pub const VARIANTS_STR: &[&str] = &["V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -23503,33 +22479,28 @@ impl GeneralizedTransactionSet {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for GeneralizedTransactionSet {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for GeneralizedTransactionSet {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for GeneralizedTransactionSet {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for GeneralizedTransactionSet {}
-
 impl ReadXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23545,7 +22516,6 @@ impl ReadXdr for GeneralizedTransactionSet {
         })
     }
 }
-
 impl WriteXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23585,7 +22555,6 @@ pub struct TransactionResultPair {
     pub transaction_hash: Hash,
     pub result: TransactionResult,
 }
-
 impl ReadXdr for TransactionResultPair {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23597,7 +22566,6 @@ impl ReadXdr for TransactionResultPair {
         })
     }
 }
-
 impl WriteXdr for TransactionResultPair {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23632,7 +22600,6 @@ impl WriteXdr for TransactionResultPair {
 pub struct TransactionResultSet {
     pub results: VecM<TransactionResultPair>,
 }
-
 impl ReadXdr for TransactionResultSet {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23643,7 +22610,6 @@ impl ReadXdr for TransactionResultSet {
         })
     }
 }
-
 impl WriteXdr for TransactionResultSet {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23682,17 +22648,15 @@ pub enum TransactionHistoryEntryExt {
     V0,
     V1(GeneralizedTransactionSet),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionHistoryEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TransactionHistoryEntryExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -23712,33 +22676,28 @@ impl TransactionHistoryEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionHistoryEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionHistoryEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionHistoryEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionHistoryEntryExt {}
-
 impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23755,7 +22714,6 @@ impl ReadXdr for TransactionHistoryEntryExt {
         })
     }
 }
-
 impl WriteXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23807,7 +22765,6 @@ pub struct TransactionHistoryEntry {
     pub tx_set: TransactionSet,
     pub ext: TransactionHistoryEntryExt,
 }
-
 impl ReadXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23820,7 +22777,6 @@ impl ReadXdr for TransactionHistoryEntry {
         })
     }
 }
-
 impl WriteXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23858,17 +22814,15 @@ impl WriteXdr for TransactionHistoryEntry {
 pub enum TransactionHistoryResultEntryExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionHistoryResultEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TransactionHistoryResultEntryExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -23886,33 +22840,28 @@ impl TransactionHistoryResultEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionHistoryResultEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionHistoryResultEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionHistoryResultEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionHistoryResultEntryExt {}
-
 impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23928,7 +22877,6 @@ impl ReadXdr for TransactionHistoryResultEntryExt {
         })
     }
 }
-
 impl WriteXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -23977,7 +22925,6 @@ pub struct TransactionHistoryResultEntry {
     pub tx_result_set: TransactionResultSet,
     pub ext: TransactionHistoryResultEntryExt,
 }
-
 impl ReadXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -23990,7 +22937,6 @@ impl ReadXdr for TransactionHistoryResultEntry {
         })
     }
 }
-
 impl WriteXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24028,17 +22974,15 @@ impl WriteXdr for TransactionHistoryResultEntry {
 pub enum LedgerHeaderHistoryEntryExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerHeaderHistoryEntryExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl LedgerHeaderHistoryEntryExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -24056,33 +23000,28 @@ impl LedgerHeaderHistoryEntryExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerHeaderHistoryEntryExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerHeaderHistoryEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerHeaderHistoryEntryExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerHeaderHistoryEntryExt {}
-
 impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24098,7 +23037,6 @@ impl ReadXdr for LedgerHeaderHistoryEntryExt {
         })
     }
 }
-
 impl WriteXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24147,7 +23085,6 @@ pub struct LedgerHeaderHistoryEntry {
     pub header: LedgerHeader,
     pub ext: LedgerHeaderHistoryEntryExt,
 }
-
 impl ReadXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24160,7 +23097,6 @@ impl ReadXdr for LedgerHeaderHistoryEntry {
         })
     }
 }
-
 impl WriteXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24198,7 +23134,6 @@ pub struct LedgerScpMessages {
     pub ledger_seq: u32,
     pub messages: VecM<ScpEnvelope>,
 }
-
 impl ReadXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24210,7 +23145,6 @@ impl ReadXdr for LedgerScpMessages {
         })
     }
 }
-
 impl WriteXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24247,7 +23181,6 @@ pub struct ScpHistoryEntryV0 {
     pub quorum_sets: VecM<ScpQuorumSet>,
     pub ledger_messages: LedgerScpMessages,
 }
-
 impl ReadXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24259,7 +23192,6 @@ impl ReadXdr for ScpHistoryEntryV0 {
         })
     }
 }
-
 impl WriteXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24296,17 +23228,15 @@ impl WriteXdr for ScpHistoryEntryV0 {
 pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ScpHistoryEntry {
     fn default() -> Self {
         Self::V0(ScpHistoryEntryV0::default())
     }
 }
-
 impl ScpHistoryEntry {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -24324,33 +23254,28 @@ impl ScpHistoryEntry {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for ScpHistoryEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for ScpHistoryEntry {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for ScpHistoryEntry {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for ScpHistoryEntry {}
-
 impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24366,7 +23291,6 @@ impl ReadXdr for ScpHistoryEntry {
         })
     }
 }
-
 impl WriteXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24413,17 +23337,15 @@ pub enum LedgerEntryChangeType {
     State = 3,
     Restored = 4,
 }
-
 impl LedgerEntryChangeType {
-    pub const VARIANTS: [LedgerEntryChangeType; 5] = [
+    pub const VARIANTS: &[LedgerEntryChangeType] = &[
         LedgerEntryChangeType::Created,
         LedgerEntryChangeType::Updated,
         LedgerEntryChangeType::Removed,
         LedgerEntryChangeType::State,
         LedgerEntryChangeType::Restored,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] =
-        ["Created", "Updated", "Removed", "State", "Restored"];
+    pub const VARIANTS_STR: &[&str] = &["Created", "Updated", "Removed", "State", "Restored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -24437,32 +23359,27 @@ impl LedgerEntryChangeType {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryChangeType; 5] {
+    pub const fn variants() -> &'static [LedgerEntryChangeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerEntryChangeType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LedgerEntryChangeType> for LedgerEntryChangeType {
     fn variants() -> slice::Iter<'static, LedgerEntryChangeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LedgerEntryChangeType {}
-
 impl fmt::Display for LedgerEntryChangeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LedgerEntryChangeType {
     type Error = Error;
 
@@ -24479,14 +23396,12 @@ impl TryFrom<i32> for LedgerEntryChangeType {
         Ok(e)
     }
 }
-
 impl From<LedgerEntryChangeType> for i32 {
     #[must_use]
     fn from(e: LedgerEntryChangeType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24497,7 +23412,6 @@ impl ReadXdr for LedgerEntryChangeType {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24545,24 +23459,21 @@ pub enum LedgerEntryChange {
     State(LedgerEntry),
     Restored(LedgerEntry),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryChange {
     fn default() -> Self {
         Self::Created(LedgerEntry::default())
     }
 }
-
 impl LedgerEntryChange {
-    pub const VARIANTS: [LedgerEntryChangeType; 5] = [
+    pub const VARIANTS: &[LedgerEntryChangeType] = &[
         LedgerEntryChangeType::Created,
         LedgerEntryChangeType::Updated,
         LedgerEntryChangeType::Removed,
         LedgerEntryChangeType::State,
         LedgerEntryChangeType::Restored,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] =
-        ["Created", "Updated", "Removed", "State", "Restored"];
+    pub const VARIANTS_STR: &[&str] = &["Created", "Updated", "Removed", "State", "Restored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -24588,33 +23499,28 @@ impl LedgerEntryChange {
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryChangeType; 5] {
+    pub const fn variants() -> &'static [LedgerEntryChangeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerEntryChange {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LedgerEntryChangeType> for LedgerEntryChange {
     #[must_use]
     fn discriminant(&self) -> LedgerEntryChangeType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LedgerEntryChangeType> for LedgerEntryChange {
     fn variants() -> slice::Iter<'static, LedgerEntryChangeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LedgerEntryChangeType> for LedgerEntryChange {}
-
 impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24634,7 +23540,6 @@ impl ReadXdr for LedgerEntryChange {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24678,21 +23583,18 @@ impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
         x.0
     }
 }
-
 impl From<VecM<LedgerEntryChange>> for LedgerEntryChanges {
     #[must_use]
     fn from(x: VecM<LedgerEntryChange>) -> Self {
         LedgerEntryChanges(x)
     }
 }
-
 impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
     #[must_use]
     fn as_ref(&self) -> &VecM<LedgerEntryChange> {
         &self.0
     }
 }
-
 impl ReadXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24703,35 +23605,30 @@ impl ReadXdr for LedgerEntryChanges {
         })
     }
 }
-
 impl WriteXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for LedgerEntryChanges {
     type Target = VecM<LedgerEntryChange>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
     #[must_use]
     fn from(x: LedgerEntryChanges) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<LedgerEntryChange>> for LedgerEntryChanges {
     type Error = Error;
     fn try_from(x: Vec<LedgerEntryChange>) -> Result<Self, Error> {
         Ok(LedgerEntryChanges(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<LedgerEntryChange>> for LedgerEntryChanges {
     type Error = Error;
@@ -24739,14 +23636,12 @@ impl TryFrom<&Vec<LedgerEntryChange>> for LedgerEntryChanges {
         Ok(LedgerEntryChanges(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
     #[must_use]
     fn as_ref(&self) -> &Vec<LedgerEntryChange> {
         &self.0 .0
     }
 }
-
 impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -24783,7 +23678,6 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 pub struct OperationMeta {
     pub changes: LedgerEntryChanges,
 }
-
 impl ReadXdr for OperationMeta {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24794,7 +23688,6 @@ impl ReadXdr for OperationMeta {
         })
     }
 }
-
 impl WriteXdr for OperationMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24830,7 +23723,6 @@ pub struct TransactionMetaV1 {
     pub tx_changes: LedgerEntryChanges,
     pub operations: VecM<OperationMeta>,
 }
-
 impl ReadXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24842,7 +23734,6 @@ impl ReadXdr for TransactionMetaV1 {
         })
     }
 }
-
 impl WriteXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24883,7 +23774,6 @@ pub struct TransactionMetaV2 {
     pub operations: VecM<OperationMeta>,
     pub tx_changes_after: LedgerEntryChanges,
 }
-
 impl ReadXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -24896,7 +23786,6 @@ impl ReadXdr for TransactionMetaV2 {
         })
     }
 }
-
 impl WriteXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -24937,14 +23826,13 @@ pub enum ContractEventType {
     Contract = 1,
     Diagnostic = 2,
 }
-
 impl ContractEventType {
-    pub const VARIANTS: [ContractEventType; 3] = [
+    pub const VARIANTS: &[ContractEventType] = &[
         ContractEventType::System,
         ContractEventType::Contract,
         ContractEventType::Diagnostic,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["System", "Contract", "Diagnostic"];
+    pub const VARIANTS_STR: &[&str] = &["System", "Contract", "Diagnostic"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -24956,32 +23844,27 @@ impl ContractEventType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractEventType; 3] {
+    pub const fn variants() -> &'static [ContractEventType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractEventType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ContractEventType> for ContractEventType {
     fn variants() -> slice::Iter<'static, ContractEventType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ContractEventType {}
-
 impl fmt::Display for ContractEventType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ContractEventType {
     type Error = Error;
 
@@ -24996,14 +23879,12 @@ impl TryFrom<i32> for ContractEventType {
         Ok(e)
     }
 }
-
 impl From<ContractEventType> for i32 {
     #[must_use]
     fn from(e: ContractEventType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ContractEventType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25014,7 +23895,6 @@ impl ReadXdr for ContractEventType {
         })
     }
 }
-
 impl WriteXdr for ContractEventType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25050,7 +23930,6 @@ pub struct ContractEventV0 {
     pub topics: VecM<ScVal>,
     pub data: ScVal,
 }
-
 impl ReadXdr for ContractEventV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25062,7 +23941,6 @@ impl ReadXdr for ContractEventV0 {
         })
     }
 }
-
 impl WriteXdr for ContractEventV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25103,17 +23981,15 @@ impl WriteXdr for ContractEventV0 {
 pub enum ContractEventBody {
     V0(ContractEventV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ContractEventBody {
     fn default() -> Self {
         Self::V0(ContractEventV0::default())
     }
 }
-
 impl ContractEventBody {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -25131,33 +24007,28 @@ impl ContractEventBody {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractEventBody {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for ContractEventBody {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for ContractEventBody {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for ContractEventBody {}
-
 impl ReadXdr for ContractEventBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25173,7 +24044,6 @@ impl ReadXdr for ContractEventBody {
         })
     }
 }
-
 impl WriteXdr for ContractEventBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25230,7 +24100,6 @@ pub struct ContractEvent {
     pub type_: ContractEventType,
     pub body: ContractEventBody,
 }
-
 impl ReadXdr for ContractEvent {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25244,7 +24113,6 @@ impl ReadXdr for ContractEvent {
         })
     }
 }
-
 impl WriteXdr for ContractEvent {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25283,7 +24151,6 @@ pub struct DiagnosticEvent {
     pub in_successful_contract_call: bool,
     pub event: ContractEvent,
 }
-
 impl ReadXdr for DiagnosticEvent {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25295,7 +24162,6 @@ impl ReadXdr for DiagnosticEvent {
         })
     }
 }
-
 impl WriteXdr for DiagnosticEvent {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25374,7 +24240,6 @@ pub struct SorobanTransactionMetaExtV1 {
     )]
     pub rent_fee_charged: i64,
 }
-
 impl ReadXdr for SorobanTransactionMetaExtV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25388,7 +24253,6 @@ impl ReadXdr for SorobanTransactionMetaExtV1 {
         })
     }
 }
-
 impl WriteXdr for SorobanTransactionMetaExtV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25431,17 +24295,15 @@ pub enum SorobanTransactionMetaExt {
     V0,
     V1(SorobanTransactionMetaExtV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SorobanTransactionMetaExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl SorobanTransactionMetaExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -25461,33 +24323,28 @@ impl SorobanTransactionMetaExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for SorobanTransactionMetaExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for SorobanTransactionMetaExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for SorobanTransactionMetaExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for SorobanTransactionMetaExt {}
-
 impl ReadXdr for SorobanTransactionMetaExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25504,7 +24361,6 @@ impl ReadXdr for SorobanTransactionMetaExt {
         })
     }
 }
-
 impl WriteXdr for SorobanTransactionMetaExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25555,7 +24411,6 @@ pub struct SorobanTransactionMeta {
     pub return_value: ScVal,
     pub diagnostic_events: VecM<DiagnosticEvent>,
 }
-
 impl ReadXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25569,7 +24424,6 @@ impl ReadXdr for SorobanTransactionMeta {
         })
     }
 }
-
 impl WriteXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25618,7 +24472,6 @@ pub struct TransactionMetaV3 {
     pub tx_changes_after: LedgerEntryChanges,
     pub soroban_meta: Option<SorobanTransactionMeta>,
 }
-
 impl ReadXdr for TransactionMetaV3 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25633,7 +24486,6 @@ impl ReadXdr for TransactionMetaV3 {
         })
     }
 }
-
 impl WriteXdr for TransactionMetaV3 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25677,7 +24529,6 @@ pub struct OperationMetaV2 {
     pub changes: LedgerEntryChanges,
     pub events: VecM<ContractEvent>,
 }
-
 impl ReadXdr for OperationMetaV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25690,7 +24541,6 @@ impl ReadXdr for OperationMetaV2 {
         })
     }
 }
-
 impl WriteXdr for OperationMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25729,7 +24579,6 @@ pub struct SorobanTransactionMetaV2 {
     pub ext: SorobanTransactionMetaExt,
     pub return_value: Option<ScVal>,
 }
-
 impl ReadXdr for SorobanTransactionMetaV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25741,7 +24590,6 @@ impl ReadXdr for SorobanTransactionMetaV2 {
         })
     }
 }
-
 impl WriteXdr for SorobanTransactionMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25786,14 +24634,13 @@ pub enum TransactionEventStage {
     AfterTx = 1,
     AfterAllTxs = 2,
 }
-
 impl TransactionEventStage {
-    pub const VARIANTS: [TransactionEventStage; 3] = [
+    pub const VARIANTS: &[TransactionEventStage] = &[
         TransactionEventStage::BeforeAllTxs,
         TransactionEventStage::AfterTx,
         TransactionEventStage::AfterAllTxs,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["BeforeAllTxs", "AfterTx", "AfterAllTxs"];
+    pub const VARIANTS_STR: &[&str] = &["BeforeAllTxs", "AfterTx", "AfterAllTxs"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -25805,32 +24652,27 @@ impl TransactionEventStage {
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionEventStage; 3] {
+    pub const fn variants() -> &'static [TransactionEventStage] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionEventStage {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<TransactionEventStage> for TransactionEventStage {
     fn variants() -> slice::Iter<'static, TransactionEventStage> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for TransactionEventStage {}
-
 impl fmt::Display for TransactionEventStage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for TransactionEventStage {
     type Error = Error;
 
@@ -25845,14 +24687,12 @@ impl TryFrom<i32> for TransactionEventStage {
         Ok(e)
     }
 }
-
 impl From<TransactionEventStage> for i32 {
     #[must_use]
     fn from(e: TransactionEventStage) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for TransactionEventStage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25863,7 +24703,6 @@ impl ReadXdr for TransactionEventStage {
         })
     }
 }
-
 impl WriteXdr for TransactionEventStage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25898,7 +24737,6 @@ pub struct TransactionEvent {
     pub stage: TransactionEventStage,
     pub event: ContractEvent,
 }
-
 impl ReadXdr for TransactionEvent {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25910,7 +24748,6 @@ impl ReadXdr for TransactionEvent {
         })
     }
 }
-
 impl WriteXdr for TransactionEvent {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -25962,7 +24799,6 @@ pub struct TransactionMetaV4 {
     pub events: VecM<TransactionEvent>,
     pub diagnostic_events: VecM<DiagnosticEvent>,
 }
-
 impl ReadXdr for TransactionMetaV4 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -25979,7 +24815,6 @@ impl ReadXdr for TransactionMetaV4 {
         })
     }
 }
-
 impl WriteXdr for TransactionMetaV4 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26021,7 +24856,6 @@ pub struct InvokeHostFunctionSuccessPreImage {
     pub return_value: ScVal,
     pub events: VecM<ContractEvent>,
 }
-
 impl ReadXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26033,7 +24867,6 @@ impl ReadXdr for InvokeHostFunctionSuccessPreImage {
         })
     }
 }
-
 impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26082,17 +24915,15 @@ pub enum TransactionMeta {
     V3(TransactionMetaV3),
     V4(TransactionMetaV4),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionMeta {
     fn default() -> Self {
         Self::V0(VecM::<OperationMeta>::default())
     }
 }
-
 impl TransactionMeta {
-    pub const VARIANTS: [i32; 5] = [0, 1, 2, 3, 4];
-    pub const VARIANTS_STR: [&'static str; 5] = ["V0", "V1", "V2", "V3", "V4"];
+    pub const VARIANTS: &[i32] = &[0, 1, 2, 3, 4];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1", "V2", "V3", "V4"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -26118,33 +24949,28 @@ impl TransactionMeta {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 5] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionMeta {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionMeta {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionMeta {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionMeta {}
-
 impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26164,7 +24990,6 @@ impl ReadXdr for TransactionMeta {
         })
     }
 }
-
 impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26210,7 +25035,6 @@ pub struct TransactionResultMeta {
     pub fee_processing: LedgerEntryChanges,
     pub tx_apply_processing: TransactionMeta,
 }
-
 impl ReadXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26223,7 +25047,6 @@ impl ReadXdr for TransactionResultMeta {
         })
     }
 }
-
 impl WriteXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26269,7 +25092,6 @@ pub struct TransactionResultMetaV1 {
     pub tx_apply_processing: TransactionMeta,
     pub post_tx_apply_fee_processing: LedgerEntryChanges,
 }
-
 impl ReadXdr for TransactionResultMetaV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26284,7 +25106,6 @@ impl ReadXdr for TransactionResultMetaV1 {
         })
     }
 }
-
 impl WriteXdr for TransactionResultMetaV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26324,7 +25145,6 @@ pub struct UpgradeEntryMeta {
     pub upgrade: LedgerUpgrade,
     pub changes: LedgerEntryChanges,
 }
-
 impl ReadXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26336,7 +25156,6 @@ impl ReadXdr for UpgradeEntryMeta {
         })
     }
 }
-
 impl WriteXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26388,7 +25207,6 @@ pub struct LedgerCloseMetaV0 {
     pub upgrades_processing: VecM<UpgradeEntryMeta>,
     pub scp_info: VecM<ScpHistoryEntry>,
 }
-
 impl ReadXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26403,7 +25221,6 @@ impl ReadXdr for LedgerCloseMetaV0 {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26447,7 +25264,6 @@ pub struct LedgerCloseMetaExtV1 {
     )]
     pub soroban_fee_write1_kb: i64,
 }
-
 impl ReadXdr for LedgerCloseMetaExtV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26459,7 +25275,6 @@ impl ReadXdr for LedgerCloseMetaExtV1 {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMetaExtV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26499,17 +25314,15 @@ pub enum LedgerCloseMetaExt {
     V0,
     V1(LedgerCloseMetaExtV1),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerCloseMetaExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl LedgerCloseMetaExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -26529,33 +25342,28 @@ impl LedgerCloseMetaExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerCloseMetaExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerCloseMetaExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerCloseMetaExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerCloseMetaExt {}
-
 impl ReadXdr for LedgerCloseMetaExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26572,7 +25380,6 @@ impl ReadXdr for LedgerCloseMetaExt {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMetaExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26648,7 +25455,6 @@ pub struct LedgerCloseMetaV1 {
     pub evicted_keys: VecM<LedgerKey>,
     pub unused: VecM<LedgerEntry>,
 }
-
 impl ReadXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26667,7 +25473,6 @@ impl ReadXdr for LedgerCloseMetaV1 {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26742,7 +25547,6 @@ pub struct LedgerCloseMetaV2 {
     pub total_byte_size_of_live_soroban_state: u64,
     pub evicted_keys: VecM<LedgerKey>,
 }
-
 impl ReadXdr for LedgerCloseMetaV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26760,7 +25564,6 @@ impl ReadXdr for LedgerCloseMetaV2 {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26809,17 +25612,15 @@ pub enum LedgerCloseMeta {
     V1(LedgerCloseMetaV1),
     V2(LedgerCloseMetaV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LedgerCloseMeta {
     fn default() -> Self {
         Self::V0(LedgerCloseMetaV0::default())
     }
 }
-
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 3] = [0, 1, 2];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: &[i32] = &[0, 1, 2];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -26841,33 +25642,28 @@ impl LedgerCloseMeta {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for LedgerCloseMeta {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for LedgerCloseMeta {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for LedgerCloseMeta {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for LedgerCloseMeta {}
-
 impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -26885,7 +25681,6 @@ impl ReadXdr for LedgerCloseMeta {
         })
     }
 }
-
 impl WriteXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -26934,16 +25729,15 @@ pub enum ErrorCode {
     Auth = 3,
     Load = 4,
 }
-
 impl ErrorCode {
-    pub const VARIANTS: [ErrorCode; 5] = [
+    pub const VARIANTS: &[ErrorCode] = &[
         ErrorCode::Misc,
         ErrorCode::Data,
         ErrorCode::Conf,
         ErrorCode::Auth,
         ErrorCode::Load,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = ["Misc", "Data", "Conf", "Auth", "Load"];
+    pub const VARIANTS_STR: &[&str] = &["Misc", "Data", "Conf", "Auth", "Load"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -26957,32 +25751,27 @@ impl ErrorCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ErrorCode; 5] {
+    pub const fn variants() -> &'static [ErrorCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ErrorCode> for ErrorCode {
     fn variants() -> slice::Iter<'static, ErrorCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ErrorCode {}
-
 impl fmt::Display for ErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ErrorCode {
     type Error = Error;
 
@@ -26999,14 +25788,12 @@ impl TryFrom<i32> for ErrorCode {
         Ok(e)
     }
 }
-
 impl From<ErrorCode> for i32 {
     #[must_use]
     fn from(e: ErrorCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ErrorCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27017,7 +25804,6 @@ impl ReadXdr for ErrorCode {
         })
     }
 }
-
 impl WriteXdr for ErrorCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27053,7 +25839,6 @@ pub struct SError {
     pub code: ErrorCode,
     pub msg: StringM<100>,
 }
-
 impl ReadXdr for SError {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27065,7 +25850,6 @@ impl ReadXdr for SError {
         })
     }
 }
-
 impl WriteXdr for SError {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27100,7 +25884,6 @@ impl WriteXdr for SError {
 pub struct SendMore {
     pub num_messages: u32,
 }
-
 impl ReadXdr for SendMore {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27111,7 +25894,6 @@ impl ReadXdr for SendMore {
         })
     }
 }
-
 impl WriteXdr for SendMore {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27147,7 +25929,6 @@ pub struct SendMoreExtended {
     pub num_messages: u32,
     pub num_bytes: u32,
 }
-
 impl ReadXdr for SendMoreExtended {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27159,7 +25940,6 @@ impl ReadXdr for SendMoreExtended {
         })
     }
 }
-
 impl WriteXdr for SendMoreExtended {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27202,7 +25982,6 @@ pub struct AuthCert {
     pub expiration: u64,
     pub sig: Signature,
 }
-
 impl ReadXdr for AuthCert {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27215,7 +25994,6 @@ impl ReadXdr for AuthCert {
         })
     }
 }
-
 impl WriteXdr for AuthCert {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27267,7 +26045,6 @@ pub struct Hello {
     pub cert: AuthCert,
     pub nonce: Uint256,
 }
-
 impl ReadXdr for Hello {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27286,7 +26063,6 @@ impl ReadXdr for Hello {
         })
     }
 }
-
 impl WriteXdr for Hello {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27336,7 +26112,6 @@ pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 pub struct Auth {
     pub flags: i32,
 }
-
 impl ReadXdr for Auth {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27347,7 +26122,6 @@ impl ReadXdr for Auth {
         })
     }
 }
-
 impl WriteXdr for Auth {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27384,10 +26158,9 @@ pub enum IpAddrType {
     IPv4 = 0,
     IPv6 = 1,
 }
-
 impl IpAddrType {
-    pub const VARIANTS: [IpAddrType; 2] = [IpAddrType::IPv4, IpAddrType::IPv6];
-    pub const VARIANTS_STR: [&'static str; 2] = ["IPv4", "IPv6"];
+    pub const VARIANTS: &[IpAddrType] = &[IpAddrType::IPv4, IpAddrType::IPv6];
+    pub const VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -27398,32 +26171,27 @@ impl IpAddrType {
     }
 
     #[must_use]
-    pub const fn variants() -> [IpAddrType; 2] {
+    pub const fn variants() -> &'static [IpAddrType] {
         Self::VARIANTS
     }
 }
-
 impl Name for IpAddrType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<IpAddrType> for IpAddrType {
     fn variants() -> slice::Iter<'static, IpAddrType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for IpAddrType {}
-
 impl fmt::Display for IpAddrType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for IpAddrType {
     type Error = Error;
 
@@ -27437,14 +26205,12 @@ impl TryFrom<i32> for IpAddrType {
         Ok(e)
     }
 }
-
 impl From<IpAddrType> for i32 {
     #[must_use]
     fn from(e: IpAddrType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for IpAddrType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27455,7 +26221,6 @@ impl ReadXdr for IpAddrType {
         })
     }
 }
-
 impl WriteXdr for IpAddrType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27494,17 +26259,15 @@ pub enum PeerAddressIp {
     IPv4([u8; 4]),
     IPv6([u8; 16]),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for PeerAddressIp {
     fn default() -> Self {
         Self::IPv4(<[u8; 4]>::default())
     }
 }
-
 impl PeerAddressIp {
-    pub const VARIANTS: [IpAddrType; 2] = [IpAddrType::IPv4, IpAddrType::IPv6];
-    pub const VARIANTS_STR: [&'static str; 2] = ["IPv4", "IPv6"];
+    pub const VARIANTS: &[IpAddrType] = &[IpAddrType::IPv4, IpAddrType::IPv6];
+    pub const VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -27524,33 +26287,28 @@ impl PeerAddressIp {
     }
 
     #[must_use]
-    pub const fn variants() -> [IpAddrType; 2] {
+    pub const fn variants() -> &'static [IpAddrType] {
         Self::VARIANTS
     }
 }
-
 impl Name for PeerAddressIp {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<IpAddrType> for PeerAddressIp {
     #[must_use]
     fn discriminant(&self) -> IpAddrType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<IpAddrType> for PeerAddressIp {
     fn variants() -> slice::Iter<'static, IpAddrType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<IpAddrType> for PeerAddressIp {}
-
 impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27567,7 +26325,6 @@ impl ReadXdr for PeerAddressIp {
         })
     }
 }
-
 impl WriteXdr for PeerAddressIp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27617,7 +26374,6 @@ pub struct PeerAddress {
     pub port: u32,
     pub num_failures: u32,
 }
-
 impl ReadXdr for PeerAddress {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27630,7 +26386,6 @@ impl ReadXdr for PeerAddress {
         })
     }
 }
-
 impl WriteXdr for PeerAddress {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27721,9 +26476,8 @@ pub enum MessageType {
     TimeSlicedSurveyStartCollecting = 23,
     TimeSlicedSurveyStopCollecting = 24,
 }
-
 impl MessageType {
-    pub const VARIANTS: [MessageType; 21] = [
+    pub const VARIANTS: &[MessageType] = &[
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
@@ -27746,7 +26500,7 @@ impl MessageType {
         MessageType::TimeSlicedSurveyStartCollecting,
         MessageType::TimeSlicedSurveyStopCollecting,
     ];
-    pub const VARIANTS_STR: [&'static str; 21] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ErrorMsg",
         "Auth",
         "DontHave",
@@ -27798,32 +26552,27 @@ impl MessageType {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 21] {
+    pub const fn variants() -> &'static [MessageType] {
         Self::VARIANTS
     }
 }
-
 impl Name for MessageType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<MessageType> for MessageType {
     fn variants() -> slice::Iter<'static, MessageType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for MessageType {}
-
 impl fmt::Display for MessageType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for MessageType {
     type Error = Error;
 
@@ -27856,14 +26605,12 @@ impl TryFrom<i32> for MessageType {
         Ok(e)
     }
 }
-
 impl From<MessageType> for i32 {
     #[must_use]
     fn from(e: MessageType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for MessageType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27874,7 +26621,6 @@ impl ReadXdr for MessageType {
         })
     }
 }
-
 impl WriteXdr for MessageType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27910,7 +26656,6 @@ pub struct DontHave {
     pub type_: MessageType,
     pub req_hash: Uint256,
 }
-
 impl ReadXdr for DontHave {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -27922,7 +26667,6 @@ impl ReadXdr for DontHave {
         })
     }
 }
-
 impl WriteXdr for DontHave {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -27958,11 +26702,10 @@ pub enum SurveyMessageCommandType {
     #[cfg_attr(feature = "alloc", default)]
     TimeSlicedSurveyTopology = 1,
 }
-
 impl SurveyMessageCommandType {
-    pub const VARIANTS: [SurveyMessageCommandType; 1] =
-        [SurveyMessageCommandType::TimeSlicedSurveyTopology];
-    pub const VARIANTS_STR: [&'static str; 1] = ["TimeSlicedSurveyTopology"];
+    pub const VARIANTS: &[SurveyMessageCommandType] =
+        &[SurveyMessageCommandType::TimeSlicedSurveyTopology];
+    pub const VARIANTS_STR: &[&str] = &["TimeSlicedSurveyTopology"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -27972,32 +26715,27 @@ impl SurveyMessageCommandType {
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageCommandType; 1] {
+    pub const fn variants() -> &'static [SurveyMessageCommandType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SurveyMessageCommandType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SurveyMessageCommandType> for SurveyMessageCommandType {
     fn variants() -> slice::Iter<'static, SurveyMessageCommandType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SurveyMessageCommandType {}
-
 impl fmt::Display for SurveyMessageCommandType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SurveyMessageCommandType {
     type Error = Error;
 
@@ -28010,14 +26748,12 @@ impl TryFrom<i32> for SurveyMessageCommandType {
         Ok(e)
     }
 }
-
 impl From<SurveyMessageCommandType> for i32 {
     #[must_use]
     fn from(e: SurveyMessageCommandType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28028,7 +26764,6 @@ impl ReadXdr for SurveyMessageCommandType {
         })
     }
 }
-
 impl WriteXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28063,11 +26798,10 @@ pub enum SurveyMessageResponseType {
     #[cfg_attr(feature = "alloc", default)]
     SurveyTopologyResponseV2 = 2,
 }
-
 impl SurveyMessageResponseType {
-    pub const VARIANTS: [SurveyMessageResponseType; 1] =
-        [SurveyMessageResponseType::SurveyTopologyResponseV2];
-    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopologyResponseV2"];
+    pub const VARIANTS: &[SurveyMessageResponseType] =
+        &[SurveyMessageResponseType::SurveyTopologyResponseV2];
+    pub const VARIANTS_STR: &[&str] = &["SurveyTopologyResponseV2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -28077,32 +26811,27 @@ impl SurveyMessageResponseType {
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageResponseType; 1] {
+    pub const fn variants() -> &'static [SurveyMessageResponseType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SurveyMessageResponseType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SurveyMessageResponseType> for SurveyMessageResponseType {
     fn variants() -> slice::Iter<'static, SurveyMessageResponseType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SurveyMessageResponseType {}
-
 impl fmt::Display for SurveyMessageResponseType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SurveyMessageResponseType {
     type Error = Error;
 
@@ -28115,14 +26844,12 @@ impl TryFrom<i32> for SurveyMessageResponseType {
         Ok(e)
     }
 }
-
 impl From<SurveyMessageResponseType> for i32 {
     #[must_use]
     fn from(e: SurveyMessageResponseType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28133,7 +26860,6 @@ impl ReadXdr for SurveyMessageResponseType {
         })
     }
 }
-
 impl WriteXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28171,7 +26897,6 @@ pub struct TimeSlicedSurveyStartCollectingMessage {
     pub nonce: u32,
     pub ledger_num: u32,
 }
-
 impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28184,7 +26909,6 @@ impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28222,7 +26946,6 @@ pub struct SignedTimeSlicedSurveyStartCollectingMessage {
     pub signature: Signature,
     pub start_collecting: TimeSlicedSurveyStartCollectingMessage,
 }
-
 impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28234,7 +26957,6 @@ impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
         })
     }
 }
-
 impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28273,7 +26995,6 @@ pub struct TimeSlicedSurveyStopCollectingMessage {
     pub nonce: u32,
     pub ledger_num: u32,
 }
-
 impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28286,7 +27007,6 @@ impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28324,7 +27044,6 @@ pub struct SignedTimeSlicedSurveyStopCollectingMessage {
     pub signature: Signature,
     pub stop_collecting: TimeSlicedSurveyStopCollectingMessage,
 }
-
 impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28336,7 +27055,6 @@ impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
         })
     }
 }
-
 impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28379,7 +27097,6 @@ pub struct SurveyRequestMessage {
     pub encryption_key: Curve25519Public,
     pub command_type: SurveyMessageCommandType,
 }
-
 impl ReadXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28394,7 +27111,6 @@ impl ReadXdr for SurveyRequestMessage {
         })
     }
 }
-
 impl WriteXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28438,7 +27154,6 @@ pub struct TimeSlicedSurveyRequestMessage {
     pub inbound_peers_index: u32,
     pub outbound_peers_index: u32,
 }
-
 impl ReadXdr for TimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28452,7 +27167,6 @@ impl ReadXdr for TimeSlicedSurveyRequestMessage {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28491,7 +27205,6 @@ pub struct SignedTimeSlicedSurveyRequestMessage {
     pub request_signature: Signature,
     pub request: TimeSlicedSurveyRequestMessage,
 }
-
 impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28503,7 +27216,6 @@ impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
         })
     }
 }
-
 impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28540,21 +27252,18 @@ impl From<EncryptedBody> for BytesM<64000> {
         x.0
     }
 }
-
 impl From<BytesM<64000>> for EncryptedBody {
     #[must_use]
     fn from(x: BytesM<64000>) -> Self {
         EncryptedBody(x)
     }
 }
-
 impl AsRef<BytesM<64000>> for EncryptedBody {
     #[must_use]
     fn as_ref(&self) -> &BytesM<64000> {
         &self.0
     }
 }
-
 impl ReadXdr for EncryptedBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28565,35 +27274,30 @@ impl ReadXdr for EncryptedBody {
         })
     }
 }
-
 impl WriteXdr for EncryptedBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for EncryptedBody {
     type Target = BytesM<64000>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<EncryptedBody> for Vec<u8> {
     #[must_use]
     fn from(x: EncryptedBody) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for EncryptedBody {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(EncryptedBody(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for EncryptedBody {
     type Error = Error;
@@ -28601,14 +27305,12 @@ impl TryFrom<&Vec<u8>> for EncryptedBody {
         Ok(EncryptedBody(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for EncryptedBody {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for EncryptedBody {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -28653,7 +27355,6 @@ pub struct SurveyResponseMessage {
     pub command_type: SurveyMessageCommandType,
     pub encrypted_body: EncryptedBody,
 }
-
 impl ReadXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28668,7 +27369,6 @@ impl ReadXdr for SurveyResponseMessage {
         })
     }
 }
-
 impl WriteXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28708,7 +27408,6 @@ pub struct TimeSlicedSurveyResponseMessage {
     pub response: SurveyResponseMessage,
     pub nonce: u32,
 }
-
 impl ReadXdr for TimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28720,7 +27419,6 @@ impl ReadXdr for TimeSlicedSurveyResponseMessage {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28757,7 +27455,6 @@ pub struct SignedTimeSlicedSurveyResponseMessage {
     pub response_signature: Signature,
     pub response: TimeSlicedSurveyResponseMessage,
 }
-
 impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28769,7 +27466,6 @@ impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
         })
     }
 }
-
 impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28886,7 +27582,6 @@ pub struct PeerStats {
     )]
     pub duplicate_fetch_message_recv: u64,
 }
-
 impl ReadXdr for PeerStats {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -28911,7 +27606,6 @@ impl ReadXdr for PeerStats {
         })
     }
 }
-
 impl WriteXdr for PeerStats {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -28983,7 +27677,6 @@ pub struct TimeSlicedNodeData {
     pub max_inbound_peer_count: u32,
     pub max_outbound_peer_count: u32,
 }
-
 impl ReadXdr for TimeSlicedNodeData {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29003,7 +27696,6 @@ impl ReadXdr for TimeSlicedNodeData {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedNodeData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -29048,7 +27740,6 @@ pub struct TimeSlicedPeerData {
     pub peer_stats: PeerStats,
     pub average_latency_ms: u32,
 }
-
 impl ReadXdr for TimeSlicedPeerData {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29060,7 +27751,6 @@ impl ReadXdr for TimeSlicedPeerData {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedPeerData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -29097,21 +27787,18 @@ impl From<TimeSlicedPeerDataList> for VecM<TimeSlicedPeerData, 25> {
         x.0
     }
 }
-
 impl From<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
     #[must_use]
     fn from(x: VecM<TimeSlicedPeerData, 25>) -> Self {
         TimeSlicedPeerDataList(x)
     }
 }
-
 impl AsRef<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
     #[must_use]
     fn as_ref(&self) -> &VecM<TimeSlicedPeerData, 25> {
         &self.0
     }
 }
-
 impl ReadXdr for TimeSlicedPeerDataList {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29122,35 +27809,30 @@ impl ReadXdr for TimeSlicedPeerDataList {
         })
     }
 }
-
 impl WriteXdr for TimeSlicedPeerDataList {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for TimeSlicedPeerDataList {
     type Target = VecM<TimeSlicedPeerData, 25>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<TimeSlicedPeerDataList> for Vec<TimeSlicedPeerData> {
     #[must_use]
     fn from(x: TimeSlicedPeerDataList) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
     type Error = Error;
     fn try_from(x: Vec<TimeSlicedPeerData>) -> Result<Self, Error> {
         Ok(TimeSlicedPeerDataList(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
     type Error = Error;
@@ -29158,14 +27840,12 @@ impl TryFrom<&Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
         Ok(TimeSlicedPeerDataList(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
     #[must_use]
     fn as_ref(&self) -> &Vec<TimeSlicedPeerData> {
         &self.0 .0
     }
 }
-
 impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -29206,7 +27886,6 @@ pub struct TopologyResponseBodyV2 {
     pub outbound_peers: TimeSlicedPeerDataList,
     pub node_data: TimeSlicedNodeData,
 }
-
 impl ReadXdr for TopologyResponseBodyV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29219,7 +27898,6 @@ impl ReadXdr for TopologyResponseBodyV2 {
         })
     }
 }
-
 impl WriteXdr for TopologyResponseBodyV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -29257,18 +27935,16 @@ impl WriteXdr for TopologyResponseBodyV2 {
 pub enum SurveyResponseBody {
     SurveyTopologyResponseV2(TopologyResponseBodyV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SurveyResponseBody {
     fn default() -> Self {
         Self::SurveyTopologyResponseV2(TopologyResponseBodyV2::default())
     }
 }
-
 impl SurveyResponseBody {
-    pub const VARIANTS: [SurveyMessageResponseType; 1] =
-        [SurveyMessageResponseType::SurveyTopologyResponseV2];
-    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopologyResponseV2"];
+    pub const VARIANTS: &[SurveyMessageResponseType] =
+        &[SurveyMessageResponseType::SurveyTopologyResponseV2];
+    pub const VARIANTS_STR: &[&str] = &["SurveyTopologyResponseV2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -29288,33 +27964,28 @@ impl SurveyResponseBody {
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageResponseType; 1] {
+    pub const fn variants() -> &'static [SurveyMessageResponseType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SurveyResponseBody {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<SurveyMessageResponseType> for SurveyResponseBody {
     #[must_use]
     fn discriminant(&self) -> SurveyMessageResponseType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<SurveyMessageResponseType> for SurveyResponseBody {
     fn variants() -> slice::Iter<'static, SurveyMessageResponseType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<SurveyMessageResponseType> for SurveyResponseBody {}
-
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29333,7 +28004,6 @@ impl ReadXdr for SurveyResponseBody {
         })
     }
 }
-
 impl WriteXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -29381,21 +28051,18 @@ impl From<TxAdvertVector> for VecM<Hash, 1000> {
         x.0
     }
 }
-
 impl From<VecM<Hash, 1000>> for TxAdvertVector {
     #[must_use]
     fn from(x: VecM<Hash, 1000>) -> Self {
         TxAdvertVector(x)
     }
 }
-
 impl AsRef<VecM<Hash, 1000>> for TxAdvertVector {
     #[must_use]
     fn as_ref(&self) -> &VecM<Hash, 1000> {
         &self.0
     }
 }
-
 impl ReadXdr for TxAdvertVector {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29406,35 +28073,30 @@ impl ReadXdr for TxAdvertVector {
         })
     }
 }
-
 impl WriteXdr for TxAdvertVector {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for TxAdvertVector {
     type Target = VecM<Hash, 1000>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<TxAdvertVector> for Vec<Hash> {
     #[must_use]
     fn from(x: TxAdvertVector) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<Hash>> for TxAdvertVector {
     type Error = Error;
     fn try_from(x: Vec<Hash>) -> Result<Self, Error> {
         Ok(TxAdvertVector(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<Hash>> for TxAdvertVector {
     type Error = Error;
@@ -29442,14 +28104,12 @@ impl TryFrom<&Vec<Hash>> for TxAdvertVector {
         Ok(TxAdvertVector(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<Hash>> for TxAdvertVector {
     #[must_use]
     fn as_ref(&self) -> &Vec<Hash> {
         &self.0 .0
     }
 }
-
 impl AsRef<[Hash]> for TxAdvertVector {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -29486,7 +28146,6 @@ impl AsRef<[Hash]> for TxAdvertVector {
 pub struct FloodAdvert {
     pub tx_hashes: TxAdvertVector,
 }
-
 impl ReadXdr for FloodAdvert {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29497,7 +28156,6 @@ impl ReadXdr for FloodAdvert {
         })
     }
 }
-
 impl WriteXdr for FloodAdvert {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -29541,21 +28199,18 @@ impl From<TxDemandVector> for VecM<Hash, 1000> {
         x.0
     }
 }
-
 impl From<VecM<Hash, 1000>> for TxDemandVector {
     #[must_use]
     fn from(x: VecM<Hash, 1000>) -> Self {
         TxDemandVector(x)
     }
 }
-
 impl AsRef<VecM<Hash, 1000>> for TxDemandVector {
     #[must_use]
     fn as_ref(&self) -> &VecM<Hash, 1000> {
         &self.0
     }
 }
-
 impl ReadXdr for TxDemandVector {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29566,35 +28221,30 @@ impl ReadXdr for TxDemandVector {
         })
     }
 }
-
 impl WriteXdr for TxDemandVector {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for TxDemandVector {
     type Target = VecM<Hash, 1000>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<TxDemandVector> for Vec<Hash> {
     #[must_use]
     fn from(x: TxDemandVector) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<Hash>> for TxDemandVector {
     type Error = Error;
     fn try_from(x: Vec<Hash>) -> Result<Self, Error> {
         Ok(TxDemandVector(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<Hash>> for TxDemandVector {
     type Error = Error;
@@ -29602,14 +28252,12 @@ impl TryFrom<&Vec<Hash>> for TxDemandVector {
         Ok(TxDemandVector(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<Hash>> for TxDemandVector {
     #[must_use]
     fn as_ref(&self) -> &Vec<Hash> {
         &self.0 .0
     }
 }
-
 impl AsRef<[Hash]> for TxDemandVector {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -29646,7 +28294,6 @@ impl AsRef<[Hash]> for TxDemandVector {
 pub struct FloodDemand {
     pub tx_hashes: TxDemandVector,
 }
-
 impl ReadXdr for FloodDemand {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29657,7 +28304,6 @@ impl ReadXdr for FloodDemand {
         })
     }
 }
-
 impl WriteXdr for FloodDemand {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -29764,16 +28410,14 @@ pub enum StellarMessage {
     FloodAdvert(FloodAdvert),
     FloodDemand(FloodDemand),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for StellarMessage {
     fn default() -> Self {
         Self::ErrorMsg(SError::default())
     }
 }
-
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 21] = [
+    pub const VARIANTS: &[MessageType] = &[
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
@@ -29796,7 +28440,7 @@ impl StellarMessage {
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 21] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ErrorMsg",
         "Hello",
         "Auth",
@@ -29878,33 +28522,28 @@ impl StellarMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 21] {
+    pub const fn variants() -> &'static [MessageType] {
         Self::VARIANTS
     }
 }
-
 impl Name for StellarMessage {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<MessageType> for StellarMessage {
     #[must_use]
     fn discriminant(&self) -> MessageType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<MessageType> for StellarMessage {
     fn variants() -> slice::Iter<'static, MessageType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<MessageType> for StellarMessage {}
-
 impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -29956,7 +28595,6 @@ impl ReadXdr for StellarMessage {
         })
     }
 }
-
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30022,7 +28660,6 @@ pub struct AuthenticatedMessageV0 {
     pub message: StellarMessage,
     pub mac: HmacSha256Mac,
 }
-
 impl ReadXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30035,7 +28672,6 @@ impl ReadXdr for AuthenticatedMessageV0 {
         })
     }
 }
-
 impl WriteXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30078,17 +28714,15 @@ impl WriteXdr for AuthenticatedMessageV0 {
 pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AuthenticatedMessage {
     fn default() -> Self {
         Self::V0(AuthenticatedMessageV0::default())
     }
 }
-
 impl AuthenticatedMessage {
-    pub const VARIANTS: [u32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[u32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -30106,33 +28740,28 @@ impl AuthenticatedMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [u32; 1] {
+    pub const fn variants() -> &'static [u32] {
         Self::VARIANTS
     }
 }
-
 impl Name for AuthenticatedMessage {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<u32> for AuthenticatedMessage {
     #[must_use]
     fn discriminant(&self) -> u32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<u32> for AuthenticatedMessage {
     fn variants() -> slice::Iter<'static, u32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<u32> for AuthenticatedMessage {}
-
 impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30148,7 +28777,6 @@ impl ReadXdr for AuthenticatedMessage {
         })
     }
 }
-
 impl WriteXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30196,17 +28824,15 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 pub enum LiquidityPoolParameters {
     LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LiquidityPoolParameters {
     fn default() -> Self {
         Self::LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters::default())
     }
 }
-
 impl LiquidityPoolParameters {
-    pub const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
-    pub const VARIANTS_STR: [&'static str; 1] = ["LiquidityPoolConstantProduct"];
+    pub const VARIANTS: &[LiquidityPoolType] = &[LiquidityPoolType::LiquidityPoolConstantProduct];
+    pub const VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -30226,33 +28852,28 @@ impl LiquidityPoolParameters {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolType; 1] {
+    pub const fn variants() -> &'static [LiquidityPoolType] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolParameters {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LiquidityPoolType> for LiquidityPoolParameters {
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LiquidityPoolType> for LiquidityPoolParameters {
     fn variants() -> slice::Iter<'static, LiquidityPoolType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LiquidityPoolType> for LiquidityPoolParameters {}
-
 impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30272,7 +28893,6 @@ impl ReadXdr for LiquidityPoolParameters {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30309,7 +28929,6 @@ pub struct MuxedAccountMed25519 {
     pub id: u64,
     pub ed25519: Uint256,
 }
-
 impl ReadXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30321,7 +28940,6 @@ impl ReadXdr for MuxedAccountMed25519 {
         })
     }
 }
-
 impl WriteXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30391,17 +29009,15 @@ pub enum MuxedAccount {
     Ed25519(Uint256),
     MuxedEd25519(MuxedAccountMed25519),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for MuxedAccount {
     fn default() -> Self {
         Self::Ed25519(Uint256::default())
     }
 }
-
 impl MuxedAccount {
-    pub const VARIANTS: [CryptoKeyType; 2] = [CryptoKeyType::Ed25519, CryptoKeyType::MuxedEd25519];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Ed25519", "MuxedEd25519"];
+    pub const VARIANTS: &[CryptoKeyType] = &[CryptoKeyType::Ed25519, CryptoKeyType::MuxedEd25519];
+    pub const VARIANTS_STR: &[&str] = &["Ed25519", "MuxedEd25519"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -30421,33 +29037,28 @@ impl MuxedAccount {
     }
 
     #[must_use]
-    pub const fn variants() -> [CryptoKeyType; 2] {
+    pub const fn variants() -> &'static [CryptoKeyType] {
         Self::VARIANTS
     }
 }
-
 impl Name for MuxedAccount {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<CryptoKeyType> for MuxedAccount {
     #[must_use]
     fn discriminant(&self) -> CryptoKeyType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<CryptoKeyType> for MuxedAccount {
     fn variants() -> slice::Iter<'static, CryptoKeyType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<CryptoKeyType> for MuxedAccount {}
-
 impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30466,7 +29077,6 @@ impl ReadXdr for MuxedAccount {
         })
     }
 }
-
 impl WriteXdr for MuxedAccount {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30507,7 +29117,6 @@ pub struct DecoratedSignature {
     pub hint: SignatureHint,
     pub signature: Signature,
 }
-
 impl ReadXdr for DecoratedSignature {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30519,7 +29128,6 @@ impl ReadXdr for DecoratedSignature {
         })
     }
 }
-
 impl WriteXdr for DecoratedSignature {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30607,9 +29215,8 @@ pub enum OperationType {
     ExtendFootprintTtl = 25,
     RestoreFootprint = 26,
 }
-
 impl OperationType {
-    pub const VARIANTS: [OperationType; 27] = [
+    pub const VARIANTS: &[OperationType] = &[
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -30638,7 +29245,7 @@ impl OperationType {
         OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
     ];
-    pub const VARIANTS_STR: [&'static str; 27] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -30702,32 +29309,27 @@ impl OperationType {
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 27] {
+    pub const fn variants() -> &'static [OperationType] {
         Self::VARIANTS
     }
 }
-
 impl Name for OperationType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<OperationType> for OperationType {
     fn variants() -> slice::Iter<'static, OperationType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for OperationType {}
-
 impl fmt::Display for OperationType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for OperationType {
     type Error = Error;
 
@@ -30766,14 +29368,12 @@ impl TryFrom<i32> for OperationType {
         Ok(e)
     }
 }
-
 impl From<OperationType> for i32 {
     #[must_use]
     fn from(e: OperationType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for OperationType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30784,7 +29384,6 @@ impl ReadXdr for OperationType {
         })
     }
 }
-
 impl WriteXdr for OperationType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30824,7 +29423,6 @@ pub struct CreateAccountOp {
     )]
     pub starting_balance: i64,
 }
-
 impl ReadXdr for CreateAccountOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30836,7 +29434,6 @@ impl ReadXdr for CreateAccountOp {
         })
     }
 }
-
 impl WriteXdr for CreateAccountOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30879,7 +29476,6 @@ pub struct PaymentOp {
     )]
     pub amount: i64,
 }
-
 impl ReadXdr for PaymentOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30892,7 +29488,6 @@ impl ReadXdr for PaymentOp {
         })
     }
 }
-
 impl WriteXdr for PaymentOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -30950,7 +29545,6 @@ pub struct PathPaymentStrictReceiveOp {
     pub dest_amount: i64,
     pub path: VecM<Asset, 5>,
 }
-
 impl ReadXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -30966,7 +29560,6 @@ impl ReadXdr for PathPaymentStrictReceiveOp {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31027,7 +29620,6 @@ pub struct PathPaymentStrictSendOp {
     pub dest_min: i64,
     pub path: VecM<Asset, 5>,
 }
-
 impl ReadXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31043,7 +29635,6 @@ impl ReadXdr for PathPaymentStrictSendOp {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31100,7 +29691,6 @@ pub struct ManageSellOfferOp {
     )]
     pub offer_id: i64,
 }
-
 impl ReadXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31115,7 +29705,6 @@ impl ReadXdr for ManageSellOfferOp {
         })
     }
 }
-
 impl WriteXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31172,7 +29761,6 @@ pub struct ManageBuyOfferOp {
     )]
     pub offer_id: i64,
 }
-
 impl ReadXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31187,7 +29775,6 @@ impl ReadXdr for ManageBuyOfferOp {
         })
     }
 }
-
 impl WriteXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31235,7 +29822,6 @@ pub struct CreatePassiveSellOfferOp {
     pub amount: i64,
     pub price: Price,
 }
-
 impl ReadXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31249,7 +29835,6 @@ impl ReadXdr for CreatePassiveSellOfferOp {
         })
     }
 }
-
 impl WriteXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31309,7 +29894,6 @@ pub struct SetOptionsOp {
     pub home_domain: Option<String32>,
     pub signer: Option<Signer>,
 }
-
 impl ReadXdr for SetOptionsOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31328,7 +29912,6 @@ impl ReadXdr for SetOptionsOp {
         })
     }
 }
-
 impl WriteXdr for SetOptionsOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31386,23 +29969,21 @@ pub enum ChangeTrustAsset {
     CreditAlphanum12(AlphaNum12),
     PoolShare(LiquidityPoolParameters),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ChangeTrustAsset {
     fn default() -> Self {
         Self::Native
     }
 }
-
 impl ChangeTrustAsset {
-    pub const VARIANTS: [AssetType; 4] = [
+    pub const VARIANTS: &[AssetType] = &[
         AssetType::Native,
         AssetType::CreditAlphanum4,
         AssetType::CreditAlphanum12,
         AssetType::PoolShare,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
+    pub const VARIANTS_STR: &[&str] =
+        &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -31426,33 +30007,28 @@ impl ChangeTrustAsset {
     }
 
     #[must_use]
-    pub const fn variants() -> [AssetType; 4] {
+    pub const fn variants() -> &'static [AssetType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ChangeTrustAsset {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<AssetType> for ChangeTrustAsset {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<AssetType> for ChangeTrustAsset {
     fn variants() -> slice::Iter<'static, AssetType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<AssetType> for ChangeTrustAsset {}
-
 impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31471,7 +30047,6 @@ impl ReadXdr for ChangeTrustAsset {
         })
     }
 }
-
 impl WriteXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31520,7 +30095,6 @@ pub struct ChangeTrustOp {
     )]
     pub limit: i64,
 }
-
 impl ReadXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31532,7 +30106,6 @@ impl ReadXdr for ChangeTrustOp {
         })
     }
 }
-
 impl WriteXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31573,7 +30146,6 @@ pub struct AllowTrustOp {
     pub asset: AssetCode,
     pub authorize: u32,
 }
-
 impl ReadXdr for AllowTrustOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31586,7 +30158,6 @@ impl ReadXdr for AllowTrustOp {
         })
     }
 }
-
 impl WriteXdr for AllowTrustOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31624,7 +30195,6 @@ pub struct ManageDataOp {
     pub data_name: String64,
     pub data_value: Option<DataValue>,
 }
-
 impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31636,7 +30206,6 @@ impl ReadXdr for ManageDataOp {
         })
     }
 }
-
 impl WriteXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31671,7 +30240,6 @@ impl WriteXdr for ManageDataOp {
 pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
 }
-
 impl ReadXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31682,7 +30250,6 @@ impl ReadXdr for BumpSequenceOp {
         })
     }
 }
-
 impl WriteXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31724,7 +30291,6 @@ pub struct CreateClaimableBalanceOp {
     pub amount: i64,
     pub claimants: VecM<Claimant, 10>,
 }
-
 impl ReadXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31737,7 +30303,6 @@ impl ReadXdr for CreateClaimableBalanceOp {
         })
     }
 }
-
 impl WriteXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31773,7 +30338,6 @@ impl WriteXdr for CreateClaimableBalanceOp {
 pub struct ClaimClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
-
 impl ReadXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31784,7 +30348,6 @@ impl ReadXdr for ClaimClaimableBalanceOp {
         })
     }
 }
-
 impl WriteXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31818,7 +30381,6 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 pub struct BeginSponsoringFutureReservesOp {
     pub sponsored_id: AccountId,
 }
-
 impl ReadXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31829,7 +30391,6 @@ impl ReadXdr for BeginSponsoringFutureReservesOp {
         })
     }
 }
-
 impl WriteXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31866,13 +30427,12 @@ pub enum RevokeSponsorshipType {
     LedgerEntry = 0,
     Signer = 1,
 }
-
 impl RevokeSponsorshipType {
-    pub const VARIANTS: [RevokeSponsorshipType; 2] = [
+    pub const VARIANTS: &[RevokeSponsorshipType] = &[
         RevokeSponsorshipType::LedgerEntry,
         RevokeSponsorshipType::Signer,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["LedgerEntry", "Signer"];
+    pub const VARIANTS_STR: &[&str] = &["LedgerEntry", "Signer"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -31883,32 +30443,27 @@ impl RevokeSponsorshipType {
     }
 
     #[must_use]
-    pub const fn variants() -> [RevokeSponsorshipType; 2] {
+    pub const fn variants() -> &'static [RevokeSponsorshipType] {
         Self::VARIANTS
     }
 }
-
 impl Name for RevokeSponsorshipType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<RevokeSponsorshipType> for RevokeSponsorshipType {
     fn variants() -> slice::Iter<'static, RevokeSponsorshipType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for RevokeSponsorshipType {}
-
 impl fmt::Display for RevokeSponsorshipType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for RevokeSponsorshipType {
     type Error = Error;
 
@@ -31922,14 +30477,12 @@ impl TryFrom<i32> for RevokeSponsorshipType {
         Ok(e)
     }
 }
-
 impl From<RevokeSponsorshipType> for i32 {
     #[must_use]
     fn from(e: RevokeSponsorshipType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31940,7 +30493,6 @@ impl ReadXdr for RevokeSponsorshipType {
         })
     }
 }
-
 impl WriteXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -31976,7 +30528,6 @@ pub struct RevokeSponsorshipOpSigner {
     pub account_id: AccountId,
     pub signer_key: SignerKey,
 }
-
 impl ReadXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -31988,7 +30539,6 @@ impl ReadXdr for RevokeSponsorshipOpSigner {
         })
     }
 }
-
 impl WriteXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32032,20 +30582,18 @@ pub enum RevokeSponsorshipOp {
     LedgerEntry(LedgerKey),
     Signer(RevokeSponsorshipOpSigner),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for RevokeSponsorshipOp {
     fn default() -> Self {
         Self::LedgerEntry(LedgerKey::default())
     }
 }
-
 impl RevokeSponsorshipOp {
-    pub const VARIANTS: [RevokeSponsorshipType; 2] = [
+    pub const VARIANTS: &[RevokeSponsorshipType] = &[
         RevokeSponsorshipType::LedgerEntry,
         RevokeSponsorshipType::Signer,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["LedgerEntry", "Signer"];
+    pub const VARIANTS_STR: &[&str] = &["LedgerEntry", "Signer"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -32065,33 +30613,28 @@ impl RevokeSponsorshipOp {
     }
 
     #[must_use]
-    pub const fn variants() -> [RevokeSponsorshipType; 2] {
+    pub const fn variants() -> &'static [RevokeSponsorshipType] {
         Self::VARIANTS
     }
 }
-
 impl Name for RevokeSponsorshipOp {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<RevokeSponsorshipType> for RevokeSponsorshipOp {
     #[must_use]
     fn discriminant(&self) -> RevokeSponsorshipType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<RevokeSponsorshipType> for RevokeSponsorshipOp {
     fn variants() -> slice::Iter<'static, RevokeSponsorshipType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<RevokeSponsorshipType> for RevokeSponsorshipOp {}
-
 impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32110,7 +30653,6 @@ impl ReadXdr for RevokeSponsorshipOp {
         })
     }
 }
-
 impl WriteXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32157,7 +30699,6 @@ pub struct ClawbackOp {
     )]
     pub amount: i64,
 }
-
 impl ReadXdr for ClawbackOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32170,7 +30711,6 @@ impl ReadXdr for ClawbackOp {
         })
     }
 }
-
 impl WriteXdr for ClawbackOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32206,7 +30746,6 @@ impl WriteXdr for ClawbackOp {
 pub struct ClawbackClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
-
 impl ReadXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32217,7 +30756,6 @@ impl ReadXdr for ClawbackClaimableBalanceOp {
         })
     }
 }
-
 impl WriteXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32258,7 +30796,6 @@ pub struct SetTrustLineFlagsOp {
     pub clear_flags: u32,
     pub set_flags: u32,
 }
-
 impl ReadXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32272,7 +30809,6 @@ impl ReadXdr for SetTrustLineFlagsOp {
         })
     }
 }
-
 impl WriteXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32333,7 +30869,6 @@ pub struct LiquidityPoolDepositOp {
     pub min_price: Price,
     pub max_price: Price,
 }
-
 impl ReadXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32348,7 +30883,6 @@ impl ReadXdr for LiquidityPoolDepositOp {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32404,7 +30938,6 @@ pub struct LiquidityPoolWithdrawOp {
     )]
     pub min_amount_b: i64,
 }
-
 impl ReadXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32418,7 +30951,6 @@ impl ReadXdr for LiquidityPoolWithdrawOp {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32462,15 +30994,14 @@ pub enum HostFunctionType {
     UploadContractWasm = 2,
     CreateContractV2 = 3,
 }
-
 impl HostFunctionType {
-    pub const VARIANTS: [HostFunctionType; 4] = [
+    pub const VARIANTS: &[HostFunctionType] = &[
         HostFunctionType::InvokeContract,
         HostFunctionType::CreateContract,
         HostFunctionType::UploadContractWasm,
         HostFunctionType::CreateContractV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "InvokeContract",
         "CreateContract",
         "UploadContractWasm",
@@ -32488,32 +31019,27 @@ impl HostFunctionType {
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunctionType; 4] {
+    pub const fn variants() -> &'static [HostFunctionType] {
         Self::VARIANTS
     }
 }
-
 impl Name for HostFunctionType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<HostFunctionType> for HostFunctionType {
     fn variants() -> slice::Iter<'static, HostFunctionType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for HostFunctionType {}
-
 impl fmt::Display for HostFunctionType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for HostFunctionType {
     type Error = Error;
 
@@ -32529,14 +31055,12 @@ impl TryFrom<i32> for HostFunctionType {
         Ok(e)
     }
 }
-
 impl From<HostFunctionType> for i32 {
     #[must_use]
     fn from(e: HostFunctionType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for HostFunctionType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32547,7 +31071,6 @@ impl ReadXdr for HostFunctionType {
         })
     }
 }
-
 impl WriteXdr for HostFunctionType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32584,13 +31107,12 @@ pub enum ContractIdPreimageType {
     Address = 0,
     Asset = 1,
 }
-
 impl ContractIdPreimageType {
-    pub const VARIANTS: [ContractIdPreimageType; 2] = [
+    pub const VARIANTS: &[ContractIdPreimageType] = &[
         ContractIdPreimageType::Address,
         ContractIdPreimageType::Asset,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Address", "Asset"];
+    pub const VARIANTS_STR: &[&str] = &["Address", "Asset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -32601,32 +31123,27 @@ impl ContractIdPreimageType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractIdPreimageType; 2] {
+    pub const fn variants() -> &'static [ContractIdPreimageType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractIdPreimageType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ContractIdPreimageType> for ContractIdPreimageType {
     fn variants() -> slice::Iter<'static, ContractIdPreimageType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ContractIdPreimageType {}
-
 impl fmt::Display for ContractIdPreimageType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ContractIdPreimageType {
     type Error = Error;
 
@@ -32640,14 +31157,12 @@ impl TryFrom<i32> for ContractIdPreimageType {
         Ok(e)
     }
 }
-
 impl From<ContractIdPreimageType> for i32 {
     #[must_use]
     fn from(e: ContractIdPreimageType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32658,7 +31173,6 @@ impl ReadXdr for ContractIdPreimageType {
         })
     }
 }
-
 impl WriteXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32694,7 +31208,6 @@ pub struct ContractIdPreimageFromAddress {
     pub address: ScAddress,
     pub salt: Uint256,
 }
-
 impl ReadXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32706,7 +31219,6 @@ impl ReadXdr for ContractIdPreimageFromAddress {
         })
     }
 }
-
 impl WriteXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32750,20 +31262,18 @@ pub enum ContractIdPreimage {
     Address(ContractIdPreimageFromAddress),
     Asset(Asset),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ContractIdPreimage {
     fn default() -> Self {
         Self::Address(ContractIdPreimageFromAddress::default())
     }
 }
-
 impl ContractIdPreimage {
-    pub const VARIANTS: [ContractIdPreimageType; 2] = [
+    pub const VARIANTS: &[ContractIdPreimageType] = &[
         ContractIdPreimageType::Address,
         ContractIdPreimageType::Asset,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Address", "Asset"];
+    pub const VARIANTS_STR: &[&str] = &["Address", "Asset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -32783,33 +31293,28 @@ impl ContractIdPreimage {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractIdPreimageType; 2] {
+    pub const fn variants() -> &'static [ContractIdPreimageType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ContractIdPreimage {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ContractIdPreimageType> for ContractIdPreimage {
     #[must_use]
     fn discriminant(&self) -> ContractIdPreimageType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ContractIdPreimageType> for ContractIdPreimage {
     fn variants() -> slice::Iter<'static, ContractIdPreimageType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ContractIdPreimageType> for ContractIdPreimage {}
-
 impl ReadXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32828,7 +31333,6 @@ impl ReadXdr for ContractIdPreimage {
         })
     }
 }
-
 impl WriteXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32869,7 +31373,6 @@ pub struct CreateContractArgs {
     pub contract_id_preimage: ContractIdPreimage,
     pub executable: ContractExecutable,
 }
-
 impl ReadXdr for CreateContractArgs {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32881,7 +31384,6 @@ impl ReadXdr for CreateContractArgs {
         })
     }
 }
-
 impl WriteXdr for CreateContractArgs {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32921,7 +31423,6 @@ pub struct CreateContractArgsV2 {
     pub executable: ContractExecutable,
     pub constructor_args: VecM<ScVal>,
 }
-
 impl ReadXdr for CreateContractArgsV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32934,7 +31435,6 @@ impl ReadXdr for CreateContractArgsV2 {
         })
     }
 }
-
 impl WriteXdr for CreateContractArgsV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -32973,7 +31473,6 @@ pub struct InvokeContractArgs {
     pub function_name: ScSymbol,
     pub args: VecM<ScVal>,
 }
-
 impl ReadXdr for InvokeContractArgs {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -32986,7 +31485,6 @@ impl ReadXdr for InvokeContractArgs {
         })
     }
 }
-
 impl WriteXdr for InvokeContractArgs {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33033,22 +31531,20 @@ pub enum HostFunction {
     UploadContractWasm(BytesM),
     CreateContractV2(CreateContractArgsV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for HostFunction {
     fn default() -> Self {
         Self::InvokeContract(InvokeContractArgs::default())
     }
 }
-
 impl HostFunction {
-    pub const VARIANTS: [HostFunctionType; 4] = [
+    pub const VARIANTS: &[HostFunctionType] = &[
         HostFunctionType::InvokeContract,
         HostFunctionType::CreateContract,
         HostFunctionType::UploadContractWasm,
         HostFunctionType::CreateContractV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "InvokeContract",
         "CreateContract",
         "UploadContractWasm",
@@ -33077,33 +31573,28 @@ impl HostFunction {
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunctionType; 4] {
+    pub const fn variants() -> &'static [HostFunctionType] {
         Self::VARIANTS
     }
 }
-
 impl Name for HostFunction {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<HostFunctionType> for HostFunction {
     #[must_use]
     fn discriminant(&self) -> HostFunctionType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<HostFunctionType> for HostFunction {
     fn variants() -> slice::Iter<'static, HostFunctionType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<HostFunctionType> for HostFunction {}
-
 impl ReadXdr for HostFunction {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33130,7 +31621,6 @@ impl ReadXdr for HostFunction {
         })
     }
 }
-
 impl WriteXdr for HostFunction {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33176,14 +31666,13 @@ pub enum SorobanAuthorizedFunctionType {
     CreateContractHostFn = 1,
     CreateContractV2HostFn = 2,
 }
-
 impl SorobanAuthorizedFunctionType {
-    pub const VARIANTS: [SorobanAuthorizedFunctionType; 3] = [
+    pub const VARIANTS: &[SorobanAuthorizedFunctionType] = &[
         SorobanAuthorizedFunctionType::ContractFn,
         SorobanAuthorizedFunctionType::CreateContractHostFn,
         SorobanAuthorizedFunctionType::CreateContractV2HostFn,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ContractFn",
         "CreateContractHostFn",
         "CreateContractV2HostFn",
@@ -33199,32 +31688,27 @@ impl SorobanAuthorizedFunctionType {
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanAuthorizedFunctionType; 3] {
+    pub const fn variants() -> &'static [SorobanAuthorizedFunctionType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SorobanAuthorizedFunctionType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunctionType {
     fn variants() -> slice::Iter<'static, SorobanAuthorizedFunctionType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SorobanAuthorizedFunctionType {}
-
 impl fmt::Display for SorobanAuthorizedFunctionType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SorobanAuthorizedFunctionType {
     type Error = Error;
 
@@ -33239,14 +31723,12 @@ impl TryFrom<i32> for SorobanAuthorizedFunctionType {
         Ok(e)
     }
 }
-
 impl From<SorobanAuthorizedFunctionType> for i32 {
     #[must_use]
     fn from(e: SorobanAuthorizedFunctionType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SorobanAuthorizedFunctionType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33257,7 +31739,6 @@ impl ReadXdr for SorobanAuthorizedFunctionType {
         })
     }
 }
-
 impl WriteXdr for SorobanAuthorizedFunctionType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33307,21 +31788,19 @@ pub enum SorobanAuthorizedFunction {
     CreateContractHostFn(CreateContractArgs),
     CreateContractV2HostFn(CreateContractArgsV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SorobanAuthorizedFunction {
     fn default() -> Self {
         Self::ContractFn(InvokeContractArgs::default())
     }
 }
-
 impl SorobanAuthorizedFunction {
-    pub const VARIANTS: [SorobanAuthorizedFunctionType; 3] = [
+    pub const VARIANTS: &[SorobanAuthorizedFunctionType] = &[
         SorobanAuthorizedFunctionType::ContractFn,
         SorobanAuthorizedFunctionType::CreateContractHostFn,
         SorobanAuthorizedFunctionType::CreateContractV2HostFn,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "ContractFn",
         "CreateContractHostFn",
         "CreateContractV2HostFn",
@@ -33349,33 +31828,28 @@ impl SorobanAuthorizedFunction {
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanAuthorizedFunctionType; 3] {
+    pub const fn variants() -> &'static [SorobanAuthorizedFunctionType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SorobanAuthorizedFunction {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
     #[must_use]
     fn discriminant(&self) -> SorobanAuthorizedFunctionType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
     fn variants() -> slice::Iter<'static, SorobanAuthorizedFunctionType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {}
-
 impl ReadXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33400,7 +31874,6 @@ impl ReadXdr for SorobanAuthorizedFunction {
         })
     }
 }
-
 impl WriteXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33442,7 +31915,6 @@ pub struct SorobanAuthorizedInvocation {
     pub function: SorobanAuthorizedFunction,
     pub sub_invocations: VecM<SorobanAuthorizedInvocation>,
 }
-
 impl ReadXdr for SorobanAuthorizedInvocation {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33454,7 +31926,6 @@ impl ReadXdr for SorobanAuthorizedInvocation {
         })
     }
 }
-
 impl WriteXdr for SorobanAuthorizedInvocation {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33499,7 +31970,6 @@ pub struct SorobanAddressCredentials {
     pub signature_expiration_ledger: u32,
     pub signature: ScVal,
 }
-
 impl ReadXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33513,7 +31983,6 @@ impl ReadXdr for SorobanAddressCredentials {
         })
     }
 }
-
 impl WriteXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33553,13 +32022,12 @@ pub enum SorobanCredentialsType {
     SourceAccount = 0,
     Address = 1,
 }
-
 impl SorobanCredentialsType {
-    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+    pub const VARIANTS: &[SorobanCredentialsType] = &[
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+    pub const VARIANTS_STR: &[&str] = &["SourceAccount", "Address"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -33570,32 +32038,27 @@ impl SorobanCredentialsType {
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanCredentialsType; 2] {
+    pub const fn variants() -> &'static [SorobanCredentialsType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SorobanCredentialsType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SorobanCredentialsType> for SorobanCredentialsType {
     fn variants() -> slice::Iter<'static, SorobanCredentialsType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SorobanCredentialsType {}
-
 impl fmt::Display for SorobanCredentialsType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SorobanCredentialsType {
     type Error = Error;
 
@@ -33609,14 +32072,12 @@ impl TryFrom<i32> for SorobanCredentialsType {
         Ok(e)
     }
 }
-
 impl From<SorobanCredentialsType> for i32 {
     #[must_use]
     fn from(e: SorobanCredentialsType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SorobanCredentialsType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33627,7 +32088,6 @@ impl ReadXdr for SorobanCredentialsType {
         })
     }
 }
-
 impl WriteXdr for SorobanCredentialsType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33666,20 +32126,18 @@ pub enum SorobanCredentials {
     SourceAccount,
     Address(SorobanAddressCredentials),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SorobanCredentials {
     fn default() -> Self {
         Self::SourceAccount
     }
 }
-
 impl SorobanCredentials {
-    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+    pub const VARIANTS: &[SorobanCredentialsType] = &[
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+    pub const VARIANTS_STR: &[&str] = &["SourceAccount", "Address"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -33699,33 +32157,28 @@ impl SorobanCredentials {
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanCredentialsType; 2] {
+    pub const fn variants() -> &'static [SorobanCredentialsType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SorobanCredentials {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<SorobanCredentialsType> for SorobanCredentials {
     #[must_use]
     fn discriminant(&self) -> SorobanCredentialsType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<SorobanCredentialsType> for SorobanCredentials {
     fn variants() -> slice::Iter<'static, SorobanCredentialsType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<SorobanCredentialsType> for SorobanCredentials {}
-
 impl ReadXdr for SorobanCredentials {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33744,7 +32197,6 @@ impl ReadXdr for SorobanCredentials {
         })
     }
 }
-
 impl WriteXdr for SorobanCredentials {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33785,7 +32237,6 @@ pub struct SorobanAuthorizationEntry {
     pub credentials: SorobanCredentials,
     pub root_invocation: SorobanAuthorizedInvocation,
 }
-
 impl ReadXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33797,7 +32248,6 @@ impl ReadXdr for SorobanAuthorizationEntry {
         })
     }
 }
-
 impl WriteXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33834,21 +32284,18 @@ impl From<SorobanAuthorizationEntries> for VecM<SorobanAuthorizationEntry> {
         x.0
     }
 }
-
 impl From<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     #[must_use]
     fn from(x: VecM<SorobanAuthorizationEntry>) -> Self {
         SorobanAuthorizationEntries(x)
     }
 }
-
 impl AsRef<VecM<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     #[must_use]
     fn as_ref(&self) -> &VecM<SorobanAuthorizationEntry> {
         &self.0
     }
 }
-
 impl ReadXdr for SorobanAuthorizationEntries {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33859,35 +32306,30 @@ impl ReadXdr for SorobanAuthorizationEntries {
         })
     }
 }
-
 impl WriteXdr for SorobanAuthorizationEntries {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for SorobanAuthorizationEntries {
     type Target = VecM<SorobanAuthorizationEntry>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<SorobanAuthorizationEntries> for Vec<SorobanAuthorizationEntry> {
     #[must_use]
     fn from(x: SorobanAuthorizationEntries) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     type Error = Error;
     fn try_from(x: Vec<SorobanAuthorizationEntry>) -> Result<Self, Error> {
         Ok(SorobanAuthorizationEntries(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     type Error = Error;
@@ -33895,14 +32337,12 @@ impl TryFrom<&Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
         Ok(SorobanAuthorizationEntries(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     #[must_use]
     fn as_ref(&self) -> &Vec<SorobanAuthorizationEntry> {
         &self.0 .0
     }
 }
-
 impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -33943,7 +32383,6 @@ pub struct InvokeHostFunctionOp {
     pub host_function: HostFunction,
     pub auth: VecM<SorobanAuthorizationEntry>,
 }
-
 impl ReadXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -33955,7 +32394,6 @@ impl ReadXdr for InvokeHostFunctionOp {
         })
     }
 }
-
 impl WriteXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -33992,7 +32430,6 @@ pub struct ExtendFootprintTtlOp {
     pub ext: ExtensionPoint,
     pub extend_to: u32,
 }
-
 impl ReadXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34004,7 +32441,6 @@ impl ReadXdr for ExtendFootprintTtlOp {
         })
     }
 }
-
 impl WriteXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34039,7 +32475,6 @@ impl WriteXdr for ExtendFootprintTtlOp {
 pub struct RestoreFootprintOp {
     pub ext: ExtensionPoint,
 }
-
 impl ReadXdr for RestoreFootprintOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34050,7 +32485,6 @@ impl ReadXdr for RestoreFootprintOp {
         })
     }
 }
-
 impl WriteXdr for RestoreFootprintOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34164,16 +32598,14 @@ pub enum OperationBody {
     ExtendFootprintTtl(ExtendFootprintTtlOp),
     RestoreFootprint(RestoreFootprintOp),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for OperationBody {
     fn default() -> Self {
         Self::CreateAccount(CreateAccountOp::default())
     }
 }
-
 impl OperationBody {
-    pub const VARIANTS: [OperationType; 27] = [
+    pub const VARIANTS: &[OperationType] = &[
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -34202,7 +32634,7 @@ impl OperationBody {
         OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
     ];
-    pub const VARIANTS_STR: [&'static str; 27] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -34300,33 +32732,28 @@ impl OperationBody {
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 27] {
+    pub const fn variants() -> &'static [OperationType] {
         Self::VARIANTS
     }
 }
-
 impl Name for OperationBody {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<OperationType> for OperationBody {
     #[must_use]
     fn discriminant(&self) -> OperationType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<OperationType> for OperationBody {
     fn variants() -> slice::Iter<'static, OperationType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<OperationType> for OperationBody {}
-
 impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34402,7 +32829,6 @@ impl ReadXdr for OperationBody {
         })
     }
 }
-
 impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34529,7 +32955,6 @@ pub struct Operation {
     pub source_account: Option<MuxedAccount>,
     pub body: OperationBody,
 }
-
 impl ReadXdr for Operation {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34541,7 +32966,6 @@ impl ReadXdr for Operation {
         })
     }
 }
-
 impl WriteXdr for Operation {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34580,7 +33004,6 @@ pub struct HashIdPreimageOperationId {
     pub seq_num: SequenceNumber,
     pub op_num: u32,
 }
-
 impl ReadXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34593,7 +33016,6 @@ impl ReadXdr for HashIdPreimageOperationId {
         })
     }
 }
-
 impl WriteXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34637,7 +33059,6 @@ pub struct HashIdPreimageRevokeId {
     pub liquidity_pool_id: PoolId,
     pub asset: Asset,
 }
-
 impl ReadXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34652,7 +33073,6 @@ impl ReadXdr for HashIdPreimageRevokeId {
         })
     }
 }
-
 impl WriteXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34692,7 +33112,6 @@ pub struct HashIdPreimageContractId {
     pub network_id: Hash,
     pub contract_id_preimage: ContractIdPreimage,
 }
-
 impl ReadXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34704,7 +33123,6 @@ impl ReadXdr for HashIdPreimageContractId {
         })
     }
 }
-
 impl WriteXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34749,7 +33167,6 @@ pub struct HashIdPreimageSorobanAuthorization {
     pub signature_expiration_ledger: u32,
     pub invocation: SorobanAuthorizedInvocation,
 }
-
 impl ReadXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34763,7 +33180,6 @@ impl ReadXdr for HashIdPreimageSorobanAuthorization {
         })
     }
 }
-
 impl WriteXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34833,22 +33249,20 @@ pub enum HashIdPreimage {
     ContractId(HashIdPreimageContractId),
     SorobanAuthorization(HashIdPreimageSorobanAuthorization),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for HashIdPreimage {
     fn default() -> Self {
         Self::OpId(HashIdPreimageOperationId::default())
     }
 }
-
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 4] = [
+    pub const VARIANTS: &[EnvelopeType] = &[
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractId,
         EnvelopeType::SorobanAuthorization,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "OpId",
         "PoolRevokeOpId",
         "ContractId",
@@ -34877,33 +33291,28 @@ impl HashIdPreimage {
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 4] {
+    pub const fn variants() -> &'static [EnvelopeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for HashIdPreimage {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<EnvelopeType> for HashIdPreimage {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<EnvelopeType> for HashIdPreimage {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<EnvelopeType> for HashIdPreimage {}
-
 impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -34928,7 +33337,6 @@ impl ReadXdr for HashIdPreimage {
         })
     }
 }
-
 impl WriteXdr for HashIdPreimage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -34978,16 +33386,15 @@ pub enum MemoType {
     Hash = 3,
     Return = 4,
 }
-
 impl MemoType {
-    pub const VARIANTS: [MemoType; 5] = [
+    pub const VARIANTS: &[MemoType] = &[
         MemoType::None,
         MemoType::Text,
         MemoType::Id,
         MemoType::Hash,
         MemoType::Return,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = ["None", "Text", "Id", "Hash", "Return"];
+    pub const VARIANTS_STR: &[&str] = &["None", "Text", "Id", "Hash", "Return"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35001,32 +33408,27 @@ impl MemoType {
     }
 
     #[must_use]
-    pub const fn variants() -> [MemoType; 5] {
+    pub const fn variants() -> &'static [MemoType] {
         Self::VARIANTS
     }
 }
-
 impl Name for MemoType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<MemoType> for MemoType {
     fn variants() -> slice::Iter<'static, MemoType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for MemoType {}
-
 impl fmt::Display for MemoType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for MemoType {
     type Error = Error;
 
@@ -35043,14 +33445,12 @@ impl TryFrom<i32> for MemoType {
         Ok(e)
     }
 }
-
 impl From<MemoType> for i32 {
     #[must_use]
     fn from(e: MemoType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for MemoType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35061,7 +33461,6 @@ impl ReadXdr for MemoType {
         })
     }
 }
-
 impl WriteXdr for MemoType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35115,23 +33514,21 @@ pub enum Memo {
     Hash(Hash),
     Return(Hash),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for Memo {
     fn default() -> Self {
         Self::None
     }
 }
-
 impl Memo {
-    pub const VARIANTS: [MemoType; 5] = [
+    pub const VARIANTS: &[MemoType] = &[
         MemoType::None,
         MemoType::Text,
         MemoType::Id,
         MemoType::Hash,
         MemoType::Return,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = ["None", "Text", "Id", "Hash", "Return"];
+    pub const VARIANTS_STR: &[&str] = &["None", "Text", "Id", "Hash", "Return"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35157,33 +33554,28 @@ impl Memo {
     }
 
     #[must_use]
-    pub const fn variants() -> [MemoType; 5] {
+    pub const fn variants() -> &'static [MemoType] {
         Self::VARIANTS
     }
 }
-
 impl Name for Memo {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<MemoType> for Memo {
     #[must_use]
     fn discriminant(&self) -> MemoType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<MemoType> for Memo {
     fn variants() -> slice::Iter<'static, MemoType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<MemoType> for Memo {}
-
 impl ReadXdr for Memo {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35203,7 +33595,6 @@ impl ReadXdr for Memo {
         })
     }
 }
-
 impl WriteXdr for Memo {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35247,7 +33638,6 @@ pub struct TimeBounds {
     pub min_time: TimePoint,
     pub max_time: TimePoint,
 }
-
 impl ReadXdr for TimeBounds {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35259,7 +33649,6 @@ impl ReadXdr for TimeBounds {
         })
     }
 }
-
 impl WriteXdr for TimeBounds {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35296,7 +33685,6 @@ pub struct LedgerBounds {
     pub min_ledger: u32,
     pub max_ledger: u32,
 }
-
 impl ReadXdr for LedgerBounds {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35308,7 +33696,6 @@ impl ReadXdr for LedgerBounds {
         })
     }
 }
-
 impl WriteXdr for LedgerBounds {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35376,7 +33763,6 @@ pub struct PreconditionsV2 {
     pub min_seq_ledger_gap: u32,
     pub extra_signers: VecM<SignerKey, 2>,
 }
-
 impl ReadXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35392,7 +33778,6 @@ impl ReadXdr for PreconditionsV2 {
         })
     }
 }
-
 impl WriteXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35436,14 +33821,13 @@ pub enum PreconditionType {
     Time = 1,
     V2 = 2,
 }
-
 impl PreconditionType {
-    pub const VARIANTS: [PreconditionType; 3] = [
+    pub const VARIANTS: &[PreconditionType] = &[
         PreconditionType::None,
         PreconditionType::Time,
         PreconditionType::V2,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["None", "Time", "V2"];
+    pub const VARIANTS_STR: &[&str] = &["None", "Time", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35455,32 +33839,27 @@ impl PreconditionType {
     }
 
     #[must_use]
-    pub const fn variants() -> [PreconditionType; 3] {
+    pub const fn variants() -> &'static [PreconditionType] {
         Self::VARIANTS
     }
 }
-
 impl Name for PreconditionType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<PreconditionType> for PreconditionType {
     fn variants() -> slice::Iter<'static, PreconditionType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for PreconditionType {}
-
 impl fmt::Display for PreconditionType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for PreconditionType {
     type Error = Error;
 
@@ -35495,14 +33874,12 @@ impl TryFrom<i32> for PreconditionType {
         Ok(e)
     }
 }
-
 impl From<PreconditionType> for i32 {
     #[must_use]
     fn from(e: PreconditionType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for PreconditionType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35513,7 +33890,6 @@ impl ReadXdr for PreconditionType {
         })
     }
 }
-
 impl WriteXdr for PreconditionType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35555,21 +33931,19 @@ pub enum Preconditions {
     Time(TimeBounds),
     V2(PreconditionsV2),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for Preconditions {
     fn default() -> Self {
         Self::None
     }
 }
-
 impl Preconditions {
-    pub const VARIANTS: [PreconditionType; 3] = [
+    pub const VARIANTS: &[PreconditionType] = &[
         PreconditionType::None,
         PreconditionType::Time,
         PreconditionType::V2,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["None", "Time", "V2"];
+    pub const VARIANTS_STR: &[&str] = &["None", "Time", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35591,33 +33965,28 @@ impl Preconditions {
     }
 
     #[must_use]
-    pub const fn variants() -> [PreconditionType; 3] {
+    pub const fn variants() -> &'static [PreconditionType] {
         Self::VARIANTS
     }
 }
-
 impl Name for Preconditions {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<PreconditionType> for Preconditions {
     #[must_use]
     fn discriminant(&self) -> PreconditionType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<PreconditionType> for Preconditions {
     fn variants() -> slice::Iter<'static, PreconditionType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<PreconditionType> for Preconditions {}
-
 impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35635,7 +34004,6 @@ impl ReadXdr for Preconditions {
         })
     }
 }
-
 impl WriteXdr for Preconditions {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35677,7 +34045,6 @@ pub struct LedgerFootprint {
     pub read_only: VecM<LedgerKey>,
     pub read_write: VecM<LedgerKey>,
 }
-
 impl ReadXdr for LedgerFootprint {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35689,7 +34056,6 @@ impl ReadXdr for LedgerFootprint {
         })
     }
 }
-
 impl WriteXdr for LedgerFootprint {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35735,7 +34101,6 @@ pub struct SorobanResources {
     pub disk_read_bytes: u32,
     pub write_bytes: u32,
 }
-
 impl ReadXdr for SorobanResources {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35749,7 +34114,6 @@ impl ReadXdr for SorobanResources {
         })
     }
 }
-
 impl WriteXdr for SorobanResources {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35789,7 +34153,6 @@ impl WriteXdr for SorobanResources {
 pub struct SorobanResourcesExtV0 {
     pub archived_soroban_entries: VecM<u32>,
 }
-
 impl ReadXdr for SorobanResourcesExtV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35800,7 +34163,6 @@ impl ReadXdr for SorobanResourcesExtV0 {
         })
     }
 }
-
 impl WriteXdr for SorobanResourcesExtV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35839,17 +34201,15 @@ pub enum SorobanTransactionDataExt {
     V0,
     V1(SorobanResourcesExtV0),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SorobanTransactionDataExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl SorobanTransactionDataExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35869,33 +34229,28 @@ impl SorobanTransactionDataExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for SorobanTransactionDataExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for SorobanTransactionDataExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for SorobanTransactionDataExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for SorobanTransactionDataExt {}
-
 impl ReadXdr for SorobanTransactionDataExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35912,7 +34267,6 @@ impl ReadXdr for SorobanTransactionDataExt {
         })
     }
 }
-
 impl WriteXdr for SorobanTransactionDataExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -35974,7 +34328,6 @@ pub struct SorobanTransactionData {
     )]
     pub resource_fee: i64,
 }
-
 impl ReadXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -35987,7 +34340,6 @@ impl ReadXdr for SorobanTransactionData {
         })
     }
 }
-
 impl WriteXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36025,17 +34377,15 @@ impl WriteXdr for SorobanTransactionData {
 pub enum TransactionV0Ext {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionV0Ext {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TransactionV0Ext {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -36053,33 +34403,28 @@ impl TransactionV0Ext {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionV0Ext {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionV0Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionV0Ext {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionV0Ext {}
-
 impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36095,7 +34440,6 @@ impl ReadXdr for TransactionV0Ext {
         })
     }
 }
-
 impl WriteXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36150,7 +34494,6 @@ pub struct TransactionV0 {
     pub operations: VecM<Operation, 100>,
     pub ext: TransactionV0Ext,
 }
-
 impl ReadXdr for TransactionV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36167,7 +34510,6 @@ impl ReadXdr for TransactionV0 {
         })
     }
 }
-
 impl WriteXdr for TransactionV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36211,7 +34553,6 @@ pub struct TransactionV0Envelope {
     pub tx: TransactionV0,
     pub signatures: VecM<DecoratedSignature, 20>,
 }
-
 impl ReadXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36223,7 +34564,6 @@ impl ReadXdr for TransactionV0Envelope {
         })
     }
 }
-
 impl WriteXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36263,17 +34603,15 @@ pub enum TransactionExt {
     V0,
     V1(SorobanTransactionData),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TransactionExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[0, 1];
+    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -36293,33 +34631,28 @@ impl TransactionExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionExt {}
-
 impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36336,7 +34669,6 @@ impl ReadXdr for TransactionExt {
         })
     }
 }
-
 impl WriteXdr for TransactionExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36404,7 +34736,6 @@ pub struct Transaction {
     pub operations: VecM<Operation, 100>,
     pub ext: TransactionExt,
 }
-
 impl ReadXdr for Transaction {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36421,7 +34752,6 @@ impl ReadXdr for Transaction {
         })
     }
 }
-
 impl WriteXdr for Transaction {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36465,7 +34795,6 @@ pub struct TransactionV1Envelope {
     pub tx: Transaction,
     pub signatures: VecM<DecoratedSignature, 20>,
 }
-
 impl ReadXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36477,7 +34806,6 @@ impl ReadXdr for TransactionV1Envelope {
         })
     }
 }
-
 impl WriteXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36514,17 +34842,15 @@ impl WriteXdr for TransactionV1Envelope {
 pub enum FeeBumpTransactionInnerTx {
     Tx(TransactionV1Envelope),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for FeeBumpTransactionInnerTx {
     fn default() -> Self {
         Self::Tx(TransactionV1Envelope::default())
     }
 }
-
 impl FeeBumpTransactionInnerTx {
-    pub const VARIANTS: [EnvelopeType; 1] = [EnvelopeType::Tx];
-    pub const VARIANTS_STR: [&'static str; 1] = ["Tx"];
+    pub const VARIANTS: &[EnvelopeType] = &[EnvelopeType::Tx];
+    pub const VARIANTS_STR: &[&str] = &["Tx"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -36542,33 +34868,28 @@ impl FeeBumpTransactionInnerTx {
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 1] {
+    pub const fn variants() -> &'static [EnvelopeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for FeeBumpTransactionInnerTx {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<EnvelopeType> for FeeBumpTransactionInnerTx {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<EnvelopeType> for FeeBumpTransactionInnerTx {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<EnvelopeType> for FeeBumpTransactionInnerTx {}
-
 impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36584,7 +34905,6 @@ impl ReadXdr for FeeBumpTransactionInnerTx {
         })
     }
 }
-
 impl WriteXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36624,17 +34944,15 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 pub enum FeeBumpTransactionExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for FeeBumpTransactionExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl FeeBumpTransactionExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -36652,33 +34970,28 @@ impl FeeBumpTransactionExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for FeeBumpTransactionExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for FeeBumpTransactionExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for FeeBumpTransactionExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for FeeBumpTransactionExt {}
-
 impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36694,7 +35007,6 @@ impl ReadXdr for FeeBumpTransactionExt {
         })
     }
 }
-
 impl WriteXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36752,7 +35064,6 @@ pub struct FeeBumpTransaction {
     pub inner_tx: FeeBumpTransactionInnerTx,
     pub ext: FeeBumpTransactionExt,
 }
-
 impl ReadXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36766,7 +35077,6 @@ impl ReadXdr for FeeBumpTransaction {
         })
     }
 }
-
 impl WriteXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36807,7 +35117,6 @@ pub struct FeeBumpTransactionEnvelope {
     pub tx: FeeBumpTransaction,
     pub signatures: VecM<DecoratedSignature, 20>,
 }
-
 impl ReadXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36819,7 +35128,6 @@ impl ReadXdr for FeeBumpTransactionEnvelope {
         })
     }
 }
-
 impl WriteXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36862,14 +35170,13 @@ pub enum TransactionEnvelope {
     Tx(TransactionV1Envelope),
     TxFeeBump(FeeBumpTransactionEnvelope),
 }
-
 impl TransactionEnvelope {
-    pub const VARIANTS: [EnvelopeType; 3] = [
+    pub const VARIANTS: &[EnvelopeType] = &[
         EnvelopeType::TxV0,
         EnvelopeType::Tx,
         EnvelopeType::TxFeeBump,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["TxV0", "Tx", "TxFeeBump"];
+    pub const VARIANTS_STR: &[&str] = &["TxV0", "Tx", "TxFeeBump"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -36891,33 +35198,28 @@ impl TransactionEnvelope {
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 3] {
+    pub const fn variants() -> &'static [EnvelopeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionEnvelope {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<EnvelopeType> for TransactionEnvelope {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<EnvelopeType> for TransactionEnvelope {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<EnvelopeType> for TransactionEnvelope {}
-
 impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -36937,7 +35239,6 @@ impl ReadXdr for TransactionEnvelope {
         })
     }
 }
-
 impl WriteXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -36983,17 +35284,15 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
     Tx(Transaction),
     TxFeeBump(FeeBumpTransaction),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionSignaturePayloadTaggedTransaction {
     fn default() -> Self {
         Self::Tx(Transaction::default())
     }
 }
-
 impl TransactionSignaturePayloadTaggedTransaction {
-    pub const VARIANTS: [EnvelopeType; 2] = [EnvelopeType::Tx, EnvelopeType::TxFeeBump];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Tx", "TxFeeBump"];
+    pub const VARIANTS: &[EnvelopeType] = &[EnvelopeType::Tx, EnvelopeType::TxFeeBump];
+    pub const VARIANTS_STR: &[&str] = &["Tx", "TxFeeBump"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37013,33 +35312,28 @@ impl TransactionSignaturePayloadTaggedTransaction {
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 2] {
+    pub const fn variants() -> &'static [EnvelopeType] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionSignaturePayloadTaggedTransaction {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {}
-
 impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37056,7 +35350,6 @@ impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
         })
     }
 }
-
 impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37105,7 +35398,6 @@ pub struct TransactionSignaturePayload {
     pub network_id: Hash,
     pub tagged_transaction: TransactionSignaturePayloadTaggedTransaction,
 }
-
 impl ReadXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37117,7 +35409,6 @@ impl ReadXdr for TransactionSignaturePayload {
         })
     }
 }
-
 impl WriteXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37157,14 +35448,13 @@ pub enum ClaimAtomType {
     OrderBook = 1,
     LiquidityPool = 2,
 }
-
 impl ClaimAtomType {
-    pub const VARIANTS: [ClaimAtomType; 3] = [
+    pub const VARIANTS: &[ClaimAtomType] = &[
         ClaimAtomType::V0,
         ClaimAtomType::OrderBook,
         ClaimAtomType::LiquidityPool,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "OrderBook", "LiquidityPool"];
+    pub const VARIANTS_STR: &[&str] = &["V0", "OrderBook", "LiquidityPool"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37176,32 +35466,27 @@ impl ClaimAtomType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimAtomType; 3] {
+    pub const fn variants() -> &'static [ClaimAtomType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimAtomType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClaimAtomType> for ClaimAtomType {
     fn variants() -> slice::Iter<'static, ClaimAtomType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClaimAtomType {}
-
 impl fmt::Display for ClaimAtomType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClaimAtomType {
     type Error = Error;
 
@@ -37216,14 +35501,12 @@ impl TryFrom<i32> for ClaimAtomType {
         Ok(e)
     }
 }
-
 impl From<ClaimAtomType> for i32 {
     #[must_use]
     fn from(e: ClaimAtomType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClaimAtomType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37234,7 +35517,6 @@ impl ReadXdr for ClaimAtomType {
         })
     }
 }
-
 impl WriteXdr for ClaimAtomType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37295,7 +35577,6 @@ pub struct ClaimOfferAtomV0 {
     )]
     pub amount_bought: i64,
 }
-
 impl ReadXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37311,7 +35592,6 @@ impl ReadXdr for ClaimOfferAtomV0 {
         })
     }
 }
-
 impl WriteXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37377,7 +35657,6 @@ pub struct ClaimOfferAtom {
     )]
     pub amount_bought: i64,
 }
-
 impl ReadXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37393,7 +35672,6 @@ impl ReadXdr for ClaimOfferAtom {
         })
     }
 }
-
 impl WriteXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37452,7 +35730,6 @@ pub struct ClaimLiquidityAtom {
     )]
     pub amount_bought: i64,
 }
-
 impl ReadXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37467,7 +35744,6 @@ impl ReadXdr for ClaimLiquidityAtom {
         })
     }
 }
-
 impl WriteXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37513,21 +35789,19 @@ pub enum ClaimAtom {
     OrderBook(ClaimOfferAtom),
     LiquidityPool(ClaimLiquidityAtom),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClaimAtom {
     fn default() -> Self {
         Self::V0(ClaimOfferAtomV0::default())
     }
 }
-
 impl ClaimAtom {
-    pub const VARIANTS: [ClaimAtomType; 3] = [
+    pub const VARIANTS: &[ClaimAtomType] = &[
         ClaimAtomType::V0,
         ClaimAtomType::OrderBook,
         ClaimAtomType::LiquidityPool,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "OrderBook", "LiquidityPool"];
+    pub const VARIANTS_STR: &[&str] = &["V0", "OrderBook", "LiquidityPool"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37549,33 +35823,28 @@ impl ClaimAtom {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimAtomType; 3] {
+    pub const fn variants() -> &'static [ClaimAtomType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimAtom {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClaimAtomType> for ClaimAtom {
     #[must_use]
     fn discriminant(&self) -> ClaimAtomType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClaimAtomType> for ClaimAtom {
     fn variants() -> slice::Iter<'static, ClaimAtomType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClaimAtomType> for ClaimAtom {}
-
 impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37595,7 +35864,6 @@ impl ReadXdr for ClaimAtom {
         })
     }
 }
-
 impl WriteXdr for ClaimAtom {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37648,16 +35916,15 @@ pub enum CreateAccountResultCode {
     LowReserve = -3,
     AlreadyExist = -4,
 }
-
 impl CreateAccountResultCode {
-    pub const VARIANTS: [CreateAccountResultCode; 5] = [
+    pub const VARIANTS: &[CreateAccountResultCode] = &[
         CreateAccountResultCode::Success,
         CreateAccountResultCode::Malformed,
         CreateAccountResultCode::Underfunded,
         CreateAccountResultCode::LowReserve,
         CreateAccountResultCode::AlreadyExist,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -37677,32 +35944,27 @@ impl CreateAccountResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [CreateAccountResultCode; 5] {
+    pub const fn variants() -> &'static [CreateAccountResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for CreateAccountResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<CreateAccountResultCode> for CreateAccountResultCode {
     fn variants() -> slice::Iter<'static, CreateAccountResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for CreateAccountResultCode {}
-
 impl fmt::Display for CreateAccountResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for CreateAccountResultCode {
     type Error = Error;
 
@@ -37719,14 +35981,12 @@ impl TryFrom<i32> for CreateAccountResultCode {
         Ok(e)
     }
 }
-
 impl From<CreateAccountResultCode> for i32 {
     #[must_use]
     fn from(e: CreateAccountResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37737,7 +35997,6 @@ impl ReadXdr for CreateAccountResultCode {
         })
     }
 }
-
 impl WriteXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37782,23 +36041,21 @@ pub enum CreateAccountResult {
     LowReserve,
     AlreadyExist,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for CreateAccountResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl CreateAccountResult {
-    pub const VARIANTS: [CreateAccountResultCode; 5] = [
+    pub const VARIANTS: &[CreateAccountResultCode] = &[
         CreateAccountResultCode::Success,
         CreateAccountResultCode::Malformed,
         CreateAccountResultCode::Underfunded,
         CreateAccountResultCode::LowReserve,
         CreateAccountResultCode::AlreadyExist,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -37830,33 +36087,28 @@ impl CreateAccountResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [CreateAccountResultCode; 5] {
+    pub const fn variants() -> &'static [CreateAccountResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for CreateAccountResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<CreateAccountResultCode> for CreateAccountResult {
     #[must_use]
     fn discriminant(&self) -> CreateAccountResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<CreateAccountResultCode> for CreateAccountResult {
     fn variants() -> slice::Iter<'static, CreateAccountResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<CreateAccountResultCode> for CreateAccountResult {}
-
 impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -37876,7 +36128,6 @@ impl ReadXdr for CreateAccountResult {
         })
     }
 }
-
 impl WriteXdr for CreateAccountResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -37940,9 +36191,8 @@ pub enum PaymentResultCode {
     LineFull = -8,
     NoIssuer = -9,
 }
-
 impl PaymentResultCode {
-    pub const VARIANTS: [PaymentResultCode; 10] = [
+    pub const VARIANTS: &[PaymentResultCode] = &[
         PaymentResultCode::Success,
         PaymentResultCode::Malformed,
         PaymentResultCode::Underfunded,
@@ -37954,7 +36204,7 @@ impl PaymentResultCode {
         PaymentResultCode::LineFull,
         PaymentResultCode::NoIssuer,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -37984,32 +36234,27 @@ impl PaymentResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [PaymentResultCode; 10] {
+    pub const fn variants() -> &'static [PaymentResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for PaymentResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<PaymentResultCode> for PaymentResultCode {
     fn variants() -> slice::Iter<'static, PaymentResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for PaymentResultCode {}
-
 impl fmt::Display for PaymentResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for PaymentResultCode {
     type Error = Error;
 
@@ -38031,14 +36276,12 @@ impl TryFrom<i32> for PaymentResultCode {
         Ok(e)
     }
 }
-
 impl From<PaymentResultCode> for i32 {
     #[must_use]
     fn from(e: PaymentResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for PaymentResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38049,7 +36292,6 @@ impl ReadXdr for PaymentResultCode {
         })
     }
 }
-
 impl WriteXdr for PaymentResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38104,16 +36346,14 @@ pub enum PaymentResult {
     LineFull,
     NoIssuer,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for PaymentResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl PaymentResult {
-    pub const VARIANTS: [PaymentResultCode; 10] = [
+    pub const VARIANTS: &[PaymentResultCode] = &[
         PaymentResultCode::Success,
         PaymentResultCode::Malformed,
         PaymentResultCode::Underfunded,
@@ -38125,7 +36365,7 @@ impl PaymentResult {
         PaymentResultCode::LineFull,
         PaymentResultCode::NoIssuer,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -38172,33 +36412,28 @@ impl PaymentResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [PaymentResultCode; 10] {
+    pub const fn variants() -> &'static [PaymentResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for PaymentResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<PaymentResultCode> for PaymentResult {
     #[must_use]
     fn discriminant(&self) -> PaymentResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<PaymentResultCode> for PaymentResult {
     fn variants() -> slice::Iter<'static, PaymentResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<PaymentResultCode> for PaymentResult {}
-
 impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38223,7 +36458,6 @@ impl ReadXdr for PaymentResult {
         })
     }
 }
-
 impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38307,9 +36541,8 @@ pub enum PathPaymentStrictReceiveResultCode {
     OfferCrossSelf = -11,
     OverSendmax = -12,
 }
-
 impl PathPaymentStrictReceiveResultCode {
-    pub const VARIANTS: [PathPaymentStrictReceiveResultCode; 13] = [
+    pub const VARIANTS: &[PathPaymentStrictReceiveResultCode] = &[
         PathPaymentStrictReceiveResultCode::Success,
         PathPaymentStrictReceiveResultCode::Malformed,
         PathPaymentStrictReceiveResultCode::Underfunded,
@@ -38324,7 +36557,7 @@ impl PathPaymentStrictReceiveResultCode {
         PathPaymentStrictReceiveResultCode::OfferCrossSelf,
         PathPaymentStrictReceiveResultCode::OverSendmax,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -38360,32 +36593,27 @@ impl PathPaymentStrictReceiveResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [PathPaymentStrictReceiveResultCode; 13] {
+    pub const fn variants() -> &'static [PathPaymentStrictReceiveResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for PathPaymentStrictReceiveResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResultCode {
     fn variants() -> slice::Iter<'static, PathPaymentStrictReceiveResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for PathPaymentStrictReceiveResultCode {}
-
 impl fmt::Display for PathPaymentStrictReceiveResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
     type Error = Error;
 
@@ -38410,14 +36638,12 @@ impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
         Ok(e)
     }
 }
-
 impl From<PathPaymentStrictReceiveResultCode> for i32 {
     #[must_use]
     fn from(e: PathPaymentStrictReceiveResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38428,7 +36654,6 @@ impl ReadXdr for PathPaymentStrictReceiveResultCode {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38470,7 +36695,6 @@ pub struct SimplePaymentResult {
     )]
     pub amount: i64,
 }
-
 impl ReadXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38483,7 +36707,6 @@ impl ReadXdr for SimplePaymentResult {
         })
     }
 }
-
 impl WriteXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38521,7 +36744,6 @@ pub struct PathPaymentStrictReceiveResultSuccess {
     pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,
 }
-
 impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38533,7 +36755,6 @@ impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38602,16 +36823,14 @@ pub enum PathPaymentStrictReceiveResult {
     OfferCrossSelf,
     OverSendmax,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for PathPaymentStrictReceiveResult {
     fn default() -> Self {
         Self::Success(PathPaymentStrictReceiveResultSuccess::default())
     }
 }
-
 impl PathPaymentStrictReceiveResult {
-    pub const VARIANTS: [PathPaymentStrictReceiveResultCode; 13] = [
+    pub const VARIANTS: &[PathPaymentStrictReceiveResultCode] = &[
         PathPaymentStrictReceiveResultCode::Success,
         PathPaymentStrictReceiveResultCode::Malformed,
         PathPaymentStrictReceiveResultCode::Underfunded,
@@ -38626,7 +36845,7 @@ impl PathPaymentStrictReceiveResult {
         PathPaymentStrictReceiveResultCode::OfferCrossSelf,
         PathPaymentStrictReceiveResultCode::OverSendmax,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -38682,33 +36901,28 @@ impl PathPaymentStrictReceiveResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [PathPaymentStrictReceiveResultCode; 13] {
+    pub const fn variants() -> &'static [PathPaymentStrictReceiveResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for PathPaymentStrictReceiveResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {
     #[must_use]
     fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {
     fn variants() -> slice::Iter<'static, PathPaymentStrictReceiveResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {}
-
 impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38739,7 +36953,6 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38825,9 +37038,8 @@ pub enum PathPaymentStrictSendResultCode {
     OfferCrossSelf = -11,
     UnderDestmin = -12,
 }
-
 impl PathPaymentStrictSendResultCode {
-    pub const VARIANTS: [PathPaymentStrictSendResultCode; 13] = [
+    pub const VARIANTS: &[PathPaymentStrictSendResultCode] = &[
         PathPaymentStrictSendResultCode::Success,
         PathPaymentStrictSendResultCode::Malformed,
         PathPaymentStrictSendResultCode::Underfunded,
@@ -38842,7 +37054,7 @@ impl PathPaymentStrictSendResultCode {
         PathPaymentStrictSendResultCode::OfferCrossSelf,
         PathPaymentStrictSendResultCode::UnderDestmin,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -38878,32 +37090,27 @@ impl PathPaymentStrictSendResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [PathPaymentStrictSendResultCode; 13] {
+    pub const fn variants() -> &'static [PathPaymentStrictSendResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for PathPaymentStrictSendResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResultCode {
     fn variants() -> slice::Iter<'static, PathPaymentStrictSendResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for PathPaymentStrictSendResultCode {}
-
 impl fmt::Display for PathPaymentStrictSendResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for PathPaymentStrictSendResultCode {
     type Error = Error;
 
@@ -38928,14 +37135,12 @@ impl TryFrom<i32> for PathPaymentStrictSendResultCode {
         Ok(e)
     }
 }
-
 impl From<PathPaymentStrictSendResultCode> for i32 {
     #[must_use]
     fn from(e: PathPaymentStrictSendResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38946,7 +37151,6 @@ impl ReadXdr for PathPaymentStrictSendResultCode {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -38982,7 +37186,6 @@ pub struct PathPaymentStrictSendResultSuccess {
     pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,
 }
-
 impl ReadXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38994,7 +37197,6 @@ impl ReadXdr for PathPaymentStrictSendResultSuccess {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39062,16 +37264,14 @@ pub enum PathPaymentStrictSendResult {
     OfferCrossSelf,
     UnderDestmin,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for PathPaymentStrictSendResult {
     fn default() -> Self {
         Self::Success(PathPaymentStrictSendResultSuccess::default())
     }
 }
-
 impl PathPaymentStrictSendResult {
-    pub const VARIANTS: [PathPaymentStrictSendResultCode; 13] = [
+    pub const VARIANTS: &[PathPaymentStrictSendResultCode] = &[
         PathPaymentStrictSendResultCode::Success,
         PathPaymentStrictSendResultCode::Malformed,
         PathPaymentStrictSendResultCode::Underfunded,
@@ -39086,7 +37286,7 @@ impl PathPaymentStrictSendResult {
         PathPaymentStrictSendResultCode::OfferCrossSelf,
         PathPaymentStrictSendResultCode::UnderDestmin,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Underfunded",
@@ -39142,33 +37342,28 @@ impl PathPaymentStrictSendResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [PathPaymentStrictSendResultCode; 13] {
+    pub const fn variants() -> &'static [PathPaymentStrictSendResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for PathPaymentStrictSendResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {
     #[must_use]
     fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {
     fn variants() -> slice::Iter<'static, PathPaymentStrictSendResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {}
-
 impl ReadXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -39199,7 +37394,6 @@ impl ReadXdr for PathPaymentStrictSendResult {
         })
     }
 }
-
 impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39284,9 +37478,8 @@ pub enum ManageSellOfferResultCode {
     NotFound = -11,
     LowReserve = -12,
 }
-
 impl ManageSellOfferResultCode {
-    pub const VARIANTS: [ManageSellOfferResultCode; 13] = [
+    pub const VARIANTS: &[ManageSellOfferResultCode] = &[
         ManageSellOfferResultCode::Success,
         ManageSellOfferResultCode::Malformed,
         ManageSellOfferResultCode::SellNoTrust,
@@ -39301,7 +37494,7 @@ impl ManageSellOfferResultCode {
         ManageSellOfferResultCode::NotFound,
         ManageSellOfferResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "SellNoTrust",
@@ -39337,32 +37530,27 @@ impl ManageSellOfferResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageSellOfferResultCode; 13] {
+    pub const fn variants() -> &'static [ManageSellOfferResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageSellOfferResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ManageSellOfferResultCode> for ManageSellOfferResultCode {
     fn variants() -> slice::Iter<'static, ManageSellOfferResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ManageSellOfferResultCode {}
-
 impl fmt::Display for ManageSellOfferResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ManageSellOfferResultCode {
     type Error = Error;
 
@@ -39387,14 +37575,12 @@ impl TryFrom<i32> for ManageSellOfferResultCode {
         Ok(e)
     }
 }
-
 impl From<ManageSellOfferResultCode> for i32 {
     #[must_use]
     fn from(e: ManageSellOfferResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -39405,7 +37591,6 @@ impl ReadXdr for ManageSellOfferResultCode {
         })
     }
 }
-
 impl WriteXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39444,14 +37629,13 @@ pub enum ManageOfferEffect {
     Updated = 1,
     Deleted = 2,
 }
-
 impl ManageOfferEffect {
-    pub const VARIANTS: [ManageOfferEffect; 3] = [
+    pub const VARIANTS: &[ManageOfferEffect] = &[
         ManageOfferEffect::Created,
         ManageOfferEffect::Updated,
         ManageOfferEffect::Deleted,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Created", "Updated", "Deleted"];
+    pub const VARIANTS_STR: &[&str] = &["Created", "Updated", "Deleted"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -39463,32 +37647,27 @@ impl ManageOfferEffect {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageOfferEffect; 3] {
+    pub const fn variants() -> &'static [ManageOfferEffect] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageOfferEffect {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ManageOfferEffect> for ManageOfferEffect {
     fn variants() -> slice::Iter<'static, ManageOfferEffect> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ManageOfferEffect {}
-
 impl fmt::Display for ManageOfferEffect {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ManageOfferEffect {
     type Error = Error;
 
@@ -39503,14 +37682,12 @@ impl TryFrom<i32> for ManageOfferEffect {
         Ok(e)
     }
 }
-
 impl From<ManageOfferEffect> for i32 {
     #[must_use]
     fn from(e: ManageOfferEffect) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -39521,7 +37698,6 @@ impl ReadXdr for ManageOfferEffect {
         })
     }
 }
-
 impl WriteXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39562,21 +37738,19 @@ pub enum ManageOfferSuccessResultOffer {
     Updated(OfferEntry),
     Deleted,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ManageOfferSuccessResultOffer {
     fn default() -> Self {
         Self::Created(OfferEntry::default())
     }
 }
-
 impl ManageOfferSuccessResultOffer {
-    pub const VARIANTS: [ManageOfferEffect; 3] = [
+    pub const VARIANTS: &[ManageOfferEffect] = &[
         ManageOfferEffect::Created,
         ManageOfferEffect::Updated,
         ManageOfferEffect::Deleted,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Created", "Updated", "Deleted"];
+    pub const VARIANTS_STR: &[&str] = &["Created", "Updated", "Deleted"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -39598,33 +37772,28 @@ impl ManageOfferSuccessResultOffer {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageOfferEffect; 3] {
+    pub const fn variants() -> &'static [ManageOfferEffect] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageOfferSuccessResultOffer {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ManageOfferEffect> for ManageOfferSuccessResultOffer {
     #[must_use]
     fn discriminant(&self) -> ManageOfferEffect {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ManageOfferEffect> for ManageOfferSuccessResultOffer {
     fn variants() -> slice::Iter<'static, ManageOfferEffect> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ManageOfferEffect> for ManageOfferSuccessResultOffer {}
-
 impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -39642,7 +37811,6 @@ impl ReadXdr for ManageOfferSuccessResultOffer {
         })
     }
 }
-
 impl WriteXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39694,7 +37862,6 @@ pub struct ManageOfferSuccessResult {
     pub offers_claimed: VecM<ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
 }
-
 impl ReadXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -39706,7 +37873,6 @@ impl ReadXdr for ManageOfferSuccessResult {
         })
     }
 }
-
 impl WriteXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39768,16 +37934,14 @@ pub enum ManageSellOfferResult {
     NotFound,
     LowReserve,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ManageSellOfferResult {
     fn default() -> Self {
         Self::Success(ManageOfferSuccessResult::default())
     }
 }
-
 impl ManageSellOfferResult {
-    pub const VARIANTS: [ManageSellOfferResultCode; 13] = [
+    pub const VARIANTS: &[ManageSellOfferResultCode] = &[
         ManageSellOfferResultCode::Success,
         ManageSellOfferResultCode::Malformed,
         ManageSellOfferResultCode::SellNoTrust,
@@ -39792,7 +37956,7 @@ impl ManageSellOfferResult {
         ManageSellOfferResultCode::NotFound,
         ManageSellOfferResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "SellNoTrust",
@@ -39848,33 +38012,28 @@ impl ManageSellOfferResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageSellOfferResultCode; 13] {
+    pub const fn variants() -> &'static [ManageSellOfferResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageSellOfferResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ManageSellOfferResultCode> for ManageSellOfferResult {
     #[must_use]
     fn discriminant(&self) -> ManageSellOfferResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ManageSellOfferResultCode> for ManageSellOfferResult {
     fn variants() -> slice::Iter<'static, ManageSellOfferResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ManageSellOfferResultCode> for ManageSellOfferResult {}
-
 impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -39905,7 +38064,6 @@ impl ReadXdr for ManageSellOfferResult {
         })
     }
 }
-
 impl WriteXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -39987,9 +38145,8 @@ pub enum ManageBuyOfferResultCode {
     NotFound = -11,
     LowReserve = -12,
 }
-
 impl ManageBuyOfferResultCode {
-    pub const VARIANTS: [ManageBuyOfferResultCode; 13] = [
+    pub const VARIANTS: &[ManageBuyOfferResultCode] = &[
         ManageBuyOfferResultCode::Success,
         ManageBuyOfferResultCode::Malformed,
         ManageBuyOfferResultCode::SellNoTrust,
@@ -40004,7 +38161,7 @@ impl ManageBuyOfferResultCode {
         ManageBuyOfferResultCode::NotFound,
         ManageBuyOfferResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "SellNoTrust",
@@ -40040,32 +38197,27 @@ impl ManageBuyOfferResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageBuyOfferResultCode; 13] {
+    pub const fn variants() -> &'static [ManageBuyOfferResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageBuyOfferResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ManageBuyOfferResultCode> for ManageBuyOfferResultCode {
     fn variants() -> slice::Iter<'static, ManageBuyOfferResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ManageBuyOfferResultCode {}
-
 impl fmt::Display for ManageBuyOfferResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ManageBuyOfferResultCode {
     type Error = Error;
 
@@ -40090,14 +38242,12 @@ impl TryFrom<i32> for ManageBuyOfferResultCode {
         Ok(e)
     }
 }
-
 impl From<ManageBuyOfferResultCode> for i32 {
     #[must_use]
     fn from(e: ManageBuyOfferResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -40108,7 +38258,6 @@ impl ReadXdr for ManageBuyOfferResultCode {
         })
     }
 }
-
 impl WriteXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -40169,16 +38318,14 @@ pub enum ManageBuyOfferResult {
     NotFound,
     LowReserve,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ManageBuyOfferResult {
     fn default() -> Self {
         Self::Success(ManageOfferSuccessResult::default())
     }
 }
-
 impl ManageBuyOfferResult {
-    pub const VARIANTS: [ManageBuyOfferResultCode; 13] = [
+    pub const VARIANTS: &[ManageBuyOfferResultCode] = &[
         ManageBuyOfferResultCode::Success,
         ManageBuyOfferResultCode::Malformed,
         ManageBuyOfferResultCode::SellNoTrust,
@@ -40193,7 +38340,7 @@ impl ManageBuyOfferResult {
         ManageBuyOfferResultCode::NotFound,
         ManageBuyOfferResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "SellNoTrust",
@@ -40249,33 +38396,28 @@ impl ManageBuyOfferResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageBuyOfferResultCode; 13] {
+    pub const fn variants() -> &'static [ManageBuyOfferResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageBuyOfferResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ManageBuyOfferResultCode> for ManageBuyOfferResult {
     #[must_use]
     fn discriminant(&self) -> ManageBuyOfferResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ManageBuyOfferResultCode> for ManageBuyOfferResult {
     fn variants() -> slice::Iter<'static, ManageBuyOfferResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ManageBuyOfferResultCode> for ManageBuyOfferResult {}
-
 impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -40305,7 +38447,6 @@ impl ReadXdr for ManageBuyOfferResult {
         })
     }
 }
-
 impl WriteXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -40379,9 +38520,8 @@ pub enum SetOptionsResultCode {
     InvalidHomeDomain = -9,
     AuthRevocableRequired = -10,
 }
-
 impl SetOptionsResultCode {
-    pub const VARIANTS: [SetOptionsResultCode; 11] = [
+    pub const VARIANTS: &[SetOptionsResultCode] = &[
         SetOptionsResultCode::Success,
         SetOptionsResultCode::LowReserve,
         SetOptionsResultCode::TooManySigners,
@@ -40394,7 +38534,7 @@ impl SetOptionsResultCode {
         SetOptionsResultCode::InvalidHomeDomain,
         SetOptionsResultCode::AuthRevocableRequired,
     ];
-    pub const VARIANTS_STR: [&'static str; 11] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "LowReserve",
         "TooManySigners",
@@ -40426,32 +38566,27 @@ impl SetOptionsResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [SetOptionsResultCode; 11] {
+    pub const fn variants() -> &'static [SetOptionsResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for SetOptionsResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SetOptionsResultCode> for SetOptionsResultCode {
     fn variants() -> slice::Iter<'static, SetOptionsResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SetOptionsResultCode {}
-
 impl fmt::Display for SetOptionsResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SetOptionsResultCode {
     type Error = Error;
 
@@ -40474,14 +38609,12 @@ impl TryFrom<i32> for SetOptionsResultCode {
         Ok(e)
     }
 }
-
 impl From<SetOptionsResultCode> for i32 {
     #[must_use]
     fn from(e: SetOptionsResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -40492,7 +38625,6 @@ impl ReadXdr for SetOptionsResultCode {
         })
     }
 }
-
 impl WriteXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -40549,16 +38681,14 @@ pub enum SetOptionsResult {
     InvalidHomeDomain,
     AuthRevocableRequired,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SetOptionsResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl SetOptionsResult {
-    pub const VARIANTS: [SetOptionsResultCode; 11] = [
+    pub const VARIANTS: &[SetOptionsResultCode] = &[
         SetOptionsResultCode::Success,
         SetOptionsResultCode::LowReserve,
         SetOptionsResultCode::TooManySigners,
@@ -40571,7 +38701,7 @@ impl SetOptionsResult {
         SetOptionsResultCode::InvalidHomeDomain,
         SetOptionsResultCode::AuthRevocableRequired,
     ];
-    pub const VARIANTS_STR: [&'static str; 11] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "LowReserve",
         "TooManySigners",
@@ -40621,33 +38751,28 @@ impl SetOptionsResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [SetOptionsResultCode; 11] {
+    pub const fn variants() -> &'static [SetOptionsResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for SetOptionsResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<SetOptionsResultCode> for SetOptionsResult {
     #[must_use]
     fn discriminant(&self) -> SetOptionsResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<SetOptionsResultCode> for SetOptionsResult {
     fn variants() -> slice::Iter<'static, SetOptionsResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<SetOptionsResultCode> for SetOptionsResult {}
-
 impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -40673,7 +38798,6 @@ impl ReadXdr for SetOptionsResult {
         })
     }
 }
-
 impl WriteXdr for SetOptionsResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -40744,9 +38868,8 @@ pub enum ChangeTrustResultCode {
     CannotDelete = -7,
     NotAuthMaintainLiabilities = -8,
 }
-
 impl ChangeTrustResultCode {
-    pub const VARIANTS: [ChangeTrustResultCode; 9] = [
+    pub const VARIANTS: &[ChangeTrustResultCode] = &[
         ChangeTrustResultCode::Success,
         ChangeTrustResultCode::Malformed,
         ChangeTrustResultCode::NoIssuer,
@@ -40757,7 +38880,7 @@ impl ChangeTrustResultCode {
         ChangeTrustResultCode::CannotDelete,
         ChangeTrustResultCode::NotAuthMaintainLiabilities,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoIssuer",
@@ -40785,32 +38908,27 @@ impl ChangeTrustResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ChangeTrustResultCode; 9] {
+    pub const fn variants() -> &'static [ChangeTrustResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ChangeTrustResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ChangeTrustResultCode> for ChangeTrustResultCode {
     fn variants() -> slice::Iter<'static, ChangeTrustResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ChangeTrustResultCode {}
-
 impl fmt::Display for ChangeTrustResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ChangeTrustResultCode {
     type Error = Error;
 
@@ -40831,14 +38949,12 @@ impl TryFrom<i32> for ChangeTrustResultCode {
         Ok(e)
     }
 }
-
 impl From<ChangeTrustResultCode> for i32 {
     #[must_use]
     fn from(e: ChangeTrustResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -40849,7 +38965,6 @@ impl ReadXdr for ChangeTrustResultCode {
         })
     }
 }
-
 impl WriteXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -40902,16 +39017,14 @@ pub enum ChangeTrustResult {
     CannotDelete,
     NotAuthMaintainLiabilities,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ChangeTrustResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl ChangeTrustResult {
-    pub const VARIANTS: [ChangeTrustResultCode; 9] = [
+    pub const VARIANTS: &[ChangeTrustResultCode] = &[
         ChangeTrustResultCode::Success,
         ChangeTrustResultCode::Malformed,
         ChangeTrustResultCode::NoIssuer,
@@ -40922,7 +39035,7 @@ impl ChangeTrustResult {
         ChangeTrustResultCode::CannotDelete,
         ChangeTrustResultCode::NotAuthMaintainLiabilities,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoIssuer",
@@ -40966,33 +39079,28 @@ impl ChangeTrustResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ChangeTrustResultCode; 9] {
+    pub const fn variants() -> &'static [ChangeTrustResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ChangeTrustResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ChangeTrustResultCode> for ChangeTrustResult {
     #[must_use]
     fn discriminant(&self) -> ChangeTrustResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ChangeTrustResultCode> for ChangeTrustResult {
     fn variants() -> slice::Iter<'static, ChangeTrustResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ChangeTrustResultCode> for ChangeTrustResult {}
-
 impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41018,7 +39126,6 @@ impl ReadXdr for ChangeTrustResult {
         })
     }
 }
-
 impl WriteXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41081,9 +39188,8 @@ pub enum AllowTrustResultCode {
     SelfNotAllowed = -5,
     LowReserve = -6,
 }
-
 impl AllowTrustResultCode {
-    pub const VARIANTS: [AllowTrustResultCode; 7] = [
+    pub const VARIANTS: &[AllowTrustResultCode] = &[
         AllowTrustResultCode::Success,
         AllowTrustResultCode::Malformed,
         AllowTrustResultCode::NoTrustLine,
@@ -41092,7 +39198,7 @@ impl AllowTrustResultCode {
         AllowTrustResultCode::SelfNotAllowed,
         AllowTrustResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrustLine",
@@ -41116,32 +39222,27 @@ impl AllowTrustResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [AllowTrustResultCode; 7] {
+    pub const fn variants() -> &'static [AllowTrustResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for AllowTrustResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<AllowTrustResultCode> for AllowTrustResultCode {
     fn variants() -> slice::Iter<'static, AllowTrustResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for AllowTrustResultCode {}
-
 impl fmt::Display for AllowTrustResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for AllowTrustResultCode {
     type Error = Error;
 
@@ -41160,14 +39261,12 @@ impl TryFrom<i32> for AllowTrustResultCode {
         Ok(e)
     }
 }
-
 impl From<AllowTrustResultCode> for i32 {
     #[must_use]
     fn from(e: AllowTrustResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41178,7 +39277,6 @@ impl ReadXdr for AllowTrustResultCode {
         })
     }
 }
-
 impl WriteXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41227,16 +39325,14 @@ pub enum AllowTrustResult {
     SelfNotAllowed,
     LowReserve,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AllowTrustResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl AllowTrustResult {
-    pub const VARIANTS: [AllowTrustResultCode; 7] = [
+    pub const VARIANTS: &[AllowTrustResultCode] = &[
         AllowTrustResultCode::Success,
         AllowTrustResultCode::Malformed,
         AllowTrustResultCode::NoTrustLine,
@@ -41245,7 +39341,7 @@ impl AllowTrustResult {
         AllowTrustResultCode::SelfNotAllowed,
         AllowTrustResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrustLine",
@@ -41283,33 +39379,28 @@ impl AllowTrustResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [AllowTrustResultCode; 7] {
+    pub const fn variants() -> &'static [AllowTrustResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for AllowTrustResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<AllowTrustResultCode> for AllowTrustResult {
     #[must_use]
     fn discriminant(&self) -> AllowTrustResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<AllowTrustResultCode> for AllowTrustResult {
     fn variants() -> slice::Iter<'static, AllowTrustResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<AllowTrustResultCode> for AllowTrustResult {}
-
 impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41331,7 +39422,6 @@ impl ReadXdr for AllowTrustResult {
         })
     }
 }
-
 impl WriteXdr for AllowTrustResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41393,9 +39483,8 @@ pub enum AccountMergeResultCode {
     DestFull = -6,
     IsSponsor = -7,
 }
-
 impl AccountMergeResultCode {
-    pub const VARIANTS: [AccountMergeResultCode; 8] = [
+    pub const VARIANTS: &[AccountMergeResultCode] = &[
         AccountMergeResultCode::Success,
         AccountMergeResultCode::Malformed,
         AccountMergeResultCode::NoAccount,
@@ -41405,7 +39494,7 @@ impl AccountMergeResultCode {
         AccountMergeResultCode::DestFull,
         AccountMergeResultCode::IsSponsor,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoAccount",
@@ -41431,32 +39520,27 @@ impl AccountMergeResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [AccountMergeResultCode; 8] {
+    pub const fn variants() -> &'static [AccountMergeResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for AccountMergeResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<AccountMergeResultCode> for AccountMergeResultCode {
     fn variants() -> slice::Iter<'static, AccountMergeResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for AccountMergeResultCode {}
-
 impl fmt::Display for AccountMergeResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for AccountMergeResultCode {
     type Error = Error;
 
@@ -41476,14 +39560,12 @@ impl TryFrom<i32> for AccountMergeResultCode {
         Ok(e)
     }
 }
-
 impl From<AccountMergeResultCode> for i32 {
     #[must_use]
     fn from(e: AccountMergeResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41494,7 +39576,6 @@ impl ReadXdr for AccountMergeResultCode {
         })
     }
 }
-
 impl WriteXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41551,16 +39632,14 @@ pub enum AccountMergeResult {
     DestFull,
     IsSponsor,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for AccountMergeResult {
     fn default() -> Self {
         Self::Success(i64::default())
     }
 }
-
 impl AccountMergeResult {
-    pub const VARIANTS: [AccountMergeResultCode; 8] = [
+    pub const VARIANTS: &[AccountMergeResultCode] = &[
         AccountMergeResultCode::Success,
         AccountMergeResultCode::Malformed,
         AccountMergeResultCode::NoAccount,
@@ -41570,7 +39649,7 @@ impl AccountMergeResult {
         AccountMergeResultCode::DestFull,
         AccountMergeResultCode::IsSponsor,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoAccount",
@@ -41611,33 +39690,28 @@ impl AccountMergeResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [AccountMergeResultCode; 8] {
+    pub const fn variants() -> &'static [AccountMergeResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for AccountMergeResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<AccountMergeResultCode> for AccountMergeResult {
     #[must_use]
     fn discriminant(&self) -> AccountMergeResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<AccountMergeResultCode> for AccountMergeResult {
     fn variants() -> slice::Iter<'static, AccountMergeResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<AccountMergeResultCode> for AccountMergeResult {}
-
 impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41660,7 +39734,6 @@ impl ReadXdr for AccountMergeResult {
         })
     }
 }
-
 impl WriteXdr for AccountMergeResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41710,11 +39783,10 @@ pub enum InflationResultCode {
     Success = 0,
     NotTime = -1,
 }
-
 impl InflationResultCode {
-    pub const VARIANTS: [InflationResultCode; 2] =
-        [InflationResultCode::Success, InflationResultCode::NotTime];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Success", "NotTime"];
+    pub const VARIANTS: &[InflationResultCode] =
+        &[InflationResultCode::Success, InflationResultCode::NotTime];
+    pub const VARIANTS_STR: &[&str] = &["Success", "NotTime"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -41725,32 +39797,27 @@ impl InflationResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [InflationResultCode; 2] {
+    pub const fn variants() -> &'static [InflationResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for InflationResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<InflationResultCode> for InflationResultCode {
     fn variants() -> slice::Iter<'static, InflationResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for InflationResultCode {}
-
 impl fmt::Display for InflationResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for InflationResultCode {
     type Error = Error;
 
@@ -41764,14 +39831,12 @@ impl TryFrom<i32> for InflationResultCode {
         Ok(e)
     }
 }
-
 impl From<InflationResultCode> for i32 {
     #[must_use]
     fn from(e: InflationResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for InflationResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41782,7 +39847,6 @@ impl ReadXdr for InflationResultCode {
         })
     }
 }
-
 impl WriteXdr for InflationResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41822,7 +39886,6 @@ pub struct InflationPayout {
     )]
     pub amount: i64,
 }
-
 impl ReadXdr for InflationPayout {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41834,7 +39897,6 @@ impl ReadXdr for InflationPayout {
         })
     }
 }
-
 impl WriteXdr for InflationPayout {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -41874,18 +39936,16 @@ pub enum InflationResult {
     Success(VecM<InflationPayout>),
     NotTime,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for InflationResult {
     fn default() -> Self {
         Self::Success(VecM::<InflationPayout>::default())
     }
 }
-
 impl InflationResult {
-    pub const VARIANTS: [InflationResultCode; 2] =
-        [InflationResultCode::Success, InflationResultCode::NotTime];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Success", "NotTime"];
+    pub const VARIANTS: &[InflationResultCode] =
+        &[InflationResultCode::Success, InflationResultCode::NotTime];
+    pub const VARIANTS_STR: &[&str] = &["Success", "NotTime"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -41905,33 +39965,28 @@ impl InflationResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [InflationResultCode; 2] {
+    pub const fn variants() -> &'static [InflationResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for InflationResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<InflationResultCode> for InflationResult {
     #[must_use]
     fn discriminant(&self) -> InflationResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<InflationResultCode> for InflationResult {
     fn variants() -> slice::Iter<'static, InflationResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<InflationResultCode> for InflationResult {}
-
 impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -41950,7 +40005,6 @@ impl ReadXdr for InflationResult {
         })
     }
 }
-
 impl WriteXdr for InflationResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42002,16 +40056,15 @@ pub enum ManageDataResultCode {
     LowReserve = -3,
     InvalidName = -4,
 }
-
 impl ManageDataResultCode {
-    pub const VARIANTS: [ManageDataResultCode; 5] = [
+    pub const VARIANTS: &[ManageDataResultCode] = &[
         ManageDataResultCode::Success,
         ManageDataResultCode::NotSupportedYet,
         ManageDataResultCode::NameNotFound,
         ManageDataResultCode::LowReserve,
         ManageDataResultCode::InvalidName,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "NotSupportedYet",
         "NameNotFound",
@@ -42031,32 +40084,27 @@ impl ManageDataResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageDataResultCode; 5] {
+    pub const fn variants() -> &'static [ManageDataResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageDataResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ManageDataResultCode> for ManageDataResultCode {
     fn variants() -> slice::Iter<'static, ManageDataResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ManageDataResultCode {}
-
 impl fmt::Display for ManageDataResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ManageDataResultCode {
     type Error = Error;
 
@@ -42073,14 +40121,12 @@ impl TryFrom<i32> for ManageDataResultCode {
         Ok(e)
     }
 }
-
 impl From<ManageDataResultCode> for i32 {
     #[must_use]
     fn from(e: ManageDataResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42091,7 +40137,6 @@ impl ReadXdr for ManageDataResultCode {
         })
     }
 }
-
 impl WriteXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42136,23 +40181,21 @@ pub enum ManageDataResult {
     LowReserve,
     InvalidName,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ManageDataResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl ManageDataResult {
-    pub const VARIANTS: [ManageDataResultCode; 5] = [
+    pub const VARIANTS: &[ManageDataResultCode] = &[
         ManageDataResultCode::Success,
         ManageDataResultCode::NotSupportedYet,
         ManageDataResultCode::NameNotFound,
         ManageDataResultCode::LowReserve,
         ManageDataResultCode::InvalidName,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "NotSupportedYet",
         "NameNotFound",
@@ -42184,33 +40227,28 @@ impl ManageDataResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ManageDataResultCode; 5] {
+    pub const fn variants() -> &'static [ManageDataResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ManageDataResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ManageDataResultCode> for ManageDataResult {
     #[must_use]
     fn discriminant(&self) -> ManageDataResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ManageDataResultCode> for ManageDataResult {
     fn variants() -> slice::Iter<'static, ManageDataResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ManageDataResultCode> for ManageDataResult {}
-
 impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42230,7 +40268,6 @@ impl ReadXdr for ManageDataResult {
         })
     }
 }
-
 impl WriteXdr for ManageDataResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42277,13 +40314,12 @@ pub enum BumpSequenceResultCode {
     Success = 0,
     BadSeq = -1,
 }
-
 impl BumpSequenceResultCode {
-    pub const VARIANTS: [BumpSequenceResultCode; 2] = [
+    pub const VARIANTS: &[BumpSequenceResultCode] = &[
         BumpSequenceResultCode::Success,
         BumpSequenceResultCode::BadSeq,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Success", "BadSeq"];
+    pub const VARIANTS_STR: &[&str] = &["Success", "BadSeq"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -42294,32 +40330,27 @@ impl BumpSequenceResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpSequenceResultCode; 2] {
+    pub const fn variants() -> &'static [BumpSequenceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for BumpSequenceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<BumpSequenceResultCode> for BumpSequenceResultCode {
     fn variants() -> slice::Iter<'static, BumpSequenceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for BumpSequenceResultCode {}
-
 impl fmt::Display for BumpSequenceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for BumpSequenceResultCode {
     type Error = Error;
 
@@ -42333,14 +40364,12 @@ impl TryFrom<i32> for BumpSequenceResultCode {
         Ok(e)
     }
 }
-
 impl From<BumpSequenceResultCode> for i32 {
     #[must_use]
     fn from(e: BumpSequenceResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42351,7 +40380,6 @@ impl ReadXdr for BumpSequenceResultCode {
         })
     }
 }
-
 impl WriteXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42390,20 +40418,18 @@ pub enum BumpSequenceResult {
     Success,
     BadSeq,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for BumpSequenceResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl BumpSequenceResult {
-    pub const VARIANTS: [BumpSequenceResultCode; 2] = [
+    pub const VARIANTS: &[BumpSequenceResultCode] = &[
         BumpSequenceResultCode::Success,
         BumpSequenceResultCode::BadSeq,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Success", "BadSeq"];
+    pub const VARIANTS_STR: &[&str] = &["Success", "BadSeq"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -42423,33 +40449,28 @@ impl BumpSequenceResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpSequenceResultCode; 2] {
+    pub const fn variants() -> &'static [BumpSequenceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for BumpSequenceResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<BumpSequenceResultCode> for BumpSequenceResult {
     #[must_use]
     fn discriminant(&self) -> BumpSequenceResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<BumpSequenceResultCode> for BumpSequenceResult {
     fn variants() -> slice::Iter<'static, BumpSequenceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<BumpSequenceResultCode> for BumpSequenceResult {}
-
 impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42466,7 +40487,6 @@ impl ReadXdr for BumpSequenceResult {
         })
     }
 }
-
 impl WriteXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42516,9 +40536,8 @@ pub enum CreateClaimableBalanceResultCode {
     NotAuthorized = -4,
     Underfunded = -5,
 }
-
 impl CreateClaimableBalanceResultCode {
-    pub const VARIANTS: [CreateClaimableBalanceResultCode; 6] = [
+    pub const VARIANTS: &[CreateClaimableBalanceResultCode] = &[
         CreateClaimableBalanceResultCode::Success,
         CreateClaimableBalanceResultCode::Malformed,
         CreateClaimableBalanceResultCode::LowReserve,
@@ -42526,7 +40545,7 @@ impl CreateClaimableBalanceResultCode {
         CreateClaimableBalanceResultCode::NotAuthorized,
         CreateClaimableBalanceResultCode::Underfunded,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "LowReserve",
@@ -42548,32 +40567,27 @@ impl CreateClaimableBalanceResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [CreateClaimableBalanceResultCode; 6] {
+    pub const fn variants() -> &'static [CreateClaimableBalanceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for CreateClaimableBalanceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResultCode {
     fn variants() -> slice::Iter<'static, CreateClaimableBalanceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for CreateClaimableBalanceResultCode {}
-
 impl fmt::Display for CreateClaimableBalanceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for CreateClaimableBalanceResultCode {
     type Error = Error;
 
@@ -42591,14 +40605,12 @@ impl TryFrom<i32> for CreateClaimableBalanceResultCode {
         Ok(e)
     }
 }
-
 impl From<CreateClaimableBalanceResultCode> for i32 {
     #[must_use]
     fn from(e: CreateClaimableBalanceResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42609,7 +40621,6 @@ impl ReadXdr for CreateClaimableBalanceResultCode {
         })
     }
 }
-
 impl WriteXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42657,16 +40668,14 @@ pub enum CreateClaimableBalanceResult {
     NotAuthorized,
     Underfunded,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for CreateClaimableBalanceResult {
     fn default() -> Self {
         Self::Success(ClaimableBalanceId::default())
     }
 }
-
 impl CreateClaimableBalanceResult {
-    pub const VARIANTS: [CreateClaimableBalanceResultCode; 6] = [
+    pub const VARIANTS: &[CreateClaimableBalanceResultCode] = &[
         CreateClaimableBalanceResultCode::Success,
         CreateClaimableBalanceResultCode::Malformed,
         CreateClaimableBalanceResultCode::LowReserve,
@@ -42674,7 +40683,7 @@ impl CreateClaimableBalanceResult {
         CreateClaimableBalanceResultCode::NotAuthorized,
         CreateClaimableBalanceResultCode::Underfunded,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "LowReserve",
@@ -42709,33 +40718,28 @@ impl CreateClaimableBalanceResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [CreateClaimableBalanceResultCode; 6] {
+    pub const fn variants() -> &'static [CreateClaimableBalanceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for CreateClaimableBalanceResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {
     #[must_use]
     fn discriminant(&self) -> CreateClaimableBalanceResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {
     fn variants() -> slice::Iter<'static, CreateClaimableBalanceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {}
-
 impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42759,7 +40763,6 @@ impl ReadXdr for CreateClaimableBalanceResult {
         })
     }
 }
-
 impl WriteXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42813,9 +40816,8 @@ pub enum ClaimClaimableBalanceResultCode {
     NoTrust = -4,
     NotAuthorized = -5,
 }
-
 impl ClaimClaimableBalanceResultCode {
-    pub const VARIANTS: [ClaimClaimableBalanceResultCode; 6] = [
+    pub const VARIANTS: &[ClaimClaimableBalanceResultCode] = &[
         ClaimClaimableBalanceResultCode::Success,
         ClaimClaimableBalanceResultCode::DoesNotExist,
         ClaimClaimableBalanceResultCode::CannotClaim,
@@ -42823,7 +40825,7 @@ impl ClaimClaimableBalanceResultCode {
         ClaimClaimableBalanceResultCode::NoTrust,
         ClaimClaimableBalanceResultCode::NotAuthorized,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "DoesNotExist",
         "CannotClaim",
@@ -42845,32 +40847,27 @@ impl ClaimClaimableBalanceResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimClaimableBalanceResultCode; 6] {
+    pub const fn variants() -> &'static [ClaimClaimableBalanceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimClaimableBalanceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResultCode {
     fn variants() -> slice::Iter<'static, ClaimClaimableBalanceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClaimClaimableBalanceResultCode {}
-
 impl fmt::Display for ClaimClaimableBalanceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
     type Error = Error;
 
@@ -42888,14 +40885,12 @@ impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
         Ok(e)
     }
 }
-
 impl From<ClaimClaimableBalanceResultCode> for i32 {
     #[must_use]
     fn from(e: ClaimClaimableBalanceResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -42906,7 +40901,6 @@ impl ReadXdr for ClaimClaimableBalanceResultCode {
         })
     }
 }
-
 impl WriteXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -42953,16 +40947,14 @@ pub enum ClaimClaimableBalanceResult {
     NoTrust,
     NotAuthorized,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClaimClaimableBalanceResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl ClaimClaimableBalanceResult {
-    pub const VARIANTS: [ClaimClaimableBalanceResultCode; 6] = [
+    pub const VARIANTS: &[ClaimClaimableBalanceResultCode] = &[
         ClaimClaimableBalanceResultCode::Success,
         ClaimClaimableBalanceResultCode::DoesNotExist,
         ClaimClaimableBalanceResultCode::CannotClaim,
@@ -42970,7 +40962,7 @@ impl ClaimClaimableBalanceResult {
         ClaimClaimableBalanceResultCode::NoTrust,
         ClaimClaimableBalanceResultCode::NotAuthorized,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "DoesNotExist",
         "CannotClaim",
@@ -43005,33 +40997,28 @@ impl ClaimClaimableBalanceResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimClaimableBalanceResultCode; 6] {
+    pub const fn variants() -> &'static [ClaimClaimableBalanceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimClaimableBalanceResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {
     #[must_use]
     fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {
     fn variants() -> slice::Iter<'static, ClaimClaimableBalanceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {}
-
 impl ReadXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43053,7 +41040,6 @@ impl ReadXdr for ClaimClaimableBalanceResult {
         })
     }
 }
-
 impl WriteXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43106,16 +41092,14 @@ pub enum BeginSponsoringFutureReservesResultCode {
     AlreadySponsored = -2,
     Recursive = -3,
 }
-
 impl BeginSponsoringFutureReservesResultCode {
-    pub const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] = [
+    pub const VARIANTS: &[BeginSponsoringFutureReservesResultCode] = &[
         BeginSponsoringFutureReservesResultCode::Success,
         BeginSponsoringFutureReservesResultCode::Malformed,
         BeginSponsoringFutureReservesResultCode::AlreadySponsored,
         BeginSponsoringFutureReservesResultCode::Recursive,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "Malformed", "AlreadySponsored", "Recursive"];
+    pub const VARIANTS_STR: &[&str] = &["Success", "Malformed", "AlreadySponsored", "Recursive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -43128,32 +41112,27 @@ impl BeginSponsoringFutureReservesResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [BeginSponsoringFutureReservesResultCode; 4] {
+    pub const fn variants() -> &'static [BeginSponsoringFutureReservesResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for BeginSponsoringFutureReservesResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResultCode {
     fn variants() -> slice::Iter<'static, BeginSponsoringFutureReservesResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for BeginSponsoringFutureReservesResultCode {}
-
 impl fmt::Display for BeginSponsoringFutureReservesResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
     type Error = Error;
 
@@ -43169,14 +41148,12 @@ impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
         Ok(e)
     }
 }
-
 impl From<BeginSponsoringFutureReservesResultCode> for i32 {
     #[must_use]
     fn from(e: BeginSponsoringFutureReservesResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43187,7 +41164,6 @@ impl ReadXdr for BeginSponsoringFutureReservesResultCode {
         })
     }
 }
-
 impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43231,23 +41207,20 @@ pub enum BeginSponsoringFutureReservesResult {
     AlreadySponsored,
     Recursive,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for BeginSponsoringFutureReservesResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl BeginSponsoringFutureReservesResult {
-    pub const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] = [
+    pub const VARIANTS: &[BeginSponsoringFutureReservesResultCode] = &[
         BeginSponsoringFutureReservesResultCode::Success,
         BeginSponsoringFutureReservesResultCode::Malformed,
         BeginSponsoringFutureReservesResultCode::AlreadySponsored,
         BeginSponsoringFutureReservesResultCode::Recursive,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "Malformed", "AlreadySponsored", "Recursive"];
+    pub const VARIANTS_STR: &[&str] = &["Success", "Malformed", "AlreadySponsored", "Recursive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -43271,33 +41244,28 @@ impl BeginSponsoringFutureReservesResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [BeginSponsoringFutureReservesResultCode; 4] {
+    pub const fn variants() -> &'static [BeginSponsoringFutureReservesResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for BeginSponsoringFutureReservesResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {
     #[must_use]
     fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {
     fn variants() -> slice::Iter<'static, BeginSponsoringFutureReservesResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {}
-
 impl ReadXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43317,7 +41285,6 @@ impl ReadXdr for BeginSponsoringFutureReservesResult {
         })
     }
 }
-
 impl WriteXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43364,13 +41331,12 @@ pub enum EndSponsoringFutureReservesResultCode {
     Success = 0,
     NotSponsored = -1,
 }
-
 impl EndSponsoringFutureReservesResultCode {
-    pub const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] = [
+    pub const VARIANTS: &[EndSponsoringFutureReservesResultCode] = &[
         EndSponsoringFutureReservesResultCode::Success,
         EndSponsoringFutureReservesResultCode::NotSponsored,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Success", "NotSponsored"];
+    pub const VARIANTS_STR: &[&str] = &["Success", "NotSponsored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -43381,32 +41347,27 @@ impl EndSponsoringFutureReservesResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [EndSponsoringFutureReservesResultCode; 2] {
+    pub const fn variants() -> &'static [EndSponsoringFutureReservesResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for EndSponsoringFutureReservesResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResultCode {
     fn variants() -> slice::Iter<'static, EndSponsoringFutureReservesResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for EndSponsoringFutureReservesResultCode {}
-
 impl fmt::Display for EndSponsoringFutureReservesResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
     type Error = Error;
 
@@ -43420,14 +41381,12 @@ impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
         Ok(e)
     }
 }
-
 impl From<EndSponsoringFutureReservesResultCode> for i32 {
     #[must_use]
     fn from(e: EndSponsoringFutureReservesResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43438,7 +41397,6 @@ impl ReadXdr for EndSponsoringFutureReservesResultCode {
         })
     }
 }
-
 impl WriteXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43478,20 +41436,18 @@ pub enum EndSponsoringFutureReservesResult {
     Success,
     NotSponsored,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for EndSponsoringFutureReservesResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl EndSponsoringFutureReservesResult {
-    pub const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] = [
+    pub const VARIANTS: &[EndSponsoringFutureReservesResultCode] = &[
         EndSponsoringFutureReservesResultCode::Success,
         EndSponsoringFutureReservesResultCode::NotSponsored,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Success", "NotSponsored"];
+    pub const VARIANTS_STR: &[&str] = &["Success", "NotSponsored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -43511,33 +41467,28 @@ impl EndSponsoringFutureReservesResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [EndSponsoringFutureReservesResultCode; 2] {
+    pub const fn variants() -> &'static [EndSponsoringFutureReservesResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for EndSponsoringFutureReservesResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {
     #[must_use]
     fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {
     fn variants() -> slice::Iter<'static, EndSponsoringFutureReservesResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {}
-
 impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43555,7 +41506,6 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
         })
     }
 }
-
 impl WriteXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43608,9 +41558,8 @@ pub enum RevokeSponsorshipResultCode {
     OnlyTransferable = -4,
     Malformed = -5,
 }
-
 impl RevokeSponsorshipResultCode {
-    pub const VARIANTS: [RevokeSponsorshipResultCode; 6] = [
+    pub const VARIANTS: &[RevokeSponsorshipResultCode] = &[
         RevokeSponsorshipResultCode::Success,
         RevokeSponsorshipResultCode::DoesNotExist,
         RevokeSponsorshipResultCode::NotSponsor,
@@ -43618,7 +41567,7 @@ impl RevokeSponsorshipResultCode {
         RevokeSponsorshipResultCode::OnlyTransferable,
         RevokeSponsorshipResultCode::Malformed,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "DoesNotExist",
         "NotSponsor",
@@ -43640,32 +41589,27 @@ impl RevokeSponsorshipResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [RevokeSponsorshipResultCode; 6] {
+    pub const fn variants() -> &'static [RevokeSponsorshipResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for RevokeSponsorshipResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<RevokeSponsorshipResultCode> for RevokeSponsorshipResultCode {
     fn variants() -> slice::Iter<'static, RevokeSponsorshipResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for RevokeSponsorshipResultCode {}
-
 impl fmt::Display for RevokeSponsorshipResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for RevokeSponsorshipResultCode {
     type Error = Error;
 
@@ -43683,14 +41627,12 @@ impl TryFrom<i32> for RevokeSponsorshipResultCode {
         Ok(e)
     }
 }
-
 impl From<RevokeSponsorshipResultCode> for i32 {
     #[must_use]
     fn from(e: RevokeSponsorshipResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43701,7 +41643,6 @@ impl ReadXdr for RevokeSponsorshipResultCode {
         })
     }
 }
-
 impl WriteXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43748,16 +41689,14 @@ pub enum RevokeSponsorshipResult {
     OnlyTransferable,
     Malformed,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for RevokeSponsorshipResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl RevokeSponsorshipResult {
-    pub const VARIANTS: [RevokeSponsorshipResultCode; 6] = [
+    pub const VARIANTS: &[RevokeSponsorshipResultCode] = &[
         RevokeSponsorshipResultCode::Success,
         RevokeSponsorshipResultCode::DoesNotExist,
         RevokeSponsorshipResultCode::NotSponsor,
@@ -43765,7 +41704,7 @@ impl RevokeSponsorshipResult {
         RevokeSponsorshipResultCode::OnlyTransferable,
         RevokeSponsorshipResultCode::Malformed,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "DoesNotExist",
         "NotSponsor",
@@ -43800,33 +41739,28 @@ impl RevokeSponsorshipResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [RevokeSponsorshipResultCode; 6] {
+    pub const fn variants() -> &'static [RevokeSponsorshipResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for RevokeSponsorshipResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
     #[must_use]
     fn discriminant(&self) -> RevokeSponsorshipResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
     fn variants() -> slice::Iter<'static, RevokeSponsorshipResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {}
-
 impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43848,7 +41782,6 @@ impl ReadXdr for RevokeSponsorshipResult {
         })
     }
 }
-
 impl WriteXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -43903,16 +41836,15 @@ pub enum ClawbackResultCode {
     NoTrust = -3,
     Underfunded = -4,
 }
-
 impl ClawbackResultCode {
-    pub const VARIANTS: [ClawbackResultCode; 5] = [
+    pub const VARIANTS: &[ClawbackResultCode] = &[
         ClawbackResultCode::Success,
         ClawbackResultCode::Malformed,
         ClawbackResultCode::NotClawbackEnabled,
         ClawbackResultCode::NoTrust,
         ClawbackResultCode::Underfunded,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NotClawbackEnabled",
@@ -43932,32 +41864,27 @@ impl ClawbackResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClawbackResultCode; 5] {
+    pub const fn variants() -> &'static [ClawbackResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClawbackResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClawbackResultCode> for ClawbackResultCode {
     fn variants() -> slice::Iter<'static, ClawbackResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClawbackResultCode {}
-
 impl fmt::Display for ClawbackResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClawbackResultCode {
     type Error = Error;
 
@@ -43974,14 +41901,12 @@ impl TryFrom<i32> for ClawbackResultCode {
         Ok(e)
     }
 }
-
 impl From<ClawbackResultCode> for i32 {
     #[must_use]
     fn from(e: ClawbackResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43992,7 +41917,6 @@ impl ReadXdr for ClawbackResultCode {
         })
     }
 }
-
 impl WriteXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44037,23 +41961,21 @@ pub enum ClawbackResult {
     NoTrust,
     Underfunded,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClawbackResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl ClawbackResult {
-    pub const VARIANTS: [ClawbackResultCode; 5] = [
+    pub const VARIANTS: &[ClawbackResultCode] = &[
         ClawbackResultCode::Success,
         ClawbackResultCode::Malformed,
         ClawbackResultCode::NotClawbackEnabled,
         ClawbackResultCode::NoTrust,
         ClawbackResultCode::Underfunded,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NotClawbackEnabled",
@@ -44085,33 +42007,28 @@ impl ClawbackResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClawbackResultCode; 5] {
+    pub const fn variants() -> &'static [ClawbackResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClawbackResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClawbackResultCode> for ClawbackResult {
     #[must_use]
     fn discriminant(&self) -> ClawbackResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClawbackResultCode> for ClawbackResult {
     fn variants() -> slice::Iter<'static, ClawbackResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClawbackResultCode> for ClawbackResult {}
-
 impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44131,7 +42048,6 @@ impl ReadXdr for ClawbackResult {
         })
     }
 }
-
 impl WriteXdr for ClawbackResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44183,16 +42099,15 @@ pub enum ClawbackClaimableBalanceResultCode {
     NotIssuer = -2,
     NotClawbackEnabled = -3,
 }
-
 impl ClawbackClaimableBalanceResultCode {
-    pub const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] = [
+    pub const VARIANTS: &[ClawbackClaimableBalanceResultCode] = &[
         ClawbackClaimableBalanceResultCode::Success,
         ClawbackClaimableBalanceResultCode::DoesNotExist,
         ClawbackClaimableBalanceResultCode::NotIssuer,
         ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
+    pub const VARIANTS_STR: &[&str] =
+        &["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -44205,32 +42120,27 @@ impl ClawbackClaimableBalanceResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClawbackClaimableBalanceResultCode; 4] {
+    pub const fn variants() -> &'static [ClawbackClaimableBalanceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClawbackClaimableBalanceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResultCode {
     fn variants() -> slice::Iter<'static, ClawbackClaimableBalanceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClawbackClaimableBalanceResultCode {}
-
 impl fmt::Display for ClawbackClaimableBalanceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
     type Error = Error;
 
@@ -44246,14 +42156,12 @@ impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
         Ok(e)
     }
 }
-
 impl From<ClawbackClaimableBalanceResultCode> for i32 {
     #[must_use]
     fn from(e: ClawbackClaimableBalanceResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44264,7 +42172,6 @@ impl ReadXdr for ClawbackClaimableBalanceResultCode {
         })
     }
 }
-
 impl WriteXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44308,23 +42215,21 @@ pub enum ClawbackClaimableBalanceResult {
     NotIssuer,
     NotClawbackEnabled,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClawbackClaimableBalanceResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl ClawbackClaimableBalanceResult {
-    pub const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] = [
+    pub const VARIANTS: &[ClawbackClaimableBalanceResultCode] = &[
         ClawbackClaimableBalanceResultCode::Success,
         ClawbackClaimableBalanceResultCode::DoesNotExist,
         ClawbackClaimableBalanceResultCode::NotIssuer,
         ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
+    pub const VARIANTS_STR: &[&str] =
+        &["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -44348,33 +42253,28 @@ impl ClawbackClaimableBalanceResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClawbackClaimableBalanceResultCode; 4] {
+    pub const fn variants() -> &'static [ClawbackClaimableBalanceResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClawbackClaimableBalanceResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {
     #[must_use]
     fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {
     fn variants() -> slice::Iter<'static, ClawbackClaimableBalanceResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {}
-
 impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44394,7 +42294,6 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
         })
     }
 }
-
 impl WriteXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44450,9 +42349,8 @@ pub enum SetTrustLineFlagsResultCode {
     InvalidState = -4,
     LowReserve = -5,
 }
-
 impl SetTrustLineFlagsResultCode {
-    pub const VARIANTS: [SetTrustLineFlagsResultCode; 6] = [
+    pub const VARIANTS: &[SetTrustLineFlagsResultCode] = &[
         SetTrustLineFlagsResultCode::Success,
         SetTrustLineFlagsResultCode::Malformed,
         SetTrustLineFlagsResultCode::NoTrustLine,
@@ -44460,7 +42358,7 @@ impl SetTrustLineFlagsResultCode {
         SetTrustLineFlagsResultCode::InvalidState,
         SetTrustLineFlagsResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrustLine",
@@ -44482,32 +42380,27 @@ impl SetTrustLineFlagsResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [SetTrustLineFlagsResultCode; 6] {
+    pub const fn variants() -> &'static [SetTrustLineFlagsResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for SetTrustLineFlagsResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResultCode {
     fn variants() -> slice::Iter<'static, SetTrustLineFlagsResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SetTrustLineFlagsResultCode {}
-
 impl fmt::Display for SetTrustLineFlagsResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SetTrustLineFlagsResultCode {
     type Error = Error;
 
@@ -44525,14 +42418,12 @@ impl TryFrom<i32> for SetTrustLineFlagsResultCode {
         Ok(e)
     }
 }
-
 impl From<SetTrustLineFlagsResultCode> for i32 {
     #[must_use]
     fn from(e: SetTrustLineFlagsResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44543,7 +42434,6 @@ impl ReadXdr for SetTrustLineFlagsResultCode {
         })
     }
 }
-
 impl WriteXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44590,16 +42480,14 @@ pub enum SetTrustLineFlagsResult {
     InvalidState,
     LowReserve,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SetTrustLineFlagsResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl SetTrustLineFlagsResult {
-    pub const VARIANTS: [SetTrustLineFlagsResultCode; 6] = [
+    pub const VARIANTS: &[SetTrustLineFlagsResultCode] = &[
         SetTrustLineFlagsResultCode::Success,
         SetTrustLineFlagsResultCode::Malformed,
         SetTrustLineFlagsResultCode::NoTrustLine,
@@ -44607,7 +42495,7 @@ impl SetTrustLineFlagsResult {
         SetTrustLineFlagsResultCode::InvalidState,
         SetTrustLineFlagsResultCode::LowReserve,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrustLine",
@@ -44642,33 +42530,28 @@ impl SetTrustLineFlagsResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [SetTrustLineFlagsResultCode; 6] {
+    pub const fn variants() -> &'static [SetTrustLineFlagsResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for SetTrustLineFlagsResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
     #[must_use]
     fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
     fn variants() -> slice::Iter<'static, SetTrustLineFlagsResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {}
-
 impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44690,7 +42573,6 @@ impl ReadXdr for SetTrustLineFlagsResult {
         })
     }
 }
-
 impl WriteXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44755,9 +42637,8 @@ pub enum LiquidityPoolDepositResultCode {
     BadPrice = -6,
     PoolFull = -7,
 }
-
 impl LiquidityPoolDepositResultCode {
-    pub const VARIANTS: [LiquidityPoolDepositResultCode; 8] = [
+    pub const VARIANTS: &[LiquidityPoolDepositResultCode] = &[
         LiquidityPoolDepositResultCode::Success,
         LiquidityPoolDepositResultCode::Malformed,
         LiquidityPoolDepositResultCode::NoTrust,
@@ -44767,7 +42648,7 @@ impl LiquidityPoolDepositResultCode {
         LiquidityPoolDepositResultCode::BadPrice,
         LiquidityPoolDepositResultCode::PoolFull,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrust",
@@ -44793,32 +42674,27 @@ impl LiquidityPoolDepositResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolDepositResultCode; 8] {
+    pub const fn variants() -> &'static [LiquidityPoolDepositResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolDepositResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResultCode {
     fn variants() -> slice::Iter<'static, LiquidityPoolDepositResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LiquidityPoolDepositResultCode {}
-
 impl fmt::Display for LiquidityPoolDepositResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LiquidityPoolDepositResultCode {
     type Error = Error;
 
@@ -44838,14 +42714,12 @@ impl TryFrom<i32> for LiquidityPoolDepositResultCode {
         Ok(e)
     }
 }
-
 impl From<LiquidityPoolDepositResultCode> for i32 {
     #[must_use]
     fn from(e: LiquidityPoolDepositResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44856,7 +42730,6 @@ impl ReadXdr for LiquidityPoolDepositResultCode {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -44907,16 +42780,14 @@ pub enum LiquidityPoolDepositResult {
     BadPrice,
     PoolFull,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LiquidityPoolDepositResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl LiquidityPoolDepositResult {
-    pub const VARIANTS: [LiquidityPoolDepositResultCode; 8] = [
+    pub const VARIANTS: &[LiquidityPoolDepositResultCode] = &[
         LiquidityPoolDepositResultCode::Success,
         LiquidityPoolDepositResultCode::Malformed,
         LiquidityPoolDepositResultCode::NoTrust,
@@ -44926,7 +42797,7 @@ impl LiquidityPoolDepositResult {
         LiquidityPoolDepositResultCode::BadPrice,
         LiquidityPoolDepositResultCode::PoolFull,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrust",
@@ -44967,33 +42838,28 @@ impl LiquidityPoolDepositResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolDepositResultCode; 8] {
+    pub const fn variants() -> &'static [LiquidityPoolDepositResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolDepositResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {
     fn variants() -> slice::Iter<'static, LiquidityPoolDepositResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {}
-
 impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45017,7 +42883,6 @@ impl ReadXdr for LiquidityPoolDepositResult {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45079,9 +42944,8 @@ pub enum LiquidityPoolWithdrawResultCode {
     LineFull = -4,
     UnderMinimum = -5,
 }
-
 impl LiquidityPoolWithdrawResultCode {
-    pub const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] = [
+    pub const VARIANTS: &[LiquidityPoolWithdrawResultCode] = &[
         LiquidityPoolWithdrawResultCode::Success,
         LiquidityPoolWithdrawResultCode::Malformed,
         LiquidityPoolWithdrawResultCode::NoTrust,
@@ -45089,7 +42953,7 @@ impl LiquidityPoolWithdrawResultCode {
         LiquidityPoolWithdrawResultCode::LineFull,
         LiquidityPoolWithdrawResultCode::UnderMinimum,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrust",
@@ -45111,32 +42975,27 @@ impl LiquidityPoolWithdrawResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolWithdrawResultCode; 6] {
+    pub const fn variants() -> &'static [LiquidityPoolWithdrawResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolWithdrawResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResultCode {
     fn variants() -> slice::Iter<'static, LiquidityPoolWithdrawResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for LiquidityPoolWithdrawResultCode {}
-
 impl fmt::Display for LiquidityPoolWithdrawResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
     type Error = Error;
 
@@ -45154,14 +43013,12 @@ impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
         Ok(e)
     }
 }
-
 impl From<LiquidityPoolWithdrawResultCode> for i32 {
     #[must_use]
     fn from(e: LiquidityPoolWithdrawResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45172,7 +43029,6 @@ impl ReadXdr for LiquidityPoolWithdrawResultCode {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45219,16 +43075,14 @@ pub enum LiquidityPoolWithdrawResult {
     LineFull,
     UnderMinimum,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for LiquidityPoolWithdrawResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl LiquidityPoolWithdrawResult {
-    pub const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] = [
+    pub const VARIANTS: &[LiquidityPoolWithdrawResultCode] = &[
         LiquidityPoolWithdrawResultCode::Success,
         LiquidityPoolWithdrawResultCode::Malformed,
         LiquidityPoolWithdrawResultCode::NoTrust,
@@ -45236,7 +43090,7 @@ impl LiquidityPoolWithdrawResult {
         LiquidityPoolWithdrawResultCode::LineFull,
         LiquidityPoolWithdrawResultCode::UnderMinimum,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "NoTrust",
@@ -45271,33 +43125,28 @@ impl LiquidityPoolWithdrawResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [LiquidityPoolWithdrawResultCode; 6] {
+    pub const fn variants() -> &'static [LiquidityPoolWithdrawResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for LiquidityPoolWithdrawResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {
     fn variants() -> slice::Iter<'static, LiquidityPoolWithdrawResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {}
-
 impl ReadXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45319,7 +43168,6 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
         })
     }
 }
-
 impl WriteXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45376,9 +43224,8 @@ pub enum InvokeHostFunctionResultCode {
     EntryArchived = -4,
     InsufficientRefundableFee = -5,
 }
-
 impl InvokeHostFunctionResultCode {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
+    pub const VARIANTS: &[InvokeHostFunctionResultCode] = &[
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
@@ -45386,7 +43233,7 @@ impl InvokeHostFunctionResultCode {
         InvokeHostFunctionResultCode::EntryArchived,
         InvokeHostFunctionResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Trapped",
@@ -45408,32 +43255,27 @@ impl InvokeHostFunctionResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
+    pub const fn variants() -> &'static [InvokeHostFunctionResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for InvokeHostFunctionResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResultCode {
     fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for InvokeHostFunctionResultCode {}
-
 impl fmt::Display for InvokeHostFunctionResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for InvokeHostFunctionResultCode {
     type Error = Error;
 
@@ -45451,14 +43293,12 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
         Ok(e)
     }
 }
-
 impl From<InvokeHostFunctionResultCode> for i32 {
     #[must_use]
     fn from(e: InvokeHostFunctionResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for InvokeHostFunctionResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45469,7 +43309,6 @@ impl ReadXdr for InvokeHostFunctionResultCode {
         })
     }
 }
-
 impl WriteXdr for InvokeHostFunctionResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45516,16 +43355,14 @@ pub enum InvokeHostFunctionResult {
     EntryArchived,
     InsufficientRefundableFee,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for InvokeHostFunctionResult {
     fn default() -> Self {
         Self::Success(Hash::default())
     }
 }
-
 impl InvokeHostFunctionResult {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
+    pub const VARIANTS: &[InvokeHostFunctionResultCode] = &[
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
@@ -45533,7 +43370,7 @@ impl InvokeHostFunctionResult {
         InvokeHostFunctionResultCode::EntryArchived,
         InvokeHostFunctionResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "Trapped",
@@ -45570,33 +43407,28 @@ impl InvokeHostFunctionResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
+    pub const fn variants() -> &'static [InvokeHostFunctionResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for InvokeHostFunctionResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
     #[must_use]
     fn discriminant(&self) -> InvokeHostFunctionResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
     fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
-
 impl ReadXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45620,7 +43452,6 @@ impl ReadXdr for InvokeHostFunctionResult {
         })
     }
 }
-
 impl WriteXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45673,15 +43504,14 @@ pub enum ExtendFootprintTtlResultCode {
     ResourceLimitExceeded = -2,
     InsufficientRefundableFee = -3,
 }
-
 impl ExtendFootprintTtlResultCode {
-    pub const VARIANTS: [ExtendFootprintTtlResultCode; 4] = [
+    pub const VARIANTS: &[ExtendFootprintTtlResultCode] = &[
         ExtendFootprintTtlResultCode::Success,
         ExtendFootprintTtlResultCode::Malformed,
         ExtendFootprintTtlResultCode::ResourceLimitExceeded,
         ExtendFootprintTtlResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "ResourceLimitExceeded",
@@ -45699,32 +43529,27 @@ impl ExtendFootprintTtlResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [ExtendFootprintTtlResultCode; 4] {
+    pub const fn variants() -> &'static [ExtendFootprintTtlResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ExtendFootprintTtlResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResultCode {
     fn variants() -> slice::Iter<'static, ExtendFootprintTtlResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ExtendFootprintTtlResultCode {}
-
 impl fmt::Display for ExtendFootprintTtlResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ExtendFootprintTtlResultCode {
     type Error = Error;
 
@@ -45740,14 +43565,12 @@ impl TryFrom<i32> for ExtendFootprintTtlResultCode {
         Ok(e)
     }
 }
-
 impl From<ExtendFootprintTtlResultCode> for i32 {
     #[must_use]
     fn from(e: ExtendFootprintTtlResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45758,7 +43581,6 @@ impl ReadXdr for ExtendFootprintTtlResultCode {
         })
     }
 }
-
 impl WriteXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45801,22 +43623,20 @@ pub enum ExtendFootprintTtlResult {
     ResourceLimitExceeded,
     InsufficientRefundableFee,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ExtendFootprintTtlResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl ExtendFootprintTtlResult {
-    pub const VARIANTS: [ExtendFootprintTtlResultCode; 4] = [
+    pub const VARIANTS: &[ExtendFootprintTtlResultCode] = &[
         ExtendFootprintTtlResultCode::Success,
         ExtendFootprintTtlResultCode::Malformed,
         ExtendFootprintTtlResultCode::ResourceLimitExceeded,
         ExtendFootprintTtlResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "ResourceLimitExceeded",
@@ -45847,33 +43667,28 @@ impl ExtendFootprintTtlResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [ExtendFootprintTtlResultCode; 4] {
+    pub const fn variants() -> &'static [ExtendFootprintTtlResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for ExtendFootprintTtlResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {
     #[must_use]
     fn discriminant(&self) -> ExtendFootprintTtlResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {
     fn variants() -> slice::Iter<'static, ExtendFootprintTtlResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {}
-
 impl ReadXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -45895,7 +43710,6 @@ impl ReadXdr for ExtendFootprintTtlResult {
         })
     }
 }
-
 impl WriteXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -45946,15 +43760,14 @@ pub enum RestoreFootprintResultCode {
     ResourceLimitExceeded = -2,
     InsufficientRefundableFee = -3,
 }
-
 impl RestoreFootprintResultCode {
-    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
+    pub const VARIANTS: &[RestoreFootprintResultCode] = &[
         RestoreFootprintResultCode::Success,
         RestoreFootprintResultCode::Malformed,
         RestoreFootprintResultCode::ResourceLimitExceeded,
         RestoreFootprintResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "ResourceLimitExceeded",
@@ -45972,32 +43785,27 @@ impl RestoreFootprintResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
+    pub const fn variants() -> &'static [RestoreFootprintResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for RestoreFootprintResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<RestoreFootprintResultCode> for RestoreFootprintResultCode {
     fn variants() -> slice::Iter<'static, RestoreFootprintResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for RestoreFootprintResultCode {}
-
 impl fmt::Display for RestoreFootprintResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for RestoreFootprintResultCode {
     type Error = Error;
 
@@ -46013,14 +43821,12 @@ impl TryFrom<i32> for RestoreFootprintResultCode {
         Ok(e)
     }
 }
-
 impl From<RestoreFootprintResultCode> for i32 {
     #[must_use]
     fn from(e: RestoreFootprintResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for RestoreFootprintResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -46031,7 +43837,6 @@ impl ReadXdr for RestoreFootprintResultCode {
         })
     }
 }
-
 impl WriteXdr for RestoreFootprintResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -46074,22 +43879,20 @@ pub enum RestoreFootprintResult {
     ResourceLimitExceeded,
     InsufficientRefundableFee,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for RestoreFootprintResult {
     fn default() -> Self {
         Self::Success
     }
 }
-
 impl RestoreFootprintResult {
-    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
+    pub const VARIANTS: &[RestoreFootprintResultCode] = &[
         RestoreFootprintResultCode::Success,
         RestoreFootprintResultCode::Malformed,
         RestoreFootprintResultCode::ResourceLimitExceeded,
         RestoreFootprintResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Success",
         "Malformed",
         "ResourceLimitExceeded",
@@ -46120,33 +43923,28 @@ impl RestoreFootprintResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
+    pub const fn variants() -> &'static [RestoreFootprintResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for RestoreFootprintResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<RestoreFootprintResultCode> for RestoreFootprintResult {
     #[must_use]
     fn discriminant(&self) -> RestoreFootprintResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<RestoreFootprintResultCode> for RestoreFootprintResult {
     fn variants() -> slice::Iter<'static, RestoreFootprintResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<RestoreFootprintResultCode> for RestoreFootprintResult {}
-
 impl ReadXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -46168,7 +43966,6 @@ impl ReadXdr for RestoreFootprintResult {
         })
     }
 }
-
 impl WriteXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -46223,9 +44020,8 @@ pub enum OperationResultCode {
     OpExceededWorkLimit = -5,
     OpTooManySponsoring = -6,
 }
-
 impl OperationResultCode {
-    pub const VARIANTS: [OperationResultCode; 7] = [
+    pub const VARIANTS: &[OperationResultCode] = &[
         OperationResultCode::OpInner,
         OperationResultCode::OpBadAuth,
         OperationResultCode::OpNoAccount,
@@ -46234,7 +44030,7 @@ impl OperationResultCode {
         OperationResultCode::OpExceededWorkLimit,
         OperationResultCode::OpTooManySponsoring,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "OpInner",
         "OpBadAuth",
         "OpNoAccount",
@@ -46258,32 +44054,27 @@ impl OperationResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationResultCode; 7] {
+    pub const fn variants() -> &'static [OperationResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for OperationResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<OperationResultCode> for OperationResultCode {
     fn variants() -> slice::Iter<'static, OperationResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for OperationResultCode {}
-
 impl fmt::Display for OperationResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for OperationResultCode {
     type Error = Error;
 
@@ -46302,14 +44093,12 @@ impl TryFrom<i32> for OperationResultCode {
         Ok(e)
     }
 }
-
 impl From<OperationResultCode> for i32 {
     #[must_use]
     fn from(e: OperationResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for OperationResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -46320,7 +44109,6 @@ impl ReadXdr for OperationResultCode {
         })
     }
 }
-
 impl WriteXdr for OperationResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -46434,16 +44222,14 @@ pub enum OperationResultTr {
     ExtendFootprintTtl(ExtendFootprintTtlResult),
     RestoreFootprint(RestoreFootprintResult),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for OperationResultTr {
     fn default() -> Self {
         Self::CreateAccount(CreateAccountResult::default())
     }
 }
-
 impl OperationResultTr {
-    pub const VARIANTS: [OperationType; 27] = [
+    pub const VARIANTS: &[OperationType] = &[
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -46472,7 +44258,7 @@ impl OperationResultTr {
         OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
     ];
-    pub const VARIANTS_STR: [&'static str; 27] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -46570,33 +44356,28 @@ impl OperationResultTr {
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 27] {
+    pub const fn variants() -> &'static [OperationType] {
         Self::VARIANTS
     }
 }
-
 impl Name for OperationResultTr {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<OperationType> for OperationResultTr {
     #[must_use]
     fn discriminant(&self) -> OperationType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<OperationType> for OperationResultTr {
     fn variants() -> slice::Iter<'static, OperationType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<OperationType> for OperationResultTr {}
-
 impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -46676,7 +44457,6 @@ impl ReadXdr for OperationResultTr {
         })
     }
 }
-
 impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -46812,16 +44592,14 @@ pub enum OperationResult {
     OpExceededWorkLimit,
     OpTooManySponsoring,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for OperationResult {
     fn default() -> Self {
         Self::OpInner(OperationResultTr::default())
     }
 }
-
 impl OperationResult {
-    pub const VARIANTS: [OperationResultCode; 7] = [
+    pub const VARIANTS: &[OperationResultCode] = &[
         OperationResultCode::OpInner,
         OperationResultCode::OpBadAuth,
         OperationResultCode::OpNoAccount,
@@ -46830,7 +44608,7 @@ impl OperationResult {
         OperationResultCode::OpExceededWorkLimit,
         OperationResultCode::OpTooManySponsoring,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "OpInner",
         "OpBadAuth",
         "OpNoAccount",
@@ -46868,33 +44646,28 @@ impl OperationResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationResultCode; 7] {
+    pub const fn variants() -> &'static [OperationResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for OperationResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<OperationResultCode> for OperationResult {
     #[must_use]
     fn discriminant(&self) -> OperationResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<OperationResultCode> for OperationResult {
     fn variants() -> slice::Iter<'static, OperationResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<OperationResultCode> for OperationResult {}
-
 impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -46916,7 +44689,6 @@ impl ReadXdr for OperationResult {
         })
     }
 }
-
 impl WriteXdr for OperationResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47001,9 +44773,8 @@ pub enum TransactionResultCode {
     TxMalformed = -16,
     TxSorobanInvalid = -17,
 }
-
 impl TransactionResultCode {
-    pub const VARIANTS: [TransactionResultCode; 19] = [
+    pub const VARIANTS: &[TransactionResultCode] = &[
         TransactionResultCode::TxFeeBumpInnerSuccess,
         TransactionResultCode::TxSuccess,
         TransactionResultCode::TxFailed,
@@ -47024,7 +44795,7 @@ impl TransactionResultCode {
         TransactionResultCode::TxMalformed,
         TransactionResultCode::TxSorobanInvalid,
     ];
-    pub const VARIANTS_STR: [&'static str; 19] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "TxFeeBumpInnerSuccess",
         "TxSuccess",
         "TxFailed",
@@ -47072,32 +44843,27 @@ impl TransactionResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 19] {
+    pub const fn variants() -> &'static [TransactionResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<TransactionResultCode> for TransactionResultCode {
     fn variants() -> slice::Iter<'static, TransactionResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for TransactionResultCode {}
-
 impl fmt::Display for TransactionResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for TransactionResultCode {
     type Error = Error;
 
@@ -47128,14 +44894,12 @@ impl TryFrom<i32> for TransactionResultCode {
         Ok(e)
     }
 }
-
 impl From<TransactionResultCode> for i32 {
     #[must_use]
     fn from(e: TransactionResultCode) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for TransactionResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47146,7 +44910,6 @@ impl ReadXdr for TransactionResultCode {
         })
     }
 }
-
 impl WriteXdr for TransactionResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47217,16 +44980,14 @@ pub enum InnerTransactionResultResult {
     TxMalformed,
     TxSorobanInvalid,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for InnerTransactionResultResult {
     fn default() -> Self {
         Self::TxSuccess(VecM::<OperationResult>::default())
     }
 }
-
 impl InnerTransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 17] = [
+    pub const VARIANTS: &[TransactionResultCode] = &[
         TransactionResultCode::TxSuccess,
         TransactionResultCode::TxFailed,
         TransactionResultCode::TxTooEarly,
@@ -47245,7 +45006,7 @@ impl InnerTransactionResultResult {
         TransactionResultCode::TxMalformed,
         TransactionResultCode::TxSorobanInvalid,
     ];
-    pub const VARIANTS_STR: [&'static str; 17] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "TxSuccess",
         "TxFailed",
         "TxTooEarly",
@@ -47313,33 +45074,28 @@ impl InnerTransactionResultResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 17] {
+    pub const fn variants() -> &'static [TransactionResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for InnerTransactionResultResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<TransactionResultCode> for InnerTransactionResultResult {
     #[must_use]
     fn discriminant(&self) -> TransactionResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<TransactionResultCode> for InnerTransactionResultResult {
     fn variants() -> slice::Iter<'static, TransactionResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<TransactionResultCode> for InnerTransactionResultResult {}
-
 impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47375,7 +45131,6 @@ impl ReadXdr for InnerTransactionResultResult {
         })
     }
 }
-
 impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47431,17 +45186,15 @@ impl WriteXdr for InnerTransactionResultResult {
 pub enum InnerTransactionResultExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for InnerTransactionResultExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl InnerTransactionResultExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -47459,33 +45212,28 @@ impl InnerTransactionResultExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for InnerTransactionResultExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for InnerTransactionResultExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for InnerTransactionResultExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for InnerTransactionResultExt {}
-
 impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47501,7 +45249,6 @@ impl ReadXdr for InnerTransactionResultExt {
         })
     }
 }
-
 impl WriteXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47580,7 +45327,6 @@ pub struct InnerTransactionResult {
     pub result: InnerTransactionResultResult,
     pub ext: InnerTransactionResultExt,
 }
-
 impl ReadXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47593,7 +45339,6 @@ impl ReadXdr for InnerTransactionResult {
         })
     }
 }
-
 impl WriteXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47631,7 +45376,6 @@ pub struct InnerTransactionResultPair {
     pub transaction_hash: Hash,
     pub result: InnerTransactionResult,
 }
-
 impl ReadXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47643,7 +45387,6 @@ impl ReadXdr for InnerTransactionResultPair {
         })
     }
 }
-
 impl WriteXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47719,16 +45462,14 @@ pub enum TransactionResultResult {
     TxMalformed,
     TxSorobanInvalid,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionResultResult {
     fn default() -> Self {
         Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::default())
     }
 }
-
 impl TransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 19] = [
+    pub const VARIANTS: &[TransactionResultCode] = &[
         TransactionResultCode::TxFeeBumpInnerSuccess,
         TransactionResultCode::TxFeeBumpInnerFailed,
         TransactionResultCode::TxSuccess,
@@ -47749,7 +45490,7 @@ impl TransactionResultResult {
         TransactionResultCode::TxMalformed,
         TransactionResultCode::TxSorobanInvalid,
     ];
-    pub const VARIANTS_STR: [&'static str; 19] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "TxFeeBumpInnerSuccess",
         "TxFeeBumpInnerFailed",
         "TxSuccess",
@@ -47823,33 +45564,28 @@ impl TransactionResultResult {
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 19] {
+    pub const fn variants() -> &'static [TransactionResultCode] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionResultResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<TransactionResultCode> for TransactionResultResult {
     #[must_use]
     fn discriminant(&self) -> TransactionResultCode {
         Self::discriminant(self)
     }
 }
-
 impl Variants<TransactionResultCode> for TransactionResultResult {
     fn variants() -> slice::Iter<'static, TransactionResultCode> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<TransactionResultCode> for TransactionResultResult {}
-
 impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47891,7 +45627,6 @@ impl ReadXdr for TransactionResultResult {
         })
     }
 }
-
 impl WriteXdr for TransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47949,17 +45684,15 @@ impl WriteXdr for TransactionResultResult {
 pub enum TransactionResultExt {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for TransactionResultExt {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl TransactionResultExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -47977,33 +45710,28 @@ impl TransactionResultExt {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for TransactionResultExt {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for TransactionResultExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for TransactionResultExt {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for TransactionResultExt {}
-
 impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48019,7 +45747,6 @@ impl ReadXdr for TransactionResultExt {
         })
     }
 }
-
 impl WriteXdr for TransactionResultExt {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48099,7 +45826,6 @@ pub struct TransactionResult {
     pub result: TransactionResultResult,
     pub ext: TransactionResultExt,
 }
-
 impl ReadXdr for TransactionResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48112,7 +45838,6 @@ impl ReadXdr for TransactionResult {
         })
     }
 }
-
 impl WriteXdr for TransactionResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48161,7 +45886,6 @@ impl core::fmt::Display for Hash {
         Ok(())
     }
 }
-
 #[cfg(feature = "alloc")]
 impl core::str::FromStr for Hash {
     type Err = Error;
@@ -48208,21 +45932,18 @@ impl From<Hash> for [u8; 32] {
         x.0
     }
 }
-
 impl From<[u8; 32]> for Hash {
     #[must_use]
     fn from(x: [u8; 32]) -> Self {
         Hash(x)
     }
 }
-
 impl AsRef<[u8; 32]> for Hash {
     #[must_use]
     fn as_ref(&self) -> &[u8; 32] {
         &self.0
     }
 }
-
 impl ReadXdr for Hash {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48233,21 +45954,18 @@ impl ReadXdr for Hash {
         })
     }
 }
-
 impl WriteXdr for Hash {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Hash {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Hash {
     type Error = Error;
@@ -48255,7 +45973,6 @@ impl TryFrom<Vec<u8>> for Hash {
         x.as_slice().try_into()
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Hash {
     type Error = Error;
@@ -48263,14 +45980,12 @@ impl TryFrom<&Vec<u8>> for Hash {
         x.as_slice().try_into()
     }
 }
-
 impl TryFrom<&[u8]> for Hash {
     type Error = Error;
     fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(Hash(x.try_into()?))
     }
 }
-
 impl AsRef<[u8]> for Hash {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -48314,7 +46029,6 @@ impl core::fmt::Display for Uint256 {
         Ok(())
     }
 }
-
 #[cfg(feature = "alloc")]
 impl core::str::FromStr for Uint256 {
     type Err = Error;
@@ -48361,21 +46075,18 @@ impl From<Uint256> for [u8; 32] {
         x.0
     }
 }
-
 impl From<[u8; 32]> for Uint256 {
     #[must_use]
     fn from(x: [u8; 32]) -> Self {
         Uint256(x)
     }
 }
-
 impl AsRef<[u8; 32]> for Uint256 {
     #[must_use]
     fn as_ref(&self) -> &[u8; 32] {
         &self.0
     }
 }
-
 impl ReadXdr for Uint256 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48386,21 +46097,18 @@ impl ReadXdr for Uint256 {
         })
     }
 }
-
 impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Uint256 {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Uint256 {
     type Error = Error;
@@ -48408,7 +46116,6 @@ impl TryFrom<Vec<u8>> for Uint256 {
         x.as_slice().try_into()
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Uint256 {
     type Error = Error;
@@ -48416,14 +46123,12 @@ impl TryFrom<&Vec<u8>> for Uint256 {
         x.as_slice().try_into()
     }
 }
-
 impl TryFrom<&[u8]> for Uint256 {
     type Error = Error;
     fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(Uint256(x.try_into()?))
     }
 }
-
 impl AsRef<[u8]> for Uint256 {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -48495,21 +46200,18 @@ impl From<TimePoint> for u64 {
         x.0
     }
 }
-
 impl From<u64> for TimePoint {
     #[must_use]
     fn from(x: u64) -> Self {
         TimePoint(x)
     }
 }
-
 impl AsRef<u64> for TimePoint {
     #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
     }
 }
-
 impl ReadXdr for TimePoint {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48520,7 +46222,6 @@ impl ReadXdr for TimePoint {
         })
     }
 }
-
 impl WriteXdr for TimePoint {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48560,21 +46261,18 @@ impl From<Duration> for u64 {
         x.0
     }
 }
-
 impl From<u64> for Duration {
     #[must_use]
     fn from(x: u64) -> Self {
         Duration(x)
     }
 }
-
 impl AsRef<u64> for Duration {
     #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
     }
 }
-
 impl ReadXdr for Duration {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48585,7 +46283,6 @@ impl ReadXdr for Duration {
         })
     }
 }
-
 impl WriteXdr for Duration {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48618,17 +46315,15 @@ impl WriteXdr for Duration {
 pub enum ExtensionPoint {
     V0,
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ExtensionPoint {
     fn default() -> Self {
         Self::V0
     }
 }
-
 impl ExtensionPoint {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: &[i32] = &[0];
+    pub const VARIANTS_STR: &[&str] = &["V0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -48646,33 +46341,28 @@ impl ExtensionPoint {
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> &'static [i32] {
         Self::VARIANTS
     }
 }
-
 impl Name for ExtensionPoint {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<i32> for ExtensionPoint {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }
 }
-
 impl Variants<i32> for ExtensionPoint {
     fn variants() -> slice::Iter<'static, i32> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<i32> for ExtensionPoint {}
-
 impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48688,7 +46378,6 @@ impl ReadXdr for ExtensionPoint {
         })
     }
 }
-
 impl WriteXdr for ExtensionPoint {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48737,16 +46426,15 @@ pub enum CryptoKeyType {
     Ed25519SignedPayload = 3,
     MuxedEd25519 = 256,
 }
-
 impl CryptoKeyType {
-    pub const VARIANTS: [CryptoKeyType; 5] = [
+    pub const VARIANTS: &[CryptoKeyType] = &[
         CryptoKeyType::Ed25519,
         CryptoKeyType::PreAuthTx,
         CryptoKeyType::HashX,
         CryptoKeyType::Ed25519SignedPayload,
         CryptoKeyType::MuxedEd25519,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Ed25519",
         "PreAuthTx",
         "HashX",
@@ -48766,32 +46454,27 @@ impl CryptoKeyType {
     }
 
     #[must_use]
-    pub const fn variants() -> [CryptoKeyType; 5] {
+    pub const fn variants() -> &'static [CryptoKeyType] {
         Self::VARIANTS
     }
 }
-
 impl Name for CryptoKeyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<CryptoKeyType> for CryptoKeyType {
     fn variants() -> slice::Iter<'static, CryptoKeyType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for CryptoKeyType {}
-
 impl fmt::Display for CryptoKeyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for CryptoKeyType {
     type Error = Error;
 
@@ -48808,14 +46491,12 @@ impl TryFrom<i32> for CryptoKeyType {
         Ok(e)
     }
 }
-
 impl From<CryptoKeyType> for i32 {
     #[must_use]
     fn from(e: CryptoKeyType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for CryptoKeyType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48826,7 +46507,6 @@ impl ReadXdr for CryptoKeyType {
         })
     }
 }
-
 impl WriteXdr for CryptoKeyType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48861,10 +46541,9 @@ pub enum PublicKeyType {
     #[cfg_attr(feature = "alloc", default)]
     PublicKeyTypeEd25519 = 0,
 }
-
 impl PublicKeyType {
-    pub const VARIANTS: [PublicKeyType; 1] = [PublicKeyType::PublicKeyTypeEd25519];
-    pub const VARIANTS_STR: [&'static str; 1] = ["PublicKeyTypeEd25519"];
+    pub const VARIANTS: &[PublicKeyType] = &[PublicKeyType::PublicKeyTypeEd25519];
+    pub const VARIANTS_STR: &[&str] = &["PublicKeyTypeEd25519"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -48874,32 +46553,27 @@ impl PublicKeyType {
     }
 
     #[must_use]
-    pub const fn variants() -> [PublicKeyType; 1] {
+    pub const fn variants() -> &'static [PublicKeyType] {
         Self::VARIANTS
     }
 }
-
 impl Name for PublicKeyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<PublicKeyType> for PublicKeyType {
     fn variants() -> slice::Iter<'static, PublicKeyType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for PublicKeyType {}
-
 impl fmt::Display for PublicKeyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for PublicKeyType {
     type Error = Error;
 
@@ -48912,14 +46586,12 @@ impl TryFrom<i32> for PublicKeyType {
         Ok(e)
     }
 }
-
 impl From<PublicKeyType> for i32 {
     #[must_use]
     fn from(e: PublicKeyType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for PublicKeyType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -48930,7 +46602,6 @@ impl ReadXdr for PublicKeyType {
         })
     }
 }
-
 impl WriteXdr for PublicKeyType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -48971,16 +46642,14 @@ pub enum SignerKeyType {
     HashX = 2,
     Ed25519SignedPayload = 3,
 }
-
 impl SignerKeyType {
-    pub const VARIANTS: [SignerKeyType; 4] = [
+    pub const VARIANTS: &[SignerKeyType] = &[
         SignerKeyType::Ed25519,
         SignerKeyType::PreAuthTx,
         SignerKeyType::HashX,
         SignerKeyType::Ed25519SignedPayload,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
+    pub const VARIANTS_STR: &[&str] = &["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -48993,32 +46662,27 @@ impl SignerKeyType {
     }
 
     #[must_use]
-    pub const fn variants() -> [SignerKeyType; 4] {
+    pub const fn variants() -> &'static [SignerKeyType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SignerKeyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<SignerKeyType> for SignerKeyType {
     fn variants() -> slice::Iter<'static, SignerKeyType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for SignerKeyType {}
-
 impl fmt::Display for SignerKeyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for SignerKeyType {
     type Error = Error;
 
@@ -49034,14 +46698,12 @@ impl TryFrom<i32> for SignerKeyType {
         Ok(e)
     }
 }
-
 impl From<SignerKeyType> for i32 {
     #[must_use]
     fn from(e: SignerKeyType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for SignerKeyType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49052,7 +46714,6 @@ impl ReadXdr for SignerKeyType {
         })
     }
 }
-
 impl WriteXdr for SignerKeyType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49085,17 +46746,15 @@ impl WriteXdr for SignerKeyType {
 pub enum PublicKey {
     PublicKeyTypeEd25519(Uint256),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for PublicKey {
     fn default() -> Self {
         Self::PublicKeyTypeEd25519(Uint256::default())
     }
 }
-
 impl PublicKey {
-    pub const VARIANTS: [PublicKeyType; 1] = [PublicKeyType::PublicKeyTypeEd25519];
-    pub const VARIANTS_STR: [&'static str; 1] = ["PublicKeyTypeEd25519"];
+    pub const VARIANTS: &[PublicKeyType] = &[PublicKeyType::PublicKeyTypeEd25519];
+    pub const VARIANTS_STR: &[&str] = &["PublicKeyTypeEd25519"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -49113,33 +46772,28 @@ impl PublicKey {
     }
 
     #[must_use]
-    pub const fn variants() -> [PublicKeyType; 1] {
+    pub const fn variants() -> &'static [PublicKeyType] {
         Self::VARIANTS
     }
 }
-
 impl Name for PublicKey {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<PublicKeyType> for PublicKey {
     #[must_use]
     fn discriminant(&self) -> PublicKeyType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<PublicKeyType> for PublicKey {
     fn variants() -> slice::Iter<'static, PublicKeyType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<PublicKeyType> for PublicKey {}
-
 impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49157,7 +46811,6 @@ impl ReadXdr for PublicKey {
         })
     }
 }
-
 impl WriteXdr for PublicKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49196,7 +46849,6 @@ pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
     pub payload: BytesM<64>,
 }
-
 impl ReadXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49208,7 +46860,6 @@ impl ReadXdr for SignerKeyEd25519SignedPayload {
         })
     }
 }
-
 impl WriteXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49291,23 +46942,20 @@ pub enum SignerKey {
     HashX(Uint256),
     Ed25519SignedPayload(SignerKeyEd25519SignedPayload),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for SignerKey {
     fn default() -> Self {
         Self::Ed25519(Uint256::default())
     }
 }
-
 impl SignerKey {
-    pub const VARIANTS: [SignerKeyType; 4] = [
+    pub const VARIANTS: &[SignerKeyType] = &[
         SignerKeyType::Ed25519,
         SignerKeyType::PreAuthTx,
         SignerKeyType::HashX,
         SignerKeyType::Ed25519SignedPayload,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
+    pub const VARIANTS_STR: &[&str] = &["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -49331,33 +46979,28 @@ impl SignerKey {
     }
 
     #[must_use]
-    pub const fn variants() -> [SignerKeyType; 4] {
+    pub const fn variants() -> &'static [SignerKeyType] {
         Self::VARIANTS
     }
 }
-
 impl Name for SignerKey {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<SignerKeyType> for SignerKey {
     #[must_use]
     fn discriminant(&self) -> SignerKeyType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<SignerKeyType> for SignerKey {
     fn variants() -> slice::Iter<'static, SignerKeyType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<SignerKeyType> for SignerKey {}
-
 impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49378,7 +47021,6 @@ impl ReadXdr for SignerKey {
         })
     }
 }
-
 impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49421,21 +47063,18 @@ impl From<Signature> for BytesM<64> {
         x.0
     }
 }
-
 impl From<BytesM<64>> for Signature {
     #[must_use]
     fn from(x: BytesM<64>) -> Self {
         Signature(x)
     }
 }
-
 impl AsRef<BytesM<64>> for Signature {
     #[must_use]
     fn as_ref(&self) -> &BytesM<64> {
         &self.0
     }
 }
-
 impl ReadXdr for Signature {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49446,35 +47085,30 @@ impl ReadXdr for Signature {
         })
     }
 }
-
 impl WriteXdr for Signature {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl Deref for Signature {
     type Target = BytesM<64>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
 impl From<Signature> for Vec<u8> {
     #[must_use]
     fn from(x: Signature) -> Self {
         x.0 .0
     }
 }
-
 impl TryFrom<Vec<u8>> for Signature {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self, Error> {
         Ok(Signature(x.try_into()?))
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for Signature {
     type Error = Error;
@@ -49482,14 +47116,12 @@ impl TryFrom<&Vec<u8>> for Signature {
         Ok(Signature(x.try_into()?))
     }
 }
-
 impl AsRef<Vec<u8>> for Signature {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
 }
-
 impl AsRef<[u8]> for Signature {
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -49539,7 +47171,6 @@ impl core::fmt::Display for SignatureHint {
         Ok(())
     }
 }
-
 #[cfg(feature = "alloc")]
 impl core::str::FromStr for SignatureHint {
     type Err = Error;
@@ -49586,21 +47217,18 @@ impl From<SignatureHint> for [u8; 4] {
         x.0
     }
 }
-
 impl From<[u8; 4]> for SignatureHint {
     #[must_use]
     fn from(x: [u8; 4]) -> Self {
         SignatureHint(x)
     }
 }
-
 impl AsRef<[u8; 4]> for SignatureHint {
     #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
 }
-
 impl ReadXdr for SignatureHint {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49611,21 +47239,18 @@ impl ReadXdr for SignatureHint {
         })
     }
 }
-
 impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
-
 impl SignatureHint {
     #[must_use]
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for SignatureHint {
     type Error = Error;
@@ -49633,7 +47258,6 @@ impl TryFrom<Vec<u8>> for SignatureHint {
         x.as_slice().try_into()
     }
 }
-
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for SignatureHint {
     type Error = Error;
@@ -49641,14 +47265,12 @@ impl TryFrom<&Vec<u8>> for SignatureHint {
         x.as_slice().try_into()
     }
 }
-
 impl TryFrom<&[u8]> for SignatureHint {
     type Error = Error;
     fn try_from(x: &[u8]) -> Result<Self, Error> {
         Ok(SignatureHint(x.try_into()?))
     }
 }
-
 impl AsRef<[u8]> for SignatureHint {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -49679,21 +47301,18 @@ impl From<NodeId> for PublicKey {
         x.0
     }
 }
-
 impl From<PublicKey> for NodeId {
     #[must_use]
     fn from(x: PublicKey) -> Self {
         NodeId(x)
     }
 }
-
 impl AsRef<PublicKey> for NodeId {
     #[must_use]
     fn as_ref(&self) -> &PublicKey {
         &self.0
     }
 }
-
 impl ReadXdr for NodeId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49704,7 +47323,6 @@ impl ReadXdr for NodeId {
         })
     }
 }
-
 impl WriteXdr for NodeId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49735,21 +47353,18 @@ impl From<AccountId> for PublicKey {
         x.0
     }
 }
-
 impl From<PublicKey> for AccountId {
     #[must_use]
     fn from(x: PublicKey) -> Self {
         AccountId(x)
     }
 }
-
 impl AsRef<PublicKey> for AccountId {
     #[must_use]
     fn as_ref(&self) -> &PublicKey {
         &self.0
     }
 }
-
 impl ReadXdr for AccountId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49760,7 +47375,6 @@ impl ReadXdr for AccountId {
         })
     }
 }
-
 impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49791,21 +47405,18 @@ impl From<ContractId> for Hash {
         x.0
     }
 }
-
 impl From<Hash> for ContractId {
     #[must_use]
     fn from(x: Hash) -> Self {
         ContractId(x)
     }
 }
-
 impl AsRef<Hash> for ContractId {
     #[must_use]
     fn as_ref(&self) -> &Hash {
         &self.0
     }
 }
-
 impl ReadXdr for ContractId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49816,7 +47427,6 @@ impl ReadXdr for ContractId {
         })
     }
 }
-
 impl WriteXdr for ContractId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49847,7 +47457,6 @@ impl WriteXdr for ContractId {
 pub struct Curve25519Secret {
     pub key: [u8; 32],
 }
-
 impl ReadXdr for Curve25519Secret {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49858,7 +47467,6 @@ impl ReadXdr for Curve25519Secret {
         })
     }
 }
-
 impl WriteXdr for Curve25519Secret {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49892,7 +47500,6 @@ impl WriteXdr for Curve25519Secret {
 pub struct Curve25519Public {
     pub key: [u8; 32],
 }
-
 impl ReadXdr for Curve25519Public {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49903,7 +47510,6 @@ impl ReadXdr for Curve25519Public {
         })
     }
 }
-
 impl WriteXdr for Curve25519Public {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49937,7 +47543,6 @@ impl WriteXdr for Curve25519Public {
 pub struct HmacSha256Key {
     pub key: [u8; 32],
 }
-
 impl ReadXdr for HmacSha256Key {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49948,7 +47553,6 @@ impl ReadXdr for HmacSha256Key {
         })
     }
 }
-
 impl WriteXdr for HmacSha256Key {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49982,7 +47586,6 @@ impl WriteXdr for HmacSha256Key {
 pub struct HmacSha256Mac {
     pub mac: [u8; 32],
 }
-
 impl ReadXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -49993,7 +47596,6 @@ impl ReadXdr for HmacSha256Mac {
         })
     }
 }
-
 impl WriteXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50027,7 +47629,6 @@ impl WriteXdr for HmacSha256Mac {
 pub struct ShortHashSeed {
     pub seed: [u8; 16],
 }
-
 impl ReadXdr for ShortHashSeed {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -50038,7 +47639,6 @@ impl ReadXdr for ShortHashSeed {
         })
     }
 }
-
 impl WriteXdr for ShortHashSeed {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50077,14 +47677,13 @@ pub enum BinaryFuseFilterType {
     B16Bit = 1,
     B32Bit = 2,
 }
-
 impl BinaryFuseFilterType {
-    pub const VARIANTS: [BinaryFuseFilterType; 3] = [
+    pub const VARIANTS: &[BinaryFuseFilterType] = &[
         BinaryFuseFilterType::B8Bit,
         BinaryFuseFilterType::B16Bit,
         BinaryFuseFilterType::B32Bit,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["B8Bit", "B16Bit", "B32Bit"];
+    pub const VARIANTS_STR: &[&str] = &["B8Bit", "B16Bit", "B32Bit"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -50096,32 +47695,27 @@ impl BinaryFuseFilterType {
     }
 
     #[must_use]
-    pub const fn variants() -> [BinaryFuseFilterType; 3] {
+    pub const fn variants() -> &'static [BinaryFuseFilterType] {
         Self::VARIANTS
     }
 }
-
 impl Name for BinaryFuseFilterType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<BinaryFuseFilterType> for BinaryFuseFilterType {
     fn variants() -> slice::Iter<'static, BinaryFuseFilterType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for BinaryFuseFilterType {}
-
 impl fmt::Display for BinaryFuseFilterType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for BinaryFuseFilterType {
     type Error = Error;
 
@@ -50136,14 +47730,12 @@ impl TryFrom<i32> for BinaryFuseFilterType {
         Ok(e)
     }
 }
-
 impl From<BinaryFuseFilterType> for i32 {
     #[must_use]
     fn from(e: BinaryFuseFilterType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for BinaryFuseFilterType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -50154,7 +47746,6 @@ impl ReadXdr for BinaryFuseFilterType {
         })
     }
 }
-
 impl WriteXdr for BinaryFuseFilterType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50210,7 +47801,6 @@ pub struct SerializedBinaryFuseFilter {
     pub fingerprint_length: u32,
     pub fingerprints: BytesM,
 }
-
 impl ReadXdr for SerializedBinaryFuseFilter {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -50229,7 +47819,6 @@ impl ReadXdr for SerializedBinaryFuseFilter {
         })
     }
 }
-
 impl WriteXdr for SerializedBinaryFuseFilter {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50271,21 +47860,18 @@ impl From<PoolId> for Hash {
         x.0
     }
 }
-
 impl From<Hash> for PoolId {
     #[must_use]
     fn from(x: Hash) -> Self {
         PoolId(x)
     }
 }
-
 impl AsRef<Hash> for PoolId {
     #[must_use]
     fn as_ref(&self) -> &Hash {
         &self.0
     }
 }
-
 impl ReadXdr for PoolId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -50296,7 +47882,6 @@ impl ReadXdr for PoolId {
         })
     }
 }
-
 impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50328,11 +47913,10 @@ pub enum ClaimableBalanceIdType {
     #[cfg_attr(feature = "alloc", default)]
     ClaimableBalanceIdTypeV0 = 0,
 }
-
 impl ClaimableBalanceIdType {
-    pub const VARIANTS: [ClaimableBalanceIdType; 1] =
-        [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceIdTypeV0"];
+    pub const VARIANTS: &[ClaimableBalanceIdType] =
+        &[ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+    pub const VARIANTS_STR: &[&str] = &["ClaimableBalanceIdTypeV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -50342,32 +47926,27 @@ impl ClaimableBalanceIdType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
+    pub const fn variants() -> &'static [ClaimableBalanceIdType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimableBalanceIdType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Variants<ClaimableBalanceIdType> for ClaimableBalanceIdType {
     fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Enum for ClaimableBalanceIdType {}
-
 impl fmt::Display for ClaimableBalanceIdType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
-
 impl TryFrom<i32> for ClaimableBalanceIdType {
     type Error = Error;
 
@@ -50380,14 +47959,12 @@ impl TryFrom<i32> for ClaimableBalanceIdType {
         Ok(e)
     }
 }
-
 impl From<ClaimableBalanceIdType> for i32 {
     #[must_use]
     fn from(e: ClaimableBalanceIdType) -> Self {
         e as Self
     }
 }
-
 impl ReadXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -50398,7 +47975,6 @@ impl ReadXdr for ClaimableBalanceIdType {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50431,18 +48007,16 @@ impl WriteXdr for ClaimableBalanceIdType {
 pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
 }
-
 #[cfg(feature = "alloc")]
 impl Default for ClaimableBalanceId {
     fn default() -> Self {
         Self::ClaimableBalanceIdTypeV0(Hash::default())
     }
 }
-
 impl ClaimableBalanceId {
-    pub const VARIANTS: [ClaimableBalanceIdType; 1] =
-        [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceIdTypeV0"];
+    pub const VARIANTS: &[ClaimableBalanceIdType] =
+        &[ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+    pub const VARIANTS_STR: &[&str] = &["ClaimableBalanceIdTypeV0"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -50460,33 +48034,28 @@ impl ClaimableBalanceId {
     }
 
     #[must_use]
-    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
+    pub const fn variants() -> &'static [ClaimableBalanceIdType] {
         Self::VARIANTS
     }
 }
-
 impl Name for ClaimableBalanceId {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
-
 impl Discriminant<ClaimableBalanceIdType> for ClaimableBalanceId {
     #[must_use]
     fn discriminant(&self) -> ClaimableBalanceIdType {
         Self::discriminant(self)
     }
 }
-
 impl Variants<ClaimableBalanceIdType> for ClaimableBalanceId {
     fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
         Self::VARIANTS.iter()
     }
 }
-
 impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
-
 impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -50504,7 +48073,6 @@ impl ReadXdr for ClaimableBalanceId {
         })
     }
 }
-
 impl WriteXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -50993,7 +48561,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: &[TypeVariant] = &[
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -51458,7 +49026,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -52410,7 +49978,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> &'static [TypeVariant] {
         Self::VARIANTS
     }
 
@@ -54093,7 +51661,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: &[TypeVariant] = &[
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -54558,7 +52126,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -69028,7 +66596,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> &'static [TypeVariant] {
         Self::VARIANTS
     }
 

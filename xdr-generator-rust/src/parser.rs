@@ -691,12 +691,44 @@ impl Parser {
             let prev_root = self.root_parent.take();
             self.root_parent = Some(struct_name.clone());
 
+            // Save and clear the ifdef stack so inner ifdefs are independent
+            let saved_ifdef_stack = std::mem::take(&mut self.ifdef_stack);
+
             let mut members = Vec::new();
             while *self.peek() != Token::RBrace {
-                let member = self.parse_member()?;
+                match self.peek().clone() {
+                    Token::Ifdef(ifdef_name) => {
+                        self.advance();
+                        self.ifdef_stack.push(IfdefCondition {
+                            name: ifdef_name,
+                            negated: false,
+                        });
+                        continue;
+                    }
+                    Token::Else => {
+                        self.advance();
+                        if let Some(top) = self.ifdef_stack.last_mut() {
+                            top.negated = !top.negated;
+                        }
+                        continue;
+                    }
+                    Token::Endif => {
+                        self.advance();
+                        self.ifdef_stack.pop();
+                        continue;
+                    }
+                    _ => {}
+                }
+                let member_ifdefs = self.ifdef_stack.clone();
+                let mut member = self.parse_member()?;
+                member.ifdefs = member_ifdefs;
                 members.push(member);
                 self.expect(Token::Semi)?;
             }
+
+            // Restore the ifdef stack
+            self.ifdef_stack = saved_ifdef_stack;
+
             self.expect(Token::RBrace)?;
 
             // Restore root_parent
@@ -881,17 +913,51 @@ impl Parser {
                 self.expect(Token::RParen)?;
                 self.expect(Token::LBrace)?;
 
+                // Save and clear the ifdef stack so inner ifdefs are independent
+                let saved_ifdef_stack = std::mem::take(&mut self.ifdef_stack);
+
                 let mut arms = Vec::new();
                 let mut default_arm = None;
 
                 while *self.peek() != Token::RBrace {
-                    let arm = self.parse_union_arm()?;
+                    // Handle ifdef directives within anonymous union body
+                    match self.peek().clone() {
+                        Token::Ifdef(ifdef_name) => {
+                            self.advance();
+                            self.ifdef_stack.push(IfdefCondition {
+                                name: ifdef_name,
+                                negated: false,
+                            });
+                            continue;
+                        }
+                        Token::Else => {
+                            self.advance();
+                            if let Some(top) = self.ifdef_stack.last_mut() {
+                                top.negated = !top.negated;
+                            }
+                            continue;
+                        }
+                        Token::Endif => {
+                            self.advance();
+                            self.ifdef_stack.pop();
+                            continue;
+                        }
+                        _ => {}
+                    }
+
+                    let arm_ifdefs = self.ifdef_stack.clone();
+                    let mut arm = self.parse_union_arm()?;
+                    arm.ifdefs = arm_ifdefs;
                     if arm.cases.is_empty() {
                         default_arm = Some(Box::new(arm));
                     } else {
                         arms.push(arm);
                     }
                 }
+
+                // Restore the ifdef stack
+                self.ifdef_stack = saved_ifdef_stack;
+
                 self.expect(Token::RBrace)?;
 
                 // Return an AnonymousUnion that will be extracted in parse_member
@@ -1415,6 +1481,83 @@ mod tests {
             assert_eq!(s.members[1].ifdefs[0].name, "B");
         } else {
             panic!("Expected struct");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_inside_anonymous_union() {
+        let input = "\
+            struct Container {\n\
+                int baseField;\n\
+                union switch (int type) {\n\
+                    case 0: int dataA;\n\
+                    #ifdef FEATURE_X\n\
+                    case 1: unsigned int dataB;\n\
+                    #endif\n\
+                    case 2: void;\n\
+                } body;\n\
+            };";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        // Should produce 2 definitions: the extracted union (ContainerBody) and the struct (Container)
+        assert_eq!(spec.definitions.len(), 2);
+
+        // First definition is the extracted anonymous union
+        if let Definition::Union(u) = &spec.definitions[0] {
+            assert_eq!(u.name, "ContainerBody");
+            assert!(u.is_nested);
+            assert_eq!(u.arms.len(), 3);
+            // First arm: no ifdef
+            assert!(u.arms[0].ifdefs.is_empty());
+            // Second arm: inside ifdef FEATURE_X
+            assert_eq!(u.arms[1].ifdefs.len(), 1);
+            assert_eq!(u.arms[1].ifdefs[0].name, "FEATURE_X");
+            assert!(!u.arms[1].ifdefs[0].negated);
+            // Third arm: no ifdef
+            assert!(u.arms[2].ifdefs.is_empty());
+        } else {
+            panic!(
+                "Expected union ContainerBody, got {:?}",
+                spec.definitions[0]
+            );
+        }
+
+        // Second definition is the struct
+        if let Definition::Struct(s) = &spec.definitions[1] {
+            assert_eq!(s.name, "Container");
+        } else {
+            panic!("Expected struct Container");
+        }
+    }
+
+    #[test]
+    fn test_ifdef_inside_inline_struct_in_union_arm() {
+        let input = "\
+            union MyUnion switch (int type) {\n\
+                case 0:\n\
+                    struct {\n\
+                        int x;\n\
+                        #ifdef FEATURE_Y\n\
+                        int y;\n\
+                        #endif\n\
+                    } data;\n\
+            };";
+        let mut parser = Parser::new(input).unwrap();
+        let spec = parser.parse().unwrap();
+
+        // Should produce 2 definitions: extracted struct and the union
+        assert_eq!(spec.definitions.len(), 2);
+
+        if let Definition::Struct(s) = &spec.definitions[0] {
+            assert_eq!(s.name, "MyUnionData");
+            assert!(s.is_nested);
+            assert_eq!(s.members.len(), 2);
+            assert!(s.members[0].ifdefs.is_empty());
+            assert_eq!(s.members[1].ifdefs.len(), 1);
+            assert_eq!(s.members[1].ifdefs[0].name, "FEATURE_Y");
+        } else {
+            panic!("Expected struct MyUnionData");
         }
     }
 }

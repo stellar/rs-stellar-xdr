@@ -39,7 +39,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-contract.x",
-        "caa002cf7e0b961b0f1f5be429c1a1b1478b49be494c9d547fc3c4b2fa6b38f0",
+        "836305b48c94209325a104fd34a67575c92ed2704acc82733fe1790e0facbee8",
     ),
     (
         "xdr/curr/Stellar-exporter.x",
@@ -51,11 +51,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "5157cad76b008b3606fe5bc2cfe87596827d8e02d16cbec3cedc297bb571aa54",
+        "d3ef70147dc8df430d5f6ad3c173d8e3ed1c8975185f656e891bd5d267455113",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "cf936606885dd265082e553aa433c2cf47b720b6d58839b154cf71096b885d1e",
+        "e2b2af0267efc7ffc3074d8a8e703e555e002b003c10958b6bfa675a7cb3d87d",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
@@ -63,7 +63,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "7c4c951f233ad7cdabedd740abd9697626ec5bc03ce97bf60cbaeee1481a48d1",
+        "909cb36130c14ac455d3e03ac2258f8d6590c2754cb4ccdd75e740c204b82089",
     ),
     (
         "xdr/curr/Stellar-types.x",
@@ -9816,7 +9816,7 @@ impl WriteXdr for ScSpecEntry {
 ///     // symbolic SCVals used as the key for ledger entries for a contract's
 ///     // instance and an address' nonce, respectively.
 ///     SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,
-/// #ifdef SPARSE_MAP
+/// #ifdef XDR_SPARSE_MAP
 ///     SCV_LEDGER_KEY_NONCE = 21,
 ///     SCV_SPARSE_MAP = 22
 /// #else
@@ -9859,11 +9859,11 @@ pub enum ScValType {
     Address = 18,
     ContractInstance = 19,
     LedgerKeyContractInstance = 20,
-    #[cfg(feature = "sparse_map")]
+    #[cfg(feature = "xdr_sparse_map")]
     LedgerKeyNonce = 21,
-    #[cfg(feature = "sparse_map")]
+    #[cfg(feature = "xdr_sparse_map")]
     SparseMap = 22,
-    #[cfg(not(feature = "sparse_map"))]
+    #[cfg(not(feature = "xdr_sparse_map"))]
     LedgerKeyNonce = 21,
 }
 impl ScValType {
@@ -9889,11 +9889,11 @@ impl ScValType {
         ScValType::Address,
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
-        #[cfg(feature = "sparse_map")]
+        #[cfg(feature = "xdr_sparse_map")]
         ScValType::LedgerKeyNonce,
-        #[cfg(feature = "sparse_map")]
+        #[cfg(feature = "xdr_sparse_map")]
         ScValType::SparseMap,
-        #[cfg(not(feature = "sparse_map"))]
+        #[cfg(not(feature = "xdr_sparse_map"))]
         ScValType::LedgerKeyNonce,
     ];
     pub const VARIANTS_STR: &[&str] = &[
@@ -9918,11 +9918,11 @@ impl ScValType {
         "Address",
         "ContractInstance",
         "LedgerKeyContractInstance",
-        #[cfg(feature = "sparse_map")]
+        #[cfg(feature = "xdr_sparse_map")]
         "LedgerKeyNonce",
-        #[cfg(feature = "sparse_map")]
+        #[cfg(feature = "xdr_sparse_map")]
         "SparseMap",
-        #[cfg(not(feature = "sparse_map"))]
+        #[cfg(not(feature = "xdr_sparse_map"))]
         "LedgerKeyNonce",
     ];
 
@@ -9950,11 +9950,11 @@ impl ScValType {
             Self::Address => "Address",
             Self::ContractInstance => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
-            #[cfg(feature = "sparse_map")]
+            #[cfg(feature = "xdr_sparse_map")]
             Self::LedgerKeyNonce => "LedgerKeyNonce",
-            #[cfg(feature = "sparse_map")]
+            #[cfg(feature = "xdr_sparse_map")]
             Self::SparseMap => "SparseMap",
-            #[cfg(not(feature = "sparse_map"))]
+            #[cfg(not(feature = "xdr_sparse_map"))]
             Self::LedgerKeyNonce => "LedgerKeyNonce",
         }
     }
@@ -10007,11 +10007,11 @@ impl TryFrom<i32> for ScValType {
             18 => ScValType::Address,
             19 => ScValType::ContractInstance,
             20 => ScValType::LedgerKeyContractInstance,
-            #[cfg(feature = "sparse_map")]
+            #[cfg(feature = "xdr_sparse_map")]
             21 => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "sparse_map")]
+            #[cfg(feature = "xdr_sparse_map")]
             22 => ScValType::SparseMap,
-            #[cfg(not(feature = "sparse_map"))]
+            #[cfg(not(feature = "xdr_sparse_map"))]
             21 => ScValType::LedgerKeyNonce,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12035,7 +12035,7 @@ impl WriteXdr for ScContractInstance {
 /// case SCV_LEDGER_KEY_NONCE:
 ///     SCNonceKey nonce_key;
 ///
-/// #ifdef SPARSE_MAP
+/// #ifdef XDR_SPARSE_MAP
 /// case SCV_SPARSE_MAP:
 ///     SCMap *sparseMap;
 /// #endif
@@ -12089,7 +12089,7 @@ pub enum ScVal {
     ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    #[cfg(feature = "sparse_map")]
+    #[cfg(feature = "xdr_sparse_map")]
     SparseMap(Option<ScMap>),
 }
 #[cfg(feature = "alloc")]
@@ -12122,7 +12122,7 @@ impl ScVal {
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
-        #[cfg(feature = "sparse_map")]
+        #[cfg(feature = "xdr_sparse_map")]
         ScValType::SparseMap,
     ];
     pub const VARIANTS_STR: &[&str] = &[
@@ -12148,7 +12148,7 @@ impl ScVal {
         "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
-        #[cfg(feature = "sparse_map")]
+        #[cfg(feature = "xdr_sparse_map")]
         "SparseMap",
     ];
 
@@ -12177,7 +12177,7 @@ impl ScVal {
             Self::ContractInstance(_) => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
-            #[cfg(feature = "sparse_map")]
+            #[cfg(feature = "xdr_sparse_map")]
             Self::SparseMap(_) => "SparseMap",
         }
     }
@@ -12208,7 +12208,7 @@ impl ScVal {
             Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "sparse_map")]
+            #[cfg(feature = "xdr_sparse_map")]
             Self::SparseMap(_) => ScValType::SparseMap,
         }
     }
@@ -12267,7 +12267,7 @@ impl ReadXdr for ScVal {
                 }
                 ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
                 ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
-                #[cfg(feature = "sparse_map")]
+                #[cfg(feature = "xdr_sparse_map")]
                 ScValType::SparseMap => Self::SparseMap(Option::<ScMap>::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
@@ -12305,7 +12305,7 @@ impl WriteXdr for ScVal {
                 Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                #[cfg(feature = "sparse_map")]
+                #[cfg(feature = "xdr_sparse_map")]
                 Self::SparseMap(v) => v.write_xdr(w)?,
             };
             Ok(())
@@ -18665,6 +18665,10 @@ impl WriteXdr for LedgerEntryData {
 ///         void;
 ///     case 1:
 ///         LedgerEntryExtensionV1 v1;
+/// #ifdef XDR_LEDGER_ENTRY_EXT_V2
+///     case 2:
+///         ExtensionPoint v2;
+/// #endif
 ///     }
 /// ```
 ///
@@ -18683,6 +18687,8 @@ impl WriteXdr for LedgerEntryData {
 pub enum LedgerEntryExt {
     V0,
     V1(LedgerEntryExtensionV1),
+    #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+    V2(ExtensionPoint),
 }
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryExt {
@@ -18691,14 +18697,26 @@ impl Default for LedgerEntryExt {
     }
 }
 impl LedgerEntryExt {
-    pub const VARIANTS: &[i32] = &[0, 1];
-    pub const VARIANTS_STR: &[&str] = &["V0", "V1"];
+    pub const VARIANTS: &[i32] = &[
+        0,
+        1,
+        #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+        2,
+    ];
+    pub const VARIANTS_STR: &[&str] = &[
+        "V0",
+        "V1",
+        #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+        "V2",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
+            #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+            Self::V2(_) => "V2",
         }
     }
 
@@ -18708,6 +18726,8 @@ impl LedgerEntryExt {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
+            #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+            Self::V2(_) => 2,
         }
     }
 
@@ -18743,6 +18763,8 @@ impl ReadXdr for LedgerEntryExt {
             let v = match dv {
                 0 => Self::V0,
                 1 => Self::V1(LedgerEntryExtensionV1::read_xdr(r)?),
+                #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+                2 => Self::V2(ExtensionPoint::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -18759,6 +18781,8 @@ impl WriteXdr for LedgerEntryExt {
             match self {
                 Self::V0 => ().write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+                #[cfg(feature = "xdr_ledger_entry_ext_v2")]
+                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -18804,6 +18828,10 @@ impl WriteXdr for LedgerEntryExt {
 ///         void;
 ///     case 1:
 ///         LedgerEntryExtensionV1 v1;
+/// #ifdef XDR_LEDGER_ENTRY_EXT_V2
+///     case 2:
+///         ExtensionPoint v2;
+/// #endif
 ///     }
 ///     ext;
 /// };
@@ -24873,6 +24901,85 @@ impl WriteXdr for TransactionMetaV4 {
     }
 }
 
+#[cfg(feature = "xdr_transaction_meta_v5")]
+/// TransactionMetaV5 is an XDR Struct defined as:
+///
+/// ```text
+/// struct TransactionMetaV5
+/// {
+///     ExtensionPoint ext;
+///
+///     LedgerEntryChanges txChangesBefore;  // tx level changes before operations
+///                                          // are applied if any
+///     OperationMetaV2 operations<>;        // meta for each operation
+///     LedgerEntryChanges txChangesAfter;   // tx level changes after operations are
+///                                          // applied if any
+///     SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for
+///                                            // Soroban transactions).
+///
+///     TransactionEvent events<>; // Used for transaction-level events (like fee payment)
+///     DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information
+///     uint32 txIndex; // Index of the transaction in the ledger
+/// };
+/// ```
+///
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TransactionMetaV5 {
+    pub ext: ExtensionPoint,
+    pub tx_changes_before: LedgerEntryChanges,
+    pub operations: VecM<OperationMetaV2>,
+    pub tx_changes_after: LedgerEntryChanges,
+    pub soroban_meta: Option<SorobanTransactionMetaV2>,
+    pub events: VecM<TransactionEvent>,
+    pub diagnostic_events: VecM<DiagnosticEvent>,
+    pub tx_index: u32,
+}
+#[cfg(feature = "xdr_transaction_meta_v5")]
+impl ReadXdr for TransactionMetaV5 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+                operations: VecM::<OperationMetaV2>::read_xdr(r)?,
+                tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+                soroban_meta: Option::<SorobanTransactionMetaV2>::read_xdr(r)?,
+                events: VecM::<TransactionEvent>::read_xdr(r)?,
+                diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+                tx_index: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+#[cfg(feature = "xdr_transaction_meta_v5")]
+impl WriteXdr for TransactionMetaV5 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.tx_changes_before.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.tx_changes_after.write_xdr(w)?;
+            self.soroban_meta.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            self.diagnostic_events.write_xdr(w)?;
+            self.tx_index.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// InvokeHostFunctionSuccessPreImage is an XDR Struct defined as:
 ///
 /// ```text
@@ -24935,6 +25042,10 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
 ///     TransactionMetaV3 v3;
 /// case 4:
 ///     TransactionMetaV4 v4;
+/// #ifdef XDR_TRANSACTION_META_V5
+/// case 5:
+///     TransactionMetaV5 v5;
+/// #endif
 /// };
 /// ```
 ///
@@ -24956,6 +25067,8 @@ pub enum TransactionMeta {
     V2(TransactionMetaV2),
     V3(TransactionMetaV3),
     V4(TransactionMetaV4),
+    #[cfg(feature = "xdr_transaction_meta_v5")]
+    V5(TransactionMetaV5),
 }
 #[cfg(feature = "alloc")]
 impl Default for TransactionMeta {
@@ -24964,8 +25077,24 @@ impl Default for TransactionMeta {
     }
 }
 impl TransactionMeta {
-    pub const VARIANTS: &[i32] = &[0, 1, 2, 3, 4];
-    pub const VARIANTS_STR: &[&str] = &["V0", "V1", "V2", "V3", "V4"];
+    pub const VARIANTS: &[i32] = &[
+        0,
+        1,
+        2,
+        3,
+        4,
+        #[cfg(feature = "xdr_transaction_meta_v5")]
+        5,
+    ];
+    pub const VARIANTS_STR: &[&str] = &[
+        "V0",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        #[cfg(feature = "xdr_transaction_meta_v5")]
+        "V5",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -24975,6 +25104,8 @@ impl TransactionMeta {
             Self::V2(_) => "V2",
             Self::V3(_) => "V3",
             Self::V4(_) => "V4",
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::V5(_) => "V5",
         }
     }
 
@@ -24987,6 +25118,8 @@ impl TransactionMeta {
             Self::V2(_) => 2,
             Self::V3(_) => 3,
             Self::V4(_) => 4,
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::V5(_) => 5,
         }
     }
 
@@ -25025,6 +25158,8 @@ impl ReadXdr for TransactionMeta {
                 2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
                 3 => Self::V3(TransactionMetaV3::read_xdr(r)?),
                 4 => Self::V4(TransactionMetaV4::read_xdr(r)?),
+                #[cfg(feature = "xdr_transaction_meta_v5")]
+                5 => Self::V5(TransactionMetaV5::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -25044,6 +25179,8 @@ impl WriteXdr for TransactionMeta {
                 Self::V2(v) => v.write_xdr(w)?,
                 Self::V3(v) => v.write_xdr(w)?,
                 Self::V4(v) => v.write_xdr(w)?,
+                #[cfg(feature = "xdr_transaction_meta_v5")]
+                Self::V5(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -29212,7 +29349,12 @@ impl WriteXdr for DecoratedSignature {
 ///     LIQUIDITY_POOL_WITHDRAW = 23,
 ///     INVOKE_HOST_FUNCTION = 24,
 ///     EXTEND_FOOTPRINT_TTL = 25,
+/// #ifdef XDR_HELLO_WORLD
+///     RESTORE_FOOTPRINT = 26,
+///     HELLO_WORLD = 27
+/// #else
 ///     RESTORE_FOOTPRINT = 26
+/// #endif
 /// };
 /// ```
 ///
@@ -29255,6 +29397,11 @@ pub enum OperationType {
     LiquidityPoolWithdraw = 23,
     InvokeHostFunction = 24,
     ExtendFootprintTtl = 25,
+    #[cfg(feature = "xdr_hello_world")]
+    RestoreFootprint = 26,
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorld = 27,
+    #[cfg(not(feature = "xdr_hello_world"))]
     RestoreFootprint = 26,
 }
 impl OperationType {
@@ -29285,6 +29432,11 @@ impl OperationType {
         OperationType::LiquidityPoolWithdraw,
         OperationType::InvokeHostFunction,
         OperationType::ExtendFootprintTtl,
+        #[cfg(feature = "xdr_hello_world")]
+        OperationType::RestoreFootprint,
+        #[cfg(feature = "xdr_hello_world")]
+        OperationType::HelloWorld,
+        #[cfg(not(feature = "xdr_hello_world"))]
         OperationType::RestoreFootprint,
     ];
     pub const VARIANTS_STR: &[&str] = &[
@@ -29314,6 +29466,11 @@ impl OperationType {
         "LiquidityPoolWithdraw",
         "InvokeHostFunction",
         "ExtendFootprintTtl",
+        #[cfg(feature = "xdr_hello_world")]
+        "RestoreFootprint",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorld",
+        #[cfg(not(feature = "xdr_hello_world"))]
         "RestoreFootprint",
     ];
 
@@ -29346,6 +29503,11 @@ impl OperationType {
             Self::LiquidityPoolWithdraw => "LiquidityPoolWithdraw",
             Self::InvokeHostFunction => "InvokeHostFunction",
             Self::ExtendFootprintTtl => "ExtendFootprintTtl",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::RestoreFootprint => "RestoreFootprint",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorld => "HelloWorld",
+            #[cfg(not(feature = "xdr_hello_world"))]
             Self::RestoreFootprint => "RestoreFootprint",
         }
     }
@@ -29403,6 +29565,11 @@ impl TryFrom<i32> for OperationType {
             23 => OperationType::LiquidityPoolWithdraw,
             24 => OperationType::InvokeHostFunction,
             25 => OperationType::ExtendFootprintTtl,
+            #[cfg(feature = "xdr_hello_world")]
+            26 => OperationType::RestoreFootprint,
+            #[cfg(feature = "xdr_hello_world")]
+            27 => OperationType::HelloWorld,
+            #[cfg(not(feature = "xdr_hello_world"))]
             26 => OperationType::RestoreFootprint,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -32596,6 +32763,10 @@ impl WriteXdr for RestoreFootprintOp {
 ///         ExtendFootprintTTLOp extendFootprintTTLOp;
 ///     case RESTORE_FOOTPRINT:
 ///         RestoreFootprintOp restoreFootprintOp;
+/// #ifdef XDR_HELLO_WORLD
+///     case HELLO_WORLD:
+///         HelloWorldOp helloWorldOp;
+/// #endif
 ///     }
 /// ```
 ///
@@ -32639,6 +32810,8 @@ pub enum OperationBody {
     InvokeHostFunction(InvokeHostFunctionOp),
     ExtendFootprintTtl(ExtendFootprintTtlOp),
     RestoreFootprint(RestoreFootprintOp),
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorld(HelloWorldOp),
 }
 #[cfg(feature = "alloc")]
 impl Default for OperationBody {
@@ -32675,6 +32848,8 @@ impl OperationBody {
         OperationType::InvokeHostFunction,
         OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
+        #[cfg(feature = "xdr_hello_world")]
+        OperationType::HelloWorld,
     ];
     pub const VARIANTS_STR: &[&str] = &[
         "CreateAccount",
@@ -32704,6 +32879,8 @@ impl OperationBody {
         "InvokeHostFunction",
         "ExtendFootprintTtl",
         "RestoreFootprint",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorld",
     ];
 
     #[must_use]
@@ -32736,6 +32913,8 @@ impl OperationBody {
             Self::InvokeHostFunction(_) => "InvokeHostFunction",
             Self::ExtendFootprintTtl(_) => "ExtendFootprintTtl",
             Self::RestoreFootprint(_) => "RestoreFootprint",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorld(_) => "HelloWorld",
         }
     }
 
@@ -32770,6 +32949,8 @@ impl OperationBody {
             Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
             Self::ExtendFootprintTtl(_) => OperationType::ExtendFootprintTtl,
             Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorld(_) => OperationType::HelloWorld,
         }
     }
 
@@ -32864,6 +33045,8 @@ impl ReadXdr for OperationBody {
                 OperationType::RestoreFootprint => {
                     Self::RestoreFootprint(RestoreFootprintOp::read_xdr(r)?)
                 }
+                #[cfg(feature = "xdr_hello_world")]
+                OperationType::HelloWorld => Self::HelloWorld(HelloWorldOp::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -32905,6 +33088,8 @@ impl WriteXdr for OperationBody {
                 Self::InvokeHostFunction(v) => v.write_xdr(w)?,
                 Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
                 Self::RestoreFootprint(v) => v.write_xdr(w)?,
+                #[cfg(feature = "xdr_hello_world")]
+                Self::HelloWorld(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -32977,6 +33162,10 @@ impl WriteXdr for OperationBody {
 ///         ExtendFootprintTTLOp extendFootprintTTLOp;
 ///     case RESTORE_FOOTPRINT:
 ///         RestoreFootprintOp restoreFootprintOp;
+/// #ifdef XDR_HELLO_WORLD
+///     case HELLO_WORLD:
+///         HelloWorldOp helloWorldOp;
+/// #endif
 ///     }
 ///     body;
 /// };
@@ -44025,6 +44214,285 @@ impl WriteXdr for RestoreFootprintResult {
     }
 }
 
+#[cfg(feature = "xdr_hello_world")]
+/// HelloWorldOp is an XDR Struct defined as:
+///
+/// ```text
+/// struct HelloWorldOp
+/// {
+///     AccountID helloTo;
+/// };
+/// ```
+///
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct HelloWorldOp {
+    pub hello_to: AccountId,
+}
+#[cfg(feature = "xdr_hello_world")]
+impl ReadXdr for HelloWorldOp {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hello_to: AccountId::read_xdr(r)?,
+            })
+        })
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl WriteXdr for HelloWorldOp {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.hello_to.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+#[cfg(feature = "xdr_hello_world")]
+/// HelloWorldResultCode is an XDR Enum defined as:
+///
+/// ```text
+/// enum HelloWorldResultCode
+/// {
+///     HELLO_WORLD_SUCCESS = 0,
+///     HELLO_WORLD_MALFORMED = -1
+/// };
+/// ```
+///
+// enum
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum HelloWorldResultCode {
+    #[cfg_attr(feature = "alloc", default)]
+    Success = 0,
+    Malformed = -1,
+}
+#[cfg(feature = "xdr_hello_world")]
+impl HelloWorldResultCode {
+    pub const VARIANTS: &[HelloWorldResultCode] = &[
+        HelloWorldResultCode::Success,
+        HelloWorldResultCode::Malformed,
+    ];
+    pub const VARIANTS_STR: &[&str] = &["Success", "Malformed"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> &'static [HelloWorldResultCode] {
+        Self::VARIANTS
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Name for HelloWorldResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Variants<HelloWorldResultCode> for HelloWorldResultCode {
+    fn variants() -> slice::Iter<'static, HelloWorldResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Enum for HelloWorldResultCode {}
+#[cfg(feature = "xdr_hello_world")]
+impl fmt::Display for HelloWorldResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl TryFrom<i32> for HelloWorldResultCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self, Error> {
+        let e = match i {
+            0 => HelloWorldResultCode::Success,
+            -1 => HelloWorldResultCode::Malformed,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl From<HelloWorldResultCode> for i32 {
+    #[must_use]
+    fn from(e: HelloWorldResultCode) -> Self {
+        e as Self
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl ReadXdr for HelloWorldResultCode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl WriteXdr for HelloWorldResultCode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+#[cfg(feature = "xdr_hello_world")]
+/// HelloWorldResult is an XDR Union defined as:
+///
+/// ```text
+/// union HelloWorldResult switch (HelloWorldResultCode code)
+/// {
+/// case HELLO_WORLD_SUCCESS:
+///     void;
+/// case HELLO_WORLD_MALFORMED:
+///     void;
+/// };
+/// ```
+///
+// union with discriminant HelloWorldResultCode
+#[cfg_eval::cfg_eval]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(clippy::large_enum_variant)]
+pub enum HelloWorldResult {
+    Success,
+    Malformed,
+}
+#[cfg(feature = "xdr_hello_world")]
+#[cfg(feature = "alloc")]
+impl Default for HelloWorldResult {
+    fn default() -> Self {
+        Self::Success
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl HelloWorldResult {
+    pub const VARIANTS: &[HelloWorldResultCode] = &[
+        HelloWorldResultCode::Success,
+        HelloWorldResultCode::Malformed,
+    ];
+    pub const VARIANTS_STR: &[&str] = &["Success", "Malformed"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> HelloWorldResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => HelloWorldResultCode::Success,
+            Self::Malformed => HelloWorldResultCode::Malformed,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> &'static [HelloWorldResultCode] {
+        Self::VARIANTS
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Name for HelloWorldResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Discriminant<HelloWorldResultCode> for HelloWorldResult {
+    #[must_use]
+    fn discriminant(&self) -> HelloWorldResultCode {
+        Self::discriminant(self)
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Variants<HelloWorldResultCode> for HelloWorldResult {
+    fn variants() -> slice::Iter<'static, HelloWorldResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl Union<HelloWorldResultCode> for HelloWorldResult {}
+#[cfg(feature = "xdr_hello_world")]
+impl ReadXdr for HelloWorldResult {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let dv: HelloWorldResultCode = <HelloWorldResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                HelloWorldResultCode::Success => Self::Success,
+                HelloWorldResultCode::Malformed => Self::Malformed,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+#[cfg(feature = "xdr_hello_world")]
+impl WriteXdr for HelloWorldResult {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
 /// OperationResultCode is an XDR Enum defined as:
 ///
 /// ```text
@@ -44220,6 +44688,10 @@ impl WriteXdr for OperationResultCode {
 ///         ExtendFootprintTTLResult extendFootprintTTLResult;
 ///     case RESTORE_FOOTPRINT:
 ///         RestoreFootprintResult restoreFootprintResult;
+/// #ifdef XDR_HELLO_WORLD
+///     case HELLO_WORLD:
+///         HelloWorldResult helloWorldResult;
+/// #endif
 ///     }
 /// ```
 ///
@@ -44263,6 +44735,8 @@ pub enum OperationResultTr {
     InvokeHostFunction(InvokeHostFunctionResult),
     ExtendFootprintTtl(ExtendFootprintTtlResult),
     RestoreFootprint(RestoreFootprintResult),
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorld(HelloWorldResult),
 }
 #[cfg(feature = "alloc")]
 impl Default for OperationResultTr {
@@ -44299,6 +44773,8 @@ impl OperationResultTr {
         OperationType::InvokeHostFunction,
         OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
+        #[cfg(feature = "xdr_hello_world")]
+        OperationType::HelloWorld,
     ];
     pub const VARIANTS_STR: &[&str] = &[
         "CreateAccount",
@@ -44328,6 +44804,8 @@ impl OperationResultTr {
         "InvokeHostFunction",
         "ExtendFootprintTtl",
         "RestoreFootprint",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorld",
     ];
 
     #[must_use]
@@ -44360,6 +44838,8 @@ impl OperationResultTr {
             Self::InvokeHostFunction(_) => "InvokeHostFunction",
             Self::ExtendFootprintTtl(_) => "ExtendFootprintTtl",
             Self::RestoreFootprint(_) => "RestoreFootprint",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorld(_) => "HelloWorld",
         }
     }
 
@@ -44394,6 +44874,8 @@ impl OperationResultTr {
             Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
             Self::ExtendFootprintTtl(_) => OperationType::ExtendFootprintTtl,
             Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorld(_) => OperationType::HelloWorld,
         }
     }
 
@@ -44492,6 +44974,8 @@ impl ReadXdr for OperationResultTr {
                 OperationType::RestoreFootprint => {
                     Self::RestoreFootprint(RestoreFootprintResult::read_xdr(r)?)
                 }
+                #[cfg(feature = "xdr_hello_world")]
+                OperationType::HelloWorld => Self::HelloWorld(HelloWorldResult::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -44533,6 +45017,8 @@ impl WriteXdr for OperationResultTr {
                 Self::InvokeHostFunction(v) => v.write_xdr(w)?,
                 Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
                 Self::RestoreFootprint(v) => v.write_xdr(w)?,
+                #[cfg(feature = "xdr_hello_world")]
+                Self::HelloWorld(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -44601,6 +45087,10 @@ impl WriteXdr for OperationResultTr {
 ///         ExtendFootprintTTLResult extendFootprintTTLResult;
 ///     case RESTORE_FOOTPRINT:
 ///         RestoreFootprintResult restoreFootprintResult;
+/// #ifdef XDR_HELLO_WORLD
+///     case HELLO_WORLD:
+///         HelloWorldResult helloWorldResult;
+/// #endif
 ///     }
 ///     tr;
 /// case opBAD_AUTH:
@@ -48366,6 +48856,8 @@ pub enum TypeVariant {
     TransactionEventStage,
     TransactionEvent,
     TransactionMetaV4,
+    #[cfg(feature = "xdr_transaction_meta_v5")]
+    TransactionMetaV5,
     InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
     TransactionResultMeta,
@@ -48559,6 +49051,12 @@ pub enum TypeVariant {
     ExtendFootprintTtlResult,
     RestoreFootprintResultCode,
     RestoreFootprintResult,
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorldOp,
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorldResultCode,
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorldResult,
     OperationResultCode,
     OperationResult,
     OperationResultTr,
@@ -48833,6 +49331,8 @@ impl TypeVariant {
         TypeVariant::TransactionEventStage,
         TypeVariant::TransactionEvent,
         TypeVariant::TransactionMetaV4,
+        #[cfg(feature = "xdr_transaction_meta_v5")]
+        TypeVariant::TransactionMetaV5,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
@@ -49026,6 +49526,12 @@ impl TypeVariant {
         TypeVariant::ExtendFootprintTtlResult,
         TypeVariant::RestoreFootprintResultCode,
         TypeVariant::RestoreFootprintResult,
+        #[cfg(feature = "xdr_hello_world")]
+        TypeVariant::HelloWorldOp,
+        #[cfg(feature = "xdr_hello_world")]
+        TypeVariant::HelloWorldResultCode,
+        #[cfg(feature = "xdr_hello_world")]
+        TypeVariant::HelloWorldResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
         TypeVariant::OperationResultTr,
@@ -49298,6 +49804,8 @@ impl TypeVariant {
         "TransactionEventStage",
         "TransactionEvent",
         "TransactionMetaV4",
+        #[cfg(feature = "xdr_transaction_meta_v5")]
+        "TransactionMetaV5",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
@@ -49491,6 +49999,12 @@ impl TypeVariant {
         "ExtendFootprintTtlResult",
         "RestoreFootprintResultCode",
         "RestoreFootprintResult",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorldOp",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorldResultCode",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorldResult",
         "OperationResultCode",
         "OperationResult",
         "OperationResultTr",
@@ -49771,6 +50285,8 @@ impl TypeVariant {
             Self::TransactionEventStage => "TransactionEventStage",
             Self::TransactionEvent => "TransactionEvent",
             Self::TransactionMetaV4 => "TransactionMetaV4",
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::TransactionMetaV5 => "TransactionMetaV5",
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
@@ -49974,6 +50490,12 @@ impl TypeVariant {
             Self::ExtendFootprintTtlResult => "ExtendFootprintTtlResult",
             Self::RestoreFootprintResultCode => "RestoreFootprintResultCode",
             Self::RestoreFootprintResult => "RestoreFootprintResult",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldOp => "HelloWorldOp",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResultCode => "HelloWorldResultCode",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResult => "HelloWorldResult",
             Self::OperationResultCode => "OperationResultCode",
             Self::OperationResult => "OperationResult",
             Self::OperationResultTr => "OperationResultTr",
@@ -50338,6 +50860,8 @@ impl TypeVariant {
             Self::TransactionEventStage => gen.into_root_schema_for::<TransactionEventStage>(),
             Self::TransactionEvent => gen.into_root_schema_for::<TransactionEvent>(),
             Self::TransactionMetaV4 => gen.into_root_schema_for::<TransactionMetaV4>(),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::TransactionMetaV5 => gen.into_root_schema_for::<TransactionMetaV5>(),
             Self::InvokeHostFunctionSuccessPreImage => {
                 gen.into_root_schema_for::<InvokeHostFunctionSuccessPreImage>()
             }
@@ -50657,6 +51181,12 @@ impl TypeVariant {
                 gen.into_root_schema_for::<RestoreFootprintResultCode>()
             }
             Self::RestoreFootprintResult => gen.into_root_schema_for::<RestoreFootprintResult>(),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldOp => gen.into_root_schema_for::<HelloWorldOp>(),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResultCode => gen.into_root_schema_for::<HelloWorldResultCode>(),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResult => gen.into_root_schema_for::<HelloWorldResult>(),
             Self::OperationResultCode => gen.into_root_schema_for::<OperationResultCode>(),
             Self::OperationResult => gen.into_root_schema_for::<OperationResult>(),
             Self::OperationResultTr => gen.into_root_schema_for::<OperationResultTr>(),
@@ -50969,6 +51499,8 @@ impl core::str::FromStr for TypeVariant {
             "TransactionEventStage" => Ok(Self::TransactionEventStage),
             "TransactionEvent" => Ok(Self::TransactionEvent),
             "TransactionMetaV4" => Ok(Self::TransactionMetaV4),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            "TransactionMetaV5" => Ok(Self::TransactionMetaV5),
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
@@ -51182,6 +51714,12 @@ impl core::str::FromStr for TypeVariant {
             "ExtendFootprintTtlResult" => Ok(Self::ExtendFootprintTtlResult),
             "RestoreFootprintResultCode" => Ok(Self::RestoreFootprintResultCode),
             "RestoreFootprintResult" => Ok(Self::RestoreFootprintResult),
+            #[cfg(feature = "xdr_hello_world")]
+            "HelloWorldOp" => Ok(Self::HelloWorldOp),
+            #[cfg(feature = "xdr_hello_world")]
+            "HelloWorldResultCode" => Ok(Self::HelloWorldResultCode),
+            #[cfg(feature = "xdr_hello_world")]
+            "HelloWorldResult" => Ok(Self::HelloWorldResult),
             "OperationResultCode" => Ok(Self::OperationResultCode),
             "OperationResult" => Ok(Self::OperationResult),
             "OperationResultTr" => Ok(Self::OperationResultTr),
@@ -51466,6 +52004,8 @@ pub enum Type {
     TransactionEventStage(Box<TransactionEventStage>),
     TransactionEvent(Box<TransactionEvent>),
     TransactionMetaV4(Box<TransactionMetaV4>),
+    #[cfg(feature = "xdr_transaction_meta_v5")]
+    TransactionMetaV5(Box<TransactionMetaV5>),
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
@@ -51659,6 +52199,12 @@ pub enum Type {
     ExtendFootprintTtlResult(Box<ExtendFootprintTtlResult>),
     RestoreFootprintResultCode(Box<RestoreFootprintResultCode>),
     RestoreFootprintResult(Box<RestoreFootprintResult>),
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorldOp(Box<HelloWorldOp>),
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorldResultCode(Box<HelloWorldResultCode>),
+    #[cfg(feature = "xdr_hello_world")]
+    HelloWorldResult(Box<HelloWorldResult>),
     OperationResultCode(Box<OperationResultCode>),
     OperationResult(Box<OperationResult>),
     OperationResultTr(Box<OperationResultTr>),
@@ -51933,6 +52479,8 @@ impl Type {
         TypeVariant::TransactionEventStage,
         TypeVariant::TransactionEvent,
         TypeVariant::TransactionMetaV4,
+        #[cfg(feature = "xdr_transaction_meta_v5")]
+        TypeVariant::TransactionMetaV5,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
@@ -52126,6 +52674,12 @@ impl Type {
         TypeVariant::ExtendFootprintTtlResult,
         TypeVariant::RestoreFootprintResultCode,
         TypeVariant::RestoreFootprintResult,
+        #[cfg(feature = "xdr_hello_world")]
+        TypeVariant::HelloWorldOp,
+        #[cfg(feature = "xdr_hello_world")]
+        TypeVariant::HelloWorldResultCode,
+        #[cfg(feature = "xdr_hello_world")]
+        TypeVariant::HelloWorldResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
         TypeVariant::OperationResultTr,
@@ -52398,6 +52952,8 @@ impl Type {
         "TransactionEventStage",
         "TransactionEvent",
         "TransactionMetaV4",
+        #[cfg(feature = "xdr_transaction_meta_v5")]
+        "TransactionMetaV5",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
@@ -52591,6 +53147,12 @@ impl Type {
         "ExtendFootprintTtlResult",
         "RestoreFootprintResultCode",
         "RestoreFootprintResult",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorldOp",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorldResultCode",
+        #[cfg(feature = "xdr_hello_world")]
+        "HelloWorldResult",
         "OperationResultCode",
         "OperationResult",
         "OperationResultTr",
@@ -53617,6 +54179,12 @@ impl Type {
                     TransactionMetaV4::read_xdr(r)?,
                 )))
             }),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionMetaV5(Box::new(
+                    TransactionMetaV5::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::InvokeHostFunctionSuccessPreImage => r.with_limited_depth(|r| {
                 Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
                     InvokeHostFunctionSuccessPreImage::read_xdr(r)?,
@@ -54496,6 +55064,22 @@ impl Type {
             TypeVariant::RestoreFootprintResult => r.with_limited_depth(|r| {
                 Ok(Self::RestoreFootprintResult(Box::new(
                     RestoreFootprintResult::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => r.with_limited_depth(|r| {
+                Ok(Self::HelloWorldOp(Box::new(HelloWorldOp::read_xdr(r)?)))
+            }),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => r.with_limited_depth(|r| {
+                Ok(Self::HelloWorldResultCode(Box::new(
+                    HelloWorldResultCode::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => r.with_limited_depth(|r| {
+                Ok(Self::HelloWorldResult(Box::new(
+                    HelloWorldResult::read_xdr(r)?,
                 )))
             }),
             TypeVariant::OperationResultCode => r.with_limited_depth(|r| {
@@ -55672,6 +56256,11 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV4>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t)))),
             ),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV5>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionMetaV5(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(
                     &mut r.inner,
@@ -56537,6 +57126,21 @@ impl Type {
             TypeVariant::RestoreFootprintResult => Box::new(
                 ReadXdrIter::<_, RestoreFootprintResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => Box::new(
+                ReadXdrIter::<_, HelloWorldOp>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldOp(Box::new(t)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Box::new(
+                ReadXdrIter::<_, HelloWorldResultCode>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldResultCode(Box::new(t)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Box::new(
+                ReadXdrIter::<_, HelloWorldResult>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, OperationResultCode>::new(&mut r.inner, r.limits.clone())
@@ -57802,6 +58406,11 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionMetaV4>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t.0)))),
             ),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMetaV5>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionMetaV5(Box::new(t.0)))),
+            ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionSuccessPreImage>>::new(
                     &mut r.inner,
@@ -58825,6 +59434,21 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => Box::new(
+                ReadXdrIter::<_, Frame<HelloWorldOp>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldOp(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Box::new(
+                ReadXdrIter::<_, Frame<HelloWorldResultCode>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldResultCode(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Box::new(
+                ReadXdrIter::<_, Frame<HelloWorldResult>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldResult(Box::new(t.0)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, Frame<OperationResultCode>>::new(&mut r.inner, r.limits.clone())
@@ -59950,6 +60574,11 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV4>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t)))),
             ),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV5>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionMetaV5(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
@@ -60740,6 +61369,21 @@ impl Type {
             TypeVariant::RestoreFootprintResult => Box::new(
                 ReadXdrIter::<_, RestoreFootprintResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => Box::new(
+                ReadXdrIter::<_, HelloWorldOp>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldOp(Box::new(t)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Box::new(
+                ReadXdrIter::<_, HelloWorldResultCode>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldResultCode(Box::new(t)))),
+            ),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Box::new(
+                ReadXdrIter::<_, HelloWorldResult>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HelloWorldResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, OperationResultCode>::new(dec, r.limits.clone())
@@ -61565,6 +62209,10 @@ impl Type {
             TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Ok(Self::TransactionMetaV5(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Ok(
                 Self::InvokeHostFunctionSuccessPreImage(Box::new(serde_json::from_reader(r)?)),
             ),
@@ -62118,6 +62766,18 @@ impl Type {
                 Box::new(serde_json::from_reader(r)?),
             )),
             TypeVariant::RestoreFootprintResult => Ok(Self::RestoreFootprintResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => {
+                Ok(Self::HelloWorldOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Ok(Self::HelloWorldResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Ok(Self::HelloWorldResult(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
@@ -62938,6 +63598,10 @@ impl Type {
             TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Ok(Self::TransactionMetaV5(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::InvokeHostFunctionSuccessPreImage => {
                 Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
@@ -63569,6 +64233,18 @@ impl Type {
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
             TypeVariant::RestoreFootprintResult => Ok(Self::RestoreFootprintResult(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => Ok(Self::HelloWorldOp(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Ok(Self::HelloWorldResultCode(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Ok(Self::HelloWorldResult(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
@@ -64324,6 +65000,10 @@ impl Type {
             TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
                 TransactionMetaV4::arbitrary(u)?,
             ))),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Ok(Self::TransactionMetaV5(Box::new(
+                TransactionMetaV5::arbitrary(u)?,
+            ))),
             TypeVariant::InvokeHostFunctionSuccessPreImage => {
                 Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
                     InvokeHostFunctionSuccessPreImage::arbitrary(u)?,
@@ -64915,6 +65595,18 @@ impl Type {
             TypeVariant::RestoreFootprintResult => Ok(Self::RestoreFootprintResult(Box::new(
                 RestoreFootprintResult::arbitrary(u)?,
             ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => {
+                Ok(Self::HelloWorldOp(Box::new(HelloWorldOp::arbitrary(u)?)))
+            }
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Ok(Self::HelloWorldResultCode(Box::new(
+                HelloWorldResultCode::arbitrary(u)?,
+            ))),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Ok(Self::HelloWorldResult(Box::new(
+                HelloWorldResult::arbitrary(u)?,
+            ))),
             TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
                 OperationResultCode::arbitrary(u)?,
             ))),
@@ -65311,6 +66003,8 @@ impl Type {
             TypeVariant::TransactionEventStage => Self::TransactionEventStage(Box::default()),
             TypeVariant::TransactionEvent => Self::TransactionEvent(Box::default()),
             TypeVariant::TransactionMetaV4 => Self::TransactionMetaV4(Box::default()),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            TypeVariant::TransactionMetaV5 => Self::TransactionMetaV5(Box::default()),
             TypeVariant::InvokeHostFunctionSuccessPreImage => {
                 Self::InvokeHostFunctionSuccessPreImage(Box::default())
             }
@@ -65614,6 +66308,12 @@ impl Type {
                 Self::RestoreFootprintResultCode(Box::default())
             }
             TypeVariant::RestoreFootprintResult => Self::RestoreFootprintResult(Box::default()),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldOp => Self::HelloWorldOp(Box::default()),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResultCode => Self::HelloWorldResultCode(Box::default()),
+            #[cfg(feature = "xdr_hello_world")]
+            TypeVariant::HelloWorldResult => Self::HelloWorldResult(Box::default()),
             TypeVariant::OperationResultCode => Self::OperationResultCode(Box::default()),
             TypeVariant::OperationResult => Self::OperationResult(Box::default()),
             TypeVariant::OperationResultTr => Self::OperationResultTr(Box::default()),
@@ -65903,6 +66603,8 @@ impl Type {
             Self::TransactionEventStage(ref v) => v.as_ref(),
             Self::TransactionEvent(ref v) => v.as_ref(),
             Self::TransactionMetaV4(ref v) => v.as_ref(),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::TransactionMetaV5(ref v) => v.as_ref(),
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
@@ -66096,6 +66798,12 @@ impl Type {
             Self::ExtendFootprintTtlResult(ref v) => v.as_ref(),
             Self::RestoreFootprintResultCode(ref v) => v.as_ref(),
             Self::RestoreFootprintResult(ref v) => v.as_ref(),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldOp(ref v) => v.as_ref(),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResultCode(ref v) => v.as_ref(),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResult(ref v) => v.as_ref(),
             Self::OperationResultCode(ref v) => v.as_ref(),
             Self::OperationResult(ref v) => v.as_ref(),
             Self::OperationResultTr(ref v) => v.as_ref(),
@@ -66381,6 +67089,8 @@ impl Type {
             Self::TransactionEventStage(_) => "TransactionEventStage",
             Self::TransactionEvent(_) => "TransactionEvent",
             Self::TransactionMetaV4(_) => "TransactionMetaV4",
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::TransactionMetaV5(_) => "TransactionMetaV5",
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
@@ -66592,6 +67302,12 @@ impl Type {
             Self::ExtendFootprintTtlResult(_) => "ExtendFootprintTtlResult",
             Self::RestoreFootprintResultCode(_) => "RestoreFootprintResultCode",
             Self::RestoreFootprintResult(_) => "RestoreFootprintResult",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldOp(_) => "HelloWorldOp",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResultCode(_) => "HelloWorldResultCode",
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResult(_) => "HelloWorldResult",
             Self::OperationResultCode(_) => "OperationResultCode",
             Self::OperationResult(_) => "OperationResult",
             Self::OperationResultTr(_) => "OperationResultTr",
@@ -66899,6 +67615,8 @@ impl Type {
             Self::TransactionEventStage(_) => TypeVariant::TransactionEventStage,
             Self::TransactionEvent(_) => TypeVariant::TransactionEvent,
             Self::TransactionMetaV4(_) => TypeVariant::TransactionMetaV4,
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::TransactionMetaV5(_) => TypeVariant::TransactionMetaV5,
             Self::InvokeHostFunctionSuccessPreImage(_) => {
                 TypeVariant::InvokeHostFunctionSuccessPreImage
             }
@@ -67138,6 +67856,12 @@ impl Type {
             Self::ExtendFootprintTtlResult(_) => TypeVariant::ExtendFootprintTtlResult,
             Self::RestoreFootprintResultCode(_) => TypeVariant::RestoreFootprintResultCode,
             Self::RestoreFootprintResult(_) => TypeVariant::RestoreFootprintResult,
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldOp(_) => TypeVariant::HelloWorldOp,
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResultCode(_) => TypeVariant::HelloWorldResultCode,
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResult(_) => TypeVariant::HelloWorldResult,
             Self::OperationResultCode(_) => TypeVariant::OperationResultCode,
             Self::OperationResult(_) => TypeVariant::OperationResult,
             Self::OperationResultTr(_) => TypeVariant::OperationResultTr,
@@ -67430,6 +68154,8 @@ impl WriteXdr for Type {
             Self::TransactionEventStage(v) => v.write_xdr(w),
             Self::TransactionEvent(v) => v.write_xdr(w),
             Self::TransactionMetaV4(v) => v.write_xdr(w),
+            #[cfg(feature = "xdr_transaction_meta_v5")]
+            Self::TransactionMetaV5(v) => v.write_xdr(w),
             Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),
             Self::TransactionMeta(v) => v.write_xdr(w),
             Self::TransactionResultMeta(v) => v.write_xdr(w),
@@ -67623,6 +68349,12 @@ impl WriteXdr for Type {
             Self::ExtendFootprintTtlResult(v) => v.write_xdr(w),
             Self::RestoreFootprintResultCode(v) => v.write_xdr(w),
             Self::RestoreFootprintResult(v) => v.write_xdr(w),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldOp(v) => v.write_xdr(w),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResultCode(v) => v.write_xdr(w),
+            #[cfg(feature = "xdr_hello_world")]
+            Self::HelloWorldResult(v) => v.write_xdr(w),
             Self::OperationResultCode(v) => v.write_xdr(w),
             Self::OperationResult(v) => v.write_xdr(w),
             Self::OperationResultTr(v) => v.write_xdr(w),

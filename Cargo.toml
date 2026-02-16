@@ -46,6 +46,12 @@ alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 curr = []
 next = []
 
+# XDR features
+xdr_sparse_map = []
+xdr_hello_world = []
+xdr_ledger_entry_ext_v2 = []
+xdr_transaction_meta_v5 = []
+
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]
 serde = ["alloc", "dep:serde", "dep:serde_with", "hex/serde"]

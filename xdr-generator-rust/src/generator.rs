@@ -1,8 +1,8 @@
 //! Code generator that prepares data for templates and renders output.
 
 use crate::ast::{
-    CaseValue, Const, Definition, Enum, Member, Size, Struct, Type, Typedef, Union, UnionArm,
-    XdrSpec,
+    CaseValue, Const, Definition, Enum, IfdefCondition, Member, Size, Struct, Type, Typedef, Union,
+    UnionArm, XdrSpec,
 };
 use crate::lexer::IntBase;
 use crate::types::{
@@ -11,6 +11,7 @@ use crate::types::{
     serde_as_type, Options, TypeInfo,
 };
 use askama::Template;
+use heck::ToSnakeCase;
 use sha2::{Digest, Sha256};
 
 /// Generator for producing Rust code from XDR specs.
@@ -53,7 +54,8 @@ impl Generator {
         // First pass: collect definitions and build parent-child map
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
         let mut children_of: HashMap<String, Vec<String>> = HashMap::new();
-        let mut all_type_names: Vec<(String, Option<String>)> = Vec::new(); // (name, parent)
+        // (name, parent, feature)
+        let mut all_type_names: Vec<(String, Option<String>, Option<String>)> = Vec::new();
 
         for def in spec.all_definitions() {
             let name = rust_type_name(def.name());
@@ -61,7 +63,8 @@ impl Generator {
             // Only add non-const types to the type enum
             if !matches!(def, Definition::Const(_)) {
                 let parent = def.parent().map(|p| rust_type_name(p));
-                all_type_names.push((name.clone(), parent.clone()));
+                let feature = ifdefs_to_cfg(def.ifdefs());
+                all_type_names.push((name.clone(), parent.clone(), feature));
 
                 if let Some(ref parent_name) = parent {
                     children_of
@@ -77,41 +80,65 @@ impl Generator {
 
         // Second pass: build types list with parent-before-children ordering
         // Use a recursive helper to add each type and then its children
-        let mut types: Vec<String> = Vec::new();
+        let mut types: Vec<TypeEnumEntry> = Vec::new();
         let mut added: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+        // Build a map from name -> feature for lookup.
+        // If a name appears with different features (e.g., ifdef/else), both
+        // definitions are always available, so no cfg gate is needed.
+        let mut feature_map: HashMap<String, Option<String>> = HashMap::new();
+        for (n, _, f) in &all_type_names {
+            match feature_map.get(n) {
+                None => {
+                    feature_map.insert(n.clone(), f.clone());
+                }
+                Some(existing) if existing != f => {
+                    // Different features on the same type name means it's always present
+                    feature_map.insert(n.clone(), None);
+                }
+                _ => {}
+            }
+        }
 
         fn add_type_and_children(
             name: &str,
-            types: &mut Vec<String>,
+            types: &mut Vec<TypeEnumEntry>,
             added: &mut std::collections::HashSet<String>,
             children_of: &HashMap<String, Vec<String>>,
+            feature_map: &HashMap<String, Option<String>>,
         ) {
             if added.contains(name) {
                 return;
             }
             added.insert(name.to_string());
-            types.push(name.to_string());
+            types.push(TypeEnumEntry {
+                name: name.to_string(),
+                feature: feature_map.get(name).cloned().flatten(),
+            });
 
             // Add children in the order they appear in children_of
             if let Some(children) = children_of.get(name) {
                 for child in children {
-                    add_type_and_children(child, types, added, children_of);
+                    add_type_and_children(child, types, added, children_of, feature_map);
                 }
             }
         }
 
         // Process types in definition order, but only add root types (no parent)
         // and let recursion handle adding children
-        for (name, parent) in &all_type_names {
+        for (name, parent, _) in &all_type_names {
             if parent.is_none() {
-                add_type_and_children(name, &mut types, &mut added, &children_of);
+                add_type_and_children(name, &mut types, &mut added, &children_of, &feature_map);
             }
         }
 
         // Add any remaining types that weren't reached (shouldn't happen, but just in case)
-        for (name, _) in &all_type_names {
+        for (name, _, _) in &all_type_names {
             if !added.contains(name) {
-                types.push(name.clone());
+                types.push(TypeEnumEntry {
+                    name: name.clone(),
+                    feature: feature_map.get(name).cloned().flatten(),
+                });
             }
         }
 
@@ -169,6 +196,7 @@ impl Generator {
             is_custom_str: custom_str,
             members,
             member_names,
+            feature: ifdefs_to_cfg(&s.ifdefs),
         }
     }
 
@@ -191,6 +219,7 @@ impl Generator {
                     name: rust_type_name(&stripped),
                     value: m.value,
                     is_first: i == 0,
+                    feature: ifdefs_to_cfg(&m.ifdefs),
                 }
             })
             .collect();
@@ -201,6 +230,7 @@ impl Generator {
             has_default: !custom_default,
             is_custom_str: custom_str,
             members,
+            feature: ifdefs_to_cfg(&e.ifdefs),
         }
     }
 
@@ -276,6 +306,7 @@ impl Generator {
             arms,
             first_arm_case_name,
             first_arm_type,
+            feature: ifdefs_to_cfg(&u.ifdefs),
         }
     }
 
@@ -293,6 +324,7 @@ impl Generator {
                 name,
                 source_comment: format_source_comment(&t.source, "Typedef"),
                 type_ref: base_rust_type_ref(&t.type_),
+                feature: ifdefs_to_cfg(&t.ifdefs),
             });
         }
 
@@ -333,6 +365,7 @@ impl Generator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+            feature: ifdefs_to_cfg(&t.ifdefs),
         })
     }
 
@@ -346,6 +379,7 @@ impl Generator {
             doc_name: rust_type_name(&c.name),
             source_comment: format_source_comment(&c.source, "Const"),
             value_str,
+            feature: ifdefs_to_cfg(&c.ifdefs),
         }
     }
 
@@ -365,6 +399,7 @@ impl Generator {
             type_ref,
             read_call,
             serde_as_type: serde_as,
+            feature: ifdefs_to_cfg(&m.ifdefs),
         }
     }
 
@@ -420,6 +455,7 @@ impl Generator {
                     type_ref,
                     read_call,
                     serde_as_type: serde_as,
+                    feature: ifdefs_to_cfg(&arm.ifdefs),
                 }
             })
             .collect()
@@ -456,6 +492,8 @@ pub struct StructOutput {
     pub members: Vec<MemberOutput>,
     /// Comma-separated list of member names for destructuring (e.g., "id, ed25519,")
     pub member_names: String,
+    /// The `#[cfg(...)]` condition for this definition, if any.
+    pub feature: Option<String>,
 }
 
 pub struct MemberOutput {
@@ -464,6 +502,8 @@ pub struct MemberOutput {
     pub read_call: String,
     /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
     pub serde_as_type: Option<String>,
+    /// The `#[cfg(...)]` condition for this member, if any.
+    pub feature: Option<String>,
 }
 
 /// Data for rendering an enum.
@@ -473,12 +513,16 @@ pub struct EnumOutput {
     pub has_default: bool,
     pub is_custom_str: bool,
     pub members: Vec<EnumMemberOutput>,
+    /// The `#[cfg(...)]` condition for this definition, if any.
+    pub feature: Option<String>,
 }
 
 pub struct EnumMemberOutput {
     pub name: String,
     pub value: i32,
     pub is_first: bool,
+    /// The `#[cfg(...)]` condition for this member, if any.
+    pub feature: Option<String>,
 }
 
 /// Data for rendering a union.
@@ -494,6 +538,8 @@ pub struct UnionOutput {
     pub first_arm_case_name: String,
     /// For default impl: type to call ::default() on (read_call of first arm, if non-void)
     pub first_arm_type: Option<String>,
+    /// The `#[cfg(...)]` condition for this definition, if any.
+    pub feature: Option<String>,
 }
 
 pub struct UnionArmOutput {
@@ -504,6 +550,8 @@ pub struct UnionArmOutput {
     pub read_call: Option<String>,
     /// The serde_as type for i64/u64 fields (e.g., "NumberOrString").
     pub serde_as_type: Option<String>,
+    /// The `#[cfg(...)]` condition for this arm, if any.
+    pub feature: Option<String>,
 }
 
 /// Data for a typedef that's a simple type alias.
@@ -511,6 +559,8 @@ pub struct TypedefAliasOutput {
     pub name: String,
     pub source_comment: String,
     pub type_ref: String,
+    /// The `#[cfg(...)]` condition for this definition, if any.
+    pub feature: Option<String>,
 }
 
 /// Data for a typedef that's a newtype struct.
@@ -532,6 +582,8 @@ pub struct TypedefNewtypeOutput {
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
+    /// The `#[cfg(...)]` condition for this definition, if any.
+    pub feature: Option<String>,
 }
 
 /// Data for a const.
@@ -543,11 +595,44 @@ pub struct ConstOutput {
     pub source_comment: String,
     /// The formatted value string (decimal or hex).
     pub value_str: String,
+    /// The `#[cfg(...)]` condition for this definition, if any.
+    pub feature: Option<String>,
 }
 
 /// Data for the TypeVariant and Type enums.
 pub struct TypeEnumOutput {
-    pub types: Vec<String>,
+    pub types: Vec<TypeEnumEntry>,
+}
+
+/// An entry in the TypeVariant/Type enum, with optional cfg condition.
+pub struct TypeEnumEntry {
+    pub name: String,
+    /// The `#[cfg(...)]` condition for this type, if any.
+    pub feature: Option<String>,
+}
+
+/// Convert a list of ifdef conditions to a Rust `#[cfg(...)]` attribute value.
+/// Returns None if the list is empty.
+fn ifdefs_to_cfg(ifdefs: &[IfdefCondition]) -> Option<String> {
+    if ifdefs.is_empty() {
+        return None;
+    }
+    let parts: Vec<String> = ifdefs
+        .iter()
+        .map(|c| {
+            let feature = c.name.to_snake_case();
+            if c.negated {
+                format!("not(feature = \"{feature}\")")
+            } else {
+                format!("feature = \"{feature}\"")
+            }
+        })
+        .collect();
+    if parts.len() == 1 {
+        Some(parts[0].clone())
+    } else {
+        Some(format!("all({})", parts.join(", ")))
+    }
 }
 
 fn format_source_comment(source: &str, kind: &str) -> String {

@@ -49,6 +49,7 @@ src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)
 	rustfmt $@
+	cp $@ src/curr/generated.rs
 
 src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
 	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
@@ -57,6 +58,7 @@ src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)
 	rustfmt $@
+	cp $@ src/next/generated.rs
 
 check-generated-match:
 	@echo "Checking that Ruby and Rust generators produce identical output..."

@@ -30,12 +30,41 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: generate-xdrgen-files xdr/curr-version xdr/next-version xdr-json/curr xdr-json/next
+generate: generate-xdrgen-files generate-rust-files xdr/curr-version xdr/next-version xdr-json/curr xdr-json/next check-generated-match
 
 generate-xdrgen-files: src/curr/generated.rs src/next/generated.rs
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:3.1 /bin/bash -c \
 		'cd xdr-generator && bundle install --quiet && bundle exec ruby generate.rb'
 	rustfmt $^
+
+CUSTOM_DEFAULT_IMPL=TransactionEnvelope
+CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
+
+generate-rust-files: src/curr/generated-rust.rs src/next/generated-rust.rs
+
+src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
+	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
+		$(addprefix --input ,$(sort $(wildcard xdr/curr/*.x))) \
+		--output $@ \
+		--custom-default $(CUSTOM_DEFAULT_IMPL) \
+		--custom-str $(CUSTOM_STR_IMPL)
+	rustfmt $@
+
+src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
+	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
+		$(addprefix --input ,$(sort $(wildcard xdr/next/*.x))) \
+		--output $@ \
+		--custom-default $(CUSTOM_DEFAULT_IMPL) \
+		--custom-str $(CUSTOM_STR_IMPL)
+	rustfmt $@
+
+check-generated-match:
+	@echo "Checking that Ruby and Rust generators produce identical output..."
+	@diff -q src/curr/generated.rs src/curr/generated-rust.rs || \
+		(echo "ERROR: src/curr/generated.rs and src/curr/generated-rust.rs differ" && exit 1)
+	@diff -q src/next/generated.rs src/next/generated-rust.rs || \
+		(echo "ERROR: src/next/generated.rs and src/next/generated-rust.rs differ" && exit 1)
+	@echo "OK: Ruby and Rust generator outputs match"
 
 src/next/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
@@ -59,6 +88,7 @@ xdr-json/next: src/next/generated.rs
 
 clean:
 	rm -f src/*/generated.rs
+	rm -f src/*/generated-rust.rs
 	rm -f xdr/*-version
 	rm -fr xdr-json/curr
 	rm -fr xdr-json/next

@@ -98,26 +98,18 @@ use alloc::{
     borrow::ToOwned,
     boxed::Box,
     string::{FromUtf8Error, String},
-    vec::Vec,
+    vec::{self, Vec},
 };
-#[cfg(feature = "std")]
-use std::string::FromUtf8Error;
-
-#[cfg(feature = "arbitrary")]
-use arbitrary::Arbitrary;
-
-#[cfg(all(feature = "schemars", feature = "alloc", not(feature = "std")))]
-use alloc::borrow::Cow;
-#[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
-use std::borrow::Cow;
-
-// TODO: Add support for read/write xdr fns when std not available.
-
 #[cfg(feature = "std")]
 use std::{
     error, io,
     io::{BufRead, BufReader, Cursor, Read, Write},
+    string::FromUtf8Error,
+    vec,
 };
+
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
 
 /// Error contains all errors returned by functions in this crate. It can be
 /// compared via `PartialEq`, however any contained IO errors will only be
@@ -1149,6 +1141,24 @@ impl<'a, T, const MAX: u32> core::iter::IntoIterator for &'a mut VecM<T, MAX> {
     type IntoIter = core::slice::IterMut<'a, T>;
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T, const MAX: u32> core::iter::IntoIterator for VecM<T, MAX> {
+    type Item = T;
+    type IntoIter = vec::IntoIter<T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<'a, T, const MAX: u32> core::iter::IntoIterator for &'a VecM<T, MAX> {
+    type Item = &'a T;
+    type IntoIter = core::slice::Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
     }
 }
 

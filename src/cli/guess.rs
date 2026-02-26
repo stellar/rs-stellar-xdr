@@ -204,7 +204,7 @@ impl<R: Read> Read for ResetRead<R> {
         buf[..n].copy_from_slice(&self.buf[self.cursor..self.cursor + n]);
         // Read from the reader and cache the result in the buf if the buf is consumed.
         if n < buf.len() {
-            let read_n = self.read.read(buf)?;
+            let read_n = self.read.read(&mut buf[n..])?;
             self.buf.extend_from_slice(&buf[n..n + read_n]);
             self.cursor += n + read_n;
             Ok(n + read_n)

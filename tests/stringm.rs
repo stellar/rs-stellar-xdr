@@ -23,7 +23,7 @@ fn stringm_from_str_at_max() {
 
 #[test]
 fn stringm_from_str_within_max() {
-    // Exactly at the limit should succeed.
+    // Within the limit should succeed.
     let result = StringM::<3>::from_str("ab");
     assert!(result.is_ok());
     assert_eq!(result.unwrap().as_vec(), b"ab");

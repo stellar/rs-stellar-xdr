@@ -251,4 +251,50 @@ mod test {
 
         Ok(())
     }
+
+    // Test that a read after reset() works correctly when partially
+    // overlapping the cached buffer. Previously this panicked with
+    // "range end index 5 out of range for slice of length 4".
+    #[test]
+    fn test_reset_read_partial_cache_overlap() -> Result<(), Box<dyn error::Error>> {
+        // 12 bytes with distinct values to verify read ordering.
+        let source: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
+        let reader = Cursor::new(source);
+        let mut rr = ResetRead::new(reader);
+
+        // Read 5 bytes to populate cache
+        let mut buf5 = [0u8; 5];
+        let n = rr.read(&mut buf5)?;
+        assert_eq!(n, 5);
+        assert_eq!(buf5, [0x00, 0x00, 0x00, 0x00, 0x01]);
+
+        // Reset cursor to replay from start
+        rr.reset();
+
+        // Read 4 bytes entirely from cache
+        let mut buf4 = [0u8; 4];
+        let n = rr.read(&mut buf4)?;
+        assert_eq!(n, 4);
+        assert_eq!(buf4, [0x00, 0x00, 0x00, 0x00]);
+
+        // Read 4 bytes: 1 from cache, 3 from the underlying reader.
+        let mut buf4 = [0u8; 4];
+        let n = rr.read(&mut buf4)?;
+        assert_eq!(n, 4);
+        assert_eq!(buf4, [0x01, 0x02, 0x03, 0x04]);
+
+        // Read remaining 3 bytes
+        let mut buf3 = [0u8; 3];
+        let n = rr.read(&mut buf3)?;
+        assert_eq!(n, 3);
+        assert_eq!(buf3, [0x05, 0x06, 0x07]);
+
+        // Read last byte
+        let mut buf1 = [0u8; 1];
+        let n = rr.read(&mut buf1)?;
+        assert_eq!(n, 1);
+        assert_eq!(buf1, [0x08]);
+
+        Ok(())
+    }
 }

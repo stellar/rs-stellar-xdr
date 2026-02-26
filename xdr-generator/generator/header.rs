@@ -33,10 +33,10 @@ use std::string::FromUtf8Error;
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
 
-#[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
-use std::borrow::Cow;
 #[cfg(all(feature = "schemars", feature = "alloc", not(feature = "std")))]
 use alloc::borrow::Cow;
+#[cfg(all(feature = "schemars", feature = "alloc", feature = "std"))]
+use std::borrow::Cow;
 
 // TODO: Add support for read/write xdr fns when std not available.
 
@@ -72,11 +72,11 @@ pub enum Error {
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Invalid,          Self::Invalid)
-            | (Self::Unsupported,      Self::Unsupported)
+            (Self::Invalid, Self::Invalid)
+            | (Self::Unsupported, Self::Unsupported)
             | (Self::LengthExceedsMax, Self::LengthExceedsMax)
-            | (Self::LengthMismatch,   Self::LengthMismatch)
-            | (Self::NonZeroPadding,   Self::NonZeroPadding) => true,
+            | (Self::LengthMismatch, Self::LengthMismatch)
+            | (Self::NonZeroPadding, Self::NonZeroPadding) => true,
 
             (Self::Utf8Error(l), Self::Utf8Error(r)) => l == r,
 
@@ -605,7 +605,7 @@ where
             base64::engine::general_purpose::GeneralPurpose,
             SkipWhitespace<&mut R>,
         >,
-        Self
+        Self,
     > {
         let dec = base64::read::DecoderReader::new(
             SkipWhitespace::new(&mut r.inner),
@@ -940,7 +940,11 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
 
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", serde_with::serde_as, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize)
+)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 
@@ -1022,7 +1026,11 @@ where
     where
         S: serde::Serializer,
     {
-        serializer.collect_seq(source.iter().map(|item| serde_with::ser::SerializeAsWrap::<T, U>::new(item)))
+        serializer.collect_seq(
+            source
+                .iter()
+                .map(|item| serde_with::ser::SerializeAsWrap::<T, U>::new(item)),
+        )
     }
 }
 
@@ -1895,7 +1903,7 @@ impl<const MAX: u32> core::str::FromStr for StringM<MAX> {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         let b = escape_bytes::unescape(s.as_bytes()).map_err(|_| Error::Invalid)?;
-        Ok(Self(b))
+        b.try_into()
     }
 }
 
@@ -3171,7 +3179,10 @@ mod tests_for_number_or_string {
     fn deserialize_i64_from_json_reader() {
         let json = r#"{"val": "123"}"#;
         let expected = TestI64 { val: 123 };
-        assert_eq!(serde_json::from_reader::<_, TestI64>(Cursor::new(json)).unwrap(), expected);
+        assert_eq!(
+            serde_json::from_reader::<_, TestI64>(Cursor::new(json)).unwrap(),
+            expected
+        );
     }
 
     #[test]
@@ -3470,7 +3481,10 @@ mod tests_for_number_or_string {
     fn deserialize_u64_from_json_reader() {
         let json = r#"{"val": "123"}"#;
         let expected = TestU64 { val: 123 };
-        assert_eq!(serde_json::from_reader::<_, TestU64>(Cursor::new(json)).unwrap(), expected);
+        assert_eq!(
+            serde_json::from_reader::<_, TestU64>(Cursor::new(json)).unwrap(),
+            expected
+        );
     }
 
     #[test]

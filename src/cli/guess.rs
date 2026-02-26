@@ -258,7 +258,9 @@ mod test {
     #[test]
     fn test_reset_read_partial_cache_overlap() -> Result<(), Box<dyn error::Error>> {
         // 12 bytes with distinct values to verify read ordering.
-        let source: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
+        let source: Vec<u8> = vec![
+            0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+        ];
         let reader = Cursor::new(source);
         let mut rr = ResetRead::new(reader);
 

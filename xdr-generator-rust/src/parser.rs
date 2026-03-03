@@ -165,7 +165,7 @@ impl Parser {
         self.expect(Token::Semi)?;
 
         // Extract source text (simplified - just use the name for now)
-        let source = self.extract_definition_source(&name);
+        let source = self.extract_definition_source();
 
         Ok(Struct {
             name,
@@ -225,7 +225,7 @@ impl Parser {
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
 
-        let source = self.extract_definition_source(&name);
+        let source = self.extract_definition_source();
 
         // Add all members to global_values for cross-enum resolution
         for m in &members {
@@ -275,7 +275,7 @@ impl Parser {
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
 
-        let source = self.extract_definition_source(&name);
+        let source = self.extract_definition_source();
 
         Ok(Union {
             name,
@@ -302,7 +302,7 @@ impl Parser {
 
         self.expect(Token::Semi)?;
 
-        let source = self.extract_definition_source(&name);
+        let source = self.extract_definition_source();
 
         Ok(Typedef {
             name,
@@ -318,7 +318,7 @@ impl Parser {
         let (value, base) = self.expect_int_with_base()?;
         self.expect(Token::Semi)?;
 
-        let source = self.extract_definition_source(&name);
+        let source = self.extract_definition_source();
 
         // Add const value to global_values for enum reference resolution
         self.global_values.insert(name.clone(), value);
@@ -333,7 +333,7 @@ impl Parser {
 
     fn parse_member(&mut self) -> Result<Member, ParseError> {
         // Record start position for source extraction (for anonymous unions)
-        let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+        let type_start_byte = self.current_start_byte();
 
         // Track extracted definitions before parsing type (for fixing parent relationships)
         let extract_start_idx = self.extracted_definitions.len();
@@ -341,14 +341,7 @@ impl Parser {
         let type_ = self.parse_type()?;
 
         // Record end position (after parsing type, before field name)
-        let type_end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            type_start_byte
-        };
+        let type_end_byte = self.prev_end_byte();
 
         let name = self.expect_ident()?;
 
@@ -421,7 +414,7 @@ impl Parser {
             Some(self.parse_inline_struct()?)
         } else {
             // Record start position for source extraction
-            let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+            let type_start_byte = self.current_start_byte();
 
             // Track extracted definitions before parsing type (for fixing parent relationships)
             let extract_start_idx = self.extracted_definitions.len();
@@ -429,14 +422,7 @@ impl Parser {
             let type_ = self.parse_type()?;
 
             // Record end position after parsing type
-            let type_end_byte = if self.pos > 0 {
-                self.tokens
-                    .get(self.pos - 1)
-                    .map(|st| st.end)
-                    .unwrap_or(self.source.len())
-            } else {
-                type_start_byte
-            };
+            let type_end_byte = self.prev_end_byte();
 
             let field_name = self.expect_ident()?;
             let type_ = self.parse_type_suffix(type_)?;
@@ -463,7 +449,7 @@ impl Parser {
     /// Expects the parser to be positioned at the `struct` keyword.
     fn parse_inline_struct(&mut self) -> Result<Type, ParseError> {
         // Record position before 'struct' keyword for source extraction
-        let source_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+        let source_start_byte = self.current_start_byte();
 
         self.advance(); // consume 'struct'
         self.expect(Token::LBrace)?;
@@ -480,14 +466,7 @@ impl Parser {
             }
         }
 
-        let source_end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            source_start_byte
-        };
+        let source_end_byte = self.prev_end_byte();
 
         let field_name = self.expect_ident()?;
         self.expect(Token::Semi)?;
@@ -518,12 +497,7 @@ impl Parser {
         // Advance past the field name and semicolon already consumed in pass 1
         self.pos = after_semi_pos;
 
-        let source = if source_start_byte < source_end_byte && source_end_byte <= self.source.len()
-        {
-            self.source[source_start_byte..source_end_byte].to_string()
-        } else {
-            String::new()
-        };
+        let source = self.source_slice(source_start_byte, source_end_byte);
 
         let struct_def = Struct {
             name: struct_name.clone(),
@@ -765,6 +739,32 @@ impl Parser {
         token
     }
 
+    /// Get the byte offset where the current token starts.
+    fn current_start_byte(&self) -> usize {
+        self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0)
+    }
+
+    /// Get the byte offset where the previous token ends.
+    fn prev_end_byte(&self) -> usize {
+        if self.pos > 0 {
+            self.tokens
+                .get(self.pos - 1)
+                .map(|st| st.end)
+                .unwrap_or(self.source.len())
+        } else {
+            0
+        }
+    }
+
+    /// Extract a source slice between two byte offsets.
+    fn source_slice(&self, start: usize, end: usize) -> String {
+        if start < end && end <= self.source.len() {
+            self.source[start..end].to_string()
+        } else {
+            String::new()
+        }
+    }
+
     /// Compute the (line, column) for the current token position, both 1-based.
     fn current_position(&self) -> (usize, usize) {
         let byte_offset = self
@@ -848,12 +848,7 @@ impl Parser {
                 };
 
                 // Extract source text for the anonymous union
-                let source =
-                    if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                        self.source[type_start_byte..type_end_byte].to_string()
-                    } else {
-                        String::new()
-                    };
+                let source = self.source_slice(type_start_byte, type_end_byte);
 
                 // Create the Union definition (unbox the discriminant)
                 let union_def = Union {
@@ -914,30 +909,14 @@ impl Parser {
     }
 
     /// Extract the source text for a definition using the tracked start position.
-    fn extract_definition_source(&self, _name: &str) -> String {
-        // Get the byte range from the start token to the current token
+    fn extract_definition_source(&self) -> String {
         let start_byte = self
             .tokens
             .get(self.def_start_pos)
             .map(|st| st.start)
             .unwrap_or(0);
-
-        // The end is the current position's end (previous token's end after parsing)
-        let end_byte = if self.pos > 0 {
-            self.tokens
-                .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
-        } else {
-            start_byte
-        };
-
-        // Extract and return the source text
-        if start_byte < end_byte && end_byte <= self.source.len() {
-            self.source[start_byte..end_byte].to_string()
-        } else {
-            String::new()
-        }
+        let end_byte = self.prev_end_byte();
+        self.source_slice(start_byte, end_byte)
     }
 }
 

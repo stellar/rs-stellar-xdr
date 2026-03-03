@@ -365,7 +365,8 @@ fn base_type_name(type_: &Type) -> Option<String> {
     }
 }
 
-fn size_to_rust(size: &Size) -> String {
+/// Convert a Size to a Rust string representation. Named sizes become type names.
+pub fn size_to_rust(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),
         Size::Named(name) => rust_type_name(name),

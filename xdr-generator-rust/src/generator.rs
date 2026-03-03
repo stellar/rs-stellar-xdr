@@ -1,14 +1,13 @@
 //! Code generator that prepares data for templates and renders output.
 
 use crate::ast::{
-    CaseValue, Const, Definition, Enum, Member, Size, Struct, Type, Typedef, Union, UnionArm,
-    XdrSpec,
+    CaseValue, Const, Definition, Enum, Member, Struct, Type, Typedef, Union, UnionArm, XdrSpec,
 };
 use crate::lexer::IntBase;
 use crate::types::{
     base_rust_type_ref, element_type_for_vec, is_builtin_type, is_fixed_array, is_fixed_opaque,
     is_var_array, rust_field_name, rust_read_call_type, rust_type_name, rust_type_ref,
-    serde_as_type, Options, TypeInfo,
+    serde_as_type, size_to_rust, Options, TypeInfo,
 };
 use askama::Template;
 use sha2::{Digest, Sha256};
@@ -313,7 +312,7 @@ impl Generator {
 
         let element_type = element_type_for_vec(&t.type_);
         let size = match &t.type_ {
-            Type::OpaqueFixed(s) | Type::Array { size: s, .. } => Some(size_to_string(s)),
+            Type::OpaqueFixed(s) | Type::Array { size: s, .. } => Some(size_to_rust(s)),
             _ => None,
         };
 
@@ -563,13 +562,6 @@ fn format_source_comment(source: &str, kind: &str) -> String {
         " is an XDR {kind} defined as:\n///\n/// ```text\n{}\n/// ```\n///",
         formatted.join("\n")
     )
-}
-
-fn size_to_string(size: &Size) -> String {
-    match size {
-        Size::Literal(n) => n.to_string(),
-        Size::Named(name) => rust_type_name(name),
-    }
 }
 
 /// Find the common prefix to strip from enum member names.

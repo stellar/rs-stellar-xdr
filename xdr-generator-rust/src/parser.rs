@@ -256,18 +256,7 @@ impl Parser {
         let prev_root = self.root_parent.take();
         self.root_parent = Some(name.clone());
 
-        let mut arms = Vec::new();
-        let mut default_arm = None;
-
-        while *self.peek() != Token::RBrace {
-            let arm = self.parse_union_arm()?;
-            if arm.cases.is_empty() {
-                // This is a default arm
-                default_arm = Some(Box::new(arm));
-            } else {
-                arms.push(arm);
-            }
-        }
+        let (arms, default_arm) = self.parse_union_body()?;
 
         // Restore previous root_parent
         self.root_parent = prev_root;
@@ -358,6 +347,25 @@ impl Parser {
         );
 
         Ok(Member { name, type_ })
+    }
+
+    /// Parse the body of a union (the arms inside the braces).
+    /// Returns `(arms, default_arm)`. The caller is responsible for consuming the
+    /// opening/closing braces.
+    fn parse_union_body(&mut self) -> Result<(Vec<UnionArm>, Option<Box<UnionArm>>), ParseError> {
+        let mut arms = Vec::new();
+        let mut default_arm = None;
+
+        while *self.peek() != Token::RBrace {
+            let arm = self.parse_union_arm()?;
+            if arm.cases.is_empty() {
+                default_arm = Some(Box::new(arm));
+            } else {
+                arms.push(arm);
+            }
+        }
+
+        Ok((arms, default_arm))
     }
 
     fn parse_union_arm(&mut self) -> Result<UnionArm, ParseError> {
@@ -570,17 +578,7 @@ impl Parser {
                 self.expect(Token::RParen)?;
                 self.expect(Token::LBrace)?;
 
-                let mut arms = Vec::new();
-                let mut default_arm = None;
-
-                while *self.peek() != Token::RBrace {
-                    let arm = self.parse_union_arm()?;
-                    if arm.cases.is_empty() {
-                        default_arm = Some(Box::new(arm));
-                    } else {
-                        arms.push(arm);
-                    }
-                }
+                let (arms, default_arm) = self.parse_union_body()?;
                 self.expect(Token::RBrace)?;
 
                 // Return an AnonymousUnion that will be extracted in parse_member

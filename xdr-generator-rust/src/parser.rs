@@ -135,10 +135,10 @@ impl Parser {
             Token::Union => self.parse_union().map(Definition::Union),
             Token::Typedef => self.parse_typedef().map(Definition::Typedef),
             Token::Const => self.parse_const().map(Definition::Const),
-            other => Err(ParseError::UnexpectedToken {
-                expected: "struct, enum, union, typedef, or const".to_string(),
-                got: other.clone(),
-            }),
+            other => Err(self.unexpected_token_error(
+                "struct, enum, union, typedef, or const".to_string(),
+                other.clone(),
+            )),
         }
     }
 
@@ -197,10 +197,9 @@ impl Parser {
                     self.resolve_enum_value(&ref_name, &members)?
                 }
                 other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: "integer or identifier".to_string(),
-                        got: other,
-                    })
+                    return Err(
+                        self.unexpected_token_error("integer or identifier".to_string(), other)
+                    )
                 }
             };
 
@@ -218,10 +217,7 @@ impl Parser {
                 }
                 Token::RBrace => break,
                 other => {
-                    return Err(ParseError::UnexpectedToken {
-                        expected: ", or }".to_string(),
-                        got: other.clone(),
-                    })
+                    return Err(self.unexpected_token_error(", or }".to_string(), other.clone()))
                 }
             }
         }
@@ -389,10 +385,7 @@ impl Parser {
                             CaseValue::Literal(value as i32)
                         }
                         other => {
-                            return Err(ParseError::UnexpectedToken {
-                                expected: "case value".to_string(),
-                                got: other,
-                            })
+                            return Err(self.unexpected_token_error("case value".to_string(), other))
                         }
                     };
                     self.expect(Token::Colon)?;
@@ -563,10 +556,9 @@ impl Parser {
                         self.advance();
                         Ok(Type::UnsignedHyper)
                     }
-                    other => Err(ParseError::UnexpectedToken {
-                        expected: "int or hyper".to_string(),
-                        got: other.clone(),
-                    }),
+                    other => {
+                        Err(self.unexpected_token_error("int or hyper".to_string(), other.clone()))
+                    }
                 }
             }
             Token::Hyper => {
@@ -646,10 +638,7 @@ impl Parser {
                     Ok(base_type)
                 }
             }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "type".to_string(),
-                got: other,
-            }),
+            other => Err(self.unexpected_token_error("type".to_string(), other)),
         }
     }
 
@@ -753,10 +742,9 @@ impl Parser {
                 self.advance();
                 Ok(Size::Named(name))
             }
-            other => Err(ParseError::UnexpectedToken {
-                expected: "size (integer or identifier)".to_string(),
-                got: other,
-            }),
+            other => {
+                Err(self.unexpected_token_error("size (integer or identifier)".to_string(), other))
+            }
         }
     }
 
@@ -777,15 +765,39 @@ impl Parser {
         token
     }
 
+    /// Compute the (line, column) for the current token position, both 1-based.
+    fn current_position(&self) -> (usize, usize) {
+        let byte_offset = self
+            .tokens
+            .get(self.pos.saturating_sub(1))
+            .map(|st| st.start)
+            .unwrap_or(self.source.len());
+        let prefix = &self.source[..byte_offset.min(self.source.len())];
+        let line = prefix.chars().filter(|&c| c == '\n').count() + 1;
+        let col = match prefix.rfind('\n') {
+            Some(nl) => byte_offset - nl,
+            None => byte_offset + 1,
+        };
+        (line, col)
+    }
+
+    /// Create an `UnexpectedToken` error with the current position.
+    fn unexpected_token_error(&self, expected: String, got: Token) -> ParseError {
+        let (line, col) = self.current_position();
+        ParseError::UnexpectedToken {
+            expected,
+            got,
+            line,
+            col,
+        }
+    }
+
     fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
         let token = self.advance().clone();
         if token == expected {
             Ok(())
         } else {
-            Err(ParseError::UnexpectedToken {
-                expected: format!("{expected:?}"),
-                got: token,
-            })
+            Err(self.unexpected_token_error(format!("{expected:?}"), token))
         }
     }
 
@@ -793,10 +805,7 @@ impl Parser {
         let token = self.advance().clone();
         match token {
             Token::Ident(s) => Ok(s),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "identifier".to_string(),
-                got: token,
-            }),
+            _ => Err(self.unexpected_token_error("identifier".to_string(), token)),
         }
     }
 
@@ -805,10 +814,7 @@ impl Parser {
         let token = self.advance().clone();
         match token {
             Token::IntLiteral((value, base)) => Ok((value, base)),
-            _ => Err(ParseError::UnexpectedToken {
-                expected: "integer literal".to_string(),
-                got: token,
-            }),
+            _ => Err(self.unexpected_token_error("integer literal".to_string(), token)),
         }
     }
 
@@ -899,8 +905,11 @@ impl Parser {
         if let Some(&value) = self.global_values.get(name) {
             return Ok(value as i32);
         }
+        let (line, col) = self.current_position();
         Err(ParseError::UnresolvedEnumValue {
             name: name.to_string(),
+            line,
+            col,
         })
     }
 
@@ -936,12 +945,21 @@ impl Parser {
 pub enum ParseError {
     #[error("lexer error: {0}")]
     Lex(#[from] LexError),
-    #[error("unexpected token: expected {expected}, got {got:?}")]
-    UnexpectedToken { expected: String, got: Token },
+    #[error("{line}:{col}: unexpected token: expected {expected}, got {got:?}")]
+    UnexpectedToken {
+        expected: String,
+        got: Token,
+        line: usize,
+        col: usize,
+    },
     #[error("unexpected end of file")]
     UnexpectedEof,
-    #[error("unresolved enum value reference: {name}")]
-    UnresolvedEnumValue { name: String },
+    #[error("{line}:{col}: unresolved enum value reference: {name}")]
+    UnresolvedEnumValue {
+        name: String,
+        line: usize,
+        col: usize,
+    },
 }
 
 /// Fix parent relationships for nested types based on naming patterns.

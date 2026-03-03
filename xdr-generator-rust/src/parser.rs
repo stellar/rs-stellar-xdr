@@ -194,10 +194,7 @@ impl Parser {
                 }
                 Token::Ident(ref_name) => {
                     self.advance();
-                    // For now, we'll store 0 and resolve later
-                    // In practice, we'd need to resolve this reference
-                    // The Ruby generator handles this via the xdrgen gem
-                    self.resolve_enum_value(&ref_name, &members)
+                    self.resolve_enum_value(&ref_name, &members)?
                 }
                 other => {
                     return Err(ParseError::UnexpectedToken {
@@ -889,20 +886,22 @@ impl Parser {
         }
     }
 
-    /// Try to resolve an enum value reference
-    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> i32 {
+    /// Resolve an enum value reference, searching the current enum members
+    /// and then previously parsed enums/consts.
+    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> Result<i32, ParseError> {
         // First check if it's in the current enum being parsed
         for m in members {
             if m.name == name {
-                return m.value;
+                return Ok(m.value);
             }
         }
         // Check global values (previously parsed enums and consts)
         if let Some(&value) = self.global_values.get(name) {
-            return value as i32;
+            return Ok(value as i32);
         }
-        // Return 0 as fallback
-        0
+        Err(ParseError::UnresolvedEnumValue {
+            name: name.to_string(),
+        })
     }
 
     /// Extract the source text for a definition using the tracked start position.
@@ -941,6 +940,8 @@ pub enum ParseError {
     UnexpectedToken { expected: String, got: Token },
     #[error("unexpected end of file")]
     UnexpectedEof,
+    #[error("unresolved enum value reference: {name}")]
+    UnresolvedEnumValue { name: String },
 }
 
 /// Fix parent relationships for nested types based on naming patterns.

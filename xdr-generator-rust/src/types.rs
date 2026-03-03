@@ -126,7 +126,7 @@ pub fn rust_field_name(name: &str) -> String {
 /// Wraps in Box for cyclic :simple and :optional types (matching Ruby behavior).
 /// Does NOT wrap arrays/var_arrays even if cyclic.
 pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> String {
-    let base = base_rust_type_ref_with_info(type_, type_info);
+    let base = base_rust_type_ref(type_, Some(type_info));
 
     // Check for cyclic reference (only for simple and optional types)
     let is_cyclic = if let Some(parent) = parent_type {
@@ -141,7 +141,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
 
     match type_ {
         Type::Optional(inner) => {
-            let inner_ref = base_rust_type_ref_with_info(inner, type_info);
+            let inner_ref = base_rust_type_ref(inner, Some(type_info));
             if is_cyclic {
                 format!("Option<Box<{inner_ref}>>")
             } else {
@@ -150,7 +150,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
         }
         Type::Array { element_type, size } => {
             // Arrays are NOT wrapped in Box even if cyclic
-            let elem = base_rust_type_ref_with_info(element_type, type_info);
+            let elem = base_rust_type_ref(element_type, Some(type_info));
             let size = type_info.size_to_literal(size);
             format!("[{elem}; {size}]")
         }
@@ -159,7 +159,7 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
             max_size,
         } => {
             // VarArrays are NOT wrapped in Box even if cyclic
-            let elem = base_rust_type_ref_with_info(element_type, type_info);
+            let elem = base_rust_type_ref(element_type, Some(type_info));
             match max_size {
                 Some(size) => format!("VecM<{elem}, {}>", type_info.size_to_literal(size)),
                 None => format!("VecM<{elem}>"),
@@ -177,8 +177,15 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
 }
 
 /// Get the base Rust type reference (without Box/Option wrapping).
-/// Uses const names for sizes - use base_rust_type_ref_with_info for literal sizes.
-pub fn base_rust_type_ref(type_: &Type) -> String {
+/// When `type_info` is provided, const-named sizes are resolved to literal values.
+/// When `None`, const-named sizes are kept as type names.
+pub fn base_rust_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> String {
+    let resolve_size = |size: &Size| -> String {
+        match type_info {
+            Some(ti) => ti.size_to_literal(size),
+            None => size_to_rust(size),
+        }
+    };
     match type_ {
         Type::Int => "i32".to_string(),
         Type::UnsignedInt => "u32".to_string(),
@@ -187,31 +194,31 @@ pub fn base_rust_type_ref(type_: &Type) -> String {
         Type::Float => "f32".to_string(),
         Type::Double => "f64".to_string(),
         Type::Bool => "bool".to_string(),
-        Type::OpaqueFixed(size) => format!("[u8; {}]", size_to_rust(size)),
+        Type::OpaqueFixed(size) => format!("[u8; {}]", resolve_size(size)),
         Type::OpaqueVar(max) => match max {
-            Some(size) => format!("BytesM::<{}>", size_to_rust(size)),
+            Some(size) => format!("BytesM::<{}>", resolve_size(size)),
             None => "BytesM".to_string(),
         },
         Type::String(max) => match max {
-            Some(size) => format!("StringM::<{}>", size_to_rust(size)),
+            Some(size) => format!("StringM::<{}>", resolve_size(size)),
             None => "StringM".to_string(),
         },
         Type::Ident(name) => rust_type_name(name),
-        Type::Optional(inner) => format!("Option<{}>", base_rust_type_ref(inner)),
+        Type::Optional(inner) => format!("Option<{}>", base_rust_type_ref(inner, type_info)),
         Type::Array { element_type, size } => {
             format!(
                 "[{}; {}]",
-                base_rust_type_ref(element_type),
-                size_to_rust(size)
+                base_rust_type_ref(element_type, type_info),
+                resolve_size(size)
             )
         }
         Type::VarArray {
             element_type,
             max_size,
         } => {
-            let elem = base_rust_type_ref(element_type);
+            let elem = base_rust_type_ref(element_type, type_info);
             match max_size {
-                Some(size) => format!("VecM<{elem}, {}>", size_to_rust(size)),
+                Some(size) => format!("VecM<{elem}, {}>", resolve_size(size)),
                 None => format!("VecM<{elem}>"),
             }
         }
@@ -267,7 +274,7 @@ pub fn element_type_for_vec(type_: &Type) -> String {
     match type_ {
         Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
         Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
-            base_rust_type_ref(element_type)
+            base_rust_type_ref(element_type, None)
         }
         Type::Ident(name) => rust_type_name(name),
         _ => "u8".to_string(),
@@ -354,59 +361,6 @@ fn base_type_name(type_: &Type) -> Option<String> {
     }
 }
 
-/// Get the base Rust type reference with type_info for resolving const sizes to literals.
-fn base_rust_type_ref_with_info(type_: &Type, type_info: &TypeInfo) -> String {
-    match type_ {
-        Type::Int => "i32".to_string(),
-        Type::UnsignedInt => "u32".to_string(),
-        Type::Hyper => "i64".to_string(),
-        Type::UnsignedHyper => "u64".to_string(),
-        Type::Float => "f32".to_string(),
-        Type::Double => "f64".to_string(),
-        Type::Bool => "bool".to_string(),
-        Type::OpaqueFixed(size) => format!("[u8; {}]", type_info.size_to_literal(size)),
-        Type::OpaqueVar(max) => match max {
-            Some(size) => format!("BytesM::<{}>", type_info.size_to_literal(size)),
-            None => "BytesM".to_string(),
-        },
-        Type::String(max) => match max {
-            Some(size) => format!("StringM::<{}>", type_info.size_to_literal(size)),
-            None => "StringM".to_string(),
-        },
-        Type::Ident(name) => rust_type_name(name),
-        Type::Optional(inner) => {
-            format!("Option<{}>", base_rust_type_ref_with_info(inner, type_info))
-        }
-        Type::Array { element_type, size } => {
-            format!(
-                "[{}; {}]",
-                base_rust_type_ref_with_info(element_type, type_info),
-                type_info.size_to_literal(size)
-            )
-        }
-        Type::VarArray {
-            element_type,
-            max_size,
-        } => {
-            let elem = base_rust_type_ref_with_info(element_type, type_info);
-            match max_size {
-                Some(size) => format!("VecM<{elem}, {}>", type_info.size_to_literal(size)),
-                None => format!("VecM<{elem}>"),
-            }
-        }
-        Type::AnonymousUnion {
-            discriminant, arms, ..
-        } => {
-            panic!(
-                "AnonymousUnion should have been extracted during parsing. \
-                 Discriminant: {:?}, Arms count: {}",
-                discriminant.name,
-                arms.len()
-            )
-        }
-    }
-}
-
 fn size_to_rust(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),
@@ -465,7 +419,7 @@ fn rust_type_ref_for_serde(type_: &Type, number_wrapper: &str) -> String {
                 None => format!("VecM<{elem}>"),
             }
         }
-        _ => base_rust_type_ref(type_),
+        _ => base_rust_type_ref(type_, None),
     }
 }
 
@@ -490,10 +444,10 @@ mod tests {
 
     #[test]
     fn test_base_rust_type_ref() {
-        assert_eq!(base_rust_type_ref(&Type::Int), "i32");
-        assert_eq!(base_rust_type_ref(&Type::UnsignedHyper), "u64");
+        assert_eq!(base_rust_type_ref(&Type::Int, None), "i32");
+        assert_eq!(base_rust_type_ref(&Type::UnsignedHyper, None), "u64");
         assert_eq!(
-            base_rust_type_ref(&Type::OpaqueFixed(Size::Literal(32))),
+            base_rust_type_ref(&Type::OpaqueFixed(Size::Literal(32)), None),
             "[u8; 32]"
         );
     }

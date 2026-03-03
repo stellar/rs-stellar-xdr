@@ -292,7 +292,7 @@ impl Generator {
             return DefinitionOutput::TypedefAlias(TypedefAliasOutput {
                 name,
                 source_comment: format_source_comment(&t.source, "Typedef"),
-                type_ref: base_rust_type_ref(&t.type_),
+                type_ref: base_rust_type_ref(&t.type_, None),
             });
         }
 

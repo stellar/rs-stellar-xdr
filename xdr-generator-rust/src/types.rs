@@ -244,26 +244,23 @@ pub fn rust_read_call_type(
 ) -> String {
     let ref_type = rust_type_ref(type_, parent_type, type_info);
 
-    // Handle special cases for turbofish
+    // Handle special cases for turbofish syntax
     if ref_type.starts_with('[') && ref_type.ends_with(']') {
         format!("<{ref_type}>")
-    } else if ref_type.starts_with("Box<") {
-        format!("Box::{}", &ref_type[3..])
-    } else if ref_type.starts_with("Option<Box<") {
-        format!("Option::<Box<{}>>", &ref_type[11..ref_type.len() - 2])
-    } else if ref_type.starts_with("Option<") {
-        format!("Option::<{}>", &ref_type[7..ref_type.len() - 1])
-    } else if ref_type.starts_with("VecM<") {
-        // VecM<T> -> VecM::<T> or VecM<T, N> -> VecM::<T, N>
-        format!("VecM::{}", &ref_type[4..])
-    } else if ref_type.starts_with("BytesM<") {
-        format!("BytesM::{}", &ref_type[6..])
-    } else if ref_type.starts_with("BytesM") && ref_type.len() == 6 {
-        ref_type
-    } else if ref_type.starts_with("StringM<") {
-        format!("StringM::{}", &ref_type[7..])
-    } else if ref_type.starts_with("StringM") && ref_type.len() == 7 {
-        ref_type
+    } else if let Some(inner) = ref_type
+        .strip_prefix("Option<Box<")
+        .and_then(|s| s.strip_suffix(">>"))
+    {
+        format!("Option::<Box<{inner}>>")
+    } else if let Some(inner) = ref_type
+        .strip_prefix("Option<")
+        .and_then(|s| s.strip_suffix('>'))
+    {
+        format!("Option::<{inner}>")
+    } else if let Some(generics) = ref_type.strip_prefix("Box<") {
+        format!("Box::<{generics}")
+    } else if let Some(generics) = ref_type.strip_prefix("VecM<") {
+        format!("VecM::<{generics}")
     } else {
         ref_type
     }

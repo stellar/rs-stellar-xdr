@@ -417,94 +417,18 @@ impl Parser {
             self.expect(Token::Semi)?;
             None
         } else if *self.peek() == Token::Struct {
-            // Inline struct definition - extract as a separate type
-            // We need to find the field name first to set root_parent correctly
-            // for any nested anonymous unions inside the struct
-
-            // Record position before 'struct' keyword for source extraction
-            let source_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
-
-            self.advance();
-            self.expect(Token::LBrace)?;
-
-            // Skip ahead to find the field name (count braces to find end of struct)
-            let start_pos = self.pos;
-            let mut brace_depth = 1;
-            while brace_depth > 0 {
-                match self.advance() {
-                    Token::LBrace => brace_depth += 1,
-                    Token::RBrace => brace_depth -= 1,
-                    Token::Eof => break,
-                    _ => {}
-                }
-            }
-
-            // Record end position (after closing brace, before field name)
-            let source_end_byte = if self.pos > 0 {
-                self.tokens
-                    .get(self.pos - 1)
-                    .map(|st| st.end)
-                    .unwrap_or(self.source.len())
-            } else {
-                source_start_byte
-            };
-
-            // Now we should be after the closing brace, next is the field name
-            let field_name = self.expect_ident()?;
-            self.expect(Token::Semi)?;
-            let end_pos = self.pos;
-
-            // Go back to parse the struct body properly
-            self.pos = start_pos;
-
-            // Generate the struct name: root_parent + field_name
-            let struct_name = if let Some(ref parent) = self.root_parent {
-                generate_nested_type_name(parent, &field_name)
-            } else {
-                // Fallback: use field name with capitalization
-                field_name.to_upper_camel_case()
-            };
-
-            // Set root_parent to the struct name for any nested types
-            let prev_root = self.root_parent.take();
-            self.root_parent = Some(struct_name.clone());
-
-            let mut members = Vec::new();
-            while *self.peek() != Token::RBrace {
-                let member = self.parse_member()?;
-                members.push(member);
-                self.expect(Token::Semi)?;
-            }
-            self.expect(Token::RBrace)?;
-
-            // Restore root_parent
-            self.root_parent = prev_root;
-
-            // Skip the field name and semicolon we already parsed
-            self.pos = end_pos;
-
-            // Extract source text
-            let source =
-                if source_start_byte < source_end_byte && source_end_byte <= self.source.len() {
-                    self.source[source_start_byte..source_end_byte].to_string()
-                } else {
-                    String::new()
-                };
-
-            // Create the struct definition
-            let struct_def = Struct {
-                name: struct_name.clone(),
-                members,
-                source,
-                is_nested: true,
-                parent: self.root_parent.clone(),
-            };
-
-            // Add to extracted definitions
-            self.extracted_definitions
-                .push(Definition::Struct(struct_def));
-
-            Some(Type::Ident(struct_name))
+            // Inline struct in a union arm. XDR syntax:
+            //   case FOO:  struct { int x; } fieldName;
+            //
+            // We need the field name *before* parsing the struct body so we can
+            // set root_parent correctly (nested types inside the struct derive
+            // their names from it). This requires a two-pass approach:
+            //   Pass 1 (lookahead): skip the struct body by counting braces,
+            //           read the field name and semicolon, record positions.
+            //   Pass 2 (rewind):    rewind into the struct body and parse
+            //           members with root_parent set to the generated name,
+            //           then skip forward past the already-consumed tokens.
+            Some(self.parse_inline_struct()?)
         } else {
             // Record start position for source extraction
             let type_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
@@ -541,6 +465,88 @@ impl Parser {
         };
 
         Ok(UnionArm { cases, type_ })
+    }
+
+    /// Parse an inline struct definition inside a union arm and extract it as a
+    /// separate named type. Returns a `Type::Ident` referencing the extracted struct.
+    ///
+    /// Expects the parser to be positioned at the `struct` keyword.
+    fn parse_inline_struct(&mut self) -> Result<Type, ParseError> {
+        // Record position before 'struct' keyword for source extraction
+        let source_start_byte = self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0);
+
+        self.advance(); // consume 'struct'
+        self.expect(Token::LBrace)?;
+
+        // --- Pass 1: lookahead to find the field name after the struct body ---
+        let body_start_pos = self.pos;
+        let mut brace_depth = 1;
+        while brace_depth > 0 {
+            match self.advance() {
+                Token::LBrace => brace_depth += 1,
+                Token::RBrace => brace_depth -= 1,
+                Token::Eof => break,
+                _ => {}
+            }
+        }
+
+        let source_end_byte = if self.pos > 0 {
+            self.tokens
+                .get(self.pos - 1)
+                .map(|st| st.end)
+                .unwrap_or(self.source.len())
+        } else {
+            source_start_byte
+        };
+
+        let field_name = self.expect_ident()?;
+        self.expect(Token::Semi)?;
+        let after_semi_pos = self.pos;
+
+        // --- Pass 2: rewind and parse the struct body properly ---
+        self.pos = body_start_pos;
+
+        let struct_name = if let Some(ref parent) = self.root_parent {
+            generate_nested_type_name(parent, &field_name)
+        } else {
+            field_name.to_upper_camel_case()
+        };
+
+        let prev_root = self.root_parent.take();
+        self.root_parent = Some(struct_name.clone());
+
+        let mut members = Vec::new();
+        while *self.peek() != Token::RBrace {
+            let member = self.parse_member()?;
+            members.push(member);
+            self.expect(Token::Semi)?;
+        }
+        self.expect(Token::RBrace)?;
+
+        self.root_parent = prev_root;
+
+        // Advance past the field name and semicolon already consumed in pass 1
+        self.pos = after_semi_pos;
+
+        let source = if source_start_byte < source_end_byte && source_end_byte <= self.source.len()
+        {
+            self.source[source_start_byte..source_end_byte].to_string()
+        } else {
+            String::new()
+        };
+
+        let struct_def = Struct {
+            name: struct_name.clone(),
+            members,
+            source,
+            is_nested: true,
+            parent: self.root_parent.clone(),
+        };
+
+        self.extracted_definitions
+            .push(Definition::Struct(struct_def));
+
+        Ok(Type::Ident(struct_name))
     }
 
     fn parse_type(&mut self) -> Result<Type, ParseError> {

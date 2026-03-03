@@ -374,6 +374,11 @@ pub fn size_to_rust(size: &Size) -> String {
 }
 
 /// Escape reserved names for type names.
+///
+/// - `"type"` conflicts with the Rust keyword.
+/// - `"Error"` conflicts with the crate's own `Error` type (and `std::error::Error`).
+///   The `S` prefix matches the Ruby xdrgen convention (`SError`), maintaining backward
+///   compatibility with the existing generated API.
 fn escape_name(name: &str) -> String {
     match name {
         "type" => "type_".to_string(),

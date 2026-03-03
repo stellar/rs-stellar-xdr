@@ -13,6 +13,8 @@ pub enum Error {
     UnmatchedIfdef { line: usize },
     #[error("line {line}: duplicate #else")]
     DuplicateElse { line: usize },
+    #[error("line {line}: #elif after #else")]
+    ElifAfterElse { line: usize },
     #[error("line {line}: {directive} missing symbol")]
     MissingSymbol { line: usize, directive: String },
     #[error("line {line}: invalid {directive} syntax")]
@@ -35,9 +37,11 @@ pub struct Cmd {
     pub features: Option<String>,
 }
 
+#[allow(clippy::struct_excessive_bools)]
 struct IfBlock {
     active: bool,
     parent_active: bool,
+    any_branch_taken: bool,
     else_seen: bool,
     start_line: usize,
 }
@@ -124,8 +128,9 @@ fn flagless_directive_err(directive: &str, line: usize) -> Error {
     }
 }
 
-/// Preprocess XDR `.x` source by evaluating `#ifdef`/`#ifndef`/`#else`/`#endif`
-/// directives against the given set of defined feature symbols.
+/// Preprocess XDR `.x` source by evaluating
+/// `#ifdef`/`#ifndef`/`#elif`/`#else`/`#endif` directives against the given
+/// set of defined feature symbols.
 ///
 /// # Errors
 ///
@@ -142,68 +147,15 @@ pub fn preprocess(input: &str, features: &[&str]) -> Result<String, Error> {
 
     for (i, raw_line) in input.split_inclusive('\n').enumerate() {
         let line_num = i + 1;
-        let line = raw_line.strip_suffix('\n').unwrap_or(raw_line);
-        let trimmed = line.trim();
-
-        if trimmed.starts_with("#ifdef") {
-            let symbol = parse_symbol_directive(trimmed, "#ifdef")
-                .map_err(|()| symbol_directive_err(trimmed, "#ifdef", line_num))?
-                .expect("starts_with guard ensures strip_prefix succeeds");
-            let parent_active = stack.last().is_none_or(|b| b.active);
-            stack.push(IfBlock {
-                active: parent_active && feature_set.contains(symbol),
-                parent_active,
-                else_seen: false,
-                start_line: line_num,
-            });
-        } else if trimmed.starts_with("#ifndef") {
-            let symbol = parse_symbol_directive(trimmed, "#ifndef")
-                .map_err(|()| symbol_directive_err(trimmed, "#ifndef", line_num))?
-                .expect("starts_with guard ensures strip_prefix succeeds");
-            let parent_active = stack.last().is_none_or(|b| b.active);
-            stack.push(IfBlock {
-                active: parent_active && !feature_set.contains(symbol),
-                parent_active,
-                else_seen: false,
-                start_line: line_num,
-            });
-        } else if trimmed.starts_with("#else") {
-            if !is_flagless_directive(trimmed, "#else")
-                .map_err(|()| flagless_directive_err("#else", line_num))?
-            {
-                let active = stack.last().is_none_or(|b| b.active);
-                if active {
-                    output.push_str(raw_line);
-                }
-                continue;
-            }
-            let block = stack
-                .last_mut()
-                .ok_or(Error::UnmatchedEndif { line: line_num })?;
-            if block.else_seen {
-                return Err(Error::DuplicateElse { line: line_num });
-            }
-            block.else_seen = true;
-            block.active = block.parent_active && !block.active;
-        } else if trimmed.starts_with("#endif") {
-            if !is_flagless_directive(trimmed, "#endif")
-                .map_err(|()| flagless_directive_err("#endif", line_num))?
-            {
-                let active = stack.last().is_none_or(|b| b.active);
-                if active {
-                    output.push_str(raw_line);
-                }
-                continue;
-            }
-            if stack.pop().is_none() {
-                return Err(Error::UnmatchedEndif { line: line_num });
-            }
-        } else {
-            let active = stack.last().is_none_or(|b| b.active);
-            if active {
-                output.push_str(raw_line);
-            }
-        }
+        let trimmed = raw_line.strip_suffix('\n').unwrap_or(raw_line).trim();
+        process_line(
+            trimmed,
+            line_num,
+            raw_line,
+            &mut stack,
+            &feature_set,
+            &mut output,
+        )?;
     }
 
     if let Some(block) = stack.last() {
@@ -213,6 +165,90 @@ pub fn preprocess(input: &str, features: &[&str]) -> Result<String, Error> {
     }
 
     Ok(output)
+}
+
+#[allow(clippy::too_many_lines)]
+fn process_line(
+    trimmed: &str,
+    line_num: usize,
+    raw_line: &str,
+    stack: &mut Vec<IfBlock>,
+    feature_set: &HashSet<&str>,
+    output: &mut String,
+) -> Result<(), Error> {
+    if trimmed.starts_with("#ifdef") {
+        let symbol = parse_symbol_directive(trimmed, "#ifdef")
+            .map_err(|()| symbol_directive_err(trimmed, "#ifdef", line_num))?
+            .expect("starts_with guard ensures strip_prefix succeeds");
+        let parent_active = stack.last().is_none_or(|b| b.active);
+        let active = parent_active && feature_set.contains(symbol);
+        stack.push(IfBlock {
+            active,
+            parent_active,
+            any_branch_taken: active,
+            else_seen: false,
+            start_line: line_num,
+        });
+    } else if trimmed.starts_with("#ifndef") {
+        let symbol = parse_symbol_directive(trimmed, "#ifndef")
+            .map_err(|()| symbol_directive_err(trimmed, "#ifndef", line_num))?
+            .expect("starts_with guard ensures strip_prefix succeeds");
+        let parent_active = stack.last().is_none_or(|b| b.active);
+        let active = parent_active && !feature_set.contains(symbol);
+        stack.push(IfBlock {
+            active,
+            parent_active,
+            any_branch_taken: active,
+            else_seen: false,
+            start_line: line_num,
+        });
+    } else if trimmed.starts_with("#elif") {
+        let symbol = parse_symbol_directive(trimmed, "#elif")
+            .map_err(|()| symbol_directive_err(trimmed, "#elif", line_num))?
+            .expect("starts_with guard ensures strip_prefix succeeds");
+        let block = stack
+            .last_mut()
+            .ok_or(Error::UnmatchedEndif { line: line_num })?;
+        if block.else_seen {
+            return Err(Error::ElifAfterElse { line: line_num });
+        }
+        let newly_active =
+            block.parent_active && !block.any_branch_taken && feature_set.contains(symbol);
+        block.active = newly_active;
+        block.any_branch_taken = block.any_branch_taken || newly_active;
+    } else if trimmed.starts_with("#else") {
+        if !is_flagless_directive(trimmed, "#else")
+            .map_err(|()| flagless_directive_err("#else", line_num))?
+        {
+            if stack.last().is_none_or(|b| b.active) {
+                output.push_str(raw_line);
+            }
+            return Ok(());
+        }
+        let block = stack
+            .last_mut()
+            .ok_or(Error::UnmatchedEndif { line: line_num })?;
+        if block.else_seen {
+            return Err(Error::DuplicateElse { line: line_num });
+        }
+        block.else_seen = true;
+        block.active = block.parent_active && !block.any_branch_taken;
+    } else if trimmed.starts_with("#endif") {
+        if !is_flagless_directive(trimmed, "#endif")
+            .map_err(|()| flagless_directive_err("#endif", line_num))?
+        {
+            if stack.last().is_none_or(|b| b.active) {
+                output.push_str(raw_line);
+            }
+            return Ok(());
+        }
+        if stack.pop().is_none() {
+            return Err(Error::UnmatchedEndif { line: line_num });
+        }
+    } else if stack.last().is_none_or(|b| b.active) {
+        output.push_str(raw_line);
+    }
+    Ok(())
 }
 
 impl Cmd {
@@ -569,5 +605,144 @@ no
         let input = "A\r\nB\r\n";
         let result = preprocess(input, &[]).unwrap();
         assert_eq!(result.as_bytes(), input.as_bytes());
+    }
+
+    #[test]
+    fn test_elif_first_branch() {
+        let input = "\
+#ifdef A
+a
+#elif B
+b
+#elif C
+c
+#else
+d
+#endif
+";
+        let result = preprocess(input, &["A", "B", "C"]).unwrap();
+        assert_eq!(result, "a\n");
+    }
+
+    #[test]
+    fn test_elif_second_branch() {
+        let input = "\
+#ifdef A
+a
+#elif B
+b
+#elif C
+c
+#else
+d
+#endif
+";
+        let result = preprocess(input, &["B"]).unwrap();
+        assert_eq!(result, "b\n");
+    }
+
+    #[test]
+    fn test_elif_third_branch() {
+        let input = "\
+#ifdef A
+a
+#elif B
+b
+#elif C
+c
+#else
+d
+#endif
+";
+        let result = preprocess(input, &["C"]).unwrap();
+        assert_eq!(result, "c\n");
+    }
+
+    #[test]
+    fn test_elif_else_fallback() {
+        let input = "\
+#ifdef A
+a
+#elif B
+b
+#else
+fallback
+#endif
+";
+        let result = preprocess(input, &[]).unwrap();
+        assert_eq!(result, "fallback\n");
+    }
+
+    #[test]
+    fn test_elif_no_else() {
+        let input = "\
+#ifdef A
+a
+#elif B
+b
+#endif
+";
+        // Neither defined
+        let result = preprocess(input, &[]).unwrap();
+        assert_eq!(result, "");
+
+        // Only B defined
+        let result = preprocess(input, &["B"]).unwrap();
+        assert_eq!(result, "b\n");
+    }
+
+    #[test]
+    fn test_elif_nested() {
+        let input = "\
+#ifdef OUTER
+#ifdef A
+a
+#elif B
+b
+#endif
+#endif
+";
+        // Outer inactive — inner elif should not activate
+        let result = preprocess(input, &["B"]).unwrap();
+        assert_eq!(result, "");
+
+        // Both outer and B active
+        let result = preprocess(input, &["OUTER", "B"]).unwrap();
+        assert_eq!(result, "b\n");
+    }
+
+    #[test]
+    fn test_error_elif_after_else() {
+        let input = "\
+#ifdef A
+a
+#else
+b
+#elif C
+c
+#endif
+";
+        let err = preprocess(input, &[]).unwrap_err();
+        assert!(matches!(err, Error::ElifAfterElse { line: 5 }));
+    }
+
+    #[test]
+    fn test_error_elif_missing_symbol() {
+        let input = "#ifdef A\n#elif\n#endif\n";
+        let err = preprocess(input, &[]).unwrap_err();
+        assert!(matches!(
+            err,
+            Error::MissingSymbol {
+                line: 2,
+                directive: _
+            }
+        ));
+    }
+
+    #[test]
+    fn test_error_elif_without_ifdef() {
+        let input = "#elif A\n";
+        let err = preprocess(input, &[]).unwrap_err();
+        assert!(matches!(err, Error::UnmatchedEndif { line: 1 }));
     }
 }

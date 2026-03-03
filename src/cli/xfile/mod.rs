@@ -19,7 +19,7 @@ pub struct Cmd {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum Sub {
-    /// Preprocess XDR .x files by evaluating #ifdef/#ifndef/#else/#endif directives
+    /// Preprocess XDR .x files by evaluating #ifdef/#ifndef/#elif/#else/#endif directives
     Preprocess(preprocess::Cmd),
 }
 

@@ -9,6 +9,10 @@ use clap::Args;
 pub enum Error {
     #[error("line {line}: unmatched #endif")]
     UnmatchedEndif { line: usize },
+    #[error("line {line}: unmatched #else")]
+    UnmatchedElse { line: usize },
+    #[error("line {line}: unmatched #elif")]
+    UnmatchedElif { line: usize },
     #[error("line {line}: unclosed #ifdef/#ifndef")]
     UnmatchedIfdef { line: usize },
     #[error("line {line}: duplicate #else")]
@@ -208,7 +212,7 @@ fn process_line(
             .expect("starts_with guard ensures strip_prefix succeeds");
         let block = stack
             .last_mut()
-            .ok_or(Error::UnmatchedEndif { line: line_num })?;
+            .ok_or(Error::UnmatchedElif { line: line_num })?;
         if block.else_seen {
             return Err(Error::ElifAfterElse { line: line_num });
         }
@@ -227,7 +231,7 @@ fn process_line(
         }
         let block = stack
             .last_mut()
-            .ok_or(Error::UnmatchedEndif { line: line_num })?;
+            .ok_or(Error::UnmatchedElse { line: line_num })?;
         if block.else_seen {
             return Err(Error::DuplicateElse { line: line_num });
         }
@@ -743,6 +747,6 @@ c
     fn test_error_elif_without_ifdef() {
         let input = "#elif A\n";
         let err = preprocess(input, &[]).unwrap_err();
-        assert!(matches!(err, Error::UnmatchedEndif { line: 1 }));
+        assert!(matches!(err, Error::UnmatchedElif { line: 1 }));
     }
 }

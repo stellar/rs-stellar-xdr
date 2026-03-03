@@ -215,32 +215,61 @@ pub fn base_rust_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> String 
 }
 
 /// Get the type to use in a read_xdr call (handles turbofish syntax).
+///
+/// Pattern-matches on the `Type` AST directly rather than parsing the string
+/// output of `rust_type_ref`, so that turbofish insertion is structural.
 pub fn rust_read_call_type(
     type_: &Type,
     parent_type: Option<&str>,
     type_info: &TypeInfo,
 ) -> String {
-    let ref_type = rust_type_ref(type_, parent_type, type_info);
-
-    // Handle special cases for turbofish syntax
-    if ref_type.starts_with('[') && ref_type.ends_with(']') {
-        format!("<{ref_type}>")
-    } else if let Some(inner) = ref_type
-        .strip_prefix("Option<Box<")
-        .and_then(|s| s.strip_suffix(">>"))
-    {
-        format!("Option::<Box<{inner}>>")
-    } else if let Some(inner) = ref_type
-        .strip_prefix("Option<")
-        .and_then(|s| s.strip_suffix('>'))
-    {
-        format!("Option::<{inner}>")
-    } else if let Some(generics) = ref_type.strip_prefix("Box<") {
-        format!("Box::<{generics}")
-    } else if let Some(generics) = ref_type.strip_prefix("VecM<") {
-        format!("VecM::<{generics}")
+    // Check for cyclic reference to decide if Box wrapping is needed
+    let is_cyclic = if let Some(parent) = parent_type {
+        if let Some(base_name) = base_type_name(type_) {
+            type_info.is_cyclic(&base_name, parent)
+        } else {
+            false
+        }
     } else {
-        ref_type
+        false
+    };
+
+    match type_ {
+        // Fixed arrays: [T; N] needs wrapping as <[T; N]>
+        Type::OpaqueFixed(size) => {
+            format!("<[u8; {}]>", type_info.size_to_literal(size))
+        }
+        Type::Array { element_type, size } => {
+            let elem = base_rust_type_ref(element_type, Some(type_info));
+            format!("<[{elem}; {}]>", type_info.size_to_literal(size))
+        }
+        // Optional types: Option::<T> or Option::<Box<T>> if cyclic
+        Type::Optional(inner) => {
+            let inner_ref = base_rust_type_ref(inner, Some(type_info));
+            if is_cyclic {
+                format!("Option::<Box<{inner_ref}>>")
+            } else {
+                format!("Option::<{inner_ref}>")
+            }
+        }
+        // VarArray types: VecM::<T> or VecM::<T, N>
+        Type::VarArray {
+            element_type,
+            max_size,
+        } => {
+            let elem = base_rust_type_ref(element_type, Some(type_info));
+            match max_size {
+                Some(size) => format!("VecM::<{elem}, {}>", type_info.size_to_literal(size)),
+                None => format!("VecM::<{elem}>"),
+            }
+        }
+        // Simple ident types: Box::<T> if cyclic, otherwise just T
+        _ if is_cyclic => {
+            let base = base_rust_type_ref(type_, Some(type_info));
+            format!("Box::<{base}>")
+        }
+        // Everything else: no turbofish needed
+        _ => base_rust_type_ref(type_, Some(type_info)),
     }
 }
 

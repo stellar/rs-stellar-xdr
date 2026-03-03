@@ -363,63 +363,13 @@ impl Parser {
         let type_ = self.parse_type_suffix(type_)?;
 
         // If this is an anonymous union, extract it as a separate definition
-        let type_ = match type_ {
-            Type::AnonymousUnion {
-                discriminant,
-                arms,
-                default_arm,
-            } => {
-                // Generate the name: root_parent + field_name
-                let union_name = if let Some(ref parent) = self.root_parent {
-                    generate_nested_type_name(parent, &name)
-                } else {
-                    // Fallback: use field name with "Union" suffix
-                    generate_nested_type_name(&name, "Union")
-                };
-
-                // Extract source text for the anonymous union
-                let source =
-                    if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                        self.source[type_start_byte..type_end_byte].to_string()
-                    } else {
-                        String::new()
-                    };
-
-                // Create the Union definition (unbox the discriminant)
-                let union_def = Union {
-                    name: union_name.clone(),
-                    discriminant: *discriminant,
-                    arms,
-                    default_arm,
-                    source,
-                    is_nested: true,
-                    parent: self.root_parent.clone(),
-                };
-
-                // Fix up parent relationships for any definitions extracted during union parsing
-                // (e.g., inline structs inside union arms should have this union as their parent)
-                // Only update if current parent is the root_parent (not already a more specific parent)
-                for def in &mut self.extracted_definitions[extract_start_idx..] {
-                    match def {
-                        Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
-                            s.parent = Some(union_name.clone());
-                        }
-                        Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
-                            u.parent = Some(union_name.clone());
-                        }
-                        _ => {}
-                    }
-                }
-
-                // Add to extracted definitions
-                self.extracted_definitions
-                    .push(Definition::Union(union_def));
-
-                // Return a reference to the extracted type
-                Type::Ident(union_name)
-            }
-            other => other,
-        };
+        let type_ = self.extract_anonymous_union_if_needed(
+            type_,
+            &name,
+            type_start_byte,
+            type_end_byte,
+            extract_start_idx,
+        );
 
         Ok(Member { name, type_ })
     }
@@ -579,65 +529,13 @@ impl Parser {
             self.expect(Token::Semi)?;
 
             // If this is an anonymous union, extract it as a separate definition
-            let type_ = match type_ {
-                Type::AnonymousUnion {
-                    discriminant,
-                    arms,
-                    default_arm,
-                } => {
-                    // Generate the name: root_parent + field_name
-                    let union_name = if let Some(ref parent) = self.root_parent {
-                        generate_nested_type_name(parent, &field_name)
-                    } else {
-                        // Fallback: use field name with capitalization
-                        field_name.to_upper_camel_case()
-                    };
-
-                    // Extract source text for the anonymous union
-                    let source =
-                        if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
-                            self.source[type_start_byte..type_end_byte].to_string()
-                        } else {
-                            String::new()
-                        };
-
-                    // Create the Union definition (unbox the discriminant)
-                    let union_def = Union {
-                        name: union_name.clone(),
-                        discriminant: *discriminant,
-                        arms,
-                        default_arm,
-                        source,
-                        is_nested: true,
-                        parent: self.root_parent.clone(),
-                    };
-
-                    // Fix up parent relationships for any definitions extracted during union parsing
-                    // (e.g., inline structs inside union arms should have this union as their parent)
-                    // Only update if current parent is the root_parent (not already a more specific parent)
-                    for def in &mut self.extracted_definitions[extract_start_idx..] {
-                        match def {
-                            Definition::Struct(s)
-                                if s.is_nested && s.parent == self.root_parent =>
-                            {
-                                s.parent = Some(union_name.clone());
-                            }
-                            Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
-                                u.parent = Some(union_name.clone());
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    // Add to extracted definitions
-                    self.extracted_definitions
-                        .push(Definition::Union(union_def));
-
-                    // Return a reference to the extracted type
-                    Type::Ident(union_name)
-                }
-                other => other,
-            };
+            let type_ = self.extract_anonymous_union_if_needed(
+                type_,
+                &field_name,
+                type_start_byte,
+                type_end_byte,
+                extract_start_idx,
+            );
 
             Some(type_)
         };
@@ -908,6 +806,80 @@ impl Parser {
                 expected: "integer literal".to_string(),
                 got: token,
             }),
+        }
+    }
+
+    /// If `type_` is an anonymous union, extract it as a named union definition and return
+    /// a `Type::Ident` referencing the extracted type. Otherwise return `type_` unchanged.
+    ///
+    /// `field_name` is the field that holds the union (used for name generation).
+    /// `type_start_byte`/`type_end_byte` delimit the source text for the anonymous union.
+    /// `extract_start_idx` is the index into `self.extracted_definitions` from before
+    /// the type was parsed, used to fix parent relationships on definitions extracted
+    /// during the union's parsing.
+    fn extract_anonymous_union_if_needed(
+        &mut self,
+        type_: Type,
+        field_name: &str,
+        type_start_byte: usize,
+        type_end_byte: usize,
+        extract_start_idx: usize,
+    ) -> Type {
+        match type_ {
+            Type::AnonymousUnion {
+                discriminant,
+                arms,
+                default_arm,
+            } => {
+                // Generate the name: root_parent + field_name
+                let union_name = if let Some(ref parent) = self.root_parent {
+                    generate_nested_type_name(parent, field_name)
+                } else {
+                    generate_nested_type_name(field_name, "Union")
+                };
+
+                // Extract source text for the anonymous union
+                let source =
+                    if type_start_byte < type_end_byte && type_end_byte <= self.source.len() {
+                        self.source[type_start_byte..type_end_byte].to_string()
+                    } else {
+                        String::new()
+                    };
+
+                // Create the Union definition (unbox the discriminant)
+                let union_def = Union {
+                    name: union_name.clone(),
+                    discriminant: *discriminant,
+                    arms,
+                    default_arm,
+                    source,
+                    is_nested: true,
+                    parent: self.root_parent.clone(),
+                };
+
+                // Fix up parent relationships for any definitions extracted during union parsing
+                // (e.g., inline structs inside union arms should have this union as their parent)
+                // Only update if current parent is the root_parent (not already a more specific parent)
+                for def in &mut self.extracted_definitions[extract_start_idx..] {
+                    match def {
+                        Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
+                            s.parent = Some(union_name.clone());
+                        }
+                        Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
+                            u.parent = Some(union_name.clone());
+                        }
+                        _ => {}
+                    }
+                }
+
+                // Add to extracted definitions
+                self.extracted_definitions
+                    .push(Definition::Union(union_def));
+
+                // Return a reference to the extracted type
+                Type::Ident(union_name)
+            }
+            other => other,
         }
     }
 

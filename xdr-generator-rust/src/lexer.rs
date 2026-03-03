@@ -5,10 +5,10 @@ use thiserror::Error;
 
 /// Token type for XDR lexing.
 #[derive(Logos, Debug, Clone, PartialEq, Eq)]
-#[logos(skip r"[ \t\n\r\f]+")]  // Skip whitespace
-#[logos(skip r"//[^\n]*")]      // Skip line comments
+#[logos(skip r"[ \t\n\r\f]+")] // Skip whitespace
+#[logos(skip r"//[^\n]*")] // Skip line comments
 #[logos(skip r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/")] // Skip block comments
-#[logos(skip r"%[^\n]*\n?")]    // Skip preprocessor directives
+#[logos(skip r"%[^\n]*\n?")] // Skip preprocessor directives
 pub enum Token {
     // Keywords
     #[token("struct")]
@@ -98,9 +98,11 @@ pub enum IntBase {
 
 fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
     let slice = lex.slice();
-    i64::from_str_radix(&slice[2..], 16)
+    // Parse as u64 first to handle the full range of hex values (e.g., 0xFFFFFFFFFFFFFFFF),
+    // then reinterpret as i64. This preserves the bit pattern for large unsigned values.
+    u64::from_str_radix(&slice[2..], 16)
         .ok()
-        .map(|v| (v, IntBase::Hexadecimal))
+        .map(|v| (v as i64, IntBase::Hexadecimal))
 }
 
 fn parse_decimal(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {

@@ -190,7 +190,7 @@ impl Parser {
             let value = match self.peek().clone() {
                 Token::IntLiteral((value, _)) => {
                     self.advance();
-                    value as i32
+                    self.try_i64_to_i32(value)?
                 }
                 Token::Ident(ref_name) => {
                     self.advance();
@@ -383,7 +383,7 @@ impl Parser {
                         }
                         Token::IntLiteral((value, _)) => {
                             self.advance();
-                            CaseValue::Literal(value as i32)
+                            CaseValue::Literal(self.try_i64_to_i32(value)?)
                         }
                         other => {
                             return Err(self.unexpected_token_error("case value".to_string(), other))
@@ -708,7 +708,7 @@ impl Parser {
         match self.peek().clone() {
             Token::IntLiteral((value, _)) => {
                 self.advance();
-                Ok(Size::Literal(value as u32))
+                Ok(Size::Literal(self.try_i64_to_u32(value)?))
             }
             Token::Ident(name) => {
                 self.advance();
@@ -777,6 +777,21 @@ impl Parser {
             None => byte_offset + 1,
         };
         (line, col)
+    }
+
+    /// Try to convert an i64 to the target integer type, returning an error with position on overflow.
+    fn try_i64_to_i32(&self, value: i64) -> Result<i32, ParseError> {
+        i32::try_from(value).map_err(|_| {
+            let (line, col) = self.current_position();
+            ParseError::IntegerOverflow { value, line, col }
+        })
+    }
+
+    fn try_i64_to_u32(&self, value: i64) -> Result<u32, ParseError> {
+        u32::try_from(value).map_err(|_| {
+            let (line, col) = self.current_position();
+            ParseError::IntegerOverflow { value, line, col }
+        })
     }
 
     /// Create an `UnexpectedToken` error with the current position.
@@ -896,7 +911,7 @@ impl Parser {
         }
         // Check global values (previously parsed enums and consts)
         if let Some(&value) = self.global_values.get(name) {
-            return Ok(value as i32);
+            return self.try_i64_to_i32(value);
         }
         let (line, col) = self.current_position();
         Err(ParseError::UnresolvedEnumValue {
@@ -937,6 +952,8 @@ pub enum ParseError {
         line: usize,
         col: usize,
     },
+    #[error("{line}:{col}: integer value {value} overflows target type")]
+    IntegerOverflow { value: i64, line: usize, col: usize },
 }
 
 /// Fix parent relationships for nested types based on naming patterns.

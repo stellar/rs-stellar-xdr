@@ -944,7 +944,27 @@ pub enum ParseError {
 }
 
 /// Fix parent relationships for nested types based on naming patterns.
-/// For a nested type whose name starts with another nested type's name, update parent.
+///
+/// During parsing, each extracted nested type is assigned its immediate parent.
+/// However, when inline structs inside union arms themselves contain anonymous
+/// unions, the deeply nested union may only know about the top-level parent.
+///
+/// For example, given XDR like:
+/// ```text
+/// union Outer switch (int v) {
+///     case 0:
+///         struct {
+///             union switch (int w) { case 0: void; } innerField;
+///         } outerField;
+/// };
+/// ```
+/// Parsing produces three types:
+///   - `OuterOuterFieldInnerField` (the anonymous union) — initially parent = `Outer`
+///   - `OuterOuterField` (the inline struct) — parent = `Outer`
+///   - `Outer` (the top-level union)
+///
+/// This function detects that `OuterOuterFieldInnerField` starts with
+/// `OuterOuterField` and reassigns its parent from `Outer` to `OuterOuterField`.
 fn fix_parent_relationships(definitions: &mut [Definition]) {
     // Collect all nested type names
     let nested_names: Vec<String> = definitions
@@ -1059,5 +1079,58 @@ mod tests {
         assert_eq!(spec.namespaces.len(), 1);
         assert_eq!(spec.namespaces[0].name, "stellar");
         assert_eq!(spec.namespaces[0].definitions.len(), 1);
+    }
+
+    #[test]
+    fn test_fix_parent_relationships() {
+        // Simulate the scenario: an inline struct inside a union arm contains
+        // an anonymous union. The deeply nested union should have its parent
+        // reassigned from the top-level union to the inline struct.
+        let mut definitions = vec![
+            Definition::Union(Union {
+                name: "OuterOuterFieldInnerField".to_string(),
+                discriminant: Discriminant {
+                    name: "w".to_string(),
+                    type_: Type::Int,
+                },
+                arms: vec![],
+                default_arm: None,
+                source: String::new(),
+                is_nested: true,
+                parent: Some("Outer".to_string()),
+            }),
+            Definition::Struct(Struct {
+                name: "OuterOuterField".to_string(),
+                members: vec![],
+                source: String::new(),
+                is_nested: true,
+                parent: Some("Outer".to_string()),
+            }),
+            Definition::Union(Union {
+                name: "Outer".to_string(),
+                discriminant: Discriminant {
+                    name: "v".to_string(),
+                    type_: Type::Int,
+                },
+                arms: vec![],
+                default_arm: None,
+                source: String::new(),
+                is_nested: false,
+                parent: None,
+            }),
+        ];
+
+        fix_parent_relationships(&mut definitions);
+
+        // The deeply nested union should now point to the inline struct
+        assert_eq!(
+            definitions[0].parent(),
+            Some("OuterOuterField"),
+            "deeply nested type should have its parent reassigned to the inline struct"
+        );
+        // The inline struct's parent should remain unchanged
+        assert_eq!(definitions[1].parent(), Some("Outer"));
+        // The top-level union has no parent
+        assert_eq!(definitions[2].parent(), None);
     }
 }

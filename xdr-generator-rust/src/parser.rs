@@ -469,7 +469,7 @@ impl Parser {
             match self.advance() {
                 Token::LBrace => brace_depth += 1,
                 Token::RBrace => brace_depth -= 1,
-                Token::Eof => break,
+                Token::Eof => return Err(ParseError::UnexpectedEof),
                 _ => {}
             }
         }

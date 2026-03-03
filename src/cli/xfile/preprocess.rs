@@ -749,4 +749,32 @@ c
         let err = preprocess(input, &[]).unwrap_err();
         assert!(matches!(err, Error::UnmatchedElif { line: 1 }));
     }
+
+    #[test]
+    fn test_ifndef_with_elif() {
+        let input = "\
+#ifndef A
+a
+#elif B
+b
+#else
+fallback
+#endif
+";
+        // A not defined → ifndef branch taken, elif/else skipped
+        let result = preprocess(input, &[]).unwrap();
+        assert_eq!(result, "a\n");
+
+        // A not defined, B defined → ifndef branch taken, elif/else skipped
+        let result = preprocess(input, &["B"]).unwrap();
+        assert_eq!(result, "a\n");
+
+        // A defined, B defined → ifndef false, elif B taken
+        let result = preprocess(input, &["A", "B"]).unwrap();
+        assert_eq!(result, "b\n");
+
+        // A defined, B not defined → ifndef false, elif false, else taken
+        let result = preprocess(input, &["A"]).unwrap();
+        assert_eq!(result, "fallback\n");
+    }
 }

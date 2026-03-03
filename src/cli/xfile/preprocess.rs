@@ -73,7 +73,7 @@ fn parse_symbol_directive<'a>(line: &'a str, directive: &str) -> Result<Option<&
     }
 
     let after_ws = rest.trim_start();
-    if after_ws.is_empty() {
+    if after_ws.is_empty() || after_ws.starts_with("//") || after_ws.starts_with("/*") {
         return Err(());
     }
 
@@ -100,15 +100,16 @@ fn is_flagless_directive(line: &str, directive: &str) -> Result<bool, ()> {
         return Ok(true);
     }
 
-    let mut chars = rest.chars();
-    let Some(first) = chars.next() else {
-        return Ok(true);
-    };
+    let first = rest.chars().next().unwrap_or(' ');
     if !first.is_whitespace() {
         return Err(());
     }
 
-    Ok(is_comment_or_empty(rest))
+    if is_comment_or_empty(rest) {
+        Ok(true)
+    } else {
+        Err(())
+    }
 }
 
 fn symbol_directive_err(trimmed: &str, directive: &str, line: usize) -> Error {
@@ -221,14 +222,8 @@ fn process_line(
         block.active = newly_active;
         block.any_branch_taken = block.any_branch_taken || newly_active;
     } else if trimmed.starts_with("#else") {
-        if !is_flagless_directive(trimmed, "#else")
-            .map_err(|()| flagless_directive_err("#else", line_num))?
-        {
-            if stack.last().is_none_or(|b| b.active) {
-                output.push_str(raw_line);
-            }
-            return Ok(());
-        }
+        is_flagless_directive(trimmed, "#else")
+            .map_err(|()| flagless_directive_err("#else", line_num))?;
         let block = stack
             .last_mut()
             .ok_or(Error::UnmatchedElse { line: line_num })?;
@@ -238,14 +233,8 @@ fn process_line(
         block.else_seen = true;
         block.active = block.parent_active && !block.any_branch_taken;
     } else if trimmed.starts_with("#endif") {
-        if !is_flagless_directive(trimmed, "#endif")
-            .map_err(|()| flagless_directive_err("#endif", line_num))?
-        {
-            if stack.last().is_none_or(|b| b.active) {
-                output.push_str(raw_line);
-            }
-            return Ok(());
-        }
+        is_flagless_directive(trimmed, "#endif")
+            .map_err(|()| flagless_directive_err("#endif", line_num))?;
         if stack.pop().is_none() {
             return Err(Error::UnmatchedEndif { line: line_num });
         }
@@ -748,6 +737,45 @@ c
         let input = "#elif A\n";
         let err = preprocess(input, &[]).unwrap_err();
         assert!(matches!(err, Error::UnmatchedElif { line: 1 }));
+    }
+
+    #[test]
+    fn test_error_ifdef_comment_as_symbol() {
+        let input = "#ifdef // comment\n#endif\n";
+        let err = preprocess(input, &[]).unwrap_err();
+        assert!(matches!(
+            err,
+            Error::InvalidDirectiveSyntax {
+                line: 1,
+                directive: _
+            }
+        ));
+    }
+
+    #[test]
+    fn test_error_endif_trailing_tokens() {
+        let input = "#ifdef FEAT_A\ncontent\n#endif EXTRA\n";
+        let err = preprocess(input, &["FEAT_A"]).unwrap_err();
+        assert!(matches!(
+            err,
+            Error::InvalidDirectiveSyntax {
+                line: 3,
+                directive: _
+            }
+        ));
+    }
+
+    #[test]
+    fn test_error_else_trailing_tokens() {
+        let input = "#ifdef FEAT_A\na\n#else EXTRA\nb\n#endif\n";
+        let err = preprocess(input, &[]).unwrap_err();
+        assert!(matches!(
+            err,
+            Error::InvalidDirectiveSyntax {
+                line: 3,
+                directive: _
+            }
+        ));
     }
 
     #[test]

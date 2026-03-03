@@ -139,40 +139,18 @@ pub fn rust_type_ref(type_: &Type, parent_type: Option<&str>, type_info: &TypeIn
         false
     };
 
+    if !is_cyclic {
+        return base;
+    }
+
+    // Cyclic types: wrap in Box. Arrays/VarArrays are excluded from boxing.
     match type_ {
         Type::Optional(inner) => {
             let inner_ref = base_rust_type_ref(inner, Some(type_info));
-            if is_cyclic {
-                format!("Option<Box<{inner_ref}>>")
-            } else {
-                format!("Option<{inner_ref}>")
-            }
+            format!("Option<Box<{inner_ref}>>")
         }
-        Type::Array { element_type, size } => {
-            // Arrays are NOT wrapped in Box even if cyclic
-            let elem = base_rust_type_ref(element_type, Some(type_info));
-            let size = type_info.size_to_literal(size);
-            format!("[{elem}; {size}]")
-        }
-        Type::VarArray {
-            element_type,
-            max_size,
-        } => {
-            // VarArrays are NOT wrapped in Box even if cyclic
-            let elem = base_rust_type_ref(element_type, Some(type_info));
-            match max_size {
-                Some(size) => format!("VecM<{elem}, {}>", type_info.size_to_literal(size)),
-                None => format!("VecM<{elem}>"),
-            }
-        }
-        _ => {
-            // Simple types: wrap in Box if cyclic
-            if is_cyclic {
-                format!("Box<{base}>")
-            } else {
-                base
-            }
-        }
+        Type::Array { .. } | Type::VarArray { .. } => base,
+        _ => format!("Box<{base}>"),
     }
 }
 

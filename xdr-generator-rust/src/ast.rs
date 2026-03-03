@@ -96,7 +96,6 @@ pub struct Union {
     pub name: String,
     pub discriminant: Discriminant,
     pub arms: Vec<UnionArm>,
-    pub default_arm: Option<Box<UnionArm>>,
     /// Original XDR source text for documentation.
     pub source: String,
     /// True if this is a nested/inline union extracted from a struct field.
@@ -164,7 +163,6 @@ pub enum Type {
     AnonymousUnion {
         discriminant: Box<Discriminant>,
         arms: Vec<UnionArm>,
-        default_arm: Option<Box<UnionArm>>,
     },
 }
 

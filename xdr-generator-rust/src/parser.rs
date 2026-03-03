@@ -256,7 +256,7 @@ impl Parser {
         let prev_root = self.root_parent.take();
         self.root_parent = Some(name.clone());
 
-        let (arms, default_arm) = self.parse_union_body()?;
+        let arms = self.parse_union_body()?;
 
         // Restore previous root_parent
         self.root_parent = prev_root;
@@ -273,7 +273,6 @@ impl Parser {
                 type_: disc_type,
             },
             arms,
-            default_arm,
             source,
             is_nested: false,
             parent: None,
@@ -350,22 +349,22 @@ impl Parser {
     }
 
     /// Parse the body of a union (the arms inside the braces).
-    /// Returns `(arms, default_arm)`. The caller is responsible for consuming the
-    /// opening/closing braces.
-    fn parse_union_body(&mut self) -> Result<(Vec<UnionArm>, Option<Box<UnionArm>>), ParseError> {
+    /// Default arms are not supported — the generated code always emits a
+    /// catch-all `_ => Err(Error::Invalid)`. If a default arm is encountered,
+    /// a parse error is returned.
+    fn parse_union_body(&mut self) -> Result<Vec<UnionArm>, ParseError> {
         let mut arms = Vec::new();
-        let mut default_arm = None;
 
         while *self.peek() != Token::RBrace {
             let arm = self.parse_union_arm()?;
             if arm.cases.is_empty() {
-                default_arm = Some(Box::new(arm));
-            } else {
-                arms.push(arm);
+                let (line, col) = self.current_position();
+                return Err(ParseError::UnsupportedDefaultArm { line, col });
             }
+            arms.push(arm);
         }
 
-        Ok((arms, default_arm))
+        Ok(arms)
     }
 
     fn parse_union_arm(&mut self) -> Result<UnionArm, ParseError> {
@@ -578,7 +577,7 @@ impl Parser {
                 self.expect(Token::RParen)?;
                 self.expect(Token::LBrace)?;
 
-                let (arms, default_arm) = self.parse_union_body()?;
+                let arms = self.parse_union_body()?;
                 self.expect(Token::RBrace)?;
 
                 // Return an AnonymousUnion that will be extracted in parse_member
@@ -588,7 +587,6 @@ impl Parser {
                         type_: disc_type,
                     }),
                     arms,
-                    default_arm,
                 })
             }
             Token::Ident(name) => {
@@ -848,11 +846,7 @@ impl Parser {
         extract_start_idx: usize,
     ) -> Type {
         match type_ {
-            Type::AnonymousUnion {
-                discriminant,
-                arms,
-                default_arm,
-            } => {
+            Type::AnonymousUnion { discriminant, arms } => {
                 // Generate the name: root_parent + field_name
                 let union_name = if let Some(ref parent) = self.root_parent {
                     generate_nested_type_name(parent, field_name)
@@ -868,7 +862,6 @@ impl Parser {
                     name: union_name.clone(),
                     discriminant: *discriminant,
                     arms,
-                    default_arm,
                     source,
                     is_nested: true,
                     parent: self.root_parent.clone(),
@@ -952,6 +945,8 @@ pub enum ParseError {
         line: usize,
         col: usize,
     },
+    #[error("{line}:{col}: default arms in unions are not supported")]
+    UnsupportedDefaultArm { line: usize, col: usize },
     #[error("{line}:{col}: integer value {value} overflows target type")]
     IntegerOverflow { value: i64, line: usize, col: usize },
 }
@@ -1107,7 +1102,6 @@ mod tests {
                     type_: Type::Int,
                 },
                 arms: vec![],
-                default_arm: None,
                 source: String::new(),
                 is_nested: true,
                 parent: Some("Outer".to_string()),
@@ -1126,7 +1120,6 @@ mod tests {
                     type_: Type::Int,
                 },
                 arms: vec![],
-                default_arm: None,
                 source: String::new(),
                 is_nested: false,
                 parent: None,

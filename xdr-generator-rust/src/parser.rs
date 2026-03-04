@@ -61,18 +61,7 @@ impl Parser {
                     spec.namespaces.push(ns);
                 }
                 _ => {
-                    // Track extracted definitions before parsing this definition
-                    let extract_start = self.extracted_definitions.len();
-
-                    let def = self.parse_definition()?;
-
-                    // Insert any newly extracted definitions before this definition
-                    // This ensures nested types appear just before their parent
-                    for extracted in self.extracted_definitions.drain(extract_start..) {
-                        spec.definitions.push(extracted);
-                    }
-
-                    spec.definitions.push(def);
+                    self.parse_definition_into(&mut spec.definitions)?;
                 }
             }
         }
@@ -108,23 +97,28 @@ impl Parser {
                 break;
             }
 
-            // Track extracted definitions before parsing this definition
-            let extract_start = self.extracted_definitions.len();
-
-            let def = self.parse_definition()?;
-
-            // Insert any newly extracted definitions before this definition
-            // This ensures nested types appear just before their parent
-            for extracted in self.extracted_definitions.drain(extract_start..) {
-                definitions.push(extracted);
-            }
-
-            definitions.push(def);
+            self.parse_definition_into(&mut definitions)?;
         }
 
         self.expect(Token::RBrace)?;
 
         Ok(Namespace { name, definitions })
+    }
+
+    /// Parse a single definition, prepending any extracted nested definitions
+    /// (anonymous unions, inline structs) so they appear just before their parent.
+    fn parse_definition_into(&mut self, out: &mut Vec<Definition>) -> Result<(), ParseError> {
+        let extract_start = self.extracted_definitions.len();
+
+        let def = self.parse_definition()?;
+
+        // Insert any newly extracted definitions before this definition
+        for extracted in self.extracted_definitions.drain(extract_start..) {
+            out.push(extracted);
+        }
+
+        out.push(def);
+        Ok(())
     }
 
     fn parse_definition(&mut self) -> Result<Definition, ParseError> {

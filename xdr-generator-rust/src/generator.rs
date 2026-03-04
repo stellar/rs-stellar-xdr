@@ -44,15 +44,9 @@ impl Generator {
             })
             .collect();
 
-        // Collect all type names for the type enum.
-        // The types list needs to be in "parent before nested" order for TypeVariant,
-        // but definitions stay in "nested before parent" order for file output.
-        //
-        // Build parent-child relationships and then traverse parent-first.
-
-        // First pass: collect definitions and build parent-child map
+        // Generate each definition's output and collect type names for the
+        // TypeVariant enum (which needs parent-before-children ordering).
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
-        let mut children_of: HashMap<String, Vec<String>> = HashMap::new();
         let mut all_type_names: Vec<(String, Option<String>)> = Vec::new(); // (name, parent)
 
         for def in spec.all_definitions() {
@@ -61,59 +55,14 @@ impl Generator {
             // Only add non-const types to the type enum
             if !matches!(def, Definition::Const(_)) {
                 let parent = def.parent().map(|p| rust_type_name(p));
-                all_type_names.push((name.clone(), parent.clone()));
-
-                if let Some(ref parent_name) = parent {
-                    children_of
-                        .entry(parent_name.clone())
-                        .or_default()
-                        .push(name.clone());
-                }
+                all_type_names.push((name, parent));
             }
 
             let output = self.generate_definition(def);
             definitions.push(output);
         }
 
-        // Second pass: build types list with parent-before-children ordering
-        // Use a recursive helper to add each type and then its children
-        let mut types: Vec<String> = Vec::new();
-        let mut added: HashSet<String> = std::collections::HashSet::new();
-
-        fn add_type_and_children(
-            name: &str,
-            types: &mut Vec<String>,
-            added: &mut HashSet<String>,
-            children_of: &HashMap<String, Vec<String>>,
-        ) {
-            if added.contains(name) {
-                return;
-            }
-            added.insert(name.to_string());
-            types.push(name.to_string());
-
-            // Add children in the order they appear in children_of
-            if let Some(children) = children_of.get(name) {
-                for child in children {
-                    add_type_and_children(child, types, added, children_of);
-                }
-            }
-        }
-
-        // Process types in definition order, but only add root types (no parent)
-        // and let recursion handle adding children
-        for (name, parent) in &all_type_names {
-            if parent.is_none() {
-                add_type_and_children(name, &mut types, &mut added, &children_of);
-            }
-        }
-
-        // Add any remaining types that weren't reached (shouldn't happen, but just in case)
-        for (name, _) in &all_type_names {
-            if !added.contains(name) {
-                types.push(name.clone());
-            }
-        }
+        let types = order_types_parent_first(&all_type_names);
 
         let namespace = spec
             .namespaces
@@ -553,6 +502,64 @@ pub struct ConstOutput {
 /// Data for the TypeVariant and Type enums.
 pub struct TypeEnumOutput {
     pub types: Vec<String>,
+}
+
+/// Order type names so that parents appear before their children.
+///
+/// Definitions in the generated file are in "nested before parent" order (so the
+/// Rust compiler sees nested types before they're referenced), but the `TypeVariant`
+/// enum needs the opposite: parents first, then children. This function builds a
+/// parent-child tree and traverses it parent-first while preserving definition order
+/// among siblings.
+fn order_types_parent_first(all_type_names: &[(String, Option<String>)]) -> Vec<String> {
+    let mut children_of: HashMap<String, Vec<String>> = HashMap::new();
+    for (name, parent) in all_type_names {
+        if let Some(ref parent_name) = parent {
+            children_of
+                .entry(parent_name.clone())
+                .or_default()
+                .push(name.clone());
+        }
+    }
+
+    let mut types: Vec<String> = Vec::new();
+    let mut added: HashSet<String> = HashSet::new();
+
+    fn add_type_and_children(
+        name: &str,
+        types: &mut Vec<String>,
+        added: &mut HashSet<String>,
+        children_of: &HashMap<String, Vec<String>>,
+    ) {
+        if added.contains(name) {
+            return;
+        }
+        added.insert(name.to_string());
+        types.push(name.to_string());
+
+        if let Some(children) = children_of.get(name) {
+            for child in children {
+                add_type_and_children(child, types, added, children_of);
+            }
+        }
+    }
+
+    // Process types in definition order, but only add root types (no parent)
+    // and let recursion handle adding children
+    for (name, parent) in all_type_names {
+        if parent.is_none() {
+            add_type_and_children(name, &mut types, &mut added, &children_of);
+        }
+    }
+
+    // Add any remaining types that weren't reached (shouldn't happen, but just in case)
+    for (name, _) in all_type_names {
+        if !added.contains(name) {
+            types.push(name.clone());
+        }
+    }
+
+    types
 }
 
 fn format_source_comment(source: &str, kind: &str) -> String {

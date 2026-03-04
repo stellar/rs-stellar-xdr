@@ -95,7 +95,7 @@ impl Generator {
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
 
-        let members: Vec<MemberOutput> = s
+        let members: Vec<StructMemberOutput> = s
             .members
             .iter()
             .map(|m| self.generate_member(m, &name, custom_str))
@@ -131,13 +131,13 @@ impl Generator {
         let member_names: Vec<&str> = e.members.iter().map(|m| m.name.as_str()).collect();
         let prefix = find_common_prefix(&member_names);
 
-        let members: Vec<EnumMemberOutput> = e
+        let members: Vec<EnumStructMemberOutput> = e
             .members
             .iter()
             .enumerate()
             .map(|(i, m)| {
                 let stripped = strip_prefix(&m.name, prefix);
-                EnumMemberOutput {
+                EnumStructMemberOutput {
                     name: rust_type_name(&stripped),
                     value: m.value,
                     is_first: i == 0,
@@ -304,7 +304,12 @@ impl Generator {
         }
     }
 
-    fn generate_member(&self, m: &StructMember, parent: &str, custom_str: bool) -> MemberOutput {
+    fn generate_member(
+        &self,
+        m: &StructMember,
+        parent: &str,
+        custom_str: bool,
+    ) -> StructMemberOutput {
         let name = rust_field_name(&m.name);
         let type_ref = rust_type_ref(&m.type_, Some(parent), &self.type_info);
         let read_call = rust_read_call_type(&m.type_, Some(parent), &self.type_info);
@@ -315,7 +320,7 @@ impl Generator {
             serde_as_type(&m.type_)
         };
 
-        MemberOutput {
+        StructMemberOutput {
             name,
             type_ref,
             read_call,
@@ -408,12 +413,12 @@ pub struct StructOutput {
     pub source_comment: String,
     pub has_default: bool,
     pub is_custom_str: bool,
-    pub members: Vec<MemberOutput>,
+    pub members: Vec<StructMemberOutput>,
     /// Comma-separated list of member names for destructuring (e.g., "id, ed25519,")
     pub member_names: String,
 }
 
-pub struct MemberOutput {
+pub struct StructMemberOutput {
     pub name: String,
     pub type_ref: String,
     pub read_call: String,
@@ -427,10 +432,10 @@ pub struct EnumOutput {
     pub source_comment: String,
     pub has_default: bool,
     pub is_custom_str: bool,
-    pub members: Vec<EnumMemberOutput>,
+    pub members: Vec<EnumStructMemberOutput>,
 }
 
-pub struct EnumMemberOutput {
+pub struct EnumStructMemberOutput {
     pub name: String,
     pub value: i32,
     pub is_first: bool,

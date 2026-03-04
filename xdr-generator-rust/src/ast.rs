@@ -72,7 +72,7 @@ impl Definition {
 #[derive(Debug, Clone)]
 pub struct Struct {
     pub name: String,
-    pub members: Vec<Member>,
+    pub members: Vec<StructMember>,
     /// Original XDR source text for documentation.
     pub source: String,
     /// True if this is a nested/inline struct extracted from a union arm.
@@ -94,7 +94,7 @@ pub struct Enum {
 #[derive(Debug, Clone)]
 pub struct Union {
     pub name: String,
-    pub discriminant: Discriminant,
+    pub discriminant: UnionDiscriminant,
     pub arms: Vec<UnionArm>,
     /// Original XDR source text for documentation.
     pub source: String,
@@ -162,7 +162,7 @@ pub enum Type {
 
 /// A member of a struct.
 #[derive(Debug, Clone)]
-pub struct Member {
+pub struct StructMember {
     pub name: String,
     pub type_: Type,
 }
@@ -176,7 +176,7 @@ pub struct EnumMember {
 
 /// The discriminant of a union.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Discriminant {
+pub struct UnionDiscriminant {
     pub name: String,
     pub type_: Type,
 }
@@ -193,12 +193,12 @@ pub struct UnionArm {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionCase {
     /// The case value - either an identifier (enum variant) or a literal.
-    pub value: CaseValue,
+    pub value: UnionCaseValue,
 }
 
 /// Value for a union case.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CaseValue {
+pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
     Ident(String),
     /// Literal integer value

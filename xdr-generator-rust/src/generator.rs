@@ -3,7 +3,8 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::ast::{
-    CaseValue, Const, Definition, Enum, Member, Struct, Type, Typedef, Union, UnionArm, XdrSpec,
+    Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm, UnionCaseValue,
+    XdrSpec,
 };
 use crate::lexer::IntBase;
 use crate::types::{
@@ -303,7 +304,7 @@ impl Generator {
         }
     }
 
-    fn generate_member(&self, m: &Member, parent: &str, custom_str: bool) -> MemberOutput {
+    fn generate_member(&self, m: &StructMember, parent: &str, custom_str: bool) -> MemberOutput {
         let name = rust_field_name(&m.name);
         let type_ref = rust_type_ref(&m.type_, Some(parent), &self.type_info);
         let read_call = rust_read_call_type(&m.type_, Some(parent), &self.type_info);
@@ -335,7 +336,7 @@ impl Generator {
             .iter()
             .map(|case| {
                 let (case_name, case_value) = match &case.value {
-                    CaseValue::Ident(name) => {
+                    UnionCaseValue::Ident(name) => {
                         // Strip common prefix from case name
                         let stripped = strip_prefix(name, discriminant_prefix);
                         let rust_name = rust_type_name(&stripped);
@@ -346,7 +347,7 @@ impl Generator {
                         };
                         (rust_name, value)
                     }
-                    CaseValue::Literal(n) => {
+                    UnionCaseValue::Literal(n) => {
                         let case_name = format!("V{n}");
                         let value = if discriminant_is_builtin {
                             n.to_string()

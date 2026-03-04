@@ -264,7 +264,7 @@ impl Parser {
 
         Ok(Union {
             name,
-            discriminant: Discriminant {
+            discriminant: UnionDiscriminant {
                 name: disc_name,
                 type_: disc_type,
             },
@@ -315,7 +315,7 @@ impl Parser {
         })
     }
 
-    fn parse_member(&mut self) -> Result<Member, ParseError> {
+    fn parse_member(&mut self) -> Result<StructMember, ParseError> {
         let ctx = self.type_parse_context();
         let parsed = self.parse_type_or_anon_union()?;
         let type_end_byte = self.prev_end_byte();
@@ -329,7 +329,7 @@ impl Parser {
             ParsedType::Type(t) => self.parse_type_suffix(t)?,
         };
 
-        Ok(Member { name, type_ })
+        Ok(StructMember { name, type_ })
     }
 
     /// Parse the body of a union (the arms inside the braces).
@@ -362,11 +362,11 @@ impl Parser {
                     let value = match self.peek().clone() {
                         Token::Ident(name) => {
                             self.advance();
-                            CaseValue::Ident(name)
+                            UnionCaseValue::Ident(name)
                         }
                         Token::IntLiteral((value, _)) => {
                             self.advance();
-                            CaseValue::Literal(self.try_i64_to_i32(value)?)
+                            UnionCaseValue::Literal(self.try_i64_to_i32(value)?)
                         }
                         other => {
                             return Err(self.unexpected_token_error("case value".to_string(), other))
@@ -578,7 +578,7 @@ impl Parser {
                 self.expect(Token::RBrace)?;
 
                 Ok(ParsedType::AnonymousUnion {
-                    discriminant: Discriminant {
+                    discriminant: UnionDiscriminant {
                         name: disc_name,
                         type_: disc_type,
                     },
@@ -848,7 +848,7 @@ impl Parser {
     /// `type_end_byte` is the byte offset where the type expression ended.
     fn extract_anonymous_union(
         &mut self,
-        discriminant: Discriminant,
+        discriminant: UnionDiscriminant,
         arms: Vec<UnionArm>,
         field_name: &str,
         ctx: &TypeParseContext,
@@ -963,7 +963,7 @@ enum ParsedType {
     /// converts this to a named `Union` definition via `extract_anonymous_union`
     /// and replaces it with a `Type::Ident` reference.
     AnonymousUnion {
-        discriminant: Discriminant,
+        discriminant: UnionDiscriminant,
         arms: Vec<UnionArm>,
     },
 }
@@ -1123,7 +1123,7 @@ mod tests {
         let mut definitions = vec![
             Definition::Union(Union {
                 name: "OuterOuterFieldInnerField".to_string(),
-                discriminant: Discriminant {
+                discriminant: UnionDiscriminant {
                     name: "w".to_string(),
                     type_: Type::Int,
                 },
@@ -1141,7 +1141,7 @@ mod tests {
             }),
             Definition::Union(Union {
                 name: "Outer".to_string(),
-                discriminant: Discriminant {
+                discriminant: UnionDiscriminant {
                     name: "v".to_string(),
                     type_: Type::Int,
                 },

@@ -16,36 +16,6 @@ impl XdrSpec {
             .iter()
             .chain(self.namespaces.iter().flat_map(|ns| &ns.definitions))
     }
-
-    /// Assert that no `Type::AnonymousUnion` variants remain in the AST.
-    /// This should always hold after parsing — anonymous unions are extracted
-    /// into named definitions during the parse phase.
-    pub fn debug_assert_no_anonymous_unions(&self) {
-        if cfg!(debug_assertions) {
-            for def in self.all_definitions() {
-                match def {
-                    Definition::Struct(s) => {
-                        for m in &s.members {
-                            debug_assert!(
-                                !matches!(m.type_, Type::AnonymousUnion { .. }),
-                                "AnonymousUnion found in struct {} field {}",
-                                s.name,
-                                m.name
-                            );
-                        }
-                    }
-                    Definition::Typedef(t) => {
-                        debug_assert!(
-                            !matches!(t.type_, Type::AnonymousUnion { .. }),
-                            "AnonymousUnion found in typedef {}",
-                            t.name
-                        );
-                    }
-                    _ => {}
-                }
-            }
-        }
-    }
 }
 
 /// A namespace containing definitions.
@@ -187,19 +157,6 @@ pub enum Type {
     VarArray {
         element_type: Box<Type>,
         max_size: Option<Size>,
-    },
-    /// Transient: anonymous union inline in a struct.
-    ///
-    /// This variant is only produced during parsing and is immediately
-    /// converted into a named `Union` definition by
-    /// `extract_anonymous_union_if_needed`. It must never appear in the
-    /// final AST returned by `parse()`. The generator and type-resolution
-    /// code will panic if they encounter it.
-    ///
-    /// Uses `Box<Discriminant>` to avoid recursive type sizing issues.
-    AnonymousUnion {
-        discriminant: Box<Discriminant>,
-        arms: Vec<UnionArm>,
     },
 }
 

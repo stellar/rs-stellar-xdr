@@ -79,8 +79,6 @@ impl Parser {
             fix_parent_relationships(&mut ns.definitions);
         }
 
-        spec.debug_assert_no_anonymous_unions();
-
         Ok(spec)
     }
 
@@ -319,16 +317,17 @@ impl Parser {
 
     fn parse_member(&mut self) -> Result<Member, ParseError> {
         let ctx = self.type_parse_context();
-        let type_ = self.parse_type()?;
+        let parsed = self.parse_type_or_anon_union()?;
         let type_end_byte = self.prev_end_byte();
 
         let name = self.expect_ident()?;
 
-        // Handle array suffix: name[size] or name<max>
-        let type_ = self.parse_type_suffix(type_)?;
-
-        // If this is an anonymous union, extract it as a separate definition
-        let type_ = self.extract_anonymous_union_if_needed(type_, &name, &ctx, type_end_byte);
+        let type_ = match parsed {
+            ParsedType::AnonymousUnion { discriminant, arms } => {
+                self.extract_anonymous_union(discriminant, arms, &name, &ctx, type_end_byte)
+            }
+            ParsedType::Type(t) => self.parse_type_suffix(t)?,
+        };
 
         Ok(Member { name, type_ })
     }
@@ -406,7 +405,7 @@ impl Parser {
             Some(self.parse_inline_struct()?)
         } else {
             let ctx = self.type_parse_context();
-            let type_ = self.parse_type()?;
+            let parsed = self.parse_type_or_anon_union()?;
             let type_end_byte = self.prev_end_byte();
 
             // The field name is consumed but not stored in UnionArm — the
@@ -414,12 +413,18 @@ impl Parser {
             // the field name. The field name is only used below for naming
             // extracted anonymous unions.
             let field_name = self.expect_ident()?;
-            let type_ = self.parse_type_suffix(type_)?;
-            self.expect(Token::Semi)?;
 
-            // If this is an anonymous union, extract it as a separate definition
-            let type_ =
-                self.extract_anonymous_union_if_needed(type_, &field_name, &ctx, type_end_byte);
+            let type_ = match parsed {
+                ParsedType::AnonymousUnion { discriminant, arms } => self.extract_anonymous_union(
+                    discriminant,
+                    arms,
+                    &field_name,
+                    &ctx,
+                    type_end_byte,
+                ),
+                ParsedType::Type(t) => self.parse_type_suffix(t)?,
+            };
+            self.expect(Token::Semi)?;
 
             Some(type_)
         };
@@ -497,22 +502,37 @@ impl Parser {
         Ok(Type::Ident(struct_name))
     }
 
+    /// Parse a type that must be a regular type (not an anonymous union).
+    /// Used for discriminants, typedefs, and other contexts where inline
+    /// unions cannot appear.
     fn parse_type(&mut self) -> Result<Type, ParseError> {
+        match self.parse_type_or_anon_union()? {
+            ParsedType::Type(t) => Ok(t),
+            ParsedType::AnonymousUnion { .. } => {
+                Err(self.unexpected_token_error("type".to_string(), Token::Union))
+            }
+        }
+    }
+
+    /// Parse a type expression, which may be an anonymous union.
+    /// Callers must handle the `ParsedType::AnonymousUnion` case by
+    /// extracting it into a named definition.
+    fn parse_type_or_anon_union(&mut self) -> Result<ParsedType, ParseError> {
         match self.peek().clone() {
             Token::Int => {
                 self.advance();
-                Ok(Type::Int)
+                Ok(ParsedType::Type(Type::Int))
             }
             Token::Unsigned => {
                 self.advance();
                 match self.peek() {
                     Token::Int => {
                         self.advance();
-                        Ok(Type::UnsignedInt)
+                        Ok(ParsedType::Type(Type::UnsignedInt))
                     }
                     Token::Hyper => {
                         self.advance();
-                        Ok(Type::UnsignedHyper)
+                        Ok(ParsedType::Type(Type::UnsignedHyper))
                     }
                     other => {
                         Err(self.unexpected_token_error("int or hyper".to_string(), other.clone()))
@@ -521,27 +541,27 @@ impl Parser {
             }
             Token::Hyper => {
                 self.advance();
-                Ok(Type::Hyper)
+                Ok(ParsedType::Type(Type::Hyper))
             }
             Token::Float => {
                 self.advance();
-                Ok(Type::Float)
+                Ok(ParsedType::Type(Type::Float))
             }
             Token::Double => {
                 self.advance();
-                Ok(Type::Double)
+                Ok(ParsedType::Type(Type::Double))
             }
             Token::Bool => {
                 self.advance();
-                Ok(Type::Bool)
+                Ok(ParsedType::Type(Type::Bool))
             }
             Token::Opaque => {
                 self.advance();
-                self.parse_opaque_suffix()
+                self.parse_opaque_suffix().map(ParsedType::Type)
             }
             Token::String => {
                 self.advance();
-                self.parse_string_suffix()
+                self.parse_string_suffix().map(ParsedType::Type)
             }
             Token::Union => {
                 // Anonymous union inside struct
@@ -557,12 +577,11 @@ impl Parser {
                 let arms = self.parse_union_body()?;
                 self.expect(Token::RBrace)?;
 
-                // Return an AnonymousUnion that will be extracted in parse_member
-                Ok(Type::AnonymousUnion {
-                    discriminant: Box::new(Discriminant {
+                Ok(ParsedType::AnonymousUnion {
+                    discriminant: Discriminant {
                         name: disc_name,
                         type_: disc_type,
-                    }),
+                    },
                     arms,
                 })
             }
@@ -580,9 +599,9 @@ impl Parser {
                 // Check for optional type suffix (Type* field)
                 if *self.peek() == Token::Star {
                     self.advance();
-                    Ok(Type::Optional(Box::new(base_type)))
+                    Ok(ParsedType::Type(Type::Optional(Box::new(base_type))))
                 } else {
-                    Ok(base_type)
+                    Ok(ParsedType::Type(base_type))
                 }
             }
             other => Err(self.unexpected_token_error("type".to_string(), other)),
@@ -821,65 +840,60 @@ impl Parser {
         }
     }
 
-    /// If `type_` is an anonymous union, extract it as a named union definition and return
-    /// a `Type::Ident` referencing the extracted type. Otherwise return `type_` unchanged.
+    /// Extract an anonymous union as a named `Union` definition and return
+    /// a `Type::Ident` referencing it.
     ///
     /// `field_name` is the field that holds the union (used for name generation).
     /// `ctx` captures the parser state from before the type was parsed.
     /// `type_end_byte` is the byte offset where the type expression ended.
-    fn extract_anonymous_union_if_needed(
+    fn extract_anonymous_union(
         &mut self,
-        type_: Type,
+        discriminant: Discriminant,
+        arms: Vec<UnionArm>,
         field_name: &str,
         ctx: &TypeParseContext,
         type_end_byte: usize,
     ) -> Type {
-        match type_ {
-            Type::AnonymousUnion { discriminant, arms } => {
-                // Generate the name: root_parent + field_name
-                let union_name = if let Some(ref parent) = self.root_parent {
-                    generate_nested_type_name(parent, field_name)
-                } else {
-                    generate_nested_type_name(field_name, "Union")
-                };
+        // Generate the name: root_parent + field_name
+        let union_name = if let Some(ref parent) = self.root_parent {
+            generate_nested_type_name(parent, field_name)
+        } else {
+            generate_nested_type_name(field_name, "Union")
+        };
 
-                // Extract source text for the anonymous union
-                let source = self.source_slice(ctx.start_byte, type_end_byte);
+        // Extract source text for the anonymous union
+        let source = self.source_slice(ctx.start_byte, type_end_byte);
 
-                // Create the Union definition (unbox the discriminant)
-                let union_def = Union {
-                    name: union_name.clone(),
-                    discriminant: *discriminant,
-                    arms,
-                    source,
-                    is_nested: true,
-                    parent: self.root_parent.clone(),
-                };
+        let union_def = Union {
+            name: union_name.clone(),
+            discriminant,
+            arms,
+            source,
+            is_nested: true,
+            parent: self.root_parent.clone(),
+        };
 
-                // Fix up parent relationships for any definitions extracted during union parsing
-                // (e.g., inline structs inside union arms should have this union as their parent)
-                // Only update if current parent is the root_parent (not already a more specific parent)
-                for def in &mut self.extracted_definitions[ctx.extract_start_idx..] {
-                    match def {
-                        Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
-                            s.parent = Some(union_name.clone());
-                        }
-                        Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
-                            u.parent = Some(union_name.clone());
-                        }
-                        _ => {}
-                    }
+        // Fix up parent relationships for any definitions extracted during union parsing
+        // (e.g., inline structs inside union arms should have this union as their parent)
+        // Only update if current parent is the root_parent (not already a more specific parent)
+        for def in &mut self.extracted_definitions[ctx.extract_start_idx..] {
+            match def {
+                Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
+                    s.parent = Some(union_name.clone());
                 }
-
-                // Add to extracted definitions
-                self.extracted_definitions
-                    .push(Definition::Union(union_def));
-
-                // Return a reference to the extracted type
-                Type::Ident(union_name)
+                Definition::Union(u) if u.is_nested && u.parent == self.root_parent => {
+                    u.parent = Some(union_name.clone());
+                }
+                _ => {}
             }
-            other => other,
         }
+
+        // Add to extracted definitions
+        self.extracted_definitions
+            .push(Definition::Union(union_def));
+
+        // Return a reference to the extracted type
+        Type::Ident(union_name)
     }
 
     /// Resolve an enum value reference, searching the current enum members
@@ -938,6 +952,20 @@ pub enum ParseError {
     UnsupportedDefaultArm { line: usize, col: usize },
     #[error("{line}:{col}: integer value {value} overflows target type")]
     IntegerOverflow { value: i64, line: usize, col: usize },
+}
+
+/// Result of `parse_type`: either a regular AST type or an anonymous union
+/// that must be extracted into a named definition before entering the AST.
+enum ParsedType {
+    /// A regular type that can appear in the final AST.
+    Type(Type),
+    /// An inline `union switch (…) { … }` inside a struct. The parser
+    /// converts this to a named `Union` definition via `extract_anonymous_union`
+    /// and replaces it with a `Type::Ident` reference.
+    AnonymousUnion {
+        discriminant: Discriminant,
+        arms: Vec<UnionArm>,
+    },
 }
 
 /// State captured before parsing a type expression, used when extracting

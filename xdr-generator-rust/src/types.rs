@@ -195,17 +195,6 @@ pub fn base_rust_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> String 
                 None => format!("VecM<{elem}>"),
             }
         }
-        Type::AnonymousUnion {
-            discriminant, arms, ..
-        } => {
-            // This should never happen - anonymous unions are extracted during parsing
-            panic!(
-                "AnonymousUnion should have been extracted during parsing. \
-                 Discriminant: {:?}, Arms count: {}",
-                discriminant.name,
-                arms.len()
-            )
-        }
     }
 }
 

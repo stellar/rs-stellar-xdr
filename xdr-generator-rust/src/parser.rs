@@ -322,15 +322,8 @@ impl Parser {
     }
 
     fn parse_member(&mut self) -> Result<Member, ParseError> {
-        // Record start position for source extraction (for anonymous unions)
-        let type_start_byte = self.current_start_byte();
-
-        // Track extracted definitions before parsing type (for fixing parent relationships)
-        let extract_start_idx = self.extracted_definitions.len();
-
+        let ctx = self.type_parse_context();
         let type_ = self.parse_type()?;
-
-        // Record end position (after parsing type, before field name)
         let type_end_byte = self.prev_end_byte();
 
         let name = self.expect_ident()?;
@@ -339,13 +332,7 @@ impl Parser {
         let type_ = self.parse_type_suffix(type_)?;
 
         // If this is an anonymous union, extract it as a separate definition
-        let type_ = self.extract_anonymous_union_if_needed(
-            type_,
-            &name,
-            type_start_byte,
-            type_end_byte,
-            extract_start_idx,
-        );
+        let type_ = self.extract_anonymous_union_if_needed(type_, &name, &ctx, type_end_byte);
 
         Ok(Member { name, type_ })
     }
@@ -422,15 +409,8 @@ impl Parser {
             //           then skip forward past the already-consumed tokens.
             Some(self.parse_inline_struct()?)
         } else {
-            // Record start position for source extraction
-            let type_start_byte = self.current_start_byte();
-
-            // Track extracted definitions before parsing type (for fixing parent relationships)
-            let extract_start_idx = self.extracted_definitions.len();
-
+            let ctx = self.type_parse_context();
             let type_ = self.parse_type()?;
-
-            // Record end position after parsing type
             let type_end_byte = self.prev_end_byte();
 
             // The field name is consumed but not stored in UnionArm — the
@@ -442,13 +422,8 @@ impl Parser {
             self.expect(Token::Semi)?;
 
             // If this is an anonymous union, extract it as a separate definition
-            let type_ = self.extract_anonymous_union_if_needed(
-                type_,
-                &field_name,
-                type_start_byte,
-                type_end_byte,
-                extract_start_idx,
-            );
+            let type_ =
+                self.extract_anonymous_union_if_needed(type_, &field_name, &ctx, type_end_byte);
 
             Some(type_)
         };
@@ -835,21 +810,28 @@ impl Parser {
         }
     }
 
+    /// Snapshot the parser state needed before parsing a type expression, so
+    /// that anonymous unions can later be extracted with correct source spans
+    /// and parent fixups.
+    fn type_parse_context(&self) -> TypeParseContext {
+        TypeParseContext {
+            start_byte: self.current_start_byte(),
+            extract_start_idx: self.extracted_definitions.len(),
+        }
+    }
+
     /// If `type_` is an anonymous union, extract it as a named union definition and return
     /// a `Type::Ident` referencing the extracted type. Otherwise return `type_` unchanged.
     ///
     /// `field_name` is the field that holds the union (used for name generation).
-    /// `type_start_byte`/`type_end_byte` delimit the source text for the anonymous union.
-    /// `extract_start_idx` is the index into `self.extracted_definitions` from before
-    /// the type was parsed, used to fix parent relationships on definitions extracted
-    /// during the union's parsing.
+    /// `ctx` captures the parser state from before the type was parsed.
+    /// `type_end_byte` is the byte offset where the type expression ended.
     fn extract_anonymous_union_if_needed(
         &mut self,
         type_: Type,
         field_name: &str,
-        type_start_byte: usize,
+        ctx: &TypeParseContext,
         type_end_byte: usize,
-        extract_start_idx: usize,
     ) -> Type {
         match type_ {
             Type::AnonymousUnion { discriminant, arms } => {
@@ -861,7 +843,7 @@ impl Parser {
                 };
 
                 // Extract source text for the anonymous union
-                let source = self.source_slice(type_start_byte, type_end_byte);
+                let source = self.source_slice(ctx.start_byte, type_end_byte);
 
                 // Create the Union definition (unbox the discriminant)
                 let union_def = Union {
@@ -876,7 +858,7 @@ impl Parser {
                 // Fix up parent relationships for any definitions extracted during union parsing
                 // (e.g., inline structs inside union arms should have this union as their parent)
                 // Only update if current parent is the root_parent (not already a more specific parent)
-                for def in &mut self.extracted_definitions[extract_start_idx..] {
+                for def in &mut self.extracted_definitions[ctx.extract_start_idx..] {
                     match def {
                         Definition::Struct(s) if s.is_nested && s.parent == self.root_parent => {
                             s.parent = Some(union_name.clone());
@@ -955,6 +937,15 @@ pub enum ParseError {
     UnsupportedDefaultArm { line: usize, col: usize },
     #[error("{line}:{col}: integer value {value} overflows target type")]
     IntegerOverflow { value: i64, line: usize, col: usize },
+}
+
+/// State captured before parsing a type expression, used when extracting
+/// anonymous unions into named definitions.
+struct TypeParseContext {
+    /// Byte offset where the type expression starts (for source extraction).
+    start_byte: usize,
+    /// Index into `extracted_definitions` before parsing (for parent fixup).
+    extract_start_idx: usize,
 }
 
 /// Fix parent relationships for nested types based on naming patterns.

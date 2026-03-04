@@ -735,6 +735,11 @@ impl Parser {
 
     /// Extract a source slice between two byte offsets.
     fn source_slice(&self, start: usize, end: usize) -> String {
+        debug_assert!(
+            start < end && end <= self.source.len(),
+            "source_slice out of bounds: start={start}, end={end}, len={}",
+            self.source.len()
+        );
         if start < end && end <= self.source.len() {
             self.source[start..end].to_string()
         } else {

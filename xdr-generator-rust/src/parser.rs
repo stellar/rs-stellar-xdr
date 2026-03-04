@@ -13,7 +13,7 @@ pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     parser.parse()
 }
 
-pub struct Parser {
+struct Parser {
     tokens: Vec<SpannedToken>,
     pos: usize,
     /// The original source text, for extracting source snippets
@@ -29,7 +29,7 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(source: &str) -> Result<Self, ParseError> {
+    fn new(source: &str) -> Result<Self, ParseError> {
         let lexer = Lexer::new(source);
         let (tokens, source) = lexer.tokenize_with_spans()?;
         Ok(Self {
@@ -44,7 +44,7 @@ impl Parser {
     }
 
     /// Parse the entire input.
-    pub fn parse(&mut self) -> Result<XdrSpec, ParseError> {
+    fn parse(&mut self) -> Result<XdrSpec, ParseError> {
         let mut spec = XdrSpec::default();
 
         while *self.peek() != Token::Eof {

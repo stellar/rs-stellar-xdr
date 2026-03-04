@@ -433,6 +433,10 @@ impl Parser {
             // Record end position after parsing type
             let type_end_byte = self.prev_end_byte();
 
+            // The field name is consumed but not stored in UnionArm — the
+            // generated Rust enum variant names come from the case values, not
+            // the field name. The field name is only used below for naming
+            // extracted anonymous unions.
             let field_name = self.expect_ident()?;
             let type_ = self.parse_type_suffix(type_)?;
             self.expect(Token::Semi)?;

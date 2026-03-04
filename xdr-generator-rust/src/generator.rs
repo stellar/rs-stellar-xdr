@@ -281,8 +281,13 @@ impl Generator {
     fn generate_typedef(&self, t: &Typedef) -> DefinitionOutput {
         let name = rust_type_name(&t.name);
 
-        // Simple type alias only for exact primitive type names (Uint64, Int64, etc.)
-        // Other typedefs to primitives (like Duration, TimePoint) become newtypes
+        // Typedefs whose underlying type is an XDR keyword primitive (int, hyper,
+        // etc.) AND whose XDR name is one of the standard aliases (uint64, int64,
+        // uint32, int32) become simple type aliases. Other typedefs to primitives
+        // (like SequenceNumber, Duration, TimePoint) become newtypes because their
+        // XDR source uses the alias name (e.g. `int64`) which the parser resolves
+        // to an Ident, not a keyword primitive. This matches the Ruby generator
+        // where `is_builtin_type` checks the AST node type, not the resolved type.
         let is_primitive_alias = matches!(
             name.as_str(),
             "Uint64" | "Int64" | "Uint32" | "Int32" | "Float" | "Double"

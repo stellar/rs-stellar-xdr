@@ -71,14 +71,6 @@ impl Parser {
             spec.definitions.push(extracted);
         }
 
-        // Post-process to fix parent relationships for nested types.
-        // For types whose name starts with another type's name, update parent to be that type.
-        // This fixes cases where inline structs inside unions have nested unions.
-        fix_parent_relationships(&mut spec.definitions);
-        for ns in &mut spec.namespaces {
-            fix_parent_relationships(&mut ns.definitions);
-        }
-
         Ok(spec)
     }
 
@@ -977,73 +969,6 @@ struct TypeParseContext {
     extract_start_idx: usize,
 }
 
-/// Fix parent relationships for nested types based on naming patterns.
-///
-/// During parsing, each extracted nested type is assigned its immediate parent.
-/// However, when inline structs inside union arms themselves contain anonymous
-/// unions, the deeply nested union may only know about the top-level parent.
-///
-/// For example, given XDR like:
-/// ```text
-/// union Outer switch (int v) {
-///     case 0:
-///         struct {
-///             union switch (int w) { case 0: void; } innerField;
-///         } outerField;
-/// };
-/// ```
-/// Parsing produces three types:
-///   - `OuterOuterFieldInnerField` (the anonymous union) — initially parent = `Outer`
-///   - `OuterOuterField` (the inline struct) — parent = `Outer`
-///   - `Outer` (the top-level union)
-///
-/// This function detects that `OuterOuterFieldInnerField` starts with
-/// `OuterOuterField` and reassigns its parent from `Outer` to `OuterOuterField`.
-fn fix_parent_relationships(definitions: &mut [Definition]) {
-    // Collect all nested type names
-    let nested_names: Vec<String> = definitions
-        .iter()
-        .filter_map(|def| {
-            if def.is_nested() {
-                Some(def.name().to_string())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    // For each nested type, find if there's a "better" parent
-    // (a nested type whose name is a prefix and longer than current parent)
-    for def in definitions.iter_mut() {
-        if !def.is_nested() {
-            continue;
-        }
-        let name = def.name().to_string();
-        let current_parent = def.parent().map(|s| s.to_string());
-
-        // Find the longest prefix match among nested types (excluding self)
-        let best_parent = nested_names
-            .iter()
-            .filter(|&candidate| {
-                candidate != &name
-                    && name.starts_with(candidate)
-                    && current_parent
-                        .as_ref()
-                        .map(|p| candidate.len() > p.len())
-                        .unwrap_or(true)
-            })
-            .max_by_key(|s| s.len());
-
-        if let Some(new_parent) = best_parent {
-            match def {
-                Definition::Struct(s) => s.parent = Some(new_parent.clone()),
-                Definition::Union(u) => u.parent = Some(new_parent.clone()),
-                _ => {}
-            }
-        }
-    }
-}
-
 /// Generate a nested type name from parent and field name.
 fn generate_nested_type_name(parent: &str, field: &str) -> String {
     format!("{}{}", parent, field.to_upper_camel_case())
@@ -1116,53 +1041,50 @@ mod tests {
     }
 
     #[test]
-    fn test_fix_parent_relationships() {
-        // Simulate the scenario: an inline struct inside a union arm contains
-        // an anonymous union. The deeply nested union should have its parent
-        // reassigned from the top-level union to the inline struct.
-        let mut definitions = vec![
-            Definition::Union(Union {
-                name: "OuterOuterFieldInnerField".to_string(),
-                discriminant: UnionDiscriminant {
-                    name: "w".to_string(),
-                    type_: Type::Int,
-                },
-                arms: vec![],
-                source: String::new(),
-                is_nested: true,
-                parent: Some("Outer".to_string()),
-            }),
-            Definition::Struct(Struct {
-                name: "OuterOuterField".to_string(),
-                members: vec![],
-                source: String::new(),
-                is_nested: true,
-                parent: Some("Outer".to_string()),
-            }),
-            Definition::Union(Union {
-                name: "Outer".to_string(),
-                discriminant: UnionDiscriminant {
-                    name: "v".to_string(),
-                    type_: Type::Int,
-                },
-                arms: vec![],
-                source: String::new(),
-                is_nested: false,
-                parent: None,
-            }),
-        ];
+    fn test_deeply_nested_parents_assigned_during_parse() {
+        let input = r#"
+            union Outer switch (int v) {
+                case 0:
+                    struct {
+                        union switch (int w) { case 0: void; } innerField;
+                    } outerField;
+            };
+        "#;
+        let mut parser = Parser::new(input).unwrap();
+        // Temporarily disable fix_parent_relationships to see raw assignments
+        let spec = parser.parse().unwrap();
 
-        fix_parent_relationships(&mut definitions);
+        // Print actual assignments for debugging
+        for def in &spec.definitions {
+            eprintln!(
+                "name={} nested={} parent={:?}",
+                def.name(),
+                def.is_nested(),
+                def.parent()
+            );
+        }
 
-        // The deeply nested union should now point to the inline struct
+        // Check that all parents are correctly assigned
+        let inner_union = spec
+            .definitions
+            .iter()
+            .find(|d| d.name() == "OuterOuterFieldInnerField")
+            .unwrap();
         assert_eq!(
-            definitions[0].parent(),
+            inner_union.parent(),
             Some("OuterOuterField"),
-            "deeply nested type should have its parent reassigned to the inline struct"
+            "inner union parent should be the inline struct"
         );
-        // The inline struct's parent should remain unchanged
-        assert_eq!(definitions[1].parent(), Some("Outer"));
-        // The top-level union has no parent
-        assert_eq!(definitions[2].parent(), None);
+
+        let inline_struct = spec
+            .definitions
+            .iter()
+            .find(|d| d.name() == "OuterOuterField")
+            .unwrap();
+        assert_eq!(
+            inline_struct.parent(),
+            Some("Outer"),
+            "inline struct parent should be the top-level union"
+        );
     }
 }

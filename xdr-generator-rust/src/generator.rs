@@ -1,5 +1,7 @@
 //! Code generator that prepares data for templates and renders output.
 
+use std::collections::{HashMap, HashSet};
+
 use crate::ast::{
     CaseValue, Const, Definition, Enum, Member, Struct, Type, Typedef, Union, UnionArm, XdrSpec,
 };
@@ -47,7 +49,6 @@ impl Generator {
         // but definitions stay in "nested before parent" order for file output.
         //
         // Build parent-child relationships and then traverse parent-first.
-        use std::collections::HashMap;
 
         // First pass: collect definitions and build parent-child map
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
@@ -77,12 +78,12 @@ impl Generator {
         // Second pass: build types list with parent-before-children ordering
         // Use a recursive helper to add each type and then its children
         let mut types: Vec<String> = Vec::new();
-        let mut added: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let mut added: HashSet<String> = std::collections::HashSet::new();
 
         fn add_type_and_children(
             name: &str,
             types: &mut Vec<String>,
-            added: &mut std::collections::HashSet<String>,
+            added: &mut HashSet<String>,
             children_of: &HashMap<String, Vec<String>>,
         ) {
             if added.contains(name) {

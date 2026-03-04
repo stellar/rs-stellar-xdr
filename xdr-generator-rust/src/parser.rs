@@ -1,5 +1,7 @@
 //! XDR parser (recursive descent).
 
+use std::collections::HashMap;
+
 use crate::ast::*;
 use crate::lexer::{IntBase, LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
@@ -23,7 +25,7 @@ pub struct Parser {
     /// Root parent type name for generating nested type names
     root_parent: Option<String>,
     /// Global map of enum member names and const names to their values
-    global_values: std::collections::HashMap<String, i64>,
+    global_values: HashMap<String, i64>,
 }
 
 impl Parser {
@@ -37,7 +39,7 @@ impl Parser {
             def_start_pos: 0,
             extracted_definitions: Vec::new(),
             root_parent: None,
-            global_values: std::collections::HashMap::new(),
+            global_values: HashMap::new(),
         })
     }
 

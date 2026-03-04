@@ -79,6 +79,8 @@ impl Parser {
             fix_parent_relationships(&mut ns.definitions);
         }
 
+        spec.debug_assert_no_anonymous_unions();
+
         Ok(spec)
     }
 

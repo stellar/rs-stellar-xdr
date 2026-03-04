@@ -17,8 +17,6 @@ pub struct Options {
 
 /// Type information collected from the XDR spec.
 pub struct TypeInfo {
-    /// All type names defined in the spec
-    pub type_names: HashSet<String>,
     /// Map from type name to its definition
     pub definitions: HashMap<String, Definition>,
     /// Map from type name to the types it references in its fields
@@ -30,7 +28,6 @@ pub struct TypeInfo {
 impl TypeInfo {
     /// Build type information from an XDR spec.
     pub fn build(spec: &XdrSpec) -> Self {
-        let mut type_names = HashSet::new();
         let mut definitions = HashMap::new();
         let mut type_field_types: HashMap<String, Vec<String>> = HashMap::new();
         let mut const_values = HashMap::new();
@@ -38,7 +35,6 @@ impl TypeInfo {
         // Collect all definitions
         for def in spec.all_definitions() {
             let name = rust_type_name(def.name());
-            type_names.insert(name.clone());
             definitions.insert(name.clone(), def.clone());
 
             // Collect field types for cyclic detection
@@ -52,7 +48,6 @@ impl TypeInfo {
         }
 
         Self {
-            type_names,
             definitions,
             type_field_types,
             const_values,

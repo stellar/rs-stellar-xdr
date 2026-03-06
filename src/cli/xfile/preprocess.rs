@@ -140,11 +140,6 @@ fn flagless_directive_err(directive: &str, line: usize) -> Error {
 /// # Errors
 ///
 /// Returns an error for malformed or unbalanced preprocessor directives.
-///
-/// # Panics
-///
-/// Panics if `parse_symbol_directive` returns `Ok(None)` after a
-/// `starts_with` guard, which cannot happen in practice.
 pub fn preprocess(input: &str, features: &[&str]) -> Result<String, Error> {
     let mut output = String::new();
     let mut stack: Vec<IfBlock> = Vec::new();
@@ -184,7 +179,10 @@ fn process_line(
     if trimmed.starts_with("#ifdef") {
         let symbol = parse_symbol_directive(trimmed, "#ifdef")
             .map_err(|()| symbol_directive_err(trimmed, "#ifdef", line_num))?
-            .expect("starts_with guard ensures strip_prefix succeeds");
+            .ok_or_else(|| Error::InvalidDirectiveSyntax {
+                line: line_num,
+                directive: "#ifdef".to_string(),
+            })?;
         let parent_active = stack.last().is_none_or(|b| b.active);
         let active = parent_active && feature_set.contains(symbol);
         stack.push(IfBlock {
@@ -197,7 +195,10 @@ fn process_line(
     } else if trimmed.starts_with("#ifndef") {
         let symbol = parse_symbol_directive(trimmed, "#ifndef")
             .map_err(|()| symbol_directive_err(trimmed, "#ifndef", line_num))?
-            .expect("starts_with guard ensures strip_prefix succeeds");
+            .ok_or_else(|| Error::InvalidDirectiveSyntax {
+                line: line_num,
+                directive: "#ifndef".to_string(),
+            })?;
         let parent_active = stack.last().is_none_or(|b| b.active);
         let active = parent_active && !feature_set.contains(symbol);
         stack.push(IfBlock {
@@ -210,7 +211,10 @@ fn process_line(
     } else if trimmed.starts_with("#elif") {
         let symbol = parse_symbol_directive(trimmed, "#elif")
             .map_err(|()| symbol_directive_err(trimmed, "#elif", line_num))?
-            .expect("starts_with guard ensures strip_prefix succeeds");
+            .ok_or_else(|| Error::InvalidDirectiveSyntax {
+                line: line_num,
+                directive: "#elif".to_string(),
+            })?;
         let block = stack
             .last_mut()
             .ok_or(Error::UnmatchedElif { line: line_num })?;

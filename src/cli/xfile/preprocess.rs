@@ -36,9 +36,9 @@ pub struct Cmd {
     #[arg()]
     pub input: Option<PathBuf>,
 
-    /// Comma-separated list of features/symbols to define
-    #[arg(long)]
-    pub features: Option<String>,
+    /// Features/symbols to define
+    #[arg(long, value_delimiter = ',')]
+    pub features: Vec<String>,
 }
 
 #[allow(clippy::struct_excessive_bools)]
@@ -251,16 +251,7 @@ impl Cmd {
     ///
     /// If the command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
-        let features: Vec<&str> = self
-            .features
-            .as_deref()
-            .map(|s| {
-                s.split(',')
-                    .map(str::trim)
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            })
-            .unwrap_or_default();
+        let features: Vec<&str> = self.features.iter().map(String::as_str).collect();
 
         let mut content = String::new();
         let mut reader: Box<dyn Read> = match &self.input {

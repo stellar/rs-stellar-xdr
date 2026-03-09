@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "FrozenLedgerKeysDelta",
+  "description": "FrozenLedgerKeysDelta is an XDR Struct defined as:\n\n```text struct FrozenLedgerKeysDelta { EncodedLedgerKey keysToFreeze<>; EncodedLedgerKey keysToUnfreeze<>; }; ```",
+  "type": "object",
+  "required": [
+    "keys_to_freeze",
+    "keys_to_unfreeze"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "keys_to_freeze": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EncodedLedgerKey"
+      },
+      "maxItems": 4294967295
+    },
+    "keys_to_unfreeze": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EncodedLedgerKey"
+      },
+      "maxItems": 4294967295
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "EncodedLedgerKey": {
+      "description": "EncodedLedgerKey is an XDR Typedef defined as:\n\n```text typedef opaque EncodedLedgerKey<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

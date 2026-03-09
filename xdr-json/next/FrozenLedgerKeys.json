@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "FrozenLedgerKeys",
+  "description": "FrozenLedgerKeys is an XDR Struct defined as:\n\n```text struct FrozenLedgerKeys { EncodedLedgerKey keys<>; }; ```",
+  "type": "object",
+  "required": [
+    "keys"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "keys": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EncodedLedgerKey"
+      },
+      "maxItems": 4294967295
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "EncodedLedgerKey": {
+      "description": "EncodedLedgerKey is an XDR Typedef defined as:\n\n```text typedef opaque EncodedLedgerKey<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "FreezeBypassTxs",
+  "description": "FreezeBypassTxs is an XDR Struct defined as:\n\n```text struct FreezeBypassTxs { Hash txHashes<>; }; ```",
+  "type": "object",
+  "required": [
+    "tx_hashes"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "tx_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64,
+        "contentEncoding": "hex",
+        "contentMediaType": "application/binary"
+      },
+      "maxItems": 4294967295
+    }
+  },
+  "unevaluatedProperties": false
+}

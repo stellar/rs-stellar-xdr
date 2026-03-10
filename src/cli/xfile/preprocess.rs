@@ -139,8 +139,7 @@ fn flagless_directive_err(directive: &str, line: usize) -> Error {
 
 /// Collect all feature symbols referenced by `#ifdef`, `#ifndef`, and `#elif`
 /// directives in the input.
-#[must_use]
-pub fn collect_symbols(input: &str) -> Vec<String> {
+fn collect_symbols(input: &str) -> Vec<String> {
     let mut symbols = Vec::new();
     let mut seen = HashSet::new();
     for raw_line in input.split_inclusive('\n') {

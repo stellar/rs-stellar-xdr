@@ -656,6 +656,14 @@ pub trait WriteXdr {
         Ok(bytes)
     }
 
+    #[cfg(feature = "std")]
+    fn to_xdr_len(&self, limits: Limits) -> Result<usize, Error> {
+        let start = limits.len;
+        let mut cursor = Limited::new(io::sink(), limits);
+        self.write_xdr(&mut cursor)?;
+        Ok(start - cursor.limits.len)
+    }
+
     #[cfg(feature = "base64")]
     fn to_xdr_base64(&self, limits: Limits) -> Result<String, Error> {
         let mut enc = Limited::new(

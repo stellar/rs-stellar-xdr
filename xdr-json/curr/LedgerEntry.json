@@ -710,7 +710,7 @@
       }
     },
     "ConfigSettingEntry": {
-      "description": "ConfigSettingEntry is an XDR Union defined as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; }; ```",
+      "description": "ConfigSettingEntry is an XDR Union defined as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; case CONFIG_SETTING_FROZEN_LEDGER_KEYS: FrozenLedgerKeys frozenLedgerKeys; case CONFIG_SETTING_FROZEN_LEDGER_KEYS_DELTA: FrozenLedgerKeysDelta frozenLedgerKeysDelta; case CONFIG_SETTING_FREEZE_BYPASS_TXS: FreezeBypassTxs freezeBypassTxs; case CONFIG_SETTING_FREEZE_BYPASS_TXS_DELTA: FreezeBypassTxsDelta freezeBypassTxsDelta; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -906,6 +906,50 @@
           "properties": {
             "scp_timing": {
               "$ref": "#/definitions/ConfigSettingScpTiming"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "frozen_ledger_keys"
+          ],
+          "properties": {
+            "frozen_ledger_keys": {
+              "$ref": "#/definitions/FrozenLedgerKeys"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "frozen_ledger_keys_delta"
+          ],
+          "properties": {
+            "frozen_ledger_keys_delta": {
+              "$ref": "#/definitions/FrozenLedgerKeysDelta"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "freeze_bypass_txs"
+          ],
+          "properties": {
+            "freeze_bypass_txs": {
+              "$ref": "#/definitions/FreezeBypassTxs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "freeze_bypass_txs_delta"
+          ],
+          "properties": {
+            "freeze_bypass_txs_delta": {
+              "$ref": "#/definitions/FreezeBypassTxsDelta"
             }
           }
         }
@@ -1217,6 +1261,12 @@
       "description": "Duration is an XDR Typedef defined as:\n\n```text typedef uint64 Duration; ```",
       "type": "string"
     },
+    "EncodedLedgerKey": {
+      "description": "EncodedLedgerKey is an XDR Typedef defined as:\n\n```text typedef opaque EncodedLedgerKey<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
     "EvictionIterator": {
       "description": "EvictionIterator is an XDR Struct defined as:\n\n```text struct EvictionIterator { uint32 bucketListLevel; bool isCurrBucket; uint64 bucketFileOffset; }; ```",
       "type": "object",
@@ -1245,6 +1295,98 @@
       "enum": [
         "v0"
       ]
+    },
+    "FreezeBypassTxs": {
+      "description": "FreezeBypassTxs is an XDR Struct defined as:\n\n```text struct FreezeBypassTxs { Hash txHashes<>; }; ```",
+      "type": "object",
+      "required": [
+        "tx_hashes"
+      ],
+      "properties": {
+        "tx_hashes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "contentEncoding": "hex",
+            "contentMediaType": "application/binary"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "FreezeBypassTxsDelta": {
+      "description": "FreezeBypassTxsDelta is an XDR Struct defined as:\n\n```text struct FreezeBypassTxsDelta { Hash addTxs<>; Hash removeTxs<>; }; ```",
+      "type": "object",
+      "required": [
+        "add_txs",
+        "remove_txs"
+      ],
+      "properties": {
+        "add_txs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "contentEncoding": "hex",
+            "contentMediaType": "application/binary"
+          },
+          "maxItems": 4294967295
+        },
+        "remove_txs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "contentEncoding": "hex",
+            "contentMediaType": "application/binary"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "FrozenLedgerKeys": {
+      "description": "FrozenLedgerKeys is an XDR Struct defined as:\n\n```text struct FrozenLedgerKeys { EncodedLedgerKey keys<>; }; ```",
+      "type": "object",
+      "required": [
+        "keys"
+      ],
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EncodedLedgerKey"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "FrozenLedgerKeysDelta": {
+      "description": "FrozenLedgerKeysDelta is an XDR Struct defined as:\n\n```text struct FrozenLedgerKeysDelta { EncodedLedgerKey keysToFreeze<>; EncodedLedgerKey keysToUnfreeze<>; }; ```",
+      "type": "object",
+      "required": [
+        "keys_to_freeze",
+        "keys_to_unfreeze"
+      ],
+      "properties": {
+        "keys_to_freeze": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EncodedLedgerKey"
+          },
+          "maxItems": 4294967295
+        },
+        "keys_to_unfreeze": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EncodedLedgerKey"
+          },
+          "maxItems": 4294967295
+        }
+      }
     },
     "Int128Parts": {
       "type": "string"

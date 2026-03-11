@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "EncodedLedgerKey",
+  "description": "EncodedLedgerKey is an XDR Typedef defined as:\n\n```text typedef opaque EncodedLedgerKey<>; ```",
+  "type": "string",
+  "contentEncoding": "hex",
+  "contentMediaType": "application/binary"
+}

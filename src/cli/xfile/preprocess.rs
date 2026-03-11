@@ -37,8 +37,12 @@ pub struct Cmd {
     pub input: Option<PathBuf>,
 
     /// Features/symbols to define
-    #[arg(long, value_delimiter = ',')]
+    #[arg(long, value_delimiter = ',', conflicts_with = "all_features")]
     pub features: Vec<String>,
+
+    /// Enable all features/symbols found in the input
+    #[arg(long)]
+    pub all_features: bool,
 }
 
 #[allow(clippy::struct_excessive_bools)]
@@ -131,6 +135,25 @@ fn flagless_directive_err(directive: &str, line: usize) -> Error {
         line,
         directive: directive.to_string(),
     }
+}
+
+/// Collect all feature symbols referenced by `#ifdef`, `#ifndef`, and `#elif`
+/// directives in the input.
+fn collect_symbols(input: &str) -> Vec<String> {
+    let mut symbols = Vec::new();
+    let mut seen = HashSet::new();
+    for raw_line in input.split_inclusive('\n') {
+        let trimmed = raw_line.strip_suffix('\n').unwrap_or(raw_line).trim();
+        for directive in &["#ifdef", "#ifndef", "#elif"] {
+            if let Ok(Some(symbol)) = parse_symbol_directive(trimmed, directive) {
+                if seen.insert(symbol.to_string()) {
+                    symbols.push(symbol.to_string());
+                }
+                break;
+            }
+        }
+    }
+    symbols
 }
 
 /// Preprocess XDR `.x` source by evaluating
@@ -255,8 +278,6 @@ impl Cmd {
     ///
     /// If the command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
-        let features: Vec<&str> = self.features.iter().map(String::as_str).collect();
-
         let mut content = String::new();
         let mut reader: Box<dyn Read> = match &self.input {
             Some(path) => Box::new(File::open(path).map_err(Error::ReadFile)?),
@@ -265,6 +286,14 @@ impl Cmd {
         reader
             .read_to_string(&mut content)
             .map_err(Error::ReadFile)?;
+
+        let collected;
+        let features: Vec<&str> = if self.all_features {
+            collected = collect_symbols(&content);
+            collected.iter().map(String::as_str).collect()
+        } else {
+            self.features.iter().map(String::as_str).collect()
+        };
         let result = preprocess(&content, &features)?;
         match stdout().write_all(result.as_bytes()) {
             Ok(()) => Ok(()),
@@ -771,6 +800,75 @@ c
                 directive: _
             }
         ));
+    }
+
+    #[test]
+    fn test_collect_symbols_basic() {
+        let input = "\
+#ifdef FEAT_A
+a
+#endif
+#ifdef FEAT_B
+b
+#endif
+";
+        let symbols = collect_symbols(input);
+        assert_eq!(symbols, vec!["FEAT_A", "FEAT_B"]);
+    }
+
+    #[test]
+    fn test_collect_symbols_deduplicates() {
+        let input = "\
+#ifdef FEAT_A
+a
+#endif
+#ifdef FEAT_A
+b
+#endif
+";
+        let symbols = collect_symbols(input);
+        assert_eq!(symbols, vec!["FEAT_A"]);
+    }
+
+    #[test]
+    fn test_collect_symbols_all_directive_types() {
+        let input = "\
+#ifdef A
+a
+#elif B
+b
+#endif
+#ifndef C
+c
+#endif
+";
+        let symbols = collect_symbols(input);
+        assert_eq!(symbols, vec!["A", "B", "C"]);
+    }
+
+    #[test]
+    fn test_collect_symbols_empty() {
+        let symbols = collect_symbols("no directives here\n");
+        assert!(symbols.is_empty());
+    }
+
+    #[test]
+    fn test_all_features_enables_everything() {
+        let input = "\
+#ifdef FEAT_A
+a
+#endif
+#ifdef FEAT_B
+b
+#endif
+#ifndef FEAT_C
+c
+#endif
+";
+        let all = collect_symbols(input);
+        let features: Vec<&str> = all.iter().map(String::as_str).collect();
+        let result = preprocess(input, &features).unwrap();
+        assert_eq!(result, "a\nb\n");
     }
 
     #[test]

@@ -70,6 +70,22 @@ impl TypeInfo {
         }
     }
 
+    /// If `type_` is a `Type::Ident` that refers to a typedef whose underlying
+    /// type is a builtin (int, hyper, etc.), return that builtin type.
+    /// This mirrors the Ruby generator's `resolved_type` logic: one level of
+    /// typedef resolution, only when the typedef's target is a keyword primitive.
+    pub fn resolve_typedef_to_builtin<'a>(&'a self, type_: &Type) -> Option<&'a Type> {
+        if let Type::Ident(name) = type_ {
+            let rust_name = rust_type_name(name);
+            if let Some(Definition::Typedef(t)) = self.definitions.get(&rust_name) {
+                if is_builtin_type(&t.type_) {
+                    return Some(&t.type_);
+                }
+            }
+        }
+        None
+    }
+
     /// Check if `type_with_fields` has a cyclic reference to `target_type`.
     pub fn is_cyclic(&self, type_with_fields: &str, target_type: &str) -> bool {
         self.is_cyclic_inner(type_with_fields, target_type, &mut HashSet::new())
@@ -176,7 +192,21 @@ pub fn base_rust_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> String 
             Some(size) => format!("StringM::<{}>", resolve_size(size)),
             None => "StringM".to_string(),
         },
-        Type::Ident(name) => rust_type_name(name),
+        Type::Ident(_) => {
+            // If the ident refers to a typedef whose underlying type is a
+            // builtin (e.g., `int64` → `typedef hyper int64`), resolve
+            // through to the builtin, matching the Ruby generator's behavior.
+            if let Some(ti) = type_info {
+                if let Some(builtin) = ti.resolve_typedef_to_builtin(type_) {
+                    return base_rust_type_ref(builtin, type_info);
+                }
+            }
+            if let Type::Ident(name) = type_ {
+                rust_type_name(name)
+            } else {
+                unreachable!()
+            }
+        }
         Type::Optional(inner) => format!("Option<{}>", base_rust_type_ref(inner, type_info)),
         Type::Array { element_type, size } => {
             format!(
@@ -258,23 +288,33 @@ pub fn rust_read_call_type(
 }
 
 /// Get the element type for a VecM/array (for conversion impls).
-pub fn element_type_for_vec(type_: &Type) -> String {
+pub fn element_type_for_vec(type_: &Type, type_info: &TypeInfo) -> String {
     match type_ {
         Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
         Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
-            base_rust_type_ref(element_type, None)
+            base_rust_type_ref(element_type, Some(type_info))
         }
-        Type::Ident(name) => rust_type_name(name),
+        Type::Ident(_) => {
+            if let Some(builtin) = type_info.resolve_typedef_to_builtin(type_) {
+                base_rust_type_ref(builtin, Some(type_info))
+            } else if let Type::Ident(name) = type_ {
+                rust_type_name(name)
+            } else {
+                unreachable!()
+            }
+        }
         _ => "u8".to_string(),
     }
 }
 
 /// Get the serde_as type for i64/u64 fields (e.g., "NumberOrString", "Option<NumberOrString>").
 /// Returns None if no serde_as is needed.
-pub fn serde_as_type(type_: &Type) -> Option<String> {
-    let base = get_base_numeric_type(type_);
+pub fn serde_as_type(type_: &Type, type_info: &TypeInfo) -> Option<String> {
+    let base = get_base_numeric_type(type_, type_info);
     match base.as_deref() {
-        Some("i64") | Some("u64") => Some(rust_type_ref_for_serde(type_, "NumberOrString")),
+        Some("i64") | Some("u64") => {
+            Some(rust_type_ref_for_serde(type_, "NumberOrString", type_info))
+        }
         _ => None,
     }
 }
@@ -379,27 +419,44 @@ fn escape_field_name(name: &str) -> String {
     }
 }
 
-fn get_base_numeric_type(type_: &Type) -> Option<String> {
+fn get_base_numeric_type(type_: &Type, type_info: &TypeInfo) -> Option<String> {
     match type_ {
         Type::Hyper => Some("i64".to_string()),
         Type::UnsignedHyper => Some("u64".to_string()),
-        Type::Optional(inner) => get_base_numeric_type(inner),
-        Type::Array { element_type, .. } => get_base_numeric_type(element_type),
-        Type::VarArray { element_type, .. } => get_base_numeric_type(element_type),
+        Type::Ident(_) => {
+            if let Some(builtin) = type_info.resolve_typedef_to_builtin(type_) {
+                get_base_numeric_type(builtin, type_info)
+            } else {
+                None
+            }
+        }
+        Type::Optional(inner) => get_base_numeric_type(inner, type_info),
+        Type::Array { element_type, .. } => get_base_numeric_type(element_type, type_info),
+        Type::VarArray { element_type, .. } => get_base_numeric_type(element_type, type_info),
         _ => None,
     }
 }
 
-fn rust_type_ref_for_serde(type_: &Type, number_wrapper: &str) -> String {
+fn rust_type_ref_for_serde(type_: &Type, number_wrapper: &str, type_info: &TypeInfo) -> String {
     match type_ {
         Type::Hyper | Type::UnsignedHyper => number_wrapper.to_string(),
+        Type::Ident(_) => {
+            if let Some(builtin) = type_info.resolve_typedef_to_builtin(type_) {
+                rust_type_ref_for_serde(builtin, number_wrapper, type_info)
+            } else {
+                base_rust_type_ref(type_, Some(type_info))
+            }
+        }
         Type::Optional(inner) => {
-            format!("Option<{}>", rust_type_ref_for_serde(inner, number_wrapper))
+            format!(
+                "Option<{}>",
+                rust_type_ref_for_serde(inner, number_wrapper, type_info)
+            )
         }
         Type::Array { element_type, size } => {
             format!(
                 "[{}; {}]",
-                rust_type_ref_for_serde(element_type, number_wrapper),
+                rust_type_ref_for_serde(element_type, number_wrapper, type_info),
                 size_to_rust(size)
             )
         }
@@ -407,13 +464,13 @@ fn rust_type_ref_for_serde(type_: &Type, number_wrapper: &str) -> String {
             element_type,
             max_size,
         } => {
-            let elem = rust_type_ref_for_serde(element_type, number_wrapper);
+            let elem = rust_type_ref_for_serde(element_type, number_wrapper, type_info);
             match max_size {
                 Some(size) => format!("VecM<{elem}, {}>", size_to_rust(size)),
                 None => format!("VecM<{elem}>"),
             }
         }
-        _ => base_rust_type_ref(type_, None),
+        _ => base_rust_type_ref(type_, Some(type_info)),
     }
 }
 

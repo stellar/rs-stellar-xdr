@@ -581,10 +581,6 @@ impl Parser {
                 self.advance();
                 // Handle built-in type aliases
                 let base_type = match name.as_str() {
-                    "uint64" => Type::UnsignedHyper,
-                    "int64" => Type::Hyper,
-                    "uint32" => Type::UnsignedInt,
-                    "int32" => Type::Int,
                     "TRUE" | "FALSE" => Type::Bool,
                     _ => Type::Ident(name),
                 };

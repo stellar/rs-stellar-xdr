@@ -233,17 +233,12 @@ impl Generator {
         let name = rust_type_name(&t.name);
 
         // Typedefs whose underlying type is an XDR keyword primitive (int, hyper,
-        // etc.) AND whose XDR name is one of the standard aliases (uint64, int64,
-        // uint32, int32) become simple type aliases. Other typedefs to primitives
-        // (like SequenceNumber, Duration, TimePoint) become newtypes because their
-        // XDR source uses the alias name (e.g. `int64`) which the parser resolves
-        // to an Ident, not a keyword primitive. This matches the Ruby generator
-        // where `is_builtin_type` checks the AST node type, not the resolved type.
-        let is_primitive_alias = matches!(
-            name.as_str(),
-            "Uint64" | "Int64" | "Uint32" | "Int32" | "Float" | "Double"
-        );
-        if is_primitive_alias && is_builtin_type(&t.type_) {
+        // etc.) become simple type aliases. Typedefs that reference another type
+        // by name (e.g. `typedef int64 SequenceNumber`) become newtypes, because
+        // their type is an Ident, not a keyword primitive. This matches the Ruby
+        // generator where `is_builtin_type` checks the AST node type, not the
+        // resolved type.
+        if is_builtin_type(&t.type_) {
             return DefinitionOutput::TypedefAlias(TypedefAliasOutput {
                 name,
                 source_comment: format_source_comment(&t.source, "Typedef"),
@@ -263,10 +258,10 @@ impl Generator {
         let serde_as = if custom_str {
             None
         } else {
-            serde_as_type(&t.type_)
+            serde_as_type(&t.type_, &self.type_info)
         };
 
-        let element_type = element_type_for_vec(&t.type_);
+        let element_type = element_type_for_vec(&t.type_, &self.type_info);
         let size = match &t.type_ {
             Type::OpaqueFixed(s) | Type::Array { size: s, .. } => Some(size_to_rust(s)),
             _ => None,
@@ -317,7 +312,7 @@ impl Generator {
         let serde_as = if custom_str {
             None
         } else {
-            serde_as_type(&m.type_)
+            serde_as_type(&m.type_, &self.type_info)
         };
 
         StructMemberOutput {
@@ -367,7 +362,11 @@ impl Generator {
                     let type_ref = rust_type_ref(t, Some(parent), &self.type_info);
                     let read_call = rust_read_call_type(t, Some(parent), &self.type_info);
                     // Get serde_as type for i64/u64 types (unless custom_str)
-                    let serde_as = if custom_str { None } else { serde_as_type(t) };
+                    let serde_as = if custom_str {
+                        None
+                    } else {
+                        serde_as_type(t, &self.type_info)
+                    };
                     (Some(type_ref), Some(read_call), serde_as)
                 } else {
                     (None, None, None)

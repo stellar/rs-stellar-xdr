@@ -6,6 +6,7 @@ pub mod guess;
 pub mod types;
 mod util;
 mod version;
+pub mod xfile;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use std::{ffi::OsString, fmt::Debug};
@@ -43,6 +44,7 @@ impl Root {
             Cmd::Encode(c) => c.run(&self.channel)?,
             Cmd::Generate(c) => c.run(&self.channel)?,
             Cmd::Compare(c) => c.run(&self.channel)?,
+            Cmd::Xfile(c) => c.run(&self.channel)?,
             Cmd::Version => version::Cmd::run(),
         }
         Ok(())
@@ -77,6 +79,8 @@ pub enum Cmd {
     Encode(encode::Cmd),
     Compare(compare::Cmd),
     Generate(generate::Cmd),
+    /// Preprocess XDR .x files
+    Xfile(xfile::Cmd),
     /// Print version information
     Version,
 }
@@ -98,6 +102,8 @@ pub enum Error {
     Generate(#[from] generate::Error),
     #[error(transparent)]
     Compare(#[from] compare::Error),
+    #[error(transparent)]
+    Xfile(#[from] xfile::Error),
 }
 
 /// Run the CLI with the given args.

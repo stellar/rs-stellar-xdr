@@ -554,7 +554,7 @@
       }
     },
     "ClaimClaimableBalanceResult": {
-      "description": "ClaimClaimableBalanceResult is an XDR Union defined as:\n\n```text union ClaimClaimableBalanceResult switch (ClaimClaimableBalanceResultCode code) { case CLAIM_CLAIMABLE_BALANCE_SUCCESS: void; case CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST: case CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM: case CLAIM_CLAIMABLE_BALANCE_LINE_FULL: case CLAIM_CLAIMABLE_BALANCE_NO_TRUST: case CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED: void; }; ```",
+      "description": "ClaimClaimableBalanceResult is an XDR Union defined as:\n\n```text union ClaimClaimableBalanceResult switch (ClaimClaimableBalanceResultCode code) { case CLAIM_CLAIMABLE_BALANCE_SUCCESS: void; case CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST: case CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM: case CLAIM_CLAIMABLE_BALANCE_LINE_FULL: case CLAIM_CLAIMABLE_BALANCE_NO_TRUST: case CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED: case CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -562,7 +562,8 @@
         "cannot_claim",
         "line_full",
         "no_trust",
-        "not_authorized"
+        "not_authorized",
+        "trustline_frozen"
       ]
     },
     "ClaimLiquidityAtom": {
@@ -1122,7 +1123,7 @@
       }
     },
     "ConfigSettingEntry": {
-      "description": "ConfigSettingEntry is an XDR Union defined as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; }; ```",
+      "description": "ConfigSettingEntry is an XDR Union defined as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW: uint64 liveSorobanStateSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; case CONFIG_SETTING_SCP_TIMING: ConfigSettingSCPTiming contractSCPTiming; case CONFIG_SETTING_FROZEN_LEDGER_KEYS: FrozenLedgerKeys frozenLedgerKeys; case CONFIG_SETTING_FROZEN_LEDGER_KEYS_DELTA: FrozenLedgerKeysDelta frozenLedgerKeysDelta; case CONFIG_SETTING_FREEZE_BYPASS_TXS: FreezeBypassTxs freezeBypassTxs; case CONFIG_SETTING_FREEZE_BYPASS_TXS_DELTA: FreezeBypassTxsDelta freezeBypassTxsDelta; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -1320,11 +1321,55 @@
               "$ref": "#/definitions/ConfigSettingScpTiming"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "frozen_ledger_keys"
+          ],
+          "properties": {
+            "frozen_ledger_keys": {
+              "$ref": "#/definitions/FrozenLedgerKeys"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "frozen_ledger_keys_delta"
+          ],
+          "properties": {
+            "frozen_ledger_keys_delta": {
+              "$ref": "#/definitions/FrozenLedgerKeysDelta"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "freeze_bypass_txs"
+          ],
+          "properties": {
+            "freeze_bypass_txs": {
+              "$ref": "#/definitions/FreezeBypassTxs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "freeze_bypass_txs_delta"
+          ],
+          "properties": {
+            "freeze_bypass_txs_delta": {
+              "$ref": "#/definitions/FreezeBypassTxsDelta"
+            }
+          }
         }
       ]
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defined as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defined as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15, CONFIG_SETTING_SCP_TIMING = 16, CONFIG_SETTING_FROZEN_LEDGER_KEYS = 17, CONFIG_SETTING_FROZEN_LEDGER_KEYS_DELTA = 18, CONFIG_SETTING_FREEZE_BYPASS_TXS = 19, CONFIG_SETTING_FREEZE_BYPASS_TXS_DELTA = 20 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -1343,7 +1388,11 @@
         "eviction_iterator",
         "contract_parallel_compute_v0",
         "contract_ledger_cost_ext_v0",
-        "scp_timing"
+        "scp_timing",
+        "frozen_ledger_keys",
+        "frozen_ledger_keys_delta",
+        "freeze_bypass_txs",
+        "freeze_bypass_txs_delta"
       ]
     },
     "ConfigSettingScpTiming": {
@@ -1982,6 +2031,12 @@
       "description": "Duration is an XDR Typedef defined as:\n\n```text typedef uint64 Duration; ```",
       "type": "string"
     },
+    "EncodedLedgerKey": {
+      "description": "EncodedLedgerKey is an XDR Typedef defined as:\n\n```text typedef opaque EncodedLedgerKey<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
     "EndSponsoringFutureReservesResult": {
       "description": "EndSponsoringFutureReservesResult is an XDR Union defined as:\n\n```text union EndSponsoringFutureReservesResult switch ( EndSponsoringFutureReservesResultCode code) { case END_SPONSORING_FUTURE_RESERVES_SUCCESS: void; case END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED: void; }; ```",
       "type": "string",
@@ -2114,6 +2169,98 @@
         }
       ]
     },
+    "FreezeBypassTxs": {
+      "description": "FreezeBypassTxs is an XDR Struct defined as:\n\n```text struct FreezeBypassTxs { Hash txHashes<>; }; ```",
+      "type": "object",
+      "required": [
+        "tx_hashes"
+      ],
+      "properties": {
+        "tx_hashes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "contentEncoding": "hex",
+            "contentMediaType": "application/binary"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "FreezeBypassTxsDelta": {
+      "description": "FreezeBypassTxsDelta is an XDR Struct defined as:\n\n```text struct FreezeBypassTxsDelta { Hash addTxs<>; Hash removeTxs<>; }; ```",
+      "type": "object",
+      "required": [
+        "add_txs",
+        "remove_txs"
+      ],
+      "properties": {
+        "add_txs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "contentEncoding": "hex",
+            "contentMediaType": "application/binary"
+          },
+          "maxItems": 4294967295
+        },
+        "remove_txs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "contentEncoding": "hex",
+            "contentMediaType": "application/binary"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "FrozenLedgerKeys": {
+      "description": "FrozenLedgerKeys is an XDR Struct defined as:\n\n```text struct FrozenLedgerKeys { EncodedLedgerKey keys<>; }; ```",
+      "type": "object",
+      "required": [
+        "keys"
+      ],
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EncodedLedgerKey"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "FrozenLedgerKeysDelta": {
+      "description": "FrozenLedgerKeysDelta is an XDR Struct defined as:\n\n```text struct FrozenLedgerKeysDelta { EncodedLedgerKey keysToFreeze<>; EncodedLedgerKey keysToUnfreeze<>; }; ```",
+      "type": "object",
+      "required": [
+        "keys_to_freeze",
+        "keys_to_unfreeze"
+      ],
+      "properties": {
+        "keys_to_freeze": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EncodedLedgerKey"
+          },
+          "maxItems": 4294967295
+        },
+        "keys_to_unfreeze": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EncodedLedgerKey"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
     "GeneralizedTransactionSet": {
       "description": "GeneralizedTransactionSet is an XDR Union defined as:\n\n```text union GeneralizedTransactionSet switch (int v) { // We consider the legacy TransactionSet to be v0. case 1: TransactionSetV1 v1TxSet; }; ```",
       "oneOf": [
@@ -2224,7 +2371,7 @@
       ]
     },
     "InnerTransactionResult": {
-      "description": "InnerTransactionResult is an XDR Struct defined as:\n\n```text struct InnerTransactionResult { // Always 0. Here for binary compatibility. int64 feeCharged;\n\nunion switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "InnerTransactionResult is an XDR Struct defined as:\n\n```text struct InnerTransactionResult { // Always 0. Here for binary compatibility. int64 feeCharged;\n\nunion switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: case txFROZEN_KEY_ACCESSED: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -2271,7 +2418,7 @@
       }
     },
     "InnerTransactionResultResult": {
-      "description": "InnerTransactionResultResult is an XDR NestedUnion defined as:\n\n```text union switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } ```",
+      "description": "InnerTransactionResultResult is an XDR NestedUnion defined as:\n\n```text union switch (TransactionResultCode code) { // txFEE_BUMP_INNER_SUCCESS is not included case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // txFEE_BUMP_INNER_FAILED is not included case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: case txFROZEN_KEY_ACCESSED: void; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -2290,7 +2437,8 @@
             "tx_bad_sponsorship",
             "tx_bad_min_seq_age_or_gap",
             "tx_malformed",
-            "tx_soroban_invalid"
+            "tx_soroban_invalid",
+            "tx_frozen_key_accessed"
           ]
         },
         {
@@ -3537,7 +3685,7 @@
       }
     },
     "LiquidityPoolDepositResult": {
-      "description": "LiquidityPoolDepositResult is an XDR Union defined as:\n\n```text union LiquidityPoolDepositResult switch (LiquidityPoolDepositResultCode code) { case LIQUIDITY_POOL_DEPOSIT_SUCCESS: void; case LIQUIDITY_POOL_DEPOSIT_MALFORMED: case LIQUIDITY_POOL_DEPOSIT_NO_TRUST: case LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED: case LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED: case LIQUIDITY_POOL_DEPOSIT_LINE_FULL: case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE: case LIQUIDITY_POOL_DEPOSIT_POOL_FULL: void; }; ```",
+      "description": "LiquidityPoolDepositResult is an XDR Union defined as:\n\n```text union LiquidityPoolDepositResult switch (LiquidityPoolDepositResultCode code) { case LIQUIDITY_POOL_DEPOSIT_SUCCESS: void; case LIQUIDITY_POOL_DEPOSIT_MALFORMED: case LIQUIDITY_POOL_DEPOSIT_NO_TRUST: case LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED: case LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED: case LIQUIDITY_POOL_DEPOSIT_LINE_FULL: case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE: case LIQUIDITY_POOL_DEPOSIT_POOL_FULL: case LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -3547,7 +3695,8 @@
         "underfunded",
         "line_full",
         "bad_price",
-        "pool_full"
+        "pool_full",
+        "trustline_frozen"
       ]
     },
     "LiquidityPoolEntry": {
@@ -3651,7 +3800,7 @@
       }
     },
     "LiquidityPoolWithdrawResult": {
-      "description": "LiquidityPoolWithdrawResult is an XDR Union defined as:\n\n```text union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code) { case LIQUIDITY_POOL_WITHDRAW_SUCCESS: void; case LIQUIDITY_POOL_WITHDRAW_MALFORMED: case LIQUIDITY_POOL_WITHDRAW_NO_TRUST: case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED: case LIQUIDITY_POOL_WITHDRAW_LINE_FULL: case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM: void; }; ```",
+      "description": "LiquidityPoolWithdrawResult is an XDR Union defined as:\n\n```text union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code) { case LIQUIDITY_POOL_WITHDRAW_SUCCESS: void; case LIQUIDITY_POOL_WITHDRAW_MALFORMED: case LIQUIDITY_POOL_WITHDRAW_NO_TRUST: case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED: case LIQUIDITY_POOL_WITHDRAW_LINE_FULL: case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM: case LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN: void; }; ```",
       "type": "string",
       "enum": [
         "success",
@@ -3659,7 +3808,8 @@
         "no_trust",
         "underfunded",
         "line_full",
-        "under_minimum"
+        "under_minimum",
+        "trustline_frozen"
       ]
     },
     "ManageBuyOfferOp": {
@@ -6933,7 +7083,7 @@
       ]
     },
     "TransactionResult": {
-      "description": "TransactionResult is an XDR Struct defined as:\n\n```text struct TransactionResult { int64 feeCharged; // actual fee charged for the transaction\n\nunion switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "description": "TransactionResult is an XDR Struct defined as:\n\n```text struct TransactionResult { int64 feeCharged; // actual fee charged for the transaction\n\nunion switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: case txFROZEN_KEY_ACCESSED: void; } result;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -7028,7 +7178,7 @@
       }
     },
     "TransactionResultResult": {
-      "description": "TransactionResultResult is an XDR NestedUnion defined as:\n\n```text union switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: void; } ```",
+      "description": "TransactionResultResult is an XDR NestedUnion defined as:\n\n```text union switch (TransactionResultCode code) { case txFEE_BUMP_INNER_SUCCESS: case txFEE_BUMP_INNER_FAILED: InnerTransactionResultPair innerResultPair; case txSUCCESS: case txFAILED: OperationResult results<>; case txTOO_EARLY: case txTOO_LATE: case txMISSING_OPERATION: case txBAD_SEQ: case txBAD_AUTH: case txINSUFFICIENT_BALANCE: case txNO_ACCOUNT: case txINSUFFICIENT_FEE: case txBAD_AUTH_EXTRA: case txINTERNAL_ERROR: case txNOT_SUPPORTED: // case txFEE_BUMP_INNER_FAILED: handled above case txBAD_SPONSORSHIP: case txBAD_MIN_SEQ_AGE_OR_GAP: case txMALFORMED: case txSOROBAN_INVALID: case txFROZEN_KEY_ACCESSED: void; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -7047,7 +7197,8 @@
             "tx_bad_sponsorship",
             "tx_bad_min_seq_age_or_gap",
             "tx_malformed",
-            "tx_soroban_invalid"
+            "tx_soroban_invalid",
+            "tx_frozen_key_accessed"
           ]
         },
         {

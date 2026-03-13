@@ -9,7 +9,7 @@ mod types;
 #[cfg(test)]
 mod tests;
 
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use generator::RustGenerator;
 use options::RustOptions;
 use std::collections::HashSet;
@@ -29,15 +29,6 @@ struct Args {
     #[arg(short, long)]
     output: PathBuf,
 
-    /// Target language
-    #[arg(long, default_value = "rust")]
-    language: Language,
-
-    /// Language-specific config file (TOML)
-    #[arg(long)]
-    config: Option<PathBuf>,
-
-    // Legacy CLI flags (still supported for backward compatibility)
     /// Types with custom Default implementation (skip derive(Default))
     #[arg(long, value_delimiter = ',')]
     custom_default: Vec<String>,
@@ -49,11 +40,6 @@ struct Args {
     /// Types that should NOT have Display/FromStr/schemars generated
     #[arg(long, value_delimiter = ',')]
     no_display_fromstr: Vec<String>,
-}
-
-#[derive(Debug, Clone, ValueEnum)]
-enum Language {
-    Rust,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -83,22 +69,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse the combined XDR
     let spec = xdr_parser::parser::parse(&combined_xdr)?;
 
-    match args.language {
-        Language::Rust => {
-            let options = if let Some(config_path) = &args.config {
-                RustOptions::from_config_file(config_path)?
-            } else {
-                RustOptions {
-                    custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
-                    custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
-                    no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
-                }
-            };
+    let options = RustOptions {
+        custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
+        custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
+        no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
+    };
 
-            let generator = RustGenerator::new(&spec, options);
-            generator.generate_to_file(&spec, &input_files, &args.output)?;
-        }
-    }
+    let generator = RustGenerator::new(&spec, options);
+    generator.generate_to_file(&spec, &input_files, &args.output)?;
 
     eprintln!("Generated: {}", args.output.display());
 

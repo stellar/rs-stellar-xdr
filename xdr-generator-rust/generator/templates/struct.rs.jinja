@@ -37,7 +37,7 @@ impl ReadXdr for {{ s.name }} {
         r.with_limited_depth(|r| {
             Ok(Self {
 {%- for m in s.members %}
-                {{ m.name }}: {{ m.read_call }}::read_xdr(r)?,
+                {{ m.name }}: {{ m.turbofish_type }}::read_xdr(r)?,
 {%- endfor %}
             })
         })

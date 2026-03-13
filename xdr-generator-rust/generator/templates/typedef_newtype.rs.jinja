@@ -130,7 +130,7 @@ impl ReadXdr for {{ t.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = {{ t.read_call }}::read_xdr(r)?;
+            let i = {{ t.turbofish_type }}::read_xdr(r)?;
             let v = {{ t.name }}(i);
             Ok(v)
         })

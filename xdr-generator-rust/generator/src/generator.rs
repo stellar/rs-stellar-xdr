@@ -12,9 +12,7 @@ use crate::output::{
     StructMemberOutput, StructOutput, TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput,
     UnionArmOutput, UnionOutput,
 };
-use crate::types::{
-    base_type_ref, element_type, read_call_type, serde_as_type, size_to_string, type_ref,
-};
+use crate::types::{base_type_ref, resolve_type, size_to_string, type_ref};
 
 pub struct RustGenerator {
     options: RustOptions,
@@ -203,15 +201,8 @@ impl RustGenerator {
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        let tr = type_ref(&t.type_, None, &self.type_info);
-        let rc = read_call_type(&t.type_, None, &self.type_info);
-        let serde_as = if custom_str {
-            None
-        } else {
-            serde_as_type(&t.type_, &self.type_info)
-        };
+        let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str);
 
-        let elem_type = element_type(&t.type_, &self.type_info);
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
             | xdr_parser::ast::Type::Array { size: s, .. } => Some(size_to_string(s)),
@@ -226,10 +217,10 @@ impl RustGenerator {
             is_fixed_opaque: is_fixed_opaque_type,
             is_fixed_array: is_fixed_array_type,
             is_custom_str: custom_str,
-            type_ref: tr,
-            read_call: rc,
-            serde_as_type: serde_as,
-            element_type: elem_type,
+            type_ref: resolved.type_ref,
+            turbofish_type: resolved.turbofish_type,
+            serde_as_type: resolved.serde_as_type,
+            element_type: resolved.element_type,
             size,
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
@@ -257,19 +248,13 @@ impl RustGenerator {
         custom_str: bool,
     ) -> StructMemberOutput {
         let name = field_name(&m.name);
-        let tr = type_ref(&m.type_, Some(parent), &self.type_info);
-        let rc = read_call_type(&m.type_, Some(parent), &self.type_info);
-        let serde_as = if custom_str {
-            None
-        } else {
-            serde_as_type(&m.type_, &self.type_info)
-        };
+        let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
 
         StructMemberOutput {
             name,
-            type_ref: tr,
-            read_call: rc,
-            serde_as_type: serde_as,
+            type_ref: resolved.type_ref,
+            turbofish_type: resolved.turbofish_type,
+            serde_as_type: resolved.serde_as_type,
         }
     }
 
@@ -292,26 +277,18 @@ impl RustGenerator {
                     discriminant_prefix,
                 );
 
-                let (tr, rc, serde_as) = if let Some(t) = &arm.type_ {
-                    let tr = type_ref(t, Some(parent), &self.type_info);
-                    let rc = read_call_type(t, Some(parent), &self.type_info);
-                    let serde_as = if custom_str {
-                        None
-                    } else {
-                        serde_as_type(t, &self.type_info)
-                    };
-                    (Some(tr), Some(rc), serde_as)
-                } else {
-                    (None, None, None)
-                };
+                let resolved = arm
+                    .type_
+                    .as_ref()
+                    .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str));
 
                 UnionArmOutput {
                     case_name,
                     case_value: case_value_expr,
                     is_void: arm.type_.is_none(),
-                    type_ref: tr,
-                    read_call: rc,
-                    serde_as_type: serde_as,
+                    type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
+                    turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
+                    serde_as_type: resolved.and_then(|r| r.serde_as_type),
                 }
             })
             .collect()

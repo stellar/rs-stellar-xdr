@@ -30,7 +30,7 @@ pub struct StructOutput {
 pub struct StructMemberOutput {
     pub name: String,
     pub type_ref: String,
-    pub read_call: String,
+    pub turbofish_type: String,
     pub serde_as_type: Option<String>,
 }
 
@@ -62,7 +62,7 @@ pub struct UnionArmOutput {
     pub case_value: String,
     pub is_void: bool,
     pub type_ref: Option<String>,
-    pub read_call: Option<String>,
+    pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
 }
 
@@ -81,7 +81,7 @@ pub struct TypedefNewtypeOutput {
     pub is_fixed_array: bool,
     pub is_custom_str: bool,
     pub type_ref: String,
-    pub read_call: String,
+    pub turbofish_type: String,
     pub serde_as_type: Option<String>,
     pub element_type: String,
     pub size: Option<String>,

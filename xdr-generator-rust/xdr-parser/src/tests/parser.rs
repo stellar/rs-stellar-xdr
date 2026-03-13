@@ -1,52 +1,77 @@
-use crate::ast::{Definition, Size, Type};
+use crate::ast::{Definition, Enum, EnumMember, Size, Struct, StructMember, Type, Typedef};
 use crate::parser::parse;
 
 #[test]
 fn test_parse_struct() {
     let input = "struct Foo { int x; unsigned hyper y; };";
     let spec = parse(input).unwrap();
-
-    assert_eq!(spec.definitions.len(), 1);
-    if let Definition::Struct(s) = &spec.definitions[0] {
-        assert_eq!(s.name, "Foo");
-        assert_eq!(s.members.len(), 2);
-        assert_eq!(s.members[0].name, "x");
-        assert_eq!(s.members[0].type_, Type::Int);
-        assert_eq!(s.members[1].name, "y");
-        assert_eq!(s.members[1].type_, Type::UnsignedHyper);
-    } else {
-        panic!("Expected struct");
-    }
+    assert_eq!(
+        spec.definitions,
+        [Definition::Struct(Struct {
+            name: "Foo".to_string(),
+            members: vec![
+                StructMember {
+                    name: "x".to_string(),
+                    type_: Type::Int,
+                },
+                StructMember {
+                    name: "y".to_string(),
+                    type_: Type::UnsignedHyper,
+                },
+            ],
+            source: "struct Foo { int x; unsigned hyper y; }".to_string(),
+            is_nested: false,
+            parent: None,
+            file_index: 0,
+        })]
+    );
 }
 
 #[test]
 fn test_parse_enum() {
     let input = "enum Color { RED = 0, GREEN = 1, BLUE = 2 };";
     let spec = parse(input).unwrap();
-
-    assert_eq!(spec.definitions.len(), 1);
-    if let Definition::Enum(e) = &spec.definitions[0] {
-        assert_eq!(e.name, "Color");
-        assert_eq!(e.members.len(), 3);
-        assert_eq!(e.members[0].name, "RED");
-        assert_eq!(e.members[0].value, 0);
-    } else {
-        panic!("Expected enum");
-    }
+    assert_eq!(
+        spec.definitions,
+        [Definition::Enum(Enum {
+            name: "Color".to_string(),
+            members: vec![
+                EnumMember {
+                    name: "RED".to_string(),
+                    stripped_name: "RED".to_string(),
+                    value: 0,
+                },
+                EnumMember {
+                    name: "GREEN".to_string(),
+                    stripped_name: "GREEN".to_string(),
+                    value: 1,
+                },
+                EnumMember {
+                    name: "BLUE".to_string(),
+                    stripped_name: "BLUE".to_string(),
+                    value: 2,
+                },
+            ],
+            member_prefix: String::new(),
+            source: "enum Color { RED = 0, GREEN = 1, BLUE = 2 }".to_string(),
+            file_index: 0,
+        })]
+    );
 }
 
 #[test]
 fn test_parse_typedef() {
     let input = "typedef opaque Hash[32];";
     let spec = parse(input).unwrap();
-
-    assert_eq!(spec.definitions.len(), 1);
-    if let Definition::Typedef(t) = &spec.definitions[0] {
-        assert_eq!(t.name, "Hash");
-        assert_eq!(t.type_, Type::OpaqueFixed(Size::Literal(32)));
-    } else {
-        panic!("Expected typedef");
-    }
+    assert_eq!(
+        spec.definitions,
+        [Definition::Typedef(Typedef {
+            name: "Hash".to_string(),
+            type_: Type::OpaqueFixed(Size::Literal(32)),
+            source: "typedef opaque Hash[32]".to_string(),
+            file_index: 0,
+        })]
+    );
 }
 
 #[test]

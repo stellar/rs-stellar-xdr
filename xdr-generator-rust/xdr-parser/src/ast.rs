@@ -3,14 +3,14 @@
 use crate::lexer::IntBase;
 
 /// Metadata about a parsed XDR source file.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct XdrFile {
     pub name: String,
     pub sha256: String,
 }
 
 /// The root of a parsed XDR file or collection of files.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct XdrSpec {
     pub files: Vec<XdrFile>,
     pub namespaces: Vec<Namespace>,
@@ -87,14 +87,14 @@ impl XdrSpec {
 }
 
 /// A namespace containing definitions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Namespace {
     pub name: String,
     pub definitions: Vec<Definition>,
 }
 
 /// A top-level definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -148,7 +148,7 @@ impl Definition {
 }
 
 /// A struct definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Struct {
     pub name: String,
     pub members: Vec<StructMember>,
@@ -163,7 +163,7 @@ pub struct Struct {
 }
 
 /// An enum definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Enum {
     pub name: String,
     pub members: Vec<EnumMember>,
@@ -199,7 +199,7 @@ impl Enum {
 }
 
 /// A union definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Union {
     pub name: String,
     pub discriminant: UnionDiscriminant,
@@ -215,7 +215,7 @@ pub struct Union {
 }
 
 /// A typedef definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Typedef {
     pub name: String,
     pub type_: Type,
@@ -226,7 +226,7 @@ pub struct Typedef {
 }
 
 /// A const definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Const {
     pub name: String,
     pub value: i64,
@@ -275,14 +275,14 @@ pub enum Type {
 }
 
 /// A member of a struct.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StructMember {
     pub name: String,
     pub type_: Type,
 }
 
 /// A member of an enum.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumMember {
     pub name: String,
     /// The member name with the common enum prefix stripped.

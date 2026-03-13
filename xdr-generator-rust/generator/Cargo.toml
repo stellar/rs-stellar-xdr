@@ -12,7 +12,6 @@ path = "src/main.rs"
 [dependencies]
 askama = "0.14"
 clap = { version = "4", features = ["derive"] }
-sha2 = "0.10"
 heck = "0.5"
 xdr-parser = { path = "../xdr-parser" }
 

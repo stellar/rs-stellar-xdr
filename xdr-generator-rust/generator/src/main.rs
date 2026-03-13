@@ -53,21 +53,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     files.sort_by(|a, b| a.0.cmp(&b.0));
 
-    // Build combined XDR in sorted order
-    let mut combined_xdr = String::new();
-    for (_, content) in &files {
-        combined_xdr.push_str(content);
-        combined_xdr.push('\n');
-    }
-
-    // Build input_files list
-    let input_files: Vec<(String, String)> = files
+    // Build file list for the parser
+    let file_refs: Vec<(&str, &str)> = files
         .iter()
-        .map(|(path, content)| (path.to_string_lossy().to_string(), content.clone()))
+        .map(|(path, content)| (path.to_str().unwrap_or(""), content.as_str()))
         .collect();
 
-    // Parse the combined XDR
-    let spec = xdr_parser::parser::parse(&combined_xdr)?;
+    // Parse the XDR files
+    let spec = xdr_parser::parser::parse_files(&file_refs)?;
 
     let options = RustOptions {
         custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
@@ -76,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let generator = RustGenerator::new(&spec, options);
-    generator.generate_to_file(&spec, &input_files, &args.output)?;
+    generator.generate_to_file(&spec, &args.output)?;
 
     eprintln!("Generated: {}", args.output.display());
 

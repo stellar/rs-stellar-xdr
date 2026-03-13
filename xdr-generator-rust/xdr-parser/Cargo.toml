@@ -8,4 +8,5 @@ rust-version = "1.84.0"
 [dependencies]
 heck = "0.5"
 logos = "0.15"
+sha2 = "0.10"
 thiserror = "2"

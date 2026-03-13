@@ -2,9 +2,17 @@
 
 use crate::lexer::IntBase;
 
+/// Metadata about a parsed XDR source file.
+#[derive(Debug, Clone)]
+pub struct XdrFile {
+    pub name: String,
+    pub sha256: String,
+}
+
 /// The root of a parsed XDR file or collection of files.
 #[derive(Debug, Clone, Default)]
 pub struct XdrSpec {
+    pub files: Vec<XdrFile>,
     pub namespaces: Vec<Namespace>,
     pub definitions: Vec<Definition>,
 }
@@ -126,6 +134,17 @@ impl Definition {
             Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => None,
         }
     }
+
+    /// Get the file index this definition was parsed from.
+    pub fn file_index(&self) -> usize {
+        match self {
+            Definition::Struct(s) => s.file_index,
+            Definition::Enum(e) => e.file_index,
+            Definition::Union(u) => u.file_index,
+            Definition::Typedef(t) => t.file_index,
+            Definition::Const(c) => c.file_index,
+        }
+    }
 }
 
 /// A struct definition.
@@ -139,6 +158,8 @@ pub struct Struct {
     pub is_nested: bool,
     /// Name of the parent type if this is nested, for ordering purposes.
     pub parent: Option<String>,
+    /// Index into `XdrSpec::files` for the file this was parsed from.
+    pub file_index: usize,
 }
 
 /// An enum definition.
@@ -150,6 +171,8 @@ pub struct Enum {
     pub member_prefix: String,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// Index into `XdrSpec::files` for the file this was parsed from.
+    pub file_index: usize,
 }
 
 impl Enum {
@@ -170,6 +193,7 @@ impl Enum {
             members,
             member_prefix,
             source,
+            file_index: 0,
         }
     }
 }
@@ -186,6 +210,8 @@ pub struct Union {
     pub is_nested: bool,
     /// Name of the parent type if this is nested, for ordering purposes.
     pub parent: Option<String>,
+    /// Index into `XdrSpec::files` for the file this was parsed from.
+    pub file_index: usize,
 }
 
 /// A typedef definition.
@@ -195,6 +221,8 @@ pub struct Typedef {
     pub type_: Type,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// Index into `XdrSpec::files` for the file this was parsed from.
+    pub file_index: usize,
 }
 
 /// A const definition.
@@ -206,6 +234,8 @@ pub struct Const {
     pub base: IntBase,
     /// Original XDR source text for documentation.
     pub source: String,
+    /// Index into `XdrSpec::files` for the file this was parsed from.
+    pub file_index: usize,
 }
 
 /// XDR type specification.

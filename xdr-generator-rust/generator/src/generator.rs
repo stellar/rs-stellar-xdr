@@ -1,5 +1,4 @@
 use askama::Template;
-use sha2::{Digest, Sha256};
 use xdr_parser::ast::{
     Const, Definition, Enum, Struct, StructMember, Typedef, Union, UnionArm, XdrSpec,
 };
@@ -32,31 +31,21 @@ impl RustGenerator {
     pub fn generate_to_file(
         &self,
         spec: &XdrSpec,
-        input_files: &[(String, String)],
         output: &std::path::PathBuf,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let header = include_str!("../header.rs");
-        let template = self.generate(spec, input_files, header);
+        let template = self.generate(spec, header);
         let rendered = template.render()?;
         std::fs::write(output, rendered)?;
         Ok(())
     }
 
     /// Generate output for the entire spec.
-    pub fn generate(
-        &self,
-        spec: &XdrSpec,
-        input_files: &[(String, String)],
-        header: &str,
-    ) -> GeneratedTemplate {
-        let xdr_files_sha256: Vec<(String, String)> = input_files
+    pub fn generate(&self, spec: &XdrSpec, header: &str) -> GeneratedTemplate {
+        let xdr_files_sha256: Vec<(String, String)> = spec
+            .files
             .iter()
-            .map(|(path, content)| {
-                let mut hasher = Sha256::new();
-                hasher.update(content.as_bytes());
-                let hash = format!("{:x}", hasher.finalize());
-                (path.clone(), hash)
-            })
+            .map(|f| (f.name.clone(), f.sha256.clone()))
             .collect();
 
         let mut definitions: Vec<DefinitionOutput> = Vec::new();

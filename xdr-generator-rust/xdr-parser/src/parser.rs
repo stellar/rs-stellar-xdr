@@ -5,12 +5,62 @@ use std::collections::HashMap;
 use crate::ast::*;
 use crate::lexer::{IntBase, LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
+use sha2::{Digest as _, Sha256};
 use thiserror::Error;
 
-/// Parse XDR source text into an AST.
+/// Parse multiple XDR source files into a single AST.
+///
+/// Each entry is a `(file_name, source_text)` pair. Files are parsed in order,
+/// with definitions from earlier files visible to later files (e.g. enum values
+/// and consts can be referenced across files). Each definition tracks which file
+/// it came from via `file_index`.
+///
+/// File SHA256 hashes are computed and stored in `XdrSpec::files`.
+pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
+    let mut spec = XdrSpec::default();
+    let mut global_values = HashMap::new();
+
+    for (file_index, (name, content)) in files.iter().enumerate() {
+        let hash = format!("{:x}", Sha256::digest(content.as_bytes()));
+        spec.files.push(XdrFile {
+            name: name.to_string(),
+            sha256: hash,
+        });
+
+        let mut parser = Parser::new(content, global_values)?;
+        parser.file_index = file_index;
+        let file_spec = parser.parse()?;
+        global_values = parser.global_values;
+
+        spec.definitions.extend(file_spec.definitions);
+        for mut ns in file_spec.namespaces {
+            // Set file_index on namespace definitions too
+            for def in &mut ns.definitions {
+                set_file_index(def, file_index);
+            }
+            spec.namespaces.push(ns);
+        }
+    }
+
+    Ok(spec)
+}
+
+/// Parse a single XDR source string into an AST.
+///
+/// Convenience wrapper around `parse_files` for single-file use.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
-    let mut parser = Parser::new(source)?;
-    parser.parse()
+    parse_files(&[("", source)])
+}
+
+/// Set the file_index on a definition.
+fn set_file_index(def: &mut Definition, index: usize) {
+    match def {
+        Definition::Struct(s) => s.file_index = index,
+        Definition::Enum(e) => e.file_index = index,
+        Definition::Union(u) => u.file_index = index,
+        Definition::Typedef(t) => t.file_index = index,
+        Definition::Const(c) => c.file_index = index,
+    }
 }
 
 struct Parser {
@@ -26,10 +76,12 @@ struct Parser {
     root_parent: Option<String>,
     /// Global map of enum member names and const names to their values
     global_values: HashMap<String, i64>,
+    /// Index of the file currently being parsed
+    file_index: usize,
 }
 
 impl Parser {
-    fn new(source: &str) -> Result<Self, ParseError> {
+    fn new(source: &str, global_values: HashMap<String, i64>) -> Result<Self, ParseError> {
         let lexer = Lexer::new(source);
         let (tokens, source) = lexer.tokenize_with_spans()?;
         Ok(Self {
@@ -39,7 +91,8 @@ impl Parser {
             def_start_pos: 0,
             extracted_definitions: Vec::new(),
             root_parent: None,
-            global_values: HashMap::new(),
+            global_values,
+            file_index: 0,
         })
     }
 
@@ -161,6 +214,7 @@ impl Parser {
             source,
             is_nested: false,
             parent: None,
+            file_index: self.file_index,
         })
     }
 
@@ -217,7 +271,9 @@ impl Parser {
             self.global_values.insert(name.clone(), *value as i64);
         }
 
-        Ok(Enum::new(name, members, source))
+        let mut e = Enum::new(name, members, source);
+        e.file_index = self.file_index;
+        Ok(e)
     }
 
     fn parse_union(&mut self) -> Result<Union, ParseError> {
@@ -257,6 +313,7 @@ impl Parser {
             source,
             is_nested: false,
             parent: None,
+            file_index: self.file_index,
         })
     }
 
@@ -277,6 +334,7 @@ impl Parser {
             name,
             type_,
             source,
+            file_index: self.file_index,
         })
     }
 
@@ -297,6 +355,7 @@ impl Parser {
             value,
             base,
             source,
+            file_index: self.file_index,
         })
     }
 
@@ -479,6 +538,7 @@ impl Parser {
             source,
             is_nested: true,
             parent: self.root_parent.clone(),
+            file_index: self.file_index,
         };
 
         self.extracted_definitions
@@ -852,6 +912,7 @@ impl Parser {
             source,
             is_nested: true,
             parent: self.root_parent.clone(),
+            file_index: self.file_index,
         };
 
         // Fix up parent relationships for any definitions extracted during union parsing

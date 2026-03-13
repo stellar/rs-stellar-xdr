@@ -37,10 +37,10 @@ generate-xdrgen-files: src/curr/generated.rs src/next/generated.rs
 		'cd xdr-generator && bundle install --quiet && bundle exec ruby generate.rb'
 	rustfmt $^
 
-src/next/generated.rs: $(sort $(wildcard xdr/curr/*.x))
+src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
 
-src/curr/generated.rs: $(sort $(wildcard xdr/next/*.x))
+src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
 
 xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x)

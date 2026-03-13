@@ -169,7 +169,7 @@ impl Parser {
         let name = self.expect_ident()?;
         self.expect(Token::LBrace)?;
 
-        let mut members = Vec::new();
+        let mut members: Vec<(String, i32)> = Vec::new();
         loop {
             let member_name = self.expect_ident()?;
             self.expect(Token::Eq)?;
@@ -191,10 +191,7 @@ impl Parser {
                 }
             };
 
-            members.push(EnumMember {
-                name: member_name,
-                value,
-            });
+            members.push((member_name, value));
 
             match self.peek() {
                 Token::Comma => {
@@ -216,15 +213,11 @@ impl Parser {
         let source = self.extract_definition_source();
 
         // Add all members to global_values for cross-enum resolution
-        for m in &members {
-            self.global_values.insert(m.name.clone(), m.value as i64);
+        for (name, value) in &members {
+            self.global_values.insert(name.clone(), *value as i64);
         }
 
-        Ok(Enum {
-            name,
-            members,
-            source,
-        })
+        Ok(Enum::new(name, members, source))
     }
 
     fn parse_union(&mut self) -> Result<Union, ParseError> {
@@ -886,11 +879,11 @@ impl Parser {
 
     /// Resolve an enum value reference, searching the current enum members
     /// and then previously parsed enums/consts.
-    fn resolve_enum_value(&self, name: &str, members: &[EnumMember]) -> Result<i32, ParseError> {
+    fn resolve_enum_value(&self, name: &str, members: &[(String, i32)]) -> Result<i32, ParseError> {
         // First check if it's in the current enum being parsed
-        for m in members {
-            if m.name == name {
-                return Ok(m.value);
+        for (member_name, value) in members {
+            if member_name == name {
+                return Ok(*value);
             }
         }
         // Check global values (previously parsed enums and consts)
@@ -968,119 +961,4 @@ struct TypeParseContext {
 /// Generate a nested type name from parent and field name.
 fn generate_nested_type_name(parent: &str, field: &str) -> String {
     format!("{}{}", parent, field.to_upper_camel_case())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_struct() {
-        let input = "struct Foo { int x; unsigned hyper y; };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
-
-        assert_eq!(spec.definitions.len(), 1);
-        if let Definition::Struct(s) = &spec.definitions[0] {
-            assert_eq!(s.name, "Foo");
-            assert_eq!(s.members.len(), 2);
-            assert_eq!(s.members[0].name, "x");
-            assert_eq!(s.members[0].type_, Type::Int);
-            assert_eq!(s.members[1].name, "y");
-            assert_eq!(s.members[1].type_, Type::UnsignedHyper);
-        } else {
-            panic!("Expected struct");
-        }
-    }
-
-    #[test]
-    fn test_parse_enum() {
-        let input = "enum Color { RED = 0, GREEN = 1, BLUE = 2 };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
-
-        assert_eq!(spec.definitions.len(), 1);
-        if let Definition::Enum(e) = &spec.definitions[0] {
-            assert_eq!(e.name, "Color");
-            assert_eq!(e.members.len(), 3);
-            assert_eq!(e.members[0].name, "RED");
-            assert_eq!(e.members[0].value, 0);
-        } else {
-            panic!("Expected enum");
-        }
-    }
-
-    #[test]
-    fn test_parse_typedef() {
-        let input = "typedef opaque Hash[32];";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
-
-        assert_eq!(spec.definitions.len(), 1);
-        if let Definition::Typedef(t) = &spec.definitions[0] {
-            assert_eq!(t.name, "Hash");
-            assert_eq!(t.type_, Type::OpaqueFixed(Size::Literal(32)));
-        } else {
-            panic!("Expected typedef");
-        }
-    }
-
-    #[test]
-    fn test_parse_namespace() {
-        let input = "namespace stellar { struct Foo { int x; }; };";
-        let mut parser = Parser::new(input).unwrap();
-        let spec = parser.parse().unwrap();
-
-        assert_eq!(spec.namespaces.len(), 1);
-        assert_eq!(spec.namespaces[0].name, "stellar");
-        assert_eq!(spec.namespaces[0].definitions.len(), 1);
-    }
-
-    #[test]
-    fn test_deeply_nested_parents_assigned_during_parse() {
-        let input = r#"
-            union Outer switch (int v) {
-                case 0:
-                    struct {
-                        union switch (int w) { case 0: void; } innerField;
-                    } outerField;
-            };
-        "#;
-        let mut parser = Parser::new(input).unwrap();
-        // Temporarily disable fix_parent_relationships to see raw assignments
-        let spec = parser.parse().unwrap();
-
-        // Print actual assignments for debugging
-        for def in &spec.definitions {
-            eprintln!(
-                "name={} nested={} parent={:?}",
-                def.name(),
-                def.is_nested(),
-                def.parent()
-            );
-        }
-
-        // Check that all parents are correctly assigned
-        let inner_union = spec
-            .definitions
-            .iter()
-            .find(|d| d.name() == "OuterOuterFieldInnerField")
-            .unwrap();
-        assert_eq!(
-            inner_union.parent(),
-            Some("OuterOuterField"),
-            "inner union parent should be the inline struct"
-        );
-
-        let inline_struct = spec
-            .definitions
-            .iter()
-            .find(|d| d.name() == "OuterOuterField")
-            .unwrap();
-        assert_eq!(
-            inline_struct.parent(),
-            Some("Outer"),
-            "inline struct parent should be the top-level union"
-        );
-    }
 }

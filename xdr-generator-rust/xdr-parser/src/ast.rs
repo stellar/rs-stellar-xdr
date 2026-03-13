@@ -16,6 +16,66 @@ impl XdrSpec {
             .iter()
             .chain(self.namespaces.iter().flat_map(|ns| &ns.definitions))
     }
+
+    /// Get type names (excluding consts) ordered so parents appear before children.
+    ///
+    /// The parser emits nested types before their parents (so the compiler sees
+    /// them before they're referenced). This method provides the opposite order:
+    /// parents first, then children — useful for type variant enums.
+    pub fn type_names_parent_first(&self) -> Vec<&str> {
+        use std::collections::{HashMap, HashSet};
+
+        let mut children_of: HashMap<&str, Vec<&str>> = HashMap::new();
+        let mut all: Vec<(&str, Option<&str>)> = Vec::new();
+
+        for def in self.all_definitions() {
+            if matches!(def, Definition::Const(_)) {
+                continue;
+            }
+            let name = def.name();
+            let parent = def.parent();
+            if let Some(p) = parent {
+                children_of.entry(p).or_default().push(name);
+            }
+            all.push((name, parent));
+        }
+
+        let mut result: Vec<&str> = Vec::new();
+        let mut added: HashSet<&str> = HashSet::new();
+
+        fn add_with_children<'a>(
+            name: &'a str,
+            result: &mut Vec<&'a str>,
+            added: &mut HashSet<&'a str>,
+            children_of: &HashMap<&'a str, Vec<&'a str>>,
+        ) {
+            if added.contains(name) {
+                return;
+            }
+            added.insert(name);
+            result.push(name);
+            if let Some(children) = children_of.get(name) {
+                for child in children {
+                    add_with_children(child, result, added, children_of);
+                }
+            }
+        }
+
+        for (name, parent) in &all {
+            if parent.is_none() {
+                add_with_children(name, &mut result, &mut added, &children_of);
+            }
+        }
+
+        // Add any remaining types that weren't reached
+        for (name, _) in &all {
+            if !added.contains(name) {
+                result.push(name);
+            }
+        }
+
+        result
+    }
 }
 
 /// A namespace containing definitions.
@@ -86,8 +146,32 @@ pub struct Struct {
 pub struct Enum {
     pub name: String,
     pub members: Vec<EnumMember>,
+    /// The common prefix shared by all member names, up to the last underscore.
+    pub member_prefix: String,
     /// Original XDR source text for documentation.
     pub source: String,
+}
+
+impl Enum {
+    /// Create a new Enum, computing stripped member names from the common prefix.
+    pub fn new(name: String, members: Vec<(String, i32)>, source: String) -> Self {
+        let names: Vec<&str> = members.iter().map(|(n, _)| n.as_str()).collect();
+        let member_prefix = find_common_prefix(&names).to_string();
+        let members = members
+            .into_iter()
+            .map(|(name, value)| EnumMember {
+                stripped_name: strip_prefix(&name, &member_prefix),
+                name,
+                value,
+            })
+            .collect();
+        Self {
+            name,
+            members,
+            member_prefix,
+            source,
+        }
+    }
 }
 
 /// A union definition.
@@ -171,6 +255,8 @@ pub struct StructMember {
 #[derive(Debug, Clone)]
 pub struct EnumMember {
     pub name: String,
+    /// The member name with the common enum prefix stripped.
+    pub stripped_name: String,
     pub value: i32,
 }
 
@@ -205,9 +291,68 @@ pub enum UnionCaseValue {
     Literal(i32),
 }
 
+impl UnionCaseValue {
+    /// Get the identifier name with the common prefix stripped.
+    /// Returns `None` for literal values.
+    pub fn stripped_ident(&self, prefix: &str) -> Option<String> {
+        match self {
+            UnionCaseValue::Ident(name) => Some(strip_prefix(name, prefix)),
+            UnionCaseValue::Literal(_) => None,
+        }
+    }
+}
+
 /// A size specification, either a literal number or a named constant.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Size {
     Literal(u32),
     Named(String),
+}
+
+// =============================================================================
+// Prefix stripping helpers
+// =============================================================================
+
+/// Find the common prefix shared by all names, up to and including the last
+/// shared underscore. Returns an empty string if no common underscore-delimited
+/// prefix exists.
+fn find_common_prefix<'a>(names: &[&'a str]) -> &'a str {
+    if names.len() <= 1 {
+        return "";
+    }
+
+    let first = names[0];
+
+    let common_len = names.iter().skip(1).fold(first.len(), |len, name| {
+        first
+            .bytes()
+            .zip(name.bytes())
+            .take(len)
+            .take_while(|(a, b)| a == b)
+            .count()
+    });
+
+    let common = &first[..common_len];
+
+    if let Some(last_underscore) = common.rfind('_') {
+        &first[..=last_underscore]
+    } else {
+        ""
+    }
+}
+
+/// Strip a prefix from a name. If the result would start with a digit, keep the
+/// first character of the prefix to avoid invalid identifiers.
+fn strip_prefix(name: &str, prefix: &str) -> String {
+    if !prefix.is_empty() && name.starts_with(prefix) {
+        let stripped = &name[prefix.len()..];
+        if stripped.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+            if let Some(first_char) = prefix.chars().next() {
+                return format!("{first_char}{stripped}");
+            }
+        }
+        stripped.to_string()
+    } else {
+        name.to_string()
+    }
 }

@@ -43,7 +43,7 @@ CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519
 generate-rust-files: src/curr/generated-rust.rs src/next/generated-rust.rs
 
 src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
-	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
+	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
 		$(addprefix --input ,$(sort $(wildcard xdr/curr/*.x))) \
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
@@ -51,7 +51,7 @@ src/curr/generated-rust.rs: $(sort $(wildcard xdr/curr/*.x))
 	rustfmt $@
 
 src/next/generated-rust.rs: $(sort $(wildcard xdr/next/*.x))
-	cargo run --manifest-path xdr-generator-rust/Cargo.toml -- \
+	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
 		$(addprefix --input ,$(sort $(wildcard xdr/next/*.x))) \
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \

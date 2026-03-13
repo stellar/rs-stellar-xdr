@@ -1,0 +1,11 @@
+[package]
+name = "xdr-parser"
+description = "XDR parser and AST"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.84.0"
+
+[dependencies]
+heck = "0.5"
+logos = "0.15"
+thiserror = "2"

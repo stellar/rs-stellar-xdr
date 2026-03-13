@@ -55,8 +55,6 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
-    pub first_arm_case_name: String,
-    pub first_arm_type: Option<String>,
 }
 
 pub struct UnionArmOutput {

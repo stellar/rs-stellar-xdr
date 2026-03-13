@@ -173,17 +173,6 @@ impl RustGenerator {
             })
             .collect();
 
-        let first_arm_case_name = if !arms.is_empty() {
-            arms[0].case_name.clone()
-        } else {
-            String::new()
-        };
-        let first_arm_type = if !arms.is_empty() && !arms[0].is_void {
-            arms[0].read_call.clone()
-        } else {
-            None
-        };
-
         let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
 
         UnionOutput {
@@ -193,8 +182,6 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
-            first_arm_case_name,
-            first_arm_type,
         }
     }
 

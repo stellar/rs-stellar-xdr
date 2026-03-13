@@ -40,10 +40,10 @@ pub enum {{ u.name }} {
 #[cfg(feature = "alloc")]
 impl Default for {{ u.name }} {
     fn default() -> Self {
-{%- if let Some(first_type) = u.first_arm_type %}
-        Self::{{ u.first_arm_case_name }}({{ first_type }}::default())
+{%- if u.arms[0].is_void %}
+        Self::{{ u.arms[0].case_name }}
 {%- else %}
-        Self::{{ u.first_arm_case_name }}
+        Self::{{ u.arms[0].case_name }}({{ u.arms[0].read_call.as_ref().unwrap() }}::default())
 {%- endif %}
     }
 }

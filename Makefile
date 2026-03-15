@@ -66,10 +66,10 @@ check-generated-match:
 		(echo "ERROR: src/next/generated.rs and src/next/generated-rust.rs differ" && exit 1)
 	@echo "OK: Ruby and Rust generator outputs match"
 
-src/next/generated.rs: $(sort $(wildcard xdr/curr/*.x))
+src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
 
-src/curr/generated.rs: $(sort $(wildcard xdr/next/*.x))
+src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
 
 xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x)

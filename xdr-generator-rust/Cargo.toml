@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "xdr-parser",
+    "generator",
+]
+resolver = "2"

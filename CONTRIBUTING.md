@@ -1,14 +1,8 @@
 # Contributing
 
-## XDR Generators
+## XDR Generator
 
-This repository has two XDR-to-Rust code generators:
-
-1. **Ruby generator** (`xdr-generator/`) - The original generator using xdrgen. Outputs to `src/*/generated.rs`.
-
-2. **Rust generator** (`xdr-generator-rust/`) - A new generator written in Rust. Outputs to `src/*/generated-rust.rs`.
-
-The plan is to migrate to the Rust generator once it has been validated to produce identical output. Currently both generators run during `make generate` and the outputs are compared to ensure they match.
+This repository has an XDR-to-Rust code generator (`xdr-generator-rust/`) that generates Rust types from XDR definitions. It outputs to `src/*/generated.rs`.
 
 ## How to Regenerate From XDR
 To regenerate types from XDR definitions:

@@ -4,10 +4,9 @@ Library and CLI containing types and functionality for working with Stellar
 XDR.
 
 Types are generated from XDR definitions hosted at [stellar/stellar-xdr]
-using [xdrgen].
+using the Rust XDR generator in `xdr-generator-rust/`.
 
 [stellar/stellar-xdr]: https://github.com/stellar/stellar-xdr
-[xdrgen]: https://github.com/stellar/xdrgen
 
 ## Usage
 

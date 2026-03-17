@@ -1,5 +1,8 @@
 {# XDR consts are always emitted as u64 to match the Ruby xdrgen generator, #}
 {# which uses u64 unconditionally regardless of the const's declared type. #}
 /// {{ c.doc_name }}{{ c.source_comment }}
+{%- if let Some(cfg) = c.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
 pub const {{ c.name }}: u64 = {{ c.value_str }};
 

@@ -72,6 +72,7 @@ macro_rules! run_x {
             let mut rr = ResetRead::new(self.input()?);
             let mut guessed = false;
             'variants: for v in crate::$m::TypeVariant::VARIANTS {
+                let v = *v;
                 rr.reset();
                 let count: usize = match self.input_format {
                     InputFormat::Single => {

@@ -1,5 +1,8 @@
 /// {{ u.name }}{{ u.source_comment }}
 // union with discriminant {{ u.discriminant_type }}
+{%- if let Some(cfg) = u.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
 #[cfg_eval::cfg_eval]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -37,6 +40,9 @@ pub enum {{ u.name }} {
 }
 {%- if u.has_default %}
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 #[cfg(feature = "alloc")]
 impl Default for {{ u.name }} {
     fn default() -> Self {
@@ -49,6 +55,9 @@ impl Default for {{ u.name }} {
 }
 {%- endif %}
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl {{ u.name }} {
     pub const VARIANTS: [{{ u.discriminant_type }}; {{ u.arms.len() }}] = [
 {%- for arm in u.arms %}
@@ -90,6 +99,9 @@ impl {{ u.name }} {
     }
 }
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl Name for {{ u.name }} {
     #[must_use]
     fn name(&self) -> &'static str {
@@ -97,6 +109,9 @@ impl Name for {{ u.name }} {
     }
 }
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl Discriminant<{{ u.discriminant_type }}> for {{ u.name }} {
     #[must_use]
     fn discriminant(&self) -> {{ u.discriminant_type }} {
@@ -104,14 +119,23 @@ impl Discriminant<{{ u.discriminant_type }}> for {{ u.name }} {
     }
 }
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl Variants<{{ u.discriminant_type }}> for {{ u.name }} {
     fn variants() -> slice::Iter<'static, {{ u.discriminant_type }}> {
         Self::VARIANTS.iter()
     }
 }
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl Union<{{ u.discriminant_type }}> for {{ u.name }} {}
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl ReadXdr for {{ u.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -134,6 +158,9 @@ impl ReadXdr for {{ u.name }} {
     }
 }
 
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl WriteXdr for {{ u.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

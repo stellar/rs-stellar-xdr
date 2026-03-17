@@ -51440,7 +51440,9 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 468] = [
+    // VARIANTS and VARIANTS_STR are slices (not fixed-size arrays) because
+    // individual entries may be #[cfg]-gated, so the count varies by enabled features.
+    pub const VARIANTS: &[TypeVariant] = &[
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -51910,7 +51912,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 468] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -52872,7 +52874,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 468] {
+    pub const fn variants() -> &'static [TypeVariant] {
         Self::VARIANTS
     }
 
@@ -54570,7 +54572,9 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 468] = [
+    // VARIANTS and VARIANTS_STR are slices (not fixed-size arrays) because
+    // individual entries may be #[cfg]-gated, so the count varies by enabled features.
+    pub const VARIANTS: &[TypeVariant] = &[
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -55040,7 +55044,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 468] = [
+    pub const VARIANTS_STR: &[&str] = &[
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -69660,7 +69664,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 468] {
+    pub const fn variants() -> &'static [TypeVariant] {
         Self::VARIANTS
     }
 

@@ -78,6 +78,8 @@ struct Parser {
     global_values: HashMap<String, i64>,
     /// Index of the file currently being parsed
     file_index: usize,
+    /// Stack of cfg conditions from enclosing `#ifdef`/`#ifndef`/`#elif`/`#else` blocks.
+    cfg_stack: Vec<CfgExpr>,
 }
 
 impl Parser {
@@ -93,6 +95,7 @@ impl Parser {
             root_parent: None,
             global_values,
             file_index: 0,
+            cfg_stack: Vec::new(),
         })
     }
 
@@ -100,24 +103,9 @@ impl Parser {
     fn parse(&mut self) -> Result<XdrSpec, ParseError> {
         let mut spec = XdrSpec::default();
 
-        while *self.peek() != Token::Eof {
-            // Skip any extra semicolons at the top level
-            while *self.peek() == Token::Semi {
-                self.advance();
-            }
-            if *self.peek() == Token::Eof {
-                break;
-            }
-            match self.peek() {
-                Token::Namespace => {
-                    let ns = self.parse_namespace()?;
-                    spec.namespaces.push(ns);
-                }
-                _ => {
-                    self.parse_definition_into(&mut spec.definitions)?;
-                }
-            }
-        }
+        self.parse_definitions_until(&mut spec.definitions, &mut spec.namespaces, |tok| {
+            *tok == Token::Eof
+        })?;
 
         // Any remaining extracted definitions (shouldn't be any, but just in case)
         for extracted in self.extracted_definitions.drain(..) {
@@ -127,27 +115,166 @@ impl Parser {
         Ok(spec)
     }
 
+    /// Parse definitions until `stop` returns true.
+    /// Handles `#ifdef`/`#ifndef`/`#elif`/`#else`/`#endif` blocks.
+    fn parse_definitions_until(
+        &mut self,
+        definitions: &mut Vec<Definition>,
+        namespaces: &mut Vec<Namespace>,
+        stop: impl Fn(&Token) -> bool,
+    ) -> Result<(), ParseError> {
+        while !stop(self.peek()) {
+            // Skip any extra semicolons
+            while *self.peek() == Token::Semi {
+                self.advance();
+            }
+            if stop(self.peek()) {
+                break;
+            }
+            match self.peek().clone() {
+                Token::Namespace => {
+                    let ns = self.parse_namespace()?;
+                    namespaces.push(ns);
+                }
+                Token::IfDef(_) | Token::IfNDef(_) => {
+                    self.parse_ifdef_block(definitions, namespaces)?;
+                }
+                Token::Else | Token::EndIf => {
+                    return Err(self.make_unexpected_directive_error());
+                }
+                Token::Elif(_) => {
+                    return Err(self.make_unexpected_directive_error());
+                }
+                _ => {
+                    self.parse_definition_into(definitions)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Parse an `#ifdef`/`#ifndef` block including `#elif`/`#else`/`#endif`.
+    fn parse_ifdef_block(
+        &mut self,
+        definitions: &mut Vec<Definition>,
+        namespaces: &mut Vec<Namespace>,
+    ) -> Result<(), ParseError> {
+        // Parse the initial #ifdef/#ifndef
+        let first_cfg = match self.peek().clone() {
+            Token::IfDef(name) => {
+                self.advance();
+                CfgExpr::Feature(name)
+            }
+            Token::IfNDef(name) => {
+                self.advance();
+                CfgExpr::Not(Box::new(CfgExpr::Feature(name)))
+            }
+            _ => unreachable!(),
+        };
+
+        // Track the actual condition for each branch (for #elif/#else negation)
+        let mut seen_conditions = vec![first_cfg.clone()];
+
+        // Parse the #ifdef body
+        self.cfg_stack.push(first_cfg);
+        self.parse_definitions_until(definitions, namespaces, |tok| {
+            matches!(
+                tok,
+                Token::Elif(_) | Token::Else | Token::EndIf | Token::Eof
+            )
+        })?;
+        self.cfg_stack.pop();
+
+        // Handle #elif branches
+        while let Token::Elif(elif_name) = self.peek().clone() {
+            self.advance();
+
+            // #elif FOO means: none of the previous branches matched AND feature = "FOO"
+            let elif_feature = CfgExpr::Feature(elif_name);
+            let mut parts: Vec<CfgExpr> =
+                seen_conditions.iter().map(|c| c.clone().negate()).collect();
+            parts.push(elif_feature.clone());
+            let elif_cfg = CfgExpr::All(parts);
+
+            seen_conditions.push(elif_feature);
+
+            self.cfg_stack.push(elif_cfg);
+            self.parse_definitions_until(definitions, namespaces, |tok| {
+                matches!(
+                    tok,
+                    Token::Elif(_) | Token::Else | Token::EndIf | Token::Eof
+                )
+            })?;
+            self.cfg_stack.pop();
+        }
+
+        // Handle #else
+        if *self.peek() == Token::Else {
+            self.advance();
+
+            // #else means: none of the previous conditions were true
+            let else_cfg = if seen_conditions.len() == 1 {
+                seen_conditions.into_iter().next().unwrap().negate()
+            } else {
+                let negated: Vec<CfgExpr> =
+                    seen_conditions.into_iter().map(|c| c.negate()).collect();
+                CfgExpr::All(negated)
+            };
+
+            self.cfg_stack.push(else_cfg);
+            self.parse_definitions_until(definitions, namespaces, |tok| {
+                matches!(tok, Token::EndIf | Token::Eof)
+            })?;
+            self.cfg_stack.pop();
+        }
+
+        // Expect #endif
+        if *self.peek() == Token::EndIf {
+            self.advance();
+        } else {
+            return Err(self.unexpected_token_error("#endif".to_string(), self.peek().clone()));
+        }
+
+        Ok(())
+    }
+
+    /// Compute the current cfg expression from the cfg_stack.
+    fn current_cfg(&self) -> Option<CfgExpr> {
+        match self.cfg_stack.len() {
+            0 => None,
+            1 => Some(self.cfg_stack[0].clone()),
+            _ => {
+                // Flatten nested All() expressions for cleaner output.
+                let mut parts = Vec::new();
+                for expr in &self.cfg_stack {
+                    match expr {
+                        CfgExpr::All(inner) => parts.extend(inner.iter().cloned()),
+                        other => parts.push(other.clone()),
+                    }
+                }
+                Some(CfgExpr::All(parts))
+            }
+        }
+    }
+
     fn parse_namespace(&mut self) -> Result<Namespace, ParseError> {
         self.expect(Token::Namespace)?;
         let name = self.expect_ident()?;
         self.expect(Token::LBrace)?;
 
         let mut definitions = Vec::new();
-        while *self.peek() != Token::RBrace && *self.peek() != Token::Eof {
-            // Skip any extra semicolons
-            while *self.peek() == Token::Semi {
-                self.advance();
-            }
-            if *self.peek() == Token::RBrace {
-                break;
-            }
-
-            self.parse_definition_into(&mut definitions)?;
-        }
+        let mut namespaces = Vec::new();
+        self.parse_definitions_until(&mut definitions, &mut namespaces, |tok| {
+            matches!(tok, Token::RBrace | Token::Eof)
+        })?;
 
         self.expect(Token::RBrace)?;
 
-        Ok(Namespace { name, definitions })
+        Ok(Namespace {
+            name,
+            definitions,
+            namespaces,
+        })
     }
 
     /// Parse a single definition, prepending any extracted nested definitions
@@ -155,7 +282,7 @@ impl Parser {
     fn parse_definition_into(&mut self, out: &mut Vec<Definition>) -> Result<(), ParseError> {
         let extract_start = self.extracted_definitions.len();
 
-        let def = self.parse_definition()?;
+        let def = self.parse_definition(extract_start)?;
 
         // Insert any newly extracted definitions before this definition
         for extracted in self.extracted_definitions.drain(extract_start..) {
@@ -166,11 +293,13 @@ impl Parser {
         Ok(())
     }
 
-    fn parse_definition(&mut self) -> Result<Definition, ParseError> {
+    fn parse_definition(&mut self, extract_start: usize) -> Result<Definition, ParseError> {
         // Mark the start of this definition for source extraction
         self.def_start_pos = self.pos;
 
-        match self.peek() {
+        let cfg = self.current_cfg();
+
+        let mut def = match self.peek() {
             Token::Struct => self.parse_struct().map(Definition::Struct),
             Token::Enum => self.parse_enum().map(Definition::Enum),
             Token::Union => self.parse_union().map(Definition::Union),
@@ -180,7 +309,21 @@ impl Parser {
                 "struct, enum, union, typedef, or const".to_string(),
                 other.clone(),
             )),
+        }?;
+
+        def.set_cfg(cfg.clone());
+
+        // Also set cfg on any extracted nested definitions from this definition.
+        // Only apply to definitions extracted during this parse (from extract_start).
+        if cfg.is_some() {
+            for extracted in &mut self.extracted_definitions[extract_start..] {
+                if extracted.cfg().is_none() {
+                    extracted.set_cfg(cfg.clone());
+                }
+            }
         }
+
+        Ok(def)
     }
 
     fn parse_struct(&mut self) -> Result<Struct, ParseError> {
@@ -215,6 +358,7 @@ impl Parser {
             is_nested: false,
             parent: None,
             file_index: self.file_index,
+            cfg: None,
         })
     }
 
@@ -314,6 +458,7 @@ impl Parser {
             is_nested: false,
             parent: None,
             file_index: self.file_index,
+            cfg: None,
         })
     }
 
@@ -335,6 +480,7 @@ impl Parser {
             type_,
             source,
             file_index: self.file_index,
+            cfg: None,
         })
     }
 
@@ -356,6 +502,7 @@ impl Parser {
             base,
             source,
             file_index: self.file_index,
+            cfg: None,
         })
     }
 
@@ -539,6 +686,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
+            cfg: None,
         };
 
         self.extracted_definitions
@@ -835,6 +983,21 @@ impl Parser {
     }
 
     /// Create an `UnexpectedToken` error with the current position.
+    fn make_unexpected_directive_error(&self) -> ParseError {
+        let directive = match self.peek() {
+            Token::Else => "else",
+            Token::EndIf => "endif",
+            Token::Elif(_) => "elif",
+            _ => "unknown",
+        };
+        let (line, col) = self.current_position();
+        ParseError::UnexpectedDirective {
+            directive: directive.to_string(),
+            line,
+            col,
+        }
+    }
+
     fn unexpected_token_error(&self, expected: String, got: Token) -> ParseError {
         let (line, col) = self.current_position();
         ParseError::UnexpectedToken {
@@ -913,6 +1076,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
+            cfg: None,
         };
 
         // Fix up parent relationships for any definitions extracted during union parsing
@@ -994,6 +1158,12 @@ pub enum ParseError {
     UnsupportedDefaultArm { line: usize, col: usize },
     #[error("{line}:{col}: integer value {value} overflows target type")]
     IntegerOverflow { value: i64, line: usize, col: usize },
+    #[error("{line}:{col}: unexpected #{directive} outside of #ifdef block")]
+    UnexpectedDirective {
+        directive: String,
+        line: usize,
+        col: usize,
+    },
 }
 
 /// Result of `parse_type`: either a regular AST type or an anonymous union

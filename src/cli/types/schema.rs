@@ -38,7 +38,7 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             use std::str::FromStr;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), crate::$m::TypeVariant::VARIANTS_STR)
+                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             let settings = match self.output {
                 OutputFormat::JsonSchemaDraft201909 => schemars::settings_draft201909(),

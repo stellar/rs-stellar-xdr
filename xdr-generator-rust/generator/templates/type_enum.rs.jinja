@@ -15,9 +15,9 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    // VARIANTS and VARIANTS_STR are slices (not fixed-size arrays) because
-    // individual entries may be #[cfg]-gated, so the count varies by enabled features.
-    pub const VARIANTS: &[TypeVariant] = &[
+    // Private const slice used to compute the variant count, supporting
+    // cfg-gated entries whose presence varies by enabled features.
+    const _VARIANTS: &[TypeVariant] = &[
 {%- for t in type_variant_enum.types %}
 {%- if let Some(cfg) = t.cfg %}
         #[cfg({{ cfg }})]
@@ -25,7 +25,23 @@ impl TypeVariant {
         TypeVariant::{{ t.name }},
 {%- endfor %}
     ];
-    pub const VARIANTS_STR: &[&str] = &[
+    pub const VARIANTS: [TypeVariant; Self::_VARIANTS.len()] = [
+{%- for t in type_variant_enum.types %}
+{%- if let Some(cfg) = t.cfg %}
+        #[cfg({{ cfg }})]
+{%- endif %}
+        TypeVariant::{{ t.name }},
+{%- endfor %}
+    ];
+    const _VARIANTS_STR: &[&str] = &[
+{%- for t in type_variant_enum.types %}
+{%- if let Some(cfg) = t.cfg %}
+        #[cfg({{ cfg }})]
+{%- endif %}
+        "{{ t.name }}",
+{%- endfor %}
+    ];
+    pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = [
 {%- for t in type_variant_enum.types %}
 {%- if let Some(cfg) = t.cfg %}
         #[cfg({{ cfg }})]
@@ -49,7 +65,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> &'static [TypeVariant] {
+    pub const fn variants() -> [TypeVariant; Self::_VARIANTS.len()] {
         Self::VARIANTS
     }
 
@@ -115,9 +131,9 @@ pub enum Type {
 }
 
 impl Type {
-    // VARIANTS and VARIANTS_STR are slices (not fixed-size arrays) because
-    // individual entries may be #[cfg]-gated, so the count varies by enabled features.
-    pub const VARIANTS: &[TypeVariant] = &[
+    // Private const slices used to compute the variant count, supporting
+    // cfg-gated entries whose presence varies by enabled features.
+    const _VARIANTS: &[TypeVariant] = &[
 {%- for t in type_variant_enum.types %}
 {%- if let Some(cfg) = t.cfg %}
         #[cfg({{ cfg }})]
@@ -125,7 +141,23 @@ impl Type {
         TypeVariant::{{ t.name }},
 {%- endfor %}
     ];
-    pub const VARIANTS_STR: &[&str] = &[
+    pub const VARIANTS: [TypeVariant; Self::_VARIANTS.len()] = [
+{%- for t in type_variant_enum.types %}
+{%- if let Some(cfg) = t.cfg %}
+        #[cfg({{ cfg }})]
+{%- endif %}
+        TypeVariant::{{ t.name }},
+{%- endfor %}
+    ];
+    const _VARIANTS_STR: &[&str] = &[
+{%- for t in type_variant_enum.types %}
+{%- if let Some(cfg) = t.cfg %}
+        #[cfg({{ cfg }})]
+{%- endif %}
+        "{{ t.name }}",
+{%- endfor %}
+    ];
+    pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = [
 {%- for t in type_variant_enum.types %}
 {%- if let Some(cfg) = t.cfg %}
         #[cfg({{ cfg }})]
@@ -337,7 +369,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> &'static [TypeVariant] {
+    pub const fn variants() -> [TypeVariant; Self::_VARIANTS.len()] {
         Self::VARIANTS
     }
 

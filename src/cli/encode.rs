@@ -116,7 +116,7 @@ macro_rules! run_x {
             use crate::$m::WriteXdr;
             let mut input = util::parse_input(&self.input).map_err(Error::ReadFile)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), crate::$m::TypeVariant::VARIANTS_STR)
+                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             for f in &mut input {
                 match self.input_format {

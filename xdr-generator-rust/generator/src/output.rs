@@ -48,6 +48,7 @@ pub struct EnumStructMemberOutput {
     pub name: String,
     pub value: i32,
     pub is_first: bool,
+    pub cfg: Option<String>,
 }
 
 pub struct UnionOutput {
@@ -67,6 +68,7 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
+    pub cfg: Option<String>,
 }
 
 pub struct TypedefAliasOutput {

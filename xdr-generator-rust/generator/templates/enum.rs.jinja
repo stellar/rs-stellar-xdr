@@ -24,6 +24,9 @@
 #[repr(i32)]
 pub enum {{ e.name }} {
 {%- for m in e.members %}
+{%- if let Some(cfg) = m.cfg %}
+    #[cfg({{ cfg }})]
+{%- endif %}
 {%- if m.is_first %}
     #[cfg_attr(feature = "alloc", default)]
 {%- endif %}
@@ -35,24 +38,55 @@ pub enum {{ e.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl {{ e.name }} {
-    pub const VARIANTS: [{{ e.name }}; {{ e.members.len() }}] = [
+    const _VARIANTS: &[{{ e.name }}] = &[
 {%- for m in e.members %}
+{%- if let Some(cfg) = m.cfg %}
+        #[cfg({{ cfg }})]
+{%- endif %}
         {{ e.name }}::{{ m.name }},
 {%- endfor %}
     ];
-    pub const VARIANTS_STR: [&'static str; {{ e.members.len() }}] = [{% for m in e.members %}"{{ m.name }}", {% endfor %}];
+    pub const VARIANTS: [{{ e.name }}; Self::_VARIANTS.len()] = {
+        let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
+        let mut i = 1;
+        while i < Self::_VARIANTS.len() {
+            arr[i] = Self::_VARIANTS[i];
+            i += 1;
+        }
+        arr
+    };
+    const _VARIANTS_STR: &[&str] = &[
+{%- for m in e.members %}
+{%- if let Some(cfg) = m.cfg %}
+        #[cfg({{ cfg }})]
+{%- endif %}
+        "{{ m.name }}",
+{%- endfor %}
+    ];
+    pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
+        let mut arr = [""; Self::_VARIANTS_STR.len()];
+        let mut i = 0;
+        while i < Self::_VARIANTS_STR.len() {
+            arr[i] = Self::_VARIANTS_STR[i];
+            i += 1;
+        }
+        arr
+    };
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
 {%- for m in e.members %}
+{%- if let Some(cfg) = m.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
             Self::{{ m.name }} => "{{ m.name }}",
 {%- endfor %}
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [{{ e.name }}; {{ e.members.len() }}] {
+    pub const fn variants() -> [{{ e.name }}; Self::_VARIANTS.len()] {
         Self::VARIANTS
     }
 }
@@ -99,6 +133,9 @@ impl TryFrom<i32> for {{ e.name }} {
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
 {%- for m in e.members %}
+{%- if let Some(cfg) = m.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
             {{ m.value }} => {{ e.name }}::{{ m.name }},
 {%- endfor %}
             #[allow(unreachable_patterns)]

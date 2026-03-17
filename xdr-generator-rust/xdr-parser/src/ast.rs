@@ -259,15 +259,16 @@ pub struct Enum {
 
 impl Enum {
     /// Create a new Enum, computing stripped member names from the common prefix.
-    pub fn new(name: String, members: Vec<(String, i32)>, source: String) -> Self {
-        let names: Vec<&str> = members.iter().map(|(n, _)| n.as_str()).collect();
+    pub fn new(name: String, members: Vec<(String, i32, Option<CfgExpr>)>, source: String) -> Self {
+        let names: Vec<&str> = members.iter().map(|(n, _, _)| n.as_str()).collect();
         let member_prefix = find_common_prefix(&names).to_string();
         let members = members
             .into_iter()
-            .map(|(name, value)| EnumMember {
+            .map(|(name, value, cfg)| EnumMember {
                 stripped_name: strip_prefix(&name, &member_prefix),
                 name,
                 value,
+                cfg,
             })
             .collect();
         Self {
@@ -377,6 +378,7 @@ pub struct EnumMember {
     /// The member name with the common enum prefix stripped.
     pub stripped_name: String,
     pub value: i32,
+    pub cfg: Option<CfgExpr>,
 }
 
 /// The discriminant of a union.
@@ -392,6 +394,7 @@ pub struct UnionArm {
     pub cases: Vec<UnionCase>,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
+    pub cfg: Option<CfgExpr>,
 }
 
 /// A case in a union.

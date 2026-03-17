@@ -153,6 +153,7 @@ impl RustGenerator {
                 name: type_name(&m.stripped_name),
                 value: m.value,
                 is_first: i == 0,
+                cfg: m.cfg.as_ref().map(|c| c.render()),
             })
             .collect();
 
@@ -325,6 +326,7 @@ impl RustGenerator {
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
+                    cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }
             })
             .collect()

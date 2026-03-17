@@ -68,7 +68,7 @@ macro_rules! run_x {
             let f1 = File::open(&self.left).map_err(Error::ReadFile)?;
             let f2 = File::open(&self.right).map_err(Error::ReadFile)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+                Error::UnknownType(self.r#type.clone(), crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             let (t1, t2) = match self.input {
                 InputFormat::Single => {

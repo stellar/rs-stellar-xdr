@@ -98,7 +98,7 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             use crate::$m::WriteXdr;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+                Error::UnknownType(self.r#type.clone(), crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             let v = crate::$m::Type::default(r#type);
             match self.output_format {

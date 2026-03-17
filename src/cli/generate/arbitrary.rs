@@ -99,7 +99,7 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             use crate::$m::WriteXdr;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+                Error::UnknownType(self.r#type.clone(), crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             let r = rand::random::<[u8; 10_240]>();
             let mut u = Unstructured::new(&r);

@@ -62,8 +62,16 @@ impl RustGenerator {
         {
             let name = type_name(d.name());
             let cfg = self.resolve_cfg(d);
-            let prev = cfg_by_name.insert(name.clone(), cfg);
-            debug_assert!(prev.is_none(), "duplicate Rust type name: {name}");
+            match cfg_by_name.entry(name) {
+                std::collections::hash_map::Entry::Vacant(e) => {
+                    e.insert(cfg);
+                }
+                std::collections::hash_map::Entry::Occupied(mut e) => {
+                    // Same name in multiple cfg branches (e.g. #ifdef/#else)
+                    // means the type is always present, so clear the cfg.
+                    e.insert(None);
+                }
+            }
         }
 
         let types: Vec<TypeEnumEntry> = spec

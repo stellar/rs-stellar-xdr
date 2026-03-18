@@ -139,7 +139,10 @@ impl CfgExpr {
     /// Render as a Rust `#[cfg(...)]` attribute string (without the outer `#[cfg()]`).
     pub fn render(&self) -> String {
         match self {
-            CfgExpr::Feature(name) => format!("feature = \"{name}\""),
+            CfgExpr::Feature(name) => {
+                let lower = name.to_lowercase();
+                format!("feature = \"{lower}\"")
+            }
             CfgExpr::Not(inner) => format!("not({})", inner.render()),
             CfgExpr::All(exprs) => {
                 let parts: Vec<String> = exprs.iter().map(|e| e.render()).collect();

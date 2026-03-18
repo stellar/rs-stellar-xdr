@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "26c2c761d5e175c8b2f373611c942ef4484a6cd33f142f69638b2df82be85313",
+        "a034a3eb4d8b94f5c4c573fe14a1afc548aa316e1e897aa70e5a1688aada3c77",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -39,7 +39,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-contract.x",
-        "caa002cf7e0b961b0f1f5be429c1a1b1478b49be494c9d547fc3c4b2fa6b38f0",
+        "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982",
     ),
     (
         "xdr/curr/Stellar-exporter.x",
@@ -63,7 +63,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "7c4c951f233ad7cdabedd740abd9697626ec5bc03ce97bf60cbaeee1481a48d1",
+        "30d03669fb29ca48fdda1c84258473fe6d798f3b881c0224b34df1a1f9e21e80",
     ),
     (
         "xdr/curr/Stellar-types.x",
@@ -4991,6 +4991,113 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
+/// EncodedLedgerKey is an XDR Typedef defined as:
+///
+/// ```text
+/// typedef opaque EncodedLedgerKey<>;
+/// ```
+///
+#[cfg_eval::cfg_eval]
+#[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct EncodedLedgerKey(pub BytesM);
+
+impl From<EncodedLedgerKey> for BytesM {
+    #[must_use]
+    fn from(x: EncodedLedgerKey) -> Self {
+        x.0
+    }
+}
+
+impl From<BytesM> for EncodedLedgerKey {
+    #[must_use]
+    fn from(x: BytesM) -> Self {
+        EncodedLedgerKey(x)
+    }
+}
+
+impl AsRef<BytesM> for EncodedLedgerKey {
+    #[must_use]
+    fn as_ref(&self) -> &BytesM {
+        &self.0
+    }
+}
+
+impl ReadXdr for EncodedLedgerKey {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::read_xdr(r)?;
+            let v = EncodedLedgerKey(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for EncodedLedgerKey {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for EncodedLedgerKey {
+    type Target = BytesM;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<EncodedLedgerKey> for Vec<u8> {
+    #[must_use]
+    fn from(x: EncodedLedgerKey) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for EncodedLedgerKey {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self, Error> {
+        Ok(EncodedLedgerKey(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for EncodedLedgerKey {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self, Error> {
+        Ok(EncodedLedgerKey(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for EncodedLedgerKey {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for EncodedLedgerKey {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
 /// ConfigSettingContractExecutionLanesV0 is an XDR Struct defined as:
 ///
 /// ```text
@@ -5709,7 +5816,9 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // Cost of performing BN254 scalar element exponentiation
 ///     Bn254FrPow = 83,
 ///      // Cost of performing BN254 scalar element inversion
-///     Bn254FrInv = 84
+///     Bn254FrInv = 84,
+///     // Cost of performing BN254 G1 multi-scalar multiplication (MSM)
+///     Bn254G1Msm = 85
 /// };
 /// ```
 ///
@@ -5811,6 +5920,7 @@ pub enum ContractCostType {
     Bn254FrMul = 82,
     Bn254FrPow = 83,
     Bn254FrInv = 84,
+    Bn254G1Msm = 85,
 }
 
 impl ContractCostType {
@@ -5900,6 +6010,7 @@ impl ContractCostType {
         ContractCostType::Bn254FrMul,
         ContractCostType::Bn254FrPow,
         ContractCostType::Bn254FrInv,
+        ContractCostType::Bn254G1Msm,
     ];
     pub const VARIANTS: [ContractCostType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -5996,6 +6107,7 @@ impl ContractCostType {
         "Bn254FrMul",
         "Bn254FrPow",
         "Bn254FrInv",
+        "Bn254G1Msm",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -6095,6 +6207,7 @@ impl ContractCostType {
             Self::Bn254FrMul => "Bn254FrMul",
             Self::Bn254FrPow => "Bn254FrPow",
             Self::Bn254FrInv => "Bn254FrInv",
+            Self::Bn254G1Msm => "Bn254G1Msm",
         }
     }
 
@@ -6215,6 +6328,7 @@ impl TryFrom<i32> for ContractCostType {
             82 => ContractCostType::Bn254FrMul,
             83 => ContractCostType::Bn254FrPow,
             84 => ContractCostType::Bn254FrInv,
+            85 => ContractCostType::Bn254G1Msm,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6531,6 +6645,190 @@ impl WriteXdr for ConfigSettingScpTiming {
     }
 }
 
+/// FrozenLedgerKeys is an XDR Struct defined as:
+///
+/// ```text
+/// struct FrozenLedgerKeys {
+///     EncodedLedgerKey keys<>;
+/// };
+/// ```
+///
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct FrozenLedgerKeys {
+    pub keys: VecM<EncodedLedgerKey>,
+}
+
+impl ReadXdr for FrozenLedgerKeys {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                keys: VecM::<EncodedLedgerKey>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for FrozenLedgerKeys {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.keys.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// FrozenLedgerKeysDelta is an XDR Struct defined as:
+///
+/// ```text
+/// struct FrozenLedgerKeysDelta {
+///     EncodedLedgerKey keysToFreeze<>;
+///     EncodedLedgerKey keysToUnfreeze<>;
+/// };
+/// ```
+///
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct FrozenLedgerKeysDelta {
+    pub keys_to_freeze: VecM<EncodedLedgerKey>,
+    pub keys_to_unfreeze: VecM<EncodedLedgerKey>,
+}
+
+impl ReadXdr for FrozenLedgerKeysDelta {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                keys_to_freeze: VecM::<EncodedLedgerKey>::read_xdr(r)?,
+                keys_to_unfreeze: VecM::<EncodedLedgerKey>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for FrozenLedgerKeysDelta {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.keys_to_freeze.write_xdr(w)?;
+            self.keys_to_unfreeze.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// FreezeBypassTxs is an XDR Struct defined as:
+///
+/// ```text
+/// struct FreezeBypassTxs {
+///     Hash txHashes<>;
+/// };
+/// ```
+///
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct FreezeBypassTxs {
+    pub tx_hashes: VecM<Hash>,
+}
+
+impl ReadXdr for FreezeBypassTxs {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_hashes: VecM::<Hash>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for FreezeBypassTxs {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.tx_hashes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// FreezeBypassTxsDelta is an XDR Struct defined as:
+///
+/// ```text
+/// struct FreezeBypassTxsDelta {
+///     Hash addTxs<>;
+///     Hash removeTxs<>;
+/// };
+/// ```
+///
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct FreezeBypassTxsDelta {
+    pub add_txs: VecM<Hash>,
+    pub remove_txs: VecM<Hash>,
+}
+
+impl ReadXdr for FreezeBypassTxsDelta {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                add_txs: VecM::<Hash>::read_xdr(r)?,
+                remove_txs: VecM::<Hash>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for FreezeBypassTxsDelta {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.add_txs.write_xdr(w)?;
+            self.remove_txs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ContractCostCountLimit is an XDR Const defined as:
 ///
 /// ```text
@@ -6667,7 +6965,11 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
 ///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
 ///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15,
-///     CONFIG_SETTING_SCP_TIMING = 16
+///     CONFIG_SETTING_SCP_TIMING = 16,
+///     CONFIG_SETTING_FROZEN_LEDGER_KEYS = 17,
+///     CONFIG_SETTING_FROZEN_LEDGER_KEYS_DELTA = 18,
+///     CONFIG_SETTING_FREEZE_BYPASS_TXS = 19,
+///     CONFIG_SETTING_FREEZE_BYPASS_TXS_DELTA = 20
 /// };
 /// ```
 ///
@@ -6701,6 +7003,10 @@ pub enum ConfigSettingId {
     ContractParallelComputeV0 = 14,
     ContractLedgerCostExtV0 = 15,
     ScpTiming = 16,
+    FrozenLedgerKeys = 17,
+    FrozenLedgerKeysDelta = 18,
+    FreezeBypassTxs = 19,
+    FreezeBypassTxsDelta = 20,
 }
 
 impl ConfigSettingId {
@@ -6722,6 +7028,10 @@ impl ConfigSettingId {
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
         ConfigSettingId::ScpTiming,
+        ConfigSettingId::FrozenLedgerKeys,
+        ConfigSettingId::FrozenLedgerKeysDelta,
+        ConfigSettingId::FreezeBypassTxs,
+        ConfigSettingId::FreezeBypassTxsDelta,
     ];
     pub const VARIANTS: [ConfigSettingId; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -6750,6 +7060,10 @@ impl ConfigSettingId {
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
         "ScpTiming",
+        "FrozenLedgerKeys",
+        "FrozenLedgerKeysDelta",
+        "FreezeBypassTxs",
+        "FreezeBypassTxsDelta",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -6781,6 +7095,10 @@ impl ConfigSettingId {
             Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
             Self::ScpTiming => "ScpTiming",
+            Self::FrozenLedgerKeys => "FrozenLedgerKeys",
+            Self::FrozenLedgerKeysDelta => "FrozenLedgerKeysDelta",
+            Self::FreezeBypassTxs => "FreezeBypassTxs",
+            Self::FreezeBypassTxsDelta => "FreezeBypassTxsDelta",
         }
     }
 
@@ -6833,6 +7151,10 @@ impl TryFrom<i32> for ConfigSettingId {
             14 => ConfigSettingId::ContractParallelComputeV0,
             15 => ConfigSettingId::ContractLedgerCostExtV0,
             16 => ConfigSettingId::ScpTiming,
+            17 => ConfigSettingId::FrozenLedgerKeys,
+            18 => ConfigSettingId::FrozenLedgerKeysDelta,
+            19 => ConfigSettingId::FreezeBypassTxs,
+            20 => ConfigSettingId::FreezeBypassTxsDelta,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6907,6 +7229,14 @@ impl WriteXdr for ConfigSettingId {
 ///     ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt;
 /// case CONFIG_SETTING_SCP_TIMING:
 ///     ConfigSettingSCPTiming contractSCPTiming;
+/// case CONFIG_SETTING_FROZEN_LEDGER_KEYS:
+///     FrozenLedgerKeys frozenLedgerKeys;
+/// case CONFIG_SETTING_FROZEN_LEDGER_KEYS_DELTA:
+///     FrozenLedgerKeysDelta frozenLedgerKeysDelta;
+/// case CONFIG_SETTING_FREEZE_BYPASS_TXS:
+///     FreezeBypassTxs freezeBypassTxs;
+/// case CONFIG_SETTING_FREEZE_BYPASS_TXS_DELTA:
+///     FreezeBypassTxsDelta freezeBypassTxsDelta;
 /// };
 /// ```
 ///
@@ -6946,6 +7276,10 @@ pub enum ConfigSettingEntry {
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
     ScpTiming(ConfigSettingScpTiming),
+    FrozenLedgerKeys(FrozenLedgerKeys),
+    FrozenLedgerKeysDelta(FrozenLedgerKeysDelta),
+    FreezeBypassTxs(FreezeBypassTxs),
+    FreezeBypassTxsDelta(FreezeBypassTxsDelta),
 }
 
 #[cfg(feature = "alloc")]
@@ -6974,6 +7308,10 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractParallelComputeV0,
         ConfigSettingId::ContractLedgerCostExtV0,
         ConfigSettingId::ScpTiming,
+        ConfigSettingId::FrozenLedgerKeys,
+        ConfigSettingId::FrozenLedgerKeysDelta,
+        ConfigSettingId::FreezeBypassTxs,
+        ConfigSettingId::FreezeBypassTxsDelta,
     ];
     pub const VARIANTS: [ConfigSettingId; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -7002,6 +7340,10 @@ impl ConfigSettingEntry {
         "ContractParallelComputeV0",
         "ContractLedgerCostExtV0",
         "ScpTiming",
+        "FrozenLedgerKeys",
+        "FrozenLedgerKeysDelta",
+        "FreezeBypassTxs",
+        "FreezeBypassTxsDelta",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -7033,6 +7375,10 @@ impl ConfigSettingEntry {
             Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
             Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
             Self::ScpTiming(_) => "ScpTiming",
+            Self::FrozenLedgerKeys(_) => "FrozenLedgerKeys",
+            Self::FrozenLedgerKeysDelta(_) => "FrozenLedgerKeysDelta",
+            Self::FreezeBypassTxs(_) => "FreezeBypassTxs",
+            Self::FreezeBypassTxsDelta(_) => "FreezeBypassTxsDelta",
         }
     }
 
@@ -7061,6 +7407,10 @@ impl ConfigSettingEntry {
             Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
             Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
             Self::ScpTiming(_) => ConfigSettingId::ScpTiming,
+            Self::FrozenLedgerKeys(_) => ConfigSettingId::FrozenLedgerKeys,
+            Self::FrozenLedgerKeysDelta(_) => ConfigSettingId::FrozenLedgerKeysDelta,
+            Self::FreezeBypassTxs(_) => ConfigSettingId::FreezeBypassTxs,
+            Self::FreezeBypassTxsDelta(_) => ConfigSettingId::FreezeBypassTxsDelta,
         }
     }
 
@@ -7148,6 +7498,18 @@ impl ReadXdr for ConfigSettingEntry {
                     ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
                 ),
                 ConfigSettingId::ScpTiming => Self::ScpTiming(ConfigSettingScpTiming::read_xdr(r)?),
+                ConfigSettingId::FrozenLedgerKeys => {
+                    Self::FrozenLedgerKeys(FrozenLedgerKeys::read_xdr(r)?)
+                }
+                ConfigSettingId::FrozenLedgerKeysDelta => {
+                    Self::FrozenLedgerKeysDelta(FrozenLedgerKeysDelta::read_xdr(r)?)
+                }
+                ConfigSettingId::FreezeBypassTxs => {
+                    Self::FreezeBypassTxs(FreezeBypassTxs::read_xdr(r)?)
+                }
+                ConfigSettingId::FreezeBypassTxsDelta => {
+                    Self::FreezeBypassTxsDelta(FreezeBypassTxsDelta::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -7180,6 +7542,10 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
                 Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
                 Self::ScpTiming(v) => v.write_xdr(w)?,
+                Self::FrozenLedgerKeys(v) => v.write_xdr(w)?,
+                Self::FrozenLedgerKeysDelta(v) => v.write_xdr(w)?,
+                Self::FreezeBypassTxs(v) => v.write_xdr(w)?,
+                Self::FreezeBypassTxsDelta(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -10387,12 +10753,7 @@ impl WriteXdr for ScSpecEntry {
 ///     // symbolic SCVals used as the key for ledger entries for a contract's
 ///     // instance and an address' nonce, respectively.
 ///     SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,
-/// #ifdef SPARSE_MAP
-///     SCV_LEDGER_KEY_NONCE = 21,
-///     SCV_SPARSE_MAP = 22
-/// #else
 ///     SCV_LEDGER_KEY_NONCE = 21
-/// #endif
 /// };
 /// ```
 ///
@@ -10430,11 +10791,6 @@ pub enum ScValType {
     Address = 18,
     ContractInstance = 19,
     LedgerKeyContractInstance = 20,
-    #[cfg(feature = "sparse_map")]
-    LedgerKeyNonce = 21,
-    #[cfg(feature = "sparse_map")]
-    SparseMap = 22,
-    #[cfg(not(feature = "sparse_map"))]
     LedgerKeyNonce = 21,
 }
 
@@ -10461,11 +10817,6 @@ impl ScValType {
         ScValType::Address,
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
-        #[cfg(feature = "sparse_map")]
-        ScValType::LedgerKeyNonce,
-        #[cfg(feature = "sparse_map")]
-        ScValType::SparseMap,
-        #[cfg(not(feature = "sparse_map"))]
         ScValType::LedgerKeyNonce,
     ];
     pub const VARIANTS: [ScValType; Self::_VARIANTS.len()] = {
@@ -10499,11 +10850,6 @@ impl ScValType {
         "Address",
         "ContractInstance",
         "LedgerKeyContractInstance",
-        #[cfg(feature = "sparse_map")]
-        "LedgerKeyNonce",
-        #[cfg(feature = "sparse_map")]
-        "SparseMap",
-        #[cfg(not(feature = "sparse_map"))]
         "LedgerKeyNonce",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
@@ -10540,11 +10886,6 @@ impl ScValType {
             Self::Address => "Address",
             Self::ContractInstance => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
-            #[cfg(feature = "sparse_map")]
-            Self::LedgerKeyNonce => "LedgerKeyNonce",
-            #[cfg(feature = "sparse_map")]
-            Self::SparseMap => "SparseMap",
-            #[cfg(not(feature = "sparse_map"))]
             Self::LedgerKeyNonce => "LedgerKeyNonce",
         }
     }
@@ -10602,11 +10943,6 @@ impl TryFrom<i32> for ScValType {
             18 => ScValType::Address,
             19 => ScValType::ContractInstance,
             20 => ScValType::LedgerKeyContractInstance,
-            #[cfg(feature = "sparse_map")]
-            21 => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "sparse_map")]
-            22 => ScValType::SparseMap,
-            #[cfg(not(feature = "sparse_map"))]
             21 => ScValType::LedgerKeyNonce,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12882,11 +13218,6 @@ impl WriteXdr for ScContractInstance {
 ///     void;
 /// case SCV_LEDGER_KEY_NONCE:
 ///     SCNonceKey nonce_key;
-///
-/// #ifdef SPARSE_MAP
-/// case SCV_SPARSE_MAP:
-///     SCMap *sparseMap;
-/// #endif
 /// };
 /// ```
 ///
@@ -12937,8 +13268,6 @@ pub enum ScVal {
     ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    #[cfg(feature = "sparse_map")]
-    SparseMap(Option<ScMap>),
 }
 
 #[cfg(feature = "alloc")]
@@ -12972,8 +13301,6 @@ impl ScVal {
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
-        #[cfg(feature = "sparse_map")]
-        ScValType::SparseMap,
     ];
     pub const VARIANTS: [ScValType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -13007,8 +13334,6 @@ impl ScVal {
         "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
-        #[cfg(feature = "sparse_map")]
-        "SparseMap",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -13045,8 +13370,6 @@ impl ScVal {
             Self::ContractInstance(_) => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
-            #[cfg(feature = "sparse_map")]
-            Self::SparseMap(_) => "SparseMap",
         }
     }
 
@@ -13076,8 +13399,6 @@ impl ScVal {
             Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "sparse_map")]
-            Self::SparseMap(_) => ScValType::SparseMap,
         }
     }
 
@@ -13140,8 +13461,6 @@ impl ReadXdr for ScVal {
                 }
                 ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
                 ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
-                #[cfg(feature = "sparse_map")]
-                ScValType::SparseMap => Self::SparseMap(Option::<ScMap>::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -13179,8 +13498,6 @@ impl WriteXdr for ScVal {
                 Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                #[cfg(feature = "sparse_map")]
-                Self::SparseMap(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -45699,7 +46016,8 @@ impl WriteXdr for CreateClaimableBalanceResult {
 ///     CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM = -2,
 ///     CLAIM_CLAIMABLE_BALANCE_LINE_FULL = -3,
 ///     CLAIM_CLAIMABLE_BALANCE_NO_TRUST = -4,
-///     CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5
+///     CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5,
+///     CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN = -6
 /// };
 /// ```
 ///
@@ -45722,6 +46040,7 @@ pub enum ClaimClaimableBalanceResultCode {
     LineFull = -3,
     NoTrust = -4,
     NotAuthorized = -5,
+    TrustlineFrozen = -6,
 }
 
 impl ClaimClaimableBalanceResultCode {
@@ -45732,6 +46051,7 @@ impl ClaimClaimableBalanceResultCode {
         ClaimClaimableBalanceResultCode::LineFull,
         ClaimClaimableBalanceResultCode::NoTrust,
         ClaimClaimableBalanceResultCode::NotAuthorized,
+        ClaimClaimableBalanceResultCode::TrustlineFrozen,
     ];
     pub const VARIANTS: [ClaimClaimableBalanceResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -45749,6 +46069,7 @@ impl ClaimClaimableBalanceResultCode {
         "LineFull",
         "NoTrust",
         "NotAuthorized",
+        "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -45769,6 +46090,7 @@ impl ClaimClaimableBalanceResultCode {
             Self::LineFull => "LineFull",
             Self::NoTrust => "NoTrust",
             Self::NotAuthorized => "NotAuthorized",
+            Self::TrustlineFrozen => "TrustlineFrozen",
         }
     }
 
@@ -45810,6 +46132,7 @@ impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
             -3 => ClaimClaimableBalanceResultCode::LineFull,
             -4 => ClaimClaimableBalanceResultCode::NoTrust,
             -5 => ClaimClaimableBalanceResultCode::NotAuthorized,
+            -6 => ClaimClaimableBalanceResultCode::TrustlineFrozen,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -45857,6 +46180,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 /// case CLAIM_CLAIMABLE_BALANCE_LINE_FULL:
 /// case CLAIM_CLAIMABLE_BALANCE_NO_TRUST:
 /// case CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED:
+/// case CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN:
 ///     void;
 /// };
 /// ```
@@ -45880,6 +46204,7 @@ pub enum ClaimClaimableBalanceResult {
     LineFull,
     NoTrust,
     NotAuthorized,
+    TrustlineFrozen,
 }
 
 #[cfg(feature = "alloc")]
@@ -45897,6 +46222,7 @@ impl ClaimClaimableBalanceResult {
         ClaimClaimableBalanceResultCode::LineFull,
         ClaimClaimableBalanceResultCode::NoTrust,
         ClaimClaimableBalanceResultCode::NotAuthorized,
+        ClaimClaimableBalanceResultCode::TrustlineFrozen,
     ];
     pub const VARIANTS: [ClaimClaimableBalanceResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -45914,6 +46240,7 @@ impl ClaimClaimableBalanceResult {
         "LineFull",
         "NoTrust",
         "NotAuthorized",
+        "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -45934,6 +46261,7 @@ impl ClaimClaimableBalanceResult {
             Self::LineFull => "LineFull",
             Self::NoTrust => "NoTrust",
             Self::NotAuthorized => "NotAuthorized",
+            Self::TrustlineFrozen => "TrustlineFrozen",
         }
     }
 
@@ -45947,6 +46275,7 @@ impl ClaimClaimableBalanceResult {
             Self::LineFull => ClaimClaimableBalanceResultCode::LineFull,
             Self::NoTrust => ClaimClaimableBalanceResultCode::NoTrust,
             Self::NotAuthorized => ClaimClaimableBalanceResultCode::NotAuthorized,
+            Self::TrustlineFrozen => ClaimClaimableBalanceResultCode::TrustlineFrozen,
         }
     }
 
@@ -45992,6 +46321,7 @@ impl ReadXdr for ClaimClaimableBalanceResult {
                 ClaimClaimableBalanceResultCode::LineFull => Self::LineFull,
                 ClaimClaimableBalanceResultCode::NoTrust => Self::NoTrust,
                 ClaimClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
+                ClaimClaimableBalanceResultCode::TrustlineFrozen => Self::TrustlineFrozen,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -46013,6 +46343,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
                 Self::LineFull => ().write_xdr(w)?,
                 Self::NoTrust => ().write_xdr(w)?,
                 Self::NotAuthorized => ().write_xdr(w)?,
+                Self::TrustlineFrozen => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -47887,7 +48218,9 @@ impl WriteXdr for SetTrustLineFlagsResult {
 ///     LIQUIDITY_POOL_DEPOSIT_LINE_FULL = -5,      // pool share trust line doesn't
 ///                                                 // have sufficient limit
 ///     LIQUIDITY_POOL_DEPOSIT_BAD_PRICE = -6,      // deposit price outside bounds
-///     LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7       // pool reserves are full
+///     LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7,      // pool reserves are full
+///     LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN = -8  // trustline for one of the
+///                                                   // assets is frozen
 /// };
 /// ```
 ///
@@ -47912,6 +48245,7 @@ pub enum LiquidityPoolDepositResultCode {
     LineFull = -5,
     BadPrice = -6,
     PoolFull = -7,
+    TrustlineFrozen = -8,
 }
 
 impl LiquidityPoolDepositResultCode {
@@ -47924,6 +48258,7 @@ impl LiquidityPoolDepositResultCode {
         LiquidityPoolDepositResultCode::LineFull,
         LiquidityPoolDepositResultCode::BadPrice,
         LiquidityPoolDepositResultCode::PoolFull,
+        LiquidityPoolDepositResultCode::TrustlineFrozen,
     ];
     pub const VARIANTS: [LiquidityPoolDepositResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -47943,6 +48278,7 @@ impl LiquidityPoolDepositResultCode {
         "LineFull",
         "BadPrice",
         "PoolFull",
+        "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -47965,6 +48301,7 @@ impl LiquidityPoolDepositResultCode {
             Self::LineFull => "LineFull",
             Self::BadPrice => "BadPrice",
             Self::PoolFull => "PoolFull",
+            Self::TrustlineFrozen => "TrustlineFrozen",
         }
     }
 
@@ -48008,6 +48345,7 @@ impl TryFrom<i32> for LiquidityPoolDepositResultCode {
             -5 => LiquidityPoolDepositResultCode::LineFull,
             -6 => LiquidityPoolDepositResultCode::BadPrice,
             -7 => LiquidityPoolDepositResultCode::PoolFull,
+            -8 => LiquidityPoolDepositResultCode::TrustlineFrozen,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -48057,6 +48395,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 /// case LIQUIDITY_POOL_DEPOSIT_LINE_FULL:
 /// case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE:
 /// case LIQUIDITY_POOL_DEPOSIT_POOL_FULL:
+/// case LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN:
 ///     void;
 /// };
 /// ```
@@ -48082,6 +48421,7 @@ pub enum LiquidityPoolDepositResult {
     LineFull,
     BadPrice,
     PoolFull,
+    TrustlineFrozen,
 }
 
 #[cfg(feature = "alloc")]
@@ -48101,6 +48441,7 @@ impl LiquidityPoolDepositResult {
         LiquidityPoolDepositResultCode::LineFull,
         LiquidityPoolDepositResultCode::BadPrice,
         LiquidityPoolDepositResultCode::PoolFull,
+        LiquidityPoolDepositResultCode::TrustlineFrozen,
     ];
     pub const VARIANTS: [LiquidityPoolDepositResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -48120,6 +48461,7 @@ impl LiquidityPoolDepositResult {
         "LineFull",
         "BadPrice",
         "PoolFull",
+        "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -48142,6 +48484,7 @@ impl LiquidityPoolDepositResult {
             Self::LineFull => "LineFull",
             Self::BadPrice => "BadPrice",
             Self::PoolFull => "PoolFull",
+            Self::TrustlineFrozen => "TrustlineFrozen",
         }
     }
 
@@ -48157,6 +48500,7 @@ impl LiquidityPoolDepositResult {
             Self::LineFull => LiquidityPoolDepositResultCode::LineFull,
             Self::BadPrice => LiquidityPoolDepositResultCode::BadPrice,
             Self::PoolFull => LiquidityPoolDepositResultCode::PoolFull,
+            Self::TrustlineFrozen => LiquidityPoolDepositResultCode::TrustlineFrozen,
         }
     }
 
@@ -48204,6 +48548,7 @@ impl ReadXdr for LiquidityPoolDepositResult {
                 LiquidityPoolDepositResultCode::LineFull => Self::LineFull,
                 LiquidityPoolDepositResultCode::BadPrice => Self::BadPrice,
                 LiquidityPoolDepositResultCode::PoolFull => Self::PoolFull,
+                LiquidityPoolDepositResultCode::TrustlineFrozen => Self::TrustlineFrozen,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -48227,6 +48572,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
                 Self::LineFull => ().write_xdr(w)?,
                 Self::BadPrice => ().write_xdr(w)?,
                 Self::PoolFull => ().write_xdr(w)?,
+                Self::TrustlineFrozen => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -48249,7 +48595,9 @@ impl WriteXdr for LiquidityPoolDepositResult {
 ///                                                // pool share
 ///     LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,    // would go above limit for one
 ///                                                // of the assets
-///     LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5 // didn't withdraw enough
+///     LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5, // didn't withdraw enough
+///     LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN = -6  // trustline for one of the
+///                                                    // assets is frozen
 /// };
 /// ```
 ///
@@ -48272,6 +48620,7 @@ pub enum LiquidityPoolWithdrawResultCode {
     Underfunded = -3,
     LineFull = -4,
     UnderMinimum = -5,
+    TrustlineFrozen = -6,
 }
 
 impl LiquidityPoolWithdrawResultCode {
@@ -48282,6 +48631,7 @@ impl LiquidityPoolWithdrawResultCode {
         LiquidityPoolWithdrawResultCode::Underfunded,
         LiquidityPoolWithdrawResultCode::LineFull,
         LiquidityPoolWithdrawResultCode::UnderMinimum,
+        LiquidityPoolWithdrawResultCode::TrustlineFrozen,
     ];
     pub const VARIANTS: [LiquidityPoolWithdrawResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -48299,6 +48649,7 @@ impl LiquidityPoolWithdrawResultCode {
         "Underfunded",
         "LineFull",
         "UnderMinimum",
+        "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -48319,6 +48670,7 @@ impl LiquidityPoolWithdrawResultCode {
             Self::Underfunded => "Underfunded",
             Self::LineFull => "LineFull",
             Self::UnderMinimum => "UnderMinimum",
+            Self::TrustlineFrozen => "TrustlineFrozen",
         }
     }
 
@@ -48360,6 +48712,7 @@ impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
             -3 => LiquidityPoolWithdrawResultCode::Underfunded,
             -4 => LiquidityPoolWithdrawResultCode::LineFull,
             -5 => LiquidityPoolWithdrawResultCode::UnderMinimum,
+            -6 => LiquidityPoolWithdrawResultCode::TrustlineFrozen,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -48407,6 +48760,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 /// case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED:
 /// case LIQUIDITY_POOL_WITHDRAW_LINE_FULL:
 /// case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM:
+/// case LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN:
 ///     void;
 /// };
 /// ```
@@ -48430,6 +48784,7 @@ pub enum LiquidityPoolWithdrawResult {
     Underfunded,
     LineFull,
     UnderMinimum,
+    TrustlineFrozen,
 }
 
 #[cfg(feature = "alloc")]
@@ -48447,6 +48802,7 @@ impl LiquidityPoolWithdrawResult {
         LiquidityPoolWithdrawResultCode::Underfunded,
         LiquidityPoolWithdrawResultCode::LineFull,
         LiquidityPoolWithdrawResultCode::UnderMinimum,
+        LiquidityPoolWithdrawResultCode::TrustlineFrozen,
     ];
     pub const VARIANTS: [LiquidityPoolWithdrawResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -48464,6 +48820,7 @@ impl LiquidityPoolWithdrawResult {
         "Underfunded",
         "LineFull",
         "UnderMinimum",
+        "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -48484,6 +48841,7 @@ impl LiquidityPoolWithdrawResult {
             Self::Underfunded => "Underfunded",
             Self::LineFull => "LineFull",
             Self::UnderMinimum => "UnderMinimum",
+            Self::TrustlineFrozen => "TrustlineFrozen",
         }
     }
 
@@ -48497,6 +48855,7 @@ impl LiquidityPoolWithdrawResult {
             Self::Underfunded => LiquidityPoolWithdrawResultCode::Underfunded,
             Self::LineFull => LiquidityPoolWithdrawResultCode::LineFull,
             Self::UnderMinimum => LiquidityPoolWithdrawResultCode::UnderMinimum,
+            Self::TrustlineFrozen => LiquidityPoolWithdrawResultCode::TrustlineFrozen,
         }
     }
 
@@ -48542,6 +48901,7 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
                 LiquidityPoolWithdrawResultCode::Underfunded => Self::Underfunded,
                 LiquidityPoolWithdrawResultCode::LineFull => Self::LineFull,
                 LiquidityPoolWithdrawResultCode::UnderMinimum => Self::UnderMinimum,
+                LiquidityPoolWithdrawResultCode::TrustlineFrozen => Self::TrustlineFrozen,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -48563,6 +48923,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
                 Self::Underfunded => ().write_xdr(w)?,
                 Self::LineFull => ().write_xdr(w)?,
                 Self::UnderMinimum => ().write_xdr(w)?,
+                Self::TrustlineFrozen => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -50356,7 +50717,8 @@ impl WriteXdr for OperationResult {
 ///     txBAD_SPONSORSHIP = -14,        // sponsorship not confirmed
 ///     txBAD_MIN_SEQ_AGE_OR_GAP = -15, // minSeqAge or minSeqLedgerGap conditions not met
 ///     txMALFORMED = -16,              // precondition is invalid
-///     txSOROBAN_INVALID = -17         // soroban-specific preconditions were not met
+///     txSOROBAN_INVALID = -17,        // soroban-specific preconditions were not met
+///     txFROZEN_KEY_ACCESSED = -18     // a 'frozen' ledger key is accessed by any operation
 /// };
 /// ```
 ///
@@ -50392,6 +50754,7 @@ pub enum TransactionResultCode {
     TxBadMinSeqAgeOrGap = -15,
     TxMalformed = -16,
     TxSorobanInvalid = -17,
+    TxFrozenKeyAccessed = -18,
 }
 
 impl TransactionResultCode {
@@ -50415,6 +50778,7 @@ impl TransactionResultCode {
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
         TransactionResultCode::TxSorobanInvalid,
+        TransactionResultCode::TxFrozenKeyAccessed,
     ];
     pub const VARIANTS: [TransactionResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -50445,6 +50809,7 @@ impl TransactionResultCode {
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
         "TxSorobanInvalid",
+        "TxFrozenKeyAccessed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -50478,6 +50843,7 @@ impl TransactionResultCode {
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
             Self::TxSorobanInvalid => "TxSorobanInvalid",
+            Self::TxFrozenKeyAccessed => "TxFrozenKeyAccessed",
         }
     }
 
@@ -50532,6 +50898,7 @@ impl TryFrom<i32> for TransactionResultCode {
             -15 => TransactionResultCode::TxBadMinSeqAgeOrGap,
             -16 => TransactionResultCode::TxMalformed,
             -17 => TransactionResultCode::TxSorobanInvalid,
+            -18 => TransactionResultCode::TxFrozenKeyAccessed,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -50592,6 +50959,7 @@ impl WriteXdr for TransactionResultCode {
 ///     case txBAD_MIN_SEQ_AGE_OR_GAP:
 ///     case txMALFORMED:
 ///     case txSOROBAN_INVALID:
+///     case txFROZEN_KEY_ACCESSED:
 ///         void;
 ///     }
 /// ```
@@ -50626,6 +50994,7 @@ pub enum InnerTransactionResultResult {
     TxBadMinSeqAgeOrGap,
     TxMalformed,
     TxSorobanInvalid,
+    TxFrozenKeyAccessed,
 }
 
 #[cfg(feature = "alloc")]
@@ -50654,6 +51023,7 @@ impl InnerTransactionResultResult {
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
         TransactionResultCode::TxSorobanInvalid,
+        TransactionResultCode::TxFrozenKeyAccessed,
     ];
     pub const VARIANTS: [TransactionResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -50682,6 +51052,7 @@ impl InnerTransactionResultResult {
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
         "TxSorobanInvalid",
+        "TxFrozenKeyAccessed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -50713,6 +51084,7 @@ impl InnerTransactionResultResult {
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
             Self::TxSorobanInvalid => "TxSorobanInvalid",
+            Self::TxFrozenKeyAccessed => "TxFrozenKeyAccessed",
         }
     }
 
@@ -50737,6 +51109,7 @@ impl InnerTransactionResultResult {
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
             Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
+            Self::TxFrozenKeyAccessed => TransactionResultCode::TxFrozenKeyAccessed,
         }
     }
 
@@ -50796,6 +51169,7 @@ impl ReadXdr for InnerTransactionResultResult {
                 TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
                 TransactionResultCode::TxMalformed => Self::TxMalformed,
                 TransactionResultCode::TxSorobanInvalid => Self::TxSorobanInvalid,
+                TransactionResultCode::TxFrozenKeyAccessed => Self::TxFrozenKeyAccessed,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -50828,6 +51202,7 @@ impl WriteXdr for InnerTransactionResultResult {
                 Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
                 Self::TxMalformed => ().write_xdr(w)?,
                 Self::TxSorobanInvalid => ().write_xdr(w)?,
+                Self::TxFrozenKeyAccessed => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -50992,6 +51367,7 @@ impl WriteXdr for InnerTransactionResultExt {
 ///     case txBAD_MIN_SEQ_AGE_OR_GAP:
 ///     case txMALFORMED:
 ///     case txSOROBAN_INVALID:
+///     case txFROZEN_KEY_ACCESSED:
 ///         void;
 ///     }
 ///     result;
@@ -51128,6 +51504,7 @@ impl WriteXdr for InnerTransactionResultPair {
 ///     case txBAD_MIN_SEQ_AGE_OR_GAP:
 ///     case txMALFORMED:
 ///     case txSOROBAN_INVALID:
+///     case txFROZEN_KEY_ACCESSED:
 ///         void;
 ///     }
 /// ```
@@ -51164,6 +51541,7 @@ pub enum TransactionResultResult {
     TxBadMinSeqAgeOrGap,
     TxMalformed,
     TxSorobanInvalid,
+    TxFrozenKeyAccessed,
 }
 
 #[cfg(feature = "alloc")]
@@ -51194,6 +51572,7 @@ impl TransactionResultResult {
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
         TransactionResultCode::TxSorobanInvalid,
+        TransactionResultCode::TxFrozenKeyAccessed,
     ];
     pub const VARIANTS: [TransactionResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -51224,6 +51603,7 @@ impl TransactionResultResult {
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
         "TxSorobanInvalid",
+        "TxFrozenKeyAccessed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [""; Self::_VARIANTS_STR.len()];
@@ -51257,6 +51637,7 @@ impl TransactionResultResult {
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
             Self::TxSorobanInvalid => "TxSorobanInvalid",
+            Self::TxFrozenKeyAccessed => "TxFrozenKeyAccessed",
         }
     }
 
@@ -51283,6 +51664,7 @@ impl TransactionResultResult {
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
             Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
+            Self::TxFrozenKeyAccessed => TransactionResultCode::TxFrozenKeyAccessed,
         }
     }
 
@@ -51348,6 +51730,7 @@ impl ReadXdr for TransactionResultResult {
                 TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
                 TransactionResultCode::TxMalformed => Self::TxMalformed,
                 TransactionResultCode::TxSorobanInvalid => Self::TxSorobanInvalid,
+                TransactionResultCode::TxFrozenKeyAccessed => Self::TxFrozenKeyAccessed,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -51382,6 +51765,7 @@ impl WriteXdr for TransactionResultResult {
                 Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
                 Self::TxMalformed => ().write_xdr(w)?,
                 Self::TxSorobanInvalid => ().write_xdr(w)?,
+                Self::TxFrozenKeyAccessed => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -51547,6 +51931,7 @@ impl WriteXdr for TransactionResultExt {
 ///     case txBAD_MIN_SEQ_AGE_OR_GAP:
 ///     case txMALFORMED:
 ///     case txSOROBAN_INVALID:
+///     case txFROZEN_KEY_ACCESSED:
 ///         void;
 ///     }
 ///     result;
@@ -55044,6 +55429,7 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
+    EncodedLedgerKey,
     ConfigSettingContractExecutionLanesV0,
     ConfigSettingContractComputeV0,
     ConfigSettingContractParallelComputeV0,
@@ -55057,6 +55443,10 @@ pub enum TypeVariant {
     StateArchivalSettings,
     EvictionIterator,
     ConfigSettingScpTiming,
+    FrozenLedgerKeys,
+    FrozenLedgerKeysDelta,
+    FreezeBypassTxs,
+    FreezeBypassTxsDelta,
     ContractCostParams,
     ConfigSettingId,
     ConfigSettingEntry,
@@ -55528,6 +55918,7 @@ impl TypeVariant {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::EncodedLedgerKey,
         TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractParallelComputeV0,
@@ -55541,6 +55932,10 @@ impl TypeVariant {
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
         TypeVariant::ConfigSettingScpTiming,
+        TypeVariant::FrozenLedgerKeys,
+        TypeVariant::FrozenLedgerKeysDelta,
+        TypeVariant::FreezeBypassTxs,
+        TypeVariant::FreezeBypassTxsDelta,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -56017,6 +56412,7 @@ impl TypeVariant {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "EncodedLedgerKey",
         "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractParallelComputeV0",
@@ -56030,6 +56426,10 @@ impl TypeVariant {
         "StateArchivalSettings",
         "EvictionIterator",
         "ConfigSettingScpTiming",
+        "FrozenLedgerKeys",
+        "FrozenLedgerKeysDelta",
+        "FreezeBypassTxs",
+        "FreezeBypassTxsDelta",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -56510,6 +56910,7 @@ impl TypeVariant {
             Self::ScpStatementExternalize => "ScpStatementExternalize",
             Self::ScpEnvelope => "ScpEnvelope",
             Self::ScpQuorumSet => "ScpQuorumSet",
+            Self::EncodedLedgerKey => "EncodedLedgerKey",
             Self::ConfigSettingContractExecutionLanesV0 => "ConfigSettingContractExecutionLanesV0",
             Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
             Self::ConfigSettingContractParallelComputeV0 => {
@@ -56525,6 +56926,10 @@ impl TypeVariant {
             Self::StateArchivalSettings => "StateArchivalSettings",
             Self::EvictionIterator => "EvictionIterator",
             Self::ConfigSettingScpTiming => "ConfigSettingScpTiming",
+            Self::FrozenLedgerKeys => "FrozenLedgerKeys",
+            Self::FrozenLedgerKeysDelta => "FrozenLedgerKeysDelta",
+            Self::FreezeBypassTxs => "FreezeBypassTxs",
+            Self::FreezeBypassTxsDelta => "FreezeBypassTxsDelta",
             Self::ContractCostParams => "ContractCostParams",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
@@ -57016,6 +57421,7 @@ impl TypeVariant {
             Self::ScpStatementExternalize => gen.into_root_schema_for::<ScpStatementExternalize>(),
             Self::ScpEnvelope => gen.into_root_schema_for::<ScpEnvelope>(),
             Self::ScpQuorumSet => gen.into_root_schema_for::<ScpQuorumSet>(),
+            Self::EncodedLedgerKey => gen.into_root_schema_for::<EncodedLedgerKey>(),
             Self::ConfigSettingContractExecutionLanesV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractExecutionLanesV0>()
             }
@@ -57045,6 +57451,10 @@ impl TypeVariant {
             Self::StateArchivalSettings => gen.into_root_schema_for::<StateArchivalSettings>(),
             Self::EvictionIterator => gen.into_root_schema_for::<EvictionIterator>(),
             Self::ConfigSettingScpTiming => gen.into_root_schema_for::<ConfigSettingScpTiming>(),
+            Self::FrozenLedgerKeys => gen.into_root_schema_for::<FrozenLedgerKeys>(),
+            Self::FrozenLedgerKeysDelta => gen.into_root_schema_for::<FrozenLedgerKeysDelta>(),
+            Self::FreezeBypassTxs => gen.into_root_schema_for::<FreezeBypassTxs>(),
+            Self::FreezeBypassTxsDelta => gen.into_root_schema_for::<FreezeBypassTxsDelta>(),
             Self::ContractCostParams => gen.into_root_schema_for::<ContractCostParams>(),
             Self::ConfigSettingId => gen.into_root_schema_for::<ConfigSettingId>(),
             Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
@@ -57732,6 +58142,7 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
+            "EncodedLedgerKey" => Ok(Self::EncodedLedgerKey),
             "ConfigSettingContractExecutionLanesV0" => {
                 Ok(Self::ConfigSettingContractExecutionLanesV0)
             }
@@ -57753,6 +58164,10 @@ impl core::str::FromStr for TypeVariant {
             "StateArchivalSettings" => Ok(Self::StateArchivalSettings),
             "EvictionIterator" => Ok(Self::EvictionIterator),
             "ConfigSettingScpTiming" => Ok(Self::ConfigSettingScpTiming),
+            "FrozenLedgerKeys" => Ok(Self::FrozenLedgerKeys),
+            "FrozenLedgerKeysDelta" => Ok(Self::FrozenLedgerKeysDelta),
+            "FreezeBypassTxs" => Ok(Self::FreezeBypassTxs),
+            "FreezeBypassTxsDelta" => Ok(Self::FreezeBypassTxsDelta),
             "ContractCostParams" => Ok(Self::ContractCostParams),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
@@ -58254,6 +58669,7 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
+    EncodedLedgerKey(Box<EncodedLedgerKey>),
     ConfigSettingContractExecutionLanesV0(Box<ConfigSettingContractExecutionLanesV0>),
     ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
     ConfigSettingContractParallelComputeV0(Box<ConfigSettingContractParallelComputeV0>),
@@ -58267,6 +58683,10 @@ pub enum Type {
     StateArchivalSettings(Box<StateArchivalSettings>),
     EvictionIterator(Box<EvictionIterator>),
     ConfigSettingScpTiming(Box<ConfigSettingScpTiming>),
+    FrozenLedgerKeys(Box<FrozenLedgerKeys>),
+    FrozenLedgerKeysDelta(Box<FrozenLedgerKeysDelta>),
+    FreezeBypassTxs(Box<FreezeBypassTxs>),
+    FreezeBypassTxsDelta(Box<FreezeBypassTxsDelta>),
     ContractCostParams(Box<ContractCostParams>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
@@ -58738,6 +59158,7 @@ impl Type {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::EncodedLedgerKey,
         TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractParallelComputeV0,
@@ -58751,6 +59172,10 @@ impl Type {
         TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
         TypeVariant::ConfigSettingScpTiming,
+        TypeVariant::FrozenLedgerKeys,
+        TypeVariant::FrozenLedgerKeysDelta,
+        TypeVariant::FreezeBypassTxs,
+        TypeVariant::FreezeBypassTxsDelta,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -59227,6 +59652,7 @@ impl Type {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "EncodedLedgerKey",
         "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractParallelComputeV0",
@@ -59240,6 +59666,10 @@ impl Type {
         "StateArchivalSettings",
         "EvictionIterator",
         "ConfigSettingScpTiming",
+        "FrozenLedgerKeys",
+        "FrozenLedgerKeysDelta",
+        "FreezeBypassTxs",
+        "FreezeBypassTxsDelta",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -59752,6 +60182,11 @@ impl Type {
             TypeVariant::ScpQuorumSet => r.with_limited_depth(|r| {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
             }),
+            TypeVariant::EncodedLedgerKey => r.with_limited_depth(|r| {
+                Ok(Self::EncodedLedgerKey(Box::new(
+                    EncodedLedgerKey::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => r.with_limited_depth(|r| {
                 Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
                     ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
@@ -59815,6 +60250,26 @@ impl Type {
             TypeVariant::ConfigSettingScpTiming => r.with_limited_depth(|r| {
                 Ok(Self::ConfigSettingScpTiming(Box::new(
                     ConfigSettingScpTiming::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FrozenLedgerKeys => r.with_limited_depth(|r| {
+                Ok(Self::FrozenLedgerKeys(Box::new(
+                    FrozenLedgerKeys::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FrozenLedgerKeysDelta => r.with_limited_depth(|r| {
+                Ok(Self::FrozenLedgerKeysDelta(Box::new(
+                    FrozenLedgerKeysDelta::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FreezeBypassTxs => r.with_limited_depth(|r| {
+                Ok(Self::FreezeBypassTxs(Box::new(FreezeBypassTxs::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::FreezeBypassTxsDelta => r.with_limited_depth(|r| {
+                Ok(Self::FreezeBypassTxsDelta(Box::new(
+                    FreezeBypassTxsDelta::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ContractCostParams => r.with_limited_depth(|r| {
@@ -61864,6 +62319,10 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::EncodedLedgerKey => Box::new(
+                ReadXdrIter::<_, EncodedLedgerKey>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::EncodedLedgerKey(Box::new(t)))),
+            ),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(
                     &mut r.inner,
@@ -61939,6 +62398,22 @@ impl Type {
             TypeVariant::ConfigSettingScpTiming => Box::new(
                 ReadXdrIter::<_, ConfigSettingScpTiming>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
+            ),
+            TypeVariant::FrozenLedgerKeys => Box::new(
+                ReadXdrIter::<_, FrozenLedgerKeys>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FrozenLedgerKeys(Box::new(t)))),
+            ),
+            TypeVariant::FrozenLedgerKeysDelta => Box::new(
+                ReadXdrIter::<_, FrozenLedgerKeysDelta>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FrozenLedgerKeysDelta(Box::new(t)))),
+            ),
+            TypeVariant::FreezeBypassTxs => Box::new(
+                ReadXdrIter::<_, FreezeBypassTxs>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FreezeBypassTxs(Box::new(t)))),
+            ),
+            TypeVariant::FreezeBypassTxsDelta => Box::new(
+                ReadXdrIter::<_, FreezeBypassTxsDelta>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FreezeBypassTxsDelta(Box::new(t)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.limits.clone())
@@ -63916,6 +64391,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
+            TypeVariant::EncodedLedgerKey => Box::new(
+                ReadXdrIter::<_, Frame<EncodedLedgerKey>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::EncodedLedgerKey(Box::new(t.0)))),
+            ),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractExecutionLanesV0>>::new(
                     &mut r.inner,
@@ -63997,6 +64476,22 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t.0)))),
+            ),
+            TypeVariant::FrozenLedgerKeys => Box::new(
+                ReadXdrIter::<_, Frame<FrozenLedgerKeys>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FrozenLedgerKeys(Box::new(t.0)))),
+            ),
+            TypeVariant::FrozenLedgerKeysDelta => Box::new(
+                ReadXdrIter::<_, Frame<FrozenLedgerKeysDelta>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FrozenLedgerKeysDelta(Box::new(t.0)))),
+            ),
+            TypeVariant::FreezeBypassTxs => Box::new(
+                ReadXdrIter::<_, Frame<FreezeBypassTxs>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FreezeBypassTxs(Box::new(t.0)))),
+            ),
+            TypeVariant::FreezeBypassTxsDelta => Box::new(
+                ReadXdrIter::<_, Frame<FreezeBypassTxsDelta>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FreezeBypassTxsDelta(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.limits.clone())
@@ -66268,6 +66763,10 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::EncodedLedgerKey => Box::new(
+                ReadXdrIter::<_, EncodedLedgerKey>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::EncodedLedgerKey(Box::new(t)))),
+            ),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
@@ -66322,6 +66821,22 @@ impl Type {
             TypeVariant::ConfigSettingScpTiming => Box::new(
                 ReadXdrIter::<_, ConfigSettingScpTiming>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingScpTiming(Box::new(t)))),
+            ),
+            TypeVariant::FrozenLedgerKeys => Box::new(
+                ReadXdrIter::<_, FrozenLedgerKeys>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FrozenLedgerKeys(Box::new(t)))),
+            ),
+            TypeVariant::FrozenLedgerKeysDelta => Box::new(
+                ReadXdrIter::<_, FrozenLedgerKeysDelta>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FrozenLedgerKeysDelta(Box::new(t)))),
+            ),
+            TypeVariant::FreezeBypassTxs => Box::new(
+                ReadXdrIter::<_, FreezeBypassTxs>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FreezeBypassTxs(Box::new(t)))),
+            ),
+            TypeVariant::FreezeBypassTxsDelta => Box::new(
+                ReadXdrIter::<_, FreezeBypassTxsDelta>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FreezeBypassTxsDelta(Box::new(t)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(dec, r.limits.clone())
@@ -68213,6 +68728,9 @@ impl Type {
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::EncodedLedgerKey => Ok(Self::EncodedLedgerKey(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Ok(
                 Self::ConfigSettingContractExecutionLanesV0(Box::new(serde_json::from_reader(r)?)),
             ),
@@ -68250,6 +68768,18 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::FrozenLedgerKeys => Ok(Self::FrozenLedgerKeys(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::FrozenLedgerKeysDelta => Ok(Self::FrozenLedgerKeysDelta(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::FreezeBypassTxs => {
+                Ok(Self::FreezeBypassTxs(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::FreezeBypassTxsDelta => Ok(Self::FreezeBypassTxsDelta(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
@@ -69527,6 +70057,9 @@ impl Type {
             TypeVariant::ScpQuorumSet => Ok(Self::ScpQuorumSet(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::EncodedLedgerKey => Ok(Self::EncodedLedgerKey(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => {
                 Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
@@ -69578,6 +70111,18 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::FrozenLedgerKeys => Ok(Self::FrozenLedgerKeys(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::FrozenLedgerKeysDelta => Ok(Self::FrozenLedgerKeysDelta(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::FreezeBypassTxs => Ok(Self::FreezeBypassTxs(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::FreezeBypassTxsDelta => Ok(Self::FreezeBypassTxsDelta(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
@@ -71032,6 +71577,9 @@ impl Type {
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::arbitrary(u)?)))
             }
+            TypeVariant::EncodedLedgerKey => Ok(Self::EncodedLedgerKey(Box::new(
+                EncodedLedgerKey::arbitrary(u)?,
+            ))),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => {
                 Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
                     ConfigSettingContractExecutionLanesV0::arbitrary(u)?,
@@ -71084,6 +71632,18 @@ impl Type {
             ))),
             TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
                 ConfigSettingScpTiming::arbitrary(u)?,
+            ))),
+            TypeVariant::FrozenLedgerKeys => Ok(Self::FrozenLedgerKeys(Box::new(
+                FrozenLedgerKeys::arbitrary(u)?,
+            ))),
+            TypeVariant::FrozenLedgerKeysDelta => Ok(Self::FrozenLedgerKeysDelta(Box::new(
+                FrozenLedgerKeysDelta::arbitrary(u)?,
+            ))),
+            TypeVariant::FreezeBypassTxs => Ok(Self::FreezeBypassTxs(Box::new(
+                FreezeBypassTxs::arbitrary(u)?,
+            ))),
+            TypeVariant::FreezeBypassTxsDelta => Ok(Self::FreezeBypassTxsDelta(Box::new(
+                FreezeBypassTxsDelta::arbitrary(u)?,
             ))),
             TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
                 ContractCostParams::arbitrary(u)?,
@@ -72358,6 +72918,7 @@ impl Type {
             TypeVariant::ScpStatementExternalize => Self::ScpStatementExternalize(Box::default()),
             TypeVariant::ScpEnvelope => Self::ScpEnvelope(Box::default()),
             TypeVariant::ScpQuorumSet => Self::ScpQuorumSet(Box::default()),
+            TypeVariant::EncodedLedgerKey => Self::EncodedLedgerKey(Box::default()),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => {
                 Self::ConfigSettingContractExecutionLanesV0(Box::default())
             }
@@ -72387,6 +72948,10 @@ impl Type {
             TypeVariant::StateArchivalSettings => Self::StateArchivalSettings(Box::default()),
             TypeVariant::EvictionIterator => Self::EvictionIterator(Box::default()),
             TypeVariant::ConfigSettingScpTiming => Self::ConfigSettingScpTiming(Box::default()),
+            TypeVariant::FrozenLedgerKeys => Self::FrozenLedgerKeys(Box::default()),
+            TypeVariant::FrozenLedgerKeysDelta => Self::FrozenLedgerKeysDelta(Box::default()),
+            TypeVariant::FreezeBypassTxs => Self::FreezeBypassTxs(Box::default()),
+            TypeVariant::FreezeBypassTxsDelta => Self::FreezeBypassTxsDelta(Box::default()),
             TypeVariant::ContractCostParams => Self::ContractCostParams(Box::default()),
             TypeVariant::ConfigSettingId => Self::ConfigSettingId(Box::default()),
             TypeVariant::ConfigSettingEntry => Self::ConfigSettingEntry(Box::default()),
@@ -73031,6 +73596,7 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
+            Self::EncodedLedgerKey(ref v) => v.as_ref(),
             Self::ConfigSettingContractExecutionLanesV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractParallelComputeV0(ref v) => v.as_ref(),
@@ -73044,6 +73610,10 @@ impl Type {
             Self::StateArchivalSettings(ref v) => v.as_ref(),
             Self::EvictionIterator(ref v) => v.as_ref(),
             Self::ConfigSettingScpTiming(ref v) => v.as_ref(),
+            Self::FrozenLedgerKeys(ref v) => v.as_ref(),
+            Self::FrozenLedgerKeysDelta(ref v) => v.as_ref(),
+            Self::FreezeBypassTxs(ref v) => v.as_ref(),
+            Self::FreezeBypassTxsDelta(ref v) => v.as_ref(),
             Self::ContractCostParams(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
@@ -73516,6 +74086,7 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
+            Self::EncodedLedgerKey(_) => "EncodedLedgerKey",
             Self::ConfigSettingContractExecutionLanesV0(_) => {
                 "ConfigSettingContractExecutionLanesV0"
             }
@@ -73535,6 +74106,10 @@ impl Type {
             Self::StateArchivalSettings(_) => "StateArchivalSettings",
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ConfigSettingScpTiming(_) => "ConfigSettingScpTiming",
+            Self::FrozenLedgerKeys(_) => "FrozenLedgerKeys",
+            Self::FrozenLedgerKeysDelta(_) => "FrozenLedgerKeysDelta",
+            Self::FreezeBypassTxs(_) => "FreezeBypassTxs",
+            Self::FreezeBypassTxsDelta(_) => "FreezeBypassTxsDelta",
             Self::ContractCostParams(_) => "ContractCostParams",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
@@ -74033,6 +74608,7 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
+            Self::EncodedLedgerKey(_) => TypeVariant::EncodedLedgerKey,
             Self::ConfigSettingContractExecutionLanesV0(_) => {
                 TypeVariant::ConfigSettingContractExecutionLanesV0
             }
@@ -74058,6 +74634,10 @@ impl Type {
             Self::StateArchivalSettings(_) => TypeVariant::StateArchivalSettings,
             Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
             Self::ConfigSettingScpTiming(_) => TypeVariant::ConfigSettingScpTiming,
+            Self::FrozenLedgerKeys(_) => TypeVariant::FrozenLedgerKeys,
+            Self::FrozenLedgerKeysDelta(_) => TypeVariant::FrozenLedgerKeysDelta,
+            Self::FreezeBypassTxs(_) => TypeVariant::FreezeBypassTxs,
+            Self::FreezeBypassTxsDelta(_) => TypeVariant::FreezeBypassTxsDelta,
             Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
@@ -74603,6 +75183,7 @@ impl WriteXdr for Type {
             Self::ScpStatementExternalize(v) => v.write_xdr(w),
             Self::ScpEnvelope(v) => v.write_xdr(w),
             Self::ScpQuorumSet(v) => v.write_xdr(w),
+            Self::EncodedLedgerKey(v) => v.write_xdr(w),
             Self::ConfigSettingContractExecutionLanesV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractComputeV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractParallelComputeV0(v) => v.write_xdr(w),
@@ -74616,6 +75197,10 @@ impl WriteXdr for Type {
             Self::StateArchivalSettings(v) => v.write_xdr(w),
             Self::EvictionIterator(v) => v.write_xdr(w),
             Self::ConfigSettingScpTiming(v) => v.write_xdr(w),
+            Self::FrozenLedgerKeys(v) => v.write_xdr(w),
+            Self::FrozenLedgerKeysDelta(v) => v.write_xdr(w),
+            Self::FreezeBypassTxs(v) => v.write_xdr(w),
+            Self::FreezeBypassTxsDelta(v) => v.write_xdr(w),
             Self::ContractCostParams(v) => v.write_xdr(w),
             Self::ConfigSettingId(v) => v.write_xdr(w),
             Self::ConfigSettingEntry(v) => v.write_xdr(w),

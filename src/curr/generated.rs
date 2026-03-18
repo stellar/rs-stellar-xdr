@@ -67,7 +67,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/curr/Stellar-types.x",
-        "a6bd5e7b2e0d84ac0cd5dd5db73d1618f04c69455d93a8190e040cfb28d8e08c",
+        "a0e9cb40db74385dc71561c8d7a62b17605a416ff816f1ca0f9487a6b2213ecd",
     ),
 ];
 
@@ -54232,77 +54232,6 @@ impl WriteXdr for ExtraUint64 {
     }
 }
 
-/// NonceUint64 is an XDR Typedef defined as:
-///
-/// ```text
-/// typedef uint64 NonceUint64;
-/// ```
-///
-#[cfg(not(feature = "disable_nonce_types"))]
-#[cfg_eval::cfg_eval]
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[derive(Debug)]
-pub struct NonceUint64(
-    #[cfg_attr(
-        all(feature = "serde", feature = "alloc"),
-        serde_as(as = "NumberOrString")
-    )]
-    pub u64,
-);
-
-#[cfg(not(feature = "disable_nonce_types"))]
-impl From<NonceUint64> for u64 {
-    #[must_use]
-    fn from(x: NonceUint64) -> Self {
-        x.0
-    }
-}
-
-#[cfg(not(feature = "disable_nonce_types"))]
-impl From<u64> for NonceUint64 {
-    #[must_use]
-    fn from(x: u64) -> Self {
-        NonceUint64(x)
-    }
-}
-
-#[cfg(not(feature = "disable_nonce_types"))]
-impl AsRef<u64> for NonceUint64 {
-    #[must_use]
-    fn as_ref(&self) -> &u64 {
-        &self.0
-    }
-}
-
-#[cfg(not(feature = "disable_nonce_types"))]
-impl ReadXdr for NonceUint64 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
-        r.with_limited_depth(|r| {
-            let i = u64::read_xdr(r)?;
-            let v = NonceUint64(i);
-            Ok(v)
-        })
-    }
-}
-
-#[cfg(not(feature = "disable_nonce_types"))]
-impl WriteXdr for NonceUint64 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
 /// ExtraStruct is an XDR Struct defined as:
 ///
 /// ```text
@@ -54504,51 +54433,6 @@ impl WriteXdr for ConditionalTypedef {
     }
 }
 
-/// VariantValue is an XDR Const defined as:
-///
-/// ```text
-/// const VARIANT_VALUE = 1;
-/// ```
-///
-#[cfg(feature = "variant_a")]
-pub const VARIANT_VALUE: u64 = 1;
-
-/// VariantValue is an XDR Const defined as:
-///
-/// ```text
-/// const VARIANT_VALUE = 2;
-/// ```
-///
-#[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-pub const VARIANT_VALUE: u64 = 2;
-
-/// VariantValue is an XDR Const defined as:
-///
-/// ```text
-/// const VARIANT_VALUE = 3;
-/// ```
-///
-#[cfg(all(not(feature = "variant_a"), not(feature = "variant_b")))]
-pub const VARIANT_VALUE: u64 = 3;
-
-/// NonceMax is an XDR Const defined as:
-///
-/// ```text
-/// const NONCE_MAX = 1000;
-/// ```
-///
-#[cfg(not(feature = "disable_nonce_types"))]
-pub const NONCE_MAX: u64 = 1000;
-
-/// NonceMax is an XDR Const defined as:
-///
-/// ```text
-/// const NONCE_MAX = 0;
-/// ```
-///
-#[cfg(feature = "disable_nonce_types")]
-pub const NONCE_MAX: u64 = 0;
-
 /// TestEnumWithIfdef is an XDR Enum defined as:
 ///
 /// ```text
@@ -54708,364 +54592,6 @@ impl ReadXdr for TestEnumWithIfdef {
 }
 
 impl WriteXdr for TestEnumWithIfdef {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// TestEnumWithIfndef is an XDR Enum defined as:
-///
-/// ```text
-/// enum TestEnumWithIfndef
-/// {
-///     TEWNIF_ALPHA = 0,
-/// #ifndef DISABLE_NONCE_TYPES
-///     TEWNIF_BETA = 1,
-///     TEWNIF_GAMMA = 2
-/// #else
-///     TEWNIF_BETA = 1
-/// #endif
-/// };
-/// ```
-///
-// enum
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum TestEnumWithIfndef {
-    #[cfg_attr(feature = "alloc", default)]
-    Alpha = 0,
-    #[cfg(not(feature = "disable_nonce_types"))]
-    Beta = 1,
-    #[cfg(not(feature = "disable_nonce_types"))]
-    Gamma = 2,
-    #[cfg(feature = "disable_nonce_types")]
-    Beta = 1,
-}
-
-impl TestEnumWithIfndef {
-    const _VARIANTS: &[TestEnumWithIfndef] = &[
-        TestEnumWithIfndef::Alpha,
-        #[cfg(not(feature = "disable_nonce_types"))]
-        TestEnumWithIfndef::Beta,
-        #[cfg(not(feature = "disable_nonce_types"))]
-        TestEnumWithIfndef::Gamma,
-        #[cfg(feature = "disable_nonce_types")]
-        TestEnumWithIfndef::Beta,
-    ];
-    pub const VARIANTS: [TestEnumWithIfndef; Self::_VARIANTS.len()] = {
-        let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
-        let mut i = 1;
-        while i < Self::_VARIANTS.len() {
-            arr[i] = Self::_VARIANTS[i];
-            i += 1;
-        }
-        arr
-    };
-    const _VARIANTS_STR: &[&str] = &[
-        "Alpha",
-        #[cfg(not(feature = "disable_nonce_types"))]
-        "Beta",
-        #[cfg(not(feature = "disable_nonce_types"))]
-        "Gamma",
-        #[cfg(feature = "disable_nonce_types")]
-        "Beta",
-    ];
-    pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
-        while i < Self::_VARIANTS_STR.len() {
-            arr[i] = Self::_VARIANTS_STR[i];
-            i += 1;
-        }
-        arr
-    };
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Alpha => "Alpha",
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::Beta => "Beta",
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::Gamma => "Gamma",
-            #[cfg(feature = "disable_nonce_types")]
-            Self::Beta => "Beta",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [TestEnumWithIfndef; Self::_VARIANTS.len()] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for TestEnumWithIfndef {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<TestEnumWithIfndef> for TestEnumWithIfndef {
-    fn variants() -> slice::Iter<'static, TestEnumWithIfndef> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for TestEnumWithIfndef {}
-
-impl fmt::Display for TestEnumWithIfndef {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for TestEnumWithIfndef {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self, Error> {
-        let e = match i {
-            0 => TestEnumWithIfndef::Alpha,
-            #[cfg(not(feature = "disable_nonce_types"))]
-            1 => TestEnumWithIfndef::Beta,
-            #[cfg(not(feature = "disable_nonce_types"))]
-            2 => TestEnumWithIfndef::Gamma,
-            #[cfg(feature = "disable_nonce_types")]
-            1 => TestEnumWithIfndef::Beta,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<TestEnumWithIfndef> for i32 {
-    #[must_use]
-    fn from(e: TestEnumWithIfndef) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for TestEnumWithIfndef {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for TestEnumWithIfndef {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// TestEnumWithElif is an XDR Enum defined as:
-///
-/// ```text
-/// enum TestEnumWithElif
-/// {
-///     TWEELIF_ONE = 0,
-/// #ifdef VARIANT_A
-///     TWEELIF_TWO = 1,
-///     TWEELIF_THREE = 2
-/// #elif VARIANT_B
-///     TWEELIF_TWO = 1,
-///     TWEELIF_THREE = 2,
-///     TWEELIF_FOUR = 3
-/// #else
-///     TWEELIF_TWO = 1
-/// #endif
-/// };
-/// ```
-///
-// enum
-#[cfg_attr(feature = "alloc", derive(Default))]
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum TestEnumWithElif {
-    #[cfg_attr(feature = "alloc", default)]
-    One = 0,
-    #[cfg(feature = "variant_a")]
-    Two = 1,
-    #[cfg(feature = "variant_a")]
-    Three = 2,
-    #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-    Two = 1,
-    #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-    Three = 2,
-    #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-    Four = 3,
-    #[cfg(all(not(feature = "variant_a"), not(feature = "variant_b")))]
-    Two = 1,
-}
-
-impl TestEnumWithElif {
-    const _VARIANTS: &[TestEnumWithElif] = &[
-        TestEnumWithElif::One,
-        #[cfg(feature = "variant_a")]
-        TestEnumWithElif::Two,
-        #[cfg(feature = "variant_a")]
-        TestEnumWithElif::Three,
-        #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-        TestEnumWithElif::Two,
-        #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-        TestEnumWithElif::Three,
-        #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-        TestEnumWithElif::Four,
-        #[cfg(all(not(feature = "variant_a"), not(feature = "variant_b")))]
-        TestEnumWithElif::Two,
-    ];
-    pub const VARIANTS: [TestEnumWithElif; Self::_VARIANTS.len()] = {
-        let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
-        let mut i = 1;
-        while i < Self::_VARIANTS.len() {
-            arr[i] = Self::_VARIANTS[i];
-            i += 1;
-        }
-        arr
-    };
-    const _VARIANTS_STR: &[&str] = &[
-        "One",
-        #[cfg(feature = "variant_a")]
-        "Two",
-        #[cfg(feature = "variant_a")]
-        "Three",
-        #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-        "Two",
-        #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-        "Three",
-        #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-        "Four",
-        #[cfg(all(not(feature = "variant_a"), not(feature = "variant_b")))]
-        "Two",
-    ];
-    pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
-        while i < Self::_VARIANTS_STR.len() {
-            arr[i] = Self::_VARIANTS_STR[i];
-            i += 1;
-        }
-        arr
-    };
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::One => "One",
-            #[cfg(feature = "variant_a")]
-            Self::Two => "Two",
-            #[cfg(feature = "variant_a")]
-            Self::Three => "Three",
-            #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-            Self::Two => "Two",
-            #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-            Self::Three => "Three",
-            #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-            Self::Four => "Four",
-            #[cfg(all(not(feature = "variant_a"), not(feature = "variant_b")))]
-            Self::Two => "Two",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [TestEnumWithElif; Self::_VARIANTS.len()] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for TestEnumWithElif {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<TestEnumWithElif> for TestEnumWithElif {
-    fn variants() -> slice::Iter<'static, TestEnumWithElif> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for TestEnumWithElif {}
-
-impl fmt::Display for TestEnumWithElif {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for TestEnumWithElif {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self, Error> {
-        let e = match i {
-            0 => TestEnumWithElif::One,
-            #[cfg(feature = "variant_a")]
-            1 => TestEnumWithElif::Two,
-            #[cfg(feature = "variant_a")]
-            2 => TestEnumWithElif::Three,
-            #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-            1 => TestEnumWithElif::Two,
-            #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-            2 => TestEnumWithElif::Three,
-            #[cfg(all(not(feature = "variant_a"), feature = "variant_b"))]
-            3 => TestEnumWithElif::Four,
-            #[cfg(all(not(feature = "variant_a"), not(feature = "variant_b")))]
-            1 => TestEnumWithElif::Two,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<TestEnumWithElif> for i32 {
-    #[must_use]
-    fn from(e: TestEnumWithElif) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for TestEnumWithElif {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for TestEnumWithElif {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -55267,171 +54793,6 @@ impl WriteXdr for TestUnionWithIfdef {
                 Self::D => ().write_xdr(w)?,
                 #[cfg(not(feature = "enable_extra_types"))]
                 Self::C => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
-/// TestUnionWithIfndef is an XDR Union defined as:
-///
-/// ```text
-/// union TestUnionWithIfndef switch (TestEnumWithIfndef type)
-/// {
-/// case TEWNIF_ALPHA:
-///     uint32 alphaVal;
-/// case TEWNIF_BETA:
-///     uint64 betaVal;
-/// #ifndef DISABLE_NONCE_TYPES
-/// case TEWNIF_GAMMA:
-///     Hash gammaVal;
-/// #endif
-/// };
-/// ```
-///
-// union with discriminant TestEnumWithIfndef
-#[cfg_eval::cfg_eval]
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum TestUnionWithIfndef {
-    Alpha(u32),
-    Beta(
-        #[cfg_attr(
-            all(feature = "serde", feature = "alloc"),
-            serde_as(as = "NumberOrString")
-        )]
-        u64,
-    ),
-    #[cfg(not(feature = "disable_nonce_types"))]
-    Gamma(Hash),
-}
-
-#[cfg(feature = "alloc")]
-impl Default for TestUnionWithIfndef {
-    fn default() -> Self {
-        Self::Alpha(u32::default())
-    }
-}
-
-impl TestUnionWithIfndef {
-    const _VARIANTS: &[TestEnumWithIfndef] = &[
-        TestEnumWithIfndef::Alpha,
-        TestEnumWithIfndef::Beta,
-        #[cfg(not(feature = "disable_nonce_types"))]
-        TestEnumWithIfndef::Gamma,
-    ];
-    pub const VARIANTS: [TestEnumWithIfndef; Self::_VARIANTS.len()] = {
-        let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
-        let mut i = 1;
-        while i < Self::_VARIANTS.len() {
-            arr[i] = Self::_VARIANTS[i];
-            i += 1;
-        }
-        arr
-    };
-    const _VARIANTS_STR: &[&str] = &[
-        "Alpha",
-        "Beta",
-        #[cfg(not(feature = "disable_nonce_types"))]
-        "Gamma",
-    ];
-    pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
-        while i < Self::_VARIANTS_STR.len() {
-            arr[i] = Self::_VARIANTS_STR[i];
-            i += 1;
-        }
-        arr
-    };
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Alpha(_) => "Alpha",
-            Self::Beta(_) => "Beta",
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::Gamma(_) => "Gamma",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> TestEnumWithIfndef {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Alpha(_) => TestEnumWithIfndef::Alpha,
-            Self::Beta(_) => TestEnumWithIfndef::Beta,
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::Gamma(_) => TestEnumWithIfndef::Gamma,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [TestEnumWithIfndef; Self::_VARIANTS.len()] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for TestUnionWithIfndef {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<TestEnumWithIfndef> for TestUnionWithIfndef {
-    #[must_use]
-    fn discriminant(&self) -> TestEnumWithIfndef {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<TestEnumWithIfndef> for TestUnionWithIfndef {
-    fn variants() -> slice::Iter<'static, TestEnumWithIfndef> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<TestEnumWithIfndef> for TestUnionWithIfndef {}
-
-impl ReadXdr for TestUnionWithIfndef {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
-        r.with_limited_depth(|r| {
-            let dv: TestEnumWithIfndef = <TestEnumWithIfndef as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                TestEnumWithIfndef::Alpha => Self::Alpha(u32::read_xdr(r)?),
-                TestEnumWithIfndef::Beta => Self::Beta(u64::read_xdr(r)?),
-                #[cfg(not(feature = "disable_nonce_types"))]
-                TestEnumWithIfndef::Gamma => Self::Gamma(Hash::read_xdr(r)?),
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for TestUnionWithIfndef {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Alpha(v) => v.write_xdr(w)?,
-                Self::Beta(v) => v.write_xdr(w)?,
-                #[cfg(not(feature = "disable_nonce_types"))]
-                Self::Gamma(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -56137,16 +55498,11 @@ pub enum TypeVariant {
     ClaimableBalanceId,
     #[cfg(feature = "enable_extra_types")]
     ExtraUint64,
-    #[cfg(not(feature = "disable_nonce_types"))]
-    NonceUint64,
     #[cfg(feature = "enable_extra_types")]
     ExtraStruct,
     ConditionalTypedef,
     TestEnumWithIfdef,
-    TestEnumWithIfndef,
-    TestEnumWithElif,
     TestUnionWithIfdef,
-    TestUnionWithIfndef,
     #[cfg(feature = "enable_extra_types")]
     ExtraBundle,
     #[cfg(feature = "enable_extra_types")]
@@ -56626,16 +55982,11 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceId,
         #[cfg(feature = "enable_extra_types")]
         TypeVariant::ExtraUint64,
-        #[cfg(not(feature = "disable_nonce_types"))]
-        TypeVariant::NonceUint64,
         #[cfg(feature = "enable_extra_types")]
         TypeVariant::ExtraStruct,
         TypeVariant::ConditionalTypedef,
         TypeVariant::TestEnumWithIfdef,
-        TypeVariant::TestEnumWithIfndef,
-        TypeVariant::TestEnumWithElif,
         TypeVariant::TestUnionWithIfdef,
-        TypeVariant::TestUnionWithIfndef,
         #[cfg(feature = "enable_extra_types")]
         TypeVariant::ExtraBundle,
         #[cfg(feature = "enable_extra_types")]
@@ -57120,16 +56471,11 @@ impl TypeVariant {
         "ClaimableBalanceId",
         #[cfg(feature = "enable_extra_types")]
         "ExtraUint64",
-        #[cfg(not(feature = "disable_nonce_types"))]
-        "NonceUint64",
         #[cfg(feature = "enable_extra_types")]
         "ExtraStruct",
         "ConditionalTypedef",
         "TestEnumWithIfdef",
-        "TestEnumWithIfndef",
-        "TestEnumWithElif",
         "TestUnionWithIfdef",
-        "TestUnionWithIfndef",
         #[cfg(feature = "enable_extra_types")]
         "ExtraBundle",
         #[cfg(feature = "enable_extra_types")]
@@ -57632,16 +56978,11 @@ impl TypeVariant {
             Self::ClaimableBalanceId => "ClaimableBalanceId",
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraUint64 => "ExtraUint64",
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::NonceUint64 => "NonceUint64",
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraStruct => "ExtraStruct",
             Self::ConditionalTypedef => "ConditionalTypedef",
             Self::TestEnumWithIfdef => "TestEnumWithIfdef",
-            Self::TestEnumWithIfndef => "TestEnumWithIfndef",
-            Self::TestEnumWithElif => "TestEnumWithElif",
             Self::TestUnionWithIfdef => "TestUnionWithIfdef",
-            Self::TestUnionWithIfndef => "TestUnionWithIfndef",
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraBundle => "ExtraBundle",
             #[cfg(feature = "enable_extra_types")]
@@ -58345,16 +57686,11 @@ impl TypeVariant {
             Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraUint64 => gen.into_root_schema_for::<ExtraUint64>(),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::NonceUint64 => gen.into_root_schema_for::<NonceUint64>(),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraStruct => gen.into_root_schema_for::<ExtraStruct>(),
             Self::ConditionalTypedef => gen.into_root_schema_for::<ConditionalTypedef>(),
             Self::TestEnumWithIfdef => gen.into_root_schema_for::<TestEnumWithIfdef>(),
-            Self::TestEnumWithIfndef => gen.into_root_schema_for::<TestEnumWithIfndef>(),
-            Self::TestEnumWithElif => gen.into_root_schema_for::<TestEnumWithElif>(),
             Self::TestUnionWithIfdef => gen.into_root_schema_for::<TestUnionWithIfdef>(),
-            Self::TestUnionWithIfndef => gen.into_root_schema_for::<TestUnionWithIfndef>(),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraBundle => gen.into_root_schema_for::<ExtraBundle>(),
             #[cfg(feature = "enable_extra_types")]
@@ -58880,16 +58216,11 @@ impl core::str::FromStr for TypeVariant {
             "ClaimableBalanceId" => Ok(Self::ClaimableBalanceId),
             #[cfg(feature = "enable_extra_types")]
             "ExtraUint64" => Ok(Self::ExtraUint64),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            "NonceUint64" => Ok(Self::NonceUint64),
             #[cfg(feature = "enable_extra_types")]
             "ExtraStruct" => Ok(Self::ExtraStruct),
             "ConditionalTypedef" => Ok(Self::ConditionalTypedef),
             "TestEnumWithIfdef" => Ok(Self::TestEnumWithIfdef),
-            "TestEnumWithIfndef" => Ok(Self::TestEnumWithIfndef),
-            "TestEnumWithElif" => Ok(Self::TestEnumWithElif),
             "TestUnionWithIfdef" => Ok(Self::TestUnionWithIfdef),
-            "TestUnionWithIfndef" => Ok(Self::TestUnionWithIfndef),
             #[cfg(feature = "enable_extra_types")]
             "ExtraBundle" => Ok(Self::ExtraBundle),
             #[cfg(feature = "enable_extra_types")]
@@ -59377,16 +58708,11 @@ pub enum Type {
     ClaimableBalanceId(Box<ClaimableBalanceId>),
     #[cfg(feature = "enable_extra_types")]
     ExtraUint64(Box<ExtraUint64>),
-    #[cfg(not(feature = "disable_nonce_types"))]
-    NonceUint64(Box<NonceUint64>),
     #[cfg(feature = "enable_extra_types")]
     ExtraStruct(Box<ExtraStruct>),
     ConditionalTypedef(Box<ConditionalTypedef>),
     TestEnumWithIfdef(Box<TestEnumWithIfdef>),
-    TestEnumWithIfndef(Box<TestEnumWithIfndef>),
-    TestEnumWithElif(Box<TestEnumWithElif>),
     TestUnionWithIfdef(Box<TestUnionWithIfdef>),
-    TestUnionWithIfndef(Box<TestUnionWithIfndef>),
     #[cfg(feature = "enable_extra_types")]
     ExtraBundle(Box<ExtraBundle>),
     #[cfg(feature = "enable_extra_types")]
@@ -59866,16 +59192,11 @@ impl Type {
         TypeVariant::ClaimableBalanceId,
         #[cfg(feature = "enable_extra_types")]
         TypeVariant::ExtraUint64,
-        #[cfg(not(feature = "disable_nonce_types"))]
-        TypeVariant::NonceUint64,
         #[cfg(feature = "enable_extra_types")]
         TypeVariant::ExtraStruct,
         TypeVariant::ConditionalTypedef,
         TypeVariant::TestEnumWithIfdef,
-        TypeVariant::TestEnumWithIfndef,
-        TypeVariant::TestEnumWithElif,
         TypeVariant::TestUnionWithIfdef,
-        TypeVariant::TestUnionWithIfndef,
         #[cfg(feature = "enable_extra_types")]
         TypeVariant::ExtraBundle,
         #[cfg(feature = "enable_extra_types")]
@@ -60360,16 +59681,11 @@ impl Type {
         "ClaimableBalanceId",
         #[cfg(feature = "enable_extra_types")]
         "ExtraUint64",
-        #[cfg(not(feature = "disable_nonce_types"))]
-        "NonceUint64",
         #[cfg(feature = "enable_extra_types")]
         "ExtraStruct",
         "ConditionalTypedef",
         "TestEnumWithIfdef",
-        "TestEnumWithIfndef",
-        "TestEnumWithElif",
         "TestUnionWithIfdef",
-        "TestUnionWithIfndef",
         #[cfg(feature = "enable_extra_types")]
         "ExtraBundle",
         #[cfg(feature = "enable_extra_types")]
@@ -62416,10 +61732,6 @@ impl Type {
             TypeVariant::ExtraUint64 => {
                 r.with_limited_depth(|r| Ok(Self::ExtraUint64(Box::new(ExtraUint64::read_xdr(r)?))))
             }
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => {
-                r.with_limited_depth(|r| Ok(Self::NonceUint64(Box::new(NonceUint64::read_xdr(r)?))))
-            }
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => {
                 r.with_limited_depth(|r| Ok(Self::ExtraStruct(Box::new(ExtraStruct::read_xdr(r)?))))
@@ -62434,24 +61746,9 @@ impl Type {
                     TestEnumWithIfdef::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::TestEnumWithIfndef => r.with_limited_depth(|r| {
-                Ok(Self::TestEnumWithIfndef(Box::new(
-                    TestEnumWithIfndef::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::TestEnumWithElif => r.with_limited_depth(|r| {
-                Ok(Self::TestEnumWithElif(Box::new(
-                    TestEnumWithElif::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::TestUnionWithIfdef => r.with_limited_depth(|r| {
                 Ok(Self::TestUnionWithIfdef(Box::new(
                     TestUnionWithIfdef::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::TestUnionWithIfndef => r.with_limited_depth(|r| {
-                Ok(Self::TestUnionWithIfndef(Box::new(
-                    TestUnionWithIfndef::read_xdr(r)?,
                 )))
             }),
             #[cfg(feature = "enable_extra_types")]
@@ -64525,11 +63822,6 @@ impl Type {
                 ReadXdrIter::<_, ExtraUint64>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtraUint64(Box::new(t)))),
             ),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => Box::new(
-                ReadXdrIter::<_, NonceUint64>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonceUint64(Box::new(t)))),
-            ),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => Box::new(
                 ReadXdrIter::<_, ExtraStruct>::new(&mut r.inner, r.limits.clone())
@@ -64543,21 +63835,9 @@ impl Type {
                 ReadXdrIter::<_, TestEnumWithIfdef>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestEnumWithIfdef(Box::new(t)))),
             ),
-            TypeVariant::TestEnumWithIfndef => Box::new(
-                ReadXdrIter::<_, TestEnumWithIfndef>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestEnumWithIfndef(Box::new(t)))),
-            ),
-            TypeVariant::TestEnumWithElif => Box::new(
-                ReadXdrIter::<_, TestEnumWithElif>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestEnumWithElif(Box::new(t)))),
-            ),
             TypeVariant::TestUnionWithIfdef => Box::new(
                 ReadXdrIter::<_, TestUnionWithIfdef>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestUnionWithIfdef(Box::new(t)))),
-            ),
-            TypeVariant::TestUnionWithIfndef => Box::new(
-                ReadXdrIter::<_, TestUnionWithIfndef>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestUnionWithIfndef(Box::new(t)))),
             ),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraBundle => Box::new(
@@ -66893,11 +66173,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<ExtraUint64>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtraUint64(Box::new(t.0)))),
             ),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => Box::new(
-                ReadXdrIter::<_, Frame<NonceUint64>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonceUint64(Box::new(t.0)))),
-            ),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => Box::new(
                 ReadXdrIter::<_, Frame<ExtraStruct>>::new(&mut r.inner, r.limits.clone())
@@ -66911,21 +66186,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<TestEnumWithIfdef>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestEnumWithIfdef(Box::new(t.0)))),
             ),
-            TypeVariant::TestEnumWithIfndef => Box::new(
-                ReadXdrIter::<_, Frame<TestEnumWithIfndef>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestEnumWithIfndef(Box::new(t.0)))),
-            ),
-            TypeVariant::TestEnumWithElif => Box::new(
-                ReadXdrIter::<_, Frame<TestEnumWithElif>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestEnumWithElif(Box::new(t.0)))),
-            ),
             TypeVariant::TestUnionWithIfdef => Box::new(
                 ReadXdrIter::<_, Frame<TestUnionWithIfdef>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestUnionWithIfdef(Box::new(t.0)))),
-            ),
-            TypeVariant::TestUnionWithIfndef => Box::new(
-                ReadXdrIter::<_, Frame<TestUnionWithIfndef>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestUnionWithIfndef(Box::new(t.0)))),
             ),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraBundle => Box::new(
@@ -68843,11 +68106,6 @@ impl Type {
                 ReadXdrIter::<_, ExtraUint64>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtraUint64(Box::new(t)))),
             ),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => Box::new(
-                ReadXdrIter::<_, NonceUint64>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonceUint64(Box::new(t)))),
-            ),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => Box::new(
                 ReadXdrIter::<_, ExtraStruct>::new(dec, r.limits.clone())
@@ -68861,21 +68119,9 @@ impl Type {
                 ReadXdrIter::<_, TestEnumWithIfdef>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestEnumWithIfdef(Box::new(t)))),
             ),
-            TypeVariant::TestEnumWithIfndef => Box::new(
-                ReadXdrIter::<_, TestEnumWithIfndef>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestEnumWithIfndef(Box::new(t)))),
-            ),
-            TypeVariant::TestEnumWithElif => Box::new(
-                ReadXdrIter::<_, TestEnumWithElif>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestEnumWithElif(Box::new(t)))),
-            ),
             TypeVariant::TestUnionWithIfdef => Box::new(
                 ReadXdrIter::<_, TestUnionWithIfdef>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestUnionWithIfdef(Box::new(t)))),
-            ),
-            TypeVariant::TestUnionWithIfndef => Box::new(
-                ReadXdrIter::<_, TestUnionWithIfndef>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TestUnionWithIfndef(Box::new(t)))),
             ),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraBundle => Box::new(
@@ -70209,10 +69455,6 @@ impl Type {
             TypeVariant::ExtraUint64 => {
                 Ok(Self::ExtraUint64(Box::new(serde_json::from_reader(r)?)))
             }
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => {
-                Ok(Self::NonceUint64(Box::new(serde_json::from_reader(r)?)))
-            }
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => {
                 Ok(Self::ExtraStruct(Box::new(serde_json::from_reader(r)?)))
@@ -70223,16 +69465,7 @@ impl Type {
             TypeVariant::TestEnumWithIfdef => Ok(Self::TestEnumWithIfdef(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::TestEnumWithIfndef => Ok(Self::TestEnumWithIfndef(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::TestEnumWithElif => Ok(Self::TestEnumWithElif(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::TestUnionWithIfdef => Ok(Self::TestUnionWithIfdef(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::TestUnionWithIfndef => Ok(Self::TestUnionWithIfndef(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             #[cfg(feature = "enable_extra_types")]
@@ -71736,10 +70969,6 @@ impl Type {
             TypeVariant::ExtraUint64 => Ok(Self::ExtraUint64(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => Ok(Self::NonceUint64(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => Ok(Self::ExtraStruct(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
@@ -71750,16 +70979,7 @@ impl Type {
             TypeVariant::TestEnumWithIfdef => Ok(Self::TestEnumWithIfdef(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::TestEnumWithIfndef => Ok(Self::TestEnumWithIfndef(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::TestEnumWithElif => Ok(Self::TestEnumWithElif(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::TestUnionWithIfdef => Ok(Self::TestUnionWithIfdef(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::TestUnionWithIfndef => Ok(Self::TestUnionWithIfndef(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             #[cfg(feature = "enable_extra_types")]
@@ -73094,8 +72314,6 @@ impl Type {
             ))),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraUint64 => Ok(Self::ExtraUint64(Box::new(ExtraUint64::arbitrary(u)?))),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => Ok(Self::NonceUint64(Box::new(NonceUint64::arbitrary(u)?))),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => Ok(Self::ExtraStruct(Box::new(ExtraStruct::arbitrary(u)?))),
             TypeVariant::ConditionalTypedef => Ok(Self::ConditionalTypedef(Box::new(
@@ -73104,17 +72322,8 @@ impl Type {
             TypeVariant::TestEnumWithIfdef => Ok(Self::TestEnumWithIfdef(Box::new(
                 TestEnumWithIfdef::arbitrary(u)?,
             ))),
-            TypeVariant::TestEnumWithIfndef => Ok(Self::TestEnumWithIfndef(Box::new(
-                TestEnumWithIfndef::arbitrary(u)?,
-            ))),
-            TypeVariant::TestEnumWithElif => Ok(Self::TestEnumWithElif(Box::new(
-                TestEnumWithElif::arbitrary(u)?,
-            ))),
             TypeVariant::TestUnionWithIfdef => Ok(Self::TestUnionWithIfdef(Box::new(
                 TestUnionWithIfdef::arbitrary(u)?,
-            ))),
-            TypeVariant::TestUnionWithIfndef => Ok(Self::TestUnionWithIfndef(Box::new(
-                TestUnionWithIfndef::arbitrary(u)?,
             ))),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraBundle => Ok(Self::ExtraBundle(Box::new(ExtraBundle::arbitrary(u)?))),
@@ -73789,16 +72998,11 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Self::ClaimableBalanceId(Box::default()),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraUint64 => Self::ExtraUint64(Box::default()),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            TypeVariant::NonceUint64 => Self::NonceUint64(Box::default()),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraStruct => Self::ExtraStruct(Box::default()),
             TypeVariant::ConditionalTypedef => Self::ConditionalTypedef(Box::default()),
             TypeVariant::TestEnumWithIfdef => Self::TestEnumWithIfdef(Box::default()),
-            TypeVariant::TestEnumWithIfndef => Self::TestEnumWithIfndef(Box::default()),
-            TypeVariant::TestEnumWithElif => Self::TestEnumWithElif(Box::default()),
             TypeVariant::TestUnionWithIfdef => Self::TestUnionWithIfdef(Box::default()),
-            TypeVariant::TestUnionWithIfndef => Self::TestUnionWithIfndef(Box::default()),
             #[cfg(feature = "enable_extra_types")]
             TypeVariant::ExtraBundle => Self::ExtraBundle(Box::default()),
             #[cfg(feature = "enable_extra_types")]
@@ -74281,16 +73485,11 @@ impl Type {
             Self::ClaimableBalanceId(ref v) => v.as_ref(),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraUint64(ref v) => v.as_ref(),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::NonceUint64(ref v) => v.as_ref(),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraStruct(ref v) => v.as_ref(),
             Self::ConditionalTypedef(ref v) => v.as_ref(),
             Self::TestEnumWithIfdef(ref v) => v.as_ref(),
-            Self::TestEnumWithIfndef(ref v) => v.as_ref(),
-            Self::TestEnumWithElif(ref v) => v.as_ref(),
             Self::TestUnionWithIfdef(ref v) => v.as_ref(),
-            Self::TestUnionWithIfndef(ref v) => v.as_ref(),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraBundle(ref v) => v.as_ref(),
             #[cfg(feature = "enable_extra_types")]
@@ -74797,16 +73996,11 @@ impl Type {
             Self::ClaimableBalanceId(_) => "ClaimableBalanceId",
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraUint64(_) => "ExtraUint64",
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::NonceUint64(_) => "NonceUint64",
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraStruct(_) => "ExtraStruct",
             Self::ConditionalTypedef(_) => "ConditionalTypedef",
             Self::TestEnumWithIfdef(_) => "TestEnumWithIfdef",
-            Self::TestEnumWithIfndef(_) => "TestEnumWithIfndef",
-            Self::TestEnumWithElif(_) => "TestEnumWithElif",
             Self::TestUnionWithIfdef(_) => "TestUnionWithIfdef",
-            Self::TestUnionWithIfndef(_) => "TestUnionWithIfndef",
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraBundle(_) => "ExtraBundle",
             #[cfg(feature = "enable_extra_types")]
@@ -75363,16 +74557,11 @@ impl Type {
             Self::ClaimableBalanceId(_) => TypeVariant::ClaimableBalanceId,
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraUint64(_) => TypeVariant::ExtraUint64,
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::NonceUint64(_) => TypeVariant::NonceUint64,
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraStruct(_) => TypeVariant::ExtraStruct,
             Self::ConditionalTypedef(_) => TypeVariant::ConditionalTypedef,
             Self::TestEnumWithIfdef(_) => TypeVariant::TestEnumWithIfdef,
-            Self::TestEnumWithIfndef(_) => TypeVariant::TestEnumWithIfndef,
-            Self::TestEnumWithElif(_) => TypeVariant::TestEnumWithElif,
             Self::TestUnionWithIfdef(_) => TypeVariant::TestUnionWithIfdef,
-            Self::TestUnionWithIfndef(_) => TypeVariant::TestUnionWithIfndef,
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraBundle(_) => TypeVariant::ExtraBundle,
             #[cfg(feature = "enable_extra_types")]
@@ -75868,16 +75057,11 @@ impl WriteXdr for Type {
             Self::ClaimableBalanceId(v) => v.write_xdr(w),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraUint64(v) => v.write_xdr(w),
-            #[cfg(not(feature = "disable_nonce_types"))]
-            Self::NonceUint64(v) => v.write_xdr(w),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraStruct(v) => v.write_xdr(w),
             Self::ConditionalTypedef(v) => v.write_xdr(w),
             Self::TestEnumWithIfdef(v) => v.write_xdr(w),
-            Self::TestEnumWithIfndef(v) => v.write_xdr(w),
-            Self::TestEnumWithElif(v) => v.write_xdr(w),
             Self::TestUnionWithIfdef(v) => v.write_xdr(w),
-            Self::TestUnionWithIfndef(v) => v.write_xdr(w),
             #[cfg(feature = "enable_extra_types")]
             Self::ExtraBundle(v) => v.write_xdr(w),
             #[cfg(feature = "enable_extra_types")]

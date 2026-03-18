@@ -45,11 +45,8 @@ std = ["alloc", "dep:sha2"]
 alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 curr = []
 next = []
-disable_nonce_types = []
 enable_extra_types = []
-sparse_map = []
 variant_a = []
-variant_b = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]

@@ -80,10 +80,10 @@ struct Parser {
     file_index: usize,
     /// Stack of cfg conditions from enclosing `#ifdef`/`#else` blocks.
     cfg_stack: Vec<CfgExpr>,
-    /// Stack tracking seen conditions for each active `#ifdef` block,
-    /// used by `parse_ifdef_enter`/`parse_ifdef_branch`/`parse_ifdef_exit` for
-    /// inline ifdef handling inside enum/union bodies.
-    ifdef_seen_stack: Vec<Vec<CfgExpr>>,
+    /// Stack tracking the initial condition for each active inline `#ifdef`
+    /// block (inside enum/union bodies), so that `parse_ifdef_branch` can
+    /// compute the `#else` condition and `parse_ifdef_exit` can clean up.
+    ifdef_seen_stack: Vec<CfgExpr>,
 }
 
 impl Parser {
@@ -212,21 +212,20 @@ impl Parser {
             }
             _ => unreachable!(),
         };
-        self.ifdef_seen_stack.push(vec![first_cfg.clone()]);
+        self.ifdef_seen_stack.push(first_cfg.clone());
         self.cfg_stack.push(first_cfg);
         Ok(())
     }
 
     /// Handle an `#else` token inside an inline ifdef block.
-    /// Pops the current branch's cfg and pushes the new branch's cfg.
+    /// Pops the current branch's cfg and pushes the negated cfg.
     fn parse_ifdef_branch(&mut self) -> Result<(), ParseError> {
         if self.ifdef_seen_stack.is_empty() {
             return Err(self.make_unexpected_directive_error());
         }
         self.cfg_stack.pop();
         self.advance(); // consume #else
-        let seen = self.ifdef_seen_stack.last_mut().unwrap();
-        let else_cfg = seen[0].clone().negate();
+        let else_cfg = self.ifdef_seen_stack.last().unwrap().clone().negate();
         self.cfg_stack.push(else_cfg);
         Ok(())
     }

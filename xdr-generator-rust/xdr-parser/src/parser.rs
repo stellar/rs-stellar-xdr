@@ -78,9 +78,9 @@ struct Parser {
     global_values: HashMap<String, i64>,
     /// Index of the file currently being parsed
     file_index: usize,
-    /// Stack of cfg conditions from enclosing `#ifdef`/`#ifndef`/`#elif`/`#else` blocks.
+    /// Stack of cfg conditions from enclosing `#ifdef`/`#else` blocks.
     cfg_stack: Vec<CfgExpr>,
-    /// Stack tracking seen conditions for each active `#ifdef`/`#ifndef` block,
+    /// Stack tracking seen conditions for each active `#ifdef` block,
     /// used by `parse_ifdef_enter`/`parse_ifdef_branch`/`parse_ifdef_exit` for
     /// inline ifdef handling inside enum/union bodies.
     ifdef_seen_stack: Vec<Vec<CfgExpr>>,
@@ -121,7 +121,7 @@ impl Parser {
     }
 
     /// Parse definitions until `stop` returns true.
-    /// Handles `#ifdef`/`#ifndef`/`#elif`/`#else`/`#endif` blocks.
+    /// Handles `#ifdef`/`#else`/`#endif` blocks.
     fn parse_definitions_until(
         &mut self,
         definitions: &mut Vec<Definition>,
@@ -141,13 +141,10 @@ impl Parser {
                     let ns = self.parse_namespace()?;
                     namespaces.push(ns);
                 }
-                Token::IfDef(_) | Token::IfNDef(_) => {
+                Token::IfDef(_) => {
                     self.parse_ifdef_block(definitions, namespaces)?;
                 }
                 Token::Else | Token::EndIf => {
-                    return Err(self.make_unexpected_directive_error());
-                }
-                Token::Elif(_) => {
                     return Err(self.make_unexpected_directive_error());
                 }
                 _ => {
@@ -158,73 +155,33 @@ impl Parser {
         Ok(())
     }
 
-    /// Parse an `#ifdef`/`#ifndef` block including `#elif`/`#else`/`#endif`.
+    /// Parse an `#ifdef` block including `#else`/`#endif`.
     fn parse_ifdef_block(
         &mut self,
         definitions: &mut Vec<Definition>,
         namespaces: &mut Vec<Namespace>,
     ) -> Result<(), ParseError> {
-        // Parse the initial #ifdef/#ifndef
+        // Parse the initial #ifdef
         let first_cfg = match self.peek().clone() {
             Token::IfDef(name) => {
                 self.advance();
                 CfgExpr::Feature(name)
             }
-            Token::IfNDef(name) => {
-                self.advance();
-                CfgExpr::Not(Box::new(CfgExpr::Feature(name)))
-            }
             _ => unreachable!(),
         };
 
-        // Track the actual condition for each branch (for #elif/#else negation)
-        let mut seen_conditions = vec![first_cfg.clone()];
-
         // Parse the #ifdef body
-        self.cfg_stack.push(first_cfg);
+        self.cfg_stack.push(first_cfg.clone());
         self.parse_definitions_until(definitions, namespaces, |tok| {
-            matches!(
-                tok,
-                Token::Elif(_) | Token::Else | Token::EndIf | Token::Eof
-            )
+            matches!(tok, Token::Else | Token::EndIf | Token::Eof)
         })?;
         self.cfg_stack.pop();
-
-        // Handle #elif branches
-        while let Token::Elif(elif_name) = self.peek().clone() {
-            self.advance();
-
-            // #elif FOO means: none of the previous branches matched AND feature = "FOO"
-            let elif_feature = CfgExpr::Feature(elif_name);
-            let mut parts: Vec<CfgExpr> =
-                seen_conditions.iter().map(|c| c.clone().negate()).collect();
-            parts.push(elif_feature.clone());
-            let elif_cfg = CfgExpr::All(parts);
-
-            seen_conditions.push(elif_feature);
-
-            self.cfg_stack.push(elif_cfg);
-            self.parse_definitions_until(definitions, namespaces, |tok| {
-                matches!(
-                    tok,
-                    Token::Elif(_) | Token::Else | Token::EndIf | Token::Eof
-                )
-            })?;
-            self.cfg_stack.pop();
-        }
 
         // Handle #else
         if *self.peek() == Token::Else {
             self.advance();
 
-            // #else means: none of the previous conditions were true
-            let else_cfg = if seen_conditions.len() == 1 {
-                seen_conditions.into_iter().next().unwrap().negate()
-            } else {
-                let negated: Vec<CfgExpr> =
-                    seen_conditions.into_iter().map(|c| c.negate()).collect();
-                CfgExpr::All(negated)
-            };
+            let else_cfg = first_cfg.negate();
 
             self.cfg_stack.push(else_cfg);
             self.parse_definitions_until(definitions, namespaces, |tok| {
@@ -243,19 +200,15 @@ impl Parser {
         Ok(())
     }
 
-    /// Enter an `#ifdef`/`#ifndef` block inline (inside an enum or union body).
+    /// Enter an `#ifdef` block inline (inside an enum or union body).
     /// Pushes the initial condition onto `cfg_stack` and records it in
     /// `ifdef_seen_stack` so that `parse_ifdef_branch` and `parse_ifdef_exit`
-    /// can manage `#elif`/`#else`/`#endif` later.
+    /// can manage `#else`/`#endif` later.
     fn parse_ifdef_enter(&mut self) -> Result<(), ParseError> {
         let first_cfg = match self.peek().clone() {
             Token::IfDef(name) => {
                 self.advance();
                 CfgExpr::Feature(name)
-            }
-            Token::IfNDef(name) => {
-                self.advance();
-                CfgExpr::Not(Box::new(CfgExpr::Feature(name)))
             }
             _ => unreachable!(),
         };
@@ -264,36 +217,17 @@ impl Parser {
         Ok(())
     }
 
-    /// Handle an `#elif` or `#else` token inside an inline ifdef block.
+    /// Handle an `#else` token inside an inline ifdef block.
     /// Pops the current branch's cfg and pushes the new branch's cfg.
     fn parse_ifdef_branch(&mut self) -> Result<(), ParseError> {
         if self.ifdef_seen_stack.is_empty() {
             return Err(self.make_unexpected_directive_error());
         }
         self.cfg_stack.pop();
-        let tok = self.peek().clone();
-        self.advance();
+        self.advance(); // consume #else
         let seen = self.ifdef_seen_stack.last_mut().unwrap();
-        match tok {
-            Token::Elif(elif_name) => {
-                let elif_feature = CfgExpr::Feature(elif_name);
-                let mut parts: Vec<CfgExpr> = seen.iter().map(|c| c.clone().negate()).collect();
-                parts.push(elif_feature.clone());
-                let elif_cfg = CfgExpr::All(parts);
-                seen.push(elif_feature);
-                self.cfg_stack.push(elif_cfg);
-            }
-            Token::Else => {
-                let else_cfg = if seen.len() == 1 {
-                    seen[0].clone().negate()
-                } else {
-                    let negated: Vec<CfgExpr> = seen.iter().map(|c| c.clone().negate()).collect();
-                    CfgExpr::All(negated)
-                };
-                self.cfg_stack.push(else_cfg);
-            }
-            _ => unreachable!(),
-        }
+        let else_cfg = seen[0].clone().negate();
+        self.cfg_stack.push(else_cfg);
         Ok(())
     }
 
@@ -440,13 +374,13 @@ impl Parser {
 
         let mut members: Vec<(String, i32, Option<CfgExpr>)> = Vec::new();
         loop {
-            // Handle #ifdef/#ifndef/#else/#elif/#endif inside enum body
+            // Handle #ifdef/#else/#endif inside enum body
             match self.peek().clone() {
-                Token::IfDef(_) | Token::IfNDef(_) => {
+                Token::IfDef(_) => {
                     self.parse_ifdef_enter()?;
                     continue;
                 }
-                Token::Elif(_) | Token::Else => {
+                Token::Else => {
                     self.parse_ifdef_branch()?;
                     continue;
                 }
@@ -490,7 +424,7 @@ impl Parser {
                 }
                 Token::RBrace => break,
                 // Allow #else/#endif directly after a member without a comma
-                Token::EndIf | Token::Else | Token::Elif(_) => {}
+                Token::EndIf | Token::Else => {}
                 other => {
                     return Err(self.unexpected_token_error(", or }".to_string(), other.clone()))
                 }
@@ -623,13 +557,13 @@ impl Parser {
         let mut arms = Vec::new();
 
         while *self.peek() != Token::RBrace {
-            // Handle #ifdef/#ifndef/#else/#elif/#endif inside union body
+            // Handle #ifdef/#else/#endif inside union body
             match self.peek().clone() {
-                Token::IfDef(_) | Token::IfNDef(_) => {
+                Token::IfDef(_) => {
                     self.parse_ifdef_enter()?;
                     continue;
                 }
-                Token::Elif(_) | Token::Else => {
+                Token::Else => {
                     self.parse_ifdef_branch()?;
                     continue;
                 }
@@ -1102,7 +1036,6 @@ impl Parser {
         let directive = match self.peek() {
             Token::Else => "else",
             Token::EndIf => "endif",
-            Token::Elif(_) => "elif",
             _ => "unknown",
         };
         let (line, col) = self.current_position();

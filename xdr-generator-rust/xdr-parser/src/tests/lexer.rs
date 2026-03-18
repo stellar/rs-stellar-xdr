@@ -22,30 +22,6 @@ fn test_ifdef_tokens() {
 }
 
 #[test]
-fn test_ifndef_token() {
-    let input = "#ifndef MY_FEATURE";
-    let lexer = Lexer::new(input);
-    let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
-    let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
-    assert_eq!(
-        tokens,
-        vec![Token::IfNDef("MY_FEATURE".into()), Token::Eof,]
-    );
-}
-
-#[test]
-fn test_elif_token() {
-    let input = "#elif OTHER_FEATURE";
-    let lexer = Lexer::new(input);
-    let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
-    let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
-    assert_eq!(
-        tokens,
-        vec![Token::Elif("OTHER_FEATURE".into()), Token::Eof,]
-    );
-}
-
-#[test]
 fn test_else_endif_tokens() {
     let input = "#else\n#endif";
     let lexer = Lexer::new(input);

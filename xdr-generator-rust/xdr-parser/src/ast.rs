@@ -94,7 +94,7 @@ pub struct Namespace {
     pub namespaces: Vec<Namespace>,
 }
 
-/// A conditional compilation expression, mapping XDR `#ifdef`/`#ifndef`/`#elif`
+/// A conditional compilation expression, mapping XDR `#ifdef`/`#else`/`#endif`
 /// directives to Rust `#[cfg(feature = "...")]` attributes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CfgExpr {
@@ -241,7 +241,7 @@ pub struct Struct {
     pub parent: Option<String>,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
-    /// Conditional compilation expression from `#ifdef`/`#ifndef`.
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
     pub cfg: Option<CfgExpr>,
 }
 
@@ -256,7 +256,7 @@ pub struct Enum {
     pub source: String,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
-    /// Conditional compilation expression from `#ifdef`/`#ifndef`.
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
     pub cfg: Option<CfgExpr>,
 }
 
@@ -299,7 +299,7 @@ pub struct Union {
     pub parent: Option<String>,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
-    /// Conditional compilation expression from `#ifdef`/`#ifndef`.
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
     pub cfg: Option<CfgExpr>,
 }
 
@@ -312,7 +312,7 @@ pub struct Typedef {
     pub source: String,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
-    /// Conditional compilation expression from `#ifdef`/`#ifndef`.
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
     pub cfg: Option<CfgExpr>,
 }
 
@@ -327,7 +327,7 @@ pub struct Const {
     pub source: String,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
-    /// Conditional compilation expression from `#ifdef`/`#ifndef`.
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
     pub cfg: Option<CfgExpr>,
 }
 

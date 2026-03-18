@@ -88,10 +88,6 @@ pub enum Token {
     // Preprocessor conditionals
     #[regex(r"#ifdef[ \t]+([a-zA-Z_][a-zA-Z0-9_]*)", parse_directive_ident)]
     IfDef(std::string::String),
-    #[regex(r"#ifndef[ \t]+([a-zA-Z_][a-zA-Z0-9_]*)", parse_directive_ident)]
-    IfNDef(std::string::String),
-    #[regex(r"#elif[ \t]+([a-zA-Z_][a-zA-Z0-9_]*)", parse_directive_ident)]
-    Elif(std::string::String),
     #[regex(r"#else")]
     Else,
     #[regex(r"#endif")]
@@ -109,7 +105,7 @@ pub enum IntBase {
 }
 
 fn parse_directive_ident(lex: &logos::Lexer<Token>) -> Option<std::string::String> {
-    // The regex captures "#ifdef IDENT", "#ifndef IDENT", or "#elif IDENT".
+    // The regex captures "#ifdef IDENT".
     // Extract the identifier (last whitespace-separated token).
     let slice = lex.slice();
     let ident = slice.rsplit(|c: char| c.is_ascii_whitespace()).next()?;

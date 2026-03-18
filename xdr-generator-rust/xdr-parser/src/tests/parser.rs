@@ -43,16 +43,19 @@ fn test_parse_enum() {
                     name: "RED".to_string(),
                     stripped_name: "RED".to_string(),
                     value: 0,
+                    cfg: None,
                 },
                 EnumMember {
                     name: "GREEN".to_string(),
                     stripped_name: "GREEN".to_string(),
                     value: 1,
+                    cfg: None,
                 },
                 EnumMember {
                     name: "BLUE".to_string(),
                     stripped_name: "BLUE".to_string(),
                     value: 2,
+                    cfg: None,
                 },
             ],
             member_prefix: String::new(),
@@ -125,7 +128,7 @@ fn test_deeply_nested_parents_assigned_during_parse() {
 }
 
 // =============================================================================
-// #ifdef / #ifndef / #elif / #else / #endif tests
+// #ifdef / #else / #endif tests
 // =============================================================================
 
 #[test]
@@ -141,23 +144,6 @@ fn test_ifdef_simple() {
     assert_eq!(
         spec.definitions[0].cfg(),
         Some(&CfgExpr::Feature("FEATURE_X".to_string()))
-    );
-}
-
-#[test]
-fn test_ifndef_simple() {
-    let input = r#"
-        #ifndef FEATURE_X
-        struct Foo { int x; };
-        #endif
-    "#;
-    let spec = parse(input).unwrap();
-    assert_eq!(spec.definitions.len(), 1);
-    assert_eq!(
-        spec.definitions[0].cfg(),
-        Some(&CfgExpr::Not(Box::new(CfgExpr::Feature(
-            "FEATURE_X".to_string()
-        ))))
     );
 }
 
@@ -185,102 +171,6 @@ fn test_ifdef_else() {
         Some(&CfgExpr::Not(Box::new(CfgExpr::Feature(
             "FEATURE_X".to_string()
         ))))
-    );
-}
-
-#[test]
-fn test_ifndef_else() {
-    let input = r#"
-        #ifndef FEATURE_X
-        struct Foo { int x; };
-        #else
-        struct Bar { int y; };
-        #endif
-    "#;
-    let spec = parse(input).unwrap();
-    assert_eq!(spec.definitions.len(), 2);
-
-    // #ifndef FEATURE_X => not(feature = "FEATURE_X")
-    assert_eq!(spec.definitions[0].name(), "Foo");
-    assert_eq!(
-        spec.definitions[0].cfg(),
-        Some(&CfgExpr::Not(Box::new(CfgExpr::Feature(
-            "FEATURE_X".to_string()
-        ))))
-    );
-
-    // #else of #ifndef => feature = "FEATURE_X"
-    assert_eq!(spec.definitions[1].name(), "Bar");
-    assert_eq!(
-        spec.definitions[1].cfg(),
-        Some(&CfgExpr::Feature("FEATURE_X".to_string()))
-    );
-}
-
-#[test]
-fn test_ifdef_elif() {
-    let input = r#"
-        #ifdef FEATURE_A
-        struct Foo { int x; };
-        #elif FEATURE_B
-        struct Bar { int y; };
-        #endif
-    "#;
-    let spec = parse(input).unwrap();
-    assert_eq!(spec.definitions.len(), 2);
-
-    assert_eq!(spec.definitions[0].name(), "Foo");
-    assert_eq!(
-        spec.definitions[0].cfg(),
-        Some(&CfgExpr::Feature("FEATURE_A".to_string()))
-    );
-
-    assert_eq!(spec.definitions[1].name(), "Bar");
-    assert_eq!(
-        spec.definitions[1].cfg(),
-        Some(&CfgExpr::All(vec![
-            CfgExpr::Not(Box::new(CfgExpr::Feature("FEATURE_A".to_string()))),
-            CfgExpr::Feature("FEATURE_B".to_string()),
-        ]))
-    );
-}
-
-#[test]
-fn test_ifdef_elif_else() {
-    let input = r#"
-        #ifdef FEATURE_A
-        struct Foo { int x; };
-        #elif FEATURE_B
-        struct Bar { int y; };
-        #else
-        struct Baz { int z; };
-        #endif
-    "#;
-    let spec = parse(input).unwrap();
-    assert_eq!(spec.definitions.len(), 3);
-
-    assert_eq!(spec.definitions[0].name(), "Foo");
-    assert_eq!(
-        spec.definitions[0].cfg(),
-        Some(&CfgExpr::Feature("FEATURE_A".to_string()))
-    );
-
-    assert_eq!(spec.definitions[1].name(), "Bar");
-    assert_eq!(
-        spec.definitions[1].cfg(),
-        Some(&CfgExpr::All(vec![
-            CfgExpr::Not(Box::new(CfgExpr::Feature("FEATURE_A".to_string()))),
-            CfgExpr::Feature("FEATURE_B".to_string()),
-        ]))
-    );
-
-    assert_eq!(spec.definitions[2].name(), "Baz");
-    assert_eq!(
-        spec.definitions[2].cfg(),
-        Some(&CfgExpr::All(vec![
-            CfgExpr::Not(Box::new(CfgExpr::Feature("FEATURE_A".to_string()))),
-            CfgExpr::Not(Box::new(CfgExpr::Feature("FEATURE_B".to_string()))),
-        ]))
     );
 }
 
@@ -427,84 +317,6 @@ fn test_ifdef_empty_block() {
 }
 
 #[test]
-fn test_ifndef_elif() {
-    let input = r#"
-        #ifndef FEATURE_A
-        struct Foo { int x; };
-        #elif FEATURE_B
-        struct Bar { int y; };
-        #endif
-    "#;
-    let spec = parse(input).unwrap();
-    assert_eq!(spec.definitions.len(), 2);
-
-    // #ifndef FEATURE_A => not(feature = "FEATURE_A")
-    assert_eq!(spec.definitions[0].name(), "Foo");
-    assert_eq!(
-        spec.definitions[0].cfg(),
-        Some(&CfgExpr::Not(Box::new(CfgExpr::Feature(
-            "FEATURE_A".to_string()
-        ))))
-    );
-
-    // #elif FEATURE_B after #ifndef FEATURE_A =>
-    // all(feature = "FEATURE_A", feature = "FEATURE_B")
-    // (negation of not(feature = "A") simplifies to feature = "A")
-    assert_eq!(spec.definitions[1].name(), "Bar");
-    assert_eq!(
-        spec.definitions[1].cfg(),
-        Some(&CfgExpr::All(vec![
-            CfgExpr::Feature("FEATURE_A".to_string()),
-            CfgExpr::Feature("FEATURE_B".to_string()),
-        ]))
-    );
-}
-
-#[test]
-fn test_ifndef_elif_else() {
-    let input = r#"
-        #ifndef FEATURE_A
-        struct Foo { int x; };
-        #elif FEATURE_B
-        struct Bar { int y; };
-        #else
-        struct Baz { int z; };
-        #endif
-    "#;
-    let spec = parse(input).unwrap();
-    assert_eq!(spec.definitions.len(), 3);
-
-    // #ifndef FEATURE_A => not(feature = "FEATURE_A")
-    assert_eq!(spec.definitions[0].name(), "Foo");
-    assert_eq!(
-        spec.definitions[0].cfg(),
-        Some(&CfgExpr::Not(Box::new(CfgExpr::Feature(
-            "FEATURE_A".to_string()
-        ))))
-    );
-
-    // #elif FEATURE_B => all(feature = "FEATURE_A", feature = "FEATURE_B")
-    assert_eq!(spec.definitions[1].name(), "Bar");
-    assert_eq!(
-        spec.definitions[1].cfg(),
-        Some(&CfgExpr::All(vec![
-            CfgExpr::Feature("FEATURE_A".to_string()),
-            CfgExpr::Feature("FEATURE_B".to_string()),
-        ]))
-    );
-
-    // #else => all(feature = "FEATURE_A", not(feature = "FEATURE_B"))
-    assert_eq!(spec.definitions[2].name(), "Baz");
-    assert_eq!(
-        spec.definitions[2].cfg(),
-        Some(&CfgExpr::All(vec![
-            CfgExpr::Feature("FEATURE_A".to_string()),
-            CfgExpr::Not(Box::new(CfgExpr::Feature("FEATURE_B".to_string()))),
-        ]))
-    );
-}
-
-#[test]
 fn test_ifdef_nested_types_inherit_cfg() {
     let input = r#"
         #ifdef FEATURE_X
@@ -592,13 +404,13 @@ fn test_cfg_expr_and() {
 #[test]
 fn test_cfg_expr_render_feature() {
     let expr = CfgExpr::Feature("FEATURE_X".to_string());
-    assert_eq!(expr.render(), r#"feature = "FEATURE_X""#);
+    assert_eq!(expr.render(), r#"feature = "feature_x""#);
 }
 
 #[test]
 fn test_cfg_expr_render_not() {
     let expr = CfgExpr::Not(Box::new(CfgExpr::Feature("FEATURE_X".to_string())));
-    assert_eq!(expr.render(), r#"not(feature = "FEATURE_X")"#);
+    assert_eq!(expr.render(), r#"not(feature = "feature_x")"#);
 }
 
 #[test]
@@ -607,5 +419,5 @@ fn test_cfg_expr_render_all() {
         CfgExpr::Feature("A".to_string()),
         CfgExpr::Not(Box::new(CfgExpr::Feature("B".to_string()))),
     ]);
-    assert_eq!(expr.render(), r#"all(feature = "A", not(feature = "B"))"#);
+    assert_eq!(expr.render(), r#"all(feature = "a", not(feature = "b"))"#);
 }

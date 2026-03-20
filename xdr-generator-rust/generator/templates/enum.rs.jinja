@@ -27,7 +27,7 @@ pub enum {{ e.name }} {
 {%- if let Some(cfg) = m.cfg %}
     #[cfg({{ cfg }})]
 {%- endif %}
-{%- if m.is_first %}
+{%- if m.is_default %}
     #[cfg_attr(feature = "alloc", default)]
 {%- endif %}
     {{ m.name }} = {{ m.value }},

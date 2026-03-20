@@ -47,7 +47,7 @@ pub struct EnumOutput {
 pub struct EnumStructMemberOutput {
     pub name: String,
     pub value: i32,
-    pub is_first: bool,
+    pub is_default: bool,
     pub cfg: Option<String>,
 }
 
@@ -59,6 +59,9 @@ pub struct UnionOutput {
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
     pub cfg: Option<String>,
+    /// Cfg for the first arm, used to gate the Default impl when the
+    /// default variant is behind a cfg.
+    pub default_arm_cfg: Option<String>,
 }
 
 pub struct UnionArmOutput {

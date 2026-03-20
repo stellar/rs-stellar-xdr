@@ -153,6 +153,7 @@ impl RustGenerator {
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
 
+        let first_uncfg_index = e.members.iter().position(|m| m.cfg.is_none()).unwrap_or(0);
         let members: Vec<EnumStructMemberOutput> = e
             .members
             .iter()
@@ -160,7 +161,7 @@ impl RustGenerator {
             .map(|(i, m)| EnumStructMemberOutput {
                 name: type_name(&m.stripped_name),
                 value: m.value,
-                is_first: i == 0,
+                is_default: i == first_uncfg_index,
                 cfg: m.cfg.as_ref().map(|c| c.render()),
             })
             .collect();
@@ -213,6 +214,10 @@ impl RustGenerator {
             .collect();
 
         let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
+        let default_arm_cfg = u
+            .arms
+            .first()
+            .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
         UnionOutput {
             name,
@@ -222,6 +227,7 @@ impl RustGenerator {
             discriminant_type,
             arms,
             cfg,
+            default_arm_cfg,
         }
     }
 

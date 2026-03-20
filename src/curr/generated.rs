@@ -55904,8 +55904,6 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    // Private const slice used to compute the variant count, supporting
-    // cfg-gated entries whose presence varies by enabled features.
     const _VARIANTS: &[TypeVariant] = &[
         TypeVariant::Value,
         TypeVariant::ScpBallot,
@@ -59144,8 +59142,6 @@ pub enum Type {
 }
 
 impl Type {
-    // Private const slices used to compute the variant count, supporting
-    // cfg-gated entries whose presence varies by enabled features.
     const _VARIANTS: &[TypeVariant] = &[
         TypeVariant::Value,
         TypeVariant::ScpBallot,

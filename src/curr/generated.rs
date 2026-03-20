@@ -4302,8 +4302,8 @@ impl ScpStatementType {
     };
     const _VARIANTS_STR: &[&str] = &["Prepare", "Confirm", "Externalize", "Nominate"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -4704,8 +4704,8 @@ impl ScpStatementPledges {
     };
     const _VARIANTS_STR: &[&str] = &["Prepare", "Confirm", "Externalize", "Nominate"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -6110,8 +6110,8 @@ impl ContractCostType {
         "Bn254G1Msm",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -7066,8 +7066,8 @@ impl ConfigSettingId {
         "FreezeBypassTxsDelta",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -7346,8 +7346,8 @@ impl ConfigSettingEntry {
         "FreezeBypassTxsDelta",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -7590,8 +7590,8 @@ impl ScEnvMetaKind {
     };
     const _VARIANTS_STR: &[&str] = &["ScEnvMetaKindInterfaceVersion"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -7771,8 +7771,8 @@ impl ScEnvMetaEntry {
     };
     const _VARIANTS_STR: &[&str] = &["ScEnvMetaKindInterfaceVersion"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -7944,8 +7944,8 @@ impl ScMetaKind {
     };
     const _VARIANTS_STR: &[&str] = &["ScMetaV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -8074,8 +8074,8 @@ impl ScMetaEntry {
     };
     const _VARIANTS_STR: &[&str] = &["ScMetaV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -8312,8 +8312,8 @@ impl ScSpecType {
         "Udt",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -8926,8 +8926,8 @@ impl ScSpecTypeDef {
         "Udt",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -9363,8 +9363,8 @@ impl ScSpecUdtUnionCaseV0Kind {
     };
     const _VARIANTS_STR: &[&str] = &["VoidV0", "TupleV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -9501,8 +9501,8 @@ impl ScSpecUdtUnionCaseV0 {
     };
     const _VARIANTS_STR: &[&str] = &["VoidV0", "TupleV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -10021,8 +10021,8 @@ impl ScSpecEventParamLocationV0 {
     };
     const _VARIANTS_STR: &[&str] = &["Data", "TopicList"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -10210,8 +10210,8 @@ impl ScSpecEventDataFormat {
     };
     const _VARIANTS_STR: &[&str] = &["SingleValue", "Vec", "Map"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -10425,8 +10425,8 @@ impl ScSpecEntryKind {
         "EventV0",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -10594,8 +10594,8 @@ impl ScSpecEntry {
         "EventV0",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -10853,8 +10853,8 @@ impl ScValType {
         "LedgerKeyNonce",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -11049,8 +11049,8 @@ impl ScErrorType {
         "Value", "Auth",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -11229,8 +11229,8 @@ impl ScErrorCode {
         "UnexpectedSize",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -11410,8 +11410,8 @@ impl ScError {
         "Value", "Auth",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -11899,8 +11899,8 @@ impl ContractExecutableType {
     };
     const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -12037,8 +12037,8 @@ impl ContractExecutable {
     };
     const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -12181,8 +12181,8 @@ impl ScAddressType {
         "LiquidityPool",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -12415,8 +12415,8 @@ impl ScAddress {
         "LiquidityPool",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -13336,8 +13336,8 @@ impl ScVal {
         "LedgerKeyNonce",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -13660,8 +13660,8 @@ impl StoredTransactionSet {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -13951,8 +13951,8 @@ impl PersistedScpState {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -14831,8 +14831,8 @@ impl AssetType {
     };
     const _VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -14970,8 +14970,8 @@ impl AssetCode {
     };
     const _VARIANTS_STR: &[&str] = &["CreditAlphanum4", "CreditAlphanum12"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -15214,8 +15214,8 @@ impl Asset {
     };
     const _VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -15459,8 +15459,8 @@ impl ThresholdIndexes {
     };
     const _VARIANTS_STR: &[&str] = &["MasterWeight", "Low", "Med", "High"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -15627,8 +15627,8 @@ impl LedgerEntryType {
         "Ttl",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -15842,8 +15842,8 @@ impl AccountFlags {
         "ClawbackEnabledFlag",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -16123,8 +16123,8 @@ impl AccountEntryExtensionV2Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V3"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -16323,8 +16323,8 @@ impl AccountEntryExtensionV1Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -16515,8 +16515,8 @@ impl AccountEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -16756,8 +16756,8 @@ impl TrustLineFlags {
         "TrustlineClawbackEnabledFlag",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -16906,8 +16906,8 @@ impl LiquidityPoolType {
     };
     const _VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -17055,8 +17055,8 @@ impl TrustLineAsset {
     };
     const _VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -17195,8 +17195,8 @@ impl TrustLineEntryExtensionV2Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -17381,8 +17381,8 @@ impl TrustLineEntryV1Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -17585,8 +17585,8 @@ impl TrustLineEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -17807,8 +17807,8 @@ impl OfferEntryFlags {
     };
     const _VARIANTS_STR: &[&str] = &["PassiveFlag"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -17945,8 +17945,8 @@ impl OfferEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -18167,8 +18167,8 @@ impl DataEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -18375,8 +18375,8 @@ impl ClaimPredicateType {
         "BeforeRelativeTime",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -18557,8 +18557,8 @@ impl ClaimPredicate {
         "BeforeRelativeTime",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -18701,8 +18701,8 @@ impl ClaimantType {
     };
     const _VARIANTS_STR: &[&str] = &["ClaimantTypeV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -18884,8 +18884,8 @@ impl Claimant {
     };
     const _VARIANTS_STR: &[&str] = &["ClaimantTypeV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -19007,8 +19007,8 @@ impl ClaimableBalanceFlags {
     };
     const _VARIANTS_STR: &[&str] = &["ClaimableBalanceClawbackEnabledFlag"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -19145,8 +19145,8 @@ impl ClaimableBalanceEntryExtensionV1Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -19331,8 +19331,8 @@ impl ClaimableBalanceEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -19685,8 +19685,8 @@ impl LiquidityPoolEntryBody {
     };
     const _VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -19879,8 +19879,8 @@ impl ContractDataDurability {
     };
     const _VARIANTS_STR: &[&str] = &["Temporary", "Persistent"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -20212,8 +20212,8 @@ impl ContractCodeEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -20456,8 +20456,8 @@ impl LedgerEntryExtensionV1Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -20688,8 +20688,8 @@ impl LedgerEntryData {
         "Ttl",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -20865,8 +20865,8 @@ impl LedgerEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -21648,8 +21648,8 @@ impl LedgerKey {
         "Ttl",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -21854,8 +21854,8 @@ impl EnvelopeType {
         "SorobanAuthorization",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -21996,8 +21996,8 @@ impl BucketListType {
     };
     const _VARIANTS_STR: &[&str] = &["Live", "HotArchive"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -22133,8 +22133,8 @@ impl BucketEntryType {
     };
     const _VARIANTS_STR: &[&str] = &["Metaentry", "Liveentry", "Deadentry", "Initentry"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -22271,8 +22271,8 @@ impl HotArchiveBucketEntryType {
     };
     const _VARIANTS_STR: &[&str] = &["Metaentry", "Archived", "Live"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -22408,8 +22408,8 @@ impl BucketMetadataExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -22613,8 +22613,8 @@ impl BucketEntry {
     };
     const _VARIANTS_STR: &[&str] = &["Liveentry", "Initentry", "Deadentry", "Metaentry"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -22764,8 +22764,8 @@ impl HotArchiveBucketEntry {
     };
     const _VARIANTS_STR: &[&str] = &["Archived", "Live", "Metaentry"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -23004,8 +23004,8 @@ impl StellarValueType {
     };
     const _VARIANTS_STR: &[&str] = &["Basic", "Signed"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -23188,8 +23188,8 @@ impl StellarValueExt {
     };
     const _VARIANTS_STR: &[&str] = &["Basic", "Signed"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -23400,8 +23400,8 @@ impl LedgerHeaderFlags {
     };
     const _VARIANTS_STR: &[&str] = &["TradingFlag", "DepositFlag", "WithdrawalFlag"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -23534,8 +23534,8 @@ impl LedgerHeaderExtensionV1Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -23720,8 +23720,8 @@ impl LedgerHeaderExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -24006,8 +24006,8 @@ impl LedgerUpgradeType {
         "MaxSorobanTxSetSize",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -24233,8 +24233,8 @@ impl LedgerUpgrade {
         "MaxSorobanTxSetSize",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -24425,8 +24425,8 @@ impl TxSetComponentType {
     };
     const _VARIANTS_STR: &[&str] = &["TxsetCompTxsMaybeDiscountedFee"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -24882,8 +24882,8 @@ impl TxSetComponent {
     };
     const _VARIANTS_STR: &[&str] = &["TxsetCompTxsMaybeDiscountedFee"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -25019,8 +25019,8 @@ impl TransactionPhase {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -25250,8 +25250,8 @@ impl GeneralizedTransactionSet {
     };
     const _VARIANTS_STR: &[&str] = &["V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -25475,8 +25475,8 @@ impl TransactionHistoryEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -25669,8 +25669,8 @@ impl TransactionHistoryResultEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -25857,8 +25857,8 @@ impl LedgerHeaderHistoryEntryExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -26143,8 +26143,8 @@ impl ScpHistoryEntry {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -26277,8 +26277,8 @@ impl LedgerEntryChangeType {
     };
     const _VARIANTS_STR: &[&str] = &["Created", "Updated", "Removed", "State", "Restored"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -26433,8 +26433,8 @@ impl LedgerEntryChange {
     };
     const _VARIANTS_STR: &[&str] = &["Created", "Updated", "Removed", "State", "Restored"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -26833,8 +26833,8 @@ impl ContractEventType {
     };
     const _VARIANTS_STR: &[&str] = &["System", "Contract", "Diagnostic"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -27020,8 +27020,8 @@ impl ContractEventBody {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -27366,8 +27366,8 @@ impl SorobanTransactionMetaExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -27736,8 +27736,8 @@ impl TransactionEventStage {
     };
     const _VARIANTS_STR: &[&str] = &["BeforeAllTxs", "AfterTx", "AfterAllTxs"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -28053,8 +28053,8 @@ impl TransactionMeta {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1", "V2", "V3", "V4"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -28488,8 +28488,8 @@ impl LedgerCloseMetaExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -28816,8 +28816,8 @@ impl LedgerCloseMeta {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1", "V2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -28958,8 +28958,8 @@ impl ErrorCode {
     };
     const _VARIANTS_STR: &[&str] = &["Misc", "Data", "Conf", "Auth", "Load"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -29420,8 +29420,8 @@ impl IpAddrType {
     };
     const _VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -29555,8 +29555,8 @@ impl PeerAddressIp {
     };
     const _VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -29837,8 +29837,8 @@ impl MessageType {
         "TimeSlicedSurveyStopCollecting",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -30049,8 +30049,8 @@ impl SurveyMessageCommandType {
     };
     const _VARIANTS_STR: &[&str] = &["TimeSlicedSurveyTopology"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -30172,8 +30172,8 @@ impl SurveyMessageResponseType {
     };
     const _VARIANTS_STR: &[&str] = &["SurveyTopologyResponseV2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -31391,8 +31391,8 @@ impl SurveyResponseBody {
     };
     const _VARIANTS_STR: &[&str] = &["SurveyTopologyResponseV2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -31959,8 +31959,8 @@ impl StellarMessage {
         "FloodDemand",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -32247,8 +32247,8 @@ impl AuthenticatedMessage {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -32383,8 +32383,8 @@ impl LiquidityPoolParameters {
     };
     const _VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -32596,8 +32596,8 @@ impl MuxedAccount {
     };
     const _VARIANTS_STR: &[&str] = &["Ed25519", "MuxedEd25519"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -32879,8 +32879,8 @@ impl OperationType {
         "RestoreFootprint",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -33632,8 +33632,8 @@ impl ChangeTrustAsset {
     };
     const _VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -34120,8 +34120,8 @@ impl RevokeSponsorshipType {
     };
     const _VARIANTS_STR: &[&str] = &["LedgerEntry", "Signer"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -34311,8 +34311,8 @@ impl RevokeSponsorshipOp {
     };
     const _VARIANTS_STR: &[&str] = &["LedgerEntry", "Signer"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -34759,8 +34759,8 @@ impl HostFunctionType {
         "CreateContractV2",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -34892,8 +34892,8 @@ impl ContractIdPreimageType {
     };
     const _VARIANTS_STR: &[&str] = &["Address", "Asset"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -35083,8 +35083,8 @@ impl ContractIdPreimage {
     };
     const _VARIANTS_STR: &[&str] = &["Address", "Asset"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -35391,8 +35391,8 @@ impl HostFunction {
         "CreateContractV2",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -35543,8 +35543,8 @@ impl SorobanAuthorizedFunctionType {
         "CreateContractV2HostFn",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -35699,8 +35699,8 @@ impl SorobanAuthorizedFunction {
         "CreateContractV2HostFn",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -35951,8 +35951,8 @@ impl SorobanCredentialsType {
     };
     const _VARIANTS_STR: &[&str] = &["SourceAccount", "Address"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -36089,8 +36089,8 @@ impl SorobanCredentials {
     };
     const _VARIANTS_STR: &[&str] = &["SourceAccount", "Address"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -36658,8 +36658,8 @@ impl OperationBody {
         "RestoreFootprint",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -37299,8 +37299,8 @@ impl HashIdPreimage {
         "SorobanAuthorization",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -37451,8 +37451,8 @@ impl MemoType {
     };
     const _VARIANTS_STR: &[&str] = &["None", "Text", "Id", "Hash", "Return"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -37613,8 +37613,8 @@ impl Memo {
     };
     const _VARIANTS_STR: &[&str] = &["None", "Text", "Id", "Hash", "Return"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -37943,8 +37943,8 @@ impl PreconditionType {
     };
     const _VARIANTS_STR: &[&str] = &["None", "Time", "V2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -38087,8 +38087,8 @@ impl Preconditions {
     };
     const _VARIANTS_STR: &[&str] = &["None", "Time", "V2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -38385,8 +38385,8 @@ impl SorobanTransactionDataExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -38589,8 +38589,8 @@ impl TransactionV0Ext {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -38845,8 +38845,8 @@ impl TransactionExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "V1"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -39114,8 +39114,8 @@ impl FeeBumpTransactionInnerTx {
     };
     const _VARIANTS_STR: &[&str] = &["Tx"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -39242,8 +39242,8 @@ impl FeeBumpTransactionExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -39495,8 +39495,8 @@ impl TransactionEnvelope {
     };
     const _VARIANTS_STR: &[&str] = &["TxV0", "Tx", "TxFeeBump"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -39637,8 +39637,8 @@ impl TransactionSignaturePayloadTaggedTransaction {
     };
     const _VARIANTS_STR: &[&str] = &["Tx", "TxFeeBump"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -39826,8 +39826,8 @@ impl ClaimAtomType {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "OrderBook", "LiquidityPool"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -40207,8 +40207,8 @@ impl ClaimAtom {
     };
     const _VARIANTS_STR: &[&str] = &["V0", "OrderBook", "LiquidityPool"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -40361,8 +40361,8 @@ impl CreateAccountResultCode {
         "AlreadyExist",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -40520,8 +40520,8 @@ impl CreateAccountResult {
         "AlreadyExist",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -40699,8 +40699,8 @@ impl PaymentResultCode {
         "NoIssuer",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -40888,8 +40888,8 @@ impl PaymentResult {
         "NoIssuer",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -41108,8 +41108,8 @@ impl PathPaymentStrictReceiveResultCode {
         "OverSendmax",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -41428,8 +41428,8 @@ impl PathPaymentStrictReceiveResult {
         "OverSendmax",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -41662,8 +41662,8 @@ impl PathPaymentStrictSendResultCode {
         "UnderDestmin",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -41924,8 +41924,8 @@ impl PathPaymentStrictSendResult {
         "UnderDestmin",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -42157,8 +42157,8 @@ impl ManageSellOfferResultCode {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -42311,8 +42311,8 @@ impl ManageOfferEffect {
     };
     const _VARIANTS_STR: &[&str] = &["Created", "Updated", "Deleted"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -42454,8 +42454,8 @@ impl ManageOfferSuccessResultOffer {
     };
     const _VARIANTS_STR: &[&str] = &["Created", "Updated", "Deleted"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -42702,8 +42702,8 @@ impl ManageSellOfferResult {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -42932,8 +42932,8 @@ impl ManageBuyOfferResultCode {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -43139,8 +43139,8 @@ impl ManageBuyOfferResult {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -43356,8 +43356,8 @@ impl SetOptionsResultCode {
         "AuthRevocableRequired",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -43551,8 +43551,8 @@ impl SetOptionsResult {
         "AuthRevocableRequired",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -43753,8 +43753,8 @@ impl ChangeTrustResultCode {
         "NotAuthMaintainLiabilities",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -43936,8 +43936,8 @@ impl ChangeTrustResult {
         "NotAuthMaintainLiabilities",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -44122,8 +44122,8 @@ impl AllowTrustResultCode {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -44293,8 +44293,8 @@ impl AllowTrustResult {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -44472,8 +44472,8 @@ impl AccountMergeResultCode {
         "IsSponsor",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -44655,8 +44655,8 @@ impl AccountMergeResult {
         "IsSponsor",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -44808,8 +44808,8 @@ impl InflationResultCode {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "NotTime"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -44997,8 +44997,8 @@ impl InflationResult {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "NotTime"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -45147,8 +45147,8 @@ impl ManageDataResultCode {
         "InvalidName",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -45306,8 +45306,8 @@ impl ManageDataResult {
         "InvalidName",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -45449,8 +45449,8 @@ impl BumpSequenceResultCode {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "BadSeq"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -45587,8 +45587,8 @@ impl BumpSequenceResult {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "BadSeq"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -45735,8 +45735,8 @@ impl CreateClaimableBalanceResultCode {
         "Underfunded",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -45901,8 +45901,8 @@ impl CreateClaimableBalanceResult {
         "Underfunded",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46072,8 +46072,8 @@ impl ClaimClaimableBalanceResultCode {
         "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46243,8 +46243,8 @@ impl ClaimClaimableBalanceResult {
         "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46402,8 +46402,8 @@ impl BeginSponsoringFutureReservesResultCode {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "Malformed", "AlreadySponsored", "Recursive"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46551,8 +46551,8 @@ impl BeginSponsoringFutureReservesResult {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "Malformed", "AlreadySponsored", "Recursive"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46692,8 +46692,8 @@ impl EndSponsoringFutureReservesResultCode {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "NotSponsored"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46831,8 +46831,8 @@ impl EndSponsoringFutureReservesResult {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "NotSponsored"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -46983,8 +46983,8 @@ impl RevokeSponsorshipResultCode {
         "Malformed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -47148,8 +47148,8 @@ impl RevokeSponsorshipResult {
         "Malformed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -47312,8 +47312,8 @@ impl ClawbackResultCode {
         "Underfunded",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -47471,8 +47471,8 @@ impl ClawbackResult {
         "Underfunded",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -47621,8 +47621,8 @@ impl ClawbackClaimableBalanceResultCode {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -47770,8 +47770,8 @@ impl ClawbackClaimableBalanceResult {
     };
     const _VARIANTS_STR: &[&str] = &["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -47931,8 +47931,8 @@ impl SetTrustLineFlagsResultCode {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -48096,8 +48096,8 @@ impl SetTrustLineFlagsResult {
         "LowReserve",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -48281,8 +48281,8 @@ impl LiquidityPoolDepositResultCode {
         "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -48464,8 +48464,8 @@ impl LiquidityPoolDepositResult {
         "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -48652,8 +48652,8 @@ impl LiquidityPoolWithdrawResultCode {
         "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -48823,8 +48823,8 @@ impl LiquidityPoolWithdrawResult {
         "TrustlineFrozen",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -48995,8 +48995,8 @@ impl InvokeHostFunctionResultCode {
         "InsufficientRefundableFee",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -49160,8 +49160,8 @@ impl InvokeHostFunctionResult {
         "InsufficientRefundableFee",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -49324,8 +49324,8 @@ impl ExtendFootprintTtlResultCode {
         "InsufficientRefundableFee",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -49477,8 +49477,8 @@ impl ExtendFootprintTtlResult {
         "InsufficientRefundableFee",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -49633,8 +49633,8 @@ impl RestoreFootprintResultCode {
         "InsufficientRefundableFee",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -49786,8 +49786,8 @@ impl RestoreFootprintResult {
         "InsufficientRefundableFee",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -49952,8 +49952,8 @@ impl OperationResultCode {
         "OpTooManySponsoring",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -50228,8 +50228,8 @@ impl OperationResultTr {
         "RestoreFootprint",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -50584,8 +50584,8 @@ impl OperationResult {
         "OpTooManySponsoring",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -50812,8 +50812,8 @@ impl TransactionResultCode {
         "TxFrozenKeyAccessed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -51055,8 +51055,8 @@ impl InnerTransactionResultResult {
         "TxFrozenKeyAccessed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -51255,8 +51255,8 @@ impl InnerTransactionResultExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -51606,8 +51606,8 @@ impl TransactionResultResult {
         "TxFrozenKeyAccessed",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -51818,8 +51818,8 @@ impl TransactionResultExt {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -52506,8 +52506,8 @@ impl ExtensionPoint {
     };
     const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -52648,8 +52648,8 @@ impl CryptoKeyType {
         "MuxedEd25519",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -52778,8 +52778,8 @@ impl PublicKeyType {
     };
     const _VARIANTS_STR: &[&str] = &["PublicKeyTypeEd25519"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -52911,8 +52911,8 @@ impl SignerKeyType {
     };
     const _VARIANTS_STR: &[&str] = &["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -53044,8 +53044,8 @@ impl PublicKey {
     };
     const _VARIANTS_STR: &[&str] = &["PublicKeyTypeEd25519"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -53273,8 +53273,8 @@ impl SignerKey {
     };
     const _VARIANTS_STR: &[&str] = &["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -54068,8 +54068,8 @@ impl BinaryFuseFilterType {
     };
     const _VARIANTS_STR: &[&str] = &["B8Bit", "B16Bit", "B32Bit"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -54334,8 +54334,8 @@ impl ClaimableBalanceIdType {
     };
     const _VARIANTS_STR: &[&str] = &["ClaimableBalanceIdTypeV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -54462,8 +54462,8 @@ impl ClaimableBalanceId {
     };
     const _VARIANTS_STR: &[&str] = &["ClaimableBalanceIdTypeV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -55975,8 +55975,8 @@ impl TypeVariant {
         "ClaimableBalanceId",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;
@@ -59123,8 +59123,8 @@ impl Type {
         "ClaimableBalanceId",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;

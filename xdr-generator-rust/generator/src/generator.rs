@@ -1,3 +1,6 @@
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
+
 use askama::Template;
 use xdr_parser::ast::{
     Const, Definition, Enum, Struct, StructMember, Typedef, Union, UnionArm, XdrSpec,
@@ -47,8 +50,7 @@ impl RustGenerator {
             .collect();
 
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
-        let mut cfg_by_name: std::collections::HashMap<String, Option<String>> =
-            std::collections::HashMap::new();
+        let mut cfg_by_name: HashMap<String, Option<String>> = HashMap::new();
 
         for def in spec.all_definitions() {
             // Build cfg_by_name for type enum entries in the same pass.
@@ -56,10 +58,10 @@ impl RustGenerator {
                 let name = type_name(def.name());
                 let cfg = self.resolve_cfg(def);
                 match cfg_by_name.entry(name) {
-                    std::collections::hash_map::Entry::Vacant(e) => {
+                    Entry::Vacant(e) => {
                         e.insert(cfg);
                     }
-                    std::collections::hash_map::Entry::Occupied(mut e) => {
+                    Entry::Occupied(mut e) => {
                         // Same name in multiple cfg branches (e.g. #ifdef/#else)
                         // means the type is always present, so clear the cfg.
                         e.insert(None);

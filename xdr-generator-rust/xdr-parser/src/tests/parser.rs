@@ -1,5 +1,6 @@
 use crate::ast::{
-    CfgExpr, Definition, Enum, EnumMember, Size, Struct, StructMember, Type, Typedef,
+    CfgExpr, Definition, Enum, EnumMember, Size, Struct, StructMember, Type, Typedef, Union,
+    UnionArm, UnionCase, UnionCaseValue, UnionDiscriminant,
 };
 use crate::parser::parse;
 
@@ -356,6 +357,156 @@ fn test_stray_endif_error() {
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
     assert!(err.contains("endif"), "error should mention #endif: {err}");
+}
+
+// =============================================================================
+// Inline #ifdef inside enum/union body tests
+// =============================================================================
+
+#[test]
+fn test_ifdef_inline_enum_members() {
+    let input = r#"
+        enum Color {
+            RED = 0,
+            #ifdef FEATURE_X
+            GREEN = 1,
+            #else
+            BLUE = 2,
+            #endif
+            YELLOW = 3
+        };
+    "#;
+    let spec = parse(input).unwrap();
+    let Definition::Enum(e) = &spec.definitions[0] else {
+        panic!("expected enum");
+    };
+    assert_eq!(e.members.len(), 4);
+
+    assert_eq!(e.members[0].stripped_name, "RED");
+    assert_eq!(e.members[0].cfg, None);
+
+    assert_eq!(e.members[1].stripped_name, "GREEN");
+    assert_eq!(
+        e.members[1].cfg,
+        Some(CfgExpr::Feature("FEATURE_X".to_string()))
+    );
+
+    assert_eq!(e.members[2].stripped_name, "BLUE");
+    assert_eq!(
+        e.members[2].cfg,
+        Some(CfgExpr::Not(Box::new(CfgExpr::Feature(
+            "FEATURE_X".to_string()
+        ))))
+    );
+
+    assert_eq!(e.members[3].stripped_name, "YELLOW");
+    assert_eq!(e.members[3].cfg, None);
+}
+
+#[test]
+fn test_ifdef_inline_enum_no_else() {
+    let input = r#"
+        enum Foo {
+            A = 0,
+            #ifdef FEATURE_X
+            B = 1
+            #endif
+        };
+    "#;
+    let spec = parse(input).unwrap();
+    let Definition::Enum(e) = &spec.definitions[0] else {
+        panic!("expected enum");
+    };
+    assert_eq!(e.members.len(), 2);
+    assert_eq!(e.members[0].cfg, None);
+    assert_eq!(
+        e.members[1].cfg,
+        Some(CfgExpr::Feature("FEATURE_X".to_string()))
+    );
+}
+
+#[test]
+fn test_ifdef_inline_enum_nested() {
+    let input = r#"
+        enum Foo {
+            #ifdef A
+            #ifdef B
+            X = 0
+            #endif
+            #endif
+        };
+    "#;
+    let spec = parse(input).unwrap();
+    let Definition::Enum(e) = &spec.definitions[0] else {
+        panic!("expected enum");
+    };
+    assert_eq!(e.members.len(), 1);
+    assert_eq!(
+        e.members[0].cfg,
+        Some(CfgExpr::All(vec![
+            CfgExpr::Feature("A".to_string()),
+            CfgExpr::Feature("B".to_string()),
+        ]))
+    );
+}
+
+#[test]
+fn test_ifdef_inline_union_arms() {
+    let input = r#"
+        enum MsgType { A = 0, B = 1, C = 2 };
+        union Msg switch (MsgType t) {
+            case A:
+                int x;
+            #ifdef FEATURE_X
+            case B:
+                int y;
+            #else
+            case C:
+                void;
+            #endif
+        };
+    "#;
+    let spec = parse(input).unwrap();
+    let Definition::Union(u) = &spec.definitions[1] else {
+        panic!("expected union");
+    };
+    assert_eq!(u.arms.len(), 3);
+    assert_eq!(u.arms[0].cfg, None);
+    assert_eq!(
+        u.arms[1].cfg,
+        Some(CfgExpr::Feature("FEATURE_X".to_string()))
+    );
+    assert_eq!(
+        u.arms[2].cfg,
+        Some(CfgExpr::Not(Box::new(CfgExpr::Feature(
+            "FEATURE_X".to_string()
+        ))))
+    );
+}
+
+#[test]
+fn test_ifdef_inline_enum_unclosed_error() {
+    let input = r#"
+        enum Foo {
+            A = 0,
+            #ifdef FEATURE_X
+            B = 1
+        };
+    "#;
+    let result = parse(input);
+    assert!(result.is_err(), "unclosed #ifdef in enum should error");
+}
+
+#[test]
+fn test_ifdef_inline_union_unclosed_error() {
+    let input = r#"
+        union Foo switch (int v) {
+            #ifdef FEATURE_X
+            case 0: void;
+        };
+    "#;
+    let result = parse(input);
+    assert!(result.is_err(), "unclosed #ifdef in union should error");
 }
 
 #[test]

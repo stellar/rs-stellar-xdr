@@ -47,31 +47,28 @@ impl RustGenerator {
             .collect();
 
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
-
-        for def in spec.all_definitions() {
-            let output = self.generate_definition(def);
-            definitions.push(output);
-        }
-
-        // Build type enum entries with cfg from definitions.
         let mut cfg_by_name: std::collections::HashMap<String, Option<String>> =
             std::collections::HashMap::new();
-        for d in spec
-            .all_definitions()
-            .filter(|d| !matches!(d, Definition::Const(_)))
-        {
-            let name = type_name(d.name());
-            let cfg = self.resolve_cfg(d);
-            match cfg_by_name.entry(name) {
-                std::collections::hash_map::Entry::Vacant(e) => {
-                    e.insert(cfg);
-                }
-                std::collections::hash_map::Entry::Occupied(mut e) => {
-                    // Same name in multiple cfg branches (e.g. #ifdef/#else)
-                    // means the type is always present, so clear the cfg.
-                    e.insert(None);
+
+        for def in spec.all_definitions() {
+            // Build cfg_by_name for type enum entries in the same pass.
+            if !matches!(def, Definition::Const(_)) {
+                let name = type_name(def.name());
+                let cfg = self.resolve_cfg(def);
+                match cfg_by_name.entry(name) {
+                    std::collections::hash_map::Entry::Vacant(e) => {
+                        e.insert(cfg);
+                    }
+                    std::collections::hash_map::Entry::Occupied(mut e) => {
+                        // Same name in multiple cfg branches (e.g. #ifdef/#else)
+                        // means the type is always present, so clear the cfg.
+                        e.insert(None);
+                    }
                 }
             }
+
+            let output = self.generate_definition(def);
+            definitions.push(output);
         }
 
         let types: Vec<TypeEnumEntry> = spec

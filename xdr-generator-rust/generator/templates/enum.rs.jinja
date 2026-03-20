@@ -64,8 +64,8 @@ impl {{ e.name }} {
 {%- endfor %}
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
-        let mut arr = [""; Self::_VARIANTS_STR.len()];
-        let mut i = 0;
+        let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
+        let mut i = 1;
         while i < Self::_VARIANTS_STR.len() {
             arr[i] = Self::_VARIANTS_STR[i];
             i += 1;

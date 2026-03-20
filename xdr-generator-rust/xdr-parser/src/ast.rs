@@ -137,6 +137,9 @@ impl CfgExpr {
     }
 
     /// Render as a Rust `#[cfg(...)]` attribute string (without the outer `#[cfg()]`).
+    ///
+    /// Feature names are lowercased to follow the Cargo convention that feature
+    /// names are lowercase (e.g. XDR `FEATURE_X` becomes `feature = "feature_x"`).
     pub fn render(&self) -> String {
         match self {
             CfgExpr::Feature(name) => {

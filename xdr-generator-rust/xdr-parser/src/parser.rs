@@ -371,6 +371,7 @@ impl Parser {
         let name = self.expect_ident()?;
         self.expect(Token::LBrace)?;
 
+        let ifdef_depth_before = self.ifdef_seen_stack.len();
         let mut members: Vec<(String, i32, Option<CfgExpr>)> = Vec::new();
         loop {
             // Handle #ifdef/#else/#endif inside enum body
@@ -431,6 +432,11 @@ impl Parser {
         }
 
         self.expect(Token::RBrace)?;
+
+        if self.ifdef_seen_stack.len() != ifdef_depth_before {
+            return Err(self.unexpected_token_error("#endif".to_string(), Token::RBrace));
+        }
+
         self.expect(Token::Semi)?;
 
         let source = self.extract_definition_source();
@@ -553,6 +559,7 @@ impl Parser {
     /// catch-all `_ => Err(Error::Invalid)`. If a default arm is encountered,
     /// a parse error is returned.
     fn parse_union_body(&mut self) -> Result<Vec<UnionArm>, ParseError> {
+        let ifdef_depth_before = self.ifdef_seen_stack.len();
         let mut arms = Vec::new();
 
         while *self.peek() != Token::RBrace {
@@ -581,6 +588,10 @@ impl Parser {
                 return Err(ParseError::UnsupportedDefaultArm { line, col });
             }
             arms.push(arm);
+        }
+
+        if self.ifdef_seen_stack.len() != ifdef_depth_before {
+            return Err(self.unexpected_token_error("#endif".to_string(), Token::RBrace));
         }
 
         Ok(arms)

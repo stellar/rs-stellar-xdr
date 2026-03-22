@@ -3,14 +3,14 @@
 use crate::lexer::IntBase;
 
 /// Metadata about a parsed XDR source file.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct XdrFile {
     pub name: String,
     pub sha256: String,
 }
 
 /// The root of a parsed XDR file or collection of files.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize)]
 pub struct XdrSpec {
     pub files: Vec<XdrFile>,
     pub namespaces: Vec<Namespace>,
@@ -87,14 +87,14 @@ impl XdrSpec {
 }
 
 /// A namespace containing definitions.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Namespace {
     pub name: String,
     pub definitions: Vec<Definition>,
 }
 
 /// A top-level definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -148,7 +148,7 @@ impl Definition {
 }
 
 /// A struct definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Struct {
     pub name: String,
     pub members: Vec<StructMember>,
@@ -163,7 +163,7 @@ pub struct Struct {
 }
 
 /// An enum definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Enum {
     pub name: String,
     pub members: Vec<EnumMember>,
@@ -199,7 +199,7 @@ impl Enum {
 }
 
 /// A union definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Union {
     pub name: String,
     pub discriminant: UnionDiscriminant,
@@ -215,7 +215,7 @@ pub struct Union {
 }
 
 /// A typedef definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Typedef {
     pub name: String,
     pub type_: Type,
@@ -226,7 +226,7 @@ pub struct Typedef {
 }
 
 /// A const definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Const {
     pub name: String,
     pub value: i64,
@@ -239,7 +239,7 @@ pub struct Const {
 }
 
 /// XDR type specification.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum Type {
     /// `int` - 32-bit signed integer
     Int,
@@ -275,14 +275,14 @@ pub enum Type {
 }
 
 /// A member of a struct.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct StructMember {
     pub name: String,
     pub type_: Type,
 }
 
 /// A member of an enum.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct EnumMember {
     pub name: String,
     /// The member name with the common enum prefix stripped.
@@ -291,29 +291,32 @@ pub struct EnumMember {
 }
 
 /// The discriminant of a union.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UnionDiscriminant {
     pub name: String,
     pub type_: Type,
 }
 
 /// An arm of a union (one or more cases with the same type).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
+    /// The declaration name for this arm (e.g., "v0" from "LedgerCloseMetaV0 v0;").
+    /// Empty string for void arms.
+    pub name: String,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
 }
 
 /// A case in a union.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UnionCase {
     /// The case value - either an identifier (enum variant) or a literal.
     pub value: UnionCaseValue,
 }
 
 /// Value for a union case.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
     Ident(String),
@@ -333,7 +336,7 @@ impl UnionCaseValue {
 }
 
 /// A size specification, either a literal number or a named constant.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum Size {
     Literal(u32),
     Named(String),

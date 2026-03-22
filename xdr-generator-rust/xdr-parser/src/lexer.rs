@@ -98,7 +98,7 @@ pub enum Token {
 }
 
 /// The base (radix) of an integer literal.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub enum IntBase {
     Decimal,
     Hexadecimal,

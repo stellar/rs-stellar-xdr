@@ -27,7 +27,11 @@ struct Args {
 
     /// Output module file (e.g. src/generated.rs)
     #[arg(short, long)]
-    output: PathBuf,
+    output: Option<PathBuf>,
+
+    /// Output the parsed XDR AST as JSON (for consumption by other code generators)
+    #[arg(long)]
+    json_ast: Option<PathBuf>,
 
     /// Types with custom Default implementation (skip derive(Default))
     #[arg(long, value_delimiter = ',')]
@@ -62,20 +66,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse the XDR files
     let spec = xdr_parser::parser::parse_files(&file_refs)?;
 
-    let options = RustOptions {
-        custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
-        custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
-        no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
-    };
+    // Output JSON AST if requested
+    if let Some(json_path) = &args.json_ast {
+        let type_info = xdr_parser::types::TypeInfo::build(&spec, &|name| name.to_string());
+        let computed = type_info.compute_properties();
+        let definition_order: Vec<&str> = spec.type_names_parent_first();
+        let ir = serde_json::json!({
+            "spec": &spec,
+            "computed": &computed,
+            "definition_order": &definition_order,
+        });
+        let json = serde_json::to_string_pretty(&ir)?;
+        fs::write(json_path, json)?;
+        eprintln!(
+            "JSON AST: {} ({} types, {} union arm maps)",
+            json_path.display(),
+            computed.types.len(),
+            computed.union_arm_is_recursive.len(),
+        );
+    }
 
-    let generator = RustGenerator::new(&spec, options);
+    // Generate Rust code if output path provided
+    if let Some(output) = &args.output {
+        let options = RustOptions {
+            custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
+            custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
+            no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
+        };
 
-    // Derive the per-type directory from the module file path:
-    // e.g. src/generated.rs -> src/generated/
-    let output_dir = args.output.with_extension("");
-    generator.generate_to_dir(&spec, &args.output, &output_dir)?;
-
-    eprintln!("Generated: {}", args.output.display());
+        let generator = RustGenerator::new(&spec, options);
+        generator.generate_to_file(&spec, output)?;
+        eprintln!("Generated: {}", output.display());
+    }
 
     Ok(())
 }

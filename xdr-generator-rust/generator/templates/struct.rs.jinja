@@ -1,4 +1,7 @@
 /// {{ s.name }}{{ s.source_comment }}
+{%- if let Some(cfg) = s.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
 {%- if s.has_default %}
 #[cfg_attr(feature = "alloc", derive(Default))]
 {%- endif %}
@@ -31,6 +34,9 @@ pub struct {{ s.name }} {
 {%- endfor %}
 }
 
+{% if let Some(cfg) = s.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl ReadXdr for {{ s.name }} {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -44,6 +50,9 @@ impl ReadXdr for {{ s.name }} {
     }
 }
 
+{% if let Some(cfg) = s.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl WriteXdr for {{ s.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -56,6 +65,9 @@ impl WriteXdr for {{ s.name }} {
     }
 }
 {%- if s.is_custom_str %}
+{%- if let Some(cfg) = s.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
 #[cfg(all(feature = "serde", feature = "alloc"))]
 impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {

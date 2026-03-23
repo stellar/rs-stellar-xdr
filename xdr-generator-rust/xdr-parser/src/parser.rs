@@ -1011,12 +1011,25 @@ impl Parser {
     }
 
     /// Compute the (line, column) for the current token position, both 1-based.
+    fn peek_position(&self) -> (usize, usize) {
+        let byte_offset = self
+            .tokens
+            .get(self.pos)
+            .map(|st| st.start)
+            .unwrap_or(self.source.len());
+        self.position_from_byte_offset(byte_offset)
+    }
+
     fn current_position(&self) -> (usize, usize) {
         let byte_offset = self
             .tokens
             .get(self.pos.saturating_sub(1))
             .map(|st| st.start)
             .unwrap_or(self.source.len());
+        self.position_from_byte_offset(byte_offset)
+    }
+
+    fn position_from_byte_offset(&self, byte_offset: usize) -> (usize, usize) {
         let prefix = &self.source[..byte_offset.min(self.source.len())];
         let line = prefix.chars().filter(|&c| c == '\n').count() + 1;
         let col = match prefix.rfind('\n') {
@@ -1041,14 +1054,14 @@ impl Parser {
         })
     }
 
-    /// Create an `UnexpectedToken` error with the current position.
+    /// Create an `UnexpectedDirective` error for the current (not-yet-consumed) token.
     fn make_unexpected_directive_error(&self) -> ParseError {
         let directive = match self.peek() {
             Token::Else => "else",
             Token::EndIf => "endif",
             _ => "unknown",
         };
-        let (line, col) = self.current_position();
+        let (line, col) = self.peek_position();
         ParseError::UnexpectedDirective {
             directive: directive.to_string(),
             line,

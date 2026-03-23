@@ -16,6 +16,13 @@ fn generate_from_xdr(xdr: &str) -> String {
     template.render().unwrap()
 }
 
+fn assert_contains(output: &str, expected: &str) {
+    assert!(
+        output.contains(expected),
+        "expected output to contain:\n{expected}\n\nfull output:\n{output}"
+    );
+}
+
 #[test]
 fn test_ifdef_generates_cfg_on_struct() {
     let output = generate_from_xdr(
@@ -25,13 +32,31 @@ fn test_ifdef_generates_cfg_on_struct() {
         #endif
     "#,
     );
-    assert!(
-        output.contains(r#"#[cfg(feature = "feature_x")]"#),
-        "output should contain #[cfg(feature = \"feature_x\")]\n{output}"
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct Foo {"#,
     );
-    assert!(
-        output.contains("pub struct Foo"),
-        "output should contain struct Foo\n{output}"
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+impl ReadXdr for Foo {"#,
+    );
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+impl WriteXdr for Foo {"#,
     );
 }
 
@@ -46,18 +71,42 @@ fn test_ifdef_else_generates_both_cfgs() {
         #endif
     "#,
     );
-    assert!(
-        output.contains(r#"#[cfg(feature = "feature_x")]"#),
-        "output should have feature_x cfg"
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct Foo {"#,
     );
-    assert!(
-        output.contains(r#"#[cfg(not(feature = "feature_x"))]"#),
-        "output should have not(feature_x) cfg"
+    assert_contains(
+        &output,
+        r#"#[cfg(not(feature = "feature_x"))]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct Bar {"#,
     );
 }
 
 #[test]
-fn test_ifdef_same_name_both_branches_no_cfg() {
+fn test_ifdef_same_name_both_branches() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -67,12 +116,44 @@ fn test_ifdef_same_name_both_branches_no_cfg() {
         #endif
     "#,
     );
-    // When same name appears in both branches, cfg is cleared for the type enum
-    // entry since the type is always present.
-    assert!(
-        output.contains("TypeVariant::Foo"),
-        "type enum should include Foo"
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct Foo {
+    pub x: i32,
+}"#,
     );
+    assert_contains(
+        &output,
+        r#"#[cfg(not(feature = "feature_x"))]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct Foo {
+    pub y: i32,
+}"#,
+    );
+    // Same name in both branches: TypeVariant entry has no cfg
+    assert_contains(&output, "pub enum TypeVariant {\n    Foo,\n}");
 }
 
 #[test]
@@ -87,15 +168,24 @@ fn test_ifdef_inline_enum_member_cfg() {
         };
     "#,
     );
-    // The enum itself should not have a top-level cfg
-    assert!(
-        output.contains("pub enum Color"),
-        "output should contain enum Color"
+    assert_contains(
+        &output,
+        r#"pub enum Color {
+    #[cfg_attr(feature = "alloc", default)]
+    Red = 0,
+    #[cfg(feature = "feature_x")]
+    Green = 1,
+}"#,
     );
-    // GREEN variant should be cfg-gated
-    assert!(
-        output.contains(r#"#[cfg(feature = "feature_x")]"#),
-        "output should cfg-gate GREEN"
+    assert_contains(
+        &output,
+        r#"let e = match i {
+            0 => Color::Red,
+            #[cfg(feature = "feature_x")]
+            1 => Color::Green,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };"#,
     );
 }
 
@@ -108,12 +198,9 @@ fn test_ifdef_generates_cfg_on_const() {
         #endif
     "#,
     );
-    assert!(
-        output.contains(r#"#[cfg(feature = "feature_x")]"#),
-        "const should be cfg-gated"
-    );
-    assert!(
-        output.contains("pub const MAX_SIZE: u64 = 100"),
-        "const should be present"
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+pub const MAX_SIZE: u64 = 100;"#,
     );
 }

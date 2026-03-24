@@ -352,7 +352,7 @@ impl Parser {
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
 
-        // Extract source text (simplified - just use the name for now)
+        // Extract source text for documentation
         let source = self.extract_definition_source();
 
         Ok(Struct {
@@ -608,11 +608,11 @@ impl Parser {
                     let value = match self.peek().clone() {
                         Token::Ident(name) => {
                             self.advance();
-                            UnionCaseValue::Ident(name)
+                            UnionCaseValue::Ident { ident: name }
                         }
                         Token::IntLiteral((value, _)) => {
                             self.advance();
-                            UnionCaseValue::Literal(self.try_i64_to_i32(value)?)
+                            UnionCaseValue::Literal { literal: self.try_i64_to_i32(value)? }
                         }
                         other => {
                             return Err(self.unexpected_token_error("case value".to_string(), other))
@@ -670,10 +670,9 @@ impl Parser {
     }
 
     /// Parse an inline struct definition inside a union arm and extract it as a
-    /// separate named type. Returns a `Type::Ident` referencing the extracted struct.
+    /// separate named type. Returns `(Type::Ident, field_name)`.
     ///
     /// Expects the parser to be positioned at the `struct` keyword.
-    /// Parse an inline struct and return (type, field_name).
     fn parse_inline_struct(&mut self) -> Result<(Type, String), ParseError> {
         // Record position before 'struct' keyword for source extraction
         let source_start_byte = self.current_start_byte();
@@ -739,7 +738,7 @@ impl Parser {
         self.extracted_definitions
             .push(Definition::Struct(struct_def));
 
-        Ok((Type::Ident(struct_name), field_name))
+        Ok((Type::Ident { ident: struct_name }, field_name))
     }
 
     /// Parse a type that must be a regular type (not an anonymous union).
@@ -830,12 +829,12 @@ impl Parser {
                 // Handle built-in type aliases
                 let base_type = match name.as_str() {
                     "TRUE" | "FALSE" => Type::Bool,
-                    _ => Type::Ident(name),
+                    _ => Type::Ident { ident: name },
                 };
                 // Check for optional type suffix (Type* field)
                 if *self.peek() == Token::Star {
                     self.advance();
-                    Ok(ParsedType::Type(Type::Optional(Box::new(base_type))))
+                    Ok(ParsedType::Type(Type::Optional { element_type: Box::new(base_type) }))
                 } else {
                     Ok(ParsedType::Type(base_type))
                 }
@@ -854,8 +853,8 @@ impl Parser {
                 // Special case: opaque name[size] or string name[size]
                 // means fixed opaque/string, not an array of opaque/string
                 match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
-                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
+                    Type::OpaqueVar { max_size: None } => Ok(Type::OpaqueFixed { size }),
+                    Type::String { max_size: None } => Ok(Type::OpaqueFixed { size }), // string with fixed size is opaque
                     _ => Ok(Type::Array {
                         element_type: Box::new(base),
                         size,
@@ -874,8 +873,8 @@ impl Parser {
                 // Special case: opaque name<max> or string name<max>
                 // means variable opaque/string with max, not a var array
                 match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
-                    Type::String(None) => Ok(Type::String(max)),
+                    Type::OpaqueVar { max_size: None } => Ok(Type::OpaqueVar { max_size: max }),
+                    Type::String { max_size: None } => Ok(Type::String { max_size: max }),
                     _ => Ok(Type::VarArray {
                         element_type: Box::new(base),
                         max_size: max,
@@ -885,7 +884,7 @@ impl Parser {
             Token::Star => {
                 // Optional: type *name
                 self.advance();
-                Ok(Type::Optional(Box::new(base)))
+                Ok(Type::Optional { element_type: Box::new(base) })
             }
             _ => Ok(base),
         }
@@ -898,7 +897,7 @@ impl Parser {
                 self.advance();
                 let size = self.parse_size()?;
                 self.expect(Token::RBracket)?;
-                Ok(Type::OpaqueFixed(size))
+                Ok(Type::OpaqueFixed { size })
             }
             Token::LAngle => {
                 // Variable: opaque<max> or opaque<>
@@ -909,11 +908,11 @@ impl Parser {
                     Some(self.parse_size()?)
                 };
                 self.expect(Token::RAngle)?;
-                Ok(Type::OpaqueVar(max))
+                Ok(Type::OpaqueVar { max_size: max })
             }
             _ => {
                 // Bare opaque - variable with no max (rare)
-                Ok(Type::OpaqueVar(None))
+                Ok(Type::OpaqueVar { max_size: None })
             }
         }
     }
@@ -928,9 +927,9 @@ impl Parser {
                     Some(self.parse_size()?)
                 };
                 self.expect(Token::RAngle)?;
-                Ok(Type::String(max))
+                Ok(Type::String { max_size: max })
             }
-            _ => Ok(Type::String(None)),
+            _ => Ok(Type::String { max_size: None }),
         }
     }
 
@@ -938,11 +937,11 @@ impl Parser {
         match self.peek().clone() {
             Token::IntLiteral((value, _)) => {
                 self.advance();
-                Ok(Size::Literal(self.try_i64_to_u32(value)?))
+                Ok(Size::Literal { literal: self.try_i64_to_u32(value)? })
             }
             Token::Ident(name) => {
                 self.advance();
-                Ok(Size::Named(name))
+                Ok(Size::Named { named: name })
             }
             other => {
                 Err(self.unexpected_token_error("size (integer or identifier)".to_string(), other))
@@ -1158,7 +1157,7 @@ impl Parser {
             .push(Definition::Union(union_def));
 
         // Return a reference to the extracted type
-        Type::Ident(union_name)
+        Type::Ident { ident: union_name }
     }
 
     /// Resolve an enum value reference, searching the current enum members

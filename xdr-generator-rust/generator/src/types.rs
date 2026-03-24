@@ -43,8 +43,8 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
 /// Convert a Size to a Rust string representation.
 pub(crate) fn size_to_string(size: &Size) -> String {
     match size {
-        Size::Literal(n) => n.to_string(),
-        Size::Named(name) => type_name(name),
+        Size::Literal { literal: n } => n.to_string(),
+        Size::Named { named: name } => type_name(name),
     }
 }
 
@@ -96,6 +96,14 @@ impl<'a> TypeMapping<'a> {
             .unwrap_or(false)
     }
 
+    /// If this is an Ident that's a typedef to a builtin, return a child mapping for the builtin.
+    fn resolved_builtin(&self) -> Option<Self> {
+        self.type_info.and_then(|ti| {
+            ti.resolve_typedef_to_builtin(self.type_)
+                .map(|builtin| self.child(builtin))
+        })
+    }
+
     // --- Public concerns ---
 
     fn base_type_ref(&self) -> String {
@@ -107,28 +115,22 @@ impl<'a> TypeMapping<'a> {
             Type::Float => "f32".to_string(),
             Type::Double => "f64".to_string(),
             Type::Bool => "bool".to_string(),
-            Type::OpaqueFixed(size) => format!("[u8; {}]", self.resolve_size(size)),
-            Type::OpaqueVar(max) => match max {
+            Type::OpaqueFixed { size } => format!("[u8; {}]", self.resolve_size(size)),
+            Type::OpaqueVar { max_size: max } => match max {
                 Some(size) => format!("BytesM::<{}>", self.resolve_size(size)),
                 None => "BytesM".to_string(),
             },
-            Type::String(max) => match max {
+            Type::String { max_size: max } => match max {
                 Some(size) => format!("StringM::<{}>", self.resolve_size(size)),
                 None => "StringM".to_string(),
             },
-            Type::Ident(_) => {
-                if let Some(ti) = self.type_info {
-                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
-                        return self.child(builtin).base_type_ref();
-                    }
+            Type::Ident { ident: name } => {
+                if let Some(child) = self.resolved_builtin() {
+                    return child.base_type_ref();
                 }
-                if let Type::Ident(name) = self.type_ {
-                    type_name(name)
-                } else {
-                    unreachable!()
-                }
+                type_name(name)
             }
-            Type::Optional(inner) => {
+            Type::Optional { element_type: inner } => {
                 format!("Option<{}>", self.child(inner).base_type_ref())
             }
             Type::Array { element_type, size } => {
@@ -159,7 +161,7 @@ impl<'a> TypeMapping<'a> {
         }
 
         match self.type_ {
-            Type::Optional(inner) => {
+            Type::Optional { element_type: inner } => {
                 let inner_ref = self.child(inner).base_type_ref();
                 format!("Option<Box<{inner_ref}>>")
             }
@@ -172,14 +174,14 @@ impl<'a> TypeMapping<'a> {
         let cyclic = self.is_cyclic();
 
         match self.type_ {
-            Type::OpaqueFixed(size) => {
+            Type::OpaqueFixed { size } => {
                 format!("<[u8; {}]>", self.resolve_size(size))
             }
             Type::Array { element_type, size } => {
                 let elem = self.child(element_type).base_type_ref();
                 format!("<[{elem}; {}]>", self.resolve_size(size))
             }
-            Type::Optional(inner) => {
+            Type::Optional { element_type: inner } => {
                 let inner_ref = self.child(inner).base_type_ref();
                 if cyclic {
                     format!("Option::<Box<{inner_ref}>>")
@@ -207,21 +209,15 @@ impl<'a> TypeMapping<'a> {
 
     fn element_type(&self) -> String {
         match self.type_ {
-            Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
+            Type::OpaqueFixed { size: _ } | Type::OpaqueVar { max_size: _ } | Type::String { max_size: _ } => "u8".to_string(),
             Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
                 self.child(element_type).base_type_ref()
             }
-            Type::Ident(_) => {
-                if let Some(ti) = self.type_info {
-                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
-                        return self.child(builtin).base_type_ref();
-                    }
+            Type::Ident { ident: name } => {
+                if let Some(child) = self.resolved_builtin() {
+                    return child.base_type_ref();
                 }
-                if let Type::Ident(name) = self.type_ {
-                    type_name(name)
-                } else {
-                    unreachable!()
-                }
+                type_name(name)
             }
             _ => "u8".to_string(),
         }
@@ -241,15 +237,10 @@ impl<'a> TypeMapping<'a> {
         match self.type_ {
             Type::Hyper => Some("i64".to_string()),
             Type::UnsignedHyper => Some("u64".to_string()),
-            Type::Ident(_) => {
-                if let Some(ti) = self.type_info {
-                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
-                        return self.child(builtin).base_numeric_type();
-                    }
-                }
-                None
+            Type::Ident { ident: _ } => {
+                self.resolved_builtin().and_then(|child| child.base_numeric_type())
             }
-            Type::Optional(inner) => self.child(inner).base_numeric_type(),
+            Type::Optional { element_type: inner } => self.child(inner).base_numeric_type(),
             Type::Array { element_type, .. } => self.child(element_type).base_numeric_type(),
             Type::VarArray { element_type, .. } => self.child(element_type).base_numeric_type(),
             _ => None,
@@ -259,15 +250,13 @@ impl<'a> TypeMapping<'a> {
     fn serde_type_ref(&self, number_wrapper: &str) -> String {
         match self.type_ {
             Type::Hyper | Type::UnsignedHyper => number_wrapper.to_string(),
-            Type::Ident(_) => {
-                if let Some(ti) = self.type_info {
-                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
-                        return self.child(builtin).serde_type_ref(number_wrapper);
-                    }
+            Type::Ident { ident: _ } => {
+                if let Some(child) = self.resolved_builtin() {
+                    return child.serde_type_ref(number_wrapper);
                 }
                 self.base_type_ref()
             }
-            Type::Optional(inner) => {
+            Type::Optional { element_type: inner } => {
                 format!(
                     "Option<{}>",
                     self.child(inner).serde_type_ref(number_wrapper)
@@ -298,8 +287,8 @@ impl<'a> TypeMapping<'a> {
 /// Extract the resolved type name from a Type for cyclic detection.
 fn extract_ident_name(type_: &Type) -> Option<String> {
     match type_ {
-        Type::Ident(name) => Some(type_name(name)),
-        Type::Optional(inner) => extract_ident_name(inner),
+        Type::Ident { ident: name } => Some(type_name(name)),
+        Type::Optional { element_type: inner } => extract_ident_name(inner),
         Type::Array { element_type, .. } => extract_ident_name(element_type),
         Type::VarArray { element_type, .. } => extract_ident_name(element_type),
         _ => None,

@@ -49,6 +49,10 @@ struct Args {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
+    if args.output.is_none() && args.json_ast.is_none() {
+        return Err("at least one of --output or --json-ast must be specified".into());
+    }
+
     // Read all input files and sort by filename
     let mut files: Vec<(PathBuf, String)> = Vec::new();
     for path in &args.input {
@@ -70,19 +74,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(json_path) = &args.json_ast {
         let type_info = xdr_parser::types::TypeInfo::build(&spec, &|name| name.to_string());
         let computed = type_info.compute_properties();
-        let definition_order: Vec<&str> = spec.type_names_parent_first();
         let ir = serde_json::json!({
             "spec": &spec,
             "computed": &computed,
-            "definition_order": &definition_order,
         });
         let json = serde_json::to_string_pretty(&ir)?;
         fs::write(json_path, json)?;
         eprintln!(
-            "JSON AST: {} ({} types, {} union arm maps)",
+            "JSON AST: {} ({} types)",
             json_path.display(),
             computed.types.len(),
-            computed.union_arm_is_recursive.len(),
         );
     }
 

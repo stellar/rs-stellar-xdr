@@ -19,7 +19,6 @@ pub(crate) fn field_name(name: &str) -> String {
 
 fn escape_type_name(name: &str) -> String {
     match name {
-        "type" => "type_".to_string(),
         "Error" => "SError".to_string(),
         _ => name.to_string(),
     }
@@ -61,7 +60,7 @@ pub(crate) fn case_value(
             format!("{discriminant_type}::{name}")
         };
         (name, val)
-    } else if let UnionCaseValue::Literal(n) = value {
+    } else if let UnionCaseValue::Literal { literal: n } = value {
         let case_name = format!("V{n}");
         let val = if is_builtin {
             n.to_string()

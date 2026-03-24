@@ -417,7 +417,7 @@ impl<T: TryInto<ScVal>> TryFrom<Vec<T>> for ScVal {
         Ok(ScVal::Vec(Some(
             v.into_iter()
                 .map(|t| <_ as TryInto<ScVal>>::try_into(t))
-                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in generated code.
                 .map_err(|_| ())?
                 .try_into()
                 .map_err(|_| ())?,
@@ -432,7 +432,7 @@ impl<T: TryInto<ScVal> + Clone> TryFrom<&Vec<T>> for ScVal {
         Ok(ScVal::Vec(Some(
             v.iter()
                 .map(|t| <_ as TryInto<ScVal>>::try_into(t.clone()))
-                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in generated code.
                 .map_err(|_| ())?
                 .try_into()
                 .map_err(|_| ())?,
@@ -447,7 +447,7 @@ impl<T: TryInto<ScVal> + Clone> TryFrom<&[T]> for ScVal {
         Ok(ScVal::Vec(Some(
             v.iter()
                 .map(|t| <_ as TryInto<ScVal>>::try_into(t.clone()))
-                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in generated code.
                 .map_err(|_| ())?
                 .try_into()
                 .map_err(|_| ())?,

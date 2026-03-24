@@ -30,18 +30,28 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: generate-xdrgen-files xdr/curr-version xdr/next-version xdr-json/curr xdr-json/next
+generate: generate-files xdr/curr-version xdr/next-version xdr-json/curr xdr-json/next
 
-generate-xdrgen-files: src/curr/generated.rs src/next/generated.rs
-	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:3.1 /bin/bash -c \
-		'cd xdr-generator && bundle install --quiet && bundle exec ruby generate.rb'
-	rustfmt $^
+CUSTOM_DEFAULT_IMPL=TransactionEnvelope
+CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
+
+generate-files: src/curr/generated.rs src/next/generated.rs
 
 src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
-	> $@
+	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
+		$(addprefix --input ,$(sort $(wildcard xdr/curr/*.x))) \
+		--output $@ \
+		--custom-default $(CUSTOM_DEFAULT_IMPL) \
+		--custom-str $(CUSTOM_STR_IMPL)
+	rustfmt $@
 
 src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
-	> $@
+	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
+		$(addprefix --input ,$(sort $(wildcard xdr/next/*.x))) \
+		--output $@ \
+		--custom-default $(CUSTOM_DEFAULT_IMPL) \
+		--custom-str $(CUSTOM_STR_IMPL)
+	rustfmt $@
 
 xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x)
 	git submodule status -- xdr/curr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr/curr-version

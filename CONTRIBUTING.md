@@ -1,5 +1,9 @@
 # Contributing
 
+## XDR Generator
+
+This repository has an XDR-to-Rust code generator (`xdr-generator-rust/`) that generates Rust types from XDR definitions. It outputs to `src/*/generated.rs`.
+
 ## How to Regenerate From XDR
 To regenerate types from XDR definitions:
 

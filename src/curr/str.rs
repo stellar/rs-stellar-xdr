@@ -1,8 +1,8 @@
 //# Custom string representations of the following types, also used for JSON
 //# formatting.
 //#
-//# The types that has impls in this file are given to the xdrgen
-//# --rust-types-custom-str-impl cli option, so that xdrgen does not generate
+//# The types that have impls in this file are given to the generator's
+//# --custom-str cli option, so that the generator does not generate
 //# FromStr and Display impls for them.
 //#
 //# ## Strkey Types (SEP-23)

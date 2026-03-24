@@ -67,7 +67,7 @@ fn test_parse_typedef() {
         spec.definitions,
         [Definition::Typedef(Typedef {
             name: "Hash".to_string(),
-            type_: Type::OpaqueFixed(Size::Literal(32)),
+            type_: Type::OpaqueFixed { size: Size::Literal { literal: 32 } },
             source: "typedef opaque Hash[32];".to_string(),
             file_index: 0,
         })]

@@ -516,7 +516,6 @@ dependencies = [
  "heck",
  "logos",
  "serde",
- "serde_json",
  "sha2",
  "thiserror",
 ]

@@ -5,11 +5,11 @@ use std::collections::{HashMap, HashSet};
 
 /// Type information collected from the XDR spec.
 pub struct TypeInfo {
-    /// Map from type name (in target language form) to its definition
+    /// Map from type name (in target language form) to its definition.
     pub definitions: HashMap<String, Definition>,
-    /// Map from type name to the types it references in its fields
+    /// Map from type name to the types it references in its fields.
     pub type_field_types: HashMap<String, Vec<String>>,
-    /// Map from const name to its value
+    /// Map from const name to its value.
     pub const_values: HashMap<String, i64>,
 }
 
@@ -44,8 +44,8 @@ impl TypeInfo {
     /// Resolve a size to a literal string, using const values for named sizes.
     pub fn size_to_literal(&self, size: &Size) -> String {
         match size {
-            Size::Literal(n) => n.to_string(),
-            Size::Named(name) => {
+            Size::Literal { literal: n } => n.to_string(),
+            Size::Named { named: name } => {
                 if let Some(&value) = self.const_values.get(name) {
                     value.to_string()
                 } else {
@@ -57,33 +57,9 @@ impl TypeInfo {
 
     /// If `type_` is a `Type::Ident` that refers to a typedef whose underlying
     /// type is a builtin, return that builtin type.
-    ///
-    /// `type_name_fn` is used to convert the ident name to the target language's
-    /// type name for lookup in the definitions map.
-    pub fn resolve_typedef_to_builtin_with<'a>(
-        &'a self,
-        type_: &Type,
-        type_name_fn: &dyn Fn(&str) -> String,
-    ) -> Option<&'a Type> {
-        if let Type::Ident(name) = type_ {
-            let target_name = type_name_fn(name);
-            if let Some(Definition::Typedef(t)) = self.definitions.get(&target_name) {
-                if is_builtin_type(&t.type_) {
-                    return Some(&t.type_);
-                }
-            }
-        }
-        None
-    }
-
-    /// Convenience: resolve typedef to builtin using a provided naming function.
-    /// This is the backward-compatible version that uses rust_type_name internally.
     pub fn resolve_typedef_to_builtin<'a>(&'a self, type_: &Type) -> Option<&'a Type> {
-        // For backward compatibility, try lookup with the raw ident name first,
-        // then fall back. The definitions map is keyed by the target-language name.
-        if let Type::Ident(name) = type_ {
-            // Try all definitions to find a match - the map is keyed by transformed name
-            for (_, def) in &self.definitions {
+        if let Type::Ident { ident: name } = type_ {
+            for def in self.definitions.values() {
                 if let Definition::Typedef(t) = def {
                     if t.name == *name && is_builtin_type(&t.type_) {
                         return Some(&t.type_);
@@ -99,8 +75,7 @@ impl TypeInfo {
     /// If the discriminant is an `Ident` referring to an enum, returns that enum.
     /// Useful for getting the member prefix to strip from union case names.
     pub fn discriminant_enum(&self, discriminant_type: &Type) -> Option<&Enum> {
-        if let Type::Ident(name) = discriminant_type {
-            // Search by original XDR name since the map is keyed by target-language name
+        if let Type::Ident { ident: name } = discriminant_type {
             for def in self.definitions.values() {
                 if let Definition::Enum(e) = def {
                     if e.name == *name {
@@ -149,20 +124,18 @@ impl TypeInfo {
 /// Computed properties for each type definition, suitable for serialization into an IR.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct TypeProperties {
+    pub kind: &'static str,
     /// Total XDR wire size in bytes if the type is fixed-size, None if variable.
     pub fixed_wire_size: Option<u32>,
-    /// True if this type participates in a reference cycle through value types.
-    pub is_recursive: bool,
 }
 
 /// Pre-computed properties for the entire XDR spec.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ComputedProperties {
-    /// Per-type properties (fixed wire size, recursion).
+    /// Per-type properties (fixed wire size).
     pub types: HashMap<String, TypeProperties>,
-    /// Per-union-arm recursion: for each union, whether each arm's type
-    /// transitively references the parent union. Vec indices match arm order.
-    pub union_arm_is_recursive: HashMap<String, Vec<bool>>,
+    /// Resolved constant values (const name → integer value).
+    pub const_values: HashMap<String, i64>,
 }
 
 impl TypeInfo {
@@ -176,41 +149,28 @@ impl TypeInfo {
             self.compute_wire_size(name, &mut wire_sizes, &mut in_progress);
         }
 
-        // Compute per-type is_recursive
+        // Compute per-type properties
         let mut types = HashMap::new();
-        for name in self.definitions.keys() {
-            let is_recursive = self.is_cyclic(name, name);
+        for (name, def) in &self.definitions {
+            let kind = match def {
+                Definition::Struct(_) => "Struct",
+                Definition::Union(_) => "Union",
+                Definition::Enum(_) => "Enum",
+                Definition::Typedef(_) => "Typedef",
+                Definition::Const(_) => "Const",
+            };
             types.insert(
                 name.clone(),
                 TypeProperties {
+                    kind,
                     fixed_wire_size: wire_sizes.get(name).copied().flatten(),
-                    is_recursive,
                 },
             );
         }
 
-        // Compute per-union-arm is_recursive
-        let mut union_arm_is_recursive = HashMap::new();
-        for (name, def) in &self.definitions {
-            if let Definition::Union(u) = def {
-                let arm_flags: Vec<bool> = u
-                    .arms
-                    .iter()
-                    .map(|arm| {
-                        arm.type_
-                            .as_ref()
-                            .and_then(|t| base_type_name(t, &|n| n.to_string()))
-                            .map(|arm_type| self.is_cyclic(&arm_type, name))
-                            .unwrap_or(false)
-                    })
-                    .collect();
-                union_arm_is_recursive.insert(name.clone(), arm_flags);
-            }
-        }
-
         ComputedProperties {
             types,
-            union_arm_is_recursive,
+            const_values: self.const_values.clone(),
         }
     }
 
@@ -280,7 +240,7 @@ impl TypeInfo {
         match type_ {
             Type::Int | Type::UnsignedInt | Type::Bool | Type::Float => Some(4),
             Type::Hyper | Type::UnsignedHyper | Type::Double => Some(8),
-            Type::OpaqueFixed(size) => {
+            Type::OpaqueFixed { size } => {
                 let sz = self.resolve_size(size);
                 Some((sz + 3) & !3) // pad to 4-byte boundary
             }
@@ -289,9 +249,9 @@ impl TypeInfo {
                 let count = self.resolve_size(size);
                 Some(elem_sz * count)
             }
-            Type::Ident(name) => self.compute_wire_size(name, cache, in_progress),
+            Type::Ident { ident: name } => self.compute_wire_size(name, cache, in_progress),
             // Variable-size types
-            Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } | Type::Optional(_) => {
+            Type::OpaqueVar { max_size: _ } | Type::String { max_size: _ } | Type::VarArray { .. } | Type::Optional { element_type: _ } => {
                 None
             }
         }
@@ -299,8 +259,8 @@ impl TypeInfo {
 
     fn resolve_size(&self, size: &Size) -> u32 {
         match size {
-            Size::Literal(n) => *n,
-            Size::Named(name) => self
+            Size::Literal { literal: n } => *n,
+            Size::Named { named: name } => self
                 .const_values
                 .get(name)
                 .map(|&v| v as u32)
@@ -329,19 +289,19 @@ pub fn is_builtin_type(type_: &Type) -> bool {
 
 /// Check if a type is a fixed-length opaque array.
 pub fn is_fixed_opaque(type_: &Type) -> bool {
-    matches!(type_, Type::OpaqueFixed(_))
+    matches!(type_, Type::OpaqueFixed { size: _ })
 }
 
 /// Check if a type is a fixed-length array (including fixed opaque).
 pub fn is_fixed_array(type_: &Type) -> bool {
-    matches!(type_, Type::OpaqueFixed(_) | Type::Array { .. })
+    matches!(type_, Type::OpaqueFixed { size: _ } | Type::Array { .. })
 }
 
 /// Check if a type is a variable-length array.
 pub fn is_var_array(type_: &Type) -> bool {
     matches!(
         type_,
-        Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. }
+        Type::OpaqueVar { max_size: _ } | Type::String { max_size: _ } | Type::VarArray { .. }
     )
 }
 
@@ -366,15 +326,20 @@ fn collect_field_types(def: &Definition, type_name_fn: &dyn Fn(&str) -> String) 
                     .and_then(|t| base_type_name(t, type_name_fn))
             })
             .collect(),
-        Definition::Typedef(_) | Definition::Enum(_) | Definition::Const(_) => vec![],
+        Definition::Typedef(t) => {
+            base_type_name(&t.type_, type_name_fn)
+                .into_iter()
+                .collect()
+        }
+        Definition::Enum(_) | Definition::Const(_) => vec![],
     }
 }
 
 /// Get the base type name from a Type (for cyclic detection).
 fn base_type_name(type_: &Type, type_name_fn: &dyn Fn(&str) -> String) -> Option<String> {
     match type_ {
-        Type::Ident(name) => Some(type_name_fn(name)),
-        Type::Optional(inner) => base_type_name(inner, type_name_fn),
+        Type::Ident { ident: name } => Some(type_name_fn(name)),
+        Type::Optional { element_type: inner } => base_type_name(inner, type_name_fn),
         Type::Array { element_type, .. } => base_type_name(element_type, type_name_fn),
         Type::VarArray { element_type, .. } => base_type_name(element_type, type_name_fn),
         _ => None,

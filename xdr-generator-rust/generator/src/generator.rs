@@ -141,11 +141,7 @@ impl RustGenerator {
 
         let discriminant_type = type_ref(&u.discriminant.type_, None, &self.type_info);
         let discriminant_is_builtin = is_builtin_type(&u.discriminant.type_)
-            || matches!(&u.discriminant.type_, xdr_parser::ast::Type::Ident(n) if {
-                self.type_info.definitions.get(&type_name(n))
-                    .map(|d| matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_)))
-                    .unwrap_or(false)
-            });
+            || self.type_info.resolve_typedef_to_builtin(&u.discriminant.type_).is_some();
 
         let discriminant_prefix = if !discriminant_is_builtin {
             self.type_info
@@ -204,7 +200,7 @@ impl RustGenerator {
         let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str);
 
         let size = match &t.type_ {
-            xdr_parser::ast::Type::OpaqueFixed(s)
+            xdr_parser::ast::Type::OpaqueFixed { size: s }
             | xdr_parser::ast::Type::Array { size: s, .. } => Some(size_to_string(s)),
             _ => None,
         };

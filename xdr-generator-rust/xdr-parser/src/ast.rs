@@ -84,6 +84,7 @@ impl XdrSpec {
 
         result
     }
+
 }
 
 /// A namespace containing definitions.
@@ -95,6 +96,7 @@ pub struct Namespace {
 
 /// A top-level definition.
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -115,16 +117,6 @@ impl Definition {
         }
     }
 
-    /// Check if this definition is nested (inline struct/union extracted from parent).
-    pub fn is_nested(&self) -> bool {
-        match self {
-            Definition::Struct(s) => s.is_nested,
-            Definition::Union(u) => u.is_nested,
-            // Enums, typedefs, and consts are never nested
-            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => false,
-        }
-    }
-
     /// Get the parent type name if this is a nested definition.
     pub fn parent(&self) -> Option<&str> {
         match self {
@@ -135,16 +127,6 @@ impl Definition {
         }
     }
 
-    /// Get the file index this definition was parsed from.
-    pub fn file_index(&self) -> usize {
-        match self {
-            Definition::Struct(s) => s.file_index,
-            Definition::Enum(e) => e.file_index,
-            Definition::Union(u) => u.file_index,
-            Definition::Typedef(t) => t.file_index,
-            Definition::Const(c) => c.file_index,
-        }
-    }
 }
 
 /// A struct definition.
@@ -240,6 +222,7 @@ pub struct Const {
 
 /// XDR type specification.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum Type {
     /// `int` - 32-bit signed integer
     Int,
@@ -256,15 +239,15 @@ pub enum Type {
     /// `bool` - boolean
     Bool,
     /// `opaque[N]` - fixed-length opaque data
-    OpaqueFixed(Size),
+    OpaqueFixed { size: Size },
     /// `opaque<N>` or `opaque<>` - variable-length opaque data
-    OpaqueVar(Option<Size>),
+    OpaqueVar { max_size: Option<Size> },
     /// `string<N>` or `string<>` - variable-length string
-    String(Option<Size>),
+    String { max_size: Option<Size> },
     /// Reference to another type by name
-    Ident(String),
+    Ident { ident: String },
     /// `T*` - optional type
-    Optional(Box<Type>),
+    Optional { element_type: Box<Type> },
     /// `T[N]` - fixed-length array
     Array { element_type: Box<Type>, size: Size },
     /// `T<N>` or `T<>` - variable-length array
@@ -317,11 +300,12 @@ pub struct UnionCase {
 
 /// Value for a union case.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
-    Ident(String),
+    Ident { ident: String },
     /// Literal integer value
-    Literal(i32),
+    Literal { literal: i32 },
 }
 
 impl UnionCaseValue {
@@ -329,18 +313,20 @@ impl UnionCaseValue {
     /// Returns `None` for literal values.
     pub fn stripped_ident(&self, prefix: &str) -> Option<String> {
         match self {
-            UnionCaseValue::Ident(name) => Some(strip_prefix(name, prefix)),
-            UnionCaseValue::Literal(_) => None,
+            UnionCaseValue::Ident { ident } => Some(strip_prefix(ident, prefix)),
+            UnionCaseValue::Literal { .. } => None,
         }
     }
 }
 
 /// A size specification, either a literal number or a named constant.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum Size {
-    Literal(u32),
-    Named(String),
+    Literal { literal: u32 },
+    Named { named: String },
 }
+
 
 // =============================================================================
 // Prefix stripping helpers

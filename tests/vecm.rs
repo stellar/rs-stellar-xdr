@@ -9,7 +9,7 @@ use stellar_xdr::curr as stellar_xdr;
 #[cfg(feature = "next")]
 use stellar_xdr::next as stellar_xdr;
 
-use stellar_xdr::{BytesM, Limits, ReadXdr, ScVal};
+use stellar_xdr::{BytesM, Limits, ReadXdr, ScVal, VecM};
 
 #[test]
 fn valid_len() {
@@ -75,4 +75,28 @@ fn invalid_bytes_len() {
     ];
     let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::none());
     assert!(result.is_err());
+}
+
+#[test]
+fn into_iter_owned() {
+    let v: VecM<u32, 5> = VecM::try_from(vec![1u32, 2, 3]).unwrap();
+    let collected: Vec<u32> = v.into_iter().collect();
+    assert_eq!(collected, vec![1, 2, 3]);
+}
+
+#[test]
+fn into_iter_ref() {
+    let v: VecM<u32, 5> = VecM::try_from(vec![1u32, 2, 3]).unwrap();
+    let collected: Vec<&u32> = (&v).into_iter().collect();
+    assert_eq!(collected, vec![&1, &2, &3]);
+}
+
+#[test]
+fn into_iter_for_loop() {
+    let v: VecM<u32, 5> = VecM::try_from(vec![10u32, 20, 30]).unwrap();
+    let mut sum = 0;
+    for item in v {
+        sum += item;
+    }
+    assert_eq!(sum, 60);
 }

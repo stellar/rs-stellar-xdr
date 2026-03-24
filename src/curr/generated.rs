@@ -1152,6 +1152,23 @@ impl<'a, T, const MAX: u32> core::iter::IntoIterator for &'a mut VecM<T, MAX> {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl<T, const MAX: u32> core::iter::IntoIterator for VecM<T, MAX> {
+    type Item = T;
+    type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a, T, const MAX: u32> core::iter::IntoIterator for &'a VecM<T, MAX> {
+    type Item = &'a T;
+    type IntoIter = core::slice::Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 impl<T: Clone, const MAX: u32> VecM<T, MAX> {
     #[must_use]
     #[cfg(feature = "alloc")]

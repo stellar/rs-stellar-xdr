@@ -25,9 +25,13 @@ struct Args {
     #[arg(short, long, required = true)]
     input: Vec<PathBuf>,
 
-    /// Output file
+    /// Output file for generated Rust code
     #[arg(short, long)]
-    output: PathBuf,
+    output: Option<PathBuf>,
+
+    /// Output the parsed XDR AST as JSON (for consumption by other code generators)
+    #[arg(long)]
+    json_ast: Option<PathBuf>,
 
     /// Types with custom Default implementation (skip derive(Default))
     #[arg(long, value_delimiter = ',')]
@@ -44,6 +48,10 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+
+    if args.output.is_none() && args.json_ast.is_none() {
+        return Err("at least one of --output or --json-ast must be specified".into());
+    }
 
     // Read all input files and sort by filename
     let mut files: Vec<(PathBuf, String)> = Vec::new();
@@ -62,16 +70,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse the XDR files
     let spec = xdr_parser::parser::parse_files(&file_refs)?;
 
-    let options = RustOptions {
-        custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
-        custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
-        no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
-    };
+    // Output JSON AST if requested
+    if let Some(json_path) = &args.json_ast {
+        // Build type info using identity naming (raw XDR names, not language-specific)
+        let type_info = xdr_parser::types::TypeInfo::build(&spec, &|name| name.to_string());
+        let computed = type_info.compute_properties();
 
-    let generator = RustGenerator::new(&spec, options);
-    generator.generate_to_file(&spec, &args.output)?;
+        // Serialize the raw spec — preserve Size::Named references for language-agnostic IR
+        let ir = serde_json::json!({
+            "spec": &spec,
+            "computed": &computed,
+        });
+        let json = serde_json::to_string_pretty(&ir)?;
+        fs::write(json_path, json)?;
+        eprintln!(
+            "JSON AST: {} ({} types)",
+            json_path.display(),
+            computed.types.len(),
+        );
+    }
 
-    eprintln!("Generated: {}", args.output.display());
+    // Generate Rust code if output path provided
+    if let Some(output) = &args.output {
+        let options = RustOptions {
+            custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
+            custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
+            no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
+        };
+
+        let generator = RustGenerator::new(&spec, options);
+        generator.generate_to_file(&spec, output)?;
+        eprintln!("Generated: {}", output.display());
+    }
 
     Ok(())
 }

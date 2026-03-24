@@ -8,5 +8,6 @@ rust-version = "1.84.0"
 [dependencies]
 heck = "0.5"
 logos = "0.15"
+serde = { version = "1", features = ["derive"] }
 sha2 = "0.10"
 thiserror = "2"

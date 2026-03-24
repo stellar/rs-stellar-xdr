@@ -3,14 +3,14 @@
 use crate::lexer::IntBase;
 
 /// Metadata about a parsed XDR source file.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct XdrFile {
     pub name: String,
     pub sha256: String,
 }
 
 /// The root of a parsed XDR file or collection of files.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize)]
 pub struct XdrSpec {
     pub files: Vec<XdrFile>,
     pub namespaces: Vec<Namespace>,
@@ -84,17 +84,19 @@ impl XdrSpec {
 
         result
     }
+
 }
 
 /// A namespace containing definitions.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Namespace {
     pub name: String,
     pub definitions: Vec<Definition>,
 }
 
 /// A top-level definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -115,16 +117,6 @@ impl Definition {
         }
     }
 
-    /// Check if this definition is nested (inline struct/union extracted from parent).
-    pub fn is_nested(&self) -> bool {
-        match self {
-            Definition::Struct(s) => s.is_nested,
-            Definition::Union(u) => u.is_nested,
-            // Enums, typedefs, and consts are never nested
-            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => false,
-        }
-    }
-
     /// Get the parent type name if this is a nested definition.
     pub fn parent(&self) -> Option<&str> {
         match self {
@@ -135,20 +127,10 @@ impl Definition {
         }
     }
 
-    /// Get the file index this definition was parsed from.
-    pub fn file_index(&self) -> usize {
-        match self {
-            Definition::Struct(s) => s.file_index,
-            Definition::Enum(e) => e.file_index,
-            Definition::Union(u) => u.file_index,
-            Definition::Typedef(t) => t.file_index,
-            Definition::Const(c) => c.file_index,
-        }
-    }
 }
 
 /// A struct definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Struct {
     pub name: String,
     pub members: Vec<StructMember>,
@@ -163,7 +145,7 @@ pub struct Struct {
 }
 
 /// An enum definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Enum {
     pub name: String,
     pub members: Vec<EnumMember>,
@@ -199,7 +181,7 @@ impl Enum {
 }
 
 /// A union definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Union {
     pub name: String,
     pub discriminant: UnionDiscriminant,
@@ -215,7 +197,7 @@ pub struct Union {
 }
 
 /// A typedef definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Typedef {
     pub name: String,
     pub type_: Type,
@@ -226,7 +208,7 @@ pub struct Typedef {
 }
 
 /// A const definition.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Const {
     pub name: String,
     pub value: i64,
@@ -239,7 +221,8 @@ pub struct Const {
 }
 
 /// XDR type specification.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum Type {
     /// `int` - 32-bit signed integer
     Int,
@@ -256,15 +239,15 @@ pub enum Type {
     /// `bool` - boolean
     Bool,
     /// `opaque[N]` - fixed-length opaque data
-    OpaqueFixed(Size),
+    OpaqueFixed { size: Size },
     /// `opaque<N>` or `opaque<>` - variable-length opaque data
-    OpaqueVar(Option<Size>),
+    OpaqueVar { max_size: Option<Size> },
     /// `string<N>` or `string<>` - variable-length string
-    String(Option<Size>),
+    String { max_size: Option<Size> },
     /// Reference to another type by name
-    Ident(String),
+    Ident { ident: String },
     /// `T*` - optional type
-    Optional(Box<Type>),
+    Optional { element_type: Box<Type> },
     /// `T[N]` - fixed-length array
     Array { element_type: Box<Type>, size: Size },
     /// `T<N>` or `T<>` - variable-length array
@@ -275,14 +258,14 @@ pub enum Type {
 }
 
 /// A member of a struct.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct StructMember {
     pub name: String,
     pub type_: Type,
 }
 
 /// A member of an enum.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct EnumMember {
     pub name: String,
     /// The member name with the common enum prefix stripped.
@@ -291,34 +274,38 @@ pub struct EnumMember {
 }
 
 /// The discriminant of a union.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UnionDiscriminant {
     pub name: String,
     pub type_: Type,
 }
 
 /// An arm of a union (one or more cases with the same type).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
+    /// The declaration name for this arm (e.g., "v0" from "LedgerCloseMetaV0 v0;").
+    /// Empty string for void arms.
+    pub name: String,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
 }
 
 /// A case in a union.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UnionCase {
     /// The case value - either an identifier (enum variant) or a literal.
     pub value: UnionCaseValue,
 }
 
 /// Value for a union case.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
-    Ident(String),
+    Ident { ident: String },
     /// Literal integer value
-    Literal(i32),
+    Literal { literal: i32 },
 }
 
 impl UnionCaseValue {
@@ -326,18 +313,20 @@ impl UnionCaseValue {
     /// Returns `None` for literal values.
     pub fn stripped_ident(&self, prefix: &str) -> Option<String> {
         match self {
-            UnionCaseValue::Ident(name) => Some(strip_prefix(name, prefix)),
-            UnionCaseValue::Literal(_) => None,
+            UnionCaseValue::Ident { ident } => Some(strip_prefix(ident, prefix)),
+            UnionCaseValue::Literal { .. } => None,
         }
     }
 }
 
 /// A size specification, either a literal number or a named constant.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind")]
 pub enum Size {
-    Literal(u32),
-    Named(String),
+    Literal { literal: u32 },
+    Named { named: String },
 }
+
 
 // =============================================================================
 // Prefix stripping helpers

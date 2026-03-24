@@ -19,7 +19,7 @@ fn test_parse_struct() {
                     type_: Type::UnsignedHyper,
                 },
             ],
-            source: "struct Foo { int x; unsigned hyper y; }".to_string(),
+            source: "struct Foo { int x; unsigned hyper y; };".to_string(),
             is_nested: false,
             parent: None,
             file_index: 0,
@@ -53,7 +53,7 @@ fn test_parse_enum() {
                 },
             ],
             member_prefix: String::new(),
-            source: "enum Color { RED = 0, GREEN = 1, BLUE = 2 }".to_string(),
+            source: "enum Color { RED = 0, GREEN = 1, BLUE = 2 };".to_string(),
             file_index: 0,
         })]
     );
@@ -67,8 +67,8 @@ fn test_parse_typedef() {
         spec.definitions,
         [Definition::Typedef(Typedef {
             name: "Hash".to_string(),
-            type_: Type::OpaqueFixed(Size::Literal(32)),
-            source: "typedef opaque Hash[32]".to_string(),
+            type_: Type::OpaqueFixed { size: Size::Literal { literal: 32 } },
+            source: "typedef opaque Hash[32];".to_string(),
             file_index: 0,
         })]
     );

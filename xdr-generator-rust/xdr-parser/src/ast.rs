@@ -91,6 +91,68 @@ impl XdrSpec {
 pub struct Namespace {
     pub name: String,
     pub definitions: Vec<Definition>,
+    pub namespaces: Vec<Namespace>,
+}
+
+/// A conditional compilation expression, mapping XDR `#ifdef`/`#else`/`#endif`
+/// directives to Rust `#[cfg(feature = "...")]` attributes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CfgExpr {
+    /// `#[cfg(feature = "name")]`
+    Feature(String),
+    /// `#[cfg(not(...))]`
+    Not(Box<CfgExpr>),
+    /// `#[cfg(all(...))]`
+    All(Vec<CfgExpr>),
+}
+
+impl CfgExpr {
+    /// Negate this expression, simplifying double negation.
+    /// `Not(x)` becomes `x`, anything else becomes `Not(self)`.
+    pub fn negate(self) -> CfgExpr {
+        match self {
+            CfgExpr::Not(inner) => *inner,
+            other => CfgExpr::Not(Box::new(other)),
+        }
+    }
+
+    /// Combine two cfg expressions with `all(...)`, flattening nested `All`.
+    ///
+    /// Useful for combining an `#ifdef`-derived cfg with a file-based cfg.
+    pub fn and(self, other: CfgExpr) -> CfgExpr {
+        let mut parts = Vec::new();
+        match self {
+            CfgExpr::All(inner) => parts.extend(inner),
+            other_expr => parts.push(other_expr),
+        }
+        match other {
+            CfgExpr::All(inner) => parts.extend(inner),
+            other_expr => parts.push(other_expr),
+        }
+        if parts.len() == 1 {
+            parts.into_iter().next().unwrap()
+        } else {
+            CfgExpr::All(parts)
+        }
+    }
+
+    /// Render as a Rust `#[cfg(...)]` attribute string (without the outer `#[cfg()]`).
+    ///
+    /// Feature names are lowercased to follow the Cargo convention that feature
+    /// names are lowercase (e.g. XDR `FEATURE_X` becomes `feature = "feature_x"`).
+    pub fn render(&self) -> String {
+        match self {
+            CfgExpr::Feature(name) => {
+                let lower = name.to_lowercase();
+                format!("feature = \"{lower}\"")
+            }
+            CfgExpr::Not(inner) => format!("not({})", inner.render()),
+            CfgExpr::All(exprs) => {
+                let parts: Vec<String> = exprs.iter().map(|e| e.render()).collect();
+                format!("all({})", parts.join(", "))
+            }
+        }
+    }
 }
 
 /// A top-level definition.
@@ -145,6 +207,28 @@ impl Definition {
             Definition::Const(c) => c.file_index,
         }
     }
+
+    /// Get the cfg expression for conditional compilation, if any.
+    pub fn cfg(&self) -> Option<&CfgExpr> {
+        match self {
+            Definition::Struct(s) => s.cfg.as_ref(),
+            Definition::Enum(e) => e.cfg.as_ref(),
+            Definition::Union(u) => u.cfg.as_ref(),
+            Definition::Typedef(t) => t.cfg.as_ref(),
+            Definition::Const(c) => c.cfg.as_ref(),
+        }
+    }
+
+    /// Set the cfg expression for conditional compilation.
+    pub fn set_cfg(&mut self, cfg: Option<CfgExpr>) {
+        match self {
+            Definition::Struct(s) => s.cfg = cfg,
+            Definition::Enum(e) => e.cfg = cfg,
+            Definition::Union(u) => u.cfg = cfg,
+            Definition::Typedef(t) => t.cfg = cfg,
+            Definition::Const(c) => c.cfg = cfg,
+        }
+    }
 }
 
 /// A struct definition.
@@ -160,6 +244,8 @@ pub struct Struct {
     pub parent: Option<String>,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
+    pub cfg: Option<CfgExpr>,
 }
 
 /// An enum definition.
@@ -173,19 +259,22 @@ pub struct Enum {
     pub source: String,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
+    pub cfg: Option<CfgExpr>,
 }
 
 impl Enum {
     /// Create a new Enum, computing stripped member names from the common prefix.
-    pub fn new(name: String, members: Vec<(String, i32)>, source: String) -> Self {
-        let names: Vec<&str> = members.iter().map(|(n, _)| n.as_str()).collect();
+    pub fn new(name: String, members: Vec<(String, i32, Option<CfgExpr>)>, source: String) -> Self {
+        let names: Vec<&str> = members.iter().map(|(n, _, _)| n.as_str()).collect();
         let member_prefix = find_common_prefix(&names).to_string();
         let members = members
             .into_iter()
-            .map(|(name, value)| EnumMember {
+            .map(|(name, value, cfg)| EnumMember {
                 stripped_name: strip_prefix(&name, &member_prefix),
                 name,
                 value,
+                cfg,
             })
             .collect();
         Self {
@@ -194,6 +283,7 @@ impl Enum {
             member_prefix,
             source,
             file_index: 0,
+            cfg: None,
         }
     }
 }
@@ -212,6 +302,8 @@ pub struct Union {
     pub parent: Option<String>,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
+    pub cfg: Option<CfgExpr>,
 }
 
 /// A typedef definition.
@@ -223,6 +315,8 @@ pub struct Typedef {
     pub source: String,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
+    pub cfg: Option<CfgExpr>,
 }
 
 /// A const definition.
@@ -236,6 +330,8 @@ pub struct Const {
     pub source: String,
     /// Index into `XdrSpec::files` for the file this was parsed from.
     pub file_index: usize,
+    /// Conditional compilation expression from `#ifdef`/`#else`/`#endif`.
+    pub cfg: Option<CfgExpr>,
 }
 
 /// XDR type specification.
@@ -288,6 +384,7 @@ pub struct EnumMember {
     /// The member name with the common enum prefix stripped.
     pub stripped_name: String,
     pub value: i32,
+    pub cfg: Option<CfgExpr>,
 }
 
 /// The discriminant of a union.
@@ -303,6 +400,7 @@ pub struct UnionArm {
     pub cases: Vec<UnionCase>,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
+    pub cfg: Option<CfgExpr>,
 }
 
 /// A case in a union.

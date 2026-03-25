@@ -25,6 +25,7 @@ pub struct StructOutput {
     pub is_custom_str: bool,
     pub members: Vec<StructMemberOutput>,
     pub member_names: String,
+    pub cfg: Option<String>,
 }
 
 pub struct StructMemberOutput {
@@ -40,12 +41,14 @@ pub struct EnumOutput {
     pub has_default: bool,
     pub is_custom_str: bool,
     pub members: Vec<EnumStructMemberOutput>,
+    pub cfg: Option<String>,
 }
 
 pub struct EnumStructMemberOutput {
     pub name: String,
     pub value: i32,
-    pub is_first: bool,
+    pub is_default: bool,
+    pub cfg: Option<String>,
 }
 
 pub struct UnionOutput {
@@ -55,6 +58,10 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
+    pub cfg: Option<String>,
+    /// Cfg for the first arm, used to gate the Default impl when the
+    /// default variant is behind a cfg.
+    pub default_arm_cfg: Option<String>,
 }
 
 pub struct UnionArmOutput {
@@ -64,12 +71,14 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
+    pub cfg: Option<String>,
 }
 
 pub struct TypedefAliasOutput {
     pub name: String,
     pub source_comment: String,
     pub type_ref: String,
+    pub cfg: Option<String>,
 }
 
 pub struct TypedefNewtypeOutput {
@@ -88,6 +97,7 @@ pub struct TypedefNewtypeOutput {
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
+    pub cfg: Option<String>,
 }
 
 pub struct ConstOutput {
@@ -95,8 +105,14 @@ pub struct ConstOutput {
     pub doc_name: String,
     pub source_comment: String,
     pub value_str: String,
+    pub cfg: Option<String>,
 }
 
 pub struct TypeEnumOutput {
-    pub types: Vec<String>,
+    pub types: Vec<TypeEnumEntry>,
+}
+
+pub struct TypeEnumEntry {
+    pub name: String,
+    pub cfg: Option<String>,
 }

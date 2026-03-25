@@ -85,6 +85,14 @@ pub enum Token {
     #[token("=")]
     Eq,
 
+    // Preprocessor conditionals
+    #[regex(r"#ifdef[ \t]+([a-zA-Z_][a-zA-Z0-9_]*)", parse_directive_ident)]
+    IfDef(std::string::String),
+    #[regex(r"#else")]
+    Else,
+    #[regex(r"#endif")]
+    EndIf,
+
     // End of file (not produced by Logos, added manually)
     Eof,
 }
@@ -94,6 +102,18 @@ pub enum Token {
 pub enum IntBase {
     Decimal,
     Hexadecimal,
+}
+
+fn parse_directive_ident(lex: &logos::Lexer<Token>) -> Option<std::string::String> {
+    // The regex captures "#ifdef IDENT".
+    // Extract the identifier (last whitespace-separated token).
+    let slice = lex.slice();
+    let ident = slice.rsplit(|c: char| c.is_ascii_whitespace()).next()?;
+    if ident.is_empty() {
+        None
+    } else {
+        Some(ident.to_string())
+    }
 }
 
 fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {

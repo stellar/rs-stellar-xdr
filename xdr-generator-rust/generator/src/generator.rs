@@ -1,3 +1,6 @@
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
+
 use askama::Template;
 use xdr_parser::ast::{
     Const, Definition, Enum, Struct, StructMember, Typedef, Union, UnionArm, XdrSpec,
@@ -9,8 +12,8 @@ use crate::naming::{case_value, field_name, source_comment, type_name};
 use crate::options::RustOptions;
 use crate::output::{
     ConstOutput, DefinitionOutput, EnumOutput, EnumStructMemberOutput, GeneratedTemplate,
-    StructMemberOutput, StructOutput, TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput,
-    UnionArmOutput, UnionOutput,
+    StructMemberOutput, StructOutput, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
+    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_string, type_ref};
 
@@ -47,16 +50,40 @@ impl RustGenerator {
             .collect();
 
         let mut definitions: Vec<DefinitionOutput> = Vec::new();
+        let mut cfg_by_name: HashMap<String, Option<String>> = HashMap::new();
 
         for def in spec.all_definitions() {
+            // Build cfg_by_name for type enum entries in the same pass.
+            if !matches!(def, Definition::Const(_)) {
+                let name = type_name(def.name());
+                let cfg = self.resolve_cfg(def);
+                match cfg_by_name.entry(name) {
+                    Entry::Vacant(e) => {
+                        e.insert(cfg);
+                    }
+                    Entry::Occupied(mut e) => {
+                        // Same name in multiple cfg branches (e.g. #ifdef/#else)
+                        // means the type is always present, so clear the cfg.
+                        e.insert(None);
+                    }
+                }
+            }
+
             let output = self.generate_definition(def);
             definitions.push(output);
         }
 
-        let types: Vec<String> = spec
+        let types: Vec<TypeEnumEntry> = spec
             .type_names_parent_first()
             .iter()
-            .map(|name| type_name(name))
+            .map(|name| {
+                let rust_name = type_name(name);
+                let cfg = cfg_by_name.get(&rust_name).cloned().flatten();
+                TypeEnumEntry {
+                    name: rust_name,
+                    cfg,
+                }
+            })
             .collect();
 
         GeneratedTemplate {
@@ -67,17 +94,27 @@ impl RustGenerator {
         }
     }
 
+    /// Resolve the cfg expression for a definition, rendered as a string.
+    ///
+    /// This is where additional cfg conditions (e.g. file-based cfg derived
+    /// from `def.file_index()`) should be combined with the `#ifdef`-derived
+    /// cfg before rendering. Use `CfgExpr::and()` to combine them.
+    fn resolve_cfg(&self, def: &Definition) -> Option<String> {
+        def.cfg().map(|c| c.render())
+    }
+
     fn generate_definition(&self, def: &Definition) -> DefinitionOutput {
+        let cfg = self.resolve_cfg(def);
         match def {
-            Definition::Struct(s) => DefinitionOutput::Struct(self.generate_struct(s)),
-            Definition::Enum(e) => DefinitionOutput::Enum(self.generate_enum(e)),
-            Definition::Union(u) => DefinitionOutput::Union(self.generate_union(u)),
-            Definition::Typedef(t) => self.generate_typedef(t),
-            Definition::Const(c) => DefinitionOutput::Const(self.generate_const(c)),
+            Definition::Struct(s) => DefinitionOutput::Struct(self.generate_struct(s, cfg)),
+            Definition::Enum(e) => DefinitionOutput::Enum(self.generate_enum(e, cfg)),
+            Definition::Union(u) => DefinitionOutput::Union(self.generate_union(u, cfg)),
+            Definition::Typedef(t) => self.generate_typedef(t, cfg),
+            Definition::Const(c) => DefinitionOutput::Const(self.generate_const(c, cfg)),
         }
     }
 
-    fn generate_struct(&self, s: &Struct) -> StructOutput {
+    fn generate_struct(&self, s: &Struct, cfg: Option<String>) -> StructOutput {
         let name = type_name(&s.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
@@ -106,14 +143,16 @@ impl RustGenerator {
             is_custom_str: custom_str,
             members,
             member_names,
+            cfg,
         }
     }
 
-    fn generate_enum(&self, e: &Enum) -> EnumOutput {
+    fn generate_enum(&self, e: &Enum, cfg: Option<String>) -> EnumOutput {
         let name = type_name(&e.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
 
+        let first_uncfg_index = e.members.iter().position(|m| m.cfg.is_none()).unwrap_or(0);
         let members: Vec<EnumStructMemberOutput> = e
             .members
             .iter()
@@ -121,7 +160,8 @@ impl RustGenerator {
             .map(|(i, m)| EnumStructMemberOutput {
                 name: type_name(&m.stripped_name),
                 value: m.value,
-                is_first: i == 0,
+                is_default: i == first_uncfg_index,
+                cfg: m.cfg.as_ref().map(|c| c.render()),
             })
             .collect();
 
@@ -131,10 +171,11 @@ impl RustGenerator {
             has_default: !custom_default,
             is_custom_str: custom_str,
             members,
+            cfg,
         }
     }
 
-    fn generate_union(&self, u: &Union) -> UnionOutput {
+    fn generate_union(&self, u: &Union, cfg: Option<String>) -> UnionOutput {
         let name = type_name(&u.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
@@ -172,6 +213,10 @@ impl RustGenerator {
             .collect();
 
         let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
+        let default_arm_cfg = u
+            .arms
+            .first()
+            .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
         UnionOutput {
             name,
@@ -180,10 +225,12 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
+            cfg,
+            default_arm_cfg,
         }
     }
 
-    fn generate_typedef(&self, t: &Typedef) -> DefinitionOutput {
+    fn generate_typedef(&self, t: &Typedef, cfg: Option<String>) -> DefinitionOutput {
         let name = type_name(&t.name);
 
         if is_builtin_type(&t.type_) {
@@ -191,6 +238,7 @@ impl RustGenerator {
                 name,
                 source_comment: source_comment(&t.source, "Typedef"),
                 type_ref: base_type_ref(&t.type_, None),
+                cfg,
             });
         }
 
@@ -225,10 +273,11 @@ impl RustGenerator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+            cfg,
         })
     }
 
-    fn generate_const(&self, c: &Const) -> ConstOutput {
+    fn generate_const(&self, c: &Const, cfg: Option<String>) -> ConstOutput {
         let value_str = match c.base {
             IntBase::Hexadecimal => format!("0x{:X}", c.value),
             IntBase::Decimal => c.value.to_string(),
@@ -238,6 +287,7 @@ impl RustGenerator {
             doc_name: type_name(&c.name),
             source_comment: source_comment(&c.source, "Const"),
             value_str,
+            cfg,
         }
     }
 
@@ -289,6 +339,7 @@ impl RustGenerator {
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
+                    cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }
             })
             .collect()

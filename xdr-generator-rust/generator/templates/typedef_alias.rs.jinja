@@ -1,3 +1,6 @@
 /// {{ t.name }}{{ t.source_comment }}
+{%- if let Some(cfg) = t.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
 pub type {{ t.name }} = {{ t.type_ref }};
 

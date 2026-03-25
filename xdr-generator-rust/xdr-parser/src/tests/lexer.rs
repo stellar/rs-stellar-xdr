@@ -1,6 +1,36 @@
 use crate::lexer::{IntBase, Lexer, Token};
 
 #[test]
+fn test_ifdef_tokens() {
+    let input = "#ifdef FEATURE_X\nstruct Foo {};\n#endif";
+    let lexer = Lexer::new(input);
+    let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
+    let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
+    assert_eq!(
+        tokens,
+        vec![
+            Token::IfDef("FEATURE_X".into()),
+            Token::Struct,
+            Token::Ident("Foo".into()),
+            Token::LBrace,
+            Token::RBrace,
+            Token::Semi,
+            Token::EndIf,
+            Token::Eof,
+        ]
+    );
+}
+
+#[test]
+fn test_else_endif_tokens() {
+    let input = "#else\n#endif";
+    let lexer = Lexer::new(input);
+    let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
+    let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();
+    assert_eq!(tokens, vec![Token::Else, Token::EndIf, Token::Eof,]);
+}
+
+#[test]
 fn test_simple() {
     let input = "struct Foo { int x; };";
     let lexer = Lexer::new(input);

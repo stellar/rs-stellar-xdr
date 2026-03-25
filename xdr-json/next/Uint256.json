@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "Uint256",
-  "type": "string",
-  "maxLength": 64,
-  "minLength": 64,
-  "contentEncoding": "hex",
-  "contentMediaType": "application/binary"
-}

@@ -44,6 +44,9 @@ default = ["std"]
 std = ["alloc", "dep:sha2"]
 alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 
+# Features from the XDR
+test_feature = []
+
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]
 serde = ["alloc", "dep:serde", "dep:serde_with", "hex/serde"]

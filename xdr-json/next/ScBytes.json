@@ -1,8 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "ScBytes",
-  "description": "ScBytes is an XDR Typedef defined as:\n\n```text typedef opaque SCBytes<>; ```",
-  "type": "string",
-  "contentEncoding": "hex",
-  "contentMediaType": "application/binary"
-}

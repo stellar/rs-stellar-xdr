@@ -25,7 +25,7 @@ struct Args {
     #[arg(short, long, required = true)]
     input: Vec<PathBuf>,
 
-    /// Output file
+    /// Output directory (one file per type)
     #[arg(short, long)]
     output: PathBuf,
 
@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let generator = RustGenerator::new(&spec, options);
-    generator.generate_to_file(&spec, &args.output)?;
+    generator.generate_to_dir(&spec, &args.output)?;
 
     eprintln!("Generated: {}", args.output.display());
 

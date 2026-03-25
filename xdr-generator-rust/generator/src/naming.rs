@@ -6,6 +6,11 @@ pub(crate) fn type_name(name: &str) -> String {
     escape_type_name(name).to_upper_camel_case()
 }
 
+/// Convert an XDR name to a Rust module name (snake_case).
+pub(crate) fn mod_name(name: &str) -> String {
+    escape_type_name(name).to_snake_case()
+}
+
 /// Convert an XDR name to a Rust field name (snake_case).
 pub(crate) fn field_name(name: &str) -> String {
     let snake = name.to_snake_case();

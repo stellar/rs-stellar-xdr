@@ -1,0 +1,29 @@
+// Module is generated from:
+{%- for (file, _) in xdr_files_sha256 %}
+//  {{ file }}
+{%- endfor %}
+
+#![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
+
+/// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
+pub const XDR_FILES_SHA256: [(&str, &str); {{ xdr_files_sha256.len() }}] = [
+{%- for (file, hash) in xdr_files_sha256 %}
+    (
+        "{{ file }}",
+        "{{ hash }}",
+    ),
+{%- endfor %}
+];
+
+{{ header }}
+{%- for m in modules %}
+{%- if let Some(cfg) = m.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+mod {{ m.mod_name }};
+{%- if let Some(cfg) = m.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+pub use {{ m.mod_name }}::*;
+{%- endfor %}
+{% include "type_enum.rs.jinja" %}

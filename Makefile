@@ -35,25 +35,25 @@ generate: generate-files xdr-version xdr-json
 CUSTOM_DEFAULT_IMPL=TransactionEnvelope
 CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
 
-generate-files: src/generated.rs
+generate-files: src/generated/mod.rs
 
-src/generated.rs: $(sort $(wildcard xdr/*.x))
+src/generated/mod.rs: $(sort $(wildcard xdr/*.x))
 	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
 		$(addprefix --input ,$(sort $(wildcard xdr/*.x))) \
-		--output $@ \
+		--output src/generated \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)
-	rustfmt $@
+	rustfmt src/generated/*.rs
 
 xdr-version: $(wildcard .git/modules/xdr/**/*) $(wildcard xdr/*.x)
 	git submodule status -- xdr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr-version
 
-xdr-json: src/generated.rs
+xdr-json: src/generated/mod.rs
 	mkdir -p xdr-json
 	cargo run --features cli -- types schema-files --out-dir xdr-json
 
 clean:
-	rm -f src/generated.rs
+	rm -rf src/generated
 	rm -f xdr-version
 	rm -fr xdr-json
 	cargo clean --quiet

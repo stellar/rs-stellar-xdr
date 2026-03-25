@@ -1,4 +1,4 @@
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 /// LiquidityPoolDepositResult is an XDR Union defined as:
 ///

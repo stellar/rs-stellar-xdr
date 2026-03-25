@@ -1,4 +1,4 @@
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 /// ConfigSettingContractHistoricalDataV0 is an XDR Struct defined as:
 ///

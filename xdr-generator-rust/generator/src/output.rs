@@ -21,7 +21,6 @@ pub struct ModTemplate {
 
 pub struct ModuleEntry {
     pub mod_name: String,
-    pub cfg: Option<String>,
 }
 
 #[derive(Template)]

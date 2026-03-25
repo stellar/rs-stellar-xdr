@@ -87,14 +87,12 @@ impl RustGenerator {
     /// Generate module entries and grouped definitions for per-file output.
     ///
     /// When the same type name appears in multiple `#ifdef`/`#else` branches,
-    /// definitions are grouped into the same file and the module entry's cfg
-    /// is cleared (the type is always present).
+    /// definitions are grouped into the same file.
     fn generate_modules(&self, spec: &XdrSpec) -> (Vec<ModuleEntry>, Vec<Vec<DefinitionOutput>>) {
         let mut order: Vec<String> = Vec::new();
-        let mut grouped: HashMap<String, (Option<String>, Vec<DefinitionOutput>)> = HashMap::new();
+        let mut grouped: HashMap<String, Vec<DefinitionOutput>> = HashMap::new();
 
         for def in spec.all_definitions() {
-            let cfg = self.resolve_cfg(def);
             let m = match def {
                 Definition::Const(c) => mod_name(&c.name),
                 _ => mod_name(def.name()),
@@ -104,13 +102,10 @@ impl RustGenerator {
             match grouped.entry(m.clone()) {
                 Entry::Vacant(e) => {
                     order.push(m);
-                    e.insert((cfg, vec![output]));
+                    e.insert(vec![output]);
                 }
                 Entry::Occupied(mut e) => {
-                    let (existing_cfg, defs) = e.get_mut();
-                    // Same name in multiple cfg branches means always present.
-                    *existing_cfg = None;
-                    defs.push(output);
+                    e.get_mut().push(output);
                 }
             }
         }
@@ -118,8 +113,8 @@ impl RustGenerator {
         let mut modules = Vec::new();
         let mut definitions = Vec::new();
         for m in order {
-            let (cfg, defs) = grouped.remove(&m).unwrap();
-            modules.push(ModuleEntry { mod_name: m, cfg });
+            let defs = grouped.remove(&m).unwrap();
+            modules.push(ModuleEntry { mod_name: m });
             definitions.push(defs);
         }
 

@@ -43,10 +43,14 @@ impl RustGenerator {
     }
 
     /// Generate Rust code from the spec and write each definition to its own
-    /// file inside `output_dir`, plus a `mod.rs` that ties them together.
+    /// file inside `output_dir`, plus a module file that ties them together.
+    ///
+    /// `module_file` is the path to the module file (e.g. `src/generated.rs`)
+    /// and `output_dir` is the directory for per-type files (e.g. `src/generated/`).
     pub fn generate_to_dir(
         &self,
         spec: &XdrSpec,
+        module_file: &std::path::Path,
         output_dir: &std::path::Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let header = include_str!("../header.rs");
@@ -63,7 +67,7 @@ impl RustGenerator {
             std::fs::write(&file_path, &rendered)?;
         }
 
-        // Write mod.rs.
+        // Write module file.
         let xdr_files_sha256: Vec<(String, String)> = spec
             .files
             .iter()
@@ -79,7 +83,7 @@ impl RustGenerator {
             type_variant_enum,
         };
         let rendered = mod_template.render()?;
-        std::fs::write(output_dir.join("mod.rs"), &rendered)?;
+        std::fs::write(module_file, &rendered)?;
 
         Ok(())
     }

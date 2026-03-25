@@ -25,7 +25,7 @@ struct Args {
     #[arg(short, long, required = true)]
     input: Vec<PathBuf>,
 
-    /// Output directory (one file per type)
+    /// Output module file (e.g. src/generated.rs)
     #[arg(short, long)]
     output: PathBuf,
 
@@ -69,7 +69,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let generator = RustGenerator::new(&spec, options);
-    generator.generate_to_dir(&spec, &args.output)?;
+
+    // Derive the per-type directory from the module file path:
+    // e.g. src/generated.rs -> src/generated/
+    let output_dir = args.output.with_extension("");
+    generator.generate_to_dir(&spec, &args.output, &output_dir)?;
 
     eprintln!("Generated: {}", args.output.display());
 

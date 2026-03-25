@@ -7,8 +7,6 @@ pub use crate::schemars as schema_settings;
 
 use clap::{Args, Subcommand};
 
-use crate::cli::Channel;
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{0}")]
@@ -41,11 +39,11 @@ impl Cmd {
     /// ## Panics
     ///
     /// If the sub-command panics.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
+    pub fn run(&self) -> Result<(), Error> {
         match &self.sub {
-            Sub::List(c) => c.run(channel),
-            Sub::Schema(c) => c.run(channel)?,
-            Sub::SchemaFiles(c) => c.run(channel)?,
+            Sub::List(c) => c.run(),
+            Sub::Schema(c) => c.run()?,
+            Sub::SchemaFiles(c) => c.run()?,
         }
         Ok(())
     }

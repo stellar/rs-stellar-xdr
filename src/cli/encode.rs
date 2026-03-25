@@ -6,60 +6,37 @@ use std::{
 
 use clap::{Args, ValueEnum};
 
-use crate::cli::{util, Channel};
+use crate::cli::util;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unknown type {0}, choose one of {1:?}")]
     UnknownType(String, &'static [&'static str]),
     #[error("error decoding JSON: {0}")]
-    ReadJsonCurr(crate::curr::Error),
-    #[error("error decoding JSON: {0}")]
-    ReadJsonNext(crate::next::Error),
+    ReadJson(crate::Error),
     #[error("error reading file: {0}")]
     ReadFile(std::io::Error),
     #[error("error writing output: {0}")]
     WriteOutput(std::io::Error),
     #[error("error generating XDR: {0}")]
-    WriteXdrCurr(crate::curr::Error),
-    #[error("error generating XDR: {0}")]
-    WriteXdrNext(crate::next::Error),
+    WriteXdr(crate::Error),
 }
 
-impl From<crate::curr::Error> for Error {
-    fn from(e: crate::curr::Error) -> Self {
+impl From<crate::Error> for Error {
+    fn from(e: crate::Error) -> Self {
         match e {
-            crate::curr::Error::Invalid
-            | crate::curr::Error::Unsupported
-            | crate::curr::Error::LengthExceedsMax
-            | crate::curr::Error::LengthMismatch
-            | crate::curr::Error::NonZeroPadding
-            | crate::curr::Error::Utf8Error(_)
-            | crate::curr::Error::InvalidHex
-            | crate::curr::Error::Io(_)
-            | crate::curr::Error::DepthLimitExceeded
-            | crate::curr::Error::LengthLimitExceeded
-            | crate::curr::Error::Arbitrary(_) => Error::WriteXdrCurr(e),
-            crate::curr::Error::Json(_) => Error::ReadJsonCurr(e),
-        }
-    }
-}
-
-impl From<crate::next::Error> for Error {
-    fn from(e: crate::next::Error) -> Self {
-        match e {
-            crate::next::Error::Invalid
-            | crate::next::Error::Unsupported
-            | crate::next::Error::LengthExceedsMax
-            | crate::next::Error::LengthMismatch
-            | crate::next::Error::NonZeroPadding
-            | crate::next::Error::Utf8Error(_)
-            | crate::next::Error::InvalidHex
-            | crate::next::Error::Io(_)
-            | crate::next::Error::DepthLimitExceeded
-            | crate::next::Error::LengthLimitExceeded
-            | crate::next::Error::Arbitrary(_) => Error::WriteXdrNext(e),
-            crate::next::Error::Json(_) => Error::ReadJsonNext(e),
+            crate::Error::Invalid
+            | crate::Error::Unsupported
+            | crate::Error::LengthExceedsMax
+            | crate::Error::LengthMismatch
+            | crate::Error::NonZeroPadding
+            | crate::Error::Utf8Error(_)
+            | crate::Error::InvalidHex
+            | crate::Error::Io(_)
+            | crate::Error::DepthLimitExceeded
+            | crate::Error::LengthLimitExceeded
+            | crate::Error::Arbitrary(_) => Error::WriteXdr(e),
+            crate::Error::Json(_) => Error::ReadJson(e),
         }
     }
 }
@@ -110,27 +87,29 @@ impl Default for OutputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            use crate::$m::WriteXdr;
+            use crate::WriteXdr;
             let mut input = util::parse_input(&self.input).map_err(Error::ReadFile)?;
-            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+            let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
             for f in &mut input {
                 match self.input_format {
                     InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
-                            let t = crate::$m::Type::from_json(r#type, f)?;
-                            let l = crate::$m::Limits::none();
+                            let t = crate::Type::from_json(r#type, f)?;
+                            let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
                                 .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
-                            let t = crate::$m::Type::from_json(r#type, f)?;
-                            let l = crate::$m::Limits::none();
+                            let t = crate::Type::from_json(r#type, f)?;
+                            let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
                         }
@@ -138,14 +117,14 @@ macro_rules! run_x {
                             let mut de =
                                 serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
                             loop {
-                                let t = match crate::$m::Type::deserialize_json(r#type, &mut de) {
+                                let t = match crate::Type::deserialize_json(r#type, &mut de) {
                                     Ok(t) => t,
-                                    Err(crate::$m::Error::Json(ref inner)) if inner.is_eof() => {
+                                    Err(crate::Error::Json(ref inner)) if inner.is_eof() => {
                                         break;
                                     }
                                     Err(e) => Err(e)?,
                                 };
-                                let l = crate::$m::Limits::none();
+                                let l = crate::Limits::none();
                                 stdout()
                                     .write_all(&t.to_xdr(l)?)
                                     .map_err(Error::WriteOutput)?;
@@ -165,12 +144,8 @@ impl Cmd {
     /// ## Errors
     ///
     /// If the command is configured with state that is invalid.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        let result = match channel {
-            Channel::Curr => self.run_curr(),
-            Channel::Next => self.run_next(),
-        };
-
+    pub fn run(&self) -> Result<(), Error> {
+        let result = self.run_inner();
         match result {
             Ok(()) => Ok(()),
             Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
@@ -178,6 +153,5 @@ impl Cmd {
         }
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 }

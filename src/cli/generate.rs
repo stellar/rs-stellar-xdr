@@ -3,8 +3,6 @@ pub mod default;
 
 use clap::{Args, Subcommand};
 
-use crate::cli::Channel;
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{0}")]
@@ -37,10 +35,10 @@ impl Cmd {
     /// ## Panics
     ///
     /// If the sub-command panics.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
+    pub fn run(&self) -> Result<(), Error> {
         match &self.sub {
-            Sub::Default(c) => c.run(channel)?,
-            Sub::Arbitrary(c) => c.run(channel)?,
+            Sub::Default(c) => c.run()?,
+            Sub::Arbitrary(c) => c.run()?,
         }
         Ok(())
     }

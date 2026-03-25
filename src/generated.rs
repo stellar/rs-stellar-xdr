@@ -1,73 +1,73 @@
 // Module  is generated from:
-//  xdr/curr/Stellar-SCP.x
-//  xdr/curr/Stellar-contract-config-setting.x
-//  xdr/curr/Stellar-contract-env-meta.x
-//  xdr/curr/Stellar-contract-meta.x
-//  xdr/curr/Stellar-contract-spec.x
-//  xdr/curr/Stellar-contract.x
-//  xdr/curr/Stellar-exporter.x
-//  xdr/curr/Stellar-internal.x
-//  xdr/curr/Stellar-ledger-entries.x
-//  xdr/curr/Stellar-ledger.x
-//  xdr/curr/Stellar-overlay.x
-//  xdr/curr/Stellar-transaction.x
-//  xdr/curr/Stellar-types.x
+//  xdr/Stellar-SCP.x
+//  xdr/Stellar-contract-config-setting.x
+//  xdr/Stellar-contract-env-meta.x
+//  xdr/Stellar-contract-meta.x
+//  xdr/Stellar-contract-spec.x
+//  xdr/Stellar-contract.x
+//  xdr/Stellar-exporter.x
+//  xdr/Stellar-internal.x
+//  xdr/Stellar-ledger-entries.x
+//  xdr/Stellar-ledger.x
+//  xdr/Stellar-overlay.x
+//  xdr/Stellar-transaction.x
+//  xdr/Stellar-types.x
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
 pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     (
-        "xdr/curr/Stellar-SCP.x",
+        "xdr/Stellar-SCP.x",
         "6aed428fb6c2d000f5bc1eef0ba685d6108f3faa96208ffa588c0e2990813939",
     ),
     (
-        "xdr/curr/Stellar-contract-config-setting.x",
+        "xdr/Stellar-contract-config-setting.x",
         "a034a3eb4d8b94f5c4c573fe14a1afc548aa316e1e897aa70e5a1688aada3c77",
     ),
     (
-        "xdr/curr/Stellar-contract-env-meta.x",
+        "xdr/Stellar-contract-env-meta.x",
         "75a271414d852096fea3283c63b7f2a702f2905f78fc28eb60ec7d7bd366a780",
     ),
     (
-        "xdr/curr/Stellar-contract-meta.x",
+        "xdr/Stellar-contract-meta.x",
         "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
     ),
     (
-        "xdr/curr/Stellar-contract-spec.x",
+        "xdr/Stellar-contract-spec.x",
         "7d99679155f6ce029f4f2bd8e1bf09524ef2f3e4ca8973265085cfcfdbdae987",
     ),
     (
-        "xdr/curr/Stellar-contract.x",
+        "xdr/Stellar-contract.x",
         "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982",
     ),
     (
-        "xdr/curr/Stellar-exporter.x",
+        "xdr/Stellar-exporter.x",
         "a00c83d02e8c8382e06f79a191f1fb5abd097a4bbcab8481c67467e3270e0529",
     ),
     (
-        "xdr/curr/Stellar-internal.x",
+        "xdr/Stellar-internal.x",
         "227835866c1b2122d1eaf28839ba85ea7289d1cb681dda4ca619c2da3d71fe00",
     ),
     (
-        "xdr/curr/Stellar-ledger-entries.x",
+        "xdr/Stellar-ledger-entries.x",
         "5157cad76b008b3606fe5bc2cfe87596827d8e02d16cbec3cedc297bb571aa54",
     ),
     (
-        "xdr/curr/Stellar-ledger.x",
+        "xdr/Stellar-ledger.x",
         "cf936606885dd265082e553aa433c2cf47b720b6d58839b154cf71096b885d1e",
     ),
     (
-        "xdr/curr/Stellar-overlay.x",
+        "xdr/Stellar-overlay.x",
         "8c9b9c13c86fa4672f03d741705b41e7221be0fc48e1ea6eeb1ba07d31ec0723",
     ),
     (
-        "xdr/curr/Stellar-transaction.x",
+        "xdr/Stellar-transaction.x",
         "30d03669fb29ca48fdda1c84258473fe6d798f3b881c0224b34df1a1f9e21e80",
     ),
     (
-        "xdr/curr/Stellar-types.x",
-        "4d7a1d1f1fa0034ddbff27d8a533e59b6154bef295306c6256066def77a5a999",
+        "xdr/Stellar-types.x",
+        "f3a360cbb07f24637ead188e885a0b4a47b903ca475f9798be5fa12453075e28",
     ),
 ];
 
@@ -54563,6 +54563,54 @@ impl WriteXdr for ClaimableBalanceId {
     }
 }
 
+/// TestNextType is an XDR Struct defined as:
+///
+/// ```text
+/// struct TestNextType
+/// {
+///     int32 value;
+/// };
+/// ```
+///
+#[cfg(feature = "test_feature")]
+#[cfg_attr(feature = "alloc", derive(Default))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TestNextType {
+    pub value: i32,
+}
+
+#[cfg(feature = "test_feature")]
+impl ReadXdr for TestNextType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                value: i32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+#[cfg(feature = "test_feature")]
+impl WriteXdr for TestNextType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -55039,6 +55087,8 @@ pub enum TypeVariant {
     PoolId,
     ClaimableBalanceIdType,
     ClaimableBalanceId,
+    #[cfg(feature = "test_feature")]
+    TestNextType,
 }
 
 impl TypeVariant {
@@ -55511,6 +55561,8 @@ impl TypeVariant {
         TypeVariant::PoolId,
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
+        #[cfg(feature = "test_feature")]
+        TypeVariant::TestNextType,
     ];
     pub const VARIANTS: [TypeVariant; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -55990,6 +56042,8 @@ impl TypeVariant {
         "PoolId",
         "ClaimableBalanceIdType",
         "ClaimableBalanceId",
+        #[cfg(feature = "test_feature")]
+        "TestNextType",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -56487,6 +56541,8 @@ impl TypeVariant {
             Self::PoolId => "PoolId",
             Self::ClaimableBalanceIdType => "ClaimableBalanceIdType",
             Self::ClaimableBalanceId => "ClaimableBalanceId",
+            #[cfg(feature = "test_feature")]
+            Self::TestNextType => "TestNextType",
         }
     }
 
@@ -57185,6 +57241,8 @@ impl TypeVariant {
             Self::PoolId => gen.into_root_schema_for::<PoolId>(),
             Self::ClaimableBalanceIdType => gen.into_root_schema_for::<ClaimableBalanceIdType>(),
             Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
+            #[cfg(feature = "test_feature")]
+            Self::TestNextType => gen.into_root_schema_for::<TestNextType>(),
         }
     }
 }
@@ -57705,6 +57763,8 @@ impl core::str::FromStr for TypeVariant {
             "PoolId" => Ok(Self::PoolId),
             "ClaimableBalanceIdType" => Ok(Self::ClaimableBalanceIdType),
             "ClaimableBalanceId" => Ok(Self::ClaimableBalanceId),
+            #[cfg(feature = "test_feature")]
+            "TestNextType" => Ok(Self::TestNextType),
             _ => Err(Error::Invalid),
         }
     }
@@ -58187,6 +58247,8 @@ pub enum Type {
     PoolId(Box<PoolId>),
     ClaimableBalanceIdType(Box<ClaimableBalanceIdType>),
     ClaimableBalanceId(Box<ClaimableBalanceId>),
+    #[cfg(feature = "test_feature")]
+    TestNextType(Box<TestNextType>),
 }
 
 impl Type {
@@ -58659,6 +58721,8 @@ impl Type {
         TypeVariant::PoolId,
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
+        #[cfg(feature = "test_feature")]
+        TypeVariant::TestNextType,
     ];
     pub const VARIANTS: [TypeVariant; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -59138,6 +59202,8 @@ impl Type {
         "PoolId",
         "ClaimableBalanceIdType",
         "ClaimableBalanceId",
+        #[cfg(feature = "test_feature")]
+        "TestNextType",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -61196,6 +61262,10 @@ impl Type {
                 Ok(Self::ClaimableBalanceId(Box::new(
                     ClaimableBalanceId::read_xdr(r)?,
                 )))
+            }),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => r.with_limited_depth(|r| {
+                Ok(Self::TestNextType(Box::new(TestNextType::read_xdr(r)?)))
             }),
         }
     }
@@ -63264,6 +63334,11 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Box::new(
                 ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
+            ),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => Box::new(
+                ReadXdrIter::<_, TestNextType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TestNextType(Box::new(t)))),
             ),
         }
     }
@@ -65594,6 +65669,11 @@ impl Type {
                 ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
             ),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => Box::new(
+                ReadXdrIter::<_, Frame<TestNextType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TestNextType(Box::new(t.0)))),
+            ),
         }
     }
 
@@ -67505,6 +67585,11 @@ impl Type {
                 ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => Box::new(
+                ReadXdrIter::<_, TestNextType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TestNextType(Box::new(t)))),
+            ),
         }
     }
 
@@ -68828,6 +68913,10 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => {
+                Ok(Self::TestNextType(Box::new(serde_json::from_reader(r)?)))
+            }
         }
     }
 
@@ -70324,6 +70413,10 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => Ok(Self::TestNextType(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
         }
     }
 
@@ -71653,6 +71746,10 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 ClaimableBalanceId::arbitrary(u)?,
             ))),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => {
+                Ok(Self::TestNextType(Box::new(TestNextType::arbitrary(u)?)))
+            }
         }
     }
 
@@ -72315,6 +72412,8 @@ impl Type {
             TypeVariant::PoolId => Self::PoolId(Box::default()),
             TypeVariant::ClaimableBalanceIdType => Self::ClaimableBalanceIdType(Box::default()),
             TypeVariant::ClaimableBalanceId => Self::ClaimableBalanceId(Box::default()),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => Self::TestNextType(Box::default()),
         }
     }
 
@@ -72792,6 +72891,8 @@ impl Type {
             Self::PoolId(ref v) => v.as_ref(),
             Self::ClaimableBalanceIdType(ref v) => v.as_ref(),
             Self::ClaimableBalanceId(ref v) => v.as_ref(),
+            #[cfg(feature = "test_feature")]
+            Self::TestNextType(ref v) => v.as_ref(),
         }
     }
 
@@ -73293,6 +73394,8 @@ impl Type {
             Self::PoolId(_) => "PoolId",
             Self::ClaimableBalanceIdType(_) => "ClaimableBalanceIdType",
             Self::ClaimableBalanceId(_) => "ClaimableBalanceId",
+            #[cfg(feature = "test_feature")]
+            Self::TestNextType(_) => "TestNextType",
         }
     }
 
@@ -73844,6 +73947,8 @@ impl Type {
             Self::PoolId(_) => TypeVariant::PoolId,
             Self::ClaimableBalanceIdType(_) => TypeVariant::ClaimableBalanceIdType,
             Self::ClaimableBalanceId(_) => TypeVariant::ClaimableBalanceId,
+            #[cfg(feature = "test_feature")]
+            Self::TestNextType(_) => TypeVariant::TestNextType,
         }
     }
 }
@@ -74334,6 +74439,8 @@ impl WriteXdr for Type {
             Self::PoolId(v) => v.write_xdr(w),
             Self::ClaimableBalanceIdType(v) => v.write_xdr(w),
             Self::ClaimableBalanceId(v) => v.write_xdr(w),
+            #[cfg(feature = "test_feature")]
+            Self::TestNextType(v) => v.write_xdr(w),
         }
     }
 }

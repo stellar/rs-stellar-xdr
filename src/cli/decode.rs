@@ -5,16 +5,14 @@ use std::{fmt::Debug, str::FromStr};
 use clap::{Args, ValueEnum};
 use serde::Serialize;
 
-use crate::cli::{util, Channel};
+use crate::cli::util;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unknown type {0}, choose one of {1:?}")]
     UnknownType(String, &'static [&'static str]),
     #[error("error decoding XDR: {0}")]
-    ReadXdrCurr(#[from] crate::curr::Error),
-    #[error("error decoding XDR: {0}")]
-    ReadXdrNext(#[from] crate::next::Error),
+    ReadXdr(#[from] crate::Error),
     #[error("error reading file: {0}")]
     ReadFile(std::io::Error),
     #[error("error writing output: {0}")]
@@ -75,40 +73,42 @@ impl Default for OutputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let mut input = util::parse_input(&self.input).map_err(Error::ReadFile)?;
-            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+            let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
             for f in &mut input {
                 match self.input_format {
                     InputFormat::Single => {
-                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        let t = crate::$m::Type::read_xdr_to_end(r#type, &mut l)?;
+                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let t = crate::Type::read_xdr_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        let t = crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?;
+                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let t = crate::Type::read_xdr_base64_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
-                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        for t in crate::$m::Type::read_xdr_iter(r#type, &mut l) {
+                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        for t in crate::Type::read_xdr_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        for t in crate::$m::Type::read_xdr_base64_iter(r#type, &mut l) {
+                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        for t in crate::Type::read_xdr_base64_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
-                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        for t in crate::$m::Type::read_xdr_framed_iter(r#type, &mut l) {
+                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        for t in crate::Type::read_xdr_framed_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
@@ -125,12 +125,8 @@ impl Cmd {
     /// ## Errors
     ///
     /// If the command is configured with state that is invalid.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        let result = match channel {
-            Channel::Curr => self.run_curr(),
-            Channel::Next => self.run_next(),
-        };
-
+    pub fn run(&self) -> Result<(), Error> {
+        let result = self.run_inner();
         match result {
             Ok(()) => Ok(()),
             Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
@@ -138,8 +134,7 @@ impl Cmd {
         }
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 
     fn out(&self, v: &(impl Serialize + Debug)) -> Result<(), Error> {
         let text = match self.output_format {

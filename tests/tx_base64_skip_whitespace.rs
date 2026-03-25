@@ -1,13 +1,6 @@
-#![cfg(all(
-    any(feature = "curr", feature = "next"),
-    not(all(feature = "curr", feature = "next"))
-))]
 #![cfg(all(feature = "std", feature = "base64"))]
 
-#[cfg(feature = "curr")]
-use stellar_xdr::curr as stellar_xdr;
-#[cfg(feature = "next")]
-use stellar_xdr::next as stellar_xdr;
+use stellar_xdr;
 
 use base64::Engine;
 use std::assert_eq;

@@ -1,7 +1,5 @@
 use clap::{Args, ValueEnum};
 
-use crate::cli::Channel;
-
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
@@ -29,8 +27,10 @@ impl Cmd {
     /// ## Panics
     ///
     /// If the list cannot be rendered as JSON.
-    pub fn run(&self, channel: &Channel) {
-        let types = Self::types(channel);
+    pub fn run(&self) {
+        let types: &[&str] = &crate::TypeVariant::VARIANTS_STR;
+        let mut types: Vec<&'static str> = types.to_vec();
+        types.sort_unstable();
         match self.output {
             OutputFormat::Plain => {
                 for t in types {
@@ -44,15 +44,5 @@ impl Cmd {
                 println!("{}", serde_json::to_string_pretty(&types).unwrap());
             }
         }
-    }
-
-    fn types(channel: &Channel) -> Vec<&'static str> {
-        let types: &[&str] = match channel {
-            Channel::Curr => &crate::curr::TypeVariant::VARIANTS_STR,
-            Channel::Next => &crate::next::TypeVariant::VARIANTS_STR,
-        };
-        let mut types: Vec<&'static str> = types.to_vec();
-        types.sort_unstable();
-        types
     }
 }

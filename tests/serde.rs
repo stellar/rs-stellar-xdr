@@ -1,20 +1,11 @@
-#![cfg(all(
-    any(feature = "curr", feature = "next"),
-    not(all(feature = "curr", feature = "next"))
-))]
 #![cfg(all(feature = "std", feature = "serde"))]
 
-#[cfg(feature = "curr")]
-use stellar_xdr::curr as stellar_xdr;
-#[cfg(feature = "next")]
-use stellar_xdr::next as stellar_xdr;
+use stellar_xdr;
 
 use stellar_xdr::{BytesM, Hash, StringM, VecM};
 
-#[cfg(feature = "curr")]
 use stellar_xdr::{AccountId, Int128Parts};
 
-#[cfg(feature = "curr")]
 use std::str::FromStr;
 
 #[test]
@@ -37,8 +28,7 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
         ))?,
         "\"3031323334353637383930313233343536373839303133343536373839303132\""
     );
-    #[cfg(feature = "curr")]
-    assert_eq!(
+        assert_eq!(
         serde_json::to_string(&AccountId::from_str(
             "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
         )?)?,
@@ -66,8 +56,7 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
         <_ as Into<Hash>>::into(*b"01234567890123456789013456789012"),
     );
 
-    #[cfg(feature = "curr")]
-    assert_eq!(
+        assert_eq!(
         AccountId::from_str("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF")?,
         serde_json::from_str("\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\"")?,
     );
@@ -75,7 +64,6 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[cfg(feature = "curr")]
 #[test]
 fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(

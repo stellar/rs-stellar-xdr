@@ -8,7 +8,7 @@ mod util;
 mod version;
 pub mod xfile;
 
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 use std::{ffi::OsString, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
@@ -23,9 +23,6 @@ use std::{ffi::OsString, fmt::Debug};
     infer_subcommands = true,
 )]
 pub struct Root {
-    /// Channel of XDR to operate on
-    #[arg(value_enum, default_value_t)]
-    channel: Channel,
     #[command(subcommand)]
     cmd: Cmd,
 }
@@ -38,30 +35,16 @@ impl Root {
     /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
         match &self.cmd {
-            Cmd::Types(c) => c.run(&self.channel)?,
-            Cmd::Guess(c) => c.run(&self.channel)?,
-            Cmd::Decode(c) => c.run(&self.channel)?,
-            Cmd::Encode(c) => c.run(&self.channel)?,
-            Cmd::Generate(c) => c.run(&self.channel)?,
-            Cmd::Compare(c) => c.run(&self.channel)?,
-            Cmd::Xfile(c) => c.run(&self.channel)?,
+            Cmd::Types(c) => c.run()?,
+            Cmd::Guess(c) => c.run()?,
+            Cmd::Decode(c) => c.run()?,
+            Cmd::Encode(c) => c.run()?,
+            Cmd::Generate(c) => c.run()?,
+            Cmd::Compare(c) => c.run()?,
+            Cmd::Xfile(c) => c.run()?,
             Cmd::Version => version::Cmd::run(),
         }
         Ok(())
-    }
-}
-
-#[derive(ValueEnum, Debug, Clone)]
-pub enum Channel {
-    #[value(name = "+curr")]
-    Curr,
-    #[value(name = "+next")]
-    Next,
-}
-
-impl Default for Channel {
-    fn default() -> Self {
-        Self::Curr
     }
 }
 

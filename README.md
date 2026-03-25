@@ -19,10 +19,10 @@ stellar-xdr = { version = "...", default-features = true, features = [] }
 
 #### Features
 
-The crate has several features, tiers of functionality, ancillary
-functionality, and channels of XDR.
+The crate has several features, tiers of functionality, and ancillary
+functionality.
 
-Default features: `std`, `curr`.
+Default features: `std`.
 
 Tiers of functionality:
 
@@ -57,15 +57,6 @@ Automatically enabled when serde is enabled.
 Features marked experimental may disappear at anytime, see breaking changes
 at anytime, or and may be minimal implementations instead of complete.
 
-Channels of XDR:
-
-- `curr` – XDR types built from the `stellar/stellar-xdr` `curr` branch.
-- `next` – XDR types built from the `stellar/stellar-xdr` `next` branch.
-
-If a single channel is enabled the types are available at the root of the
-crate. If multiple channels are enabled they are available in modules at
-the root of the crate.
-
 ### CLI
 
 To use the CLI:
@@ -85,7 +76,7 @@ AAAAA...
 
 Parse a `ScSpecEntry` stream from a contract:
 ```console
-stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted << -
+stellar-xdr decode --type ScSpecEntry --input stream-base64 --output json-formatted << -
 AAAAA...
 -
 ```

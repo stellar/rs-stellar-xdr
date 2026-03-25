@@ -27,10 +27,10 @@
 //!
 //! #### Features
 //!
-//! The crate has several features, tiers of functionality, ancillary
-//! functionality, and channels of XDR.
+//! The crate has several features, tiers of functionality, and ancillary
+//! functionality.
 //!
-//! Default features: `std`, `curr`.
+//! Default features: `std`.
 //!
 //! Tiers of functionality:
 //!
@@ -65,15 +65,6 @@
 //! Features marked experimental may disappear at anytime, see breaking changes
 //! at anytime, or and may be minimal implementations instead of complete.
 //!
-//! Channels of XDR:
-//!
-//! - `curr` – XDR types built from the `stellar/stellar-xdr` `curr` branch.
-//! - `next` – XDR types built from the `stellar/stellar-xdr` `next` branch.
-//!
-//! If a single channel is enabled the types are available at the root of the
-//! crate. If multiple channels are enabled they are available in modules at
-//! the root of the crate.
-//!
 //! ### CLI
 //!
 //! To use the CLI:
@@ -93,7 +84,7 @@
 //!
 //! Parse a `ScSpecEntry` stream from a contract:
 //! ```console
-//! stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted << -
+//! stellar-xdr decode --type ScSpecEntry --input stream-base64 --output json-formatted << -
 //! AAAAA...
 //! -
 //! ```
@@ -109,39 +100,44 @@ pub struct Version<'a> {
     pub pkg: &'a str,
     pub rev: &'a str,
     pub xdr: &'a str,
-    pub xdr_curr: &'a str,
-    pub xdr_next: &'a str,
 }
 pub const VERSION: Version = Version {
     pkg: env!("CARGO_PKG_VERSION"),
     rev: env!("GIT_REVISION"),
-    xdr: if cfg!(all(feature = "curr", feature = "next")) {
-        "curr,next"
-    } else if cfg!(feature = "curr") {
-        "curr"
-    } else if cfg!(feature = "next") {
-        "next"
-    } else {
-        ""
-    },
-    xdr_curr: include_str!("../xdr/curr-version"),
-    xdr_next: include_str!("../xdr/next-version"),
+    xdr: include_str!("../xdr-version"),
 };
 
 #[cfg(feature = "schemars")]
 pub mod schemars;
 
-#[cfg(feature = "curr")]
-pub mod curr;
+#[allow(clippy::empty_line_after_doc_comments)]
+mod generated;
+mod ledgerkey;
+pub use generated::*;
 
-#[cfg(feature = "next")]
-pub mod next;
+mod default;
+mod jsonschema;
+mod str;
+
+mod scval_conversions;
+pub use scval_conversions::*;
+mod account_conversions;
+mod transaction_conversions;
+
+mod scval_validations;
+pub use scval_validations::*;
+
+#[cfg(feature = "alloc")]
+mod scmap;
+
+mod tx_auths;
+mod tx_hash;
 
 #[cfg(feature = "cli")]
 pub mod cli;
 
-#[cfg(all(any(feature = "curr", feature = "next"), feature = "alloc"))]
+#[cfg(feature = "alloc")]
 pub(crate) mod num256;
 
-#[cfg(all(any(feature = "curr", feature = "next"), feature = "alloc"))]
+#[cfg(feature = "alloc")]
 pub(crate) mod num128;

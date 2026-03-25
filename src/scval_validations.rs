@@ -76,7 +76,7 @@ impl Validate for ScMap {
 
 #[cfg(test)]
 mod test {
-    use crate::curr::ScSymbol;
+    use crate::ScSymbol;
 
     use super::{Error, ScVal, Validate};
 

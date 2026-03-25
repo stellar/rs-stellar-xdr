@@ -2,8 +2,6 @@ pub mod preprocess;
 
 use clap::{Args, Subcommand};
 
-use crate::cli::Channel;
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{0}")]
@@ -29,7 +27,7 @@ impl Cmd {
     /// ## Errors
     ///
     /// If the sub-command is configured with state that is invalid.
-    pub fn run(&self, _channel: &Channel) -> Result<(), Error> {
+    pub fn run(&self) -> Result<(), Error> {
         match &self.sub {
             Sub::Preprocess(c) => c.run()?,
         }

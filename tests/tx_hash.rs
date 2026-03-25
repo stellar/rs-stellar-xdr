@@ -1,16 +1,8 @@
-#![cfg(all(
-    feature = "std",
-    feature = "base64",
-    any(feature = "curr", feature = "next"),
-    not(all(feature = "curr", feature = "next"))
-))]
+#![cfg(all(feature = "std", feature = "base64"))]
 
 use bytes_lit::bytes;
 
-#[cfg(feature = "curr")]
-use stellar_xdr::curr as stellar_xdr;
-#[cfg(feature = "next")]
-use stellar_xdr::next as stellar_xdr;
+use stellar_xdr;
 
 use stellar_xdr::{
     FeeBumpTransaction, FeeBumpTransactionEnvelope, FeeBumpTransactionInnerTx, Limits, Memo,

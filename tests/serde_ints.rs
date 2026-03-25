@@ -1,7 +1,5 @@
-#![cfg(feature = "curr")]
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use stellar_xdr::curr as stellar_xdr;
 use stellar_xdr::{ConfigSettingEntry, ScNonceKey, ScVal, SequenceNumber};
 
 #[test]

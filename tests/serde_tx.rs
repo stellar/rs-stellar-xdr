@@ -1,7 +1,4 @@
-#![cfg(feature = "curr")]
 #![cfg(all(feature = "std", feature = "serde"))]
-
-use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
     AccountId, AlphaNum4, AssetCode4, ChangeTrustAsset, ChangeTrustOp, Memo, MuxedAccount,
@@ -9,7 +6,6 @@ use stellar_xdr::{
     TransactionExt, TransactionV1Envelope, Uint256,
 };
 
-#[cfg(feature = "curr")]
 #[test]
 fn test_serde_tx() -> Result<(), Box<dyn std::error::Error>> {
     let te = TransactionEnvelope::Tx(TransactionV1Envelope {

@@ -8,16 +8,12 @@ use std::{
 
 use clap::{Args, ValueEnum};
 
-use crate::cli::Channel;
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unknown type {0}, choose one of {1:?}")]
     UnknownType(String, &'static [&'static str]),
     #[error("error decoding XDR: {0}")]
-    ReadXdrCurr(#[from] crate::curr::Error),
-    #[error("error decoding XDR: {0}")]
-    ReadXdrNext(#[from] crate::next::Error),
+    ReadXdr(#[from] crate::Error),
     #[error("error reading file: {0}")]
     ReadFile(std::io::Error),
     #[error("error writing output: {0}")]
@@ -62,34 +58,36 @@ impl Default for InputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let f1 = File::open(&self.left).map_err(Error::ReadFile)?;
             let f2 = File::open(&self.right).map_err(Error::ReadFile)?;
-            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+            let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
             let (t1, t2) = match self.input {
                 InputFormat::Single => {
                     let t1 = {
-                        let mut l1 = crate::$m::Limited::new(f1, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_to_end(r#type, &mut l1)?
+                        let mut l1 = crate::Limited::new(f1, crate::Limits::none());
+                        crate::Type::read_xdr_to_end(r#type, &mut l1)?
                     };
                     let t2 = {
-                        let mut l = crate::$m::Limited::new(f2, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_to_end(r#type, &mut l)?
+                        let mut l = crate::Limited::new(f2, crate::Limits::none());
+                        crate::Type::read_xdr_to_end(r#type, &mut l)?
                     };
                     (t1, t2)
                 }
                 InputFormat::SingleBase64 => {
                     let t1 = {
-                        let mut l = crate::$m::Limited::new(f1, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?
+                        let mut l = crate::Limited::new(f1, crate::Limits::none());
+                        crate::Type::read_xdr_base64_to_end(r#type, &mut l)?
                     };
                     let t2 = {
-                        let mut l = crate::$m::Limited::new(f2, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?
+                        let mut l = crate::Limited::new(f2, crate::Limits::none());
+                        crate::Type::read_xdr_base64_to_end(r#type, &mut l)?
                     };
                     (t1, t2)
                 }
@@ -107,12 +105,8 @@ impl Cmd {
     /// ## Errors
     ///
     /// If the command is configured with state that is invalid.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        let result = match channel {
-            Channel::Curr => self.run_curr(),
-            Channel::Next => self.run_next(),
-        };
-
+    pub fn run(&self) -> Result<(), Error> {
+        let result = self.run_inner();
         match result {
             Ok(()) => Ok(()),
             Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
@@ -120,6 +114,5 @@ impl Cmd {
         }
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 }

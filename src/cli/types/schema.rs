@@ -1,6 +1,6 @@
 use clap::{Args, ValueEnum};
 
-use crate::{cli::Channel, schemars};
+use crate::schemars;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -33,12 +33,14 @@ impl Default for OutputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
             use std::str::FromStr;
-            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+            let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
             let settings = match self.output {
                 OutputFormat::JsonSchemaDraft201909 => schemars::settings_draft201909(),
@@ -54,14 +56,9 @@ macro_rules! run_x {
 impl Cmd {
     /// # Errors
     /// Fails if the type is unknown or if the JSON generation fails.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
-        }
-        Ok(())
+    pub fn run(&self) -> Result<(), Error> {
+        self.run_inner()
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 }

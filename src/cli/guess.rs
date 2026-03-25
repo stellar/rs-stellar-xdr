@@ -5,15 +5,11 @@ use std::fs::File;
 use std::io::{self, stdin, stdout, Cursor, Read, Write};
 use std::path::Path;
 
-use crate::cli::Channel;
-
 #[derive(thiserror::Error, Debug)]
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[error("error decoding XDR: {0}")]
-    ReadXdrCurr(#[from] crate::curr::Error),
-    #[error("error decoding XDR: {0}")]
-    ReadXdrNext(#[from] crate::next::Error),
+    ReadXdr(#[from] crate::Error),
     #[error("error reading file: {0}")]
     ReadFile(std::io::Error),
     #[error("error writing output: {0}")]
@@ -66,31 +62,33 @@ impl Default for OutputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let mut rr = ResetRead::new(self.input()?);
             let mut guessed = false;
-            'variants: for v in crate::$m::TypeVariant::VARIANTS {
+            'variants: for v in crate::TypeVariant::VARIANTS {
                 rr.reset();
                 let count: usize = match self.input_format {
                     InputFormat::Single => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_to_end(v, &mut l)
+                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        crate::Type::read_xdr_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
                             .unwrap_or_default()
                     }
                     InputFormat::SingleBase64 => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_base64_to_end(v, &mut l)
+                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        crate::Type::read_xdr_base64_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
                             .unwrap_or_default()
                     }
                     InputFormat::Stream => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        let iter = crate::$m::Type::read_xdr_iter(v, &mut l);
+                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let iter = crate::Type::read_xdr_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
                         for v in iter {
@@ -102,8 +100,8 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamBase64 => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        let iter = crate::$m::Type::read_xdr_base64_iter(v, &mut l);
+                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let iter = crate::Type::read_xdr_base64_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
                         for v in iter {
@@ -115,8 +113,8 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamFramed => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        let iter = crate::$m::Type::read_xdr_framed_iter(v, &mut l);
+                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let iter = crate::Type::read_xdr_framed_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
                         for v in iter {
@@ -147,12 +145,8 @@ impl Cmd {
     /// ## Errors
     ///
     /// If the command is configured with state that is invalid.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        let result = match channel {
-            Channel::Curr => self.run_curr(),
-            Channel::Next => self.run_next(),
-        };
-
+    pub fn run(&self) -> Result<(), Error> {
+        let result = self.run_inner();
         match result {
             Ok(()) => Ok(()),
             Err(Error::WriteOutput(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
@@ -160,8 +154,7 @@ impl Cmd {
         }
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 
     fn input(&self) -> Result<Box<dyn Read>, Error> {
         if let Some(input) = &self.input {

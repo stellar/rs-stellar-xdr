@@ -1,7 +1,7 @@
 use clap::{Args, ValueEnum};
-
-use crate::{cli::Channel, schemars};
 use std::path::PathBuf;
+
+use crate::schemars;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -35,10 +35,12 @@ impl Default for OutputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            for t in crate::$m::TypeVariant::VARIANTS {
+            for t in crate::TypeVariant::VARIANTS {
                 let settings = match self.output {
                     OutputFormat::JsonSchemaDraft201909 => schemars::settings_draft201909(),
                 };
@@ -55,14 +57,9 @@ macro_rules! run_x {
 impl Cmd {
     /// # Errors
     /// Fails if the JSON generation fails.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
-        }
-        Ok(())
+    pub fn run(&self) -> Result<(), Error> {
+        self.run_inner()
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 }

@@ -40,11 +40,12 @@ serde_json = "1.0.89"
 bytes-lit = "0.0.5"
 
 [features]
-default = ["std", "curr"]
+default = ["std"]
 std = ["alloc", "dep:sha2"]
 alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
-curr = []
-next = []
+
+# Features from the XDR
+test_feature = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]
@@ -56,7 +57,7 @@ hex = []
 rand = ["dep:rand"]
 
 # Features for the CLI.
-cli = ["std", "curr", "next", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum"]
+cli = ["std", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum"]
 
 [package.metadata.docs.rs]
 all-features = true

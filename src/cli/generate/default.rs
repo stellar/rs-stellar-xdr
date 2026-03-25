@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::cli::{util, Channel};
+use crate::cli::util;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -13,53 +13,11 @@ pub enum Error {
     #[error("error reading file: {0}")]
     ReadFile(#[from] std::io::Error),
     #[error("error generating XDR: {0}")]
-    WriteXdrCurr(crate::curr::Error),
-    #[error("error generating XDR: {0}")]
-    WriteXdrNext(crate::next::Error),
+    WriteXdr(#[from] crate::Error),
     #[error("error generating JSON: {0}")]
     GenerateJson(#[from] serde_json::Error),
-    #[error("error generating arbitrary value: {0}")]
-    Arbitrary(#[from] arbitrary::Error),
     #[error("type doesn't have a text representation, use 'json' as output")]
     TextUnsupported,
-}
-
-impl From<crate::curr::Error> for Error {
-    fn from(e: crate::curr::Error) -> Self {
-        match e {
-            crate::curr::Error::Invalid
-            | crate::curr::Error::Unsupported
-            | crate::curr::Error::LengthExceedsMax
-            | crate::curr::Error::LengthMismatch
-            | crate::curr::Error::NonZeroPadding
-            | crate::curr::Error::Utf8Error(_)
-            | crate::curr::Error::InvalidHex
-            | crate::curr::Error::Io(_)
-            | crate::curr::Error::DepthLimitExceeded
-            | crate::curr::Error::LengthLimitExceeded
-            | crate::curr::Error::Arbitrary(_)
-            | crate::curr::Error::Json(_) => Error::WriteXdrCurr(e),
-        }
-    }
-}
-
-impl From<crate::next::Error> for Error {
-    fn from(e: crate::next::Error) -> Self {
-        match e {
-            crate::next::Error::Invalid
-            | crate::next::Error::Unsupported
-            | crate::next::Error::LengthExceedsMax
-            | crate::next::Error::LengthMismatch
-            | crate::next::Error::NonZeroPadding
-            | crate::next::Error::Utf8Error(_)
-            | crate::next::Error::InvalidHex
-            | crate::next::Error::Io(_)
-            | crate::next::Error::DepthLimitExceeded
-            | crate::next::Error::LengthLimitExceeded
-            | crate::next::Error::Arbitrary(_)
-            | crate::next::Error::Json(_) => Error::WriteXdrNext(e),
-        }
-    }
 }
 
 /// Generate default XDR values
@@ -93,21 +51,23 @@ impl Default for OutputFormat {
     }
 }
 
+// TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
+// channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
-    ($f:ident, $m:ident) => {
+    ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            use crate::$m::WriteXdr;
-            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
+            use crate::WriteXdr;
+            let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
-            let v = crate::$m::Type::default(r#type);
+            let v = crate::Type::default(r#type);
             match self.output_format {
                 OutputFormat::Single => {
-                    let l = crate::$m::Limits::none();
+                    let l = crate::Limits::none();
                     stdout().write_all(&v.to_xdr(l)?)?
                 }
                 OutputFormat::SingleBase64 => {
-                    let l = crate::$m::Limits::none();
+                    let l = crate::Limits::none();
                     println!("{}", v.to_xdr_base64(l)?)
                 }
                 OutputFormat::Json => {
@@ -133,14 +93,9 @@ impl Cmd {
     /// ## Errors
     ///
     /// If the command is configured with state that is invalid.
-    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
-        match channel {
-            Channel::Curr => self.run_curr()?,
-            Channel::Next => self.run_next()?,
-        }
-        Ok(())
+    pub fn run(&self) -> Result<(), Error> {
+        self.run_inner()
     }
 
-    run_x!(run_curr, curr);
-    run_x!(run_next, next);
+    run_x!(run_inner);
 }

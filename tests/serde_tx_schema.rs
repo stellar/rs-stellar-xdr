@@ -1,6 +1,6 @@
 #![cfg(all(feature = "schemars", feature = "serde", feature = "alloc"))]
 
-use stellar_xdr;
+
 
 #[allow(clippy::too_many_lines)]
 #[test]

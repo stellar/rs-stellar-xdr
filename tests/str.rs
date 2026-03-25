@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use stellar_xdr;
+
 
 use stellar_xdr::{
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,

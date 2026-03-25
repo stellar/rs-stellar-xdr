@@ -2,7 +2,7 @@
 
 use bytes_lit::bytes;
 
-use stellar_xdr;
+
 
 use stellar_xdr::{
     FeeBumpTransaction, FeeBumpTransactionEnvelope, FeeBumpTransactionInnerTx, Limits, Memo,

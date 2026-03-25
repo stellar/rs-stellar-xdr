@@ -1,6 +1,6 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
-use stellar_xdr;
+
 
 use base64::Engine;
 use std::assert_eq;

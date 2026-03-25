@@ -1,6 +1,6 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
-use stellar_xdr;
+
 
 use std::io::{self, Cursor};
 use stellar_xdr::Error;

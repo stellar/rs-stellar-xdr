@@ -1,6 +1,6 @@
 #![cfg(feature = "alloc")]
 
-use stellar_xdr;
+
 
 use stellar_xdr::{
     Asset, ContractId, Error, FeeBumpTransaction, FeeBumpTransactionEnvelope,

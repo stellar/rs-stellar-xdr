@@ -2,8 +2,6 @@
 
 use bytes_lit::bytes;
 
-
-
 use stellar_xdr::{
     FeeBumpTransaction, FeeBumpTransactionEnvelope, FeeBumpTransactionInnerTx, Limits, Memo,
     MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope, TransactionExt,

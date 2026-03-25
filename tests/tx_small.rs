@@ -1,6 +1,3 @@
-
-
-
 use stellar_xdr::{
     Error, Memo, MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,
     TransactionExt, TransactionV1Envelope, Uint256,

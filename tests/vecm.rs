@@ -1,7 +1,5 @@
 #![cfg(feature = "std")]
 
-
-
 use stellar_xdr::{BytesM, Limits, ReadXdr, ScVal, VecM};
 
 #[test]

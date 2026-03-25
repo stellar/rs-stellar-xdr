@@ -1,6 +1,3 @@
-
-
-
 use stellar_xdr::{BytesM, Error, Hash, StringM, VecM};
 
 #[test]

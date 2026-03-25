@@ -1,7 +1,5 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
-
-
 use base64::Engine;
 use std::assert_eq;
 use std::io::Cursor;

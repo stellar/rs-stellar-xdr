@@ -1,7 +1,5 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
-
-
 use std::io::{self, Cursor};
 use stellar_xdr::Error;
 use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};

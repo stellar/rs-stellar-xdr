@@ -1,7 +1,5 @@
 #![cfg(feature = "std")]
 
-
-
 use stellar_xdr::{
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
     Int128Parts, Int256Parts, MuxedAccount, MuxedAccountMed25519, MuxedEd25519Account, NodeId,

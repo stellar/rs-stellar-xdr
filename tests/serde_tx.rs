@@ -1,7 +1,5 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-
-
 use stellar_xdr::{
     AccountId, AlphaNum4, AssetCode4, ChangeTrustAsset, ChangeTrustOp, Memo, MuxedAccount,
     Operation, OperationBody, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,

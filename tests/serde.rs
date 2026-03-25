@@ -1,7 +1,5 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-
-
 use stellar_xdr::{BytesM, Hash, StringM, VecM};
 
 use stellar_xdr::{AccountId, Int128Parts};
@@ -28,7 +26,7 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
         ))?,
         "\"3031323334353637383930313233343536373839303133343536373839303132\""
     );
-        assert_eq!(
+    assert_eq!(
         serde_json::to_string(&AccountId::from_str(
             "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
         )?)?,
@@ -56,7 +54,7 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
         <_ as Into<Hash>>::into(*b"01234567890123456789013456789012"),
     );
 
-        assert_eq!(
+    assert_eq!(
         AccountId::from_str("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF")?,
         serde_json::from_str("\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\"")?,
     );

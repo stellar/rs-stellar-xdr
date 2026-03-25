@@ -1,7 +1,5 @@
 #![cfg(feature = "std")]
 
-
-
 use stellar_xdr::{Error, StringM};
 
 use std::str::FromStr;

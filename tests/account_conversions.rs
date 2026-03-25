@@ -1,7 +1,5 @@
 #![cfg(feature = "std")]
 
-
-
 use stellar_xdr::{AccountId, MuxedAccount, MuxedAccountMed25519, PublicKey, Uint256};
 
 #[test]

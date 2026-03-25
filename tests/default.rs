@@ -1,7 +1,5 @@
 #![cfg(feature = "alloc")]
 
-
-
 use stellar_xdr::{Hash, TransactionEnvelope, Uint32};
 
 #[test]

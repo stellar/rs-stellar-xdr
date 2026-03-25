@@ -1,7 +1,5 @@
 #![cfg(all(feature = "schemars", feature = "serde", feature = "alloc"))]
 
-
-
 #[allow(clippy::too_many_lines)]
 #[test]
 fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {

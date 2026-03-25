@@ -27,7 +27,7 @@ pub struct ModuleEntry {
 #[derive(Template)]
 #[template(path = "definition.rs.jinja", escape = "none")]
 pub struct DefinitionTemplate {
-    pub definition: DefinitionOutput,
+    pub definitions: Vec<DefinitionOutput>,
 }
 
 pub enum DefinitionOutput {

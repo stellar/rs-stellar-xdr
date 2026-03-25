@@ -55,9 +55,9 @@ impl RustGenerator {
         // Ensure the output directory exists.
         std::fs::create_dir_all(output_dir)?;
 
-        // Write each definition to its own file.
-        for (module, definition) in modules.iter().zip(definitions.into_iter()) {
-            let template = DefinitionTemplate { definition };
+        // Write each definition (or group of definitions) to its own file.
+        for (module, defs) in modules.iter().zip(definitions.into_iter()) {
+            let template = DefinitionTemplate { definitions: defs };
             let rendered = template.render()?;
             let file_path = output_dir.join(format!("{}.rs", module.mod_name));
             std::fs::write(&file_path, &rendered)?;
@@ -84,10 +84,14 @@ impl RustGenerator {
         Ok(())
     }
 
-    /// Generate module entries and definitions for per-file output.
-    fn generate_modules(&self, spec: &XdrSpec) -> (Vec<ModuleEntry>, Vec<DefinitionOutput>) {
-        let mut modules: Vec<ModuleEntry> = Vec::new();
-        let mut definitions: Vec<DefinitionOutput> = Vec::new();
+    /// Generate module entries and grouped definitions for per-file output.
+    ///
+    /// When the same type name appears in multiple `#ifdef`/`#else` branches,
+    /// definitions are grouped into the same file and the module entry's cfg
+    /// is cleared (the type is always present).
+    fn generate_modules(&self, spec: &XdrSpec) -> (Vec<ModuleEntry>, Vec<Vec<DefinitionOutput>>) {
+        let mut order: Vec<String> = Vec::new();
+        let mut grouped: HashMap<String, (Option<String>, Vec<DefinitionOutput>)> = HashMap::new();
 
         for def in spec.all_definitions() {
             let cfg = self.resolve_cfg(def);
@@ -96,11 +100,27 @@ impl RustGenerator {
                 _ => mod_name(def.name()),
             };
 
-            modules.push(ModuleEntry {
-                mod_name: m,
-                cfg: cfg.clone(),
-            });
-            definitions.push(self.generate_definition(def));
+            let output = self.generate_definition(def);
+            match grouped.entry(m.clone()) {
+                Entry::Vacant(e) => {
+                    order.push(m);
+                    e.insert((cfg, vec![output]));
+                }
+                Entry::Occupied(mut e) => {
+                    let (existing_cfg, defs) = e.get_mut();
+                    // Same name in multiple cfg branches means always present.
+                    *existing_cfg = None;
+                    defs.push(output);
+                }
+            }
+        }
+
+        let mut modules = Vec::new();
+        let mut definitions = Vec::new();
+        for m in order {
+            let (cfg, defs) = grouped.remove(&m).unwrap();
+            modules.push(ModuleEntry { mod_name: m, cfg });
+            definitions.push(defs);
         }
 
         (modules, definitions)

@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// Int64 is an XDR Typedef defined as:
 ///
 /// ```text

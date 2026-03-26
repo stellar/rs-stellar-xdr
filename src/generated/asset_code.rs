@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// AssetCode is an XDR Union defined as:
 ///
 /// ```text

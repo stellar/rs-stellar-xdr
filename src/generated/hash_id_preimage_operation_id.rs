@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// HashIdPreimageOperationId is an XDR NestedStruct defined as:
 ///
 /// ```text

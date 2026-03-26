@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// Uint32 is an XDR Typedef defined as:
 ///
 /// ```text

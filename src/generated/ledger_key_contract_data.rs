@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// LedgerKeyContractData is an XDR NestedStruct defined as:
 ///
 /// ```text

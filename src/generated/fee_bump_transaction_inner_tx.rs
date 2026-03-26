@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// FeeBumpTransactionInnerTx is an XDR NestedUnion defined as:
 ///
 /// ```text

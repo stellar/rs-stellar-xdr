@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// StellarValueExt is an XDR NestedUnion defined as:
 ///
 /// ```text

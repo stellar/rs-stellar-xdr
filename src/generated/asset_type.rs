@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// AssetType is an XDR Enum defined as:
 ///
 /// ```text

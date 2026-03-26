@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// PathPaymentStrictReceiveOp is an XDR Struct defined as:
 ///
 /// ```text

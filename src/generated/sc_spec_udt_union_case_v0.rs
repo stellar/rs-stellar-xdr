@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// ScSpecUdtUnionCaseV0 is an XDR Union defined as:
 ///
 /// ```text

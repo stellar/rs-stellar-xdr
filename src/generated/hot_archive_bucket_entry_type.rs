@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// HotArchiveBucketEntryType is an XDR Enum defined as:
 ///
 /// ```text

@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// FeeBumpTransaction is an XDR Struct defined as:
 ///
 /// ```text

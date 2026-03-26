@@ -1,5 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
+
 /// ScSymbol is an XDR Typedef defined as:
 ///
 /// ```text

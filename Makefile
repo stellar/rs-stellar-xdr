@@ -43,7 +43,7 @@ src/generated.rs: $(sort $(wildcard xdr/*.x))
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)
-	rustfmt $(wildcard src/generated.rs src/generated/*.rs)
+	rustfmt $@ src/generated/*.rs
 
 xdr-version: $(wildcard .git/modules/xdr/**/*) $(wildcard xdr/*.x)
 	git submodule status -- xdr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr-version

@@ -1,5 +1,6 @@
 use askama::Template;
 
+#[allow(dead_code)]
 #[derive(Template)]
 #[template(path = "generated.rs.jinja", escape = "none")]
 pub struct GeneratedTemplate {
@@ -7,6 +8,25 @@ pub struct GeneratedTemplate {
     pub header: String,
     pub definitions: Vec<DefinitionOutput>,
     pub type_variant_enum: TypeEnumOutput,
+}
+
+#[derive(Template)]
+#[template(path = "mod.rs.jinja", escape = "none")]
+pub struct ModTemplate {
+    pub xdr_files_sha256: Vec<(String, String)>,
+    pub header: String,
+    pub modules: Vec<ModuleEntry>,
+    pub type_variant_enum: TypeEnumOutput,
+}
+
+pub struct ModuleEntry {
+    pub mod_name: String,
+}
+
+#[derive(Template)]
+#[template(path = "definition.rs.jinja", escape = "none")]
+pub struct DefinitionTemplate {
+    pub definitions: Vec<DefinitionOutput>,
 }
 
 pub enum DefinitionOutput {

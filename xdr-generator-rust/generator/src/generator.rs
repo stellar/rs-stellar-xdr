@@ -8,12 +8,12 @@ use xdr_parser::ast::{
 use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
 
-use crate::naming::{case_value, field_name, source_comment, type_name};
+use crate::naming::{case_value, field_name, mod_name, source_comment, type_name};
 use crate::options::RustOptions;
 use crate::output::{
-    ConstOutput, DefinitionOutput, EnumOutput, EnumStructMemberOutput, GeneratedTemplate,
-    StructMemberOutput, StructOutput, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
-    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
+    ConstOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
+    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput, TypeEnumEntry,
+    TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_string, type_ref};
 
@@ -29,6 +29,7 @@ impl RustGenerator {
     }
 
     /// Generate Rust code from the spec and write it to the output file.
+    #[allow(dead_code)]
     pub fn generate_to_file(
         &self,
         spec: &XdrSpec,
@@ -41,7 +42,126 @@ impl RustGenerator {
         Ok(())
     }
 
+    /// Generate Rust code from the spec and write each definition to its own
+    /// file inside `output_dir`, plus a module file that ties them together.
+    ///
+    /// `module_file` is the path to the module file (e.g. `src/generated.rs`)
+    /// and `output_dir` is the directory for per-type files (e.g. `src/generated/`).
+    pub fn generate_to_dir(
+        &self,
+        spec: &XdrSpec,
+        module_file: &std::path::Path,
+        output_dir: &std::path::Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let header = include_str!("../header.rs");
+        let (modules, definitions) = self.generate_modules(spec);
+
+        // Ensure the output directory exists.
+        std::fs::create_dir_all(output_dir)?;
+
+        // Write each definition (or group of definitions) to its own file.
+        for (module, defs) in modules.iter().zip(definitions.into_iter()) {
+            let template = DefinitionTemplate { definitions: defs };
+            let rendered = template.render()?;
+            let file_path = output_dir.join(format!("{}.rs", module.mod_name));
+            std::fs::write(&file_path, &rendered)?;
+        }
+
+        // Write module file.
+        let xdr_files_sha256: Vec<(String, String)> = spec
+            .files
+            .iter()
+            .map(|f| (f.name.clone(), f.sha256.clone()))
+            .collect();
+
+        let type_variant_enum = self.generate_type_enum(spec);
+
+        let mod_template = ModTemplate {
+            xdr_files_sha256,
+            header: header.to_string(),
+            modules,
+            type_variant_enum,
+        };
+        let rendered = mod_template.render()?;
+        std::fs::write(module_file, &rendered)?;
+
+        Ok(())
+    }
+
+    /// Generate module entries and grouped definitions for per-file output.
+    ///
+    /// When the same type name appears in multiple `#ifdef`/`#else` branches,
+    /// definitions are grouped into the same file.
+    fn generate_modules(&self, spec: &XdrSpec) -> (Vec<ModuleEntry>, Vec<Vec<DefinitionOutput>>) {
+        let mut order: Vec<String> = Vec::new();
+        let mut grouped: HashMap<String, Vec<DefinitionOutput>> = HashMap::new();
+
+        for def in spec.all_definitions() {
+            let m = match def {
+                Definition::Const(c) => mod_name(&c.name),
+                _ => mod_name(def.name()),
+            };
+
+            let output = self.generate_definition(def);
+            match grouped.entry(m.clone()) {
+                Entry::Vacant(e) => {
+                    order.push(m);
+                    e.insert(vec![output]);
+                }
+                Entry::Occupied(mut e) => {
+                    e.get_mut().push(output);
+                }
+            }
+        }
+
+        let mut modules = Vec::new();
+        let mut definitions = Vec::new();
+        for m in order {
+            let defs = grouped.remove(&m).unwrap();
+            modules.push(ModuleEntry { mod_name: m });
+            definitions.push(defs);
+        }
+
+        (modules, definitions)
+    }
+
+    /// Generate the TypeEnumOutput for the type variant enum.
+    fn generate_type_enum(&self, spec: &XdrSpec) -> TypeEnumOutput {
+        let mut cfg_by_name: HashMap<String, Option<String>> = HashMap::new();
+
+        for def in spec.all_definitions() {
+            if !matches!(def, Definition::Const(_)) {
+                let name = type_name(def.name());
+                let cfg = self.resolve_cfg(def);
+                match cfg_by_name.entry(name) {
+                    Entry::Vacant(e) => {
+                        e.insert(cfg);
+                    }
+                    Entry::Occupied(mut e) => {
+                        e.insert(None);
+                    }
+                }
+            }
+        }
+
+        let types: Vec<TypeEnumEntry> = spec
+            .type_names_parent_first()
+            .iter()
+            .map(|name| {
+                let rust_name = type_name(name);
+                let cfg = cfg_by_name.get(&rust_name).cloned().flatten();
+                TypeEnumEntry {
+                    name: rust_name,
+                    cfg,
+                }
+            })
+            .collect();
+
+        TypeEnumOutput { types }
+    }
+
     /// Generate output for the entire spec.
+    #[allow(dead_code)]
     pub fn generate(&self, spec: &XdrSpec, header: &str) -> GeneratedTemplate {
         let xdr_files_sha256: Vec<(String, String)> = spec
             .files

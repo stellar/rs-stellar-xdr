@@ -43,7 +43,7 @@ src/generated.rs: $(sort $(wildcard xdr/*.x))
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
 		--custom-str $(CUSTOM_STR_IMPL)
-	rustfmt $@
+	rustfmt $@ && find src/generated -name '*.rs' | xargs rustfmt
 
 xdr-version: $(wildcard .git/modules/xdr/**/*) $(wildcard xdr/*.x)
 	git submodule status -- xdr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr-version
@@ -54,6 +54,7 @@ xdr-json: src/generated.rs
 
 clean:
 	rm -f src/generated.rs
+	rm -rf src/generated
 	rm -f xdr-version
 	rm -fr xdr-json
 	cargo clean --quiet

@@ -76,7 +76,7 @@ use super::*;
 /// ```
 ///
 // union with discriminant OperationResultCode
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(

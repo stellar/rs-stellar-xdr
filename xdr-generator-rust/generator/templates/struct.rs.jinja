@@ -6,7 +6,7 @@
 #[cfg_attr(feature = "alloc", derive(Default))]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 {%- if s.is_custom_str %}
 #[cfg_attr(

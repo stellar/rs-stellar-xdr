@@ -29,23 +29,12 @@ use super::*;
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScAddress {
-    Account(
-        AccountId,
-    ),
-    Contract(
-        ContractId,
-    ),
-    MuxedAccount(
-        MuxedEd25519Account,
-    ),
-    ClaimableBalance(
-        ClaimableBalanceId,
-    ),
-    LiquidityPool(
-        PoolId,
-    ),
+    Account(AccountId),
+    Contract(ContractId),
+    MuxedAccount(MuxedEd25519Account),
+    ClaimableBalance(ClaimableBalanceId),
+    LiquidityPool(PoolId),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ScAddress {
@@ -148,8 +137,12 @@ impl ReadXdr for ScAddress {
             let v = match dv {
                 ScAddressType::Account => Self::Account(AccountId::read_xdr(r)?),
                 ScAddressType::Contract => Self::Contract(ContractId::read_xdr(r)?),
-                ScAddressType::MuxedAccount => Self::MuxedAccount(MuxedEd25519Account::read_xdr(r)?),
-                ScAddressType::ClaimableBalance => Self::ClaimableBalance(ClaimableBalanceId::read_xdr(r)?),
+                ScAddressType::MuxedAccount => {
+                    Self::MuxedAccount(MuxedEd25519Account::read_xdr(r)?)
+                }
+                ScAddressType::ClaimableBalance => {
+                    Self::ClaimableBalance(ClaimableBalanceId::read_xdr(r)?)
+                }
                 ScAddressType::LiquidityPool => Self::LiquidityPool(PoolId::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),

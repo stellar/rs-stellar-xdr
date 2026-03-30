@@ -40,7 +40,6 @@ pub enum AllowTrustResult {
     LowReserve,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for AllowTrustResult {
     fn default() -> Self {

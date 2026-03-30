@@ -20,7 +20,6 @@ use super::*;
 #[derive(Debug)]
 pub struct ContractCostParams(pub VecM<ContractCostParamEntry, 1024>);
 
-
 impl From<ContractCostParams> for VecM<ContractCostParamEntry, 1024> {
     #[must_use]
     fn from(x: ContractCostParams) -> Self {
@@ -56,7 +55,7 @@ impl ReadXdr for ContractCostParams {
 impl WriteXdr for ContractCostParams {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -70,7 +69,7 @@ impl Deref for ContractCostParams {
 impl From<ContractCostParams> for Vec<ContractCostParamEntry> {
     #[must_use]
     fn from(x: ContractCostParams) -> Self {
-        x.0.0
+        x.0 .0
     }
 }
 
@@ -92,7 +91,7 @@ impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
 impl AsRef<Vec<ContractCostParamEntry>> for ContractCostParams {
     #[must_use]
     fn as_ref(&self) -> &Vec<ContractCostParamEntry> {
-        &self.0.0
+        &self.0 .0
     }
 }
 
@@ -100,11 +99,11 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[ContractCostParamEntry] {
-        &self.0.0
+        &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[ContractCostParamEntry] {
-        self.0.0
+        self.0 .0
     }
 }

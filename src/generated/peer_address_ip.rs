@@ -26,14 +26,9 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
-    IPv4(
-        [u8; 4],
-    ),
-    IPv6(
-        [u8; 16],
-    ),
+    IPv4([u8; 4]),
+    IPv6([u8; 16]),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for PeerAddressIp {
@@ -43,10 +38,7 @@ impl Default for PeerAddressIp {
 }
 
 impl PeerAddressIp {
-    const _VARIANTS: &[IpAddrType] = &[
-        IpAddrType::IPv4,
-        IpAddrType::IPv6,
-    ];
+    const _VARIANTS: &[IpAddrType] = &[IpAddrType::IPv4, IpAddrType::IPv6];
     pub const VARIANTS: [IpAddrType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -56,10 +48,7 @@ impl PeerAddressIp {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "IPv4",
-        "IPv6",
-    ];
+    const _VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

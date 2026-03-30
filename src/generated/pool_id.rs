@@ -18,7 +18,6 @@ use super::*;
 #[derive(Debug)]
 pub struct PoolId(pub Hash);
 
-
 impl From<PoolId> for Hash {
     #[must_use]
     fn from(x: PoolId) -> Self {
@@ -54,6 +53,6 @@ impl ReadXdr for PoolId {
 impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }

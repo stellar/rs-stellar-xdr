@@ -34,38 +34,17 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScError {
-    Contract(
-        u32,
-    ),
-    WasmVm(
-        ScErrorCode,
-    ),
-    Context(
-        ScErrorCode,
-    ),
-    Storage(
-        ScErrorCode,
-    ),
-    Object(
-        ScErrorCode,
-    ),
-    Crypto(
-        ScErrorCode,
-    ),
-    Events(
-        ScErrorCode,
-    ),
-    Budget(
-        ScErrorCode,
-    ),
-    Value(
-        ScErrorCode,
-    ),
-    Auth(
-        ScErrorCode,
-    ),
+    Contract(u32),
+    WasmVm(ScErrorCode),
+    Context(ScErrorCode),
+    Storage(ScErrorCode),
+    Object(ScErrorCode),
+    Crypto(ScErrorCode),
+    Events(ScErrorCode),
+    Budget(ScErrorCode),
+    Value(ScErrorCode),
+    Auth(ScErrorCode),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ScError {
@@ -97,16 +76,8 @@ impl ScError {
         arr
     };
     const _VARIANTS_STR: &[&str] = &[
-        "Contract",
-        "WasmVm",
-        "Context",
-        "Storage",
-        "Object",
-        "Crypto",
-        "Events",
-        "Budget",
-        "Value",
-        "Auth",
+        "Contract", "WasmVm", "Context", "Storage", "Object", "Crypto", "Events", "Budget",
+        "Value", "Auth",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];

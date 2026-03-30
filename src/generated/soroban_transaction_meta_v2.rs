@@ -7,7 +7,7 @@ use super::*;
 /// struct SorobanTransactionMetaV2
 /// {
 ///     SorobanTransactionMetaExt ext;
-/// 
+///
 ///     SCVal* returnValue;
 /// };
 /// ```

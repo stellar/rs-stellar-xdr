@@ -1,8 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-
-
 /// AuthMsgFlagFlowControlBytesRequested is an XDR Const defined as:
 ///
 /// ```text

@@ -18,26 +18,25 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct String32(pub StringM::<32>);
+pub struct String32(pub StringM<32>);
 
-
-impl From<String32> for StringM::<32> {
+impl From<String32> for StringM<32> {
     #[must_use]
     fn from(x: String32) -> Self {
         x.0
     }
 }
 
-impl From<StringM::<32>> for String32 {
+impl From<StringM<32>> for String32 {
     #[must_use]
-    fn from(x: StringM::<32>) -> Self {
+    fn from(x: StringM<32>) -> Self {
         String32(x)
     }
 }
 
-impl AsRef<StringM::<32>> for String32 {
+impl AsRef<StringM<32>> for String32 {
     #[must_use]
-    fn as_ref(&self) -> &StringM::<32> {
+    fn as_ref(&self) -> &StringM<32> {
         &self.0
     }
 }
@@ -56,12 +55,12 @@ impl ReadXdr for String32 {
 impl WriteXdr for String32 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
 impl Deref for String32 {
-    type Target = StringM::<32>;
+    type Target = StringM<32>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -70,7 +69,7 @@ impl Deref for String32 {
 impl From<String32> for Vec<u8> {
     #[must_use]
     fn from(x: String32) -> Self {
-        x.0.0
+        x.0 .0
     }
 }
 
@@ -92,7 +91,7 @@ impl TryFrom<&Vec<u8>> for String32 {
 impl AsRef<Vec<u8>> for String32 {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
-        &self.0.0
+        &self.0 .0
     }
 }
 
@@ -100,11 +99,11 @@ impl AsRef<[u8]> for String32 {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
-        &self.0.0
+        &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
-        self.0.0
+        self.0 .0
     }
 }

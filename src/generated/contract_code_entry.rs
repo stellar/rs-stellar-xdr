@@ -16,7 +16,7 @@ use super::*;
 ///                 ContractCodeCostInputs costInputs;
 ///             } v1;
 ///     } ext;
-/// 
+///
 ///     Hash hash;
 ///     opaque code<>;
 /// };

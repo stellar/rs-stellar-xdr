@@ -28,11 +28,8 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum Claimant {
-    ClaimantTypeV0(
-        ClaimantV0,
-    ),
+    ClaimantTypeV0(ClaimantV0),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for Claimant {
@@ -42,9 +39,7 @@ impl Default for Claimant {
 }
 
 impl Claimant {
-    const _VARIANTS: &[ClaimantType] = &[
-        ClaimantType::ClaimantTypeV0,
-    ];
+    const _VARIANTS: &[ClaimantType] = &[ClaimantType::ClaimantTypeV0];
     pub const VARIANTS: [ClaimantType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -54,9 +49,7 @@ impl Claimant {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "ClaimantTypeV0",
-    ];
+    const _VARIANTS_STR: &[&str] = &["ClaimantTypeV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

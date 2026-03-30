@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     END_SPONSORING_FUTURE_RESERVES_SUCCESS = 0,
-/// 
+///
 ///     // codes considered as "failure" for the operation
 ///     END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED = -1
 /// };
@@ -45,10 +45,7 @@ impl EndSponsoringFutureReservesResultCode {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Success",
-        "NotSponsored",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Success", "NotSponsored"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

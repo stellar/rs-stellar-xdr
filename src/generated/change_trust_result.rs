@@ -44,7 +44,6 @@ pub enum ChangeTrustResult {
     NotAuthMaintainLiabilities,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for ChangeTrustResult {
     fn default() -> Self {
@@ -168,7 +167,9 @@ impl ReadXdr for ChangeTrustResult {
                 ChangeTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
                 ChangeTrustResultCode::TrustLineMissing => Self::TrustLineMissing,
                 ChangeTrustResultCode::CannotDelete => Self::CannotDelete,
-                ChangeTrustResultCode::NotAuthMaintainLiabilities => Self::NotAuthMaintainLiabilities,
+                ChangeTrustResultCode::NotAuthMaintainLiabilities => {
+                    Self::NotAuthMaintainLiabilities
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

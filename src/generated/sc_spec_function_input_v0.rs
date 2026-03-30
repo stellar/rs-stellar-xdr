@@ -24,8 +24,8 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecFunctionInputV0 {
-    pub doc: StringM::<1024>,
-    pub name: StringM::<30>,
+    pub doc: StringM<1024>,
+    pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
 

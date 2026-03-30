@@ -17,7 +17,7 @@ use super::*;
 ///     struct
 ///     {
 ///         AccountID sourceAccount;
-///         SequenceNumber seqNum; 
+///         SequenceNumber seqNum;
 ///         uint32 opNum;
 ///         PoolID liquidityPoolID;
 ///         Asset asset;
@@ -52,20 +52,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum HashIdPreimage {
-    OpId(
-        HashIdPreimageOperationId,
-    ),
-    PoolRevokeOpId(
-        HashIdPreimageRevokeId,
-    ),
-    ContractId(
-        HashIdPreimageContractId,
-    ),
-    SorobanAuthorization(
-        HashIdPreimageSorobanAuthorization,
-    ),
+    OpId(HashIdPreimageOperationId),
+    PoolRevokeOpId(HashIdPreimageRevokeId),
+    ContractId(HashIdPreimageContractId),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorization),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for HashIdPreimage {
@@ -163,9 +154,15 @@ impl ReadXdr for HashIdPreimage {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 EnvelopeType::OpId => Self::OpId(HashIdPreimageOperationId::read_xdr(r)?),
-                EnvelopeType::PoolRevokeOpId => Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?),
-                EnvelopeType::ContractId => Self::ContractId(HashIdPreimageContractId::read_xdr(r)?),
-                EnvelopeType::SorobanAuthorization => Self::SorobanAuthorization(HashIdPreimageSorobanAuthorization::read_xdr(r)?),
+                EnvelopeType::PoolRevokeOpId => {
+                    Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
+                }
+                EnvelopeType::ContractId => {
+                    Self::ContractId(HashIdPreimageContractId::read_xdr(r)?)
+                }
+                EnvelopeType::SorobanAuthorization => {
+                    Self::SorobanAuthorization(HashIdPreimageSorobanAuthorization::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

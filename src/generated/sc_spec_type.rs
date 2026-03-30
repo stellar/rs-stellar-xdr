@@ -7,7 +7,7 @@ use super::*;
 /// enum SCSpecType
 /// {
 ///     SC_SPEC_TYPE_VAL = 0,
-/// 
+///
 ///     // Types with no parameters.
 ///     SC_SPEC_TYPE_BOOL = 1,
 ///     SC_SPEC_TYPE_VOID = 2,
@@ -27,7 +27,7 @@ use super::*;
 ///     SC_SPEC_TYPE_SYMBOL = 17,
 ///     SC_SPEC_TYPE_ADDRESS = 19,
 ///     SC_SPEC_TYPE_MUXED_ADDRESS = 20,
-/// 
+///
 ///     // Types with parameters.
 ///     SC_SPEC_TYPE_OPTION = 1000,
 ///     SC_SPEC_TYPE_RESULT = 1001,
@@ -35,7 +35,7 @@ use super::*;
 ///     SC_SPEC_TYPE_MAP = 1004,
 ///     SC_SPEC_TYPE_TUPLE = 1005,
 ///     SC_SPEC_TYPE_BYTES_N = 1006,
-/// 
+///
 ///     // User defined types.
 ///     SC_SPEC_TYPE_UDT = 2000
 /// };

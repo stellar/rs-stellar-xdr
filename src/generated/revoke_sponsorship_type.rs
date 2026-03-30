@@ -42,10 +42,7 @@ impl RevokeSponsorshipType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "LedgerEntry",
-        "Signer",
-    ];
+    const _VARIANTS_STR: &[&str] = &["LedgerEntry", "Signer"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

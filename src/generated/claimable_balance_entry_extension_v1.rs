@@ -12,7 +12,7 @@ use super::*;
 ///         void;
 ///     }
 ///     ext;
-/// 
+///
 ///     uint32 flags; // see ClaimableBalanceFlags
 /// };
 /// ```

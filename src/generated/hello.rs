@@ -34,7 +34,7 @@ pub struct Hello {
     pub overlay_version: u32,
     pub overlay_min_version: u32,
     pub network_id: Hash,
-    pub version_str: StringM::<100>,
+    pub version_str: StringM<100>,
     pub listening_port: i32,
     pub peer_id: NodeId,
     pub cert: AuthCert,

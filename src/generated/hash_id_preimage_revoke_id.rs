@@ -7,7 +7,7 @@ use super::*;
 /// struct
 ///     {
 ///         AccountID sourceAccount;
-///         SequenceNumber seqNum; 
+///         SequenceNumber seqNum;
 ///         uint32 opNum;
 ///         PoolID liquidityPoolID;
 ///         Asset asset;

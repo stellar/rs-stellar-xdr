@@ -21,11 +21,8 @@ use super::*;
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
-    PublicKeyTypeEd25519(
-        Uint256,
-    ),
+    PublicKeyTypeEd25519(Uint256),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for PublicKey {
@@ -35,9 +32,7 @@ impl Default for PublicKey {
 }
 
 impl PublicKey {
-    const _VARIANTS: &[PublicKeyType] = &[
-        PublicKeyType::PublicKeyTypeEd25519,
-    ];
+    const _VARIANTS: &[PublicKeyType] = &[PublicKeyType::PublicKeyTypeEd25519];
     pub const VARIANTS: [PublicKeyType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -47,9 +42,7 @@ impl PublicKey {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "PublicKeyTypeEd25519",
-    ];
+    const _VARIANTS_STR: &[&str] = &["PublicKeyTypeEd25519"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -110,7 +103,9 @@ impl ReadXdr for PublicKey {
             let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                PublicKeyType::PublicKeyTypeEd25519 => Self::PublicKeyTypeEd25519(Uint256::read_xdr(r)?),
+                PublicKeyType::PublicKeyTypeEd25519 => {
+                    Self::PublicKeyTypeEd25519(Uint256::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

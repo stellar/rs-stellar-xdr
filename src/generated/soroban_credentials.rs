@@ -27,11 +27,8 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanCredentials {
     SourceAccount,
-    Address(
-        SorobanAddressCredentials,
-    ),
+    Address(SorobanAddressCredentials),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for SorobanCredentials {
@@ -54,10 +51,7 @@ impl SorobanCredentials {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "SourceAccount",
-        "Address",
-    ];
+    const _VARIANTS_STR: &[&str] = &["SourceAccount", "Address"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -121,7 +115,9 @@ impl ReadXdr for SorobanCredentials {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 SorobanCredentialsType::SourceAccount => Self::SourceAccount,
-                SorobanCredentialsType::Address => Self::Address(SorobanAddressCredentials::read_xdr(r)?),
+                SorobanCredentialsType::Address => {
+                    Self::Address(SorobanAddressCredentials::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

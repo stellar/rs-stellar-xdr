@@ -26,14 +26,9 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecUdtUnionCaseV0 {
-    VoidV0(
-        ScSpecUdtUnionCaseVoidV0,
-    ),
-    TupleV0(
-        ScSpecUdtUnionCaseTupleV0,
-    ),
+    VoidV0(ScSpecUdtUnionCaseVoidV0),
+    TupleV0(ScSpecUdtUnionCaseTupleV0),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ScSpecUdtUnionCaseV0 {
@@ -56,10 +51,7 @@ impl ScSpecUdtUnionCaseV0 {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "VoidV0",
-        "TupleV0",
-    ];
+    const _VARIANTS_STR: &[&str] = &["VoidV0", "TupleV0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -122,8 +114,12 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
             let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ScSpecUdtUnionCaseV0Kind::VoidV0 => Self::VoidV0(ScSpecUdtUnionCaseVoidV0::read_xdr(r)?),
-                ScSpecUdtUnionCaseV0Kind::TupleV0 => Self::TupleV0(ScSpecUdtUnionCaseTupleV0::read_xdr(r)?),
+                ScSpecUdtUnionCaseV0Kind::VoidV0 => {
+                    Self::VoidV0(ScSpecUdtUnionCaseVoidV0::read_xdr(r)?)
+                }
+                ScSpecUdtUnionCaseV0Kind::TupleV0 => {
+                    Self::TupleV0(ScSpecUdtUnionCaseTupleV0::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

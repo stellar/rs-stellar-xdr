@@ -7,7 +7,7 @@ use super::*;
 /// struct TransactionResult
 /// {
 ///     int64 feeCharged; // actual fee charged for the transaction
-/// 
+///
 ///     union switch (TransactionResultCode code)
 ///     {
 ///     case txFEE_BUMP_INNER_SUCCESS:
@@ -36,7 +36,7 @@ use super::*;
 ///         void;
 ///     }
 ///     result;
-/// 
+///
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

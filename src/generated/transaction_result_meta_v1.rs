@@ -7,11 +7,11 @@ use super::*;
 /// struct TransactionResultMetaV1
 /// {
 ///     ExtensionPoint ext;
-/// 
+///
 ///     TransactionResultPair result;
 ///     LedgerEntryChanges feeProcessing;
 ///     TransactionMeta txApplyProcessing;
-/// 
+///
 ///     LedgerEntryChanges postTxApplyFeeProcessing;
 /// };
 /// ```

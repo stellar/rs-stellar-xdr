@@ -45,11 +45,7 @@ impl ScSpecEventDataFormat {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "SingleValue",
-        "Vec",
-        "Map",
-    ];
+    const _VARIANTS_STR: &[&str] = &["SingleValue", "Vec", "Map"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

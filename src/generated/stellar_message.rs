@@ -16,31 +16,31 @@ use super::*;
 ///     DontHave dontHave;
 /// case PEERS:
 ///     PeerAddress peers<100>;
-/// 
+///
 /// case GET_TX_SET:
 ///     uint256 txSetHash;
 /// case TX_SET:
 ///     TransactionSet txSet;
 /// case GENERALIZED_TX_SET:
 ///     GeneralizedTransactionSet generalizedTxSet;
-/// 
+///
 /// case TRANSACTION:
 ///     TransactionEnvelope transaction;
-/// 
+///
 /// case TIME_SLICED_SURVEY_REQUEST:
 ///     SignedTimeSlicedSurveyRequestMessage signedTimeSlicedSurveyRequestMessage;
-/// 
+///
 /// case TIME_SLICED_SURVEY_RESPONSE:
 ///     SignedTimeSlicedSurveyResponseMessage signedTimeSlicedSurveyResponseMessage;
-/// 
+///
 /// case TIME_SLICED_SURVEY_START_COLLECTING:
 ///     SignedTimeSlicedSurveyStartCollectingMessage
 ///         signedTimeSlicedSurveyStartCollectingMessage;
-/// 
+///
 /// case TIME_SLICED_SURVEY_STOP_COLLECTING:
 ///     SignedTimeSlicedSurveyStopCollectingMessage
 ///         signedTimeSlicedSurveyStopCollectingMessage;
-/// 
+///
 /// // SCP
 /// case GET_SCP_QUORUMSET:
 ///     uint256 qSetHash;
@@ -75,71 +75,28 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarMessage {
-    ErrorMsg(
-        SError,
-    ),
-    Hello(
-        Hello,
-    ),
-    Auth(
-        Auth,
-    ),
-    DontHave(
-        DontHave,
-    ),
-    Peers(
-        VecM<PeerAddress, 100>,
-    ),
-    GetTxSet(
-        Uint256,
-    ),
-    TxSet(
-        TransactionSet,
-    ),
-    GeneralizedTxSet(
-        GeneralizedTransactionSet,
-    ),
-    Transaction(
-        TransactionEnvelope,
-    ),
-    TimeSlicedSurveyRequest(
-        SignedTimeSlicedSurveyRequestMessage,
-    ),
-    TimeSlicedSurveyResponse(
-        SignedTimeSlicedSurveyResponseMessage,
-    ),
-    TimeSlicedSurveyStartCollecting(
-        SignedTimeSlicedSurveyStartCollectingMessage,
-    ),
-    TimeSlicedSurveyStopCollecting(
-        SignedTimeSlicedSurveyStopCollectingMessage,
-    ),
-    GetScpQuorumset(
-        Uint256,
-    ),
-    ScpQuorumset(
-        ScpQuorumSet,
-    ),
-    ScpMessage(
-        ScpEnvelope,
-    ),
-    GetScpState(
-        u32,
-    ),
-    SendMore(
-        SendMore,
-    ),
-    SendMoreExtended(
-        SendMoreExtended,
-    ),
-    FloodAdvert(
-        FloodAdvert,
-    ),
-    FloodDemand(
-        FloodDemand,
-    ),
+    ErrorMsg(SError),
+    Hello(Hello),
+    Auth(Auth),
+    DontHave(DontHave),
+    Peers(VecM<PeerAddress, 100>),
+    GetTxSet(Uint256),
+    TxSet(TransactionSet),
+    GeneralizedTxSet(GeneralizedTransactionSet),
+    Transaction(TransactionEnvelope),
+    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessage),
+    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessage),
+    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessage),
+    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessage),
+    GetScpQuorumset(Uint256),
+    ScpQuorumset(ScpQuorumSet),
+    ScpMessage(ScpEnvelope),
+    GetScpState(u32),
+    SendMore(SendMore),
+    SendMoreExtended(SendMoreExtended),
+    FloodAdvert(FloodAdvert),
+    FloodDemand(FloodDemand),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for StellarMessage {
@@ -256,7 +213,9 @@ impl StellarMessage {
             Self::Transaction(_) => MessageType::Transaction,
             Self::TimeSlicedSurveyRequest(_) => MessageType::TimeSlicedSurveyRequest,
             Self::TimeSlicedSurveyResponse(_) => MessageType::TimeSlicedSurveyResponse,
-            Self::TimeSlicedSurveyStartCollecting(_) => MessageType::TimeSlicedSurveyStartCollecting,
+            Self::TimeSlicedSurveyStartCollecting(_) => {
+                MessageType::TimeSlicedSurveyStartCollecting
+            }
             Self::TimeSlicedSurveyStopCollecting(_) => MessageType::TimeSlicedSurveyStopCollecting,
             Self::GetScpQuorumset(_) => MessageType::GetScpQuorumset,
             Self::ScpQuorumset(_) => MessageType::ScpQuorumset,
@@ -311,18 +270,34 @@ impl ReadXdr for StellarMessage {
                 MessageType::Peers => Self::Peers(VecM::<PeerAddress, 100>::read_xdr(r)?),
                 MessageType::GetTxSet => Self::GetTxSet(Uint256::read_xdr(r)?),
                 MessageType::TxSet => Self::TxSet(TransactionSet::read_xdr(r)?),
-                MessageType::GeneralizedTxSet => Self::GeneralizedTxSet(GeneralizedTransactionSet::read_xdr(r)?),
+                MessageType::GeneralizedTxSet => {
+                    Self::GeneralizedTxSet(GeneralizedTransactionSet::read_xdr(r)?)
+                }
                 MessageType::Transaction => Self::Transaction(TransactionEnvelope::read_xdr(r)?),
-                MessageType::TimeSlicedSurveyRequest => Self::TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessage::read_xdr(r)?),
-                MessageType::TimeSlicedSurveyResponse => Self::TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessage::read_xdr(r)?),
-                MessageType::TimeSlicedSurveyStartCollecting => Self::TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessage::read_xdr(r)?),
-                MessageType::TimeSlicedSurveyStopCollecting => Self::TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessage::read_xdr(r)?),
+                MessageType::TimeSlicedSurveyRequest => Self::TimeSlicedSurveyRequest(
+                    SignedTimeSlicedSurveyRequestMessage::read_xdr(r)?,
+                ),
+                MessageType::TimeSlicedSurveyResponse => Self::TimeSlicedSurveyResponse(
+                    SignedTimeSlicedSurveyResponseMessage::read_xdr(r)?,
+                ),
+                MessageType::TimeSlicedSurveyStartCollecting => {
+                    Self::TimeSlicedSurveyStartCollecting(
+                        SignedTimeSlicedSurveyStartCollectingMessage::read_xdr(r)?,
+                    )
+                }
+                MessageType::TimeSlicedSurveyStopCollecting => {
+                    Self::TimeSlicedSurveyStopCollecting(
+                        SignedTimeSlicedSurveyStopCollectingMessage::read_xdr(r)?,
+                    )
+                }
                 MessageType::GetScpQuorumset => Self::GetScpQuorumset(Uint256::read_xdr(r)?),
                 MessageType::ScpQuorumset => Self::ScpQuorumset(ScpQuorumSet::read_xdr(r)?),
                 MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
                 MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
                 MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
-                MessageType::SendMoreExtended => Self::SendMoreExtended(SendMoreExtended::read_xdr(r)?),
+                MessageType::SendMoreExtended => {
+                    Self::SendMoreExtended(SendMoreExtended::read_xdr(r)?)
+                }
                 MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
                 MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
                 #[allow(unreachable_patterns)]

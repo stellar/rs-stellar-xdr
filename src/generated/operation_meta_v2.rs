@@ -7,9 +7,9 @@ use super::*;
 /// struct OperationMetaV2
 /// {
 ///     ExtensionPoint ext;
-/// 
+///
 ///     LedgerEntryChanges changes;
-/// 
+///
 ///     ContractEvent events<>;
 /// };
 /// ```

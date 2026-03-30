@@ -9,7 +9,7 @@ use super::*;
 /// case LIVEENTRY:
 /// case INITENTRY:
 ///     LedgerEntry liveEntry;
-/// 
+///
 /// case DEADENTRY:
 ///     LedgerKey deadEntry;
 /// case METAENTRY:
@@ -30,20 +30,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketEntry {
-    Liveentry(
-        LedgerEntry,
-    ),
-    Initentry(
-        LedgerEntry,
-    ),
-    Deadentry(
-        LedgerKey,
-    ),
-    Metaentry(
-        BucketMetadata,
-    ),
+    Liveentry(LedgerEntry),
+    Initentry(LedgerEntry),
+    Deadentry(LedgerKey),
+    Metaentry(BucketMetadata),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for BucketEntry {
@@ -68,12 +59,7 @@ impl BucketEntry {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Liveentry",
-        "Initentry",
-        "Deadentry",
-        "Metaentry",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Liveentry", "Initentry", "Deadentry", "Metaentry"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

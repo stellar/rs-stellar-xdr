@@ -27,7 +27,6 @@ pub enum TrustLineEntryExtensionV2Ext {
     V0,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for TrustLineEntryExtensionV2Ext {
     fn default() -> Self {
@@ -36,9 +35,7 @@ impl Default for TrustLineEntryExtensionV2Ext {
 }
 
 impl TrustLineEntryExtensionV2Ext {
-    const _VARIANTS: &[i32] = &[
-        0,
-    ];
+    const _VARIANTS: &[i32] = &[0];
     pub const VARIANTS: [i32; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,9 +45,7 @@ impl TrustLineEntryExtensionV2Ext {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "V0",
-    ];
+    const _VARIANTS_STR: &[&str] = &["V0"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

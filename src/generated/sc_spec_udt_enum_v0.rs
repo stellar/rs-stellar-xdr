@@ -25,9 +25,9 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtEnumV0 {
-    pub doc: StringM::<1024>,
-    pub lib: StringM::<80>,
-    pub name: StringM::<60>,
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtEnumCaseV0>,
 }
 

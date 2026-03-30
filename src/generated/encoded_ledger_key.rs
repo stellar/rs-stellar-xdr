@@ -20,7 +20,6 @@ use super::*;
 #[derive(Debug)]
 pub struct EncodedLedgerKey(pub BytesM);
 
-
 impl From<EncodedLedgerKey> for BytesM {
     #[must_use]
     fn from(x: EncodedLedgerKey) -> Self {
@@ -56,7 +55,7 @@ impl ReadXdr for EncodedLedgerKey {
 impl WriteXdr for EncodedLedgerKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -70,7 +69,7 @@ impl Deref for EncodedLedgerKey {
 impl From<EncodedLedgerKey> for Vec<u8> {
     #[must_use]
     fn from(x: EncodedLedgerKey) -> Self {
-        x.0.0
+        x.0 .0
     }
 }
 
@@ -92,7 +91,7 @@ impl TryFrom<&Vec<u8>> for EncodedLedgerKey {
 impl AsRef<Vec<u8>> for EncodedLedgerKey {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
-        &self.0.0
+        &self.0 .0
     }
 }
 
@@ -100,11 +99,11 @@ impl AsRef<[u8]> for EncodedLedgerKey {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
-        &self.0.0
+        &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
-        self.0.0
+        self.0 .0
     }
 }

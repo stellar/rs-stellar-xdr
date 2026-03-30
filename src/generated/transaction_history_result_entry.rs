@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     uint32 ledgerSeq;
 ///     TransactionResultSet txResultSet;
-/// 
+///
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

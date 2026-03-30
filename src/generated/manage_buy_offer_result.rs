@@ -37,9 +37,7 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageBuyOfferResult {
-    Success(
-        ManageOfferSuccessResult,
-    ),
+    Success(ManageOfferSuccessResult),
     Malformed,
     SellNoTrust,
     BuyNoTrust,
@@ -53,7 +51,6 @@ pub enum ManageBuyOfferResult {
     NotFound,
     LowReserve,
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ManageBuyOfferResult {
@@ -186,7 +183,9 @@ impl ReadXdr for ManageBuyOfferResult {
             let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ManageBuyOfferResultCode::Success => Self::Success(ManageOfferSuccessResult::read_xdr(r)?),
+                ManageBuyOfferResultCode::Success => {
+                    Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
+                }
                 ManageBuyOfferResultCode::Malformed => Self::Malformed,
                 ManageBuyOfferResultCode::SellNoTrust => Self::SellNoTrust,
                 ManageBuyOfferResultCode::BuyNoTrust => Self::BuyNoTrust,

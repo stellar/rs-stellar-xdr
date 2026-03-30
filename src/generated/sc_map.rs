@@ -20,7 +20,6 @@ use super::*;
 #[derive(Debug)]
 pub struct ScMap(pub VecM<ScMapEntry>);
 
-
 impl From<ScMap> for VecM<ScMapEntry> {
     #[must_use]
     fn from(x: ScMap) -> Self {
@@ -56,7 +55,7 @@ impl ReadXdr for ScMap {
 impl WriteXdr for ScMap {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -70,7 +69,7 @@ impl Deref for ScMap {
 impl From<ScMap> for Vec<ScMapEntry> {
     #[must_use]
     fn from(x: ScMap) -> Self {
-        x.0.0
+        x.0 .0
     }
 }
 
@@ -92,7 +91,7 @@ impl TryFrom<&Vec<ScMapEntry>> for ScMap {
 impl AsRef<Vec<ScMapEntry>> for ScMap {
     #[must_use]
     fn as_ref(&self) -> &Vec<ScMapEntry> {
-        &self.0.0
+        &self.0 .0
     }
 }
 
@@ -100,11 +99,11 @@ impl AsRef<[ScMapEntry]> for ScMap {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[ScMapEntry] {
-        &self.0.0
+        &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[ScMapEntry] {
-        self.0.0
+        self.0 .0
     }
 }

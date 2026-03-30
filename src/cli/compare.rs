@@ -46,11 +46,16 @@ pub struct Cmd {
     pub input: InputFormat,
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum InputFormat {
     Single,
-    #[default]
     SingleBase64,
+}
+
+impl Default for InputFormat {
+    fn default() -> Self {
+        Self::SingleBase64
+    }
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next

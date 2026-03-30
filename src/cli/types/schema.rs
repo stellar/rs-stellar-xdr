@@ -22,10 +22,15 @@ pub struct Cmd {
     pub output: OutputFormat,
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputFormat {
-    #[default]
     JsonSchemaDraft201909,
+}
+
+impl Default for OutputFormat {
+    fn default() -> Self {
+        Self::JsonSchemaDraft201909
+    }
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next

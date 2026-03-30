@@ -27,6 +27,7 @@ pub struct Duration(
     pub u64,
 );
 
+
 impl From<Duration> for u64 {
     #[must_use]
     fn from(x: Duration) -> Self {
@@ -62,6 +63,6 @@ impl ReadXdr for Duration {
 impl WriteXdr for Duration {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }

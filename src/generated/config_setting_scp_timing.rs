@@ -53,8 +53,7 @@ impl WriteXdr for ConfigSettingScpTiming {
         w.with_limited_depth(|w| {
             self.ledger_target_close_time_milliseconds.write_xdr(w)?;
             self.nomination_timeout_initial_milliseconds.write_xdr(w)?;
-            self.nomination_timeout_increment_milliseconds
-                .write_xdr(w)?;
+            self.nomination_timeout_increment_milliseconds.write_xdr(w)?;
             self.ballot_timeout_initial_milliseconds.write_xdr(w)?;
             self.ballot_timeout_increment_milliseconds.write_xdr(w)?;
             Ok(())

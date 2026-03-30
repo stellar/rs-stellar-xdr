@@ -8,10 +8,10 @@ use super::*;
 /// {
 /// case ASSET_TYPE_CREDIT_ALPHANUM4:
 ///     AssetCode4 assetCode4;
-///
+/// 
 /// case ASSET_TYPE_CREDIT_ALPHANUM12:
 ///     AssetCode12 assetCode12;
-///
+/// 
 ///     // add other asset types here in the future
 /// };
 /// ```
@@ -26,9 +26,14 @@ use super::*;
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
-    CreditAlphanum4(AssetCode4),
-    CreditAlphanum12(AssetCode12),
+    CreditAlphanum4(
+        AssetCode4,
+    ),
+    CreditAlphanum12(
+        AssetCode12,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for AssetCode {
@@ -38,7 +43,10 @@ impl Default for AssetCode {
 }
 
 impl AssetCode {
-    const _VARIANTS: &[AssetType] = &[AssetType::CreditAlphanum4, AssetType::CreditAlphanum12];
+    const _VARIANTS: &[AssetType] = &[
+        AssetType::CreditAlphanum4,
+        AssetType::CreditAlphanum12,
+    ];
     pub const VARIANTS: [AssetType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,7 +56,10 @@ impl AssetCode {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["CreditAlphanum4", "CreditAlphanum12"];
+    const _VARIANTS_STR: &[&str] = &[
+        "CreditAlphanum4",
+        "CreditAlphanum12",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

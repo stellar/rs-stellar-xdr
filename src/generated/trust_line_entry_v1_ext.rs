@@ -27,8 +27,11 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryV1Ext {
     V0,
-    V2(TrustLineEntryExtensionV2),
+    V2(
+        TrustLineEntryExtensionV2,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for TrustLineEntryV1Ext {
@@ -38,7 +41,10 @@ impl Default for TrustLineEntryV1Ext {
 }
 
 impl TrustLineEntryV1Ext {
-    const _VARIANTS: &[i32] = &[0, 2];
+    const _VARIANTS: &[i32] = &[
+        0,
+        2,
+    ];
     pub const VARIANTS: [i32; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,7 +54,10 @@ impl TrustLineEntryV1Ext {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["V0", "V2"];
+    const _VARIANTS_STR: &[&str] = &[
+        "V0",
+        "V2",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

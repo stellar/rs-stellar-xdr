@@ -36,6 +36,7 @@ pub enum CreateAccountResult {
     AlreadyExist,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for CreateAccountResult {
     fn default() -> Self {

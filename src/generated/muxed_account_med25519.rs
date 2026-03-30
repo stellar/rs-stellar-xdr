@@ -48,10 +48,7 @@ impl WriteXdr for MuxedAccountMed25519 {
 }
 #[cfg(all(feature = "serde", feature = "alloc"))]
 impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
         use serde::Deserialize;
         #[derive(Deserialize)]
         struct MuxedAccountMed25519 {
@@ -69,9 +66,10 @@ impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
             MuxedAccountMed25519OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
             MuxedAccountMed25519OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
             MuxedAccountMed25519OrString::MuxedAccountMed25519(MuxedAccountMed25519 {
-                id,
-                ed25519,
-            }) => Ok(self::MuxedAccountMed25519 { id, ed25519 }),
+                id, ed25519,
+            }) => Ok(self::MuxedAccountMed25519 {
+                id, ed25519,
+            }),
         }
     }
 }

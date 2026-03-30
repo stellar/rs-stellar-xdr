@@ -35,11 +35,20 @@ use super::*;
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
-    Ed25519(Uint256),
-    PreAuthTx(Uint256),
-    HashX(Uint256),
-    Ed25519SignedPayload(SignerKeyEd25519SignedPayload),
+    Ed25519(
+        Uint256,
+    ),
+    PreAuthTx(
+        Uint256,
+    ),
+    HashX(
+        Uint256,
+    ),
+    Ed25519SignedPayload(
+        SignerKeyEd25519SignedPayload,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for SignerKey {
@@ -64,7 +73,12 @@ impl SignerKey {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Ed25519",
+        "PreAuthTx",
+        "HashX",
+        "Ed25519SignedPayload",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -134,9 +148,7 @@ impl ReadXdr for SignerKey {
                 SignerKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
                 SignerKeyType::PreAuthTx => Self::PreAuthTx(Uint256::read_xdr(r)?),
                 SignerKeyType::HashX => Self::HashX(Uint256::read_xdr(r)?),
-                SignerKeyType::Ed25519SignedPayload => {
-                    Self::Ed25519SignedPayload(SignerKeyEd25519SignedPayload::read_xdr(r)?)
-                }
+                SignerKeyType::Ed25519SignedPayload => Self::Ed25519SignedPayload(SignerKeyEd25519SignedPayload::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

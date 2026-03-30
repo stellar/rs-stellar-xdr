@@ -10,7 +10,7 @@ use super::*;
 ///     Asset buying;
 ///     int64 amount; // amount being sold. if set to 0, delete the offer
 ///     Price price;  // price of thing being sold in terms of what you are buying
-///
+/// 
 ///     // 0=create a new offer, otherwise edit an existing offer
 ///     int64 offerID;
 /// };

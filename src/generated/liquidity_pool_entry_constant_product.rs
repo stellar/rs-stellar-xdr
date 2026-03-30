@@ -7,7 +7,7 @@ use super::*;
 /// struct
 ///         {
 ///             LiquidityPoolConstantProductParameters params;
-///
+/// 
 ///             int64 reserveA;        // amount of A in the pool
 ///             int64 reserveB;        // amount of B in the pool
 ///             int64 totalPoolShares; // total number of pool shares issued

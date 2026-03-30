@@ -21,6 +21,7 @@ use super::*;
 #[derive(Debug)]
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
+
 impl From<SponsorshipDescriptor> for Option<AccountId> {
     #[must_use]
     fn from(x: SponsorshipDescriptor) -> Self {
@@ -56,6 +57,6 @@ impl ReadXdr for SponsorshipDescriptor {
 impl WriteXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }

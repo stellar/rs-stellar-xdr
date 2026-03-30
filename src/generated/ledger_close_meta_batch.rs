@@ -8,10 +8,10 @@ use super::*;
 /// {
 ///     // starting ledger sequence number in the batch
 ///     uint32 startSequence;
-///
+/// 
 ///     // ending ledger sequence number in the batch
 ///     uint32 endSequence;
-///
+/// 
 ///     // Ledger close meta for each ledger within the batch
 ///     LedgerCloseMeta ledgerCloseMetas<>;
 /// };

@@ -113,6 +113,11 @@ pub const VERSION: Version = Version {
 pub mod schemars;
 
 #[allow(clippy::empty_line_after_doc_comments)]
+#[allow(
+    clippy::derivable_impls,
+    clippy::len_zero,
+    clippy::unnecessary_semicolon
+)]
 mod generated;
 mod ledgerkey;
 pub use generated::*;

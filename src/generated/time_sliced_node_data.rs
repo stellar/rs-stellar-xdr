@@ -10,14 +10,14 @@ use super::*;
 ///     uint32 droppedAuthenticatedPeers;
 ///     uint32 totalInboundPeerCount;
 ///     uint32 totalOutboundPeerCount;
-///
+/// 
 ///     // SCP stats
 ///     uint32 p75SCPFirstToSelfLatencyMs;
 ///     uint32 p75SCPSelfToOtherLatencyMs;
-///
+/// 
 ///     // How many times the node lost sync in the time slice
 ///     uint32 lostSyncCount;
-///
+/// 
 ///     // Config data
 ///     bool isValidator;
 ///     uint32 maxInboundPeerCount;

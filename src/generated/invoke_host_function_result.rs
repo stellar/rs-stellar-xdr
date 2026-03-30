@@ -30,13 +30,16 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum InvokeHostFunctionResult {
-    Success(Hash),
+    Success(
+        Hash,
+    ),
     Malformed,
     Trapped,
     ResourceLimitExceeded,
     EntryArchived,
     InsufficientRefundableFee,
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for InvokeHostFunctionResult {
@@ -102,9 +105,7 @@ impl InvokeHostFunctionResult {
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
             Self::ResourceLimitExceeded => InvokeHostFunctionResultCode::ResourceLimitExceeded,
             Self::EntryArchived => InvokeHostFunctionResultCode::EntryArchived,
-            Self::InsufficientRefundableFee => {
-                InvokeHostFunctionResultCode::InsufficientRefundableFee
-            }
+            Self::InsufficientRefundableFee => InvokeHostFunctionResultCode::InsufficientRefundableFee,
         }
     }
 
@@ -140,8 +141,7 @@ impl ReadXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: InvokeHostFunctionResultCode =
-                <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: InvokeHostFunctionResultCode = <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 InvokeHostFunctionResultCode::Success => Self::Success(Hash::read_xdr(r)?),
@@ -149,9 +149,7 @@ impl ReadXdr for InvokeHostFunctionResult {
                 InvokeHostFunctionResultCode::Trapped => Self::Trapped,
                 InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
                 InvokeHostFunctionResultCode::EntryArchived => Self::EntryArchived,
-                InvokeHostFunctionResultCode::InsufficientRefundableFee => {
-                    Self::InsufficientRefundableFee
-                }
+                InvokeHostFunctionResultCode::InsufficientRefundableFee => Self::InsufficientRefundableFee,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

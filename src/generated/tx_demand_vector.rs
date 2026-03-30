@@ -20,6 +20,7 @@ use super::*;
 #[derive(Debug)]
 pub struct TxDemandVector(pub VecM<Hash, 1000>);
 
+
 impl From<TxDemandVector> for VecM<Hash, 1000> {
     #[must_use]
     fn from(x: TxDemandVector) -> Self {
@@ -55,7 +56,7 @@ impl ReadXdr for TxDemandVector {
 impl WriteXdr for TxDemandVector {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }
 
@@ -69,7 +70,7 @@ impl Deref for TxDemandVector {
 impl From<TxDemandVector> for Vec<Hash> {
     #[must_use]
     fn from(x: TxDemandVector) -> Self {
-        x.0 .0
+        x.0.0
     }
 }
 
@@ -91,7 +92,7 @@ impl TryFrom<&Vec<Hash>> for TxDemandVector {
 impl AsRef<Vec<Hash>> for TxDemandVector {
     #[must_use]
     fn as_ref(&self) -> &Vec<Hash> {
-        &self.0 .0
+        &self.0.0
     }
 }
 
@@ -99,11 +100,11 @@ impl AsRef<[Hash]> for TxDemandVector {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[Hash] {
-        &self.0 .0
+        &self.0.0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[Hash] {
-        self.0 .0
+        self.0.0
     }
 }

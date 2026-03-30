@@ -8,7 +8,7 @@ use super::*;
 /// {
 /// case HOT_ARCHIVE_ARCHIVED:
 ///     LedgerEntry archivedEntry;
-///
+/// 
 /// case HOT_ARCHIVE_LIVE:
 ///     LedgerKey key;
 /// case HOT_ARCHIVE_METAENTRY:
@@ -29,10 +29,17 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum HotArchiveBucketEntry {
-    Archived(LedgerEntry),
-    Live(LedgerKey),
-    Metaentry(BucketMetadata),
+    Archived(
+        LedgerEntry,
+    ),
+    Live(
+        LedgerKey,
+    ),
+    Metaentry(
+        BucketMetadata,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for HotArchiveBucketEntry {
@@ -56,7 +63,11 @@ impl HotArchiveBucketEntry {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Archived", "Live", "Metaentry"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Archived",
+        "Live",
+        "Metaentry",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -118,15 +129,12 @@ impl ReadXdr for HotArchiveBucketEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: HotArchiveBucketEntryType =
-                <HotArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
+            let dv: HotArchiveBucketEntryType = <HotArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 HotArchiveBucketEntryType::Archived => Self::Archived(LedgerEntry::read_xdr(r)?),
                 HotArchiveBucketEntryType::Live => Self::Live(LedgerKey::read_xdr(r)?),
-                HotArchiveBucketEntryType::Metaentry => {
-                    Self::Metaentry(BucketMetadata::read_xdr(r)?)
-                }
+                HotArchiveBucketEntryType::Metaentry => Self::Metaentry(BucketMetadata::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

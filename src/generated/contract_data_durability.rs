@@ -41,7 +41,10 @@ impl ContractDataDurability {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Temporary", "Persistent"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Temporary",
+        "Persistent",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

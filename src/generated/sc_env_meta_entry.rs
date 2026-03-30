@@ -27,8 +27,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScEnvMetaEntry {
-    ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion),
+    ScEnvMetaKindInterfaceVersion(
+        ScEnvMetaEntryInterfaceVersion,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ScEnvMetaEntry {
@@ -38,7 +41,9 @@ impl Default for ScEnvMetaEntry {
 }
 
 impl ScEnvMetaEntry {
-    const _VARIANTS: &[ScEnvMetaKind] = &[ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    const _VARIANTS: &[ScEnvMetaKind] = &[
+        ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+    ];
     pub const VARIANTS: [ScEnvMetaKind; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,7 +53,9 @@ impl ScEnvMetaEntry {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["ScEnvMetaKindInterfaceVersion"];
+    const _VARIANTS_STR: &[&str] = &[
+        "ScEnvMetaKindInterfaceVersion",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -109,11 +116,7 @@ impl ReadXdr for ScEnvMetaEntry {
             let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
-                    Self::ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion::read_xdr(
-                        r,
-                    )?)
-                }
+                ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => Self::ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

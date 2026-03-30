@@ -50,11 +50,20 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledges {
-    Prepare(ScpStatementPrepare),
-    Confirm(ScpStatementConfirm),
-    Externalize(ScpStatementExternalize),
-    Nominate(ScpNomination),
+    Prepare(
+        ScpStatementPrepare,
+    ),
+    Confirm(
+        ScpStatementConfirm,
+    ),
+    Externalize(
+        ScpStatementExternalize,
+    ),
+    Nominate(
+        ScpNomination,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ScpStatementPledges {
@@ -79,7 +88,12 @@ impl ScpStatementPledges {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Prepare", "Confirm", "Externalize", "Nominate"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Prepare",
+        "Confirm",
+        "Externalize",
+        "Nominate",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -148,9 +162,7 @@ impl ReadXdr for ScpStatementPledges {
             let v = match dv {
                 ScpStatementType::Prepare => Self::Prepare(ScpStatementPrepare::read_xdr(r)?),
                 ScpStatementType::Confirm => Self::Confirm(ScpStatementConfirm::read_xdr(r)?),
-                ScpStatementType::Externalize => {
-                    Self::Externalize(ScpStatementExternalize::read_xdr(r)?)
-                }
+                ScpStatementType::Externalize => Self::Externalize(ScpStatementExternalize::read_xdr(r)?),
                 ScpStatementType::Nominate => Self::Nominate(ScpNomination::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),

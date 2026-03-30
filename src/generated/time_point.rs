@@ -27,6 +27,7 @@ pub struct TimePoint(
     pub u64,
 );
 
+
 impl From<TimePoint> for u64 {
     #[must_use]
     fn from(x: TimePoint) -> Self {
@@ -62,6 +63,6 @@ impl ReadXdr for TimePoint {
 impl WriteXdr for TimePoint {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }

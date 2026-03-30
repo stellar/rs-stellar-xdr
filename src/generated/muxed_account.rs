@@ -27,9 +27,14 @@ use super::*;
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
-    Ed25519(Uint256),
-    MuxedEd25519(MuxedAccountMed25519),
+    Ed25519(
+        Uint256,
+    ),
+    MuxedEd25519(
+        MuxedAccountMed25519,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for MuxedAccount {
@@ -39,7 +44,10 @@ impl Default for MuxedAccount {
 }
 
 impl MuxedAccount {
-    const _VARIANTS: &[CryptoKeyType] = &[CryptoKeyType::Ed25519, CryptoKeyType::MuxedEd25519];
+    const _VARIANTS: &[CryptoKeyType] = &[
+        CryptoKeyType::Ed25519,
+        CryptoKeyType::MuxedEd25519,
+    ];
     pub const VARIANTS: [CryptoKeyType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -49,7 +57,10 @@ impl MuxedAccount {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Ed25519", "MuxedEd25519"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Ed25519",
+        "MuxedEd25519",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -113,9 +124,7 @@ impl ReadXdr for MuxedAccount {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 CryptoKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
-                CryptoKeyType::MuxedEd25519 => {
-                    Self::MuxedEd25519(MuxedAccountMed25519::read_xdr(r)?)
-                }
+                CryptoKeyType::MuxedEd25519 => Self::MuxedEd25519(MuxedAccountMed25519::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     LIQUIDITY_POOL_DEPOSIT_SUCCESS = 0,
-///
+/// 
 ///     // codes considered as "failure" for the operation
 ///     LIQUIDITY_POOL_DEPOSIT_MALFORMED = -1,      // bad input
 ///     LIQUIDITY_POOL_DEPOSIT_NO_TRUST = -2,       // no trust line for one of the
@@ -21,7 +21,7 @@ use super::*;
 ///                                                 // have sufficient limit
 ///     LIQUIDITY_POOL_DEPOSIT_BAD_PRICE = -6,      // deposit price outside bounds
 ///     LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7,      // pool reserves are full
-///     LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN = -8  // trustline for one of the
+///     LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN = -8  // trustline for one of the 
 ///                                                   // assets is frozen
 /// };
 /// ```

@@ -46,6 +46,7 @@ pub enum PaymentResult {
     NoIssuer,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for PaymentResult {
     fn default() -> Self {

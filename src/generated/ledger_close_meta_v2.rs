@@ -7,26 +7,26 @@ use super::*;
 /// struct LedgerCloseMetaV2
 /// {
 ///     LedgerCloseMetaExt ext;
-///
+/// 
 ///     LedgerHeaderHistoryEntry ledgerHeader;
-///
+/// 
 ///     GeneralizedTransactionSet txSet;
-///
+/// 
 ///     // NB: transactions are sorted in apply order here
 ///     // fees for all transactions are processed first
 ///     // followed by applying transactions
 ///     TransactionResultMetaV1 txProcessing<>;
-///
+/// 
 ///     // upgrades are applied last
 ///     UpgradeEntryMeta upgradesProcessing<>;
-///
+/// 
 ///     // other misc information attached to the ledger close
 ///     SCPHistoryEntry scpInfo<>;
-///
+/// 
 ///     // Size in bytes of live Soroban state, to support downstream
 ///     // systems calculating storage fees correctly.
 ///     uint64 totalByteSizeOfLiveSorobanState;
-///
+/// 
 ///     // TTL and data/code keys that have been evicted at this ledger.
 ///     LedgerKey evictedKeys<>;
 /// };

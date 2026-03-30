@@ -24,8 +24,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTx {
-    Tx(TransactionV1Envelope),
+    Tx(
+        TransactionV1Envelope,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for FeeBumpTransactionInnerTx {
@@ -35,7 +38,9 @@ impl Default for FeeBumpTransactionInnerTx {
 }
 
 impl FeeBumpTransactionInnerTx {
-    const _VARIANTS: &[EnvelopeType] = &[EnvelopeType::Tx];
+    const _VARIANTS: &[EnvelopeType] = &[
+        EnvelopeType::Tx,
+    ];
     pub const VARIANTS: [EnvelopeType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -45,7 +50,9 @@ impl FeeBumpTransactionInnerTx {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Tx"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Tx",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

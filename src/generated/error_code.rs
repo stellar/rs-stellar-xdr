@@ -51,7 +51,13 @@ impl ErrorCode {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Misc", "Data", "Conf", "Auth", "Load"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Misc",
+        "Data",
+        "Conf",
+        "Auth",
+        "Load",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

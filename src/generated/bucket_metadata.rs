@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // Indicates the protocol version used to create / merge this bucket.
 ///     uint32 ledgerVersion;
-///
+/// 
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

@@ -33,7 +33,9 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum Memo {
     None,
-    Text(StringM<28>),
+    Text(
+        StringM::<28>,
+    ),
     Id(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
@@ -41,9 +43,14 @@ pub enum Memo {
         )]
         u64,
     ),
-    Hash(Hash),
-    Return(Hash),
+    Hash(
+        Hash,
+    ),
+    Return(
+        Hash,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for Memo {
@@ -69,7 +76,13 @@ impl Memo {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["None", "Text", "Id", "Hash", "Return"];
+    const _VARIANTS_STR: &[&str] = &[
+        "None",
+        "Text",
+        "Id",
+        "Hash",
+        "Return",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

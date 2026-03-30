@@ -25,7 +25,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecFunctionV0 {
-    pub doc: StringM<1024>,
+    pub doc: StringM::<1024>,
     pub name: ScSymbol,
     pub inputs: VecM<ScSpecFunctionInputV0>,
     pub outputs: VecM<ScSpecTypeDef, 1>,

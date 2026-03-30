@@ -29,7 +29,10 @@ pub enum StellarValueType {
 }
 
 impl StellarValueType {
-    const _VARIANTS: &[StellarValueType] = &[StellarValueType::Basic, StellarValueType::Signed];
+    const _VARIANTS: &[StellarValueType] = &[
+        StellarValueType::Basic,
+        StellarValueType::Signed,
+    ];
     pub const VARIANTS: [StellarValueType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,7 +42,10 @@ impl StellarValueType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Basic", "Signed"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Basic",
+        "Signed",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

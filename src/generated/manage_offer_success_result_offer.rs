@@ -27,10 +27,15 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageOfferSuccessResultOffer {
-    Created(OfferEntry),
-    Updated(OfferEntry),
+    Created(
+        OfferEntry,
+    ),
+    Updated(
+        OfferEntry,
+    ),
     Deleted,
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ManageOfferSuccessResultOffer {
@@ -54,7 +59,11 @@ impl ManageOfferSuccessResultOffer {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Created", "Updated", "Deleted"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Created",
+        "Updated",
+        "Deleted",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

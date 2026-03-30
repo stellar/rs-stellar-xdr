@@ -27,7 +27,9 @@ pub enum PublicKeyType {
 }
 
 impl PublicKeyType {
-    const _VARIANTS: &[PublicKeyType] = &[PublicKeyType::PublicKeyTypeEd25519];
+    const _VARIANTS: &[PublicKeyType] = &[
+        PublicKeyType::PublicKeyTypeEd25519,
+    ];
     pub const VARIANTS: [PublicKeyType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -37,7 +39,9 @@ impl PublicKeyType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["PublicKeyTypeEd25519"];
+    const _VARIANTS_STR: &[&str] = &[
+        "PublicKeyTypeEd25519",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

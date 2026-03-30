@@ -20,6 +20,7 @@ use super::*;
 #[derive(Debug)]
 pub struct TimeSlicedPeerDataList(pub VecM<TimeSlicedPeerData, 25>);
 
+
 impl From<TimeSlicedPeerDataList> for VecM<TimeSlicedPeerData, 25> {
     #[must_use]
     fn from(x: TimeSlicedPeerDataList) -> Self {
@@ -55,7 +56,7 @@ impl ReadXdr for TimeSlicedPeerDataList {
 impl WriteXdr for TimeSlicedPeerDataList {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }
 
@@ -69,7 +70,7 @@ impl Deref for TimeSlicedPeerDataList {
 impl From<TimeSlicedPeerDataList> for Vec<TimeSlicedPeerData> {
     #[must_use]
     fn from(x: TimeSlicedPeerDataList) -> Self {
-        x.0 .0
+        x.0.0
     }
 }
 
@@ -91,7 +92,7 @@ impl TryFrom<&Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
 impl AsRef<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
     #[must_use]
     fn as_ref(&self) -> &Vec<TimeSlicedPeerData> {
-        &self.0 .0
+        &self.0.0
     }
 }
 
@@ -99,11 +100,11 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[TimeSlicedPeerData] {
-        &self.0 .0
+        &self.0.0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[TimeSlicedPeerData] {
-        self.0 .0
+        self.0.0
     }
 }

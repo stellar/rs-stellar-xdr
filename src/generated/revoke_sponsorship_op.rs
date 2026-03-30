@@ -30,9 +30,14 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipOp {
-    LedgerEntry(LedgerKey),
-    Signer(RevokeSponsorshipOpSigner),
+    LedgerEntry(
+        LedgerKey,
+    ),
+    Signer(
+        RevokeSponsorshipOpSigner,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for RevokeSponsorshipOp {
@@ -55,7 +60,10 @@ impl RevokeSponsorshipOp {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["LedgerEntry", "Signer"];
+    const _VARIANTS_STR: &[&str] = &[
+        "LedgerEntry",
+        "Signer",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -119,9 +127,7 @@ impl ReadXdr for RevokeSponsorshipOp {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 RevokeSponsorshipType::LedgerEntry => Self::LedgerEntry(LedgerKey::read_xdr(r)?),
-                RevokeSponsorshipType::Signer => {
-                    Self::Signer(RevokeSponsorshipOpSigner::read_xdr(r)?)
-                }
+                RevokeSponsorshipType::Signer => Self::Signer(RevokeSponsorshipOpSigner::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

@@ -88,7 +88,9 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResult {
-    OpInner(OperationResultTr),
+    OpInner(
+        OperationResultTr,
+    ),
     OpBadAuth,
     OpNoAccount,
     OpNotSupported,
@@ -96,6 +98,7 @@ pub enum OperationResult {
     OpExceededWorkLimit,
     OpTooManySponsoring,
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for OperationResult {

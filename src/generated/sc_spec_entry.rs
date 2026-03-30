@@ -34,13 +34,26 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecEntry {
-    FunctionV0(ScSpecFunctionV0),
-    UdtStructV0(ScSpecUdtStructV0),
-    UdtUnionV0(ScSpecUdtUnionV0),
-    UdtEnumV0(ScSpecUdtEnumV0),
-    UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
-    EventV0(ScSpecEventV0),
+    FunctionV0(
+        ScSpecFunctionV0,
+    ),
+    UdtStructV0(
+        ScSpecUdtStructV0,
+    ),
+    UdtUnionV0(
+        ScSpecUdtUnionV0,
+    ),
+    UdtEnumV0(
+        ScSpecUdtEnumV0,
+    ),
+    UdtErrorEnumV0(
+        ScSpecUdtErrorEnumV0,
+    ),
+    EventV0(
+        ScSpecEventV0,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ScSpecEntry {
@@ -149,9 +162,7 @@ impl ReadXdr for ScSpecEntry {
                 ScSpecEntryKind::UdtStructV0 => Self::UdtStructV0(ScSpecUdtStructV0::read_xdr(r)?),
                 ScSpecEntryKind::UdtUnionV0 => Self::UdtUnionV0(ScSpecUdtUnionV0::read_xdr(r)?),
                 ScSpecEntryKind::UdtEnumV0 => Self::UdtEnumV0(ScSpecUdtEnumV0::read_xdr(r)?),
-                ScSpecEntryKind::UdtErrorEnumV0 => {
-                    Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
-                }
+                ScSpecEntryKind::UdtErrorEnumV0 => Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?),
                 ScSpecEntryKind::EventV0 => Self::EventV0(ScSpecEventV0::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),

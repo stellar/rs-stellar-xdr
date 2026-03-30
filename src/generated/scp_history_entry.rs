@@ -24,8 +24,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
-    V0(ScpHistoryEntryV0),
+    V0(
+        ScpHistoryEntryV0,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ScpHistoryEntry {
@@ -35,7 +38,9 @@ impl Default for ScpHistoryEntry {
 }
 
 impl ScpHistoryEntry {
-    const _VARIANTS: &[i32] = &[0];
+    const _VARIANTS: &[i32] = &[
+        0,
+    ];
     pub const VARIANTS: [i32; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -45,7 +50,9 @@ impl ScpHistoryEntry {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["V0"];
+    const _VARIANTS_STR: &[&str] = &[
+        "V0",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

@@ -36,9 +36,15 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicate {
     Unconditional,
-    And(VecM<ClaimPredicate, 2>),
-    Or(VecM<ClaimPredicate, 2>),
-    Not(Option<Box<ClaimPredicate>>),
+    And(
+        VecM<ClaimPredicate, 2>,
+    ),
+    Or(
+        VecM<ClaimPredicate, 2>,
+    ),
+    Not(
+        Option<Box<ClaimPredicate>>,
+    ),
     BeforeAbsoluteTime(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
@@ -54,6 +60,7 @@ pub enum ClaimPredicate {
         i64,
     ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ClaimPredicate {
@@ -162,12 +169,8 @@ impl ReadXdr for ClaimPredicate {
                 ClaimPredicateType::And => Self::And(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
                 ClaimPredicateType::Or => Self::Or(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
                 ClaimPredicateType::Not => Self::Not(Option::<Box<ClaimPredicate>>::read_xdr(r)?),
-                ClaimPredicateType::BeforeAbsoluteTime => {
-                    Self::BeforeAbsoluteTime(i64::read_xdr(r)?)
-                }
-                ClaimPredicateType::BeforeRelativeTime => {
-                    Self::BeforeRelativeTime(i64::read_xdr(r)?)
-                }
+                ClaimPredicateType::BeforeAbsoluteTime => Self::BeforeAbsoluteTime(i64::read_xdr(r)?),
+                ClaimPredicateType::BeforeRelativeTime => Self::BeforeRelativeTime(i64::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

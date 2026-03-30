@@ -31,13 +31,16 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateClaimableBalanceResult {
-    Success(ClaimableBalanceId),
+    Success(
+        ClaimableBalanceId,
+    ),
     Malformed,
     LowReserve,
     NoTrust,
     NotAuthorized,
     Underfunded,
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for CreateClaimableBalanceResult {
@@ -139,13 +142,10 @@ impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: CreateClaimableBalanceResultCode =
-                <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: CreateClaimableBalanceResultCode = <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                CreateClaimableBalanceResultCode::Success => {
-                    Self::Success(ClaimableBalanceId::read_xdr(r)?)
-                }
+                CreateClaimableBalanceResultCode::Success => Self::Success(ClaimableBalanceId::read_xdr(r)?),
                 CreateClaimableBalanceResultCode::Malformed => Self::Malformed,
                 CreateClaimableBalanceResultCode::LowReserve => Self::LowReserve,
                 CreateClaimableBalanceResultCode::NoTrust => Self::NoTrust,

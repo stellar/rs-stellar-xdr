@@ -5,13 +5,13 @@ use super::*;
 ///
 /// ```text
 /// enum TransactionEventStage {
-///     // The event has happened before any one of the transactions has its
+///     // The event has happened before any one of the transactions has its 
 ///     // operations applied.
 ///     TRANSACTION_EVENT_STAGE_BEFORE_ALL_TXS = 0,
 ///     // The event has happened immediately after operations of the transaction
 ///     // have been applied.
 ///     TRANSACTION_EVENT_STAGE_AFTER_TX = 1,
-///     // The event has happened after every transaction had its operations
+///     // The event has happened after every transaction had its operations 
 ///     // applied.
 ///     TRANSACTION_EVENT_STAGE_AFTER_ALL_TXS = 2
 /// };
@@ -50,7 +50,11 @@ impl TransactionEventStage {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["BeforeAllTxs", "AfterTx", "AfterAllTxs"];
+    const _VARIANTS_STR: &[&str] = &[
+        "BeforeAllTxs",
+        "AfterTx",
+        "AfterAllTxs",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

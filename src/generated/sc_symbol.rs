@@ -18,25 +18,26 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct ScSymbol(pub StringM<32>);
+pub struct ScSymbol(pub StringM::<32>);
 
-impl From<ScSymbol> for StringM<32> {
+
+impl From<ScSymbol> for StringM::<32> {
     #[must_use]
     fn from(x: ScSymbol) -> Self {
         x.0
     }
 }
 
-impl From<StringM<32>> for ScSymbol {
+impl From<StringM::<32>> for ScSymbol {
     #[must_use]
-    fn from(x: StringM<32>) -> Self {
+    fn from(x: StringM::<32>) -> Self {
         ScSymbol(x)
     }
 }
 
-impl AsRef<StringM<32>> for ScSymbol {
+impl AsRef<StringM::<32>> for ScSymbol {
     #[must_use]
-    fn as_ref(&self) -> &StringM<32> {
+    fn as_ref(&self) -> &StringM::<32> {
         &self.0
     }
 }
@@ -55,12 +56,12 @@ impl ReadXdr for ScSymbol {
 impl WriteXdr for ScSymbol {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }
 
 impl Deref for ScSymbol {
-    type Target = StringM<32>;
+    type Target = StringM::<32>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -69,7 +70,7 @@ impl Deref for ScSymbol {
 impl From<ScSymbol> for Vec<u8> {
     #[must_use]
     fn from(x: ScSymbol) -> Self {
-        x.0 .0
+        x.0.0
     }
 }
 
@@ -91,7 +92,7 @@ impl TryFrom<&Vec<u8>> for ScSymbol {
 impl AsRef<Vec<u8>> for ScSymbol {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
+        &self.0.0
     }
 }
 
@@ -99,11 +100,11 @@ impl AsRef<[u8]> for ScSymbol {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
-        &self.0 .0
+        &self.0.0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
-        self.0 .0
+        self.0.0
     }
 }

@@ -8,23 +8,23 @@ use super::*;
 ///     uint32 maxEntryTTL;
 ///     uint32 minTemporaryTTL;
 ///     uint32 minPersistentTTL;
-///
+/// 
 ///     // rent_fee = wfee_rate_average / rent_rate_denominator_for_type
 ///     int64 persistentRentRateDenominator;
 ///     int64 tempRentRateDenominator;
-///
+/// 
 ///     // max number of entries that emit archival meta in a single ledger
 ///     uint32 maxEntriesToArchive;
-///
+/// 
 ///     // Number of snapshots to use when calculating average live Soroban State size
 ///     uint32 liveSorobanStateSizeWindowSampleSize;
-///
+/// 
 ///     // How often to sample the live Soroban State size for the average, in ledgers
 ///     uint32 liveSorobanStateSizeWindowSamplePeriod;
-///
+/// 
 ///     // Maximum number of bytes that we scan for eviction per ledger
 ///     uint32 evictionScanSize;
-///
+/// 
 ///     // Lowest BucketList level to be scanned to evict entries
 ///     uint32 startingEvictionScanLevel;
 /// };
@@ -92,10 +92,8 @@ impl WriteXdr for StateArchivalSettings {
             self.persistent_rent_rate_denominator.write_xdr(w)?;
             self.temp_rent_rate_denominator.write_xdr(w)?;
             self.max_entries_to_archive.write_xdr(w)?;
-            self.live_soroban_state_size_window_sample_size
-                .write_xdr(w)?;
-            self.live_soroban_state_size_window_sample_period
-                .write_xdr(w)?;
+            self.live_soroban_state_size_window_sample_size.write_xdr(w)?;
+            self.live_soroban_state_size_window_sample_period.write_xdr(w)?;
             self.eviction_scan_size.write_xdr(w)?;
             self.starting_eviction_scan_level.write_xdr(w)?;
             Ok(())

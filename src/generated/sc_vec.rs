@@ -20,6 +20,7 @@ use super::*;
 #[derive(Debug)]
 pub struct ScVec(pub VecM<ScVal>);
 
+
 impl From<ScVec> for VecM<ScVal> {
     #[must_use]
     fn from(x: ScVec) -> Self {
@@ -55,7 +56,7 @@ impl ReadXdr for ScVec {
 impl WriteXdr for ScVec {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }
 
@@ -69,7 +70,7 @@ impl Deref for ScVec {
 impl From<ScVec> for Vec<ScVal> {
     #[must_use]
     fn from(x: ScVec) -> Self {
-        x.0 .0
+        x.0.0
     }
 }
 
@@ -91,7 +92,7 @@ impl TryFrom<&Vec<ScVal>> for ScVec {
 impl AsRef<Vec<ScVal>> for ScVec {
     #[must_use]
     fn as_ref(&self) -> &Vec<ScVal> {
-        &self.0 .0
+        &self.0.0
     }
 }
 
@@ -99,11 +100,11 @@ impl AsRef<[ScVal]> for ScVec {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[ScVal] {
-        &self.0 .0
+        &self.0.0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[ScVal] {
-        self.0 .0
+        self.0.0
     }
 }

@@ -43,34 +43,24 @@ pub struct Cmd {
     pub output_format: OutputFormat,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, ValueEnum)]
 pub enum InputFormat {
     Single,
     SingleBase64,
     Stream,
+    #[default]
     StreamBase64,
     StreamFramed,
 }
 
-impl Default for InputFormat {
-    fn default() -> Self {
-        Self::StreamBase64
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputFormat {
+    #[default]
     Json,
     JsonFormatted,
     Text,
     RustDebug,
     RustDebugFormatted,
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::Json
-    }
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next

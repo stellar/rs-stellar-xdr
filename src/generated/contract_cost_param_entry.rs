@@ -7,7 +7,7 @@ use super::*;
 /// struct ContractCostParamEntry {
 ///     // use `ext` to add more terms (e.g. higher order polynomials) in the future
 ///     ExtensionPoint ext;
-///
+/// 
 ///     int64 constTerm;
 ///     int64 linearTerm;
 /// };

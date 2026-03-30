@@ -12,7 +12,7 @@ use super::*;
 ///     int64 txMaxInstructions;
 ///     // Cost of 10000 instructions
 ///     int64 feeRatePerInstructionsIncrement;
-///
+/// 
 ///     // Memory limit per transaction. Unlike instructions, there is no fee
 ///     // for memory, just the limit.
 ///     uint32 txMemoryLimit;

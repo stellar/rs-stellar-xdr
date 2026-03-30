@@ -48,7 +48,12 @@ impl SignerKeyType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Ed25519", "PreAuthTx", "HashX", "Ed25519SignedPayload"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Ed25519",
+        "PreAuthTx",
+        "HashX",
+        "Ed25519SignedPayload",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

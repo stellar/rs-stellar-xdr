@@ -27,8 +27,9 @@ pub enum ClaimableBalanceIdType {
 }
 
 impl ClaimableBalanceIdType {
-    const _VARIANTS: &[ClaimableBalanceIdType] =
-        &[ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+    const _VARIANTS: &[ClaimableBalanceIdType] = &[
+        ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
+    ];
     pub const VARIANTS: [ClaimableBalanceIdType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -38,7 +39,9 @@ impl ClaimableBalanceIdType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["ClaimableBalanceIdTypeV0"];
+    const _VARIANTS_STR: &[&str] = &[
+        "ClaimableBalanceIdTypeV0",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

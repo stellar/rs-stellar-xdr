@@ -36,9 +36,10 @@ pub struct Cmd {
     pub output_format: OutputFormat,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputFormat {
     Single,
+    #[default]
     SingleBase64,
     // TODO: Stream,
     // TODO: StreamBase64,
@@ -46,12 +47,6 @@ pub enum OutputFormat {
     Json,
     JsonFormatted,
     Text,
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::SingleBase64
-    }
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next

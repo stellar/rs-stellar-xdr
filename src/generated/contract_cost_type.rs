@@ -16,7 +16,7 @@ use super::*;
 ///     // Cost of a host function dispatch, not including the actual work done by
 ///     // the function nor the cost of VM invocation machinary
 ///     DispatchHostFunction = 4,
-///     // Cost of visiting a host object from the host object storage. Exists to
+///     // Cost of visiting a host object from the host object storage. Exists to 
 ///     // make sure some baseline cost coverage, i.e. repeatly visiting objects
 ///     // by the guest will always incur some charges.
 ///     VisitObject = 5,
@@ -56,7 +56,7 @@ use super::*;
 ///     Int256Shift = 21,
 ///     // Cost of drawing random bytes using a ChaCha20 PRNG
 ///     ChaCha20DrawBytes = 22,
-///
+/// 
 ///     // Cost of parsing wasm bytes that only encode instructions.
 ///     ParseWasmInstructions = 23,
 ///     // Cost of parsing a known number of wasm functions.
@@ -77,7 +77,7 @@ use super::*;
 ///     ParseWasmExports = 31,
 ///     // Cost of parsing a known number of data segment bytes.
 ///     ParseWasmDataSegmentBytes = 32,
-///
+/// 
 ///     // Cost of instantiating wasm bytes that only encode instructions.
 ///     InstantiateWasmInstructions = 33,
 ///     // Cost of instantiating a known number of wasm functions.
@@ -98,13 +98,13 @@ use super::*;
 ///     InstantiateWasmExports = 41,
 ///     // Cost of instantiating a known number of data segment bytes.
 ///     InstantiateWasmDataSegmentBytes = 42,
-///
+/// 
 ///     // Cost of decoding a bytes array representing an uncompressed SEC-1 encoded
 ///     // point on a 256-bit elliptic curve
 ///     Sec1DecodePointUncompressed = 43,
 ///     // Cost of verifying an ECDSA Secp256r1 signature
 ///     VerifyEcdsaSecp256r1Sig = 44,
-///
+/// 
 ///     // Cost of encoding a BLS12-381 Fp (base field element)
 ///     Bls12381EncodeFp = 45,
 ///     // Cost of decoding a BLS12-381 Fp (base field element)
@@ -155,7 +155,7 @@ use super::*;
 ///     Bls12381FrPow = 68,
 ///     // Cost of performing BLS12-381 scalar element inversion
 ///     Bls12381FrInv = 69,
-///
+/// 
 ///     // Cost of encoding a BN254 Fp (base field element)
 ///     Bn254EncodeFp = 70,
 ///     // Cost of decoding a BN254 Fp (base field element)

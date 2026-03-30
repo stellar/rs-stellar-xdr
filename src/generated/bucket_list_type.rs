@@ -29,7 +29,10 @@ pub enum BucketListType {
 }
 
 impl BucketListType {
-    const _VARIANTS: &[BucketListType] = &[BucketListType::Live, BucketListType::HotArchive];
+    const _VARIANTS: &[BucketListType] = &[
+        BucketListType::Live,
+        BucketListType::HotArchive,
+    ];
     pub const VARIANTS: [BucketListType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,7 +42,10 @@ impl BucketListType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Live", "HotArchive"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Live",
+        "HotArchive",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

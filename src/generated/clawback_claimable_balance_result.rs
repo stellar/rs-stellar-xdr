@@ -35,6 +35,7 @@ pub enum ClawbackClaimableBalanceResult {
     NotClawbackEnabled,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for ClawbackClaimableBalanceResult {
     fn default() -> Self {
@@ -58,7 +59,12 @@ impl ClawbackClaimableBalanceResult {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Success",
+        "DoesNotExist",
+        "NotIssuer",
+        "NotClawbackEnabled",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -122,8 +128,7 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: ClawbackClaimableBalanceResultCode =
-                <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: ClawbackClaimableBalanceResultCode = <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 ClawbackClaimableBalanceResultCode::Success => Self::Success,

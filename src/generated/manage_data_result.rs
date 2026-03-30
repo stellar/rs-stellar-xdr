@@ -36,6 +36,7 @@ pub enum ManageDataResult {
     InvalidName,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for ManageDataResult {
     fn default() -> Self {

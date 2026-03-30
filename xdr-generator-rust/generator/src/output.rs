@@ -16,6 +16,11 @@ pub struct ModTemplate {
     pub xdr_files_sha256: Vec<(String, String)>,
     pub header: String,
     pub modules: Vec<ModuleEntry>,
+}
+
+#[derive(Template)]
+#[template(path = "type_enum_definition.rs.jinja", escape = "none")]
+pub struct TypeEnumDefinitionTemplate {
     pub type_variant_enum: TypeEnumOutput,
 }
 

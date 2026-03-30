@@ -7,22 +7,22 @@ use super::*;
 /// struct SorobanTransactionMetaExtV1
 /// {
 ///     ExtensionPoint ext;
-/// 
+///
 ///     // The following are the components of the overall Soroban resource fee
 ///     // charged for the transaction.
 ///     // The following relation holds:
 ///     // `resourceFeeCharged = totalNonRefundableResourceFeeCharged + totalRefundableResourceFeeCharged`
-///     // where `resourceFeeCharged` is the overall fee charged for the 
-///     // transaction. Also, `resourceFeeCharged` <= `sorobanData.resourceFee` 
+///     // where `resourceFeeCharged` is the overall fee charged for the
+///     // transaction. Also, `resourceFeeCharged` <= `sorobanData.resourceFee`
 ///     // i.e.we never charge more than the declared resource fee.
-///     // The inclusion fee for charged the Soroban transaction can be found using 
+///     // The inclusion fee for charged the Soroban transaction can be found using
 ///     // the following equation:
 ///     // `result.feeCharged = resourceFeeCharged + inclusionFeeCharged`.
-/// 
+///
 ///     // Total amount (in stroops) that has been charged for non-refundable
 ///     // Soroban resources.
 ///     // Non-refundable resources are charged based on the usage declared in
-///     // the transaction envelope (such as `instructions`, `readBytes` etc.) and 
+///     // the transaction envelope (such as `instructions`, `readBytes` etc.) and
 ///     // is charged regardless of the success of the transaction.
 ///     int64 totalNonRefundableResourceFeeCharged;
 ///     // Total amount (in stroops) that has been charged for refundable
@@ -88,7 +88,8 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
-            self.total_non_refundable_resource_fee_charged.write_xdr(w)?;
+            self.total_non_refundable_resource_fee_charged
+                .write_xdr(w)?;
             self.total_refundable_resource_fee_charged.write_xdr(w)?;
             self.rent_fee_charged.write_xdr(w)?;
             Ok(())

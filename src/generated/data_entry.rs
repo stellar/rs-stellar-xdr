@@ -9,7 +9,7 @@ use super::*;
 ///     AccountID accountID; // account this data belongs to
 ///     string64 dataName;
 ///     DataValue dataValue;
-/// 
+///
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

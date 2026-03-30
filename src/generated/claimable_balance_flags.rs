@@ -29,9 +29,8 @@ pub enum ClaimableBalanceFlags {
 }
 
 impl ClaimableBalanceFlags {
-    const _VARIANTS: &[ClaimableBalanceFlags] = &[
-        ClaimableBalanceFlags::ClaimableBalanceClawbackEnabledFlag,
-    ];
+    const _VARIANTS: &[ClaimableBalanceFlags] =
+        &[ClaimableBalanceFlags::ClaimableBalanceClawbackEnabledFlag];
     pub const VARIANTS: [ClaimableBalanceFlags; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -41,9 +40,7 @@ impl ClaimableBalanceFlags {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "ClaimableBalanceClawbackEnabledFlag",
-    ];
+    const _VARIANTS_STR: &[&str] = &["ClaimableBalanceClawbackEnabledFlag"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

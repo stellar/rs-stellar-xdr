@@ -36,7 +36,6 @@ pub enum ClawbackResult {
     Underfunded,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for ClawbackResult {
     fn default() -> Self {

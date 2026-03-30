@@ -32,23 +32,12 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChange {
-    Created(
-        LedgerEntry,
-    ),
-    Updated(
-        LedgerEntry,
-    ),
-    Removed(
-        LedgerKey,
-    ),
-    State(
-        LedgerEntry,
-    ),
-    Restored(
-        LedgerEntry,
-    ),
+    Created(LedgerEntry),
+    Updated(LedgerEntry),
+    Removed(LedgerKey),
+    State(LedgerEntry),
+    Restored(LedgerEntry),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryChange {
@@ -74,13 +63,7 @@ impl LedgerEntryChange {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Created",
-        "Updated",
-        "Removed",
-        "State",
-        "Restored",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Created", "Updated", "Removed", "State", "Restored"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

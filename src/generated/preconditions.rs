@@ -29,14 +29,9 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum Preconditions {
     None,
-    Time(
-        TimeBounds,
-    ),
-    V2(
-        PreconditionsV2,
-    ),
+    Time(TimeBounds),
+    V2(PreconditionsV2),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for Preconditions {
@@ -60,11 +55,7 @@ impl Preconditions {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "None",
-        "Time",
-        "V2",
-    ];
+    const _VARIANTS_STR: &[&str] = &["None", "Time", "V2"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

@@ -28,11 +28,8 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TxSetComponent {
-    TxsetCompTxsMaybeDiscountedFee(
-        TxSetComponentTxsMaybeDiscountedFee,
-    ),
+    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for TxSetComponent {
@@ -42,9 +39,7 @@ impl Default for TxSetComponent {
 }
 
 impl TxSetComponent {
-    const _VARIANTS: &[TxSetComponentType] = &[
-        TxSetComponentType::TxsetCompTxsMaybeDiscountedFee,
-    ];
+    const _VARIANTS: &[TxSetComponentType] = &[TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
     pub const VARIANTS: [TxSetComponentType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -54,9 +49,7 @@ impl TxSetComponent {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "TxsetCompTxsMaybeDiscountedFee",
-    ];
+    const _VARIANTS_STR: &[&str] = &["TxsetCompTxsMaybeDiscountedFee"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -78,7 +71,9 @@ impl TxSetComponent {
     pub const fn discriminant(&self) -> TxSetComponentType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::TxsetCompTxsMaybeDiscountedFee(_) => TxSetComponentType::TxsetCompTxsMaybeDiscountedFee,
+            Self::TxsetCompTxsMaybeDiscountedFee(_) => {
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee
+            }
         }
     }
 
@@ -117,7 +112,11 @@ impl ReadXdr for TxSetComponent {
             let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => Self::TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee::read_xdr(r)?),
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => {
+                    Self::TxsetCompTxsMaybeDiscountedFee(
+                        TxSetComponentTxsMaybeDiscountedFee::read_xdr(r)?,
+                    )
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

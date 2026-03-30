@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     Hash hash;
 ///     LedgerHeader header;
-/// 
+///
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

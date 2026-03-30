@@ -64,42 +64,18 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ConfigSettingEntry {
-    ContractMaxSizeBytes(
-        u32,
-    ),
-    ContractComputeV0(
-        ConfigSettingContractComputeV0,
-    ),
-    ContractLedgerCostV0(
-        ConfigSettingContractLedgerCostV0,
-    ),
-    ContractHistoricalDataV0(
-        ConfigSettingContractHistoricalDataV0,
-    ),
-    ContractEventsV0(
-        ConfigSettingContractEventsV0,
-    ),
-    ContractBandwidthV0(
-        ConfigSettingContractBandwidthV0,
-    ),
-    ContractCostParamsCpuInstructions(
-        ContractCostParams,
-    ),
-    ContractCostParamsMemoryBytes(
-        ContractCostParams,
-    ),
-    ContractDataKeySizeBytes(
-        u32,
-    ),
-    ContractDataEntrySizeBytes(
-        u32,
-    ),
-    StateArchival(
-        StateArchivalSettings,
-    ),
-    ContractExecutionLanes(
-        ConfigSettingContractExecutionLanesV0,
-    ),
+    ContractMaxSizeBytes(u32),
+    ContractComputeV0(ConfigSettingContractComputeV0),
+    ContractLedgerCostV0(ConfigSettingContractLedgerCostV0),
+    ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0),
+    ContractEventsV0(ConfigSettingContractEventsV0),
+    ContractBandwidthV0(ConfigSettingContractBandwidthV0),
+    ContractCostParamsCpuInstructions(ContractCostParams),
+    ContractCostParamsMemoryBytes(ContractCostParams),
+    ContractDataKeySizeBytes(u32),
+    ContractDataEntrySizeBytes(u32),
+    StateArchival(StateArchivalSettings),
+    ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
     LiveSorobanStateSizeWindow(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
@@ -107,32 +83,15 @@ pub enum ConfigSettingEntry {
         )]
         VecM<u64>,
     ),
-    EvictionIterator(
-        EvictionIterator,
-    ),
-    ContractParallelComputeV0(
-        ConfigSettingContractParallelComputeV0,
-    ),
-    ContractLedgerCostExtV0(
-        ConfigSettingContractLedgerCostExtV0,
-    ),
-    ScpTiming(
-        ConfigSettingScpTiming,
-    ),
-    FrozenLedgerKeys(
-        FrozenLedgerKeys,
-    ),
-    FrozenLedgerKeysDelta(
-        FrozenLedgerKeysDelta,
-    ),
-    FreezeBypassTxs(
-        FreezeBypassTxs,
-    ),
-    FreezeBypassTxsDelta(
-        FreezeBypassTxsDelta,
-    ),
+    EvictionIterator(EvictionIterator),
+    ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
+    ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
+    ScpTiming(ConfigSettingScpTiming),
+    FrozenLedgerKeys(FrozenLedgerKeys),
+    FrozenLedgerKeysDelta(FrozenLedgerKeysDelta),
+    FreezeBypassTxs(FreezeBypassTxs),
+    FreezeBypassTxsDelta(FreezeBypassTxsDelta),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ConfigSettingEntry {
@@ -244,8 +203,12 @@ impl ConfigSettingEntry {
             Self::ContractHistoricalDataV0(_) => ConfigSettingId::ContractHistoricalDataV0,
             Self::ContractEventsV0(_) => ConfigSettingId::ContractEventsV0,
             Self::ContractBandwidthV0(_) => ConfigSettingId::ContractBandwidthV0,
-            Self::ContractCostParamsCpuInstructions(_) => ConfigSettingId::ContractCostParamsCpuInstructions,
-            Self::ContractCostParamsMemoryBytes(_) => ConfigSettingId::ContractCostParamsMemoryBytes,
+            Self::ContractCostParamsCpuInstructions(_) => {
+                ConfigSettingId::ContractCostParamsCpuInstructions
+            }
+            Self::ContractCostParamsMemoryBytes(_) => {
+                ConfigSettingId::ContractCostParamsMemoryBytes
+            }
             Self::ContractDataKeySizeBytes(_) => ConfigSettingId::ContractDataKeySizeBytes,
             Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
             Self::StateArchival(_) => ConfigSettingId::StateArchival,
@@ -297,27 +260,67 @@ impl ReadXdr for ConfigSettingEntry {
             let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ConfigSettingId::ContractMaxSizeBytes => Self::ContractMaxSizeBytes(u32::read_xdr(r)?),
-                ConfigSettingId::ContractComputeV0 => Self::ContractComputeV0(ConfigSettingContractComputeV0::read_xdr(r)?),
-                ConfigSettingId::ContractLedgerCostV0 => Self::ContractLedgerCostV0(ConfigSettingContractLedgerCostV0::read_xdr(r)?),
-                ConfigSettingId::ContractHistoricalDataV0 => Self::ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0::read_xdr(r)?),
-                ConfigSettingId::ContractEventsV0 => Self::ContractEventsV0(ConfigSettingContractEventsV0::read_xdr(r)?),
-                ConfigSettingId::ContractBandwidthV0 => Self::ContractBandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?),
-                ConfigSettingId::ContractCostParamsCpuInstructions => Self::ContractCostParamsCpuInstructions(ContractCostParams::read_xdr(r)?),
-                ConfigSettingId::ContractCostParamsMemoryBytes => Self::ContractCostParamsMemoryBytes(ContractCostParams::read_xdr(r)?),
-                ConfigSettingId::ContractDataKeySizeBytes => Self::ContractDataKeySizeBytes(u32::read_xdr(r)?),
-                ConfigSettingId::ContractDataEntrySizeBytes => Self::ContractDataEntrySizeBytes(u32::read_xdr(r)?),
-                ConfigSettingId::StateArchival => Self::StateArchival(StateArchivalSettings::read_xdr(r)?),
-                ConfigSettingId::ContractExecutionLanes => Self::ContractExecutionLanes(ConfigSettingContractExecutionLanesV0::read_xdr(r)?),
-                ConfigSettingId::LiveSorobanStateSizeWindow => Self::LiveSorobanStateSizeWindow(VecM::<u64>::read_xdr(r)?),
-                ConfigSettingId::EvictionIterator => Self::EvictionIterator(EvictionIterator::read_xdr(r)?),
-                ConfigSettingId::ContractParallelComputeV0 => Self::ContractParallelComputeV0(ConfigSettingContractParallelComputeV0::read_xdr(r)?),
-                ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0::read_xdr(r)?),
+                ConfigSettingId::ContractMaxSizeBytes => {
+                    Self::ContractMaxSizeBytes(u32::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractComputeV0 => {
+                    Self::ContractComputeV0(ConfigSettingContractComputeV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractLedgerCostV0 => {
+                    Self::ContractLedgerCostV0(ConfigSettingContractLedgerCostV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractHistoricalDataV0 => Self::ContractHistoricalDataV0(
+                    ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
+                ),
+                ConfigSettingId::ContractEventsV0 => {
+                    Self::ContractEventsV0(ConfigSettingContractEventsV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractBandwidthV0 => {
+                    Self::ContractBandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractCostParamsCpuInstructions => {
+                    Self::ContractCostParamsCpuInstructions(ContractCostParams::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractCostParamsMemoryBytes => {
+                    Self::ContractCostParamsMemoryBytes(ContractCostParams::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractDataKeySizeBytes => {
+                    Self::ContractDataKeySizeBytes(u32::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractDataEntrySizeBytes => {
+                    Self::ContractDataEntrySizeBytes(u32::read_xdr(r)?)
+                }
+                ConfigSettingId::StateArchival => {
+                    Self::StateArchival(StateArchivalSettings::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractExecutionLanes => Self::ContractExecutionLanes(
+                    ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
+                ),
+                ConfigSettingId::LiveSorobanStateSizeWindow => {
+                    Self::LiveSorobanStateSizeWindow(VecM::<u64>::read_xdr(r)?)
+                }
+                ConfigSettingId::EvictionIterator => {
+                    Self::EvictionIterator(EvictionIterator::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractParallelComputeV0 => Self::ContractParallelComputeV0(
+                    ConfigSettingContractParallelComputeV0::read_xdr(r)?,
+                ),
+                ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(
+                    ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
+                ),
                 ConfigSettingId::ScpTiming => Self::ScpTiming(ConfigSettingScpTiming::read_xdr(r)?),
-                ConfigSettingId::FrozenLedgerKeys => Self::FrozenLedgerKeys(FrozenLedgerKeys::read_xdr(r)?),
-                ConfigSettingId::FrozenLedgerKeysDelta => Self::FrozenLedgerKeysDelta(FrozenLedgerKeysDelta::read_xdr(r)?),
-                ConfigSettingId::FreezeBypassTxs => Self::FreezeBypassTxs(FreezeBypassTxs::read_xdr(r)?),
-                ConfigSettingId::FreezeBypassTxsDelta => Self::FreezeBypassTxsDelta(FreezeBypassTxsDelta::read_xdr(r)?),
+                ConfigSettingId::FrozenLedgerKeys => {
+                    Self::FrozenLedgerKeys(FrozenLedgerKeys::read_xdr(r)?)
+                }
+                ConfigSettingId::FrozenLedgerKeysDelta => {
+                    Self::FrozenLedgerKeysDelta(FrozenLedgerKeysDelta::read_xdr(r)?)
+                }
+                ConfigSettingId::FreezeBypassTxs => {
+                    Self::FreezeBypassTxs(FreezeBypassTxs::read_xdr(r)?)
+                }
+                ConfigSettingId::FreezeBypassTxsDelta => {
+                    Self::FreezeBypassTxsDelta(FreezeBypassTxsDelta::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

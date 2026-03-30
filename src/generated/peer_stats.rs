@@ -13,12 +13,12 @@ use super::*;
 ///     uint64 bytesRead;
 ///     uint64 bytesWritten;
 ///     uint64 secondsConnected;
-/// 
+///
 ///     uint64 uniqueFloodBytesRecv;
 ///     uint64 duplicateFloodBytesRecv;
 ///     uint64 uniqueFetchBytesRecv;
 ///     uint64 duplicateFetchBytesRecv;
-/// 
+///
 ///     uint64 uniqueFloodMessageRecv;
 ///     uint64 duplicateFloodMessageRecv;
 ///     uint64 uniqueFetchMessageRecv;
@@ -39,7 +39,7 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PeerStats {
     pub id: NodeId,
-    pub version_str: StringM::<100>,
+    pub version_str: StringM<100>,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
         serde_as(as = "NumberOrString")

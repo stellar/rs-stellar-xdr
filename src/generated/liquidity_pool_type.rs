@@ -27,9 +27,7 @@ pub enum LiquidityPoolType {
 }
 
 impl LiquidityPoolType {
-    const _VARIANTS: &[LiquidityPoolType] = &[
-        LiquidityPoolType::LiquidityPoolConstantProduct,
-    ];
+    const _VARIANTS: &[LiquidityPoolType] = &[LiquidityPoolType::LiquidityPoolConstantProduct];
     pub const VARIANTS: [LiquidityPoolType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,9 +37,7 @@ impl LiquidityPoolType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "LiquidityPoolConstantProduct",
-    ];
+    const _VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

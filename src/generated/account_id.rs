@@ -18,7 +18,6 @@ use super::*;
 #[derive(Debug)]
 pub struct AccountId(pub PublicKey);
 
-
 impl From<AccountId> for PublicKey {
     #[must_use]
     fn from(x: AccountId) -> Self {
@@ -54,6 +53,6 @@ impl ReadXdr for AccountId {
 impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }

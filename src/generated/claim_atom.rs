@@ -28,17 +28,10 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimAtom {
-    V0(
-        ClaimOfferAtomV0,
-    ),
-    OrderBook(
-        ClaimOfferAtom,
-    ),
-    LiquidityPool(
-        ClaimLiquidityAtom,
-    ),
+    V0(ClaimOfferAtomV0),
+    OrderBook(ClaimOfferAtom),
+    LiquidityPool(ClaimLiquidityAtom),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ClaimAtom {
@@ -62,11 +55,7 @@ impl ClaimAtom {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "V0",
-        "OrderBook",
-        "LiquidityPool",
-    ];
+    const _VARIANTS_STR: &[&str] = &["V0", "OrderBook", "LiquidityPool"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -133,7 +122,9 @@ impl ReadXdr for ClaimAtom {
             let v = match dv {
                 ClaimAtomType::V0 => Self::V0(ClaimOfferAtomV0::read_xdr(r)?),
                 ClaimAtomType::OrderBook => Self::OrderBook(ClaimOfferAtom::read_xdr(r)?),
-                ClaimAtomType::LiquidityPool => Self::LiquidityPool(ClaimLiquidityAtom::read_xdr(r)?),
+                ClaimAtomType::LiquidityPool => {
+                    Self::LiquidityPool(ClaimLiquidityAtom::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

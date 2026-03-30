@@ -10,10 +10,10 @@ use super::*;
 ///     TrustLineAsset asset; // type of asset (with issuer)
 ///     int64 balance;        // how much of this asset the user has.
 ///                           // Asset defines the unit for this;
-/// 
+///
 ///     int64 limit;  // balance cannot be above this
 ///     uint32 flags; // see TrustLineFlags
-/// 
+///
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {
@@ -23,7 +23,7 @@ use super::*;
 ///         struct
 ///         {
 ///             Liabilities liabilities;
-/// 
+///
 ///             union switch (int v)
 ///             {
 ///             case 0:

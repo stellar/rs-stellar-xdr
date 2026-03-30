@@ -48,7 +48,6 @@ pub enum SetOptionsResult {
     AuthRevocableRequired,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for SetOptionsResult {
     fn default() -> Self {

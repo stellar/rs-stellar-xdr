@@ -20,7 +20,6 @@ use super::*;
 #[derive(Debug)]
 pub struct DependentTxCluster(pub VecM<TransactionEnvelope>);
 
-
 impl From<DependentTxCluster> for VecM<TransactionEnvelope> {
     #[must_use]
     fn from(x: DependentTxCluster) -> Self {
@@ -56,7 +55,7 @@ impl ReadXdr for DependentTxCluster {
 impl WriteXdr for DependentTxCluster {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -70,7 +69,7 @@ impl Deref for DependentTxCluster {
 impl From<DependentTxCluster> for Vec<TransactionEnvelope> {
     #[must_use]
     fn from(x: DependentTxCluster) -> Self {
-        x.0.0
+        x.0 .0
     }
 }
 
@@ -92,7 +91,7 @@ impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
 impl AsRef<Vec<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn as_ref(&self) -> &Vec<TransactionEnvelope> {
-        &self.0.0
+        &self.0 .0
     }
 }
 
@@ -100,11 +99,11 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[TransactionEnvelope] {
-        &self.0.0
+        &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[TransactionEnvelope] {
-        self.0.0
+        self.0 .0
     }
 }

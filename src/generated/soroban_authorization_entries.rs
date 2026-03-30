@@ -20,7 +20,6 @@ use super::*;
 #[derive(Debug)]
 pub struct SorobanAuthorizationEntries(pub VecM<SorobanAuthorizationEntry>);
 
-
 impl From<SorobanAuthorizationEntries> for VecM<SorobanAuthorizationEntry> {
     #[must_use]
     fn from(x: SorobanAuthorizationEntries) -> Self {
@@ -56,7 +55,7 @@ impl ReadXdr for SorobanAuthorizationEntries {
 impl WriteXdr for SorobanAuthorizationEntries {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -70,7 +69,7 @@ impl Deref for SorobanAuthorizationEntries {
 impl From<SorobanAuthorizationEntries> for Vec<SorobanAuthorizationEntry> {
     #[must_use]
     fn from(x: SorobanAuthorizationEntries) -> Self {
-        x.0.0
+        x.0 .0
     }
 }
 
@@ -92,7 +91,7 @@ impl TryFrom<&Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
 impl AsRef<Vec<SorobanAuthorizationEntry>> for SorobanAuthorizationEntries {
     #[must_use]
     fn as_ref(&self) -> &Vec<SorobanAuthorizationEntry> {
-        &self.0.0
+        &self.0 .0
     }
 }
 
@@ -100,11 +99,11 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[SorobanAuthorizationEntry] {
-        &self.0.0
+        &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[SorobanAuthorizationEntry] {
-        self.0.0
+        self.0 .0
     }
 }

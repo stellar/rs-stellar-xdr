@@ -27,7 +27,6 @@ pub struct SequenceNumber(
     pub i64,
 );
 
-
 impl From<SequenceNumber> for i64 {
     #[must_use]
     fn from(x: SequenceNumber) -> Self {
@@ -63,6 +62,6 @@ impl ReadXdr for SequenceNumber {
 impl WriteXdr for SequenceNumber {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| { self.0.write_xdr(w) })
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }

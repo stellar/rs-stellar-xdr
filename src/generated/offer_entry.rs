@@ -11,7 +11,7 @@ use super::*;
 ///     Asset selling; // A
 ///     Asset buying;  // B
 ///     int64 amount;  // amount of A
-/// 
+///
 ///     /* price for this offer:
 ///         price of A in terms of B
 ///         price=AmountB/AmountA=priceNumerator/priceDenominator
@@ -19,7 +19,7 @@ use super::*;
 ///     */
 ///     Price price;
 ///     uint32 flags; // see OfferEntryFlags
-/// 
+///
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

@@ -30,20 +30,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum HostFunction {
-    InvokeContract(
-        InvokeContractArgs,
-    ),
-    CreateContract(
-        CreateContractArgs,
-    ),
-    UploadContractWasm(
-        BytesM,
-    ),
-    CreateContractV2(
-        CreateContractArgsV2,
-    ),
+    InvokeContract(InvokeContractArgs),
+    CreateContract(CreateContractArgs),
+    UploadContractWasm(BytesM),
+    CreateContractV2(CreateContractArgsV2),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for HostFunction {
@@ -140,10 +131,18 @@ impl ReadXdr for HostFunction {
             let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                HostFunctionType::InvokeContract => Self::InvokeContract(InvokeContractArgs::read_xdr(r)?),
-                HostFunctionType::CreateContract => Self::CreateContract(CreateContractArgs::read_xdr(r)?),
-                HostFunctionType::UploadContractWasm => Self::UploadContractWasm(BytesM::read_xdr(r)?),
-                HostFunctionType::CreateContractV2 => Self::CreateContractV2(CreateContractArgsV2::read_xdr(r)?),
+                HostFunctionType::InvokeContract => {
+                    Self::InvokeContract(InvokeContractArgs::read_xdr(r)?)
+                }
+                HostFunctionType::CreateContract => {
+                    Self::CreateContract(CreateContractArgs::read_xdr(r)?)
+                }
+                HostFunctionType::UploadContractWasm => {
+                    Self::UploadContractWasm(BytesM::read_xdr(r)?)
+                }
+                HostFunctionType::CreateContractV2 => {
+                    Self::CreateContractV2(CreateContractArgsV2::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

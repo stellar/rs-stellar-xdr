@@ -44,7 +44,6 @@ pub enum LiquidityPoolDepositResult {
     TrustlineFrozen,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for LiquidityPoolDepositResult {
     fn default() -> Self {
@@ -157,7 +156,8 @@ impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: LiquidityPoolDepositResultCode = <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: LiquidityPoolDepositResultCode =
+                <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 LiquidityPoolDepositResultCode::Success => Self::Success,

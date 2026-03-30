@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS = 0,
-/// 
+///
 ///     // codes considered as "failure" for the operation
 ///     BEGIN_SPONSORING_FUTURE_RESERVES_MALFORMED = -1,
 ///     BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED = -2,
@@ -51,12 +51,7 @@ impl BeginSponsoringFutureReservesResultCode {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Success",
-        "Malformed",
-        "AlreadySponsored",
-        "Recursive",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Success", "Malformed", "AlreadySponsored", "Recursive"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

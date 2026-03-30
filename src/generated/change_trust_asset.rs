@@ -8,16 +8,16 @@ use super::*;
 /// {
 /// case ASSET_TYPE_NATIVE: // Not credit
 ///     void;
-/// 
+///
 /// case ASSET_TYPE_CREDIT_ALPHANUM4:
 ///     AlphaNum4 alphaNum4;
-/// 
+///
 /// case ASSET_TYPE_CREDIT_ALPHANUM12:
 ///     AlphaNum12 alphaNum12;
-/// 
+///
 /// case ASSET_TYPE_POOL_SHARE:
 ///     LiquidityPoolParameters liquidityPool;
-/// 
+///
 ///     // add other asset types here in the future
 /// };
 /// ```
@@ -36,17 +36,10 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustAsset {
     Native,
-    CreditAlphanum4(
-        AlphaNum4,
-    ),
-    CreditAlphanum12(
-        AlphaNum12,
-    ),
-    PoolShare(
-        LiquidityPoolParameters,
-    ),
+    CreditAlphanum4(AlphaNum4),
+    CreditAlphanum12(AlphaNum12),
+    PoolShare(LiquidityPoolParameters),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for ChangeTrustAsset {
@@ -71,12 +64,7 @@ impl ChangeTrustAsset {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Native",
-        "CreditAlphanum4",
-        "CreditAlphanum12",
-        "PoolShare",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12", "PoolShare"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

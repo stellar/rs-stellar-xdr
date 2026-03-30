@@ -38,7 +38,6 @@ pub enum SetTrustLineFlagsResult {
     LowReserve,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for SetTrustLineFlagsResult {
     fn default() -> Self {
@@ -139,7 +138,8 @@ impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: SetTrustLineFlagsResultCode = <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: SetTrustLineFlagsResultCode =
+                <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 SetTrustLineFlagsResultCode::Success => Self::Success,

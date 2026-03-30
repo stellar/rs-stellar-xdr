@@ -46,18 +46,10 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultResult {
-    TxFeeBumpInnerSuccess(
-        InnerTransactionResultPair,
-    ),
-    TxFeeBumpInnerFailed(
-        InnerTransactionResultPair,
-    ),
-    TxSuccess(
-        VecM<OperationResult>,
-    ),
-    TxFailed(
-        VecM<OperationResult>,
-    ),
+    TxFeeBumpInnerSuccess(InnerTransactionResultPair),
+    TxFeeBumpInnerFailed(InnerTransactionResultPair),
+    TxSuccess(VecM<OperationResult>),
+    TxFailed(VecM<OperationResult>),
     TxTooEarly,
     TxTooLate,
     TxMissingOperation,
@@ -75,7 +67,6 @@ pub enum TransactionResultResult {
     TxSorobanInvalid,
     TxFrozenKeyAccessed,
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for TransactionResultResult {
@@ -236,10 +227,18 @@ impl ReadXdr for TransactionResultResult {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                TransactionResultCode::TxFeeBumpInnerSuccess => Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::read_xdr(r)?),
-                TransactionResultCode::TxFeeBumpInnerFailed => Self::TxFeeBumpInnerFailed(InnerTransactionResultPair::read_xdr(r)?),
-                TransactionResultCode::TxSuccess => Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?),
-                TransactionResultCode::TxFailed => Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?),
+                TransactionResultCode::TxFeeBumpInnerSuccess => {
+                    Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::read_xdr(r)?)
+                }
+                TransactionResultCode::TxFeeBumpInnerFailed => {
+                    Self::TxFeeBumpInnerFailed(InnerTransactionResultPair::read_xdr(r)?)
+                }
+                TransactionResultCode::TxSuccess => {
+                    Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
+                }
+                TransactionResultCode::TxFailed => {
+                    Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
+                }
                 TransactionResultCode::TxTooEarly => Self::TxTooEarly,
                 TransactionResultCode::TxTooLate => Self::TxTooLate,
                 TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,

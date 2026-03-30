@@ -27,9 +27,7 @@ pub enum ScEnvMetaKind {
 }
 
 impl ScEnvMetaKind {
-    const _VARIANTS: &[ScEnvMetaKind] = &[
-        ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
-    ];
+    const _VARIANTS: &[ScEnvMetaKind] = &[ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
     pub const VARIANTS: [ScEnvMetaKind; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,9 +37,7 @@ impl ScEnvMetaKind {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "ScEnvMetaKindInterfaceVersion",
-    ];
+    const _VARIANTS_STR: &[&str] = &["ScEnvMetaKindInterfaceVersion"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

@@ -7,7 +7,7 @@ use super::*;
 /// struct TrustLineEntryExtensionV2
 /// {
 ///     int32 liquidityPoolUseCount;
-/// 
+///
 ///     union switch (int v)
 ///     {
 ///     case 0:

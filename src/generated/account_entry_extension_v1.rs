@@ -7,7 +7,7 @@ use super::*;
 /// struct AccountEntryExtensionV1
 /// {
 ///     Liabilities liabilities;
-/// 
+///
 ///     union switch (int v)
 ///     {
 ///     case 0:

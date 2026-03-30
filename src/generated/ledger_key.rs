@@ -11,34 +11,34 @@ use super::*;
 ///     {
 ///         AccountID accountID;
 ///     } account;
-/// 
+///
 /// case TRUSTLINE:
 ///     struct
 ///     {
 ///         AccountID accountID;
 ///         TrustLineAsset asset;
 ///     } trustLine;
-/// 
+///
 /// case OFFER:
 ///     struct
 ///     {
 ///         AccountID sellerID;
 ///         int64 offerID;
 ///     } offer;
-/// 
+///
 /// case DATA:
 ///     struct
 ///     {
 ///         AccountID accountID;
 ///         string64 dataName;
 ///     } data;
-/// 
+///
 /// case CLAIMABLE_BALANCE:
 ///     struct
 ///     {
 ///         ClaimableBalanceID balanceID;
 ///     } claimableBalance;
-/// 
+///
 /// case LIQUIDITY_POOL:
 ///     struct
 ///     {
@@ -83,38 +83,17 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerKey {
-    Account(
-        LedgerKeyAccount,
-    ),
-    Trustline(
-        LedgerKeyTrustLine,
-    ),
-    Offer(
-        LedgerKeyOffer,
-    ),
-    Data(
-        LedgerKeyData,
-    ),
-    ClaimableBalance(
-        LedgerKeyClaimableBalance,
-    ),
-    LiquidityPool(
-        LedgerKeyLiquidityPool,
-    ),
-    ContractData(
-        LedgerKeyContractData,
-    ),
-    ContractCode(
-        LedgerKeyContractCode,
-    ),
-    ConfigSetting(
-        LedgerKeyConfigSetting,
-    ),
-    Ttl(
-        LedgerKeyTtl,
-    ),
+    Account(LedgerKeyAccount),
+    Trustline(LedgerKeyTrustLine),
+    Offer(LedgerKeyOffer),
+    Data(LedgerKeyData),
+    ClaimableBalance(LedgerKeyClaimableBalance),
+    LiquidityPool(LedgerKeyLiquidityPool),
+    ContractData(LedgerKeyContractData),
+    ContractCode(LedgerKeyContractCode),
+    ConfigSetting(LedgerKeyConfigSetting),
+    Ttl(LedgerKeyTtl),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for LedgerKey {
@@ -239,11 +218,21 @@ impl ReadXdr for LedgerKey {
                 LedgerEntryType::Trustline => Self::Trustline(LedgerKeyTrustLine::read_xdr(r)?),
                 LedgerEntryType::Offer => Self::Offer(LedgerKeyOffer::read_xdr(r)?),
                 LedgerEntryType::Data => Self::Data(LedgerKeyData::read_xdr(r)?),
-                LedgerEntryType::ClaimableBalance => Self::ClaimableBalance(LedgerKeyClaimableBalance::read_xdr(r)?),
-                LedgerEntryType::LiquidityPool => Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?),
-                LedgerEntryType::ContractData => Self::ContractData(LedgerKeyContractData::read_xdr(r)?),
-                LedgerEntryType::ContractCode => Self::ContractCode(LedgerKeyContractCode::read_xdr(r)?),
-                LedgerEntryType::ConfigSetting => Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?),
+                LedgerEntryType::ClaimableBalance => {
+                    Self::ClaimableBalance(LedgerKeyClaimableBalance::read_xdr(r)?)
+                }
+                LedgerEntryType::LiquidityPool => {
+                    Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?)
+                }
+                LedgerEntryType::ContractData => {
+                    Self::ContractData(LedgerKeyContractData::read_xdr(r)?)
+                }
+                LedgerEntryType::ContractCode => {
+                    Self::ContractCode(LedgerKeyContractCode::read_xdr(r)?)
+                }
+                LedgerEntryType::ConfigSetting => {
+                    Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
+                }
                 LedgerEntryType::Ttl => Self::Ttl(LedgerKeyTtl::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),

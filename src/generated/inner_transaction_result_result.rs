@@ -44,12 +44,8 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultResult {
-    TxSuccess(
-        VecM<OperationResult>,
-    ),
-    TxFailed(
-        VecM<OperationResult>,
-    ),
+    TxSuccess(VecM<OperationResult>),
+    TxFailed(VecM<OperationResult>),
     TxTooEarly,
     TxTooLate,
     TxMissingOperation,
@@ -67,7 +63,6 @@ pub enum InnerTransactionResultResult {
     TxSorobanInvalid,
     TxFrozenKeyAccessed,
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for InnerTransactionResultResult {
@@ -220,8 +215,12 @@ impl ReadXdr for InnerTransactionResultResult {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                TransactionResultCode::TxSuccess => Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?),
-                TransactionResultCode::TxFailed => Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?),
+                TransactionResultCode::TxSuccess => {
+                    Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
+                }
+                TransactionResultCode::TxFailed => {
+                    Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
+                }
                 TransactionResultCode::TxTooEarly => Self::TxTooEarly,
                 TransactionResultCode::TxTooLate => Self::TxTooLate,
                 TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,

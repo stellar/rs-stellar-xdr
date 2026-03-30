@@ -11,7 +11,7 @@ use super::*;
 ///     int64 buyAmount; // amount being bought. if set to 0, delete the offer
 ///     Price price;     // price of thing being bought in terms of what you are
 ///                      // selling
-/// 
+///
 ///     // 0=create a new offer, otherwise edit an existing offer
 ///     int64 offerID;
 /// };

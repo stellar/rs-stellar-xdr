@@ -44,9 +44,7 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictReceiveResult {
-    Success(
-        PathPaymentStrictReceiveResultSuccess,
-    ),
+    Success(PathPaymentStrictReceiveResultSuccess),
     Malformed,
     Underfunded,
     SrcNoTrust,
@@ -55,14 +53,11 @@ pub enum PathPaymentStrictReceiveResult {
     NoTrust,
     NotAuthorized,
     LineFull,
-    NoIssuer(
-        Asset,
-    ),
+    NoIssuer(Asset),
     TooFewOffers,
     OfferCrossSelf,
     OverSendmax,
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for PathPaymentStrictReceiveResult {
@@ -192,10 +187,13 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: PathPaymentStrictReceiveResultCode = <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: PathPaymentStrictReceiveResultCode =
+                <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                PathPaymentStrictReceiveResultCode::Success => Self::Success(PathPaymentStrictReceiveResultSuccess::read_xdr(r)?),
+                PathPaymentStrictReceiveResultCode::Success => {
+                    Self::Success(PathPaymentStrictReceiveResultSuccess::read_xdr(r)?)
+                }
                 PathPaymentStrictReceiveResultCode::Malformed => Self::Malformed,
                 PathPaymentStrictReceiveResultCode::Underfunded => Self::Underfunded,
                 PathPaymentStrictReceiveResultCode::SrcNoTrust => Self::SrcNoTrust,

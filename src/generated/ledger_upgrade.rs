@@ -39,29 +39,14 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerUpgrade {
-    Version(
-        u32,
-    ),
-    BaseFee(
-        u32,
-    ),
-    MaxTxSetSize(
-        u32,
-    ),
-    BaseReserve(
-        u32,
-    ),
-    Flags(
-        u32,
-    ),
-    Config(
-        ConfigUpgradeSetKey,
-    ),
-    MaxSorobanTxSetSize(
-        u32,
-    ),
+    Version(u32),
+    BaseFee(u32),
+    MaxTxSetSize(u32),
+    BaseReserve(u32),
+    Flags(u32),
+    Config(ConfigUpgradeSetKey),
+    MaxSorobanTxSetSize(u32),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for LedgerUpgrade {
@@ -176,7 +161,9 @@ impl ReadXdr for LedgerUpgrade {
                 LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
                 LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
                 LedgerUpgradeType::Config => Self::Config(ConfigUpgradeSetKey::read_xdr(r)?),
-                LedgerUpgradeType::MaxSorobanTxSetSize => Self::MaxSorobanTxSetSize(u32::read_xdr(r)?),
+                LedgerUpgradeType::MaxSorobanTxSetSize => {
+                    Self::MaxSorobanTxSetSize(u32::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

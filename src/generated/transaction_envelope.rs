@@ -28,15 +28,9 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionEnvelope {
-    TxV0(
-        TransactionV0Envelope,
-    ),
-    Tx(
-        TransactionV1Envelope,
-    ),
-    TxFeeBump(
-        FeeBumpTransactionEnvelope,
-    ),
+    TxV0(TransactionV0Envelope),
+    Tx(TransactionV1Envelope),
+    TxFeeBump(FeeBumpTransactionEnvelope),
 }
 
 impl TransactionEnvelope {
@@ -54,11 +48,7 @@ impl TransactionEnvelope {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "TxV0",
-        "Tx",
-        "TxFeeBump",
-    ];
+    const _VARIANTS_STR: &[&str] = &["TxV0", "Tx", "TxFeeBump"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -125,7 +115,9 @@ impl ReadXdr for TransactionEnvelope {
             let v = match dv {
                 EnvelopeType::TxV0 => Self::TxV0(TransactionV0Envelope::read_xdr(r)?),
                 EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
-                EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?),
+                EnvelopeType::TxFeeBump => {
+                    Self::TxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

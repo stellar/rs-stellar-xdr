@@ -48,7 +48,6 @@ pub enum AccountMergeResult {
     IsSponsor,
 }
 
-
 #[cfg(feature = "alloc")]
 impl Default for AccountMergeResult {
     fn default() -> Self {

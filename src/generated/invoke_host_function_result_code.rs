@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     INVOKE_HOST_FUNCTION_SUCCESS = 0,
-/// 
+///
 ///     // codes considered as "failure" for the operation
 ///     INVOKE_HOST_FUNCTION_MALFORMED = -1,
 ///     INVOKE_HOST_FUNCTION_TRAPPED = -2,

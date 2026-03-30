@@ -27,11 +27,8 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum StellarValueExt {
     Basic,
-    Signed(
-        LedgerCloseValueSignature,
-    ),
+    Signed(LedgerCloseValueSignature),
 }
-
 
 #[cfg(feature = "alloc")]
 impl Default for StellarValueExt {
@@ -41,10 +38,7 @@ impl Default for StellarValueExt {
 }
 
 impl StellarValueExt {
-    const _VARIANTS: &[StellarValueType] = &[
-        StellarValueType::Basic,
-        StellarValueType::Signed,
-    ];
+    const _VARIANTS: &[StellarValueType] = &[StellarValueType::Basic, StellarValueType::Signed];
     pub const VARIANTS: [StellarValueType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -54,10 +48,7 @@ impl StellarValueExt {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Basic",
-        "Signed",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Basic", "Signed"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

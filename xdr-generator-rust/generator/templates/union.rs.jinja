@@ -3,7 +3,7 @@
 {%- if let Some(cfg) = u.cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 {%- if u.is_custom_str %}

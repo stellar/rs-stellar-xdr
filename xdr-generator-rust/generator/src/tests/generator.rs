@@ -152,8 +152,12 @@ pub struct Foo {
     pub y: i32,
 }"#,
     );
-    // Same name in both branches: TypeVariant entry has no cfg
-    assert_contains(&output, "pub enum TypeVariant {\n    Foo,\n}");
+    // Same name in both branches: TypeVariant entry has no per-branch cfg,
+    // but the whole type enum API is behind the `type` feature.
+    assert_contains(
+        &output,
+        "#[cfg(feature = \"type_enum\")]\n#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]",
+    );
 }
 
 #[test]

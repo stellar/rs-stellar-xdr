@@ -42,17 +42,38 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryData {
-    Account(AccountEntry),
-    Trustline(TrustLineEntry),
-    Offer(OfferEntry),
-    Data(DataEntry),
-    ClaimableBalance(ClaimableBalanceEntry),
-    LiquidityPool(LiquidityPoolEntry),
-    ContractData(ContractDataEntry),
-    ContractCode(ContractCodeEntry),
-    ConfigSetting(ConfigSettingEntry),
-    Ttl(TtlEntry),
+    Account(
+        AccountEntry,
+    ),
+    Trustline(
+        TrustLineEntry,
+    ),
+    Offer(
+        OfferEntry,
+    ),
+    Data(
+        DataEntry,
+    ),
+    ClaimableBalance(
+        ClaimableBalanceEntry,
+    ),
+    LiquidityPool(
+        LiquidityPoolEntry,
+    ),
+    ContractData(
+        ContractDataEntry,
+    ),
+    ContractCode(
+        ContractCodeEntry,
+    ),
+    ConfigSetting(
+        ConfigSettingEntry,
+    ),
+    Ttl(
+        TtlEntry,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for LedgerEntryData {
@@ -177,21 +198,11 @@ impl ReadXdr for LedgerEntryData {
                 LedgerEntryType::Trustline => Self::Trustline(TrustLineEntry::read_xdr(r)?),
                 LedgerEntryType::Offer => Self::Offer(OfferEntry::read_xdr(r)?),
                 LedgerEntryType::Data => Self::Data(DataEntry::read_xdr(r)?),
-                LedgerEntryType::ClaimableBalance => {
-                    Self::ClaimableBalance(ClaimableBalanceEntry::read_xdr(r)?)
-                }
-                LedgerEntryType::LiquidityPool => {
-                    Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?)
-                }
-                LedgerEntryType::ContractData => {
-                    Self::ContractData(ContractDataEntry::read_xdr(r)?)
-                }
-                LedgerEntryType::ContractCode => {
-                    Self::ContractCode(ContractCodeEntry::read_xdr(r)?)
-                }
-                LedgerEntryType::ConfigSetting => {
-                    Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?)
-                }
+                LedgerEntryType::ClaimableBalance => Self::ClaimableBalance(ClaimableBalanceEntry::read_xdr(r)?),
+                LedgerEntryType::LiquidityPool => Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?),
+                LedgerEntryType::ContractData => Self::ContractData(ContractDataEntry::read_xdr(r)?),
+                LedgerEntryType::ContractCode => Self::ContractCode(ContractCodeEntry::read_xdr(r)?),
+                LedgerEntryType::ConfigSetting => Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?),
                 LedgerEntryType::Ttl => Self::Ttl(TtlEntry::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),

@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     REVOKE_SPONSORSHIP_SUCCESS = 0,
-///
+/// 
 ///     // codes considered as "failure" for the operation
 ///     REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1,
 ///     REVOKE_SPONSORSHIP_NOT_SPONSOR = -2,

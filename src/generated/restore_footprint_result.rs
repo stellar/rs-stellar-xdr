@@ -34,6 +34,7 @@ pub enum RestoreFootprintResult {
     InsufficientRefundableFee,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for RestoreFootprintResult {
     fn default() -> Self {
@@ -90,9 +91,7 @@ impl RestoreFootprintResult {
             Self::Success => RestoreFootprintResultCode::Success,
             Self::Malformed => RestoreFootprintResultCode::Malformed,
             Self::ResourceLimitExceeded => RestoreFootprintResultCode::ResourceLimitExceeded,
-            Self::InsufficientRefundableFee => {
-                RestoreFootprintResultCode::InsufficientRefundableFee
-            }
+            Self::InsufficientRefundableFee => RestoreFootprintResultCode::InsufficientRefundableFee,
         }
     }
 
@@ -128,16 +127,13 @@ impl ReadXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: RestoreFootprintResultCode =
-                <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: RestoreFootprintResultCode = <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 RestoreFootprintResultCode::Success => Self::Success,
                 RestoreFootprintResultCode::Malformed => Self::Malformed,
                 RestoreFootprintResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
-                RestoreFootprintResultCode::InsufficientRefundableFee => {
-                    Self::InsufficientRefundableFee
-                }
+                RestoreFootprintResultCode::InsufficientRefundableFee => Self::InsufficientRefundableFee,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

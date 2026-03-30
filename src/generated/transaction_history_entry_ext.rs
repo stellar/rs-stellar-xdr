@@ -27,8 +27,11 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExt {
     V0,
-    V1(GeneralizedTransactionSet),
+    V1(
+        GeneralizedTransactionSet,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for TransactionHistoryEntryExt {
@@ -38,7 +41,10 @@ impl Default for TransactionHistoryEntryExt {
 }
 
 impl TransactionHistoryEntryExt {
-    const _VARIANTS: &[i32] = &[0, 1];
+    const _VARIANTS: &[i32] = &[
+        0,
+        1,
+    ];
     pub const VARIANTS: [i32; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,7 +54,10 @@ impl TransactionHistoryEntryExt {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["V0", "V1"];
+    const _VARIANTS_STR: &[&str] = &[
+        "V0",
+        "V1",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

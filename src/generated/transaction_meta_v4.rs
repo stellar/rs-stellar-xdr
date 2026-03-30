@@ -7,7 +7,7 @@ use super::*;
 /// struct TransactionMetaV4
 /// {
 ///     ExtensionPoint ext;
-///
+/// 
 ///     LedgerEntryChanges txChangesBefore;  // tx level changes before operations
 ///                                          // are applied if any
 ///     OperationMetaV2 operations<>;        // meta for each operation
@@ -15,7 +15,7 @@ use super::*;
 ///                                          // applied if any
 ///     SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for
 ///                                            // Soroban transactions).
-///
+/// 
 ///     TransactionEvent events<>; // Used for transaction-level events (like fee payment)
 ///     DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information
 /// };

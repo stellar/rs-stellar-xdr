@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     CLAWBACK_CLAIMABLE_BALANCE_SUCCESS = 0,
-///
+/// 
 ///     // codes considered as "failure" for the operation
 ///     CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST = -1,
 ///     CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER = -2,
@@ -51,7 +51,12 @@ impl ClawbackClaimableBalanceResultCode {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Success", "DoesNotExist", "NotIssuer", "NotClawbackEnabled"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Success",
+        "DoesNotExist",
+        "NotIssuer",
+        "NotClawbackEnabled",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

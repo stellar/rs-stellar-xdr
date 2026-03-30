@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     AccountID trustor;
 ///     Asset asset;
-///
+/// 
 ///     uint32 clearFlags; // which flags to clear
 ///     uint32 setFlags;   // which flags to set
 /// };

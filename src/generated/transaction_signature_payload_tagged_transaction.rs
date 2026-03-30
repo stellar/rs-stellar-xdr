@@ -27,9 +27,14 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
-    Tx(Transaction),
-    TxFeeBump(FeeBumpTransaction),
+    Tx(
+        Transaction,
+    ),
+    TxFeeBump(
+        FeeBumpTransaction,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for TransactionSignaturePayloadTaggedTransaction {
@@ -39,7 +44,10 @@ impl Default for TransactionSignaturePayloadTaggedTransaction {
 }
 
 impl TransactionSignaturePayloadTaggedTransaction {
-    const _VARIANTS: &[EnvelopeType] = &[EnvelopeType::Tx, EnvelopeType::TxFeeBump];
+    const _VARIANTS: &[EnvelopeType] = &[
+        EnvelopeType::Tx,
+        EnvelopeType::TxFeeBump,
+    ];
     pub const VARIANTS: [EnvelopeType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -49,7 +57,10 @@ impl TransactionSignaturePayloadTaggedTransaction {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Tx", "TxFeeBump"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Tx",
+        "TxFeeBump",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

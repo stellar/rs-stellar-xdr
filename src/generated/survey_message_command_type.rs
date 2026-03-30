@@ -27,8 +27,9 @@ pub enum SurveyMessageCommandType {
 }
 
 impl SurveyMessageCommandType {
-    const _VARIANTS: &[SurveyMessageCommandType] =
-        &[SurveyMessageCommandType::TimeSlicedSurveyTopology];
+    const _VARIANTS: &[SurveyMessageCommandType] = &[
+        SurveyMessageCommandType::TimeSlicedSurveyTopology,
+    ];
     pub const VARIANTS: [SurveyMessageCommandType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -38,7 +39,9 @@ impl SurveyMessageCommandType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["TimeSlicedSurveyTopology"];
+    const _VARIANTS_STR: &[&str] = &[
+        "TimeSlicedSurveyTopology",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

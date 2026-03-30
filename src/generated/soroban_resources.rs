@@ -9,8 +9,8 @@ use super::*;
 ///     // The ledger footprint of the transaction.
 ///     LedgerFootprint footprint;
 ///     // The maximum number of instructions this transaction can use
-///     uint32 instructions;
-///
+///     uint32 instructions; 
+/// 
 ///     // The maximum number of bytes this transaction can read from disk backed entries
 ///     uint32 diskReadBytes;
 ///     // The maximum number of bytes this transaction can write to ledger

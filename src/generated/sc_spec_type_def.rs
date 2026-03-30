@@ -75,14 +75,29 @@ pub enum ScSpecTypeDef {
     Symbol,
     Address,
     MuxedAddress,
-    Option(Box<ScSpecTypeOption>),
-    Result(Box<ScSpecTypeResult>),
-    Vec(Box<ScSpecTypeVec>),
-    Map(Box<ScSpecTypeMap>),
-    Tuple(Box<ScSpecTypeTuple>),
-    BytesN(ScSpecTypeBytesN),
-    Udt(ScSpecTypeUdt),
+    Option(
+        Box<ScSpecTypeOption>,
+    ),
+    Result(
+        Box<ScSpecTypeResult>,
+    ),
+    Vec(
+        Box<ScSpecTypeVec>,
+    ),
+    Map(
+        Box<ScSpecTypeMap>,
+    ),
+    Tuple(
+        Box<ScSpecTypeTuple>,
+    ),
+    BytesN(
+        ScSpecTypeBytesN,
+    ),
+    Udt(
+        ScSpecTypeUdt,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ScSpecTypeDef {

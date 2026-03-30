@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     EXTEND_FOOTPRINT_TTL_SUCCESS = 0,
-///
+/// 
 ///     // codes considered as "failure" for the operation
 ///     EXTEND_FOOTPRINT_TTL_MALFORMED = -1,
 ///     EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED = -2,

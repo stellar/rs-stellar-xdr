@@ -31,8 +31,10 @@ pub enum InflationResultCode {
 }
 
 impl InflationResultCode {
-    const _VARIANTS: &[InflationResultCode] =
-        &[InflationResultCode::Success, InflationResultCode::NotTime];
+    const _VARIANTS: &[InflationResultCode] = &[
+        InflationResultCode::Success,
+        InflationResultCode::NotTime,
+    ];
     pub const VARIANTS: [InflationResultCode; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -42,7 +44,10 @@ impl InflationResultCode {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Success", "NotTime"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Success",
+        "NotTime",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

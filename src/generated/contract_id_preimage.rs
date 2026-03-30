@@ -30,9 +30,14 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractIdPreimage {
-    Address(ContractIdPreimageFromAddress),
-    Asset(Asset),
+    Address(
+        ContractIdPreimageFromAddress,
+    ),
+    Asset(
+        Asset,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ContractIdPreimage {
@@ -55,7 +60,10 @@ impl ContractIdPreimage {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Address", "Asset"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Address",
+        "Asset",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -118,9 +126,7 @@ impl ReadXdr for ContractIdPreimage {
             let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ContractIdPreimageType::Address => {
-                    Self::Address(ContractIdPreimageFromAddress::read_xdr(r)?)
-                }
+                ContractIdPreimageType::Address => Self::Address(ContractIdPreimageFromAddress::read_xdr(r)?),
                 ContractIdPreimageType::Asset => Self::Asset(Asset::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),

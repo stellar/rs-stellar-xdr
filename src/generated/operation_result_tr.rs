@@ -76,34 +76,89 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResultTr {
-    CreateAccount(CreateAccountResult),
-    Payment(PaymentResult),
-    PathPaymentStrictReceive(PathPaymentStrictReceiveResult),
-    ManageSellOffer(ManageSellOfferResult),
-    CreatePassiveSellOffer(ManageSellOfferResult),
-    SetOptions(SetOptionsResult),
-    ChangeTrust(ChangeTrustResult),
-    AllowTrust(AllowTrustResult),
-    AccountMerge(AccountMergeResult),
-    Inflation(InflationResult),
-    ManageData(ManageDataResult),
-    BumpSequence(BumpSequenceResult),
-    ManageBuyOffer(ManageBuyOfferResult),
-    PathPaymentStrictSend(PathPaymentStrictSendResult),
-    CreateClaimableBalance(CreateClaimableBalanceResult),
-    ClaimClaimableBalance(ClaimClaimableBalanceResult),
-    BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult),
-    EndSponsoringFutureReserves(EndSponsoringFutureReservesResult),
-    RevokeSponsorship(RevokeSponsorshipResult),
-    Clawback(ClawbackResult),
-    ClawbackClaimableBalance(ClawbackClaimableBalanceResult),
-    SetTrustLineFlags(SetTrustLineFlagsResult),
-    LiquidityPoolDeposit(LiquidityPoolDepositResult),
-    LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
-    InvokeHostFunction(InvokeHostFunctionResult),
-    ExtendFootprintTtl(ExtendFootprintTtlResult),
-    RestoreFootprint(RestoreFootprintResult),
+    CreateAccount(
+        CreateAccountResult,
+    ),
+    Payment(
+        PaymentResult,
+    ),
+    PathPaymentStrictReceive(
+        PathPaymentStrictReceiveResult,
+    ),
+    ManageSellOffer(
+        ManageSellOfferResult,
+    ),
+    CreatePassiveSellOffer(
+        ManageSellOfferResult,
+    ),
+    SetOptions(
+        SetOptionsResult,
+    ),
+    ChangeTrust(
+        ChangeTrustResult,
+    ),
+    AllowTrust(
+        AllowTrustResult,
+    ),
+    AccountMerge(
+        AccountMergeResult,
+    ),
+    Inflation(
+        InflationResult,
+    ),
+    ManageData(
+        ManageDataResult,
+    ),
+    BumpSequence(
+        BumpSequenceResult,
+    ),
+    ManageBuyOffer(
+        ManageBuyOfferResult,
+    ),
+    PathPaymentStrictSend(
+        PathPaymentStrictSendResult,
+    ),
+    CreateClaimableBalance(
+        CreateClaimableBalanceResult,
+    ),
+    ClaimClaimableBalance(
+        ClaimClaimableBalanceResult,
+    ),
+    BeginSponsoringFutureReserves(
+        BeginSponsoringFutureReservesResult,
+    ),
+    EndSponsoringFutureReserves(
+        EndSponsoringFutureReservesResult,
+    ),
+    RevokeSponsorship(
+        RevokeSponsorshipResult,
+    ),
+    Clawback(
+        ClawbackResult,
+    ),
+    ClawbackClaimableBalance(
+        ClawbackClaimableBalanceResult,
+    ),
+    SetTrustLineFlags(
+        SetTrustLineFlagsResult,
+    ),
+    LiquidityPoolDeposit(
+        LiquidityPoolDepositResult,
+    ),
+    LiquidityPoolWithdraw(
+        LiquidityPoolWithdrawResult,
+    ),
+    InvokeHostFunction(
+        InvokeHostFunctionResult,
+    ),
+    ExtendFootprintTtl(
+        ExtendFootprintTtlResult,
+    ),
+    RestoreFootprint(
+        RestoreFootprintResult,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for OperationResultTr {
@@ -292,19 +347,11 @@ impl ReadXdr for OperationResultTr {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                OperationType::CreateAccount => {
-                    Self::CreateAccount(CreateAccountResult::read_xdr(r)?)
-                }
+                OperationType::CreateAccount => Self::CreateAccount(CreateAccountResult::read_xdr(r)?),
                 OperationType::Payment => Self::Payment(PaymentResult::read_xdr(r)?),
-                OperationType::PathPaymentStrictReceive => {
-                    Self::PathPaymentStrictReceive(PathPaymentStrictReceiveResult::read_xdr(r)?)
-                }
-                OperationType::ManageSellOffer => {
-                    Self::ManageSellOffer(ManageSellOfferResult::read_xdr(r)?)
-                }
-                OperationType::CreatePassiveSellOffer => {
-                    Self::CreatePassiveSellOffer(ManageSellOfferResult::read_xdr(r)?)
-                }
+                OperationType::PathPaymentStrictReceive => Self::PathPaymentStrictReceive(PathPaymentStrictReceiveResult::read_xdr(r)?),
+                OperationType::ManageSellOffer => Self::ManageSellOffer(ManageSellOfferResult::read_xdr(r)?),
+                OperationType::CreatePassiveSellOffer => Self::CreatePassiveSellOffer(ManageSellOfferResult::read_xdr(r)?),
                 OperationType::SetOptions => Self::SetOptions(SetOptionsResult::read_xdr(r)?),
                 OperationType::ChangeTrust => Self::ChangeTrust(ChangeTrustResult::read_xdr(r)?),
                 OperationType::AllowTrust => Self::AllowTrust(AllowTrustResult::read_xdr(r)?),
@@ -312,51 +359,21 @@ impl ReadXdr for OperationResultTr {
                 OperationType::Inflation => Self::Inflation(InflationResult::read_xdr(r)?),
                 OperationType::ManageData => Self::ManageData(ManageDataResult::read_xdr(r)?),
                 OperationType::BumpSequence => Self::BumpSequence(BumpSequenceResult::read_xdr(r)?),
-                OperationType::ManageBuyOffer => {
-                    Self::ManageBuyOffer(ManageBuyOfferResult::read_xdr(r)?)
-                }
-                OperationType::PathPaymentStrictSend => {
-                    Self::PathPaymentStrictSend(PathPaymentStrictSendResult::read_xdr(r)?)
-                }
-                OperationType::CreateClaimableBalance => {
-                    Self::CreateClaimableBalance(CreateClaimableBalanceResult::read_xdr(r)?)
-                }
-                OperationType::ClaimClaimableBalance => {
-                    Self::ClaimClaimableBalance(ClaimClaimableBalanceResult::read_xdr(r)?)
-                }
-                OperationType::BeginSponsoringFutureReserves => {
-                    Self::BeginSponsoringFutureReserves(
-                        BeginSponsoringFutureReservesResult::read_xdr(r)?,
-                    )
-                }
-                OperationType::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves(
-                    EndSponsoringFutureReservesResult::read_xdr(r)?,
-                ),
-                OperationType::RevokeSponsorship => {
-                    Self::RevokeSponsorship(RevokeSponsorshipResult::read_xdr(r)?)
-                }
+                OperationType::ManageBuyOffer => Self::ManageBuyOffer(ManageBuyOfferResult::read_xdr(r)?),
+                OperationType::PathPaymentStrictSend => Self::PathPaymentStrictSend(PathPaymentStrictSendResult::read_xdr(r)?),
+                OperationType::CreateClaimableBalance => Self::CreateClaimableBalance(CreateClaimableBalanceResult::read_xdr(r)?),
+                OperationType::ClaimClaimableBalance => Self::ClaimClaimableBalance(ClaimClaimableBalanceResult::read_xdr(r)?),
+                OperationType::BeginSponsoringFutureReserves => Self::BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult::read_xdr(r)?),
+                OperationType::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves(EndSponsoringFutureReservesResult::read_xdr(r)?),
+                OperationType::RevokeSponsorship => Self::RevokeSponsorship(RevokeSponsorshipResult::read_xdr(r)?),
                 OperationType::Clawback => Self::Clawback(ClawbackResult::read_xdr(r)?),
-                OperationType::ClawbackClaimableBalance => {
-                    Self::ClawbackClaimableBalance(ClawbackClaimableBalanceResult::read_xdr(r)?)
-                }
-                OperationType::SetTrustLineFlags => {
-                    Self::SetTrustLineFlags(SetTrustLineFlagsResult::read_xdr(r)?)
-                }
-                OperationType::LiquidityPoolDeposit => {
-                    Self::LiquidityPoolDeposit(LiquidityPoolDepositResult::read_xdr(r)?)
-                }
-                OperationType::LiquidityPoolWithdraw => {
-                    Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?)
-                }
-                OperationType::InvokeHostFunction => {
-                    Self::InvokeHostFunction(InvokeHostFunctionResult::read_xdr(r)?)
-                }
-                OperationType::ExtendFootprintTtl => {
-                    Self::ExtendFootprintTtl(ExtendFootprintTtlResult::read_xdr(r)?)
-                }
-                OperationType::RestoreFootprint => {
-                    Self::RestoreFootprint(RestoreFootprintResult::read_xdr(r)?)
-                }
+                OperationType::ClawbackClaimableBalance => Self::ClawbackClaimableBalance(ClawbackClaimableBalanceResult::read_xdr(r)?),
+                OperationType::SetTrustLineFlags => Self::SetTrustLineFlags(SetTrustLineFlagsResult::read_xdr(r)?),
+                OperationType::LiquidityPoolDeposit => Self::LiquidityPoolDeposit(LiquidityPoolDepositResult::read_xdr(r)?),
+                OperationType::LiquidityPoolWithdraw => Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?),
+                OperationType::InvokeHostFunction => Self::InvokeHostFunction(InvokeHostFunctionResult::read_xdr(r)?),
+                OperationType::ExtendFootprintTtl => Self::ExtendFootprintTtl(ExtendFootprintTtlResult::read_xdr(r)?),
+                OperationType::RestoreFootprint => Self::RestoreFootprint(RestoreFootprintResult::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

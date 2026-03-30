@@ -27,8 +27,11 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1Ext {
     V0,
-    V2(AccountEntryExtensionV2),
+    V2(
+        AccountEntryExtensionV2,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for AccountEntryExtensionV1Ext {
@@ -38,7 +41,10 @@ impl Default for AccountEntryExtensionV1Ext {
 }
 
 impl AccountEntryExtensionV1Ext {
-    const _VARIANTS: &[i32] = &[0, 2];
+    const _VARIANTS: &[i32] = &[
+        0,
+        2,
+    ];
     pub const VARIANTS: [i32; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,7 +54,10 @@ impl AccountEntryExtensionV1Ext {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["V0", "V2"];
+    const _VARIANTS_STR: &[&str] = &[
+        "V0",
+        "V2",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

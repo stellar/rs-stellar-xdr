@@ -14,7 +14,7 @@ use super::*;
 ///     uint32 ledgerMaxWriteLedgerEntries;
 ///     // Maximum number of bytes that can be written per ledger
 ///     uint32 ledgerMaxWriteBytes;
-///
+/// 
 ///     // Maximum number of disk entry read operations per transaction
 ///     uint32 txMaxDiskReadEntries;
 ///     // Maximum number of bytes of disk reads that can be performed per transaction
@@ -23,12 +23,12 @@ use super::*;
 ///     uint32 txMaxWriteLedgerEntries;
 ///     // Maximum number of bytes that can be written per transaction
 ///     uint32 txMaxWriteBytes;
-///
+/// 
 ///     int64 feeDiskReadLedgerEntry;  // Fee per disk ledger entry read
 ///     int64 feeWriteLedgerEntry;     // Fee per ledger entry write
-///
+/// 
 ///     int64 feeDiskRead1KB;          // Fee for reading 1KB disk
-///
+/// 
 ///     // The following parameters determine the write fee per 1KB.
 ///     // Rent fee grows linearly until soroban state reaches this size
 ///     int64 sorobanStateTargetSizeBytes;

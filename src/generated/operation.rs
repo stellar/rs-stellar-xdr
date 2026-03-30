@@ -10,7 +10,7 @@ use super::*;
 ///     // if not set, the runtime defaults to "sourceAccount" specified at
 ///     // the transaction level
 ///     MuxedAccount* sourceAccount;
-///
+/// 
 ///     union switch (OperationType type)
 ///     {
 ///     case CREATE_ACCOUNT:

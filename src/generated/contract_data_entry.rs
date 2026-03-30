@@ -6,7 +6,7 @@ use super::*;
 /// ```text
 /// struct ContractDataEntry {
 ///     ExtensionPoint ext;
-///
+/// 
 ///     SCAddress contract;
 ///     SCVal key;
 ///     ContractDataDurability durability;

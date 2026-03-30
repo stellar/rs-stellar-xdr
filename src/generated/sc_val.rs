@@ -6,19 +6,19 @@ use super::*;
 /// ```text
 /// union SCVal switch (SCValType type)
 /// {
-///
+/// 
 /// case SCV_BOOL:
 ///     bool b;
 /// case SCV_VOID:
 ///     void;
 /// case SCV_ERROR:
 ///     SCError error;
-///
+/// 
 /// case SCV_U32:
 ///     uint32 u32;
 /// case SCV_I32:
 ///     int32 i32;
-///
+/// 
 /// case SCV_U64:
 ///     uint64 u64;
 /// case SCV_I64:
@@ -27,34 +27,34 @@ use super::*;
 ///     TimePoint timepoint;
 /// case SCV_DURATION:
 ///     Duration duration;
-///
+/// 
 /// case SCV_U128:
 ///     UInt128Parts u128;
 /// case SCV_I128:
 ///     Int128Parts i128;
-///
+/// 
 /// case SCV_U256:
 ///     UInt256Parts u256;
 /// case SCV_I256:
 ///     Int256Parts i256;
-///
+/// 
 /// case SCV_BYTES:
 ///     SCBytes bytes;
 /// case SCV_STRING:
 ///     SCString str;
 /// case SCV_SYMBOL:
 ///     SCSymbol sym;
-///
+/// 
 /// // Vec and Map are recursive so need to live
 /// // behind an option, due to xdrpp limitations.
 /// case SCV_VEC:
 ///     SCVec *vec;
 /// case SCV_MAP:
 ///     SCMap *map;
-///
+/// 
 /// case SCV_ADDRESS:
 ///     SCAddress address;
-///
+/// 
 /// // Special SCVals reserved for system-constructed contract-data
 /// // ledger keys, not generally usable elsewhere.
 /// case SCV_CONTRACT_INSTANCE:
@@ -79,11 +79,19 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScVal {
-    Bool(bool),
+    Bool(
+        bool,
+    ),
     Void,
-    Error(ScError),
-    U32(u32),
-    I32(i32),
+    Error(
+        ScError,
+    ),
+    U32(
+        u32,
+    ),
+    I32(
+        i32,
+    ),
     U64(
         #[cfg_attr(
             all(feature = "serde", feature = "alloc"),
@@ -98,22 +106,51 @@ pub enum ScVal {
         )]
         i64,
     ),
-    Timepoint(TimePoint),
-    Duration(Duration),
-    U128(UInt128Parts),
-    I128(Int128Parts),
-    U256(UInt256Parts),
-    I256(Int256Parts),
-    Bytes(ScBytes),
-    String(ScString),
-    Symbol(ScSymbol),
-    Vec(Option<ScVec>),
-    Map(Option<ScMap>),
-    Address(ScAddress),
-    ContractInstance(ScContractInstance),
+    Timepoint(
+        TimePoint,
+    ),
+    Duration(
+        Duration,
+    ),
+    U128(
+        UInt128Parts,
+    ),
+    I128(
+        Int128Parts,
+    ),
+    U256(
+        UInt256Parts,
+    ),
+    I256(
+        Int256Parts,
+    ),
+    Bytes(
+        ScBytes,
+    ),
+    String(
+        ScString,
+    ),
+    Symbol(
+        ScSymbol,
+    ),
+    Vec(
+        Option<ScVec>,
+    ),
+    Map(
+        Option<ScMap>,
+    ),
+    Address(
+        ScAddress,
+    ),
+    ContractInstance(
+        ScContractInstance,
+    ),
     LedgerKeyContractInstance,
-    LedgerKeyNonce(ScNonceKey),
+    LedgerKeyNonce(
+        ScNonceKey,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ScVal {
@@ -301,9 +338,7 @@ impl ReadXdr for ScVal {
                 ScValType::Vec => Self::Vec(Option::<ScVec>::read_xdr(r)?),
                 ScValType::Map => Self::Map(Option::<ScMap>::read_xdr(r)?),
                 ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
-                ScValType::ContractInstance => {
-                    Self::ContractInstance(ScContractInstance::read_xdr(r)?)
-                }
+                ScValType::ContractInstance => Self::ContractInstance(ScContractInstance::read_xdr(r)?),
                 ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
                 ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
                 #[allow(unreachable_patterns)]

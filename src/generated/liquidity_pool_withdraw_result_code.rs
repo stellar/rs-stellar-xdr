@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     // codes considered as "success" for the operation
 ///     LIQUIDITY_POOL_WITHDRAW_SUCCESS = 0,
-///
+/// 
 ///     // codes considered as "failure" for the operation
 ///     LIQUIDITY_POOL_WITHDRAW_MALFORMED = -1,    // bad input
 ///     LIQUIDITY_POOL_WITHDRAW_NO_TRUST = -2,     // no trust line for one of the
@@ -18,7 +18,7 @@ use super::*;
 ///     LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,    // would go above limit for one
 ///                                                // of the assets
 ///     LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5, // didn't withdraw enough
-///     LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN = -6  // trustline for one of the
+///     LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN = -6  // trustline for one of the 
 ///                                                    // assets is frozen
 /// };
 /// ```

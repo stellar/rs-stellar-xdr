@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     NodeID nodeID;    // v
 ///     uint64 slotIndex; // i
-///
+/// 
 ///     union switch (SCPStatementType type)
 ///     {
 ///     case SCP_ST_PREPARE:

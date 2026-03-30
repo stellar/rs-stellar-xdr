@@ -7,7 +7,7 @@ use super::*;
 /// struct LedgerEntry
 /// {
 ///     uint32 lastModifiedLedgerSeq; // ledger the LedgerEntry was last changed
-///
+/// 
 ///     union switch (LedgerEntryType type)
 ///     {
 ///     case ACCOUNT:
@@ -32,7 +32,7 @@ use super::*;
 ///         TTLEntry ttl;
 ///     }
 ///     data;
-///
+/// 
 ///     // reserved for future use
 ///     union switch (int v)
 ///     {

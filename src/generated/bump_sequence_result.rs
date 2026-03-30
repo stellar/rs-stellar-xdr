@@ -30,6 +30,7 @@ pub enum BumpSequenceResult {
     BadSeq,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for BumpSequenceResult {
     fn default() -> Self {
@@ -51,7 +52,10 @@ impl BumpSequenceResult {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Success", "BadSeq"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Success",
+        "BadSeq",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

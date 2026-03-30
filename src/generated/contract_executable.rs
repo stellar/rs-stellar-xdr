@@ -26,9 +26,12 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractExecutable {
-    Wasm(Hash),
+    Wasm(
+        Hash,
+    ),
     StellarAsset,
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ContractExecutable {
@@ -51,7 +54,10 @@ impl ContractExecutable {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Wasm",
+        "StellarAsset",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

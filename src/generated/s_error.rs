@@ -24,7 +24,7 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SError {
     pub code: ErrorCode,
-    pub msg: StringM<100>,
+    pub msg: StringM::<100>,
 }
 
 impl ReadXdr for SError {

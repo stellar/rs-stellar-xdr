@@ -156,7 +156,7 @@ pub struct Foo {
     // but the whole type enum API is behind the `type` feature.
     assert_contains(
         &output,
-        "#[cfg(feature = \"type\")]\n#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]",
+        "#[cfg(feature = \"type_enum\")]\n#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]",
     );
 }
 

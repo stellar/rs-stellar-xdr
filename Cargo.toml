@@ -48,7 +48,7 @@ alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 test_feature = []
 
 # Features available without any new dependencies.
-type = []
+type_enum = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]
@@ -60,7 +60,7 @@ hex = []
 rand = ["dep:rand"]
 
 # Features for the CLI.
-cli = ["std", "type", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum"]
+cli = ["std", "type_enum", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum"]
 
 [package.metadata.docs.rs]
 all-features = true

@@ -47,10 +47,7 @@ impl WriteXdr for UInt128Parts {
 }
 #[cfg(all(feature = "serde", feature = "alloc"))]
 impl<'de> serde::Deserialize<'de> for UInt128Parts {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
         use serde::Deserialize;
         #[derive(Deserialize)]
         struct UInt128Parts {
@@ -67,9 +64,11 @@ impl<'de> serde::Deserialize<'de> for UInt128Parts {
         match UInt128PartsOrString::deserialize(deserializer)? {
             UInt128PartsOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
             UInt128PartsOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
-            UInt128PartsOrString::UInt128Parts(UInt128Parts { hi, lo }) => {
-                Ok(self::UInt128Parts { hi, lo })
-            }
+            UInt128PartsOrString::UInt128Parts(UInt128Parts {
+                hi, lo,
+            }) => Ok(self::UInt128Parts {
+                hi, lo,
+            }),
         }
     }
 }

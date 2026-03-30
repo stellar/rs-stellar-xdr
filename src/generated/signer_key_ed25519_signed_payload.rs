@@ -23,7 +23,7 @@ use super::*;
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
-    pub payload: BytesM<64>,
+    pub payload: BytesM::<64>,
 }
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
@@ -50,15 +50,12 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 }
 #[cfg(all(feature = "serde", feature = "alloc"))]
 impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
         use serde::Deserialize;
         #[derive(Deserialize)]
         struct SignerKeyEd25519SignedPayload {
             ed25519: Uint256,
-            payload: BytesM<64>,
+            payload: BytesM::<64>,
         }
         #[derive(Deserialize)]
         #[serde(untagged)]
@@ -68,15 +65,13 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
             SignerKeyEd25519SignedPayload(SignerKeyEd25519SignedPayload),
         }
         match SignerKeyEd25519SignedPayloadOrString::deserialize(deserializer)? {
-            SignerKeyEd25519SignedPayloadOrString::Str(s) => {
-                s.parse().map_err(serde::de::Error::custom)
-            }
-            SignerKeyEd25519SignedPayloadOrString::String(s) => {
-                s.parse().map_err(serde::de::Error::custom)
-            }
-            SignerKeyEd25519SignedPayloadOrString::SignerKeyEd25519SignedPayload(
-                SignerKeyEd25519SignedPayload { ed25519, payload },
-            ) => Ok(self::SignerKeyEd25519SignedPayload { ed25519, payload }),
+            SignerKeyEd25519SignedPayloadOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            SignerKeyEd25519SignedPayloadOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            SignerKeyEd25519SignedPayloadOrString::SignerKeyEd25519SignedPayload(SignerKeyEd25519SignedPayload {
+                ed25519, payload,
+            }) => Ok(self::SignerKeyEd25519SignedPayload {
+                ed25519, payload,
+            }),
         }
     }
 }

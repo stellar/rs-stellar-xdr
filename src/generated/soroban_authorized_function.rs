@@ -11,7 +11,7 @@ use super::*;
 /// // This variant of auth payload for creating new contract instances
 /// // doesn't allow specifying the constructor arguments, creating contracts
 /// // with constructors that take arguments is only possible by authorizing
-/// // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN`
+/// // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` 
 /// // (protocol 22+).
 /// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
 ///     CreateContractArgs createContractHostFn;
@@ -36,10 +36,17 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanAuthorizedFunction {
-    ContractFn(InvokeContractArgs),
-    CreateContractHostFn(CreateContractArgs),
-    CreateContractV2HostFn(CreateContractArgsV2),
+    ContractFn(
+        InvokeContractArgs,
+    ),
+    CreateContractHostFn(
+        CreateContractArgs,
+    ),
+    CreateContractV2HostFn(
+        CreateContractArgsV2,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for SorobanAuthorizedFunction {
@@ -93,9 +100,7 @@ impl SorobanAuthorizedFunction {
         match self {
             Self::ContractFn(_) => SorobanAuthorizedFunctionType::ContractFn,
             Self::CreateContractHostFn(_) => SorobanAuthorizedFunctionType::CreateContractHostFn,
-            Self::CreateContractV2HostFn(_) => {
-                SorobanAuthorizedFunctionType::CreateContractV2HostFn
-            }
+            Self::CreateContractV2HostFn(_) => SorobanAuthorizedFunctionType::CreateContractV2HostFn,
         }
     }
 
@@ -131,19 +136,12 @@ impl ReadXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: SorobanAuthorizedFunctionType =
-                <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
+            let dv: SorobanAuthorizedFunctionType = <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                SorobanAuthorizedFunctionType::ContractFn => {
-                    Self::ContractFn(InvokeContractArgs::read_xdr(r)?)
-                }
-                SorobanAuthorizedFunctionType::CreateContractHostFn => {
-                    Self::CreateContractHostFn(CreateContractArgs::read_xdr(r)?)
-                }
-                SorobanAuthorizedFunctionType::CreateContractV2HostFn => {
-                    Self::CreateContractV2HostFn(CreateContractArgsV2::read_xdr(r)?)
-                }
+                SorobanAuthorizedFunctionType::ContractFn => Self::ContractFn(InvokeContractArgs::read_xdr(r)?),
+                SorobanAuthorizedFunctionType::CreateContractHostFn => Self::CreateContractHostFn(CreateContractArgs::read_xdr(r)?),
+                SorobanAuthorizedFunctionType::CreateContractV2HostFn => Self::CreateContractV2HostFn(CreateContractArgsV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

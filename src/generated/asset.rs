@@ -8,13 +8,13 @@ use super::*;
 /// {
 /// case ASSET_TYPE_NATIVE: // Not credit
 ///     void;
-///
+/// 
 /// case ASSET_TYPE_CREDIT_ALPHANUM4:
 ///     AlphaNum4 alphaNum4;
-///
+/// 
 /// case ASSET_TYPE_CREDIT_ALPHANUM12:
 ///     AlphaNum12 alphaNum12;
-///
+/// 
 ///     // add other asset types here in the future
 /// };
 /// ```
@@ -33,9 +33,14 @@ use super::*;
 #[allow(clippy::large_enum_variant)]
 pub enum Asset {
     Native,
-    CreditAlphanum4(AlphaNum4),
-    CreditAlphanum12(AlphaNum12),
+    CreditAlphanum4(
+        AlphaNum4,
+    ),
+    CreditAlphanum12(
+        AlphaNum12,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for Asset {
@@ -59,7 +64,11 @@ impl Asset {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Native", "CreditAlphanum4", "CreditAlphanum12"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Native",
+        "CreditAlphanum4",
+        "CreditAlphanum12",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

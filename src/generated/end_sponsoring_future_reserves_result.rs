@@ -31,6 +31,7 @@ pub enum EndSponsoringFutureReservesResult {
     NotSponsored,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for EndSponsoringFutureReservesResult {
     fn default() -> Self {
@@ -52,7 +53,10 @@ impl EndSponsoringFutureReservesResult {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Success", "NotSponsored"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Success",
+        "NotSponsored",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -112,8 +116,7 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: EndSponsoringFutureReservesResultCode =
-                <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: EndSponsoringFutureReservesResultCode = <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 EndSponsoringFutureReservesResultCode::Success => Self::Success,

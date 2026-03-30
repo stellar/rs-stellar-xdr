@@ -27,8 +27,8 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecEventV0 {
-    pub doc: StringM<1024>,
-    pub lib: StringM<80>,
+    pub doc: StringM::<1024>,
+    pub lib: StringM::<80>,
     pub name: ScSymbol,
     pub prefix_topics: VecM<ScSymbol, 2>,
     pub params: VecM<ScSpecEventParamV0>,

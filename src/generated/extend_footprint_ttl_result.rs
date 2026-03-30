@@ -34,6 +34,7 @@ pub enum ExtendFootprintTtlResult {
     InsufficientRefundableFee,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for ExtendFootprintTtlResult {
     fn default() -> Self {
@@ -90,9 +91,7 @@ impl ExtendFootprintTtlResult {
             Self::Success => ExtendFootprintTtlResultCode::Success,
             Self::Malformed => ExtendFootprintTtlResultCode::Malformed,
             Self::ResourceLimitExceeded => ExtendFootprintTtlResultCode::ResourceLimitExceeded,
-            Self::InsufficientRefundableFee => {
-                ExtendFootprintTtlResultCode::InsufficientRefundableFee
-            }
+            Self::InsufficientRefundableFee => ExtendFootprintTtlResultCode::InsufficientRefundableFee,
         }
     }
 
@@ -128,16 +127,13 @@ impl ReadXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: ExtendFootprintTtlResultCode =
-                <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: ExtendFootprintTtlResultCode = <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 ExtendFootprintTtlResultCode::Success => Self::Success,
                 ExtendFootprintTtlResultCode::Malformed => Self::Malformed,
                 ExtendFootprintTtlResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
-                ExtendFootprintTtlResultCode::InsufficientRefundableFee => {
-                    Self::InsufficientRefundableFee
-                }
+                ExtendFootprintTtlResultCode::InsufficientRefundableFee => Self::InsufficientRefundableFee,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

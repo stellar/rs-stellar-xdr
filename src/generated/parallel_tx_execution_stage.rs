@@ -20,6 +20,7 @@ use super::*;
 #[derive(Debug)]
 pub struct ParallelTxExecutionStage(pub VecM<DependentTxCluster>);
 
+
 impl From<ParallelTxExecutionStage> for VecM<DependentTxCluster> {
     #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
@@ -55,7 +56,7 @@ impl ReadXdr for ParallelTxExecutionStage {
 impl WriteXdr for ParallelTxExecutionStage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
+        w.with_limited_depth(|w| { self.0.write_xdr(w) })
     }
 }
 
@@ -69,7 +70,7 @@ impl Deref for ParallelTxExecutionStage {
 impl From<ParallelTxExecutionStage> for Vec<DependentTxCluster> {
     #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
-        x.0 .0
+        x.0.0
     }
 }
 
@@ -91,7 +92,7 @@ impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
 impl AsRef<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
     fn as_ref(&self) -> &Vec<DependentTxCluster> {
-        &self.0 .0
+        &self.0.0
     }
 }
 
@@ -99,11 +100,11 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[DependentTxCluster] {
-        &self.0 .0
+        &self.0.0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
     fn as_ref(&self) -> &[DependentTxCluster] {
-        self.0 .0
+        self.0.0
     }
 }

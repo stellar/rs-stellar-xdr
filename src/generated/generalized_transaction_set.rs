@@ -25,8 +25,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSet {
-    V1(TransactionSetV1),
+    V1(
+        TransactionSetV1,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for GeneralizedTransactionSet {
@@ -36,7 +39,9 @@ impl Default for GeneralizedTransactionSet {
 }
 
 impl GeneralizedTransactionSet {
-    const _VARIANTS: &[i32] = &[1];
+    const _VARIANTS: &[i32] = &[
+        1,
+    ];
     pub const VARIANTS: [i32; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -46,7 +51,9 @@ impl GeneralizedTransactionSet {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["V1"];
+    const _VARIANTS_STR: &[&str] = &[
+        "V1",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

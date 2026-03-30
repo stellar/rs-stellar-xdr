@@ -10,7 +10,7 @@ use super::*;
 ///         struct
 ///         {
 ///             LiquidityPoolConstantProductParameters params;
-///
+/// 
 ///             int64 reserveA;        // amount of A in the pool
 ///             int64 reserveB;        // amount of B in the pool
 ///             int64 totalPoolShares; // total number of pool shares issued
@@ -33,8 +33,11 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolEntryBody {
-    LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
+    LiquidityPoolConstantProduct(
+        LiquidityPoolEntryConstantProduct,
+    ),
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for LiquidityPoolEntryBody {
@@ -44,7 +47,9 @@ impl Default for LiquidityPoolEntryBody {
 }
 
 impl LiquidityPoolEntryBody {
-    const _VARIANTS: &[LiquidityPoolType] = &[LiquidityPoolType::LiquidityPoolConstantProduct];
+    const _VARIANTS: &[LiquidityPoolType] = &[
+        LiquidityPoolType::LiquidityPoolConstantProduct,
+    ];
     pub const VARIANTS: [LiquidityPoolType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -54,7 +59,9 @@ impl LiquidityPoolEntryBody {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["LiquidityPoolConstantProduct"];
+    const _VARIANTS_STR: &[&str] = &[
+        "LiquidityPoolConstantProduct",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -76,9 +83,7 @@ impl LiquidityPoolEntryBody {
     pub const fn discriminant(&self) -> LiquidityPoolType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::LiquidityPoolConstantProduct(_) => {
-                LiquidityPoolType::LiquidityPoolConstantProduct
-            }
+            Self::LiquidityPoolConstantProduct(_) => LiquidityPoolType::LiquidityPoolConstantProduct,
         }
     }
 
@@ -117,11 +122,7 @@ impl ReadXdr for LiquidityPoolEntryBody {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                LiquidityPoolType::LiquidityPoolConstantProduct => {
-                    Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::read_xdr(
-                        r,
-                    )?)
-                }
+                LiquidityPoolType::LiquidityPoolConstantProduct => Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };

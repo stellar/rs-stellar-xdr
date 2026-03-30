@@ -7,7 +7,7 @@ use super::*;
 /// struct LedgerHeaderExtensionV1
 /// {
 ///     uint32 flags; // LedgerHeaderFlags
-///
+/// 
 ///     union switch (int v)
 ///     {
 ///     case 0:

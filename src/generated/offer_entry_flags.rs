@@ -29,7 +29,9 @@ pub enum OfferEntryFlags {
 }
 
 impl OfferEntryFlags {
-    const _VARIANTS: &[OfferEntryFlags] = &[OfferEntryFlags::PassiveFlag];
+    const _VARIANTS: &[OfferEntryFlags] = &[
+        OfferEntryFlags::PassiveFlag,
+    ];
     pub const VARIANTS: [OfferEntryFlags; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,7 +41,9 @@ impl OfferEntryFlags {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["PassiveFlag"];
+    const _VARIANTS_STR: &[&str] = &[
+        "PassiveFlag",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

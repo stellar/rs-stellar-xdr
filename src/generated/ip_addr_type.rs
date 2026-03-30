@@ -29,7 +29,10 @@ pub enum IpAddrType {
 }
 
 impl IpAddrType {
-    const _VARIANTS: &[IpAddrType] = &[IpAddrType::IPv4, IpAddrType::IPv6];
+    const _VARIANTS: &[IpAddrType] = &[
+        IpAddrType::IPv4,
+        IpAddrType::IPv6,
+    ];
     pub const VARIANTS: [IpAddrType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,7 +42,10 @@ impl IpAddrType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
+    const _VARIANTS_STR: &[&str] = &[
+        "IPv4",
+        "IPv6",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;

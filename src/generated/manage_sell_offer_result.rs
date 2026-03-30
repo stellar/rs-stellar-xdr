@@ -37,7 +37,9 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageSellOfferResult {
-    Success(ManageOfferSuccessResult),
+    Success(
+        ManageOfferSuccessResult,
+    ),
     Malformed,
     SellNoTrust,
     BuyNoTrust,
@@ -51,6 +53,7 @@ pub enum ManageSellOfferResult {
     NotFound,
     LowReserve,
 }
+
 
 #[cfg(feature = "alloc")]
 impl Default for ManageSellOfferResult {
@@ -180,13 +183,10 @@ impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: ManageSellOfferResultCode =
-                <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ManageSellOfferResultCode::Success => {
-                    Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
-                }
+                ManageSellOfferResultCode::Success => Self::Success(ManageOfferSuccessResult::read_xdr(r)?),
                 ManageSellOfferResultCode::Malformed => Self::Malformed,
                 ManageSellOfferResultCode::SellNoTrust => Self::SellNoTrust,
                 ManageSellOfferResultCode::BuyNoTrust => Self::BuyNoTrust,

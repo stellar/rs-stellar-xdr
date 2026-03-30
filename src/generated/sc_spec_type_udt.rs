@@ -22,7 +22,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeUdt {
-    pub name: StringM<60>,
+    pub name: StringM::<60>,
 }
 
 impl ReadXdr for ScSpecTypeUdt {

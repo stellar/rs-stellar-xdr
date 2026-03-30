@@ -7,7 +7,7 @@ use super::*;
 /// struct ChangeTrustOp
 /// {
 ///     ChangeTrustAsset line;
-///
+/// 
 ///     // if limit is set to 0, deletes the trust line
 ///     int64 limit;
 /// };

@@ -38,6 +38,7 @@ pub enum RevokeSponsorshipResult {
     Malformed,
 }
 
+
 #[cfg(feature = "alloc")]
 impl Default for RevokeSponsorshipResult {
     fn default() -> Self {
@@ -138,8 +139,7 @@ impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let dv: RevokeSponsorshipResultCode =
-                <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: RevokeSponsorshipResultCode = <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 RevokeSponsorshipResultCode::Success => Self::Success,

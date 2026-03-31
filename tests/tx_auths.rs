@@ -17,7 +17,7 @@ fn txv0() -> Result<(), Error> {
     let auth3 = create_soroban_auth_entry(3);
 
     let invoke_op_some = create_invoke_host_op(&[auth1.clone(), auth2.clone()]);
-    let invoke_op_more = create_invoke_host_op(std::slice::from_ref(&auth3));
+    let invoke_op_more = create_invoke_host_op(&[auth3.clone()]);
     let invoke_op_none = create_invoke_host_op(&[]);
     let other_op = create_payment_op();
 
@@ -56,7 +56,7 @@ fn txv1() -> Result<(), Error> {
     let auth3 = create_soroban_auth_entry(3);
 
     let invoke_op_some = create_invoke_host_op(&[auth1.clone(), auth2.clone()]);
-    let invoke_op_more = create_invoke_host_op(std::slice::from_ref(&auth3));
+    let invoke_op_more = create_invoke_host_op(&[auth3.clone()]);
     let invoke_op_none = create_invoke_host_op(&[]);
     let other_op = create_payment_op();
 
@@ -95,7 +95,7 @@ fn txfeebump() -> Result<(), Error> {
     let auth3 = create_soroban_auth_entry(3);
 
     let invoke_op_some = create_invoke_host_op(&[auth1.clone(), auth2.clone()]);
-    let invoke_op_more = create_invoke_host_op(std::slice::from_ref(&auth3));
+    let invoke_op_more = create_invoke_host_op(&[auth3.clone()]);
     let invoke_op_none = create_invoke_host_op(&[]);
     let other_op = create_payment_op();
 

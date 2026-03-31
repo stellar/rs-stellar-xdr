@@ -2,10 +2,10 @@ use stellar_xdr::{
     Error, Memo, MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,
     TransactionExt, TransactionV1Envelope, Uint256,
 };
-#[cfg(all(feature = "std", feature = "base64"))]
+#[cfg(all(feature = "std", feature = "base64", feature = "type_enum"))]
 use stellar_xdr::{Limits, Type, TypeVariant};
 
-#[cfg(all(feature = "std", feature = "base64"))]
+#[cfg(all(feature = "std", feature = "base64", feature = "type_enum"))]
 #[test]
 fn test_build_small_tx_with_std() -> Result<(), Error> {
     use std::str::FromStr;

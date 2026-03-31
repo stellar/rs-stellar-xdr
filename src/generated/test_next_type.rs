@@ -13,7 +13,7 @@ use super::*;
 #[cfg(feature = "test_feature")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),

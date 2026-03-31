@@ -7,7 +7,7 @@ use super::*;
 /// typedef PublicKey AccountID;
 /// ```
 ///
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]

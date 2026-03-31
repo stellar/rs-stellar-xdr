@@ -7,7 +7,7 @@ use super::*;
 /// typedef DependentTxCluster ParallelTxExecutionStage<>;
 /// ```
 ///
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(

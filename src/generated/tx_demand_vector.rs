@@ -7,7 +7,7 @@ use super::*;
 /// typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;
 /// ```
 ///
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[derive(Default, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(

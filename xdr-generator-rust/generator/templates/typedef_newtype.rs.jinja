@@ -2,7 +2,7 @@
 {%- if let Some(cfg) = t.cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
-#[cfg_eval::cfg_eval]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 {%- if t.has_default && !t.is_var_array %}
 #[cfg_attr(feature = "alloc", derive(Default))]
 {%- endif %}

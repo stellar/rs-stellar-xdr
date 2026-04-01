@@ -138,6 +138,16 @@ impl CfgExpr {
         }
     }
 
+    /// Evaluate this expression against a set of enabled features.
+    /// Feature names are compared case-insensitively.
+    pub fn evaluate(&self, features: &std::collections::HashSet<String>) -> bool {
+        match self {
+            CfgExpr::Feature(name) => features.contains(&name.to_lowercase()),
+            CfgExpr::Not(inner) => !inner.evaluate(features),
+            CfgExpr::All(exprs) => exprs.iter().all(|e| e.evaluate(features)),
+        }
+    }
+
     /// Render as a Rust `#[cfg(...)]` attribute string (without the outer `#[cfg()]`).
     ///
     /// Feature names are lowercased to follow the Cargo convention that feature
@@ -159,7 +169,7 @@ impl CfgExpr {
 
 /// A top-level definition.
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -329,7 +339,7 @@ pub struct Const {
 
 /// XDR type specification.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Type {
     /// `int` - 32-bit signed integer
     Int,
@@ -409,7 +419,7 @@ pub struct UnionCase {
 
 /// Value for a union case.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
     Ident { ident: String },
@@ -430,7 +440,7 @@ impl UnionCaseValue {
 
 /// A size specification, either a literal number or a named constant.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Size {
     Literal { literal: u32 },
     Named { named: String },

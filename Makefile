@@ -30,7 +30,7 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: generate-files xdr-version xdr-json
+generate: generate-files xdr-version xdr-json xdr-definitions-json
 
 CUSTOM_DEFAULT_IMPL=TransactionEnvelope
 CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
@@ -52,11 +52,18 @@ xdr-json: src/generated.rs
 	mkdir -p xdr-json
 	cargo run --features cli -- types schema-files --out-dir xdr-json
 
+xdr-definitions-json: $(sort $(wildcard xdr/curr/*.x))
+	mkdir -p xdr-definitions-json
+	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
+		$(addprefix --input ,$(sort $(wildcard xdr/curr/*.x))) \
+		--json-ast xdr-definitions-json/curr.json
+
 clean:
 	rm -f src/generated.rs
 	rm -rf src/generated
 	rm -f xdr-version
 	rm -fr xdr-json
+	rm -fr xdr-definitions-json
 	cargo clean --quiet
 
 fmt:

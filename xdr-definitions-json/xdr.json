@@ -1688,6 +1688,10 @@
         "fixed_wire_size": null,
         "kind": "const"
       },
+      "TestNextType": {
+        "fixed_wire_size": 4,
+        "kind": "struct"
+      },
       "ThresholdIndexes": {
         "fixed_wire_size": 4,
         "kind": "enum"
@@ -1967,56 +1971,56 @@
     "definitions": [],
     "files": [
       {
-        "name": "xdr/curr/Stellar-SCP.x",
+        "name": "xdr/Stellar-SCP.x",
         "sha256": "6aed428fb6c2d000f5bc1eef0ba685d6108f3faa96208ffa588c0e2990813939"
       },
       {
-        "name": "xdr/curr/Stellar-contract-config-setting.x",
+        "name": "xdr/Stellar-contract-config-setting.x",
         "sha256": "a034a3eb4d8b94f5c4c573fe14a1afc548aa316e1e897aa70e5a1688aada3c77"
       },
       {
-        "name": "xdr/curr/Stellar-contract-env-meta.x",
+        "name": "xdr/Stellar-contract-env-meta.x",
         "sha256": "75a271414d852096fea3283c63b7f2a702f2905f78fc28eb60ec7d7bd366a780"
       },
       {
-        "name": "xdr/curr/Stellar-contract-meta.x",
+        "name": "xdr/Stellar-contract-meta.x",
         "sha256": "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d"
       },
       {
-        "name": "xdr/curr/Stellar-contract-spec.x",
+        "name": "xdr/Stellar-contract-spec.x",
         "sha256": "7d99679155f6ce029f4f2bd8e1bf09524ef2f3e4ca8973265085cfcfdbdae987"
       },
       {
-        "name": "xdr/curr/Stellar-contract.x",
+        "name": "xdr/Stellar-contract.x",
         "sha256": "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982"
       },
       {
-        "name": "xdr/curr/Stellar-exporter.x",
+        "name": "xdr/Stellar-exporter.x",
         "sha256": "a00c83d02e8c8382e06f79a191f1fb5abd097a4bbcab8481c67467e3270e0529"
       },
       {
-        "name": "xdr/curr/Stellar-internal.x",
+        "name": "xdr/Stellar-internal.x",
         "sha256": "227835866c1b2122d1eaf28839ba85ea7289d1cb681dda4ca619c2da3d71fe00"
       },
       {
-        "name": "xdr/curr/Stellar-ledger-entries.x",
+        "name": "xdr/Stellar-ledger-entries.x",
         "sha256": "5157cad76b008b3606fe5bc2cfe87596827d8e02d16cbec3cedc297bb571aa54"
       },
       {
-        "name": "xdr/curr/Stellar-ledger.x",
+        "name": "xdr/Stellar-ledger.x",
         "sha256": "cf936606885dd265082e553aa433c2cf47b720b6d58839b154cf71096b885d1e"
       },
       {
-        "name": "xdr/curr/Stellar-overlay.x",
+        "name": "xdr/Stellar-overlay.x",
         "sha256": "8c9b9c13c86fa4672f03d741705b41e7221be0fc48e1ea6eeb1ba07d31ec0723"
       },
       {
-        "name": "xdr/curr/Stellar-transaction.x",
+        "name": "xdr/Stellar-transaction.x",
         "sha256": "30d03669fb29ca48fdda1c84258473fe6d798f3b881c0224b34df1a1f9e21e80"
       },
       {
-        "name": "xdr/curr/Stellar-types.x",
-        "sha256": "4d7a1d1f1fa0034ddbff27d8a533e59b6154bef295306c6256066def77a5a999"
+        "name": "xdr/Stellar-types.x",
+        "sha256": "f3a360cbb07f24637ead188e885a0b4a47b903ca475f9798be5fa12453075e28"
       }
     ],
     "namespaces": [
@@ -24324,6 +24328,26 @@
             "name": "ClaimableBalanceID",
             "parent": null,
             "source": "union ClaimableBalanceID switch (ClaimableBalanceIDType type)\n{\ncase CLAIMABLE_BALANCE_ID_TYPE_V0:\n    Hash v0;\n};"
+          },
+          {
+            "cfg": {
+              "feature": "TEST_FEATURE"
+            },
+            "file_index": 12,
+            "is_nested": false,
+            "kind": "struct",
+            "members": [
+              {
+                "name": "value",
+                "type_": {
+                  "ident": "int32",
+                  "kind": "ident"
+                }
+              }
+            ],
+            "name": "TestNextType",
+            "parent": null,
+            "source": "struct TestNextType\n{\n    int32 value;\n};"
           }
         ],
         "name": "stellar",

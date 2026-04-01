@@ -19,6 +19,7 @@ pub(crate) fn field_name(name: &str) -> String {
 
 fn escape_type_name(name: &str) -> String {
     match name {
+        "type" => "type_".to_string(),
         "Error" => "SError".to_string(),
         _ => name.to_string(),
     }

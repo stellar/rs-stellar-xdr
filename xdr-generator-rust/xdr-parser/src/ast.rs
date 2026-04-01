@@ -84,7 +84,6 @@ impl XdrSpec {
 
         result
     }
-
 }
 
 /// A namespace containing definitions.
@@ -187,6 +186,16 @@ impl Definition {
             Definition::Union(u) => &u.name,
             Definition::Typedef(t) => &t.name,
             Definition::Const(c) => &c.name,
+        }
+    }
+
+    /// Check if this definition is nested (inline struct/union extracted from parent).
+    pub fn is_nested(&self) -> bool {
+        match self {
+            Definition::Struct(s) => s.is_nested,
+            Definition::Union(u) => u.is_nested,
+            // Enums, typedefs, and consts are never nested
+            Definition::Enum(_) | Definition::Typedef(_) | Definition::Const(_) => false,
         }
     }
 
@@ -445,7 +454,6 @@ pub enum Size {
     Literal { literal: u32 },
     Named { named: String },
 }
-
 
 // =============================================================================
 // Prefix stripping helpers

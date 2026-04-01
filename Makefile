@@ -52,11 +52,11 @@ xdr-json: src/generated.rs
 	mkdir -p xdr-json
 	cargo run --features cli -- types schema-files --out-dir xdr-json
 
-xdr-definitions-json: $(sort $(wildcard xdr/curr/*.x))
+xdr-definitions-json: $(sort $(wildcard xdr/*.x))
 	mkdir -p xdr-definitions-json
 	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
-		$(addprefix --input ,$(sort $(wildcard xdr/curr/*.x))) \
-		--json-ast xdr-definitions-json/curr.json
+		$(addprefix --input ,$(sort $(wildcard xdr/*.x))) \
+		--json-ast xdr-definitions-json/xdr.json
 
 clean:
 	rm -f src/generated.rs

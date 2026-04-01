@@ -302,7 +302,11 @@ impl RustGenerator {
 
         let discriminant_type = type_ref(&u.discriminant.type_, None, &self.type_info);
         let discriminant_is_builtin = is_builtin_type(&u.discriminant.type_)
-            || self.type_info.resolve_typedef_to_builtin(&u.discriminant.type_).is_some();
+            || matches!(&u.discriminant.type_, xdr_parser::ast::Type::Ident { ident: n } if {
+                self.type_info.definitions.get(&type_name(n))
+                    .map(|d| matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_)))
+                    .unwrap_or(false)
+            });
 
         let discriminant_prefix = if !discriminant_is_builtin {
             self.type_info

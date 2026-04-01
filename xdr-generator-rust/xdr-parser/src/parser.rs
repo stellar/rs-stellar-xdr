@@ -352,7 +352,7 @@ impl Parser {
         self.expect(Token::RBrace)?;
         self.expect(Token::Semi)?;
 
-        // Extract source text for documentation
+        // Extract source text (simplified - just use the name for now)
         let source = self.extract_definition_source();
 
         Ok(Struct {
@@ -637,6 +637,17 @@ impl Parser {
             self.expect(Token::Semi)?;
             (None, String::new())
         } else if *self.peek() == Token::Struct {
+            // Inline struct in a union arm. XDR syntax:
+            //   case FOO:  struct { int x; } fieldName;
+            //
+            // We need the field name *before* parsing the struct body so we can
+            // set root_parent correctly (nested types inside the struct derive
+            // their names from it). This requires a two-pass approach:
+            //   Pass 1 (lookahead): skip the struct body by counting braces,
+            //           read the field name and semicolon, record positions.
+            //   Pass 2 (rewind):    rewind into the struct body and parse
+            //           members with root_parent set to the generated name,
+            //           then skip forward past the already-consumed tokens.
             let (t, field_name) = self.parse_inline_struct()?;
             (Some(t), field_name)
         } else {

@@ -96,14 +96,6 @@ impl<'a> TypeMapping<'a> {
             .unwrap_or(false)
     }
 
-    /// If this is an Ident that's a typedef to a builtin, return a child mapping for the builtin.
-    fn resolved_builtin(&self) -> Option<Self> {
-        self.type_info.and_then(|ti| {
-            ti.resolve_typedef_to_builtin(self.type_)
-                .map(|builtin| self.child(builtin))
-        })
-    }
-
     // --- Public concerns ---
 
     fn base_type_ref(&self) -> String {
@@ -124,11 +116,17 @@ impl<'a> TypeMapping<'a> {
                 Some(size) => format!("StringM::<{}>", self.resolve_size(size)),
                 None => "StringM".to_string(),
             },
-            Type::Ident { ident: name } => {
-                if let Some(child) = self.resolved_builtin() {
-                    return child.base_type_ref();
+            Type::Ident { ident: _ } => {
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).base_type_ref();
+                    }
                 }
-                type_name(name)
+                if let Type::Ident { ident: name } = self.type_ {
+                    type_name(name)
+                } else {
+                    unreachable!()
+                }
             }
             Type::Optional { element_type: inner } => {
                 format!("Option<{}>", self.child(inner).base_type_ref())
@@ -213,11 +211,17 @@ impl<'a> TypeMapping<'a> {
             Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
                 self.child(element_type).base_type_ref()
             }
-            Type::Ident { ident: name } => {
-                if let Some(child) = self.resolved_builtin() {
-                    return child.base_type_ref();
+            Type::Ident { ident: _ } => {
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).base_type_ref();
+                    }
                 }
-                type_name(name)
+                if let Type::Ident { ident: name } = self.type_ {
+                    type_name(name)
+                } else {
+                    unreachable!()
+                }
             }
             _ => "u8".to_string(),
         }
@@ -238,7 +242,12 @@ impl<'a> TypeMapping<'a> {
             Type::Hyper => Some("i64".to_string()),
             Type::UnsignedHyper => Some("u64".to_string()),
             Type::Ident { ident: _ } => {
-                self.resolved_builtin().and_then(|child| child.base_numeric_type())
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).base_numeric_type();
+                    }
+                }
+                None
             }
             Type::Optional { element_type: inner } => self.child(inner).base_numeric_type(),
             Type::Array { element_type, .. } => self.child(element_type).base_numeric_type(),
@@ -251,8 +260,10 @@ impl<'a> TypeMapping<'a> {
         match self.type_ {
             Type::Hyper | Type::UnsignedHyper => number_wrapper.to_string(),
             Type::Ident { ident: _ } => {
-                if let Some(child) = self.resolved_builtin() {
-                    return child.serde_type_ref(number_wrapper);
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).serde_type_ref(number_wrapper);
+                    }
                 }
                 self.base_type_ref()
             }

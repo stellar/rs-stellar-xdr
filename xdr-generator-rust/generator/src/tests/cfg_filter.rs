@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use xdr_parser::ast::{CfgExpr, Definition, XdrSpec};
 
-use crate::{filter_spec, validate_union_coverage};
+use crate::filter_spec;
 
 fn features(names: &[&str]) -> HashSet<String> {
     names.iter().map(|s| s.to_lowercase()).collect()
@@ -95,7 +95,7 @@ fn test_filter_spec_removes_gated_definitions() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"])).unwrap();
+    filter_spec(&mut spec, &features(&["other"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Always"]);
 }
@@ -110,7 +110,7 @@ fn test_filter_spec_keeps_matching_definitions() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"])).unwrap();
+    filter_spec(&mut spec, &features(&["next"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Always", "OnlyNext"]);
 }
@@ -124,7 +124,7 @@ fn test_filter_spec_clears_cfg_on_surviving_definitions() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"])).unwrap();
+    filter_spec(&mut spec, &features(&["next"]));
     assert!(spec.definitions[0].cfg().is_none());
 }
 
@@ -154,7 +154,7 @@ fn test_filter_spec_removes_gated_union_arms() {
         };
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"])).unwrap();
+    filter_spec(&mut spec, &features(&["other"]));
     let u = match &spec.definitions[1] {
         Definition::Union(u) => u,
         _ => panic!("expected Union"),
@@ -183,7 +183,7 @@ fn test_filter_spec_keeps_matching_union_arms() {
         };
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"])).unwrap();
+    filter_spec(&mut spec, &features(&["next"]));
     let u = match &spec.definitions[1] {
         Definition::Union(u) => u,
         _ => panic!("expected Union"),
@@ -210,7 +210,7 @@ fn test_filter_spec_removes_gated_enum_members() {
         };
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"])).unwrap();
+    filter_spec(&mut spec, &features(&["other"]));
     let e = match &spec.definitions[0] {
         Definition::Enum(e) => e,
         _ => panic!("expected Enum"),
@@ -218,92 +218,6 @@ fn test_filter_spec_removes_gated_enum_members() {
     let values: Vec<i32> = e.members.iter().map(|m| m.value).collect();
     assert_eq!(values, vec![0, 2]);
     assert!(e.members.iter().all(|m| m.cfg.is_none()));
-}
-
-// =============================================================================
-// validate_union_coverage
-// =============================================================================
-
-#[test]
-fn test_validate_union_coverage_passes_when_complete() {
-    let spec = parse(
-        r#"
-        enum E { A = 0, B = 1 };
-        union U switch (E v) {
-            case A: int a;
-            case B: int b;
-        };
-    "#,
-    );
-    validate_union_coverage(&spec).unwrap();
-}
-
-#[test]
-fn test_validate_union_coverage_fails_when_missing_arm() {
-    // Manually construct a spec where the union is missing a case for enum value B.
-    let mut spec = parse(
-        r#"
-        enum E { A = 0, B = 1 };
-        union U switch (E v) {
-            case A: int a;
-            case B: int b;
-        };
-    "#,
-    );
-    // Remove the B arm to simulate cfg filtering.
-    if let Definition::Union(ref mut u) = spec.definitions[1] {
-        u.arms.retain(|arm| {
-            arm.cases.iter().any(|c| match &c.value {
-                xdr_parser::ast::UnionCaseValue::Ident { ident } => ident != "B",
-                _ => true,
-            })
-        });
-    }
-    let result = validate_union_coverage(&spec);
-    assert!(result.is_err());
-    let err = result.unwrap_err().to_string();
-    assert!(err.contains("U"), "error should mention union name: {err}");
-}
-
-#[test]
-fn test_validate_union_coverage_ok_with_int_discriminant() {
-    // Unions with non-enum discriminants are not checked.
-    let spec = parse(
-        r#"
-        union U switch (int v) {
-            case 0: int a;
-        };
-    "#,
-    );
-    validate_union_coverage(&spec).unwrap();
-}
-
-// =============================================================================
-// filter_spec — union coverage error via cfg filtering
-// =============================================================================
-
-#[test]
-fn test_filter_spec_fails_when_cfg_creates_incomplete_union() {
-    // The union arm for B is cfg-gated, but the enum member B is NOT.
-    // After filtering, the enum still has B but the union doesn't cover it.
-    let mut spec = parse(
-        r#"
-        enum E { A = 0, B = 1 };
-        union U switch (E v) {
-            case A:
-                int a;
-            #ifdef NEXT
-            case B:
-                int b;
-            #endif
-        };
-    "#,
-    );
-    let result = filter_spec(&mut spec, &features(&["other"]));
-    assert!(result.is_err());
-    let err = result.unwrap_err().to_string();
-    assert!(err.contains("U"), "error should mention union name: {err}");
-    assert!(err.contains("1"), "error should mention missing value 1: {err}");
 }
 
 // =============================================================================
@@ -321,7 +235,7 @@ fn test_filter_spec_ifdef_else_keeps_correct_branch() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"])).unwrap();
+    filter_spec(&mut spec, &features(&["next"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Foo"]);
     if let Definition::Struct(s) = &spec.definitions[0] {
@@ -342,7 +256,7 @@ fn test_filter_spec_ifdef_else_keeps_else_branch() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"])).unwrap();
+    filter_spec(&mut spec, &features(&["other"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Foo"]);
     if let Definition::Struct(s) = &spec.definitions[0] {

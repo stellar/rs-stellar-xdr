@@ -98,6 +98,7 @@ pub struct Namespace {
 /// A conditional compilation expression, mapping XDR `#ifdef`/`#else`/`#endif`
 /// directives to Rust `#[cfg(feature = "...")]` attributes.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CfgExpr {
     /// `#[cfg(feature = "name")]`
     Feature(String),
@@ -158,7 +159,7 @@ impl CfgExpr {
 
 /// A top-level definition.
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
-#[serde(tag = "kind")]
+#[serde(rename_all = "snake_case")]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -328,7 +329,7 @@ pub struct Const {
 
 /// XDR type specification.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(tag = "kind")]
+#[serde(rename_all = "snake_case")]
 pub enum Type {
     /// `int` - 32-bit signed integer
     Int,
@@ -408,7 +409,7 @@ pub struct UnionCase {
 
 /// Value for a union case.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(tag = "kind")]
+#[serde(rename_all = "snake_case")]
 pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
     Ident { ident: String },
@@ -429,7 +430,7 @@ impl UnionCaseValue {
 
 /// A size specification, either a literal number or a named constant.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(tag = "kind")]
+#[serde(rename_all = "snake_case")]
 pub enum Size {
     Literal { literal: u32 },
     Named { named: String },

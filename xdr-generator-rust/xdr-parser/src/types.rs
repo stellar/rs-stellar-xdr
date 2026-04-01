@@ -121,11 +121,24 @@ impl TypeInfo {
 // Wire size computation (XDR RFC 4506)
 // =============================================================================
 
+/// The kind of a top-level XDR definition.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DefKind {
+    Struct,
+    Union,
+    Enum,
+    Typedef,
+    Const,
+}
+
 /// Computed properties for each type definition, suitable for serialization into an IR.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct TypeProperties {
-    pub kind: &'static str,
-    /// Total XDR wire size in bytes if the type is fixed-size, None if variable.
+    pub kind: DefKind,
+    /// Total XDR wire size in bytes if the type is fixed-size, `None` if variable.
+    /// When `None`, the consumer must read wire data (length prefixes, discriminants)
+    /// to determine the size at runtime.
     pub fixed_wire_size: Option<u32>,
 }
 
@@ -153,11 +166,11 @@ impl TypeInfo {
         let mut types = HashMap::new();
         for (name, def) in &self.definitions {
             let kind = match def {
-                Definition::Struct(_) => "Struct",
-                Definition::Union(_) => "Union",
-                Definition::Enum(_) => "Enum",
-                Definition::Typedef(_) => "Typedef",
-                Definition::Const(_) => "Const",
+                Definition::Struct(_) => DefKind::Struct,
+                Definition::Union(_) => DefKind::Union,
+                Definition::Enum(_) => DefKind::Enum,
+                Definition::Typedef(_) => DefKind::Typedef,
+                Definition::Const(_) => DefKind::Const,
             };
             types.insert(
                 name.clone(),

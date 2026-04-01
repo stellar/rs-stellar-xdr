@@ -1,5 +1,5 @@
 use crate::parser::parse;
-use crate::types::TypeInfo;
+use crate::types::{DefKind, TypeInfo};
 
 fn build_props(input: &str) -> crate::types::ComputedProperties {
     let spec = parse(input).unwrap();
@@ -42,17 +42,17 @@ fn test_compute_properties_fixed_wire_size() {
     // Fixed struct: int(4) + unsigned hyper(8) = 12
     let fixed = props.types.get("Fixed").unwrap();
     assert_eq!(fixed.fixed_wire_size, Some(12));
-    assert_eq!(fixed.kind, "Struct");
+    assert_eq!(fixed.kind, DefKind::Struct);
 
     // Variable struct: has opaque<>, no fixed size
     let var = props.types.get("Variable").unwrap();
     assert_eq!(var.fixed_wire_size, None);
-    assert_eq!(var.kind, "Struct");
+    assert_eq!(var.kind, DefKind::Struct);
 
     // Enum: always 4 bytes
     let color = props.types.get("Color").unwrap();
     assert_eq!(color.fixed_wire_size, Some(4));
-    assert_eq!(color.kind, "Enum");
+    assert_eq!(color.kind, DefKind::Enum);
 }
 
 #[test]
@@ -137,11 +137,11 @@ fn test_compute_properties_kind_values() {
         union U switch (int v) { case 0: void; };
     "#;
     let props = build_props(input);
-    assert_eq!(props.types.get("MAX").unwrap().kind, "Const");
-    assert_eq!(props.types.get("MyInt").unwrap().kind, "Typedef");
-    assert_eq!(props.types.get("S").unwrap().kind, "Struct");
-    assert_eq!(props.types.get("E").unwrap().kind, "Enum");
-    assert_eq!(props.types.get("U").unwrap().kind, "Union");
+    assert_eq!(props.types.get("MAX").unwrap().kind, DefKind::Const);
+    assert_eq!(props.types.get("MyInt").unwrap().kind, DefKind::Typedef);
+    assert_eq!(props.types.get("S").unwrap().kind, DefKind::Struct);
+    assert_eq!(props.types.get("E").unwrap().kind, DefKind::Enum);
+    assert_eq!(props.types.get("U").unwrap().kind, DefKind::Union);
 }
 
 #[test]

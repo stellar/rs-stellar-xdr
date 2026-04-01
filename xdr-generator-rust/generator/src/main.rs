@@ -72,6 +72,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Output JSON AST if requested
     if let Some(json_path) = &args.json_ast {
+        // Check for duplicate definition names. The computed properties are keyed
+        // by name, so duplicates (from cfg-gated redefinitions) would silently
+        // produce wrong results. The JSON IR requires unique names.
+        let mut seen = std::collections::HashSet::new();
+        for def in spec.all_definitions() {
+            if !seen.insert(def.name().to_string()) {
+                return Err(format!(
+                    "duplicate definition {:?} in XDR spec; the JSON IR does not support \
+                     cfg-gated redefinition of the same type name",
+                    def.name()
+                ).into());
+            }
+        }
+
         let type_info = xdr_parser::types::TypeInfo::build(&spec, &|name| name.to_string());
         let computed = type_info.compute_properties();
         let ir = serde_json::json!({

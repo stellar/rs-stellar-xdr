@@ -59,8 +59,6 @@ pub struct Union {
     pub file_index: usize,
     pub discriminant: Field,
     pub arms: Vec<UnionArm>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub default_arm: Option<UnionDefaultArm>,
 }
 
 #[derive(Serialize)]
@@ -79,16 +77,8 @@ pub struct UnionCase {
 }
 
 #[derive(Serialize)]
-pub struct UnionDefaultArm {
-    pub name: String,
-    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
-    pub type_: Option<TypeRef>,
-}
-
-#[derive(Serialize)]
 pub struct Enum {
     pub name: String,
-    pub fixed_size: Option<u32>,
     pub source: String,
     pub file_index: usize,
     pub member_prefix: String,
@@ -104,7 +94,6 @@ pub struct EnumMember {
 #[derive(Serialize)]
 pub struct Typedef {
     pub name: String,
-    pub fixed_size: Option<u32>,
     pub source: String,
     pub file_index: usize,
     #[serde(rename = "type")]
@@ -230,11 +219,9 @@ fn convert_definition(
                     type_: arm.type_.as_ref().map(|t| convert_type(t, const_values)),
                 }
             }).collect(),
-            default_arm: None, // default arms not yet supported by parser
         }),
         ast::Definition::Enum(e) => Definition::Enum(Enum {
             name: e.name.clone(),
-            fixed_size,
             source: e.source.clone(),
             file_index: e.file_index,
             member_prefix: e.member_prefix.clone(),
@@ -245,7 +232,6 @@ fn convert_definition(
         }),
         ast::Definition::Typedef(t) => Definition::Typedef(Typedef {
             name: t.name.clone(),
-            fixed_size,
             source: t.source.clone(),
             file_index: t.file_index,
             type_: convert_type(&t.type_, const_values),

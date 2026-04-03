@@ -93,19 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             filter_spec(&mut ir_spec, &features);
         }
 
-        let type_info = xdr_parser::types::TypeInfo::build(&ir_spec, &|name| name.to_string());
-        let computed = type_info.compute_properties();
-        let definitions = ir::build_definitions(&ir_spec, &computed);
-
-        let output = ir::IR {
-            version: 1,
-            files: ir_spec.files.iter().map(|f| ir::XdrFile {
-                name: f.name.clone(),
-                sha256: f.sha256.clone(),
-            }).collect(),
-            resolved_features,
-            definitions,
-        };
+        let output = ir::build(&ir_spec, resolved_features);
         let json = serde_json::to_string_pretty(&output)?;
         fs::write(json_path, json)?;
         eprintln!(

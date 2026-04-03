@@ -59,7 +59,6 @@
     {
       "kind": "typedef",
       "name": "Value",
-      "fixed_size": null,
       "source": "typedef opaque Value<>;",
       "file_index": 0,
       "type": {
@@ -92,7 +91,6 @@
     {
       "kind": "enum",
       "name": "SCPStatementType",
-      "fixed_size": 4,
       "source": "enum SCPStatementType\n{\n    SCP_ST_PREPARE = 0,\n    SCP_ST_CONFIRM = 1,\n    SCP_ST_EXTERNALIZE = 2,\n    SCP_ST_NOMINATE = 3\n};",
       "file_index": 0,
       "member_prefix": "SCP_ST_",
@@ -442,7 +440,6 @@
     {
       "kind": "typedef",
       "name": "EncodedLedgerKey",
-      "fixed_size": null,
       "source": "typedef opaque EncodedLedgerKey<>;",
       "file_index": 1,
       "type": {
@@ -727,7 +724,6 @@
     {
       "kind": "enum",
       "name": "ContractCostType",
-      "fixed_size": 4,
       "source": "enum ContractCostType {\n    // Cost of running 1 wasm instruction\n    WasmInsnExec = 0,\n    // Cost of allocating a slice of memory (in bytes)\n    MemAlloc = 1,\n    // Cost of copying a slice of bytes into a pre-allocated memory\n    MemCpy = 2,\n    // Cost of comparing two slices of memory\n    MemCmp = 3,\n    // Cost of a host function dispatch, not including the actual work done by\n    // the function nor the cost of VM invocation machinary\n    DispatchHostFunction = 4,\n    // Cost of visiting a host object from the host object storage. Exists to \n    // make sure some baseline cost coverage, i.e. repeatly visiting objects\n    // by the guest will always incur some charges.\n    VisitObject = 5,\n    // Cost of serializing an xdr object to bytes\n    ValSer = 6,\n    // Cost of deserializing an xdr object from bytes\n    ValDeser = 7,\n    // Cost of computing the sha256 hash from bytes\n    ComputeSha256Hash = 8,\n    // Cost of computing the ed25519 pubkey from bytes\n    ComputeEd25519PubKey = 9,\n    // Cost of verifying ed25519 signature of a payload.\n    VerifyEd25519Sig = 10,\n    // Cost of instantiation a VM from wasm bytes code.\n    VmInstantiation = 11,\n    // Cost of instantiation a VM from a cached state.\n    VmCachedInstantiation = 12,\n    // Cost of invoking a function on the VM. If the function is a host function,\n    // additional cost will be covered by `DispatchHostFunction`.\n    InvokeVmFunction = 13,\n    // Cost of computing a keccak256 hash from bytes.\n    ComputeKeccak256Hash = 14,\n    // Cost of decoding an ECDSA signature computed from a 256-bit prime modulus\n    // curve (e.g. secp256k1 and secp256r1)\n    DecodeEcdsaCurve256Sig = 15,\n    // Cost of recovering an ECDSA secp256k1 key from a signature.\n    RecoverEcdsaSecp256k1Key = 16,\n    // Cost of int256 addition (`+`) and subtraction (`-`) operations\n    Int256AddSub = 17,\n    // Cost of int256 multiplication (`*`) operation\n    Int256Mul = 18,\n    // Cost of int256 division (`/`) operation\n    Int256Div = 19,\n    // Cost of int256 power (`exp`) operation\n    Int256Pow = 20,\n    // Cost of int256 shift (`shl`, `shr`) operation\n    Int256Shift = 21,\n    // Cost of drawing random bytes using a ChaCha20 PRNG\n    ChaCha20DrawBytes = 22,\n\n    // Cost of parsing wasm bytes that only encode instructions.\n    ParseWasmInstructions = 23,\n    // Cost of parsing a known number of wasm functions.\n    ParseWasmFunctions = 24,\n    // Cost of parsing a known number of wasm globals.\n    ParseWasmGlobals = 25,\n    // Cost of parsing a known number of wasm table entries.\n    ParseWasmTableEntries = 26,\n    // Cost of parsing a known number of wasm types.\n    ParseWasmTypes = 27,\n    // Cost of parsing a known number of wasm data segments.\n    ParseWasmDataSegments = 28,\n    // Cost of parsing a known number of wasm element segments.\n    ParseWasmElemSegments = 29,\n    // Cost of parsing a known number of wasm imports.\n    ParseWasmImports = 30,\n    // Cost of parsing a known number of wasm exports.\n    ParseWasmExports = 31,\n    // Cost of parsing a known number of data segment bytes.\n    ParseWasmDataSegmentBytes = 32,\n\n    // Cost of instantiating wasm bytes that only encode instructions.\n    InstantiateWasmInstructions = 33,\n    // Cost of instantiating a known number of wasm functions.\n    InstantiateWasmFunctions = 34,\n    // Cost of instantiating a known number of wasm globals.\n    InstantiateWasmGlobals = 35,\n    // Cost of instantiating a known number of wasm table entries.\n    InstantiateWasmTableEntries = 36,\n    // Cost of instantiating a known number of wasm types.\n    InstantiateWasmTypes = 37,\n    // Cost of instantiating a known number of wasm data segments.\n    InstantiateWasmDataSegments = 38,\n    // Cost of instantiating a known number of wasm element segments.\n    InstantiateWasmElemSegments = 39,\n    // Cost of instantiating a known number of wasm imports.\n    InstantiateWasmImports = 40,\n    // Cost of instantiating a known number of wasm exports.\n    InstantiateWasmExports = 41,\n    // Cost of instantiating a known number of data segment bytes.\n    InstantiateWasmDataSegmentBytes = 42,\n\n    // Cost of decoding a bytes array representing an uncompressed SEC-1 encoded\n    // point on a 256-bit elliptic curve\n    Sec1DecodePointUncompressed = 43,\n    // Cost of verifying an ECDSA Secp256r1 signature\n    VerifyEcdsaSecp256r1Sig = 44,\n\n    // Cost of encoding a BLS12-381 Fp (base field element)\n    Bls12381EncodeFp = 45,\n    // Cost of decoding a BLS12-381 Fp (base field element)\n    Bls12381DecodeFp = 46,\n    // Cost of checking a G1 point lies on the curve\n    Bls12381G1CheckPointOnCurve = 47,\n    // Cost of checking a G1 point belongs to the correct subgroup\n    Bls12381G1CheckPointInSubgroup = 48,\n    // Cost of checking a G2 point lies on the curve\n    Bls12381G2CheckPointOnCurve = 49,\n    // Cost of checking a G2 point belongs to the correct subgroup\n    Bls12381G2CheckPointInSubgroup = 50,\n    // Cost of converting a BLS12-381 G1 point from projective to affine coordinates\n    Bls12381G1ProjectiveToAffine = 51,\n    // Cost of converting a BLS12-381 G2 point from projective to affine coordinates\n    Bls12381G2ProjectiveToAffine = 52,\n    // Cost of performing BLS12-381 G1 point addition\n    Bls12381G1Add = 53,\n    // Cost of performing BLS12-381 G1 scalar multiplication\n    Bls12381G1Mul = 54,\n    // Cost of performing BLS12-381 G1 multi-scalar multiplication (MSM)\n    Bls12381G1Msm = 55,\n    // Cost of mapping a BLS12-381 Fp field element to a G1 point\n    Bls12381MapFpToG1 = 56,\n    // Cost of hashing to a BLS12-381 G1 point\n    Bls12381HashToG1 = 57,\n    // Cost of performing BLS12-381 G2 point addition\n    Bls12381G2Add = 58,\n    // Cost of performing BLS12-381 G2 scalar multiplication\n    Bls12381G2Mul = 59,\n    // Cost of performing BLS12-381 G2 multi-scalar multiplication (MSM)\n    Bls12381G2Msm = 60,\n    // Cost of mapping a BLS12-381 Fp2 field element to a G2 point\n    Bls12381MapFp2ToG2 = 61,\n    // Cost of hashing to a BLS12-381 G2 point\n    Bls12381HashToG2 = 62,\n    // Cost of performing BLS12-381 pairing operation\n    Bls12381Pairing = 63,\n    // Cost of converting a BLS12-381 scalar element from U256\n    Bls12381FrFromU256 = 64,\n    // Cost of converting a BLS12-381 scalar element to U256\n    Bls12381FrToU256 = 65,\n    // Cost of performing BLS12-381 scalar element addition/subtraction\n    Bls12381FrAddSub = 66,\n    // Cost of performing BLS12-381 scalar element multiplication\n    Bls12381FrMul = 67,\n    // Cost of performing BLS12-381 scalar element exponentiation\n    Bls12381FrPow = 68,\n    // Cost of performing BLS12-381 scalar element inversion\n    Bls12381FrInv = 69,\n\n    // Cost of encoding a BN254 Fp (base field element)\n    Bn254EncodeFp = 70,\n    // Cost of decoding a BN254 Fp (base field element)\n    Bn254DecodeFp = 71,\n    // Cost of checking a G1 point lies on the curve\n    Bn254G1CheckPointOnCurve = 72,\n    // Cost of checking a G2 point lies on the curve\n    Bn254G2CheckPointOnCurve = 73,\n    // Cost of checking a G2 point belongs to the correct subgroup\n    Bn254G2CheckPointInSubgroup = 74,\n    // Cost of converting a BN254 G1 point from projective to affine coordinates\n    Bn254G1ProjectiveToAffine = 75,\n    // Cost of performing BN254 G1 point addition\n    Bn254G1Add = 76,\n    // Cost of performing BN254 G1 scalar multiplication\n    Bn254G1Mul = 77,\n    // Cost of performing BN254 pairing operation\n    Bn254Pairing = 78,\n    // Cost of converting a BN254 scalar element from U256\n    Bn254FrFromU256 = 79,\n    // Cost of converting a BN254 scalar element to U256\n    Bn254FrToU256 = 80,\n    // // Cost of performing BN254 scalar element addition/subtraction\n    Bn254FrAddSub = 81,\n    // Cost of performing BN254 scalar element multiplication\n    Bn254FrMul = 82,\n    // Cost of performing BN254 scalar element exponentiation\n    Bn254FrPow = 83,\n     // Cost of performing BN254 scalar element inversion\n    Bn254FrInv = 84,\n    // Cost of performing BN254 G1 multi-scalar multiplication (MSM)\n    Bn254G1Msm = 85\n};",
       "file_index": 1,
       "member_prefix": "",
@@ -1366,7 +1362,6 @@
     {
       "kind": "typedef",
       "name": "ContractCostParams",
-      "fixed_size": null,
       "source": "typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>;",
       "file_index": 1,
       "type": {
@@ -1381,7 +1376,6 @@
     {
       "kind": "enum",
       "name": "ConfigSettingID",
-      "fixed_size": 4,
       "source": "enum ConfigSettingID\n{\n    CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0,\n    CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1,\n    CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2,\n    CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,\n    CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4,\n    CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,\n    CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6,\n    CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,\n    CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8,\n    CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,\n    CONFIG_SETTING_STATE_ARCHIVAL = 10,\n    CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,\n    CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12,\n    CONFIG_SETTING_EVICTION_ITERATOR = 13,\n    CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,\n    CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15,\n    CONFIG_SETTING_SCP_TIMING = 16,\n    CONFIG_SETTING_FROZEN_LEDGER_KEYS = 17,\n    CONFIG_SETTING_FROZEN_LEDGER_KEYS_DELTA = 18,\n    CONFIG_SETTING_FREEZE_BYPASS_TXS = 19,\n    CONFIG_SETTING_FREEZE_BYPASS_TXS_DELTA = 20\n};",
       "file_index": 1,
       "member_prefix": "CONFIG_SETTING_",
@@ -1767,7 +1761,6 @@
     {
       "kind": "enum",
       "name": "SCEnvMetaKind",
-      "fixed_size": 4,
       "source": "enum SCEnvMetaKind\n{\n    SC_ENV_META_KIND_INTERFACE_VERSION = 0\n};",
       "file_index": 2,
       "member_prefix": "",
@@ -1854,7 +1847,6 @@
     {
       "kind": "enum",
       "name": "SCMetaKind",
-      "fixed_size": 4,
       "source": "enum SCMetaKind\n{\n    SC_META_V0 = 0\n};",
       "file_index": 3,
       "member_prefix": "",
@@ -1904,7 +1896,6 @@
     {
       "kind": "enum",
       "name": "SCSpecType",
-      "fixed_size": 4,
       "source": "enum SCSpecType\n{\n    SC_SPEC_TYPE_VAL = 0,\n\n    // Types with no parameters.\n    SC_SPEC_TYPE_BOOL = 1,\n    SC_SPEC_TYPE_VOID = 2,\n    SC_SPEC_TYPE_ERROR = 3,\n    SC_SPEC_TYPE_U32 = 4,\n    SC_SPEC_TYPE_I32 = 5,\n    SC_SPEC_TYPE_U64 = 6,\n    SC_SPEC_TYPE_I64 = 7,\n    SC_SPEC_TYPE_TIMEPOINT = 8,\n    SC_SPEC_TYPE_DURATION = 9,\n    SC_SPEC_TYPE_U128 = 10,\n    SC_SPEC_TYPE_I128 = 11,\n    SC_SPEC_TYPE_U256 = 12,\n    SC_SPEC_TYPE_I256 = 13,\n    SC_SPEC_TYPE_BYTES = 14,\n    SC_SPEC_TYPE_STRING = 16,\n    SC_SPEC_TYPE_SYMBOL = 17,\n    SC_SPEC_TYPE_ADDRESS = 19,\n    SC_SPEC_TYPE_MUXED_ADDRESS = 20,\n\n    // Types with parameters.\n    SC_SPEC_TYPE_OPTION = 1000,\n    SC_SPEC_TYPE_RESULT = 1001,\n    SC_SPEC_TYPE_VEC = 1002,\n    SC_SPEC_TYPE_MAP = 1004,\n    SC_SPEC_TYPE_TUPLE = 1005,\n    SC_SPEC_TYPE_BYTES_N = 1006,\n\n    // User defined types.\n    SC_SPEC_TYPE_UDT = 2000\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_TYPE_",
@@ -2462,7 +2453,6 @@
     {
       "kind": "enum",
       "name": "SCSpecUDTUnionCaseV0Kind",
-      "fixed_size": 4,
       "source": "enum SCSpecUDTUnionCaseV0Kind\n{\n    SC_SPEC_UDT_UNION_CASE_VOID_V0 = 0,\n    SC_SPEC_UDT_UNION_CASE_TUPLE_V0 = 1\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_UDT_UNION_CASE_",
@@ -2776,7 +2766,6 @@
     {
       "kind": "enum",
       "name": "SCSpecEventParamLocationV0",
-      "fixed_size": 4,
       "source": "enum SCSpecEventParamLocationV0\n{\n    SC_SPEC_EVENT_PARAM_LOCATION_DATA = 0,\n    SC_SPEC_EVENT_PARAM_LOCATION_TOPIC_LIST = 1\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_EVENT_PARAM_LOCATION_",
@@ -2831,7 +2820,6 @@
     {
       "kind": "enum",
       "name": "SCSpecEventDataFormat",
-      "fixed_size": 4,
       "source": "enum SCSpecEventDataFormat\n{\n    SC_SPEC_EVENT_DATA_FORMAT_SINGLE_VALUE = 0,\n    SC_SPEC_EVENT_DATA_FORMAT_VEC = 1,\n    SC_SPEC_EVENT_DATA_FORMAT_MAP = 2\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_EVENT_DATA_FORMAT_",
@@ -2911,7 +2899,6 @@
     {
       "kind": "enum",
       "name": "SCSpecEntryKind",
-      "fixed_size": 4,
       "source": "enum SCSpecEntryKind\n{\n    SC_SPEC_ENTRY_FUNCTION_V0 = 0,\n    SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,\n    SC_SPEC_ENTRY_UDT_UNION_V0 = 2,\n    SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,\n    SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,\n    SC_SPEC_ENTRY_EVENT_V0 = 5\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_ENTRY_",
@@ -3039,7 +3026,6 @@
     {
       "kind": "enum",
       "name": "SCValType",
-      "fixed_size": 4,
       "source": "enum SCValType\n{\n    SCV_BOOL = 0,\n    SCV_VOID = 1,\n    SCV_ERROR = 2,\n\n    // 32 bits is the smallest type in WASM or XDR; no need for u8/u16.\n    SCV_U32 = 3,\n    SCV_I32 = 4,\n\n    // 64 bits is naturally supported by both WASM and XDR also.\n    SCV_U64 = 5,\n    SCV_I64 = 6,\n\n    // Time-related u64 subtypes with their own functions and formatting.\n    SCV_TIMEPOINT = 7,\n    SCV_DURATION = 8,\n\n    // 128 bits is naturally supported by Rust and we use it for Soroban\n    // fixed-point arithmetic prices / balances / similar \"quantities\". These\n    // are represented in XDR as a pair of 2 u64s.\n    SCV_U128 = 9,\n    SCV_I128 = 10,\n\n    // 256 bits is the size of sha256 output, ed25519 keys, and the EVM machine\n    // word, so for interop use we include this even though it requires a small\n    // amount of Rust guest and/or host library code.\n    SCV_U256 = 11,\n    SCV_I256 = 12,\n\n    // Bytes come in 3 flavors, 2 of which have meaningfully different\n    // formatting and validity-checking / domain-restriction.\n    SCV_BYTES = 13,\n    SCV_STRING = 14,\n    SCV_SYMBOL = 15,\n\n    // Vecs and maps are just polymorphic containers of other ScVals.\n    SCV_VEC = 16,\n    SCV_MAP = 17,\n\n    // Address is the universal identifier for contracts and classic\n    // accounts.\n    SCV_ADDRESS = 18,\n\n    // The following are the internal SCVal variants that are not\n    // exposed to the contracts. \n    SCV_CONTRACT_INSTANCE = 19,\n\n    // SCV_LEDGER_KEY_CONTRACT_INSTANCE and SCV_LEDGER_KEY_NONCE are unique\n    // symbolic SCVals used as the key for ledger entries for a contract's\n    // instance and an address' nonce, respectively.\n    SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,\n    SCV_LEDGER_KEY_NONCE = 21\n};",
       "file_index": 5,
       "member_prefix": "SCV_",
@@ -3137,7 +3123,6 @@
     {
       "kind": "enum",
       "name": "SCErrorType",
-      "fixed_size": 4,
       "source": "enum SCErrorType\n{\n    SCE_CONTRACT = 0,          // Contract-specific, user-defined codes.\n    SCE_WASM_VM = 1,           // Errors while interpreting WASM bytecode.\n    SCE_CONTEXT = 2,           // Errors in the contract's host context.\n    SCE_STORAGE = 3,           // Errors accessing host storage.\n    SCE_OBJECT = 4,            // Errors working with host objects.\n    SCE_CRYPTO = 5,            // Errors in cryptographic operations.\n    SCE_EVENTS = 6,            // Errors while emitting events.\n    SCE_BUDGET = 7,            // Errors relating to budget limits.\n    SCE_VALUE = 8,             // Errors working with host values or SCVals.\n    SCE_AUTH = 9               // Errors from the authentication subsystem.\n};",
       "file_index": 5,
       "member_prefix": "SCE_",
@@ -3187,7 +3172,6 @@
     {
       "kind": "enum",
       "name": "SCErrorCode",
-      "fixed_size": 4,
       "source": "enum SCErrorCode\n{\n    SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero).\n    SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds.\n    SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data.\n    SCEC_MISSING_VALUE = 3,     // Some value was required but not provided.\n    SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed.\n    SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit.\n    SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not.\n    SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic.\n    SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected.\n    SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected.\n};",
       "file_index": 5,
       "member_prefix": "SCEC_",
@@ -3431,7 +3415,6 @@
     {
       "kind": "enum",
       "name": "ContractExecutableType",
-      "fixed_size": 4,
       "source": "enum ContractExecutableType\n{\n    CONTRACT_EXECUTABLE_WASM = 0,\n    CONTRACT_EXECUTABLE_STELLAR_ASSET = 1\n};",
       "file_index": 5,
       "member_prefix": "CONTRACT_EXECUTABLE_",
@@ -3487,7 +3470,6 @@
     {
       "kind": "enum",
       "name": "SCAddressType",
-      "fixed_size": 4,
       "source": "enum SCAddressType\n{\n    SC_ADDRESS_TYPE_ACCOUNT = 0,\n    SC_ADDRESS_TYPE_CONTRACT = 1,\n    SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2,\n    SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3,\n    SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4\n};",
       "file_index": 5,
       "member_prefix": "SC_ADDRESS_TYPE_",
@@ -3628,7 +3610,6 @@
     {
       "kind": "typedef",
       "name": "SCVec",
-      "fixed_size": null,
       "source": "typedef SCVal SCVec<>;",
       "file_index": 5,
       "type": {
@@ -3642,7 +3623,6 @@
     {
       "kind": "typedef",
       "name": "SCMap",
-      "fixed_size": null,
       "source": "typedef SCMapEntry SCMap<>;",
       "file_index": 5,
       "type": {
@@ -3656,7 +3636,6 @@
     {
       "kind": "typedef",
       "name": "SCBytes",
-      "fixed_size": null,
       "source": "typedef opaque SCBytes<>;",
       "file_index": 5,
       "type": {
@@ -3666,7 +3645,6 @@
     {
       "kind": "typedef",
       "name": "SCString",
-      "fixed_size": null,
       "source": "typedef string SCString<>;",
       "file_index": 5,
       "type": {
@@ -3676,7 +3654,6 @@
     {
       "kind": "typedef",
       "name": "SCSymbol",
-      "fixed_size": null,
       "source": "typedef string SCSymbol<SCSYMBOL_LIMIT>;",
       "file_index": 5,
       "type": {
@@ -4260,7 +4237,6 @@
     {
       "kind": "typedef",
       "name": "Thresholds",
-      "fixed_size": 4,
       "source": "typedef opaque Thresholds[4];",
       "file_index": 8,
       "type": {
@@ -4271,7 +4247,6 @@
     {
       "kind": "typedef",
       "name": "string32",
-      "fixed_size": null,
       "source": "typedef string string32<32>;",
       "file_index": 8,
       "type": {
@@ -4282,7 +4257,6 @@
     {
       "kind": "typedef",
       "name": "string64",
-      "fixed_size": null,
       "source": "typedef string string64<64>;",
       "file_index": 8,
       "type": {
@@ -4293,7 +4267,6 @@
     {
       "kind": "typedef",
       "name": "SequenceNumber",
-      "fixed_size": 8,
       "source": "typedef int64 SequenceNumber;",
       "file_index": 8,
       "type": {
@@ -4304,7 +4277,6 @@
     {
       "kind": "typedef",
       "name": "DataValue",
-      "fixed_size": null,
       "source": "typedef opaque DataValue<64>;",
       "file_index": 8,
       "type": {
@@ -4315,7 +4287,6 @@
     {
       "kind": "typedef",
       "name": "AssetCode4",
-      "fixed_size": 4,
       "source": "typedef opaque AssetCode4[4];",
       "file_index": 8,
       "type": {
@@ -4326,7 +4297,6 @@
     {
       "kind": "typedef",
       "name": "AssetCode12",
-      "fixed_size": 12,
       "source": "typedef opaque AssetCode12[12];",
       "file_index": 8,
       "type": {
@@ -4337,7 +4307,6 @@
     {
       "kind": "enum",
       "name": "AssetType",
-      "fixed_size": 4,
       "source": "enum AssetType\n{\n    ASSET_TYPE_NATIVE = 0,\n    ASSET_TYPE_CREDIT_ALPHANUM4 = 1,\n    ASSET_TYPE_CREDIT_ALPHANUM12 = 2,\n    ASSET_TYPE_POOL_SHARE = 3\n};",
       "file_index": 8,
       "member_prefix": "ASSET_TYPE_",
@@ -4548,7 +4517,6 @@
     {
       "kind": "enum",
       "name": "ThresholdIndexes",
-      "fixed_size": 4,
       "source": "enum ThresholdIndexes\n{\n    THRESHOLD_MASTER_WEIGHT = 0,\n    THRESHOLD_LOW = 1,\n    THRESHOLD_MED = 2,\n    THRESHOLD_HIGH = 3\n};",
       "file_index": 8,
       "member_prefix": "THRESHOLD_",
@@ -4574,7 +4542,6 @@
     {
       "kind": "enum",
       "name": "LedgerEntryType",
-      "fixed_size": 4,
       "source": "enum LedgerEntryType\n{\n    ACCOUNT = 0,\n    TRUSTLINE = 1,\n    OFFER = 2,\n    DATA = 3,\n    CLAIMABLE_BALANCE = 4,\n    LIQUIDITY_POOL = 5,\n    CONTRACT_DATA = 6,\n    CONTRACT_CODE = 7,\n    CONFIG_SETTING = 8,\n    TTL = 9\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -4647,7 +4614,6 @@
     {
       "kind": "enum",
       "name": "AccountFlags",
-      "fixed_size": 4,
       "source": "enum AccountFlags\n{ // masks for each flag\n\n    // Flags set on issuer accounts\n    // TrustLines are created with authorized set to \"false\" requiring\n    // the issuer to set it for each TrustLine\n    AUTH_REQUIRED_FLAG = 0x1,\n    // If set, the authorized flag in TrustLines can be cleared\n    // otherwise, authorization cannot be revoked\n    AUTH_REVOCABLE_FLAG = 0x2,\n    // Once set, causes all AUTH_* flags to be read-only\n    AUTH_IMMUTABLE_FLAG = 0x4,\n    // Trustlines are created with clawback enabled set to \"true\",\n    // and claimable balances created from those trustlines are created\n    // with clawback enabled set to \"true\"\n    AUTH_CLAWBACK_ENABLED_FLAG = 0x8\n};",
       "file_index": 8,
       "member_prefix": "AUTH_",
@@ -4694,7 +4660,6 @@
     {
       "kind": "typedef",
       "name": "SponsorshipDescriptor",
-      "fixed_size": null,
       "source": "typedef AccountID* SponsorshipDescriptor;",
       "file_index": 8,
       "type": {
@@ -4993,7 +4958,6 @@
     {
       "kind": "enum",
       "name": "TrustLineFlags",
-      "fixed_size": 4,
       "source": "enum TrustLineFlags\n{\n    // issuer has authorized account to perform transactions with its credit\n    AUTHORIZED_FLAG = 1,\n    // issuer has authorized account to maintain and reduce liabilities for its\n    // credit\n    AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2,\n    // issuer has specified that it may clawback its credit, and that claimable\n    // balances created with its credit may also be clawed back\n    TRUSTLINE_CLAWBACK_ENABLED_FLAG = 4\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -5036,7 +5000,6 @@
     {
       "kind": "enum",
       "name": "LiquidityPoolType",
-      "fixed_size": 4,
       "source": "enum LiquidityPoolType\n{\n    LIQUIDITY_POOL_CONSTANT_PRODUCT = 0\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -5304,7 +5267,6 @@
     {
       "kind": "enum",
       "name": "OfferEntryFlags",
-      "fixed_size": 4,
       "source": "enum OfferEntryFlags\n{\n    // an offer with this flag will not act on and take a reverse offer of equal\n    // price\n    PASSIVE_FLAG = 1\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -5473,7 +5435,6 @@
     {
       "kind": "enum",
       "name": "ClaimPredicateType",
-      "fixed_size": 4,
       "source": "enum ClaimPredicateType\n{\n    CLAIM_PREDICATE_UNCONDITIONAL = 0,\n    CLAIM_PREDICATE_AND = 1,\n    CLAIM_PREDICATE_OR = 2,\n    CLAIM_PREDICATE_NOT = 3,\n    CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME = 4,\n    CLAIM_PREDICATE_BEFORE_RELATIVE_TIME = 5\n};",
       "file_index": 8,
       "member_prefix": "CLAIM_PREDICATE_",
@@ -5608,7 +5569,6 @@
     {
       "kind": "enum",
       "name": "ClaimantType",
-      "fixed_size": 4,
       "source": "enum ClaimantType\n{\n    CLAIMANT_TYPE_V0 = 0\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -5674,7 +5634,6 @@
     {
       "kind": "enum",
       "name": "ClaimableBalanceFlags",
-      "fixed_size": 4,
       "source": "enum ClaimableBalanceFlags\n{\n    // If set, the issuer account of the asset held by the claimable balance may\n    // clawback the claimable balance\n    CLAIMABLE_BALANCE_CLAWBACK_ENABLED_FLAG = 0x1\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -5950,7 +5909,6 @@
     {
       "kind": "enum",
       "name": "ContractDataDurability",
-      "fixed_size": 4,
       "source": "enum ContractDataDurability {\n    TEMPORARY = 0,\n    PERSISTENT = 1\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -6806,7 +6764,6 @@
     {
       "kind": "enum",
       "name": "EnvelopeType",
-      "fixed_size": 4,
       "source": "enum EnvelopeType\n{\n    ENVELOPE_TYPE_TX_V0 = 0,\n    ENVELOPE_TYPE_SCP = 1,\n    ENVELOPE_TYPE_TX = 2,\n    ENVELOPE_TYPE_AUTH = 3,\n    ENVELOPE_TYPE_SCPVALUE = 4,\n    ENVELOPE_TYPE_TX_FEE_BUMP = 5,\n    ENVELOPE_TYPE_OP_ID = 6,\n    ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,\n    ENVELOPE_TYPE_CONTRACT_ID = 8,\n    ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9\n};",
       "file_index": 8,
       "member_prefix": "ENVELOPE_TYPE_",
@@ -6856,7 +6813,6 @@
     {
       "kind": "enum",
       "name": "BucketListType",
-      "fixed_size": 4,
       "source": "enum BucketListType\n{\n    LIVE = 0,\n    HOT_ARCHIVE = 1\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -6874,7 +6830,6 @@
     {
       "kind": "enum",
       "name": "BucketEntryType",
-      "fixed_size": 4,
       "source": "enum BucketEntryType\n{\n    METAENTRY =\n        -1, // At-and-after protocol 11: bucket metadata, should come first.\n    LIVEENTRY = 0, // Before protocol 11: created-or-updated;\n                   // At-and-after protocol 11: only updated.\n    DEADENTRY = 1,\n    INITENTRY = 2 // At-and-after protocol 11: only created.\n};",
       "file_index": 8,
       "member_prefix": "",
@@ -6900,7 +6855,6 @@
     {
       "kind": "enum",
       "name": "HotArchiveBucketEntryType",
-      "fixed_size": 4,
       "source": "enum HotArchiveBucketEntryType\n{\n    HOT_ARCHIVE_METAENTRY = -1, // Bucket metadata, should come first.\n    HOT_ARCHIVE_ARCHIVED = 0,   // Entry is Archived\n    HOT_ARCHIVE_LIVE = 1        // Entry was previously HOT_ARCHIVE_ARCHIVED, but\n                                // has been added back to the live BucketList.\n                                // Does not need to be persisted.\n};",
       "file_index": 8,
       "member_prefix": "HOT_ARCHIVE_",
@@ -7094,7 +7048,6 @@
     {
       "kind": "typedef",
       "name": "UpgradeType",
-      "fixed_size": null,
       "source": "typedef opaque UpgradeType<128>;",
       "file_index": 9,
       "type": {
@@ -7105,7 +7058,6 @@
     {
       "kind": "enum",
       "name": "StellarValueType",
-      "fixed_size": 4,
       "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1\n};",
       "file_index": 9,
       "member_prefix": "STELLAR_VALUE_",
@@ -7232,7 +7184,6 @@
     {
       "kind": "enum",
       "name": "LedgerHeaderFlags",
-      "fixed_size": 4,
       "source": "enum LedgerHeaderFlags\n{\n    DISABLE_LIQUIDITY_POOL_TRADING_FLAG = 0x1,\n    DISABLE_LIQUIDITY_POOL_DEPOSIT_FLAG = 0x2,\n    DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4\n};",
       "file_index": 9,
       "member_prefix": "DISABLE_LIQUIDITY_POOL_",
@@ -7453,7 +7404,6 @@
     {
       "kind": "enum",
       "name": "LedgerUpgradeType",
-      "fixed_size": 4,
       "source": "enum LedgerUpgradeType\n{\n    LEDGER_UPGRADE_VERSION = 1,\n    LEDGER_UPGRADE_BASE_FEE = 2,\n    LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3,\n    LEDGER_UPGRADE_BASE_RESERVE = 4,\n    LEDGER_UPGRADE_FLAGS = 5,\n    LEDGER_UPGRADE_CONFIG = 6,\n    LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE = 7\n};",
       "file_index": 9,
       "member_prefix": "LEDGER_UPGRADE_",
@@ -7640,7 +7590,6 @@
     {
       "kind": "enum",
       "name": "TxSetComponentType",
-      "fixed_size": 4,
       "source": "enum TxSetComponentType\n{\n  // txs with effective fee <= bid derived from a base fee (if any).\n  // If base fee is not specified, no discount is applied.\n  TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE = 0\n};",
       "file_index": 9,
       "member_prefix": "",
@@ -7654,7 +7603,6 @@
     {
       "kind": "typedef",
       "name": "DependentTxCluster",
-      "fixed_size": null,
       "source": "typedef TransactionEnvelope DependentTxCluster<>;",
       "file_index": 9,
       "type": {
@@ -7668,7 +7616,6 @@
     {
       "kind": "typedef",
       "name": "ParallelTxExecutionStage",
-      "fixed_size": null,
       "source": "typedef DependentTxCluster ParallelTxExecutionStage<>;",
       "file_index": 9,
       "type": {
@@ -8182,7 +8129,6 @@
     {
       "kind": "enum",
       "name": "LedgerEntryChangeType",
-      "fixed_size": 4,
       "source": "enum LedgerEntryChangeType\n{\n    LEDGER_ENTRY_CREATED = 0, // entry was added to the ledger\n    LEDGER_ENTRY_UPDATED = 1, // entry was modified in the ledger\n    LEDGER_ENTRY_REMOVED = 2, // entry was removed from the ledger\n    LEDGER_ENTRY_STATE    = 3, // value of the entry\n    LEDGER_ENTRY_RESTORED = 4  // archived entry was restored in the ledger\n};",
       "file_index": 9,
       "member_prefix": "LEDGER_ENTRY_",
@@ -8293,7 +8239,6 @@
     {
       "kind": "typedef",
       "name": "LedgerEntryChanges",
-      "fixed_size": null,
       "source": "typedef LedgerEntryChange LedgerEntryChanges<>;",
       "file_index": 9,
       "type": {
@@ -8382,7 +8327,6 @@
     {
       "kind": "enum",
       "name": "ContractEventType",
-      "fixed_size": 4,
       "source": "enum ContractEventType\n{\n    SYSTEM = 0,\n    CONTRACT = 1,\n    DIAGNOSTIC = 2\n};",
       "file_index": 9,
       "member_prefix": "",
@@ -8743,7 +8687,6 @@
     {
       "kind": "enum",
       "name": "TransactionEventStage",
-      "fixed_size": 4,
       "source": "enum TransactionEventStage {\n    // The event has happened before any one of the transactions has its \n    // operations applied.\n    TRANSACTION_EVENT_STAGE_BEFORE_ALL_TXS = 0,\n    // The event has happened immediately after operations of the transaction\n    // have been applied.\n    TRANSACTION_EVENT_STAGE_AFTER_TX = 1,\n    // The event has happened after every transaction had its operations \n    // applied.\n    TRANSACTION_EVENT_STAGE_AFTER_ALL_TXS = 2\n};",
       "file_index": 9,
       "member_prefix": "TRANSACTION_EVENT_STAGE_",
@@ -9385,7 +9328,6 @@
     {
       "kind": "enum",
       "name": "ErrorCode",
-      "fixed_size": 4,
       "source": "enum ErrorCode\n{\n    ERR_MISC = 0, // Unspecific error\n    ERR_DATA = 1, // Malformed data\n    ERR_CONF = 2, // Misconfiguration error\n    ERR_AUTH = 3, // Authentication failure\n    ERR_LOAD = 4  // System overloaded\n};",
       "file_index": 10,
       "member_prefix": "ERR_",
@@ -9600,7 +9542,6 @@
     {
       "kind": "enum",
       "name": "IPAddrType",
-      "fixed_size": 4,
       "source": "enum IPAddrType\n{\n    IPv4 = 0,\n    IPv6 = 1\n};",
       "file_index": 10,
       "member_prefix": "",
@@ -9690,7 +9631,6 @@
     {
       "kind": "enum",
       "name": "MessageType",
-      "fixed_size": 4,
       "source": "enum MessageType\n{\n    ERROR_MSG = 0,\n    AUTH = 2,\n    DONT_HAVE = 3,\n    // GET_PEERS (4) is deprecated\n\n    PEERS = 5,\n\n    GET_TX_SET = 6, // gets a particular txset by hash\n    TX_SET = 7,\n    GENERALIZED_TX_SET = 17,\n\n    TRANSACTION = 8, // pass on a tx you have heard about\n\n    // SCP\n    GET_SCP_QUORUMSET = 9,\n    SCP_QUORUMSET = 10,\n    SCP_MESSAGE = 11,\n    GET_SCP_STATE = 12,\n\n    // new messages\n    HELLO = 13,\n\n    // SURVEY_REQUEST (14) removed and replaced by TIME_SLICED_SURVEY_REQUEST\n    // SURVEY_RESPONSE (15) removed and replaced by TIME_SLICED_SURVEY_RESPONSE\n\n    SEND_MORE = 16,\n    SEND_MORE_EXTENDED = 20,\n\n    FLOOD_ADVERT = 18,\n    FLOOD_DEMAND = 19,\n\n    TIME_SLICED_SURVEY_REQUEST = 21,\n    TIME_SLICED_SURVEY_RESPONSE = 22,\n    TIME_SLICED_SURVEY_START_COLLECTING = 23,\n    TIME_SLICED_SURVEY_STOP_COLLECTING = 24\n};",
       "file_index": 10,
       "member_prefix": "",
@@ -9807,7 +9747,6 @@
     {
       "kind": "enum",
       "name": "SurveyMessageCommandType",
-      "fixed_size": 4,
       "source": "enum SurveyMessageCommandType\n{\n    TIME_SLICED_SURVEY_TOPOLOGY = 1\n};",
       "file_index": 10,
       "member_prefix": "",
@@ -9821,7 +9760,6 @@
     {
       "kind": "enum",
       "name": "SurveyMessageResponseType",
-      "fixed_size": 4,
       "source": "enum SurveyMessageResponseType\n{\n    SURVEY_TOPOLOGY_RESPONSE_V2 = 2\n};",
       "file_index": 10,
       "member_prefix": "",
@@ -10045,7 +9983,6 @@
     {
       "kind": "typedef",
       "name": "EncryptedBody",
-      "fixed_size": null,
       "source": "typedef opaque EncryptedBody<64000>;",
       "file_index": 10,
       "type": {
@@ -10361,7 +10298,6 @@
     {
       "kind": "typedef",
       "name": "TimeSlicedPeerDataList",
-      "fixed_size": null,
       "source": "typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>;",
       "file_index": 10,
       "type": {
@@ -10442,7 +10378,6 @@
     {
       "kind": "typedef",
       "name": "TxAdvertVector",
-      "fixed_size": null,
       "source": "typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;",
       "file_index": 10,
       "type": {
@@ -10480,7 +10415,6 @@
     {
       "kind": "typedef",
       "name": "TxDemandVector",
-      "fixed_size": null,
       "source": "typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;",
       "file_index": 10,
       "type": {
@@ -10986,7 +10920,6 @@
     {
       "kind": "enum",
       "name": "OperationType",
-      "fixed_size": 4,
       "source": "enum OperationType\n{\n    CREATE_ACCOUNT = 0,\n    PAYMENT = 1,\n    PATH_PAYMENT_STRICT_RECEIVE = 2,\n    MANAGE_SELL_OFFER = 3,\n    CREATE_PASSIVE_SELL_OFFER = 4,\n    SET_OPTIONS = 5,\n    CHANGE_TRUST = 6,\n    ALLOW_TRUST = 7,\n    ACCOUNT_MERGE = 8,\n    INFLATION = 9,\n    MANAGE_DATA = 10,\n    BUMP_SEQUENCE = 11,\n    MANAGE_BUY_OFFER = 12,\n    PATH_PAYMENT_STRICT_SEND = 13,\n    CREATE_CLAIMABLE_BALANCE = 14,\n    CLAIM_CLAIMABLE_BALANCE = 15,\n    BEGIN_SPONSORING_FUTURE_RESERVES = 16,\n    END_SPONSORING_FUTURE_RESERVES = 17,\n    REVOKE_SPONSORSHIP = 18,\n    CLAWBACK = 19,\n    CLAWBACK_CLAIMABLE_BALANCE = 20,\n    SET_TRUST_LINE_FLAGS = 21,\n    LIQUIDITY_POOL_DEPOSIT = 22,\n    LIQUIDITY_POOL_WITHDRAW = 23,\n    INVOKE_HOST_FUNCTION = 24,\n    EXTEND_FOOTPRINT_TTL = 25,\n    RESTORE_FOOTPRINT = 26\n};",
       "file_index": 11,
       "member_prefix": "",
@@ -11716,7 +11649,6 @@
     {
       "kind": "enum",
       "name": "RevokeSponsorshipType",
-      "fixed_size": 4,
       "source": "enum RevokeSponsorshipType\n{\n    REVOKE_SPONSORSHIP_LEDGER_ENTRY = 0,\n    REVOKE_SPONSORSHIP_SIGNER = 1\n};",
       "file_index": 11,
       "member_prefix": "REVOKE_SPONSORSHIP_",
@@ -11970,7 +11902,6 @@
     {
       "kind": "enum",
       "name": "HostFunctionType",
-      "fixed_size": 4,
       "source": "enum HostFunctionType\n{\n    HOST_FUNCTION_TYPE_INVOKE_CONTRACT = 0,\n    HOST_FUNCTION_TYPE_CREATE_CONTRACT = 1,\n    HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM = 2,\n    HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2 = 3\n};",
       "file_index": 11,
       "member_prefix": "HOST_FUNCTION_TYPE_",
@@ -11996,7 +11927,6 @@
     {
       "kind": "enum",
       "name": "ContractIDPreimageType",
-      "fixed_size": 4,
       "source": "enum ContractIDPreimageType\n{\n    CONTRACT_ID_PREIMAGE_FROM_ADDRESS = 0,\n    CONTRACT_ID_PREIMAGE_FROM_ASSET = 1\n};",
       "file_index": 11,
       "member_prefix": "CONTRACT_ID_PREIMAGE_FROM_",
@@ -12235,7 +12165,6 @@
     {
       "kind": "enum",
       "name": "SorobanAuthorizedFunctionType",
-      "fixed_size": 4,
       "source": "enum SorobanAuthorizedFunctionType\n{\n    SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN = 0,\n    SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1,\n    SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN = 2\n};",
       "file_index": 11,
       "member_prefix": "SOROBAN_AUTHORIZED_FUNCTION_TYPE_",
@@ -12375,7 +12304,6 @@
     {
       "kind": "enum",
       "name": "SorobanCredentialsType",
-      "fixed_size": 4,
       "source": "enum SorobanCredentialsType\n{\n    SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,\n    SOROBAN_CREDENTIALS_ADDRESS = 1\n};",
       "file_index": 11,
       "member_prefix": "SOROBAN_CREDENTIALS_",
@@ -12454,7 +12382,6 @@
     {
       "kind": "typedef",
       "name": "SorobanAuthorizationEntries",
-      "fixed_size": null,
       "source": "typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>;",
       "file_index": 11,
       "type": {
@@ -13120,7 +13047,6 @@
     {
       "kind": "enum",
       "name": "MemoType",
-      "fixed_size": 4,
       "source": "enum MemoType\n{\n    MEMO_NONE = 0,\n    MEMO_TEXT = 1,\n    MEMO_ID = 2,\n    MEMO_HASH = 3,\n    MEMO_RETURN = 4\n};",
       "file_index": 11,
       "member_prefix": "MEMO_",
@@ -13337,7 +13263,6 @@
     {
       "kind": "enum",
       "name": "PreconditionType",
-      "fixed_size": 4,
       "source": "enum PreconditionType\n{\n    PRECOND_NONE = 0,\n    PRECOND_TIME = 1,\n    PRECOND_V2 = 2\n};",
       "file_index": 11,
       "member_prefix": "PRECOND_",
@@ -14035,7 +13960,6 @@
     {
       "kind": "enum",
       "name": "ClaimAtomType",
-      "fixed_size": 4,
       "source": "enum ClaimAtomType\n{\n    CLAIM_ATOM_TYPE_V0 = 0,\n    CLAIM_ATOM_TYPE_ORDER_BOOK = 1,\n    CLAIM_ATOM_TYPE_LIQUIDITY_POOL = 2\n};",
       "file_index": 11,
       "member_prefix": "CLAIM_ATOM_TYPE_",
@@ -14258,7 +14182,6 @@
     {
       "kind": "enum",
       "name": "CreateAccountResultCode",
-      "fixed_size": 4,
       "source": "enum CreateAccountResultCode\n{\n    // codes considered as \"success\" for the operation\n    CREATE_ACCOUNT_SUCCESS = 0, // account was created\n\n    // codes considered as \"failure\" for the operation\n    CREATE_ACCOUNT_MALFORMED = -1,   // invalid destination\n    CREATE_ACCOUNT_UNDERFUNDED = -2, // not enough funds in source account\n    CREATE_ACCOUNT_LOW_RESERVE =\n        -3, // would create an account below the min reserve\n    CREATE_ACCOUNT_ALREADY_EXIST = -4 // account already exists\n};",
       "file_index": 11,
       "member_prefix": "CREATE_ACCOUNT_",
@@ -14334,7 +14257,6 @@
     {
       "kind": "enum",
       "name": "PaymentResultCode",
-      "fixed_size": 4,
       "source": "enum PaymentResultCode\n{\n    // codes considered as \"success\" for the operation\n    PAYMENT_SUCCESS = 0, // payment successfully completed\n\n    // codes considered as \"failure\" for the operation\n    PAYMENT_MALFORMED = -1,          // bad input\n    PAYMENT_UNDERFUNDED = -2,        // not enough funds in source account\n    PAYMENT_SRC_NO_TRUST = -3,       // no trust line on source account\n    PAYMENT_SRC_NOT_AUTHORIZED = -4, // source not authorized to transfer\n    PAYMENT_NO_DESTINATION = -5,     // destination account does not exist\n    PAYMENT_NO_TRUST = -6,       // destination missing a trust line for asset\n    PAYMENT_NOT_AUTHORIZED = -7, // destination not authorized to hold asset\n    PAYMENT_LINE_FULL = -8,      // destination would go above their limit\n    PAYMENT_NO_ISSUER = -9       // missing issuer on asset\n};",
       "file_index": 11,
       "member_prefix": "PAYMENT_",
@@ -14450,7 +14372,6 @@
     {
       "kind": "enum",
       "name": "PathPaymentStrictReceiveResultCode",
-      "fixed_size": 4,
       "source": "enum PathPaymentStrictReceiveResultCode\n{\n    // codes considered as \"success\" for the operation\n    PATH_PAYMENT_STRICT_RECEIVE_SUCCESS = 0, // success\n\n    // codes considered as \"failure\" for the operation\n    PATH_PAYMENT_STRICT_RECEIVE_MALFORMED = -1, // bad input\n    PATH_PAYMENT_STRICT_RECEIVE_UNDERFUNDED =\n        -2, // not enough funds in source account\n    PATH_PAYMENT_STRICT_RECEIVE_SRC_NO_TRUST =\n        -3, // no trust line on source account\n    PATH_PAYMENT_STRICT_RECEIVE_SRC_NOT_AUTHORIZED =\n        -4, // source not authorized to transfer\n    PATH_PAYMENT_STRICT_RECEIVE_NO_DESTINATION =\n        -5, // destination account does not exist\n    PATH_PAYMENT_STRICT_RECEIVE_NO_TRUST =\n        -6, // dest missing a trust line for asset\n    PATH_PAYMENT_STRICT_RECEIVE_NOT_AUTHORIZED =\n        -7, // dest not authorized to hold asset\n    PATH_PAYMENT_STRICT_RECEIVE_LINE_FULL =\n        -8, // dest would go above their limit\n    PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER = -9, // missing issuer on one asset\n    PATH_PAYMENT_STRICT_RECEIVE_TOO_FEW_OFFERS =\n        -10, // not enough offers to satisfy path\n    PATH_PAYMENT_STRICT_RECEIVE_OFFER_CROSS_SELF =\n        -11, // would cross one of its own offers\n    PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX = -12 // could not satisfy sendmax\n};",
       "file_index": 11,
       "member_prefix": "PATH_PAYMENT_STRICT_RECEIVE_",
@@ -14664,7 +14585,6 @@
     {
       "kind": "enum",
       "name": "PathPaymentStrictSendResultCode",
-      "fixed_size": 4,
       "source": "enum PathPaymentStrictSendResultCode\n{\n    // codes considered as \"success\" for the operation\n    PATH_PAYMENT_STRICT_SEND_SUCCESS = 0, // success\n\n    // codes considered as \"failure\" for the operation\n    PATH_PAYMENT_STRICT_SEND_MALFORMED = -1, // bad input\n    PATH_PAYMENT_STRICT_SEND_UNDERFUNDED =\n        -2, // not enough funds in source account\n    PATH_PAYMENT_STRICT_SEND_SRC_NO_TRUST =\n        -3, // no trust line on source account\n    PATH_PAYMENT_STRICT_SEND_SRC_NOT_AUTHORIZED =\n        -4, // source not authorized to transfer\n    PATH_PAYMENT_STRICT_SEND_NO_DESTINATION =\n        -5, // destination account does not exist\n    PATH_PAYMENT_STRICT_SEND_NO_TRUST =\n        -6, // dest missing a trust line for asset\n    PATH_PAYMENT_STRICT_SEND_NOT_AUTHORIZED =\n        -7, // dest not authorized to hold asset\n    PATH_PAYMENT_STRICT_SEND_LINE_FULL = -8, // dest would go above their limit\n    PATH_PAYMENT_STRICT_SEND_NO_ISSUER = -9, // missing issuer on one asset\n    PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS =\n        -10, // not enough offers to satisfy path\n    PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF =\n        -11, // would cross one of its own offers\n    PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN = -12 // could not satisfy destMin\n};",
       "file_index": 11,
       "member_prefix": "PATH_PAYMENT_STRICT_SEND_",
@@ -14848,7 +14768,6 @@
     {
       "kind": "enum",
       "name": "ManageSellOfferResultCode",
-      "fixed_size": 4,
       "source": "enum ManageSellOfferResultCode\n{\n    // codes considered as \"success\" for the operation\n    MANAGE_SELL_OFFER_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    MANAGE_SELL_OFFER_MALFORMED = -1, // generated offer would be invalid\n    MANAGE_SELL_OFFER_SELL_NO_TRUST =\n        -2,                              // no trust line for what we're selling\n    MANAGE_SELL_OFFER_BUY_NO_TRUST = -3, // no trust line for what we're buying\n    MANAGE_SELL_OFFER_SELL_NOT_AUTHORIZED = -4, // not authorized to sell\n    MANAGE_SELL_OFFER_BUY_NOT_AUTHORIZED = -5,  // not authorized to buy\n    MANAGE_SELL_OFFER_LINE_FULL = -6, // can't receive more of what it's buying\n    MANAGE_SELL_OFFER_UNDERFUNDED = -7, // doesn't hold what it's trying to sell\n    MANAGE_SELL_OFFER_CROSS_SELF =\n        -8, // would cross an offer from the same user\n    MANAGE_SELL_OFFER_SELL_NO_ISSUER = -9, // no issuer for what we're selling\n    MANAGE_SELL_OFFER_BUY_NO_ISSUER = -10, // no issuer for what we're buying\n\n    // update errors\n    MANAGE_SELL_OFFER_NOT_FOUND =\n        -11, // offerID does not match an existing offer\n\n    MANAGE_SELL_OFFER_LOW_RESERVE =\n        -12 // not enough funds to create a new Offer\n};",
       "file_index": 11,
       "member_prefix": "MANAGE_SELL_OFFER_",
@@ -14910,7 +14829,6 @@
     {
       "kind": "enum",
       "name": "ManageOfferEffect",
-      "fixed_size": 4,
       "source": "enum ManageOfferEffect\n{\n    MANAGE_OFFER_CREATED = 0,\n    MANAGE_OFFER_UPDATED = 1,\n    MANAGE_OFFER_DELETED = 2\n};",
       "file_index": 11,
       "member_prefix": "MANAGE_OFFER_",
@@ -15082,7 +15000,6 @@
     {
       "kind": "enum",
       "name": "ManageBuyOfferResultCode",
-      "fixed_size": 4,
       "source": "enum ManageBuyOfferResultCode\n{\n    // codes considered as \"success\" for the operation\n    MANAGE_BUY_OFFER_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    MANAGE_BUY_OFFER_MALFORMED = -1,     // generated offer would be invalid\n    MANAGE_BUY_OFFER_SELL_NO_TRUST = -2, // no trust line for what we're selling\n    MANAGE_BUY_OFFER_BUY_NO_TRUST = -3,  // no trust line for what we're buying\n    MANAGE_BUY_OFFER_SELL_NOT_AUTHORIZED = -4, // not authorized to sell\n    MANAGE_BUY_OFFER_BUY_NOT_AUTHORIZED = -5,  // not authorized to buy\n    MANAGE_BUY_OFFER_LINE_FULL = -6,   // can't receive more of what it's buying\n    MANAGE_BUY_OFFER_UNDERFUNDED = -7, // doesn't hold what it's trying to sell\n    MANAGE_BUY_OFFER_CROSS_SELF = -8, // would cross an offer from the same user\n    MANAGE_BUY_OFFER_SELL_NO_ISSUER = -9, // no issuer for what we're selling\n    MANAGE_BUY_OFFER_BUY_NO_ISSUER = -10, // no issuer for what we're buying\n\n    // update errors\n    MANAGE_BUY_OFFER_NOT_FOUND =\n        -11, // offerID does not match an existing offer\n\n    MANAGE_BUY_OFFER_LOW_RESERVE = -12 // not enough funds to create a new Offer\n};",
       "file_index": 11,
       "member_prefix": "MANAGE_BUY_OFFER_",
@@ -15226,7 +15143,6 @@
     {
       "kind": "enum",
       "name": "SetOptionsResultCode",
-      "fixed_size": 4,
       "source": "enum SetOptionsResultCode\n{\n    // codes considered as \"success\" for the operation\n    SET_OPTIONS_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    SET_OPTIONS_LOW_RESERVE = -1,      // not enough funds to add a signer\n    SET_OPTIONS_TOO_MANY_SIGNERS = -2, // max number of signers already reached\n    SET_OPTIONS_BAD_FLAGS = -3,        // invalid combination of clear/set flags\n    SET_OPTIONS_INVALID_INFLATION = -4,      // inflation account does not exist\n    SET_OPTIONS_CANT_CHANGE = -5,            // can no longer change this option\n    SET_OPTIONS_UNKNOWN_FLAG = -6,           // can't set an unknown flag\n    SET_OPTIONS_THRESHOLD_OUT_OF_RANGE = -7, // bad value for weight/threshold\n    SET_OPTIONS_BAD_SIGNER = -8,             // signer cannot be masterkey\n    SET_OPTIONS_INVALID_HOME_DOMAIN = -9,    // malformed home domain\n    SET_OPTIONS_AUTH_REVOCABLE_REQUIRED =\n        -10 // auth revocable is required for clawback\n};",
       "file_index": 11,
       "member_prefix": "SET_OPTIONS_",
@@ -15350,7 +15266,6 @@
     {
       "kind": "enum",
       "name": "ChangeTrustResultCode",
-      "fixed_size": 4,
       "source": "enum ChangeTrustResultCode\n{\n    // codes considered as \"success\" for the operation\n    CHANGE_TRUST_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    CHANGE_TRUST_MALFORMED = -1,     // bad input\n    CHANGE_TRUST_NO_ISSUER = -2,     // could not find issuer\n    CHANGE_TRUST_INVALID_LIMIT = -3, // cannot drop limit below balance\n                                     // cannot create with a limit of 0\n    CHANGE_TRUST_LOW_RESERVE =\n        -4, // not enough funds to create a new trust line,\n    CHANGE_TRUST_SELF_NOT_ALLOWED = -5,   // trusting self is not allowed\n    CHANGE_TRUST_TRUST_LINE_MISSING = -6, // Asset trustline is missing for pool\n    CHANGE_TRUST_CANNOT_DELETE =\n        -7, // Asset trustline is still referenced in a pool\n    CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES =\n        -8 // Asset trustline is deauthorized\n};",
       "file_index": 11,
       "member_prefix": "CHANGE_TRUST_",
@@ -15458,7 +15373,6 @@
     {
       "kind": "enum",
       "name": "AllowTrustResultCode",
-      "fixed_size": 4,
       "source": "enum AllowTrustResultCode\n{\n    // codes considered as \"success\" for the operation\n    ALLOW_TRUST_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    ALLOW_TRUST_MALFORMED = -1,     // asset is not ASSET_TYPE_ALPHANUM\n    ALLOW_TRUST_NO_TRUST_LINE = -2, // trustor does not have a trustline\n                                    // source account does not require trust\n    ALLOW_TRUST_TRUST_NOT_REQUIRED = -3,\n    ALLOW_TRUST_CANT_REVOKE = -4,      // source account can't revoke trust,\n    ALLOW_TRUST_SELF_NOT_ALLOWED = -5, // trusting self is not allowed\n    ALLOW_TRUST_LOW_RESERVE = -6       // claimable balances can't be created\n                                       // on revoke due to low reserves\n};",
       "file_index": 11,
       "member_prefix": "ALLOW_TRUST_",
@@ -15550,7 +15464,6 @@
     {
       "kind": "enum",
       "name": "AccountMergeResultCode",
-      "fixed_size": 4,
       "source": "enum AccountMergeResultCode\n{\n    // codes considered as \"success\" for the operation\n    ACCOUNT_MERGE_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    ACCOUNT_MERGE_MALFORMED = -1,       // can't merge onto itself\n    ACCOUNT_MERGE_NO_ACCOUNT = -2,      // destination does not exist\n    ACCOUNT_MERGE_IMMUTABLE_SET = -3,   // source account has AUTH_IMMUTABLE set\n    ACCOUNT_MERGE_HAS_SUB_ENTRIES = -4, // account has trust lines/offers\n    ACCOUNT_MERGE_SEQNUM_TOO_FAR = -5,  // sequence number is over max allowed\n    ACCOUNT_MERGE_DEST_FULL = -6,       // can't add source balance to\n                                        // destination balance\n    ACCOUNT_MERGE_IS_SPONSOR = -7       // can't merge account that is a sponsor\n};",
       "file_index": 11,
       "member_prefix": "ACCOUNT_MERGE_",
@@ -15654,7 +15567,6 @@
     {
       "kind": "enum",
       "name": "InflationResultCode",
-      "fixed_size": 4,
       "source": "enum InflationResultCode\n{\n    // codes considered as \"success\" for the operation\n    INFLATION_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    INFLATION_NOT_TIME = -1\n};",
       "file_index": 11,
       "member_prefix": "INFLATION_",
@@ -15736,7 +15648,6 @@
     {
       "kind": "enum",
       "name": "ManageDataResultCode",
-      "fixed_size": 4,
       "source": "enum ManageDataResultCode\n{\n    // codes considered as \"success\" for the operation\n    MANAGE_DATA_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    MANAGE_DATA_NOT_SUPPORTED_YET =\n        -1, // The network hasn't moved to this protocol change yet\n    MANAGE_DATA_NAME_NOT_FOUND =\n        -2, // Trying to remove a Data Entry that isn't there\n    MANAGE_DATA_LOW_RESERVE = -3, // not enough funds to create a new Data Entry\n    MANAGE_DATA_INVALID_NAME = -4 // Name not a valid string\n};",
       "file_index": 11,
       "member_prefix": "MANAGE_DATA_",
@@ -15812,7 +15723,6 @@
     {
       "kind": "enum",
       "name": "BumpSequenceResultCode",
-      "fixed_size": 4,
       "source": "enum BumpSequenceResultCode\n{\n    // codes considered as \"success\" for the operation\n    BUMP_SEQUENCE_SUCCESS = 0,\n    // codes considered as \"failure\" for the operation\n    BUMP_SEQUENCE_BAD_SEQ = -1 // `bumpTo` is not within bounds\n};",
       "file_index": 11,
       "member_prefix": "BUMP_SEQUENCE_",
@@ -15864,7 +15774,6 @@
     {
       "kind": "enum",
       "name": "CreateClaimableBalanceResultCode",
-      "fixed_size": 4,
       "source": "enum CreateClaimableBalanceResultCode\n{\n    CREATE_CLAIMABLE_BALANCE_SUCCESS = 0,\n    CREATE_CLAIMABLE_BALANCE_MALFORMED = -1,\n    CREATE_CLAIMABLE_BALANCE_LOW_RESERVE = -2,\n    CREATE_CLAIMABLE_BALANCE_NO_TRUST = -3,\n    CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -4,\n    CREATE_CLAIMABLE_BALANCE_UNDERFUNDED = -5\n};",
       "file_index": 11,
       "member_prefix": "CREATE_CLAIMABLE_BALANCE_",
@@ -15952,7 +15861,6 @@
     {
       "kind": "enum",
       "name": "ClaimClaimableBalanceResultCode",
-      "fixed_size": 4,
       "source": "enum ClaimClaimableBalanceResultCode\n{\n    CLAIM_CLAIMABLE_BALANCE_SUCCESS = 0,\n    CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST = -1,\n    CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM = -2,\n    CLAIM_CLAIMABLE_BALANCE_LINE_FULL = -3,\n    CLAIM_CLAIMABLE_BALANCE_NO_TRUST = -4,\n    CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5,\n    CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN = -6\n};",
       "file_index": 11,
       "member_prefix": "CLAIM_CLAIMABLE_BALANCE_",
@@ -16044,7 +15952,6 @@
     {
       "kind": "enum",
       "name": "BeginSponsoringFutureReservesResultCode",
-      "fixed_size": 4,
       "source": "enum BeginSponsoringFutureReservesResultCode\n{\n    // codes considered as \"success\" for the operation\n    BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    BEGIN_SPONSORING_FUTURE_RESERVES_MALFORMED = -1,\n    BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED = -2,\n    BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE = -3\n};",
       "file_index": 11,
       "member_prefix": "BEGIN_SPONSORING_FUTURE_RESERVES_",
@@ -16112,7 +16019,6 @@
     {
       "kind": "enum",
       "name": "EndSponsoringFutureReservesResultCode",
-      "fixed_size": 4,
       "source": "enum EndSponsoringFutureReservesResultCode\n{\n    // codes considered as \"success\" for the operation\n    END_SPONSORING_FUTURE_RESERVES_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED = -1\n};",
       "file_index": 11,
       "member_prefix": "END_SPONSORING_FUTURE_RESERVES_",
@@ -16164,7 +16070,6 @@
     {
       "kind": "enum",
       "name": "RevokeSponsorshipResultCode",
-      "fixed_size": 4,
       "source": "enum RevokeSponsorshipResultCode\n{\n    // codes considered as \"success\" for the operation\n    REVOKE_SPONSORSHIP_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1,\n    REVOKE_SPONSORSHIP_NOT_SPONSOR = -2,\n    REVOKE_SPONSORSHIP_LOW_RESERVE = -3,\n    REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4,\n    REVOKE_SPONSORSHIP_MALFORMED = -5\n};",
       "file_index": 11,
       "member_prefix": "REVOKE_SPONSORSHIP_",
@@ -16248,7 +16153,6 @@
     {
       "kind": "enum",
       "name": "ClawbackResultCode",
-      "fixed_size": 4,
       "source": "enum ClawbackResultCode\n{\n    // codes considered as \"success\" for the operation\n    CLAWBACK_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    CLAWBACK_MALFORMED = -1,\n    CLAWBACK_NOT_CLAWBACK_ENABLED = -2,\n    CLAWBACK_NO_TRUST = -3,\n    CLAWBACK_UNDERFUNDED = -4\n};",
       "file_index": 11,
       "member_prefix": "CLAWBACK_",
@@ -16324,7 +16228,6 @@
     {
       "kind": "enum",
       "name": "ClawbackClaimableBalanceResultCode",
-      "fixed_size": 4,
       "source": "enum ClawbackClaimableBalanceResultCode\n{\n    // codes considered as \"success\" for the operation\n    CLAWBACK_CLAIMABLE_BALANCE_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST = -1,\n    CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER = -2,\n    CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED = -3\n};",
       "file_index": 11,
       "member_prefix": "CLAWBACK_CLAIMABLE_BALANCE_",
@@ -16392,7 +16295,6 @@
     {
       "kind": "enum",
       "name": "SetTrustLineFlagsResultCode",
-      "fixed_size": 4,
       "source": "enum SetTrustLineFlagsResultCode\n{\n    // codes considered as \"success\" for the operation\n    SET_TRUST_LINE_FLAGS_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    SET_TRUST_LINE_FLAGS_MALFORMED = -1,\n    SET_TRUST_LINE_FLAGS_NO_TRUST_LINE = -2,\n    SET_TRUST_LINE_FLAGS_CANT_REVOKE = -3,\n    SET_TRUST_LINE_FLAGS_INVALID_STATE = -4,\n    SET_TRUST_LINE_FLAGS_LOW_RESERVE = -5 // claimable balances can't be created\n                                          // on revoke due to low reserves\n};",
       "file_index": 11,
       "member_prefix": "SET_TRUST_LINE_FLAGS_",
@@ -16476,7 +16378,6 @@
     {
       "kind": "enum",
       "name": "LiquidityPoolDepositResultCode",
-      "fixed_size": 4,
       "source": "enum LiquidityPoolDepositResultCode\n{\n    // codes considered as \"success\" for the operation\n    LIQUIDITY_POOL_DEPOSIT_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    LIQUIDITY_POOL_DEPOSIT_MALFORMED = -1,      // bad input\n    LIQUIDITY_POOL_DEPOSIT_NO_TRUST = -2,       // no trust line for one of the\n                                                // assets\n    LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED = -3, // not authorized for one of the\n                                                // assets\n    LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED = -4,    // not enough balance for one of\n                                                // the assets\n    LIQUIDITY_POOL_DEPOSIT_LINE_FULL = -5,      // pool share trust line doesn't\n                                                // have sufficient limit\n    LIQUIDITY_POOL_DEPOSIT_BAD_PRICE = -6,      // deposit price outside bounds\n    LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7,      // pool reserves are full\n    LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN = -8  // trustline for one of the \n                                                  // assets is frozen\n};",
       "file_index": 11,
       "member_prefix": "LIQUIDITY_POOL_DEPOSIT_",
@@ -16584,7 +16485,6 @@
     {
       "kind": "enum",
       "name": "LiquidityPoolWithdrawResultCode",
-      "fixed_size": 4,
       "source": "enum LiquidityPoolWithdrawResultCode\n{\n    // codes considered as \"success\" for the operation\n    LIQUIDITY_POOL_WITHDRAW_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    LIQUIDITY_POOL_WITHDRAW_MALFORMED = -1,    // bad input\n    LIQUIDITY_POOL_WITHDRAW_NO_TRUST = -2,     // no trust line for one of the\n                                               // assets\n    LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED = -3,  // not enough balance of the\n                                               // pool share\n    LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,    // would go above limit for one\n                                               // of the assets\n    LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5, // didn't withdraw enough\n    LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN = -6  // trustline for one of the \n                                                   // assets is frozen\n};",
       "file_index": 11,
       "member_prefix": "LIQUIDITY_POOL_WITHDRAW_",
@@ -16676,7 +16576,6 @@
     {
       "kind": "enum",
       "name": "InvokeHostFunctionResultCode",
-      "fixed_size": 4,
       "source": "enum InvokeHostFunctionResultCode\n{\n    // codes considered as \"success\" for the operation\n    INVOKE_HOST_FUNCTION_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    INVOKE_HOST_FUNCTION_MALFORMED = -1,\n    INVOKE_HOST_FUNCTION_TRAPPED = -2,\n    INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,\n    INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED = -4,\n    INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5\n};",
       "file_index": 11,
       "member_prefix": "INVOKE_HOST_FUNCTION_",
@@ -16764,7 +16663,6 @@
     {
       "kind": "enum",
       "name": "ExtendFootprintTTLResultCode",
-      "fixed_size": 4,
       "source": "enum ExtendFootprintTTLResultCode\n{\n    // codes considered as \"success\" for the operation\n    EXTEND_FOOTPRINT_TTL_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    EXTEND_FOOTPRINT_TTL_MALFORMED = -1,\n    EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED = -2,\n    EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE = -3\n};",
       "file_index": 11,
       "member_prefix": "EXTEND_FOOTPRINT_TTL_",
@@ -16832,7 +16730,6 @@
     {
       "kind": "enum",
       "name": "RestoreFootprintResultCode",
-      "fixed_size": 4,
       "source": "enum RestoreFootprintResultCode\n{\n    // codes considered as \"success\" for the operation\n    RESTORE_FOOTPRINT_SUCCESS = 0,\n\n    // codes considered as \"failure\" for the operation\n    RESTORE_FOOTPRINT_MALFORMED = -1,\n    RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2,\n    RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3\n};",
       "file_index": 11,
       "member_prefix": "RESTORE_FOOTPRINT_",
@@ -16900,7 +16797,6 @@
     {
       "kind": "enum",
       "name": "OperationResultCode",
-      "fixed_size": 4,
       "source": "enum OperationResultCode\n{\n    opINNER = 0, // inner object result is valid\n\n    opBAD_AUTH = -1,            // too few valid signatures / wrong network\n    opNO_ACCOUNT = -2,          // source account was not found\n    opNOT_SUPPORTED = -3,       // operation not supported at this time\n    opTOO_MANY_SUBENTRIES = -4, // max number of subentries already reached\n    opEXCEEDED_WORK_LIMIT = -5, // operation did too much work\n    opTOO_MANY_SPONSORING = -6  // account is sponsoring too many entries\n};",
       "file_index": 11,
       "member_prefix": "",
@@ -17363,7 +17259,6 @@
     {
       "kind": "enum",
       "name": "TransactionResultCode",
-      "fixed_size": 4,
       "source": "enum TransactionResultCode\n{\n    txFEE_BUMP_INNER_SUCCESS = 1, // fee bump inner transaction succeeded\n    txSUCCESS = 0,                // all operations succeeded\n\n    txFAILED = -1, // one of the operations failed (none were applied)\n\n    txTOO_EARLY = -2,         // ledger closeTime before minTime\n    txTOO_LATE = -3,          // ledger closeTime after maxTime\n    txMISSING_OPERATION = -4, // no operation was specified\n    txBAD_SEQ = -5,           // sequence number does not match source account\n\n    txBAD_AUTH = -6,             // too few valid signatures / wrong network\n    txINSUFFICIENT_BALANCE = -7, // fee would bring account below reserve\n    txNO_ACCOUNT = -8,           // source account not found\n    txINSUFFICIENT_FEE = -9,     // fee is too small\n    txBAD_AUTH_EXTRA = -10,      // unused signatures attached to transaction\n    txINTERNAL_ERROR = -11,      // an unknown error occurred\n\n    txNOT_SUPPORTED = -12,          // transaction type not supported\n    txFEE_BUMP_INNER_FAILED = -13,  // fee bump inner transaction failed\n    txBAD_SPONSORSHIP = -14,        // sponsorship not confirmed\n    txBAD_MIN_SEQ_AGE_OR_GAP = -15, // minSeqAge or minSeqLedgerGap conditions not met\n    txMALFORMED = -16,              // precondition is invalid\n    txSOROBAN_INVALID = -17,        // soroban-specific preconditions were not met\n    txFROZEN_KEY_ACCESSED = -18     // a 'frozen' ledger key is accessed by any operation\n};",
       "file_index": 11,
       "member_prefix": "",
@@ -17809,7 +17704,6 @@
     {
       "kind": "typedef",
       "name": "Hash",
-      "fixed_size": 32,
       "source": "typedef opaque Hash[32];",
       "file_index": 12,
       "type": {
@@ -17820,7 +17714,6 @@
     {
       "kind": "typedef",
       "name": "uint256",
-      "fixed_size": 32,
       "source": "typedef opaque uint256[32];",
       "file_index": 12,
       "type": {
@@ -17831,7 +17724,6 @@
     {
       "kind": "typedef",
       "name": "uint32",
-      "fixed_size": 4,
       "source": "typedef unsigned int uint32;",
       "file_index": 12,
       "type": {
@@ -17841,7 +17733,6 @@
     {
       "kind": "typedef",
       "name": "int32",
-      "fixed_size": 4,
       "source": "typedef int int32;",
       "file_index": 12,
       "type": {
@@ -17851,7 +17742,6 @@
     {
       "kind": "typedef",
       "name": "uint64",
-      "fixed_size": 8,
       "source": "typedef unsigned hyper uint64;",
       "file_index": 12,
       "type": {
@@ -17861,7 +17751,6 @@
     {
       "kind": "typedef",
       "name": "int64",
-      "fixed_size": 8,
       "source": "typedef hyper int64;",
       "file_index": 12,
       "type": {
@@ -17871,7 +17760,6 @@
     {
       "kind": "typedef",
       "name": "TimePoint",
-      "fixed_size": 8,
       "source": "typedef uint64 TimePoint;",
       "file_index": 12,
       "type": {
@@ -17882,7 +17770,6 @@
     {
       "kind": "typedef",
       "name": "Duration",
-      "fixed_size": 8,
       "source": "typedef uint64 Duration;",
       "file_index": 12,
       "type": {
@@ -17916,7 +17803,6 @@
     {
       "kind": "enum",
       "name": "CryptoKeyType",
-      "fixed_size": 4,
       "source": "enum CryptoKeyType\n{\n    KEY_TYPE_ED25519 = 0,\n    KEY_TYPE_PRE_AUTH_TX = 1,\n    KEY_TYPE_HASH_X = 2,\n    KEY_TYPE_ED25519_SIGNED_PAYLOAD = 3,\n    // MUXED enum values for supported type are derived from the enum values\n    // above by ORing them with 0x100\n    KEY_TYPE_MUXED_ED25519 = 0x100\n};",
       "file_index": 12,
       "member_prefix": "KEY_TYPE_",
@@ -17946,7 +17832,6 @@
     {
       "kind": "enum",
       "name": "PublicKeyType",
-      "fixed_size": 4,
       "source": "enum PublicKeyType\n{\n    PUBLIC_KEY_TYPE_ED25519 = KEY_TYPE_ED25519\n};",
       "file_index": 12,
       "member_prefix": "",
@@ -17960,7 +17845,6 @@
     {
       "kind": "enum",
       "name": "SignerKeyType",
-      "fixed_size": 4,
       "source": "enum SignerKeyType\n{\n    SIGNER_KEY_TYPE_ED25519 = KEY_TYPE_ED25519,\n    SIGNER_KEY_TYPE_PRE_AUTH_TX = KEY_TYPE_PRE_AUTH_TX,\n    SIGNER_KEY_TYPE_HASH_X = KEY_TYPE_HASH_X,\n    SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD = KEY_TYPE_ED25519_SIGNED_PAYLOAD\n};",
       "file_index": 12,
       "member_prefix": "SIGNER_KEY_TYPE_",
@@ -18106,7 +17990,6 @@
     {
       "kind": "typedef",
       "name": "Signature",
-      "fixed_size": null,
       "source": "typedef opaque Signature<64>;",
       "file_index": 12,
       "type": {
@@ -18117,7 +18000,6 @@
     {
       "kind": "typedef",
       "name": "SignatureHint",
-      "fixed_size": 4,
       "source": "typedef opaque SignatureHint[4];",
       "file_index": 12,
       "type": {
@@ -18128,7 +18010,6 @@
     {
       "kind": "typedef",
       "name": "NodeID",
-      "fixed_size": 36,
       "source": "typedef PublicKey NodeID;",
       "file_index": 12,
       "type": {
@@ -18139,7 +18020,6 @@
     {
       "kind": "typedef",
       "name": "AccountID",
-      "fixed_size": 36,
       "source": "typedef PublicKey AccountID;",
       "file_index": 12,
       "type": {
@@ -18150,7 +18030,6 @@
     {
       "kind": "typedef",
       "name": "ContractID",
-      "fixed_size": 32,
       "source": "typedef Hash ContractID;",
       "file_index": 12,
       "type": {
@@ -18241,7 +18120,6 @@
     {
       "kind": "enum",
       "name": "BinaryFuseFilterType",
-      "fixed_size": 4,
       "source": "enum BinaryFuseFilterType\n{\n    BINARY_FUSE_FILTER_8_BIT = 0,\n    BINARY_FUSE_FILTER_16_BIT = 1,\n    BINARY_FUSE_FILTER_32_BIT = 2\n};",
       "file_index": 12,
       "member_prefix": "BINARY_FUSE_FILTER_",
@@ -18334,7 +18212,6 @@
     {
       "kind": "typedef",
       "name": "PoolID",
-      "fixed_size": 32,
       "source": "typedef Hash PoolID;",
       "file_index": 12,
       "type": {
@@ -18345,7 +18222,6 @@
     {
       "kind": "enum",
       "name": "ClaimableBalanceIDType",
-      "fixed_size": 4,
       "source": "enum ClaimableBalanceIDType\n{\n    CLAIMABLE_BALANCE_ID_TYPE_V0 = 0\n};",
       "file_index": 12,
       "member_prefix": "",

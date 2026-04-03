@@ -6,8 +6,9 @@
 //! values) embedded directly.
 
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use xdr_parser::ast;
+use xdr_parser::types::TypeInfo;
 
 /// Top-level IR output.
 #[derive(Serialize)]
@@ -147,12 +148,11 @@ pub enum TypeRef {
     },
 }
 
-/// Build IR definitions from the AST spec and computed properties.
-pub fn build_definitions(
-    spec: &ast::XdrSpec,
-    computed: &xdr_parser::types::ComputedProperties,
-) -> Vec<Definition> {
-    // Build enum member value lookup for resolving union case idents.
+/// Build the complete IR from a parsed (and optionally filtered) XDR spec.
+pub fn build(spec: &ast::XdrSpec, resolved_features: Vec<String>) -> IR {
+    let type_info = TypeInfo::build(spec, &|name| name.to_string());
+    let wire_sizes = compute_wire_sizes(&type_info);
+
     let mut enum_member_values: HashMap<&str, i32> = HashMap::new();
     for def in spec.all_definitions() {
         if let ast::Definition::Enum(e) = def {
@@ -162,21 +162,30 @@ pub fn build_definitions(
         }
     }
 
-    // Build const value lookup for resolving named sizes.
-    let const_values = &computed.const_values;
+    let const_values = &type_info.const_values;
 
-    spec.all_definitions()
-        .map(|def| convert_definition(def, computed, const_values, &enum_member_values))
-        .collect()
+    let definitions = spec.all_definitions()
+        .map(|def| convert_definition(def, &wire_sizes, const_values, &enum_member_values))
+        .collect();
+
+    IR {
+        version: 1,
+        files: spec.files.iter().map(|f| XdrFile {
+            name: f.name.clone(),
+            sha256: f.sha256.clone(),
+        }).collect(),
+        resolved_features,
+        definitions,
+    }
 }
 
 fn convert_definition(
     def: &ast::Definition,
-    computed: &xdr_parser::types::ComputedProperties,
+    wire_sizes: &HashMap<String, Option<u32>>,
     const_values: &HashMap<String, i64>,
     enum_member_values: &HashMap<&str, i32>,
 ) -> Definition {
-    let fixed_size = computed.types.get(def.name()).and_then(|p| p.fixed_wire_size);
+    let fixed_size = wire_sizes.get(def.name()).copied().flatten();
     match def {
         ast::Definition::Struct(s) => Definition::Struct(Struct {
             name: s.name.clone(),
@@ -291,5 +300,119 @@ fn resolve_size(size: &ast::Size, const_values: &HashMap<String, i64>) -> u64 {
                 .unwrap_or_else(|| panic!("unresolved size constant '{named}'"));
             u64::try_from(v).unwrap_or_else(|_| panic!("size constant '{named}' is negative: {v}"))
         }
+    }
+}
+
+// =============================================================================
+// Wire size computation
+// =============================================================================
+
+fn compute_wire_sizes(type_info: &TypeInfo) -> HashMap<String, Option<u32>> {
+    let mut cache: HashMap<String, Option<u32>> = HashMap::new();
+    let mut in_progress: HashSet<String> = HashSet::new();
+    for name in type_info.definitions.keys() {
+        compute_wire_size(type_info, name, &mut cache, &mut in_progress);
+    }
+    cache
+}
+
+fn compute_wire_size(
+    ti: &TypeInfo,
+    name: &str,
+    cache: &mut HashMap<String, Option<u32>>,
+    in_progress: &mut HashSet<String>,
+) -> Option<u32> {
+    if let Some(&cached) = cache.get(name) {
+        return cached;
+    }
+    if in_progress.contains(name) {
+        return None;
+    }
+    in_progress.insert(name.to_string());
+
+    let result = match ti.definitions.get(name) {
+        Some(ast::Definition::Struct(s)) => {
+            let mut total: u32 = 0;
+            for member in &s.members {
+                match type_wire_size(ti, &member.type_, cache, in_progress) {
+                    Some(sz) => {
+                        total = match total.checked_add(sz) {
+                            Some(t) => t,
+                            None => {
+                                in_progress.remove(name);
+                                cache.insert(name.to_string(), None);
+                                return None;
+                            }
+                        };
+                    }
+                    None => {
+                        in_progress.remove(name);
+                        cache.insert(name.to_string(), None);
+                        return None;
+                    }
+                }
+            }
+            Some(total)
+        }
+        Some(ast::Definition::Union(u)) => {
+            let disc_size: u32 = 4;
+            let mut arm_sizes: Vec<Option<u32>> = Vec::new();
+            for arm in &u.arms {
+                match &arm.type_ {
+                    None => arm_sizes.push(Some(0)),
+                    Some(t) => arm_sizes.push(type_wire_size(ti, t, cache, in_progress)),
+                }
+            }
+            if arm_sizes.is_empty()
+                || arm_sizes.iter().any(|s| s.is_none())
+                || arm_sizes.iter().filter_map(|s| *s).collect::<HashSet<_>>().len() != 1
+            {
+                None
+            } else {
+                disc_size.checked_add(arm_sizes[0]?)
+            }
+        }
+        Some(ast::Definition::Enum(_)) => Some(4),
+        Some(ast::Definition::Typedef(t)) => type_wire_size(ti, &t.type_, cache, in_progress),
+        Some(ast::Definition::Const(_)) | None => None,
+    };
+
+    in_progress.remove(name);
+    cache.insert(name.to_string(), result);
+    result
+}
+
+fn type_wire_size(
+    ti: &TypeInfo,
+    type_: &ast::Type,
+    cache: &mut HashMap<String, Option<u32>>,
+    in_progress: &mut HashSet<String>,
+) -> Option<u32> {
+    match type_ {
+        ast::Type::Int | ast::Type::UnsignedInt | ast::Type::Bool | ast::Type::Float => Some(4),
+        ast::Type::Hyper | ast::Type::UnsignedHyper | ast::Type::Double => Some(8),
+        ast::Type::OpaqueFixed(size) => {
+            let sz = resolve_size_u32(ti, size)?;
+            sz.checked_add(3).map(|v| v & !3)
+        }
+        ast::Type::Array { element_type, size } => {
+            let elem_sz = type_wire_size(ti, element_type, cache, in_progress)?;
+            let count = resolve_size_u32(ti, size)?;
+            elem_sz.checked_mul(count)
+        }
+        ast::Type::Ident(name) => compute_wire_size(ti, name, cache, in_progress),
+        ast::Type::OpaqueVar(_) | ast::Type::String(_) | ast::Type::VarArray { .. } | ast::Type::Optional(_) => {
+            None
+        }
+    }
+}
+
+fn resolve_size_u32(ti: &TypeInfo, size: &ast::Size) -> Option<u32> {
+    match size {
+        ast::Size::Literal(n) => Some(*n),
+        ast::Size::Named(name) => ti
+            .const_values
+            .get(name)
+            .and_then(|&v| u32::try_from(v).ok()),
     }
 }

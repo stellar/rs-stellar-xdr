@@ -3,14 +3,14 @@
 use crate::lexer::IntBase;
 
 /// Metadata about a parsed XDR source file.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct XdrFile {
     pub name: String,
     pub sha256: String,
 }
 
 /// The root of a parsed XDR file or collection of files.
-#[derive(Debug, Clone, Default, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct XdrSpec {
     pub files: Vec<XdrFile>,
     pub namespaces: Vec<Namespace>,
@@ -87,7 +87,7 @@ impl XdrSpec {
 }
 
 /// A namespace containing definitions.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Namespace {
     pub name: String,
     pub definitions: Vec<Definition>,
@@ -96,8 +96,7 @@ pub struct Namespace {
 
 /// A conditional compilation expression, mapping XDR `#ifdef`/`#else`/`#endif`
 /// directives to Rust `#[cfg(feature = "...")]` attributes.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CfgExpr {
     /// `#[cfg(feature = "name")]`
     Feature(String),
@@ -167,8 +166,7 @@ impl CfgExpr {
 }
 
 /// A top-level definition.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Definition {
     Struct(Struct),
     Enum(Enum),
@@ -244,7 +242,7 @@ impl Definition {
 }
 
 /// A struct definition.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Struct {
     pub name: String,
     pub members: Vec<StructMember>,
@@ -261,7 +259,7 @@ pub struct Struct {
 }
 
 /// An enum definition.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Enum {
     pub name: String,
     pub members: Vec<EnumMember>,
@@ -301,7 +299,7 @@ impl Enum {
 }
 
 /// A union definition.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Union {
     pub name: String,
     pub discriminant: UnionDiscriminant,
@@ -319,7 +317,7 @@ pub struct Union {
 }
 
 /// A typedef definition.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Typedef {
     pub name: String,
     pub type_: Type,
@@ -332,7 +330,7 @@ pub struct Typedef {
 }
 
 /// A const definition.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Const {
     pub name: String,
     pub value: i64,
@@ -347,8 +345,7 @@ pub struct Const {
 }
 
 /// XDR type specification.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     /// `int` - 32-bit signed integer
     Int,
@@ -365,15 +362,15 @@ pub enum Type {
     /// `bool` - boolean
     Bool,
     /// `opaque[N]` - fixed-length opaque data
-    OpaqueFixed { size: Size },
+    OpaqueFixed(Size),
     /// `opaque<N>` or `opaque<>` - variable-length opaque data
-    OpaqueVar { max_size: Option<Size> },
+    OpaqueVar(Option<Size>),
     /// `string<N>` or `string<>` - variable-length string
-    String { max_size: Option<Size> },
+    String(Option<Size>),
     /// Reference to another type by name
-    Ident { ident: String },
+    Ident(String),
     /// `T*` - optional type
-    Optional { element_type: Box<Type> },
+    Optional(Box<Type>),
     /// `T[N]` - fixed-length array
     Array { element_type: Box<Type>, size: Size },
     /// `T<N>` or `T<>` - variable-length array
@@ -384,14 +381,14 @@ pub enum Type {
 }
 
 /// A member of a struct.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StructMember {
     pub name: String,
     pub type_: Type,
 }
 
 /// A member of an enum.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumMember {
     pub name: String,
     /// The member name with the common enum prefix stripped.
@@ -401,14 +398,14 @@ pub struct EnumMember {
 }
 
 /// The discriminant of a union.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionDiscriminant {
     pub name: String,
     pub type_: Type,
 }
 
 /// An arm of a union (one or more cases with the same type).
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
     /// The declaration name for this arm (e.g., "v0" from "LedgerCloseMetaV0 v0;").
@@ -420,20 +417,19 @@ pub struct UnionArm {
 }
 
 /// A case in a union.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionCase {
     /// The case value - either an identifier (enum variant) or a literal.
     pub value: UnionCaseValue,
 }
 
 /// Value for a union case.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UnionCaseValue {
     /// Named identifier (typically an enum variant)
-    Ident { ident: String },
+    Ident(String),
     /// Literal integer value
-    Literal { literal: i32 },
+    Literal(i32),
 }
 
 impl UnionCaseValue {
@@ -441,18 +437,17 @@ impl UnionCaseValue {
     /// Returns `None` for literal values.
     pub fn stripped_ident(&self, prefix: &str) -> Option<String> {
         match self {
-            UnionCaseValue::Ident { ident } => Some(strip_prefix(ident, prefix)),
-            UnionCaseValue::Literal { .. } => None,
+            UnionCaseValue::Ident(name) => Some(strip_prefix(name, prefix)),
+            UnionCaseValue::Literal(_) => None,
         }
     }
 }
 
 /// A size specification, either a literal number or a named constant.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Size {
-    Literal { literal: u32 },
-    Named { named: String },
+    Literal(u32),
+    Named(String),
 }
 
 // =============================================================================

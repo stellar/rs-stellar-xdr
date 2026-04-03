@@ -39,7 +39,7 @@ fn test_base_type_ref_bool() {
 #[test]
 fn test_base_type_ref_opaque_fixed() {
     assert_eq!(
-        base_type_ref(&Type::OpaqueFixed { size: Size::Literal { literal: 32 } }, None),
+        base_type_ref(&Type::OpaqueFixed(Size::Literal(32)), None),
         "[u8; 32]"
     );
 }
@@ -48,7 +48,7 @@ fn test_base_type_ref_opaque_fixed() {
 fn test_base_type_ref_opaque_fixed_named_size() {
     assert_eq!(
         base_type_ref(
-            &Type::OpaqueFixed { size: Size::Named { named: "KEY_SIZE".to_string() } },
+            &Type::OpaqueFixed(Size::Named("KEY_SIZE".to_string())),
             None
         ),
         "[u8; KeySize]"
@@ -58,33 +58,33 @@ fn test_base_type_ref_opaque_fixed_named_size() {
 #[test]
 fn test_base_type_ref_opaque_var_with_max() {
     assert_eq!(
-        base_type_ref(&Type::OpaqueVar { max_size: Some(Size::Literal { literal: 64 }) }, None),
+        base_type_ref(&Type::OpaqueVar(Some(Size::Literal(64))), None),
         "BytesM::<64>"
     );
 }
 
 #[test]
 fn test_base_type_ref_opaque_var_unbounded() {
-    assert_eq!(base_type_ref(&Type::OpaqueVar { max_size: None }, None), "BytesM");
+    assert_eq!(base_type_ref(&Type::OpaqueVar(None), None), "BytesM");
 }
 
 #[test]
 fn test_base_type_ref_string_with_max() {
     assert_eq!(
-        base_type_ref(&Type::String { max_size: Some(Size::Literal { literal: 100 }) }, None),
+        base_type_ref(&Type::String(Some(Size::Literal(100))), None),
         "StringM::<100>"
     );
 }
 
 #[test]
 fn test_base_type_ref_string_unbounded() {
-    assert_eq!(base_type_ref(&Type::String { max_size: None }, None), "StringM");
+    assert_eq!(base_type_ref(&Type::String(None), None), "StringM");
 }
 
 #[test]
 fn test_base_type_ref_ident() {
     assert_eq!(
-        base_type_ref(&Type::Ident { ident: "public_key".to_string() }, None),
+        base_type_ref(&Type::Ident("public_key".to_string()), None),
         "PublicKey"
     );
 }
@@ -92,7 +92,7 @@ fn test_base_type_ref_ident() {
 #[test]
 fn test_base_type_ref_optional() {
     assert_eq!(
-        base_type_ref(&Type::Optional { element_type: Box::new(Type::Int) }, None),
+        base_type_ref(&Type::Optional(Box::new(Type::Int)), None),
         "Option<i32>"
     );
 }
@@ -103,7 +103,7 @@ fn test_base_type_ref_array() {
         base_type_ref(
             &Type::Array {
                 element_type: Box::new(Type::UnsignedInt),
-                size: Size::Literal { literal: 4 },
+                size: Size::Literal(4),
             },
             None
         ),
@@ -117,7 +117,7 @@ fn test_base_type_ref_var_array_with_max() {
         base_type_ref(
             &Type::VarArray {
                 element_type: Box::new(Type::Int),
-                max_size: Some(Size::Literal { literal: 10 }),
+                max_size: Some(Size::Literal(10)),
             },
             None
         ),
@@ -143,10 +143,10 @@ fn test_base_type_ref_var_array_unbounded() {
 fn test_base_type_ref_nested_optional_array() {
     assert_eq!(
         base_type_ref(
-            &Type::Optional { element_type: Box::new(Type::Array {
+            &Type::Optional(Box::new(Type::Array {
                 element_type: Box::new(Type::UnsignedHyper),
-                size: Size::Literal { literal: 2 },
-            }) },
+                size: Size::Literal(2),
+            })),
             None
         ),
         "Option<[u64; 2]>"
@@ -155,13 +155,13 @@ fn test_base_type_ref_nested_optional_array() {
 
 #[test]
 fn test_size_to_string_literal() {
-    assert_eq!(size_to_string(&Size::Literal { literal: 32 }), "32");
+    assert_eq!(size_to_string(&Size::Literal(32)), "32");
 }
 
 #[test]
 fn test_size_to_string_named() {
     assert_eq!(
-        size_to_string(&Size::Named { named: "MAX_SIZE".to_string() }),
+        size_to_string(&Size::Named("MAX_SIZE".to_string())),
         "MaxSize"
     );
 }

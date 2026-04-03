@@ -608,11 +608,11 @@ impl Parser {
                     let value = match self.peek().clone() {
                         Token::Ident(name) => {
                             self.advance();
-                            UnionCaseValue::Ident { ident: name }
+                            UnionCaseValue::Ident(name)
                         }
                         Token::IntLiteral((value, _)) => {
                             self.advance();
-                            UnionCaseValue::Literal { literal: self.try_i64_to_i32(value)? }
+                            UnionCaseValue::Literal(self.try_i64_to_i32(value)?)
                         }
                         other => {
                             return Err(self.unexpected_token_error("case value".to_string(), other))
@@ -749,7 +749,7 @@ impl Parser {
         self.extracted_definitions
             .push(Definition::Struct(struct_def));
 
-        Ok((Type::Ident { ident: struct_name }, field_name))
+        Ok((Type::Ident(struct_name), field_name))
     }
 
     /// Parse a type that must be a regular type (not an anonymous union).
@@ -840,12 +840,12 @@ impl Parser {
                 // Handle built-in type aliases
                 let base_type = match name.as_str() {
                     "TRUE" | "FALSE" => Type::Bool,
-                    _ => Type::Ident { ident: name },
+                    _ => Type::Ident(name),
                 };
                 // Check for optional type suffix (Type* field)
                 if *self.peek() == Token::Star {
                     self.advance();
-                    Ok(ParsedType::Type(Type::Optional { element_type: Box::new(base_type) }))
+                    Ok(ParsedType::Type(Type::Optional(Box::new(base_type))))
                 } else {
                     Ok(ParsedType::Type(base_type))
                 }
@@ -864,8 +864,8 @@ impl Parser {
                 // Special case: opaque name[size] or string name[size]
                 // means fixed opaque/string, not an array of opaque/string
                 match base {
-                    Type::OpaqueVar { max_size: None } => Ok(Type::OpaqueFixed { size }),
-                    Type::String { max_size: None } => Ok(Type::OpaqueFixed { size }), // string with fixed size is opaque
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
+                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
                     _ => Ok(Type::Array {
                         element_type: Box::new(base),
                         size,
@@ -884,8 +884,8 @@ impl Parser {
                 // Special case: opaque name<max> or string name<max>
                 // means variable opaque/string with max, not a var array
                 match base {
-                    Type::OpaqueVar { max_size: None } => Ok(Type::OpaqueVar { max_size: max }),
-                    Type::String { max_size: None } => Ok(Type::String { max_size: max }),
+                    Type::OpaqueVar(None) => Ok(Type::OpaqueVar(max)),
+                    Type::String(None) => Ok(Type::String(max)),
                     _ => Ok(Type::VarArray {
                         element_type: Box::new(base),
                         max_size: max,
@@ -895,7 +895,7 @@ impl Parser {
             Token::Star => {
                 // Optional: type *name
                 self.advance();
-                Ok(Type::Optional { element_type: Box::new(base) })
+                Ok(Type::Optional(Box::new(base)))
             }
             _ => Ok(base),
         }
@@ -908,7 +908,7 @@ impl Parser {
                 self.advance();
                 let size = self.parse_size()?;
                 self.expect(Token::RBracket)?;
-                Ok(Type::OpaqueFixed { size })
+                Ok(Type::OpaqueFixed(size))
             }
             Token::LAngle => {
                 // Variable: opaque<max> or opaque<>
@@ -919,11 +919,11 @@ impl Parser {
                     Some(self.parse_size()?)
                 };
                 self.expect(Token::RAngle)?;
-                Ok(Type::OpaqueVar { max_size: max })
+                Ok(Type::OpaqueVar(max))
             }
             _ => {
                 // Bare opaque - variable with no max (rare)
-                Ok(Type::OpaqueVar { max_size: None })
+                Ok(Type::OpaqueVar(None))
             }
         }
     }
@@ -938,9 +938,9 @@ impl Parser {
                     Some(self.parse_size()?)
                 };
                 self.expect(Token::RAngle)?;
-                Ok(Type::String { max_size: max })
+                Ok(Type::String(max))
             }
-            _ => Ok(Type::String { max_size: None }),
+            _ => Ok(Type::String(None)),
         }
     }
 
@@ -948,11 +948,11 @@ impl Parser {
         match self.peek().clone() {
             Token::IntLiteral((value, _)) => {
                 self.advance();
-                Ok(Size::Literal { literal: self.try_i64_to_u32(value)? })
+                Ok(Size::Literal(self.try_i64_to_u32(value)?))
             }
             Token::Ident(name) => {
                 self.advance();
-                Ok(Size::Named { named: name })
+                Ok(Size::Named(name))
             }
             other => {
                 Err(self.unexpected_token_error("size (integer or identifier)".to_string(), other))
@@ -1168,7 +1168,7 @@ impl Parser {
             .push(Definition::Union(union_def));
 
         // Return a reference to the extracted type
-        Type::Ident { ident: union_name }
+        Type::Ident(union_name)
     }
 
     /// Resolve an enum value reference, searching the current enum members

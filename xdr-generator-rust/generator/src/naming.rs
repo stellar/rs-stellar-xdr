@@ -61,7 +61,7 @@ pub(crate) fn case_value(
             format!("{discriminant_type}::{name}")
         };
         (name, val)
-    } else if let UnionCaseValue::Literal { literal: n } = value {
+    } else if let UnionCaseValue::Literal(n) = value {
         let case_name = format!("V{n}");
         let val = if is_builtin {
             n.to_string()

@@ -1,6 +1,7 @@
 //! CLI entry point for the XDR code generator.
 
 mod generator;
+mod ir;
 mod naming;
 mod options;
 mod output;
@@ -46,11 +47,11 @@ struct Args {
     #[arg(long, value_delimiter = ',')]
     no_display_fromstr: Vec<String>,
 
-    /// Feature to enable for cfg resolution (restricted to --json-ast).
+    /// Features to enable for cfg resolution (restricted to --json-ast).
     /// When specified, cfg expressions are evaluated and filtered before emission.
     /// Without this flag, all definitions are included with cfg annotations intact.
-    #[arg(long)]
-    feature: Option<String>,
+    #[arg(long, value_delimiter = ',')]
+    feature: Vec<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -60,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("at least one of --output or --json-ast must be specified".into());
     }
 
-    if args.feature.is_some() && args.json_ast.is_none() {
+    if !args.feature.is_empty() && args.json_ast.is_none() {
         return Err("--feature can only be used with --json-ast".into());
     }
 
@@ -84,29 +85,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Output JSON AST if requested
     if let Some(json_path) = &args.json_ast {
         let mut ir_spec = spec.clone();
-        let resolved_features = if let Some(ref feature) = args.feature {
-            let feature_lower = feature.to_lowercase();
-            let features: HashSet<String> =
-                std::iter::once(feature_lower.clone()).collect();
+        let resolved_features: Vec<String> = args.feature.iter()
+            .map(|f| f.to_lowercase())
+            .collect();
+        if !resolved_features.is_empty() {
+            let features: HashSet<String> = resolved_features.iter().cloned().collect();
             filter_spec(&mut ir_spec, &features);
-            vec![feature_lower]
-        } else {
-            Vec::new()
-        };
+        }
 
         let type_info = xdr_parser::types::TypeInfo::build(&ir_spec, &|name| name.to_string());
         let computed = type_info.compute_properties();
-        let ir = serde_json::json!({
-            "resolved_features": &resolved_features,
-            "spec": &ir_spec,
-            "computed": &computed,
-        });
-        let json = serde_json::to_string_pretty(&ir)?;
+        let definitions = ir::build_definitions(&ir_spec, &computed);
+
+        let output = ir::IR {
+            version: 1,
+            files: ir_spec.files.iter().map(|f| ir::XdrFile {
+                name: f.name.clone(),
+                sha256: f.sha256.clone(),
+            }).collect(),
+            resolved_features,
+            definitions,
+        };
+        let json = serde_json::to_string_pretty(&output)?;
         fs::write(json_path, json)?;
         eprintln!(
-            "JSON AST: {} ({} types)",
+            "JSON AST: {} ({} definitions)",
             json_path.display(),
-            computed.types.len(),
+            output.definitions.len(),
         );
     }
 

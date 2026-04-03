@@ -505,6 +505,7 @@ dependencies = [
  "clap",
  "heck",
  "pretty_assertions",
+ "serde",
  "serde_json",
  "xdr-parser",
 ]
@@ -515,7 +516,6 @@ version = "0.1.0"
 dependencies = [
  "heck",
  "logos",
- "serde",
  "sha2",
  "thiserror",
 ]

@@ -392,6 +392,15 @@ impl Parser {
                 _ => {}
             }
 
+            // Skip a leading comma (e.g. when the comma is inside an #ifdef block)
+            if *self.peek() == Token::Comma {
+                self.advance();
+                if *self.peek() == Token::RBrace {
+                    break;
+                }
+                continue;
+            }
+
             let member_name = self.expect_ident()?;
             self.expect(Token::Eq)?;
 
@@ -423,8 +432,8 @@ impl Parser {
                     }
                 }
                 Token::RBrace => break,
-                // Allow #else/#endif directly after a member without a comma
-                Token::EndIf | Token::Else => {}
+                // Allow #ifdef/#else/#endif directly after a member without a comma
+                Token::IfDef(_) | Token::EndIf | Token::Else => {}
                 other => {
                     return Err(self.unexpected_token_error(", or }".to_string(), other.clone()))
                 }

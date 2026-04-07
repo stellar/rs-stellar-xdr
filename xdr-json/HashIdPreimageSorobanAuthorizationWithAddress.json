@@ -1,12 +1,42 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "SorobanAuthorizationEntries",
-  "description": "SorobanAuthorizationEntries is an XDR Typedef defined as:\n\n```text typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>; ```",
-  "type": "array",
-  "items": {
-    "$ref": "#/definitions/SorobanAuthorizationEntry"
+  "title": "HashIdPreimageSorobanAuthorizationWithAddress",
+  "description": "HashIdPreimageSorobanAuthorizationWithAddress is an XDR NestedStruct defined as:\n\n```text struct { Hash networkID; int64 nonce; uint32 signatureExpirationLedger; SCAddress address; SorobanAuthorizedInvocation invocation; } ```",
+  "type": "object",
+  "required": [
+    "address",
+    "invocation",
+    "network_id",
+    "nonce",
+    "signature_expiration_ledger"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "address": {
+      "$ref": "#/definitions/ScAddress"
+    },
+    "invocation": {
+      "$ref": "#/definitions/SorobanAuthorizedInvocation"
+    },
+    "network_id": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "nonce": {
+      "type": "string"
+    },
+    "signature_expiration_ledger": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
   },
-  "maxItems": 4294967295,
+  "unevaluatedProperties": false,
   "definitions": {
     "AccountId": {
       "type": "string"
@@ -694,48 +724,6 @@
       },
       "maxItems": 4294967295
     },
-    "SorobanAddressCredentials": {
-      "description": "SorobanAddressCredentials is an XDR Struct defined as:\n\n```text struct SorobanAddressCredentials { SCAddress address; int64 nonce; uint32 signatureExpirationLedger; SCVal signature; }; ```",
-      "type": "object",
-      "required": [
-        "address",
-        "nonce",
-        "signature",
-        "signature_expiration_ledger"
-      ],
-      "properties": {
-        "address": {
-          "$ref": "#/definitions/ScAddress"
-        },
-        "nonce": {
-          "type": "string"
-        },
-        "signature": {
-          "$ref": "#/definitions/ScVal"
-        },
-        "signature_expiration_ledger": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        }
-      }
-    },
-    "SorobanAuthorizationEntry": {
-      "description": "SorobanAuthorizationEntry is an XDR Struct defined as:\n\n```text struct SorobanAuthorizationEntry { SorobanCredentials credentials; SorobanAuthorizedInvocation rootInvocation; }; ```",
-      "type": "object",
-      "required": [
-        "credentials",
-        "root_invocation"
-      ],
-      "properties": {
-        "credentials": {
-          "$ref": "#/definitions/SorobanCredentials"
-        },
-        "root_invocation": {
-          "$ref": "#/definitions/SorobanAuthorizedInvocation"
-        }
-      }
-    },
     "SorobanAuthorizedFunction": {
       "description": "SorobanAuthorizedFunction is an XDR Union defined as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; // This variant of auth payload for creating new contract instances // doesn't allow specifying the constructor arguments, creating contracts // with constructors that take arguments is only possible by authorizing // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` // (protocol 22+). case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; // This variant of auth payload for creating new contract instances // is only accepted in and after protocol 22. It allows authorizing the // contract constructor arguments. case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN: CreateContractArgsV2 createContractV2HostFn; }; ```",
       "oneOf": [
@@ -793,28 +781,6 @@
           "maxItems": 4294967295
         }
       }
-    },
-    "SorobanCredentials": {
-      "description": "SorobanCredentials is an XDR Union defined as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; #ifdef CAP_0071 case SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES: SorobanAddressCredentialsWithDelegates addressWithDelegates; #endif }; ```",
-      "oneOf": [
-        {
-          "type": "string",
-          "enum": [
-            "source_account"
-          ]
-        },
-        {
-          "type": "object",
-          "required": [
-            "address"
-          ],
-          "properties": {
-            "address": {
-              "$ref": "#/definitions/SorobanAddressCredentials"
-            }
-          }
-        }
-      ]
     },
     "StringM<32>": {
       "type": "string",

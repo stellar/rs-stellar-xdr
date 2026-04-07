@@ -8,6 +8,10 @@ use super::*;
 /// {
 ///     SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,
 ///     SOROBAN_CREDENTIALS_ADDRESS = 1
+/// #ifdef CAP_0071
+///     ,
+///     SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 2
+/// #endif
 /// };
 /// ```
 ///
@@ -26,12 +30,16 @@ pub enum SorobanCredentialsType {
     #[cfg_attr(feature = "alloc", default)]
     SourceAccount = 0,
     Address = 1,
+    #[cfg(feature = "cap_0071")]
+    AddressWithDelegates = 2,
 }
 
 impl SorobanCredentialsType {
     const _VARIANTS: &[SorobanCredentialsType] = &[
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
+        #[cfg(feature = "cap_0071")]
+        SorobanCredentialsType::AddressWithDelegates,
     ];
     pub const VARIANTS: [SorobanCredentialsType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -42,7 +50,12 @@ impl SorobanCredentialsType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["SourceAccount", "Address"];
+    const _VARIANTS_STR: &[&str] = &[
+        "SourceAccount",
+        "Address",
+        #[cfg(feature = "cap_0071")]
+        "AddressWithDelegates",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -58,6 +71,8 @@ impl SorobanCredentialsType {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address => "Address",
+            #[cfg(feature = "cap_0071")]
+            Self::AddressWithDelegates => "AddressWithDelegates",
         }
     }
 
@@ -95,6 +110,8 @@ impl TryFrom<i32> for SorobanCredentialsType {
         let e = match i {
             0 => SorobanCredentialsType::SourceAccount,
             1 => SorobanCredentialsType::Address,
+            #[cfg(feature = "cap_0071")]
+            2 => SorobanCredentialsType::AddressWithDelegates,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

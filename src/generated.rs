@@ -23,55 +23,55 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     (
         "xdr/Stellar-SCP.x",
-        "6aed428fb6c2d000f5bc1eef0ba685d6108f3faa96208ffa588c0e2990813939",
+        "41ff1f6a3de9fcb07372953e73a9e49071e278081e411a62e69683ad3591a218",
     ),
     (
         "xdr/Stellar-contract-config-setting.x",
-        "a034a3eb4d8b94f5c4c573fe14a1afc548aa316e1e897aa70e5a1688aada3c77",
+        "56eb21162887b96ec423cab36e924ab085d52f885b7d41bcd3cd040e8dfe616d",
     ),
     (
         "xdr/Stellar-contract-env-meta.x",
-        "75a271414d852096fea3283c63b7f2a702f2905f78fc28eb60ec7d7bd366a780",
+        "e1f0595afd6249879ea4898f0ccb2293025c21db3a6590178ba129bc1e99d8c9",
     ),
     (
         "xdr/Stellar-contract-meta.x",
-        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
+        "5f2ad607144ef4dcc44c6d4fbf3c10cc07d716e707281a8789fb958c83904e16",
     ),
     (
         "xdr/Stellar-contract-spec.x",
-        "7d99679155f6ce029f4f2bd8e1bf09524ef2f3e4ca8973265085cfcfdbdae987",
+        "f0655f82e0a28a79e067c02f427cc709db1e4323a50c9b85f730f812b9612dbd",
     ),
     (
         "xdr/Stellar-contract.x",
-        "dce61df115c93fef5bb352beac1b504a518cb11dcb8ee029b1bb1b5f8fe52982",
+        "5d8063e6ddc09be5c22569f1668720b5c705505a70e9224f00748fa58aab2fc5",
     ),
     (
         "xdr/Stellar-exporter.x",
-        "a00c83d02e8c8382e06f79a191f1fb5abd097a4bbcab8481c67467e3270e0529",
+        "d36ec815cceb534e3f565448aa79ba8dd7f6be6485de050dfb62613eb05b11a4",
     ),
     (
         "xdr/Stellar-internal.x",
-        "227835866c1b2122d1eaf28839ba85ea7289d1cb681dda4ca619c2da3d71fe00",
+        "81f9804d6a5f88afdb62e8d00506c348e45c7b70012d781d14ef22ddc7414833",
     ),
     (
         "xdr/Stellar-ledger-entries.x",
-        "e492a89d5391c2881b076a530588308a2bd98feb4fb966900078d8a7c51190d9",
+        "f3407720eb6348b141cf1d03993c9ef2a8896521fc711bdc212bf32ba92e63c9",
     ),
     (
         "xdr/Stellar-ledger.x",
-        "cf936606885dd265082e553aa433c2cf47b720b6d58839b154cf71096b885d1e",
+        "93cdd4dd597d9f0b271762c2f3c81be8562e2004f4f019f539ca7d7e92167099",
     ),
     (
         "xdr/Stellar-overlay.x",
-        "8c9b9c13c86fa4672f03d741705b41e7221be0fc48e1ea6eeb1ba07d31ec0723",
+        "ad2ea6b317d8b0e72bf8b08b6a4b11dc81352afb7bf6409dc4c84e48dd76b092",
     ),
     (
         "xdr/Stellar-transaction.x",
-        "7929ab5e0ce30b35b9b9093e8027697e39b500dc74bd1cb5f350215b1d7f5abb",
+        "52815125acb35d8aa7bfe979df1f6028a81c25cef13d2f7645b23b299792bede",
     ),
     (
         "xdr/Stellar-types.x",
-        "f3a360cbb07f24637ead188e885a0b4a47b903ca475f9798be5fa12453075e28",
+        "1bf41da09307489c04c454d9081a3ddcd52d04ed9af173abeb308fe4907dc590",
     ),
 ];
 

@@ -16,12 +16,18 @@ use thiserror::Error;
 /// it came from via `file_index`.
 ///
 /// File SHA256 hashes are computed and stored in `XdrSpec::files`.
+///
+/// Hashes are computed after stripping `#ifdef`/`#endif` blocks and removing
+/// all whitespace, so they are stable regardless of feature ifdefs or
+/// formatting differences. This ensures compatibility with builds that may
+/// use the same base XDR definitions with different feature flags enabled.
 pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
     let mut spec = XdrSpec::default();
     let mut global_values = HashMap::new();
 
     for (file_index, (name, content)) in files.iter().enumerate() {
-        let hash = format!("{:x}", Sha256::digest(content.as_bytes()));
+        let stripped = strip_ifdef_blocks_and_whitespace(content);
+        let hash = format!("{:x}", Sha256::digest(stripped.as_bytes()));
         spec.files.push(XdrFile {
             name: name.to_string(),
             sha256: hash,
@@ -50,6 +56,29 @@ pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
 /// Convenience wrapper around `parse_files` for single-file use.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     parse_files(&[("", source)])
+}
+
+/// Strip `#ifdef`/`#endif` blocks (inclusive) and remove all whitespace from
+/// the input string. This produces a canonical representation of the base XDR
+/// content that is stable regardless of feature ifdefs or formatting.
+fn strip_ifdef_blocks_and_whitespace(content: &str) -> String {
+    let mut result = String::new();
+    let mut skip = false;
+    for line in content.lines() {
+        if line.trim_start().starts_with("#ifdef") {
+            skip = true;
+            continue;
+        }
+        if line.trim_start().starts_with("#endif") {
+            skip = false;
+            continue;
+        }
+        if !skip {
+            result.push_str(line);
+        }
+    }
+    result.retain(|c| !c.is_whitespace());
+    result
 }
 
 /// Set the file_index on a definition.

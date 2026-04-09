@@ -790,7 +790,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
-            cfg: None,
+            cfg: self.current_cfg(),
         };
 
         self.extracted_definitions
@@ -1192,7 +1192,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
-            cfg: None,
+            cfg: self.current_cfg(),
         };
 
         // Fix up parent relationships for any definitions extracted during union parsing

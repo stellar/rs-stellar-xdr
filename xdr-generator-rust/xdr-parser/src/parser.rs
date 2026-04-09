@@ -58,18 +58,25 @@ pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     parse_files(&[("", source)])
 }
 
-/// Strip `#ifdef`/`#endif` blocks (inclusive) and remove all whitespace from
-/// the input string. This produces a canonical representation of the base XDR
-/// content that is stable regardless of feature ifdefs or formatting.
+/// Strip `#ifdef`/`#else`/`#endif` blocks and remove all whitespace from the
+/// input string. Content between `#ifdef` and `#else` (the feature-on branch)
+/// is removed, while content between `#else` and `#endif` (the feature-off
+/// branch) is kept, since it represents the base types when no features are
+/// enabled. The directive lines themselves are always removed.
 fn strip_ifdef_blocks_and_whitespace(content: &str) -> String {
     let mut result = String::new();
     let mut skip = false;
     for line in content.lines() {
-        if line.trim_start().starts_with("#ifdef") {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("#ifdef") {
             skip = true;
             continue;
         }
-        if line.trim_start().starts_with("#endif") {
+        if trimmed.starts_with("#else") {
+            skip = false;
+            continue;
+        }
+        if trimmed.starts_with("#endif") {
             skip = false;
             continue;
         }

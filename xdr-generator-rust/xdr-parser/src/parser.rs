@@ -16,12 +16,18 @@ use thiserror::Error;
 /// it came from via `file_index`.
 ///
 /// File SHA256 hashes are computed and stored in `XdrSpec::files`.
+///
+/// Hashes are computed after stripping `#ifdef`/`#endif` blocks and removing
+/// all whitespace, so they are stable regardless of feature ifdefs or
+/// formatting differences. This ensures compatibility with builds that may
+/// use the same base XDR definitions with different feature flags enabled.
 pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
     let mut spec = XdrSpec::default();
     let mut global_values = HashMap::new();
 
     for (file_index, (name, content)) in files.iter().enumerate() {
-        let hash = format!("{:x}", Sha256::digest(content.as_bytes()));
+        let stripped = strip_ifdef_blocks_and_whitespace(content);
+        let hash = format!("{:x}", Sha256::digest(stripped.as_bytes()));
         spec.files.push(XdrFile {
             name: name.to_string(),
             sha256: hash,
@@ -50,6 +56,36 @@ pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
 /// Convenience wrapper around `parse_files` for single-file use.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     parse_files(&[("", source)])
+}
+
+/// Strip `#ifdef`/`#else`/`#endif` blocks and remove all whitespace from the
+/// input string. Content between `#ifdef` and `#else` (the feature-on branch)
+/// is removed, while content between `#else` and `#endif` (the feature-off
+/// branch) is kept, since it represents the base types when no features are
+/// enabled. The directive lines themselves are always removed.
+fn strip_ifdef_blocks_and_whitespace(content: &str) -> String {
+    let mut result = String::new();
+    let mut skip = false;
+    for line in content.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("#ifdef") {
+            skip = true;
+            continue;
+        }
+        if trimmed.starts_with("#else") {
+            skip = false;
+            continue;
+        }
+        if trimmed.starts_with("#endif") {
+            skip = false;
+            continue;
+        }
+        if !skip {
+            result.push_str(line);
+        }
+    }
+    result.retain(|c| !c.is_whitespace());
+    result
 }
 
 /// Set the file_index on a definition.
@@ -392,6 +428,15 @@ impl Parser {
                 _ => {}
             }
 
+            // Skip a leading comma (e.g. when the comma is inside an #ifdef block)
+            if *self.peek() == Token::Comma {
+                self.advance();
+                if *self.peek() == Token::RBrace {
+                    break;
+                }
+                continue;
+            }
+
             let member_name = self.expect_ident()?;
             self.expect(Token::Eq)?;
 
@@ -423,8 +468,8 @@ impl Parser {
                     }
                 }
                 Token::RBrace => break,
-                // Allow #else/#endif directly after a member without a comma
-                Token::EndIf | Token::Else => {}
+                // Allow #ifdef/#else/#endif directly after a member without a comma
+                Token::IfDef(_) | Token::EndIf | Token::Else => {}
                 other => {
                     return Err(self.unexpected_token_error(", or }".to_string(), other.clone()))
                 }
@@ -745,7 +790,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
-            cfg: None,
+            cfg: self.current_cfg(),
         };
 
         self.extracted_definitions
@@ -1147,7 +1192,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
-            cfg: None,
+            cfg: self.current_cfg(),
         };
 
         // Fix up parent relationships for any definitions extracted during union parsing

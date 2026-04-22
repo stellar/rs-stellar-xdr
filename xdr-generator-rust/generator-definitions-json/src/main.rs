@@ -24,9 +24,14 @@ struct Args {
     #[arg(short, long, required = true)]
     output: PathBuf,
 
-    /// Features to enable for cfg resolution.
-    /// When specified, cfg expressions are evaluated and filtered before emission.
-    /// Without this flag, all definitions are included with cfg annotations intact.
+    /// Feature set for cfg resolution. Items whose cfg evaluates to true
+    /// under this feature set are kept; others are dropped. Accepts
+    /// comma-separated values or may be repeated (e.g. --feature curr,next
+    /// or --feature curr --feature next).
+    ///
+    /// By default the feature set is empty: items gated on any feature are
+    /// dropped (`not(feature = "X")` still evaluates to true with an empty
+    /// set and is kept).
     #[arg(long, value_delimiter = ',')]
     feature: Vec<String>,
 }
@@ -51,13 +56,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse the XDR files
     let mut spec = xdr_parser::parser::parse_files(&file_refs)?;
 
-    let resolved_features: Vec<String> = args.feature.iter()
-        .map(|f| f.to_lowercase())
-        .collect();
-    if !resolved_features.is_empty() {
-        let features: HashSet<String> = resolved_features.iter().cloned().collect();
-        filter_spec(&mut spec, &features);
-    }
+    let features: HashSet<String> = args.feature.iter().map(|f| f.to_lowercase()).collect();
+    let mut resolved_features: Vec<String> = features.iter().cloned().collect();
+    resolved_features.sort();
+    filter_spec(&mut spec, &features);
 
     let output = ir::build(&spec, resolved_features);
     let json = serde_json::to_string_pretty(&output)?;
@@ -72,7 +74,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Filter an XDR spec in-place: remove definitions and sub-elements whose cfg
-/// evaluates to false, then clear all remaining cfg annotations.
+/// evaluates to false under the given feature set, then clear all remaining
+/// cfg annotations.
 fn filter_spec(spec: &mut XdrSpec, features: &HashSet<String>) {
     filter_definitions(&mut spec.definitions, features);
     for ns in &mut spec.namespaces {

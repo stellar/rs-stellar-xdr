@@ -54,9 +54,9 @@ xdr-json: src/generated.rs
 
 xdr-definitions-json: $(sort $(wildcard xdr/*.x))
 	mkdir -p xdr-definitions-json
-	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
+	cargo run --manifest-path xdr-generator-rust/generator-definitions-json/Cargo.toml -- \
 		$(addprefix --input ,$(sort $(wildcard xdr/*.x))) \
-		--json-ast xdr-definitions-json/xdr.json
+		--output xdr-definitions-json/xdr.json
 
 clean:
 	rm -f src/generated.rs

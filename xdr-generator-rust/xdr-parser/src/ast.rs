@@ -136,6 +136,16 @@ impl CfgExpr {
         }
     }
 
+    /// Evaluate this expression against a set of enabled features.
+    /// Feature names are compared case-insensitively.
+    pub fn evaluate(&self, features: &std::collections::HashSet<String>) -> bool {
+        match self {
+            CfgExpr::Feature(name) => features.contains(&name.to_lowercase()),
+            CfgExpr::Not(inner) => !inner.evaluate(features),
+            CfgExpr::All(exprs) => exprs.iter().all(|e| e.evaluate(features)),
+        }
+    }
+
     /// Render as a Rust `#[cfg(...)]` attribute string (without the outer `#[cfg()]`).
     ///
     /// Feature names are lowercased to follow the Cargo convention that feature
@@ -398,6 +408,9 @@ pub struct UnionDiscriminant {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
+    /// The declaration name for this arm (e.g., "v0" from "LedgerCloseMetaV0 v0;").
+    /// `None` for void arms.
+    pub name: Option<String>,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
     pub cfg: Option<CfgExpr>,

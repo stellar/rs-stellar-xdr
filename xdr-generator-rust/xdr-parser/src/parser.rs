@@ -676,11 +676,11 @@ impl Parser {
             }
         }
 
-        // Parse the arm type
-        let type_ = if *self.peek() == Token::Void {
+        // Parse the arm type and field name
+        let (type_, arm_name) = if *self.peek() == Token::Void {
             self.advance();
             self.expect(Token::Semi)?;
-            None
+            (None, None)
         } else if *self.peek() == Token::Struct {
             // Inline struct in a union arm. XDR syntax:
             //   case FOO:  struct { int x; } fieldName;
@@ -693,16 +693,13 @@ impl Parser {
             //   Pass 2 (rewind):    rewind into the struct body and parse
             //           members with root_parent set to the generated name,
             //           then skip forward past the already-consumed tokens.
-            Some(self.parse_inline_struct()?)
+            let (t, field_name) = self.parse_inline_struct()?;
+            (Some(t), Some(field_name))
         } else {
             let ctx = self.type_parse_context();
             let parsed = self.parse_type_or_anon_union()?;
             let type_end_byte = self.prev_end_byte();
 
-            // The field name is consumed but not stored in UnionArm — the
-            // generated Rust enum variant names come from the case values, not
-            // the field name. The field name is only used below for naming
-            // extracted anonymous unions.
             let field_name = self.expect_ident()?;
 
             let type_ = match parsed {
@@ -717,21 +714,22 @@ impl Parser {
             };
             self.expect(Token::Semi)?;
 
-            Some(type_)
+            (Some(type_), Some(field_name))
         };
 
         Ok(UnionArm {
             cases,
+            name: arm_name,
             type_,
             cfg: None,
         })
     }
 
     /// Parse an inline struct definition inside a union arm and extract it as a
-    /// separate named type. Returns a `Type::Ident` referencing the extracted struct.
+    /// separate named type. Returns `(Type::Ident, field_name)`.
     ///
     /// Expects the parser to be positioned at the `struct` keyword.
-    fn parse_inline_struct(&mut self) -> Result<Type, ParseError> {
+    fn parse_inline_struct(&mut self) -> Result<(Type, String), ParseError> {
         // Record position before 'struct' keyword for source extraction
         let source_start_byte = self.current_start_byte();
 
@@ -796,7 +794,7 @@ impl Parser {
         self.extracted_definitions
             .push(Definition::Struct(struct_def));
 
-        Ok(Type::Ident(struct_name))
+        Ok((Type::Ident(struct_name), field_name))
     }
 
     /// Parse a type that must be a regular type (not an anonymous union).

@@ -2,5 +2,6 @@
 members = [
     "xdr-parser",
     "generator",
+    "generator-definitions-json",
 ]
 resolver = "2"

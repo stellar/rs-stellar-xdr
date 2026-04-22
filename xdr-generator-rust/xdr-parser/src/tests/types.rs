@@ -14,8 +14,8 @@ fn test_union_arm_name() {
     let u = spec.definitions.iter().find(|d| d.name() == "MyUnion").unwrap();
     if let crate::ast::Definition::Union(union_def) = u {
         assert_eq!(union_def.arms.len(), 2);
-        assert_eq!(union_def.arms[0].name, "myField");
-        assert_eq!(union_def.arms[1].name, ""); // void arm
+        assert_eq!(union_def.arms[0].name.as_deref(), Some("myField"));
+        assert_eq!(union_def.arms[1].name, None); // void arm
     } else {
         panic!("expected Union");
     }
@@ -32,7 +32,7 @@ fn test_inline_struct_arm_name() {
     let spec = parse(input).unwrap();
     let u = spec.definitions.iter().find(|d| d.name() == "Outer").unwrap();
     if let crate::ast::Definition::Union(union_def) = u {
-        assert_eq!(union_def.arms[0].name, "myInlineField");
+        assert_eq!(union_def.arms[0].name.as_deref(), Some("myInlineField"));
     } else {
         panic!("expected Union");
     }
@@ -54,9 +54,9 @@ fn test_union_arm_name_multi_case() {
     let u = spec.definitions.iter().find(|d| d.name() == "U").unwrap();
     if let crate::ast::Definition::Union(union_def) = u {
         assert_eq!(union_def.arms[0].cases.len(), 2);
-        assert_eq!(union_def.arms[0].name, "sharedField");
+        assert_eq!(union_def.arms[0].name.as_deref(), Some("sharedField"));
         assert_eq!(union_def.arms[1].cases.len(), 1);
-        assert_eq!(union_def.arms[1].name, "");
+        assert_eq!(union_def.arms[1].name, None);
     } else {
         panic!("expected Union");
     }

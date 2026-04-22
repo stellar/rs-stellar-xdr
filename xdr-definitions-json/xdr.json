@@ -2229,7 +2229,7 @@
               "name": "SC_SPEC_TYPE_MUXED_ADDRESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -3463,7 +3463,7 @@
               "name": "CONTRACT_EXECUTABLE_STELLAR_ASSET"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -3736,7 +3736,7 @@
               "name": "SCV_VOID"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -3985,7 +3985,7 @@
               "name": "SCV_LEDGER_KEY_CONTRACT_INSTANCE"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -4438,7 +4438,7 @@
               "name": "ASSET_TYPE_NATIVE"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -4719,7 +4719,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -4795,7 +4795,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -4853,7 +4853,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -5031,7 +5031,7 @@
               "name": "ASSET_TYPE_NATIVE"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -5093,7 +5093,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -5139,7 +5139,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -5197,7 +5197,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -5303,7 +5303,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -5391,7 +5391,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -5486,7 +5486,7 @@
               "name": "CLAIM_PREDICATE_UNCONDITIONAL"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -5670,7 +5670,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -5716,7 +5716,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -6095,7 +6095,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -6182,7 +6182,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -6374,7 +6374,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -6896,7 +6896,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -7120,7 +7120,7 @@
               "name": "STELLAR_VALUE_BASIC"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -7225,7 +7225,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -7271,7 +7271,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -7899,7 +7899,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -7964,7 +7964,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -8017,7 +8017,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -8520,7 +8520,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -9098,7 +9098,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -11446,7 +11446,7 @@
               "name": "ASSET_TYPE_NATIVE"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -12406,7 +12406,7 @@
               "name": "SOROBAN_CREDENTIALS_SOURCE_ACCOUNT"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -12675,7 +12675,7 @@
               "name": "INFLATION"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -12775,7 +12775,7 @@
               "name": "END_SPONSORING_FUTURE_RESERVES"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -13231,7 +13231,7 @@
               "name": "MEMO_NONE"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -13439,7 +13439,7 @@
               "name": "PRECOND_NONE"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -13573,7 +13573,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -13638,7 +13638,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -13753,7 +13753,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -13906,7 +13906,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -14366,7 +14366,7 @@
               "name": "CREATE_ACCOUNT_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -14387,7 +14387,7 @@
               "name": "CREATE_ACCOUNT_ALREADY_EXIST"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -14461,7 +14461,7 @@
               "name": "PAYMENT_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -14502,7 +14502,7 @@
               "name": "PAYMENT_NO_ISSUER"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -14685,7 +14685,7 @@
               "name": "PATH_PAYMENT_STRICT_RECEIVE_LINE_FULL"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -14715,7 +14715,7 @@
               "name": "PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -14868,7 +14868,7 @@
               "name": "PATH_PAYMENT_STRICT_SEND_LINE_FULL"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -14898,7 +14898,7 @@
               "name": "PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15022,7 +15022,7 @@
               "name": "MANAGE_OFFER_DELETED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15130,7 +15130,7 @@
               "name": "MANAGE_SELL_OFFER_LOW_RESERVE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15273,7 +15273,7 @@
               "name": "MANAGE_BUY_OFFER_LOW_RESERVE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15351,7 +15351,7 @@
               "name": "SET_OPTIONS_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -15396,7 +15396,7 @@
               "name": "SET_OPTIONS_AUTH_REVOCABLE_REQUIRED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15466,7 +15466,7 @@
               "name": "CHANGE_TRUST_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -15503,7 +15503,7 @@
               "name": "CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15565,7 +15565,7 @@
               "name": "ALLOW_TRUST_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -15594,7 +15594,7 @@
               "name": "ALLOW_TRUST_LOW_RESERVE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15697,7 +15697,7 @@
               "name": "ACCOUNT_MERGE_IS_SPONSOR"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15778,7 +15778,7 @@
               "name": "INFLATION_NOT_TIME"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15832,7 +15832,7 @@
               "name": "MANAGE_DATA_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -15853,7 +15853,7 @@
               "name": "MANAGE_DATA_INVALID_NAME"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15895,7 +15895,7 @@
               "name": "BUMP_SEQUENCE_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -15904,7 +15904,7 @@
               "name": "BUMP_SEQUENCE_BAD_SEQ"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -15991,7 +15991,7 @@
               "name": "CREATE_CLAIMABLE_BALANCE_UNDERFUNDED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16053,7 +16053,7 @@
               "name": "CLAIM_CLAIMABLE_BALANCE_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16082,7 +16082,7 @@
               "name": "CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16132,7 +16132,7 @@
               "name": "BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16149,7 +16149,7 @@
               "name": "BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16191,7 +16191,7 @@
               "name": "END_SPONSORING_FUTURE_RESERVES_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16200,7 +16200,7 @@
               "name": "END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16258,7 +16258,7 @@
               "name": "REVOKE_SPONSORSHIP_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16283,7 +16283,7 @@
               "name": "REVOKE_SPONSORSHIP_MALFORMED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16337,7 +16337,7 @@
               "name": "CLAWBACK_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16358,7 +16358,7 @@
               "name": "CLAWBACK_UNDERFUNDED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16408,7 +16408,7 @@
               "name": "CLAWBACK_CLAIMABLE_BALANCE_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16425,7 +16425,7 @@
               "name": "CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16483,7 +16483,7 @@
               "name": "SET_TRUST_LINE_FLAGS_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16508,7 +16508,7 @@
               "name": "SET_TRUST_LINE_FLAGS_LOW_RESERVE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16578,7 +16578,7 @@
               "name": "LIQUIDITY_POOL_DEPOSIT_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16615,7 +16615,7 @@
               "name": "LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16677,7 +16677,7 @@
               "name": "LIQUIDITY_POOL_WITHDRAW_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16706,7 +16706,7 @@
               "name": "LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16793,7 +16793,7 @@
               "name": "INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16843,7 +16843,7 @@
               "name": "EXTEND_FOOTPRINT_TTL_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16860,7 +16860,7 @@
               "name": "EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -16910,7 +16910,7 @@
               "name": "RESTORE_FOOTPRINT_SUCCESS"
             }
           ],
-          "name": ""
+          "name": null
         },
         {
           "cases": [
@@ -16927,7 +16927,7 @@
               "name": "RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -17389,7 +17389,7 @@
               "name": "opTOO_MANY_SPONSORING"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -17583,7 +17583,7 @@
               "name": "txFROZEN_KEY_ACCESSED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -17606,7 +17606,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -17781,7 +17781,7 @@
               "name": "txFROZEN_KEY_ACCESSED"
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -17804,7 +17804,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },
@@ -17933,7 +17933,7 @@
               "value": 0
             }
           ],
-          "name": ""
+          "name": null
         }
       ]
     },

@@ -65,7 +65,7 @@ pub struct Union {
 #[derive(Serialize)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
-    pub name: String,
+    pub name: Option<String>,
     #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub type_: Option<TypeRef>,
 }

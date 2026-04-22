@@ -680,7 +680,7 @@ impl Parser {
         let (type_, arm_name) = if *self.peek() == Token::Void {
             self.advance();
             self.expect(Token::Semi)?;
-            (None, String::new())
+            (None, None)
         } else if *self.peek() == Token::Struct {
             // Inline struct in a union arm. XDR syntax:
             //   case FOO:  struct { int x; } fieldName;
@@ -694,7 +694,7 @@ impl Parser {
             //           members with root_parent set to the generated name,
             //           then skip forward past the already-consumed tokens.
             let (t, field_name) = self.parse_inline_struct()?;
-            (Some(t), field_name)
+            (Some(t), Some(field_name))
         } else {
             let ctx = self.type_parse_context();
             let parsed = self.parse_type_or_anon_union()?;
@@ -714,7 +714,7 @@ impl Parser {
             };
             self.expect(Token::Semi)?;
 
-            (Some(type_), field_name)
+            (Some(type_), Some(field_name))
         };
 
         Ok(UnionArm {

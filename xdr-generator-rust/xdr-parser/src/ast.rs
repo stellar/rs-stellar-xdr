@@ -409,8 +409,8 @@ pub struct UnionDiscriminant {
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
     /// The declaration name for this arm (e.g., "v0" from "LedgerCloseMetaV0 v0;").
-    /// Empty string for void arms.
-    pub name: String,
+    /// `None` for void arms.
+    pub name: Option<String>,
     /// The type for this arm. None means `void`.
     pub type_: Option<Type>,
     pub cfg: Option<CfgExpr>,

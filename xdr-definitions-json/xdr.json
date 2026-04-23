@@ -6807,10 +6807,6 @@
         {
           "name": "ENVELOPE_TYPE_SOROBAN_AUTHORIZATION",
           "value": 9
-        },
-        {
-          "name": "ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_WITH_ADDRESS",
-          "value": 10
         }
       ]
     },
@@ -12306,65 +12302,6 @@
       ]
     },
     {
-      "kind": "struct",
-      "name": "SorobanDelegateSignature",
-      "fixed_size": null,
-      "source": "struct SorobanDelegateSignature {\n    SCAddress address;\n    SCVal signature;\n    SorobanDelegateSignature nestedDelegates<>;\n};",
-      "file_index": 11,
-      "fields": [
-        {
-          "name": "address",
-          "type": {
-            "kind": "ref",
-            "name": "SCAddress"
-          }
-        },
-        {
-          "name": "signature",
-          "type": {
-            "kind": "ref",
-            "name": "SCVal"
-          }
-        },
-        {
-          "name": "nestedDelegates",
-          "type": {
-            "kind": "var_array",
-            "element": {
-              "kind": "ref",
-              "name": "SorobanDelegateSignature"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "kind": "struct",
-      "name": "SorobanAddressCredentialsWithDelegates",
-      "fixed_size": null,
-      "source": "struct SorobanAddressCredentialsWithDelegates\n{\n    SorobanAddressCredentials addressCredentials;\n    SorobanDelegateSignature delegates<>;\n};",
-      "file_index": 11,
-      "fields": [
-        {
-          "name": "addressCredentials",
-          "type": {
-            "kind": "ref",
-            "name": "SorobanAddressCredentials"
-          }
-        },
-        {
-          "name": "delegates",
-          "type": {
-            "kind": "var_array",
-            "element": {
-              "kind": "ref",
-              "name": "SorobanDelegateSignature"
-            }
-          }
-        }
-      ]
-    },
-    {
       "kind": "enum",
       "name": "SorobanCredentialsType",
       "source": "enum SorobanCredentialsType\n{\n    SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,\n    SOROBAN_CREDENTIALS_ADDRESS = 1\n#ifdef CAP_0071\n    ,\n    SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 2\n#endif\n};",
@@ -12378,10 +12315,6 @@
         {
           "name": "SOROBAN_CREDENTIALS_ADDRESS",
           "value": 1
-        },
-        {
-          "name": "SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES",
-          "value": 2
         }
       ]
     },
@@ -12419,19 +12352,6 @@
           "type": {
             "kind": "ref",
             "name": "SorobanAddressCredentials"
-          }
-        },
-        {
-          "cases": [
-            {
-              "value": 2,
-              "name": "SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES"
-            }
-          ],
-          "name": "addressWithDelegates",
-          "type": {
-            "kind": "ref",
-            "name": "SorobanAddressCredentialsWithDelegates"
           }
         }
       ]
@@ -13057,50 +12977,6 @@
       ]
     },
     {
-      "kind": "struct",
-      "name": "HashIDPreimageSorobanAuthorizationWithAddress",
-      "fixed_size": null,
-      "source": "struct\n    {\n        Hash networkID;\n        int64 nonce;\n        uint32 signatureExpirationLedger;\n        SCAddress address;\n        SorobanAuthorizedInvocation invocation;\n    }",
-      "file_index": 11,
-      "fields": [
-        {
-          "name": "networkID",
-          "type": {
-            "kind": "ref",
-            "name": "Hash"
-          }
-        },
-        {
-          "name": "nonce",
-          "type": {
-            "kind": "ref",
-            "name": "int64"
-          }
-        },
-        {
-          "name": "signatureExpirationLedger",
-          "type": {
-            "kind": "ref",
-            "name": "uint32"
-          }
-        },
-        {
-          "name": "address",
-          "type": {
-            "kind": "ref",
-            "name": "SCAddress"
-          }
-        },
-        {
-          "name": "invocation",
-          "type": {
-            "kind": "ref",
-            "name": "SorobanAuthorizedInvocation"
-          }
-        }
-      ]
-    },
-    {
       "kind": "union",
       "name": "HashIDPreimage",
       "fixed_size": null,
@@ -13164,19 +13040,6 @@
           "type": {
             "kind": "ref",
             "name": "HashIDPreimageSorobanAuthorization"
-          }
-        },
-        {
-          "cases": [
-            {
-              "value": 10,
-              "name": "ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_WITH_ADDRESS"
-            }
-          ],
-          "name": "sorobanAuthorizationWithAddress",
-          "type": {
-            "kind": "ref",
-            "name": "HashIDPreimageSorobanAuthorizationWithAddress"
           }
         }
       ]
@@ -18394,22 +18257,6 @@
           "type": {
             "kind": "ref",
             "name": "Hash"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "struct",
-      "name": "TestNextType",
-      "fixed_size": 4,
-      "source": "struct TestNextType\n{\n    int32 value;\n};",
-      "file_index": 12,
-      "fields": [
-        {
-          "name": "value",
-          "type": {
-            "kind": "ref",
-            "name": "int32"
           }
         }
       ]

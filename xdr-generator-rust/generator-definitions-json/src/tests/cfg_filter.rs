@@ -3,7 +3,7 @@ use xdr_parser::ast::{CfgExpr, Definition, XdrSpec};
 
 use crate::filter_spec;
 
-fn features(names: &[&str]) -> HashSet<String> {
+fn feature_set(names: &[&str]) -> HashSet<String> {
     names.iter().map(|s| s.to_lowercase()).collect()
 }
 
@@ -18,26 +18,26 @@ fn parse(input: &str) -> XdrSpec {
 #[test]
 fn test_evaluate_cfg_feature_present() {
     let expr = CfgExpr::Feature("NEXT".to_string());
-    assert!(expr.evaluate(&features(&["next"])));
+    assert!(expr.evaluate(&feature_set(&["next"])));
 }
 
 #[test]
 fn test_evaluate_cfg_feature_absent() {
     let expr = CfgExpr::Feature("NEXT".to_string());
-    assert!(!expr.evaluate(&features(&["other"])));
+    assert!(!expr.evaluate(&feature_set(&["other"])));
 }
 
 #[test]
 fn test_evaluate_cfg_feature_case_insensitive() {
     let expr = CfgExpr::Feature("Next".to_string());
-    assert!(expr.evaluate(&features(&["NEXT"])));
+    assert!(expr.evaluate(&feature_set(&["NEXT"])));
 }
 
 #[test]
 fn test_evaluate_cfg_not() {
     let expr = CfgExpr::Not(Box::new(CfgExpr::Feature("NEXT".to_string())));
-    assert!(expr.evaluate(&features(&["other"])));
-    assert!(!expr.evaluate(&features(&["next"])));
+    assert!(expr.evaluate(&feature_set(&["other"])));
+    assert!(!expr.evaluate(&feature_set(&["next"])));
 }
 
 #[test]
@@ -46,15 +46,15 @@ fn test_evaluate_cfg_all() {
         CfgExpr::Feature("A".to_string()),
         CfgExpr::Feature("B".to_string()),
     ]);
-    assert!(expr.evaluate(&features(&["a", "b"])));
-    assert!(!expr.evaluate(&features(&["a"])));
-    assert!(!expr.evaluate(&features(&["b"])));
+    assert!(expr.evaluate(&feature_set(&["a", "b"])));
+    assert!(!expr.evaluate(&feature_set(&["a"])));
+    assert!(!expr.evaluate(&feature_set(&["b"])));
 }
 
 #[test]
 fn test_evaluate_cfg_empty_features() {
     let expr = CfgExpr::Feature("X".to_string());
-    assert!(!expr.evaluate(&features(&[])));
+    assert!(!expr.evaluate(&feature_set(&[])));
 }
 
 // =============================================================================
@@ -77,8 +77,47 @@ fn test_def_cfg_evaluates_correctly() {
     "#,
     );
     let cfg = spec.definitions[0].cfg().unwrap();
-    assert!(cfg.evaluate(&features(&["next"])));
-    assert!(!cfg.evaluate(&features(&["other"])));
+    assert!(cfg.evaluate(&feature_set(&["next"])));
+    assert!(!cfg.evaluate(&feature_set(&["other"])));
+}
+
+// =============================================================================
+// filter_spec — default (empty feature set drops all ifdef'd definitions)
+// =============================================================================
+
+#[test]
+fn test_filter_spec_default_drops_all_gated_definitions() {
+    let mut spec = parse(
+        r#"
+        struct Always { int x; };
+        #ifdef NEXT
+        struct OnlyNext { int y; };
+        #endif
+    "#,
+    );
+    filter_spec(&mut spec, &feature_set(&[]));
+    let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
+    assert_eq!(names, vec!["Always"]);
+}
+
+#[test]
+fn test_filter_spec_default_drops_gated_union_arms() {
+    let mut spec = parse(
+        r#"
+        union U switch (int v) {
+            case 0: int a;
+            #ifdef NEXT
+            case 1: int b;
+            #endif
+        };
+    "#,
+    );
+    filter_spec(&mut spec, &feature_set(&[]));
+    let u = match &spec.definitions[0] {
+        Definition::Union(u) => u,
+        _ => panic!("expected Union"),
+    };
+    assert_eq!(u.arms.len(), 1);
 }
 
 // =============================================================================
@@ -95,7 +134,7 @@ fn test_filter_spec_removes_gated_definitions() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"]));
+    filter_spec(&mut spec, &feature_set(&["other"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Always"]);
 }
@@ -110,7 +149,7 @@ fn test_filter_spec_keeps_matching_definitions() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"]));
+    filter_spec(&mut spec, &feature_set(&["next"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Always", "OnlyNext"]);
 }
@@ -124,7 +163,7 @@ fn test_filter_spec_clears_cfg_on_surviving_definitions() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"]));
+    filter_spec(&mut spec, &feature_set(&["next"]));
     assert!(spec.definitions[0].cfg().is_none());
 }
 
@@ -154,7 +193,7 @@ fn test_filter_spec_removes_gated_union_arms() {
         };
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"]));
+    filter_spec(&mut spec, &feature_set(&["other"]));
     let u = match &spec.definitions[1] {
         Definition::Union(u) => u,
         _ => panic!("expected Union"),
@@ -183,7 +222,7 @@ fn test_filter_spec_keeps_matching_union_arms() {
         };
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"]));
+    filter_spec(&mut spec, &feature_set(&["next"]));
     let u = match &spec.definitions[1] {
         Definition::Union(u) => u,
         _ => panic!("expected Union"),
@@ -210,7 +249,7 @@ fn test_filter_spec_removes_gated_enum_members() {
         };
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"]));
+    filter_spec(&mut spec, &feature_set(&["other"]));
     let e = match &spec.definitions[0] {
         Definition::Enum(e) => e,
         _ => panic!("expected Enum"),
@@ -235,7 +274,7 @@ fn test_filter_spec_ifdef_else_keeps_correct_branch() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["next"]));
+    filter_spec(&mut spec, &feature_set(&["next"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Foo"]);
     if let Definition::Struct(s) = &spec.definitions[0] {
@@ -256,7 +295,7 @@ fn test_filter_spec_ifdef_else_keeps_else_branch() {
         #endif
     "#,
     );
-    filter_spec(&mut spec, &features(&["other"]));
+    filter_spec(&mut spec, &feature_set(&["other"]));
     let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
     assert_eq!(names, vec!["Foo"]);
     if let Definition::Struct(s) = &spec.definitions[0] {

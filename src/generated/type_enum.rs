@@ -334,6 +334,10 @@ pub enum TypeVariant {
     SorobanAuthorizedFunction,
     SorobanAuthorizedInvocation,
     SorobanAddressCredentials,
+    #[cfg(feature = "cap_0071")]
+    SorobanDelegateSignature,
+    #[cfg(feature = "cap_0071")]
+    SorobanAddressCredentialsWithDelegates,
     SorobanCredentialsType,
     SorobanCredentials,
     SorobanAuthorizationEntry,
@@ -348,6 +352,8 @@ pub enum TypeVariant {
     HashIdPreimageRevokeId,
     HashIdPreimageContractId,
     HashIdPreimageSorobanAuthorization,
+    #[cfg(feature = "cap_0071")]
+    HashIdPreimageSorobanAuthorizationWithAddress,
     MemoType,
     Memo,
     TimeBounds,
@@ -809,6 +815,10 @@ impl TypeVariant {
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
+        #[cfg(feature = "cap_0071")]
+        TypeVariant::SorobanDelegateSignature,
+        #[cfg(feature = "cap_0071")]
+        TypeVariant::SorobanAddressCredentialsWithDelegates,
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
@@ -823,6 +833,8 @@ impl TypeVariant {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageContractId,
         TypeVariant::HashIdPreimageSorobanAuthorization,
+        #[cfg(feature = "cap_0071")]
+        TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -1290,6 +1302,10 @@ impl TypeVariant {
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
+        #[cfg(feature = "cap_0071")]
+        "SorobanDelegateSignature",
+        #[cfg(feature = "cap_0071")]
+        "SorobanAddressCredentialsWithDelegates",
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
@@ -1304,6 +1320,8 @@ impl TypeVariant {
         "HashIdPreimageRevokeId",
         "HashIdPreimageContractId",
         "HashIdPreimageSorobanAuthorization",
+        #[cfg(feature = "cap_0071")]
+        "HashIdPreimageSorobanAuthorizationWithAddress",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -1785,6 +1803,12 @@ impl TypeVariant {
             Self::SorobanAuthorizedFunction => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials => "SorobanAddressCredentials",
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanDelegateSignature => "SorobanDelegateSignature",
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanAddressCredentialsWithDelegates => {
+                "SorobanAddressCredentialsWithDelegates"
+            }
             Self::SorobanCredentialsType => "SorobanCredentialsType",
             Self::SorobanCredentials => "SorobanCredentials",
             Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
@@ -1799,6 +1823,10 @@ impl TypeVariant {
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
             Self::HashIdPreimageContractId => "HashIdPreimageContractId",
             Self::HashIdPreimageSorobanAuthorization => "HashIdPreimageSorobanAuthorization",
+            #[cfg(feature = "cap_0071")]
+            Self::HashIdPreimageSorobanAuthorizationWithAddress => {
+                "HashIdPreimageSorobanAuthorizationWithAddress"
+            }
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -2397,6 +2425,14 @@ impl TypeVariant {
             Self::SorobanAddressCredentials => {
                 gen.into_root_schema_for::<SorobanAddressCredentials>()
             }
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanDelegateSignature => {
+                gen.into_root_schema_for::<SorobanDelegateSignature>()
+            }
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanAddressCredentialsWithDelegates => {
+                gen.into_root_schema_for::<SorobanAddressCredentialsWithDelegates>()
+            }
             Self::SorobanCredentialsType => gen.into_root_schema_for::<SorobanCredentialsType>(),
             Self::SorobanCredentials => gen.into_root_schema_for::<SorobanCredentials>(),
             Self::SorobanAuthorizationEntry => {
@@ -2420,6 +2456,10 @@ impl TypeVariant {
             }
             Self::HashIdPreimageSorobanAuthorization => {
                 gen.into_root_schema_for::<HashIdPreimageSorobanAuthorization>()
+            }
+            #[cfg(feature = "cap_0071")]
+            Self::HashIdPreimageSorobanAuthorizationWithAddress => {
+                gen.into_root_schema_for::<HashIdPreimageSorobanAuthorizationWithAddress>()
             }
             Self::MemoType => gen.into_root_schema_for::<MemoType>(),
             Self::Memo => gen.into_root_schema_for::<Memo>(),
@@ -3006,6 +3046,12 @@ impl core::str::FromStr for TypeVariant {
             "SorobanAuthorizedFunction" => Ok(Self::SorobanAuthorizedFunction),
             "SorobanAuthorizedInvocation" => Ok(Self::SorobanAuthorizedInvocation),
             "SorobanAddressCredentials" => Ok(Self::SorobanAddressCredentials),
+            #[cfg(feature = "cap_0071")]
+            "SorobanDelegateSignature" => Ok(Self::SorobanDelegateSignature),
+            #[cfg(feature = "cap_0071")]
+            "SorobanAddressCredentialsWithDelegates" => {
+                Ok(Self::SorobanAddressCredentialsWithDelegates)
+            }
             "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
             "SorobanCredentials" => Ok(Self::SorobanCredentials),
             "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
@@ -3020,6 +3066,10 @@ impl core::str::FromStr for TypeVariant {
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
             "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
             "HashIdPreimageSorobanAuthorization" => Ok(Self::HashIdPreimageSorobanAuthorization),
+            #[cfg(feature = "cap_0071")]
+            "HashIdPreimageSorobanAuthorizationWithAddress" => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationWithAddress)
+            }
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -3499,6 +3549,10 @@ pub enum Type {
     SorobanAuthorizedFunction(Box<SorobanAuthorizedFunction>),
     SorobanAuthorizedInvocation(Box<SorobanAuthorizedInvocation>),
     SorobanAddressCredentials(Box<SorobanAddressCredentials>),
+    #[cfg(feature = "cap_0071")]
+    SorobanDelegateSignature(Box<SorobanDelegateSignature>),
+    #[cfg(feature = "cap_0071")]
+    SorobanAddressCredentialsWithDelegates(Box<SorobanAddressCredentialsWithDelegates>),
     SorobanCredentialsType(Box<SorobanCredentialsType>),
     SorobanCredentials(Box<SorobanCredentials>),
     SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
@@ -3513,6 +3567,10 @@ pub enum Type {
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
     HashIdPreimageContractId(Box<HashIdPreimageContractId>),
     HashIdPreimageSorobanAuthorization(Box<HashIdPreimageSorobanAuthorization>),
+    #[cfg(feature = "cap_0071")]
+    HashIdPreimageSorobanAuthorizationWithAddress(
+        Box<HashIdPreimageSorobanAuthorizationWithAddress>,
+    ),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -3974,6 +4032,10 @@ impl Type {
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
+        #[cfg(feature = "cap_0071")]
+        TypeVariant::SorobanDelegateSignature,
+        #[cfg(feature = "cap_0071")]
+        TypeVariant::SorobanAddressCredentialsWithDelegates,
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
@@ -3988,6 +4050,8 @@ impl Type {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageContractId,
         TypeVariant::HashIdPreimageSorobanAuthorization,
+        #[cfg(feature = "cap_0071")]
+        TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -4455,6 +4519,10 @@ impl Type {
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
+        #[cfg(feature = "cap_0071")]
+        "SorobanDelegateSignature",
+        #[cfg(feature = "cap_0071")]
+        "SorobanAddressCredentialsWithDelegates",
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
@@ -4469,6 +4537,8 @@ impl Type {
         "HashIdPreimageRevokeId",
         "HashIdPreimageContractId",
         "HashIdPreimageSorobanAuthorization",
+        #[cfg(feature = "cap_0071")]
+        "HashIdPreimageSorobanAuthorizationWithAddress",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -6016,6 +6086,18 @@ impl Type {
                     SorobanAddressCredentials::read_xdr(r)?,
                 )))
             }),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => r.with_limited_depth(|r| {
+                Ok(Self::SorobanDelegateSignature(Box::new(
+                    SorobanDelegateSignature::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAddressCredentialsWithDelegates(Box::new(
+                    SorobanAddressCredentialsWithDelegates::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SorobanCredentialsType => r.with_limited_depth(|r| {
                 Ok(Self::SorobanCredentialsType(Box::new(
                     SorobanCredentialsType::read_xdr(r)?,
@@ -6080,6 +6162,14 @@ impl Type {
                     HashIdPreimageSorobanAuthorization::read_xdr(r)?,
                 )))
             }),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                r.with_limited_depth(|r| {
+                    Ok(Self::HashIdPreimageSorobanAuthorizationWithAddress(
+                        Box::new(HashIdPreimageSorobanAuthorizationWithAddress::read_xdr(r)?),
+                    ))
+                })
+            }
             TypeVariant::MemoType => {
                 r.with_limited_depth(|r| Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))))
             }
@@ -8097,6 +8187,19 @@ impl Type {
                 ReadXdrIter::<_, SorobanAddressCredentials>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Box::new(
+                ReadXdrIter::<_, SorobanDelegateSignature>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanDelegateSignature(Box::new(t)))),
+            ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentialsWithDelegates>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanAddressCredentialsWithDelegates(Box::new(t)))),
+            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, SorobanCredentialsType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
@@ -8155,6 +8258,16 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
+            ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorizationWithAddress>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::HashIdPreimageSorobanAuthorizationWithAddress(Box::new(t)))
+                }),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.limits.clone())
@@ -10314,6 +10427,22 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t.0)))),
             ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Box::new(
+                ReadXdrIter::<_, Frame<SorobanDelegateSignature>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanDelegateSignature(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAddressCredentialsWithDelegates>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanAddressCredentialsWithDelegates(Box::new(t.0)))),
+            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, Frame<SorobanCredentialsType>>::new(
                     &mut r.inner,
@@ -10390,6 +10519,16 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageSorobanAuthorizationWithAddress>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::HashIdPreimageSorobanAuthorizationWithAddress(Box::new(t.0)))
+                }),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.limits.clone())
@@ -12398,6 +12537,19 @@ impl Type {
                 ReadXdrIter::<_, SorobanAddressCredentials>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Box::new(
+                ReadXdrIter::<_, SorobanDelegateSignature>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanDelegateSignature(Box::new(t)))),
+            ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentialsWithDelegates>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanAddressCredentialsWithDelegates(Box::new(t)))),
+            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, SorobanCredentialsType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
@@ -12453,6 +12605,16 @@ impl Type {
             TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
                 ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
+            ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorizationWithAddress>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::HashIdPreimageSorobanAuthorizationWithAddress(Box::new(t)))
+                }),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec, r.limits.clone())
@@ -13914,6 +14076,14 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Ok(Self::SorobanDelegateSignature(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => Ok(
+                Self::SorobanAddressCredentialsWithDelegates(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -13954,6 +14124,12 @@ impl Type {
             TypeVariant::HashIdPreimageSorobanAuthorization => Ok(
                 Self::HashIdPreimageSorobanAuthorization(Box::new(serde_json::from_reader(r)?)),
             ),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationWithAddress(
+                    Box::new(serde_json::from_reader(r)?),
+                ))
+            }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(serde_json::from_reader(r)?))),
@@ -15344,6 +15520,16 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Ok(Self::SorobanDelegateSignature(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => {
+                Ok(Self::SorobanAddressCredentialsWithDelegates(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -15387,6 +15573,12 @@ impl Type {
                 Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
                 )))
+            }
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationWithAddress(
+                    Box::new(serde::de::Deserialize::deserialize(r)?),
+                ))
             }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
@@ -16719,6 +16911,16 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(SorobanAddressCredentials::arbitrary(u)?),
             )),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Ok(Self::SorobanDelegateSignature(Box::new(
+                SorobanDelegateSignature::arbitrary(u)?,
+            ))),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => {
+                Ok(Self::SorobanAddressCredentialsWithDelegates(Box::new(
+                    SorobanAddressCredentialsWithDelegates::arbitrary(u)?,
+                )))
+            }
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 SorobanCredentialsType::arbitrary(u)?,
             ))),
@@ -16760,6 +16962,12 @@ impl Type {
                 Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
                     HashIdPreimageSorobanAuthorization::arbitrary(u)?,
                 )))
+            }
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationWithAddress(
+                    Box::new(HashIdPreimageSorobanAuthorizationWithAddress::arbitrary(u)?),
+                ))
             }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::arbitrary(u)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(Memo::arbitrary(u)?))),
@@ -17583,6 +17791,12 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => {
                 Self::SorobanAddressCredentials(Box::default())
             }
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanDelegateSignature => Self::SorobanDelegateSignature(Box::default()),
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::SorobanAddressCredentialsWithDelegates => {
+                Self::SorobanAddressCredentialsWithDelegates(Box::default())
+            }
             TypeVariant::SorobanCredentialsType => Self::SorobanCredentialsType(Box::default()),
             TypeVariant::SorobanCredentials => Self::SorobanCredentials(Box::default()),
             TypeVariant::SorobanAuthorizationEntry => {
@@ -17604,6 +17818,10 @@ impl Type {
             TypeVariant::HashIdPreimageContractId => Self::HashIdPreimageContractId(Box::default()),
             TypeVariant::HashIdPreimageSorobanAuthorization => {
                 Self::HashIdPreimageSorobanAuthorization(Box::default())
+            }
+            #[cfg(feature = "cap_0071")]
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                Self::HashIdPreimageSorobanAuthorizationWithAddress(Box::default())
             }
             TypeVariant::MemoType => Self::MemoType(Box::default()),
             TypeVariant::Memo => Self::Memo(Box::default()),
@@ -18144,6 +18362,10 @@ impl Type {
             Self::SorobanAuthorizedFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedInvocation(ref v) => v.as_ref(),
             Self::SorobanAddressCredentials(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanDelegateSignature(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanAddressCredentialsWithDelegates(ref v) => v.as_ref(),
             Self::SorobanCredentialsType(ref v) => v.as_ref(),
             Self::SorobanCredentials(ref v) => v.as_ref(),
             Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
@@ -18158,6 +18380,8 @@ impl Type {
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
             Self::HashIdPreimageContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageSorobanAuthorization(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0071")]
+            Self::HashIdPreimageSorobanAuthorizationWithAddress(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -18639,6 +18863,12 @@ impl Type {
             Self::SorobanAuthorizedFunction(_) => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation(_) => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials(_) => "SorobanAddressCredentials",
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanDelegateSignature(_) => "SorobanDelegateSignature",
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanAddressCredentialsWithDelegates(_) => {
+                "SorobanAddressCredentialsWithDelegates"
+            }
             Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
             Self::SorobanCredentials(_) => "SorobanCredentials",
             Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
@@ -18653,6 +18883,10 @@ impl Type {
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
             Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
             Self::HashIdPreimageSorobanAuthorization(_) => "HashIdPreimageSorobanAuthorization",
+            #[cfg(feature = "cap_0071")]
+            Self::HashIdPreimageSorobanAuthorizationWithAddress(_) => {
+                "HashIdPreimageSorobanAuthorizationWithAddress"
+            }
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -19172,6 +19406,12 @@ impl Type {
             Self::SorobanAuthorizedFunction(_) => TypeVariant::SorobanAuthorizedFunction,
             Self::SorobanAuthorizedInvocation(_) => TypeVariant::SorobanAuthorizedInvocation,
             Self::SorobanAddressCredentials(_) => TypeVariant::SorobanAddressCredentials,
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanDelegateSignature(_) => TypeVariant::SorobanDelegateSignature,
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanAddressCredentialsWithDelegates(_) => {
+                TypeVariant::SorobanAddressCredentialsWithDelegates
+            }
             Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
             Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
             Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
@@ -19187,6 +19427,10 @@ impl Type {
             Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
             Self::HashIdPreimageSorobanAuthorization(_) => {
                 TypeVariant::HashIdPreimageSorobanAuthorization
+            }
+            #[cfg(feature = "cap_0071")]
+            Self::HashIdPreimageSorobanAuthorizationWithAddress(_) => {
+                TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress
             }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
@@ -19695,6 +19939,10 @@ impl WriteXdr for Type {
             Self::SorobanAuthorizedFunction(v) => v.write_xdr(w),
             Self::SorobanAuthorizedInvocation(v) => v.write_xdr(w),
             Self::SorobanAddressCredentials(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanDelegateSignature(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0071")]
+            Self::SorobanAddressCredentialsWithDelegates(v) => v.write_xdr(w),
             Self::SorobanCredentialsType(v) => v.write_xdr(w),
             Self::SorobanCredentials(v) => v.write_xdr(w),
             Self::SorobanAuthorizationEntry(v) => v.write_xdr(w),
@@ -19709,6 +19957,8 @@ impl WriteXdr for Type {
             Self::HashIdPreimageRevokeId(v) => v.write_xdr(w),
             Self::HashIdPreimageContractId(v) => v.write_xdr(w),
             Self::HashIdPreimageSorobanAuthorization(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0071")]
+            Self::HashIdPreimageSorobanAuthorizationWithAddress(v) => v.write_xdr(w),
             Self::MemoType(v) => v.write_xdr(w),
             Self::Memo(v) => v.write_xdr(w),
             Self::TimeBounds(v) => v.write_xdr(w),

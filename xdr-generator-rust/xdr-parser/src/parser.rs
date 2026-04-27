@@ -16,12 +16,18 @@ use thiserror::Error;
 /// it came from via `file_index`.
 ///
 /// File SHA256 hashes are computed and stored in `XdrSpec::files`.
+///
+/// Hashes are computed after stripping `#ifdef`/`#endif` blocks and removing
+/// all whitespace, so they are stable regardless of feature ifdefs or
+/// formatting differences. This ensures compatibility with builds that may
+/// use the same base XDR definitions with different feature flags enabled.
 pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
     let mut spec = XdrSpec::default();
     let mut global_values = HashMap::new();
 
     for (file_index, (name, content)) in files.iter().enumerate() {
-        let hash = format!("{:x}", Sha256::digest(content.as_bytes()));
+        let stripped = strip_ifdef_blocks_and_whitespace(content);
+        let hash = format!("{:x}", Sha256::digest(stripped.as_bytes()));
         spec.files.push(XdrFile {
             name: name.to_string(),
             sha256: hash,
@@ -50,6 +56,36 @@ pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
 /// Convenience wrapper around `parse_files` for single-file use.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     parse_files(&[("", source)])
+}
+
+/// Strip `#ifdef`/`#else`/`#endif` blocks and remove all whitespace from the
+/// input string. Content between `#ifdef` and `#else` (the feature-on branch)
+/// is removed, while content between `#else` and `#endif` (the feature-off
+/// branch) is kept, since it represents the base types when no features are
+/// enabled. The directive lines themselves are always removed.
+fn strip_ifdef_blocks_and_whitespace(content: &str) -> String {
+    let mut result = String::new();
+    let mut skip = false;
+    for line in content.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("#ifdef") {
+            skip = true;
+            continue;
+        }
+        if trimmed.starts_with("#else") {
+            skip = false;
+            continue;
+        }
+        if trimmed.starts_with("#endif") {
+            skip = false;
+            continue;
+        }
+        if !skip {
+            result.push_str(line);
+        }
+    }
+    result.retain(|c| !c.is_whitespace());
+    result
 }
 
 /// Set the file_index on a definition.
@@ -392,6 +428,15 @@ impl Parser {
                 _ => {}
             }
 
+            // Skip a leading comma (e.g. when the comma is inside an #ifdef block)
+            if *self.peek() == Token::Comma {
+                self.advance();
+                if *self.peek() == Token::RBrace {
+                    break;
+                }
+                continue;
+            }
+
             let member_name = self.expect_ident()?;
             self.expect(Token::Eq)?;
 
@@ -423,8 +468,8 @@ impl Parser {
                     }
                 }
                 Token::RBrace => break,
-                // Allow #else/#endif directly after a member without a comma
-                Token::EndIf | Token::Else => {}
+                // Allow #ifdef/#else/#endif directly after a member without a comma
+                Token::IfDef(_) | Token::EndIf | Token::Else => {}
                 other => {
                     return Err(self.unexpected_token_error(", or }".to_string(), other.clone()))
                 }
@@ -631,11 +676,11 @@ impl Parser {
             }
         }
 
-        // Parse the arm type
-        let type_ = if *self.peek() == Token::Void {
+        // Parse the arm type and field name
+        let (type_, arm_name) = if *self.peek() == Token::Void {
             self.advance();
             self.expect(Token::Semi)?;
-            None
+            (None, None)
         } else if *self.peek() == Token::Struct {
             // Inline struct in a union arm. XDR syntax:
             //   case FOO:  struct { int x; } fieldName;
@@ -648,16 +693,13 @@ impl Parser {
             //   Pass 2 (rewind):    rewind into the struct body and parse
             //           members with root_parent set to the generated name,
             //           then skip forward past the already-consumed tokens.
-            Some(self.parse_inline_struct()?)
+            let (t, field_name) = self.parse_inline_struct()?;
+            (Some(t), Some(field_name))
         } else {
             let ctx = self.type_parse_context();
             let parsed = self.parse_type_or_anon_union()?;
             let type_end_byte = self.prev_end_byte();
 
-            // The field name is consumed but not stored in UnionArm — the
-            // generated Rust enum variant names come from the case values, not
-            // the field name. The field name is only used below for naming
-            // extracted anonymous unions.
             let field_name = self.expect_ident()?;
 
             let type_ = match parsed {
@@ -672,21 +714,22 @@ impl Parser {
             };
             self.expect(Token::Semi)?;
 
-            Some(type_)
+            (Some(type_), Some(field_name))
         };
 
         Ok(UnionArm {
             cases,
+            name: arm_name,
             type_,
             cfg: None,
         })
     }
 
     /// Parse an inline struct definition inside a union arm and extract it as a
-    /// separate named type. Returns a `Type::Ident` referencing the extracted struct.
+    /// separate named type. Returns `(Type::Ident, field_name)`.
     ///
     /// Expects the parser to be positioned at the `struct` keyword.
-    fn parse_inline_struct(&mut self) -> Result<Type, ParseError> {
+    fn parse_inline_struct(&mut self) -> Result<(Type, String), ParseError> {
         // Record position before 'struct' keyword for source extraction
         let source_start_byte = self.current_start_byte();
 
@@ -745,13 +788,13 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
-            cfg: None,
+            cfg: self.current_cfg(),
         };
 
         self.extracted_definitions
             .push(Definition::Struct(struct_def));
 
-        Ok(Type::Ident(struct_name))
+        Ok((Type::Ident(struct_name), field_name))
     }
 
     /// Parse a type that must be a regular type (not an anonymous union).
@@ -1147,7 +1190,7 @@ impl Parser {
             is_nested: true,
             parent: self.root_parent.clone(),
             file_index: self.file_index,
-            cfg: None,
+            cfg: self.current_cfg(),
         };
 
         // Fix up parent relationships for any definitions extracted during union parsing

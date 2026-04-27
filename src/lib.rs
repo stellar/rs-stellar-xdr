@@ -102,11 +102,20 @@ pub struct Version<'a> {
     pub pkg: &'a str,
     pub rev: &'a str,
     pub xdr: &'a str,
+    /// List of XDR feature flags enabled in this build.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub features: &'a [&'a str],
 }
 pub const VERSION: Version = Version {
     pkg: env!("CARGO_PKG_VERSION"),
     rev: env!("GIT_REVISION"),
     xdr: include_str!("../xdr-version"),
+    features: &[
+        #[cfg(feature = "cap_0071")]
+        "cap_0071",
+        #[cfg(feature = "test_feature")]
+        "test_feature",
+    ],
 };
 
 #[cfg(feature = "schemars")]

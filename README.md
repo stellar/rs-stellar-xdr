@@ -8,6 +8,20 @@ using the Rust XDR generator in `xdr-generator-rust/`.
 
 [stellar/stellar-xdr]: https://github.com/stellar/stellar-xdr
 
+## Support
+
+Bug and security fixes are provided for:
+
+- The latest major version.
+- The latest major version in use by the Stellar network's current protocol.
+
+In practice that means only the latest major version, or, if the latest major
+version has not yet been adopted by the Stellar network, the major version
+prior.
+
+All other major versions are unsupported and do not receive bug or security
+fixes.
+
 ## Usage
 
 ### Library

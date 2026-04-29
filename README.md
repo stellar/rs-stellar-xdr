@@ -10,17 +10,9 @@ using the Rust XDR generator in `xdr-generator-rust/`.
 
 ## Support
 
-Bug and security fixes are provided for:
-
-- The latest major version.
-- The latest major version in use by the Stellar network's current protocol.
-
-In practice that means only the latest major version, or, if the latest major
-version has not yet been adopted by the Stellar network, the major version
-prior.
-
-All other major versions are unsupported and do not receive bug or security
-fixes.
+The most recent stellar-xdr major release is supported with critical security fixes.
+Critical security issues may be backported to earlier versions if practical, but not guaranteed.
+General bugs are only fixed on, and new features are only added to, the latest major release.
 
 ## Usage
 

@@ -18,7 +18,7 @@
 //!
 //! ## Support
 //!
-//! The two most recent stellar-xdr major releases are supported with critical security fixes.
+//! The most recent stellar-xdr major release is supported with critical security fixes.
 //! Critical security issues may be backported to earlier versions if practical, but not guaranteed.
 //! General bugs are only fixed on, and new features are only added to, the latest major release.
 //!

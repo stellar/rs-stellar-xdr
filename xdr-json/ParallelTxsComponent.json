@@ -2638,7 +2638,7 @@
       }
     },
     "SorobanCredentials": {
-      "description": "SorobanCredentials is an XDR Union defined as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; #ifdef CAP_0071 case SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES: SorobanAddressCredentialsWithDelegates addressWithDelegates; #endif }; ```",
+      "description": "SorobanCredentials is an XDR Union defined as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; #ifdef CAP_0071 case SOROBAN_CREDENTIALS_ADDRESS_V2: SorobanAddressCredentials addressV2; case SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES: SorobanAddressCredentialsWithDelegates addressWithDelegates; #endif }; ```",
       "oneOf": [
         {
           "type": "string",

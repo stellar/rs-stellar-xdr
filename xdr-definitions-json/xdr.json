@@ -12304,7 +12304,7 @@
     {
       "kind": "enum",
       "name": "SorobanCredentialsType",
-      "source": "enum SorobanCredentialsType\n{\n    SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,\n    SOROBAN_CREDENTIALS_ADDRESS = 1\n#ifdef CAP_0071\n    ,\n    SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 2\n#endif\n};",
+      "source": "enum SorobanCredentialsType\n{\n    SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,\n    SOROBAN_CREDENTIALS_ADDRESS = 1\n#ifdef CAP_0071\n    ,\n    SOROBAN_CREDENTIALS_ADDRESS_V2 = 2,\n    SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 3\n#endif\n};",
       "file_index": 11,
       "member_prefix": "SOROBAN_CREDENTIALS_",
       "members": [
@@ -12322,7 +12322,7 @@
       "kind": "union",
       "name": "SorobanCredentials",
       "fixed_size": null,
-      "source": "union SorobanCredentials switch (SorobanCredentialsType type)\n{\ncase SOROBAN_CREDENTIALS_SOURCE_ACCOUNT:\n    void;\ncase SOROBAN_CREDENTIALS_ADDRESS:\n    SorobanAddressCredentials address;\n#ifdef CAP_0071\ncase SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES:\n    SorobanAddressCredentialsWithDelegates addressWithDelegates;\n#endif\n};",
+      "source": "union SorobanCredentials switch (SorobanCredentialsType type)\n{\ncase SOROBAN_CREDENTIALS_SOURCE_ACCOUNT:\n    void;\ncase SOROBAN_CREDENTIALS_ADDRESS:\n    SorobanAddressCredentials address;\n#ifdef CAP_0071\ncase SOROBAN_CREDENTIALS_ADDRESS_V2:\n    SorobanAddressCredentials addressV2;\ncase SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES:\n    SorobanAddressCredentialsWithDelegates addressWithDelegates;\n#endif\n};",
       "file_index": 11,
       "discriminant": {
         "name": "type",

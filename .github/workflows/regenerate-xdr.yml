@@ -74,7 +74,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add src/generated.rs src/generated xdr xdr-version xdr-json Cargo.toml src/lib.rs
+          # -A so deletions are staged too (e.g. if upstream removes a generated type/file).
+          git add -A -- src/generated.rs src/generated xdr xdr-version xdr-json Cargo.toml src/lib.rs
           if git diff --cached --quiet; then
             echo "No tracked changes to commit; nothing to do."
             exit 0

@@ -15,6 +15,11 @@ definition, a new XDR gate (dependency features like `serde`/`alloc` are always
 already declared). This script finds those and adds them to both places. It is
 idempotent: running it when nothing is missing is a no-op.
 
+The script depends on the existing structure of Cargo.toml and src/lib.rs (the
+"# Features from the XDR" marker and the `VERSION.features` array). If that
+structure ever changes, it fails with a clear message and a non-zero exit rather
+than an opaque traceback, so the workflow surfaces the cause.
+
 Set SYNC_ROOT to point at a repo checkout other than the default (used by tests).
 Pass --check to print the planned changes without writing.
 """
@@ -22,11 +27,17 @@ import os
 import pathlib
 import re
 import sys
+from typing import NoReturn
 
 ROOT = pathlib.Path(os.environ.get("SYNC_ROOT", pathlib.Path(__file__).resolve().parents[2]))
 DRY = "--check" in sys.argv
 
 FEATURE_RE = re.compile(r'feature\s*=\s*"([^"]+)"')
+
+
+def die(msg: str) -> NoReturn:
+    print(f"sync-xdr-features: error: {msg}", file=sys.stderr)
+    sys.exit(1)
 
 
 def referenced_features() -> set[str]:
@@ -40,13 +51,19 @@ def referenced_features() -> set[str]:
 
 def declared_features(cargo: str) -> set[str]:
     block = re.search(r"(?ms)^\[features\]\s*\n(.*?)(?=^\[|\Z)", cargo)
-    return set(re.findall(r"(?m)^([A-Za-z0-9_-]+)\s*=", block.group(1))) if block else set()
+    if not block:
+        die("could not find a [features] section in Cargo.toml")
+    return set(re.findall(r"(?m)^([A-Za-z0-9_-]+)\s*=", block.group(1)))
 
 
 def add_to_cargo(cargo: str, missing: list[str]) -> str:
     marker = "# Features from the XDR\n"
+    if marker not in cargo:
+        die(f"could not find the {marker.strip()!r} marker in Cargo.toml")
     start = cargo.index(marker) + len(marker)
-    end = cargo.index("\n\n", start)
+    end = cargo.find("\n\n", start)
+    if end == -1:
+        die("could not find the blank line ending the '# Features from the XDR' block in Cargo.toml")
     existing = [l for l in cargo[start:end].splitlines() if l.strip()]
     existing += [f"{f} = []" for f in missing]
     return cargo[:start] + "\n".join(existing) + cargo[end:]
@@ -54,6 +71,8 @@ def add_to_cargo(cargo: str, missing: list[str]) -> str:
 
 def add_to_lib(lib: str, missing: list[str]) -> str:
     arr = re.search(r"(?ms)(features:\s*&\[\n)(.*?)(\n[ \t]*\],)", lib)
+    if not arr:
+        die("could not find the `VERSION.features` array in src/lib.rs")
     head, body, tail = arr.group(1), arr.group(2), arr.group(3)
     present = re.findall(r'#\[cfg\(feature = "([^"]+)"\)\]', body)
     feats = present + [f for f in missing if f not in present]
@@ -65,6 +84,9 @@ def add_to_lib(lib: str, missing: list[str]) -> str:
 def main() -> int:
     cargo_path = ROOT / "Cargo.toml"
     lib_path = ROOT / "src" / "lib.rs"
+    for p in (cargo_path, lib_path):
+        if not p.exists():
+            die(f"{p} does not exist")
     cargo = cargo_path.read_text()
 
     missing = sorted(referenced_features() - declared_features(cargo))
@@ -78,9 +100,11 @@ def main() -> int:
 
     if DRY:
         print("\n--- Cargo.toml [features] (new) ---")
-        print(re.search(r"(?ms)^\[features\].*?(?=\n\n\[)", new_cargo).group(0))
+        m = re.search(r"(?ms)^\[features\].*?(?=\n\n\[)", new_cargo)
+        print(m.group(0) if m else new_cargo)
         print("\n--- src/lib.rs VERSION.features (new) ---")
-        print(re.search(r"(?ms)features:\s*&\[.*?\],", new_lib).group(0))
+        m = re.search(r"(?ms)features:\s*&\[.*?\],", new_lib)
+        print(m.group(0) if m else "(not found)")
         return 0
 
     cargo_path.write_text(new_cargo)

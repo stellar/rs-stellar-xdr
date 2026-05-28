@@ -47,6 +47,7 @@ alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 # Features from the XDR
 test_feature = []
 cap_0071 = []
+cap_0083 = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]

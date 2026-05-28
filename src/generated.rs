@@ -4696,6 +4696,9 @@ pub use stellar_value_type::*;
 mod ledger_close_value_signature;
 #[allow(unused_imports)]
 pub use ledger_close_value_signature::*;
+mod stellar_value_proposed_value;
+#[allow(unused_imports)]
+pub use stellar_value_proposed_value::*;
 mod stellar_value_ext;
 #[allow(unused_imports)]
 pub use stellar_value_ext::*;
@@ -5776,6 +5779,8 @@ pub enum TypeVariant {
     LedgerCloseValueSignature,
     StellarValue,
     StellarValueExt,
+    #[cfg(feature = "cap_0083")]
+    StellarValueProposedValue,
     LedgerHeaderFlags,
     LedgerHeaderExtensionV1,
     LedgerHeaderExtensionV1Ext,
@@ -6256,6 +6261,8 @@ impl TypeVariant {
         TypeVariant::LedgerCloseValueSignature,
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
+        #[cfg(feature = "cap_0083")]
+        TypeVariant::StellarValueProposedValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
         TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -6743,6 +6750,8 @@ impl TypeVariant {
         "LedgerCloseValueSignature",
         "StellarValue",
         "StellarValueExt",
+        #[cfg(feature = "cap_0083")]
+        "StellarValueProposedValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
         "LedgerHeaderExtensionV1Ext",
@@ -7238,6 +7247,8 @@ impl TypeVariant {
             Self::LedgerCloseValueSignature => "LedgerCloseValueSignature",
             Self::StellarValue => "StellarValue",
             Self::StellarValueExt => "StellarValueExt",
+            #[cfg(feature = "cap_0083")]
+            Self::StellarValueProposedValue => "StellarValueProposedValue",
             Self::LedgerHeaderFlags => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1 => "LedgerHeaderExtensionV1",
             Self::LedgerHeaderExtensionV1Ext => "LedgerHeaderExtensionV1Ext",
@@ -7798,6 +7809,10 @@ impl TypeVariant {
             }
             Self::StellarValue => gen.into_root_schema_for::<StellarValue>(),
             Self::StellarValueExt => gen.into_root_schema_for::<StellarValueExt>(),
+            #[cfg(feature = "cap_0083")]
+            Self::StellarValueProposedValue => {
+                gen.into_root_schema_for::<StellarValueProposedValue>()
+            }
             Self::LedgerHeaderFlags => gen.into_root_schema_for::<LedgerHeaderFlags>(),
             Self::LedgerHeaderExtensionV1 => gen.into_root_schema_for::<LedgerHeaderExtensionV1>(),
             Self::LedgerHeaderExtensionV1Ext => {
@@ -8472,6 +8487,8 @@ impl core::str::FromStr for TypeVariant {
             "LedgerCloseValueSignature" => Ok(Self::LedgerCloseValueSignature),
             "StellarValue" => Ok(Self::StellarValue),
             "StellarValueExt" => Ok(Self::StellarValueExt),
+            #[cfg(feature = "cap_0083")]
+            "StellarValueProposedValue" => Ok(Self::StellarValueProposedValue),
             "LedgerHeaderFlags" => Ok(Self::LedgerHeaderFlags),
             "LedgerHeaderExtensionV1" => Ok(Self::LedgerHeaderExtensionV1),
             "LedgerHeaderExtensionV1Ext" => Ok(Self::LedgerHeaderExtensionV1Ext),
@@ -8986,6 +9003,8 @@ pub enum Type {
     LedgerCloseValueSignature(Box<LedgerCloseValueSignature>),
     StellarValue(Box<StellarValue>),
     StellarValueExt(Box<StellarValueExt>),
+    #[cfg(feature = "cap_0083")]
+    StellarValueProposedValue(Box<StellarValueProposedValue>),
     LedgerHeaderFlags(Box<LedgerHeaderFlags>),
     LedgerHeaderExtensionV1(Box<LedgerHeaderExtensionV1>),
     LedgerHeaderExtensionV1Ext(Box<LedgerHeaderExtensionV1Ext>),
@@ -9468,6 +9487,8 @@ impl Type {
         TypeVariant::LedgerCloseValueSignature,
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
+        #[cfg(feature = "cap_0083")]
+        TypeVariant::StellarValueProposedValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
         TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -9955,6 +9976,8 @@ impl Type {
         "LedgerCloseValueSignature",
         "StellarValue",
         "StellarValueExt",
+        #[cfg(feature = "cap_0083")]
+        "StellarValueProposedValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
         "LedgerHeaderExtensionV1Ext",
@@ -11027,6 +11050,12 @@ impl Type {
                 Ok(Self::StellarValueExt(Box::new(StellarValueExt::read_xdr(
                     r,
                 )?)))
+            }),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueProposedValue(Box::new(
+                    StellarValueProposedValue::read_xdr(r)?,
+                )))
             }),
             TypeVariant::LedgerHeaderFlags => r.with_limited_depth(|r| {
                 Ok(Self::LedgerHeaderFlags(Box::new(
@@ -13155,6 +13184,11 @@ impl Type {
             TypeVariant::StellarValueExt => Box::new(
                 ReadXdrIter::<_, StellarValueExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
+            ),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Box::new(
+                ReadXdrIter::<_, StellarValueProposedValue>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, LedgerHeaderFlags>::new(&mut r.inner, r.limits.clone())
@@ -15297,6 +15331,14 @@ impl Type {
             TypeVariant::StellarValueExt => Box::new(
                 ReadXdrIter::<_, Frame<StellarValueExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueProposedValue>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(&mut r.inner, r.limits.clone())
@@ -17542,6 +17584,11 @@ impl Type {
                 ReadXdrIter::<_, StellarValueExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Box::new(
+                ReadXdrIter::<_, StellarValueProposedValue>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
+            ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, LedgerHeaderFlags>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
@@ -19250,6 +19297,10 @@ impl Type {
             TypeVariant::StellarValueExt => {
                 Ok(Self::StellarValueExt(Box::new(serde_json::from_reader(r)?)))
             }
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -20652,6 +20703,10 @@ impl Type {
             TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -22073,6 +22128,10 @@ impl Type {
             TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
                 StellarValueExt::arbitrary(u)?,
             ))),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(StellarValueProposedValue::arbitrary(u)?),
+            )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
                 LedgerHeaderFlags::arbitrary(u)?,
             ))),
@@ -23171,6 +23230,10 @@ impl Type {
             }
             TypeVariant::StellarValue => Self::StellarValue(Box::default()),
             TypeVariant::StellarValueExt => Self::StellarValueExt(Box::default()),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => {
+                Self::StellarValueProposedValue(Box::default())
+            }
             TypeVariant::LedgerHeaderFlags => Self::LedgerHeaderFlags(Box::default()),
             TypeVariant::LedgerHeaderExtensionV1 => Self::LedgerHeaderExtensionV1(Box::default()),
             TypeVariant::LedgerHeaderExtensionV1Ext => {
@@ -23798,6 +23861,8 @@ impl Type {
             Self::LedgerCloseValueSignature(ref v) => v.as_ref(),
             Self::StellarValue(ref v) => v.as_ref(),
             Self::StellarValueExt(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0083")]
+            Self::StellarValueProposedValue(ref v) => v.as_ref(),
             Self::LedgerHeaderFlags(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1Ext(ref v) => v.as_ref(),
@@ -24289,6 +24354,8 @@ impl Type {
             Self::LedgerCloseValueSignature(_) => "LedgerCloseValueSignature",
             Self::StellarValue(_) => "StellarValue",
             Self::StellarValueExt(_) => "StellarValueExt",
+            #[cfg(feature = "cap_0083")]
+            Self::StellarValueProposedValue(_) => "StellarValueProposedValue",
             Self::LedgerHeaderFlags(_) => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1(_) => "LedgerHeaderExtensionV1",
             Self::LedgerHeaderExtensionV1Ext(_) => "LedgerHeaderExtensionV1Ext",
@@ -24820,6 +24887,8 @@ impl Type {
             Self::LedgerCloseValueSignature(_) => TypeVariant::LedgerCloseValueSignature,
             Self::StellarValue(_) => TypeVariant::StellarValue,
             Self::StellarValueExt(_) => TypeVariant::StellarValueExt,
+            #[cfg(feature = "cap_0083")]
+            Self::StellarValueProposedValue(_) => TypeVariant::StellarValueProposedValue,
             Self::LedgerHeaderFlags(_) => TypeVariant::LedgerHeaderFlags,
             Self::LedgerHeaderExtensionV1(_) => TypeVariant::LedgerHeaderExtensionV1,
             Self::LedgerHeaderExtensionV1Ext(_) => TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -25372,6 +25441,8 @@ impl WriteXdr for Type {
             Self::LedgerCloseValueSignature(v) => v.write_xdr(w),
             Self::StellarValue(v) => v.write_xdr(w),
             Self::StellarValueExt(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0083")]
+            Self::StellarValueProposedValue(v) => v.write_xdr(w),
             Self::LedgerHeaderFlags(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1Ext(v) => v.write_xdr(w),

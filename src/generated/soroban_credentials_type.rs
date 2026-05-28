@@ -10,7 +10,8 @@ use super::*;
 ///     SOROBAN_CREDENTIALS_ADDRESS = 1
 /// #ifdef CAP_0071
 ///     ,
-///     SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 2
+///     SOROBAN_CREDENTIALS_ADDRESS_V2 = 2,
+///     SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 3
 /// #endif
 /// };
 /// ```
@@ -31,13 +32,17 @@ pub enum SorobanCredentialsType {
     SourceAccount = 0,
     Address = 1,
     #[cfg(feature = "cap_0071")]
-    AddressWithDelegates = 2,
+    AddressV2 = 2,
+    #[cfg(feature = "cap_0071")]
+    AddressWithDelegates = 3,
 }
 
 impl SorobanCredentialsType {
     const _VARIANTS: &[SorobanCredentialsType] = &[
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
+        #[cfg(feature = "cap_0071")]
+        SorobanCredentialsType::AddressV2,
         #[cfg(feature = "cap_0071")]
         SorobanCredentialsType::AddressWithDelegates,
     ];
@@ -53,6 +58,8 @@ impl SorobanCredentialsType {
     const _VARIANTS_STR: &[&str] = &[
         "SourceAccount",
         "Address",
+        #[cfg(feature = "cap_0071")]
+        "AddressV2",
         #[cfg(feature = "cap_0071")]
         "AddressWithDelegates",
     ];
@@ -71,6 +78,8 @@ impl SorobanCredentialsType {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address => "Address",
+            #[cfg(feature = "cap_0071")]
+            Self::AddressV2 => "AddressV2",
             #[cfg(feature = "cap_0071")]
             Self::AddressWithDelegates => "AddressWithDelegates",
         }
@@ -111,7 +120,9 @@ impl TryFrom<i32> for SorobanCredentialsType {
             0 => SorobanCredentialsType::SourceAccount,
             1 => SorobanCredentialsType::Address,
             #[cfg(feature = "cap_0071")]
-            2 => SorobanCredentialsType::AddressWithDelegates,
+            2 => SorobanCredentialsType::AddressV2,
+            #[cfg(feature = "cap_0071")]
+            3 => SorobanCredentialsType::AddressWithDelegates,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

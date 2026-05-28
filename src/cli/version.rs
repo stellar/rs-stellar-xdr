@@ -9,6 +9,13 @@ pub struct Cmd;
 impl Cmd {
     pub fn run() {
         let v = VERSION;
-        println!("stellar-xdr {} ({})\nxdr: {}", v.pkg, v.rev, v.xdr);
+        let features = match v.features {
+            [] => "<none>".to_string(),
+            fs => fs.join(", "),
+        };
+        println!(
+            "stellar-xdr {} ({})\nxdr: {}\nfeatures: {}",
+            v.pkg, v.rev, v.xdr, features,
+        );
     }
 }

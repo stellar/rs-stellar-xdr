@@ -7058,7 +7058,7 @@
     {
       "kind": "enum",
       "name": "StellarValueType",
-      "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1\n};",
+      "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1\n#ifdef CAP_0083\n    ,\n    STELLAR_VALUE_EMPTY_TX_SET = 2\n#endif\n};",
       "file_index": 9,
       "member_prefix": "STELLAR_VALUE_",
       "members": [
@@ -7099,7 +7099,7 @@
       "kind": "union",
       "name": "StellarValueExt",
       "fixed_size": null,
-      "source": "union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    }",
+      "source": "union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n#ifdef CAP_0083\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n#endif\n    }",
       "file_index": 9,
       "discriminant": {
         "name": "v",
@@ -7137,7 +7137,7 @@
       "kind": "struct",
       "name": "StellarValue",
       "fixed_size": null,
-      "source": "struct StellarValue\n{\n    Hash txSetHash;      // transaction set to apply to previous ledger\n    TimePoint closeTime; // network close time\n\n    // upgrades to apply to the previous ledger (usually empty)\n    // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop\n    // unknown steps during consensus if needed.\n    // see notes below on 'LedgerUpgrade' for more detail\n    // max size is dictated by number of upgrade types (+ room for future)\n    UpgradeType upgrades<6>;\n\n    // reserved for future use\n    union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    }\n    ext;\n};",
+      "source": "struct StellarValue\n{\n    Hash txSetHash;      // transaction set to apply to previous ledger\n    TimePoint closeTime; // network close time\n\n    // upgrades to apply to the previous ledger (usually empty)\n    // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop\n    // unknown steps during consensus if needed.\n    // see notes below on 'LedgerUpgrade' for more detail\n    // max size is dictated by number of upgrade types (+ room for future)\n    UpgradeType upgrades<6>;\n\n    // reserved for future use\n    union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n#ifdef CAP_0083\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n#endif\n    }\n    ext;\n};",
       "file_index": 9,
       "fields": [
         {

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "StellarValueExt",
-  "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; } ```",
+  "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; #ifdef CAP_0083 case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; #endif } ```",
   "oneOf": [
     {
       "type": "string",

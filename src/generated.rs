@@ -4696,6 +4696,9 @@ pub use stellar_value_type::*;
 mod ledger_close_value_signature;
 #[allow(unused_imports)]
 pub use ledger_close_value_signature::*;
+mod stellar_value_proposed_value;
+#[allow(unused_imports)]
+pub use stellar_value_proposed_value::*;
 mod stellar_value_ext;
 #[allow(unused_imports)]
 pub use stellar_value_ext::*;

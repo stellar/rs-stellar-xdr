@@ -12,8 +12,9 @@ use crate::naming::{case_value, field_name, mod_name, source_comment, type_name}
 use crate::options::RustOptions;
 use crate::output::{
     ConstOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
-    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput, TypeEnumEntry,
-    TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
+    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
+    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
+    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_string, type_ref};
 
@@ -54,7 +55,7 @@ impl RustGenerator {
         output_dir: &std::path::Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let header = include_str!("../header.rs");
-        let (modules, definitions) = self.generate_modules(spec);
+        let (mut modules, definitions) = self.generate_modules(spec);
 
         // Ensure the output directory exists.
         std::fs::create_dir_all(output_dir)?;
@@ -67,6 +68,14 @@ impl RustGenerator {
             std::fs::write(&file_path, &rendered)?;
         }
 
+        let type_variant_enum = self.generate_type_enum(spec);
+        let type_enum_template = TypeEnumDefinitionTemplate { type_variant_enum };
+        let rendered = type_enum_template.render()?;
+        std::fs::write(output_dir.join("type_enum.rs"), &rendered)?;
+        modules.push(ModuleEntry {
+            mod_name: "type_enum".to_string(),
+        });
+
         // Write module file.
         let xdr_files_sha256: Vec<(String, String)> = spec
             .files
@@ -74,13 +83,10 @@ impl RustGenerator {
             .map(|f| (f.name.clone(), f.sha256.clone()))
             .collect();
 
-        let type_variant_enum = self.generate_type_enum(spec);
-
         let mod_template = ModTemplate {
             xdr_files_sha256,
             header: header.to_string(),
             modules,
-            type_variant_enum,
         };
         let rendered = mod_template.render()?;
         std::fs::write(module_file, &rendered)?;

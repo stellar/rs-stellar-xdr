@@ -8,6 +8,10 @@ use super::*;
 /// {
 ///     STELLAR_VALUE_BASIC = 0,
 ///     STELLAR_VALUE_SIGNED = 1
+/// #ifdef CAP_0083
+///     ,
+///     STELLAR_VALUE_EMPTY_TX_SET = 2
+/// #endif
 /// };
 /// ```
 ///
@@ -26,10 +30,17 @@ pub enum StellarValueType {
     #[cfg_attr(feature = "alloc", default)]
     Basic = 0,
     Signed = 1,
+    #[cfg(feature = "cap_0083")]
+    EmptyTxSet = 2,
 }
 
 impl StellarValueType {
-    const _VARIANTS: &[StellarValueType] = &[StellarValueType::Basic, StellarValueType::Signed];
+    const _VARIANTS: &[StellarValueType] = &[
+        StellarValueType::Basic,
+        StellarValueType::Signed,
+        #[cfg(feature = "cap_0083")]
+        StellarValueType::EmptyTxSet,
+    ];
     pub const VARIANTS: [StellarValueType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,7 +50,12 @@ impl StellarValueType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Basic", "Signed"];
+    const _VARIANTS_STR: &[&str] = &[
+        "Basic",
+        "Signed",
+        #[cfg(feature = "cap_0083")]
+        "EmptyTxSet",
+    ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -55,6 +71,8 @@ impl StellarValueType {
         match self {
             Self::Basic => "Basic",
             Self::Signed => "Signed",
+            #[cfg(feature = "cap_0083")]
+            Self::EmptyTxSet => "EmptyTxSet",
         }
     }
 
@@ -92,6 +110,8 @@ impl TryFrom<i32> for StellarValueType {
         let e = match i {
             0 => StellarValueType::Basic,
             1 => StellarValueType::Signed,
+            #[cfg(feature = "cap_0083")]
+            2 => StellarValueType::EmptyTxSet,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

@@ -10,12 +10,10 @@ use super::*;
 ///     void;
 /// case SOROBAN_CREDENTIALS_ADDRESS:
 ///     SorobanAddressCredentials address;
-/// #ifdef CAP_0071
 /// case SOROBAN_CREDENTIALS_ADDRESS_V2:
 ///     SorobanAddressCredentials addressV2;
 /// case SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES:
 ///     SorobanAddressCredentialsWithDelegates addressWithDelegates;
-/// #endif
 /// };
 /// ```
 ///
@@ -34,9 +32,7 @@ use super::*;
 pub enum SorobanCredentials {
     SourceAccount,
     Address(SorobanAddressCredentials),
-    #[cfg(feature = "cap_0071")]
     AddressV2(SorobanAddressCredentials),
-    #[cfg(feature = "cap_0071")]
     AddressWithDelegates(SorobanAddressCredentialsWithDelegates),
 }
 
@@ -51,9 +47,7 @@ impl SorobanCredentials {
     const _VARIANTS: &[SorobanCredentialsType] = &[
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
-        #[cfg(feature = "cap_0071")]
         SorobanCredentialsType::AddressV2,
-        #[cfg(feature = "cap_0071")]
         SorobanCredentialsType::AddressWithDelegates,
     ];
     pub const VARIANTS: [SorobanCredentialsType; Self::_VARIANTS.len()] = {
@@ -68,9 +62,7 @@ impl SorobanCredentials {
     const _VARIANTS_STR: &[&str] = &[
         "SourceAccount",
         "Address",
-        #[cfg(feature = "cap_0071")]
         "AddressV2",
-        #[cfg(feature = "cap_0071")]
         "AddressWithDelegates",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
@@ -88,9 +80,7 @@ impl SorobanCredentials {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address(_) => "Address",
-            #[cfg(feature = "cap_0071")]
             Self::AddressV2(_) => "AddressV2",
-            #[cfg(feature = "cap_0071")]
             Self::AddressWithDelegates(_) => "AddressWithDelegates",
         }
     }
@@ -101,9 +91,7 @@ impl SorobanCredentials {
         match self {
             Self::SourceAccount => SorobanCredentialsType::SourceAccount,
             Self::Address(_) => SorobanCredentialsType::Address,
-            #[cfg(feature = "cap_0071")]
             Self::AddressV2(_) => SorobanCredentialsType::AddressV2,
-            #[cfg(feature = "cap_0071")]
             Self::AddressWithDelegates(_) => SorobanCredentialsType::AddressWithDelegates,
         }
     }
@@ -147,11 +135,9 @@ impl ReadXdr for SorobanCredentials {
                 SorobanCredentialsType::Address => {
                     Self::Address(SorobanAddressCredentials::read_xdr(r)?)
                 }
-                #[cfg(feature = "cap_0071")]
                 SorobanCredentialsType::AddressV2 => {
                     Self::AddressV2(SorobanAddressCredentials::read_xdr(r)?)
                 }
-                #[cfg(feature = "cap_0071")]
                 SorobanCredentialsType::AddressWithDelegates => {
                     Self::AddressWithDelegates(SorobanAddressCredentialsWithDelegates::read_xdr(r)?)
                 }
@@ -172,9 +158,7 @@ impl WriteXdr for SorobanCredentials {
             match self {
                 Self::SourceAccount => ().write_xdr(w)?,
                 Self::Address(v) => v.write_xdr(w)?,
-                #[cfg(feature = "cap_0071")]
                 Self::AddressV2(v) => v.write_xdr(w)?,
-                #[cfg(feature = "cap_0071")]
                 Self::AddressWithDelegates(v) => v.write_xdr(w)?,
             };
             Ok(())

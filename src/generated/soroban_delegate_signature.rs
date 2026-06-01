@@ -4,14 +4,14 @@ use super::*;
 /// SorobanDelegateSignature is an XDR Struct defined as:
 ///
 /// ```text
-/// struct SorobanDelegateSignature {
+/// struct SorobanDelegateSignature
+/// {
 ///     SCAddress address;
 ///     SCVal signature;
 ///     SorobanDelegateSignature nestedDelegates<>;
 /// };
 /// ```
 ///
-#[cfg(feature = "cap_0071")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -29,7 +29,6 @@ pub struct SorobanDelegateSignature {
     pub nested_delegates: VecM<SorobanDelegateSignature>,
 }
 
-#[cfg(feature = "cap_0071")]
 impl ReadXdr for SorobanDelegateSignature {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -43,7 +42,6 @@ impl ReadXdr for SorobanDelegateSignature {
     }
 }
 
-#[cfg(feature = "cap_0071")]
 impl WriteXdr for SorobanDelegateSignature {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

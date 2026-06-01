@@ -117,8 +117,6 @@ pub const VERSION: Version = Version {
     rev: env!("GIT_REVISION"),
     xdr: include_str!("../xdr-version"),
     features: &[
-        #[cfg(feature = "cap_0071")]
-        "cap_0071",
         #[cfg(feature = "test_feature")]
         "test_feature",
         #[cfg(feature = "cap_0083")]

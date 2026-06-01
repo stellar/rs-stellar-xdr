@@ -55,7 +55,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-ledger-entries.x",
-        "f3407720eb6348b141cf1d03993c9ef2a8896521fc711bdc212bf32ba92e63c9",
+        "3e212dab2177c86c0a0a439dd870f4e71dda70472930f17096f48b9507e4ef1a",
     ),
     (
         "xdr/Stellar-ledger.x",
@@ -67,7 +67,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-transaction.x",
-        "52815125acb35d8aa7bfe979df1f6028a81c25cef13d2f7645b23b299792bede",
+        "840ee5f5216c8e35ded4590e2976d246fa5f8b4e60670051b8373e7282c20278",
     ),
     (
         "xdr/Stellar-types.x",

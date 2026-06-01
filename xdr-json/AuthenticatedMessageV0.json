@@ -3281,6 +3281,26 @@
         }
       }
     },
+    "SorobanAddressCredentialsWithDelegates": {
+      "description": "SorobanAddressCredentialsWithDelegates is an XDR Struct defined as:\n\n```text struct SorobanAddressCredentialsWithDelegates { SorobanAddressCredentials addressCredentials; SorobanDelegateSignature delegates<>; }; ```",
+      "type": "object",
+      "required": [
+        "address_credentials",
+        "delegates"
+      ],
+      "properties": {
+        "address_credentials": {
+          "$ref": "#/definitions/SorobanAddressCredentials"
+        },
+        "delegates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SorobanDelegateSignature"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
     "SorobanAuthorizationEntry": {
       "description": "SorobanAuthorizationEntry is an XDR Struct defined as:\n\n```text struct SorobanAuthorizationEntry { SorobanCredentials credentials; SorobanAuthorizedInvocation rootInvocation; }; ```",
       "type": "object",
@@ -3356,7 +3376,7 @@
       }
     },
     "SorobanCredentials": {
-      "description": "SorobanCredentials is an XDR Union defined as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; #ifdef CAP_0071 case SOROBAN_CREDENTIALS_ADDRESS_V2: SorobanAddressCredentials addressV2; case SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES: SorobanAddressCredentialsWithDelegates addressWithDelegates; #endif }; ```",
+      "description": "SorobanCredentials is an XDR Union defined as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; case SOROBAN_CREDENTIALS_ADDRESS_V2: SorobanAddressCredentials addressV2; case SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES: SorobanAddressCredentialsWithDelegates addressWithDelegates; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -3374,8 +3394,54 @@
               "$ref": "#/definitions/SorobanAddressCredentials"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "address_v2"
+          ],
+          "properties": {
+            "address_v2": {
+              "$ref": "#/definitions/SorobanAddressCredentials"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "address_with_delegates"
+          ],
+          "properties": {
+            "address_with_delegates": {
+              "$ref": "#/definitions/SorobanAddressCredentialsWithDelegates"
+            }
+          }
         }
       ]
+    },
+    "SorobanDelegateSignature": {
+      "description": "SorobanDelegateSignature is an XDR Struct defined as:\n\n```text struct SorobanDelegateSignature { SCAddress address; SCVal signature; SorobanDelegateSignature nestedDelegates<>; }; ```",
+      "type": "object",
+      "required": [
+        "address",
+        "nested_delegates",
+        "signature"
+      ],
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "nested_delegates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SorobanDelegateSignature"
+          },
+          "maxItems": 4294967295
+        },
+        "signature": {
+          "$ref": "#/definitions/ScVal"
+        }
+      }
     },
     "SorobanResources": {
       "description": "SorobanResources is an XDR Struct defined as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from disk backed entries uint32 diskReadBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",

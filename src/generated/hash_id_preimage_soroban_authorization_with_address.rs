@@ -14,7 +14,6 @@ use super::*;
 ///     }
 /// ```
 ///
-#[cfg(feature = "cap_0071")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -38,7 +37,6 @@ pub struct HashIdPreimageSorobanAuthorizationWithAddress {
     pub invocation: SorobanAuthorizedInvocation,
 }
 
-#[cfg(feature = "cap_0071")]
 impl ReadXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -54,7 +52,6 @@ impl ReadXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     }
 }
 
-#[cfg(feature = "cap_0071")]
 impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

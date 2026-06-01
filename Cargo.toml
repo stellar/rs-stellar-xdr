@@ -16,7 +16,7 @@ required-features = ["cli"]
 doctest = false
 
 [build-dependencies]
-crate-git-revision = "0.0.6"
+crate-git-revision = "0.0.9"
 
 [dependencies]
 cfg_eval = { version = "0.1.2", optional = true }

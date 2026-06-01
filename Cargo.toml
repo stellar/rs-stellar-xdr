@@ -20,7 +20,7 @@ crate-git-revision = "0.0.6"
 
 [dependencies]
 cfg_eval = { version = "0.1.2", optional = true }
-stellar-strkey = { version = "0.0.13", optional = true }
+stellar-strkey = { version = "0.0.17", optional = true }
 base64 = { version = "0.22.1", optional = true }
 serde = { version = "1.0.139", features = ["derive"], optional = true }
 serde_with = { version = "3.12.0", features = ["schemars_0_8"], optional = true }
@@ -67,3 +67,6 @@ cli = ["std", "type_enum", "base64", "serde", "serde_json", "schemars", "arbitra
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docs"]
+
+[patch.crates-io]
+stellar-strkey = { git = "https://github.com/stellar/rs-stellar-strkey", rev = "d16561c672b950d7af05939817df19f3a1f63299" }

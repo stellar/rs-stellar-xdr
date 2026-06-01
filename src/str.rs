@@ -160,8 +160,7 @@ impl core::str::FromStr for MuxedAccount {
                 ed25519: Uint256(ed25519),
                 id,
             })),
-            stellar_strkey::Strkey::PrivateKeyEd25519(_)
-            | stellar_strkey::Strkey::PreAuthTx(_)
+            stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_)
             | stellar_strkey::Strkey::Contract(_)
@@ -204,10 +203,8 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
             ed25519: Uint256(ed25519),
             payload,
         } = self;
-        let k = stellar_strkey::ed25519::SignedPayload {
-            ed25519: *ed25519,
-            payload: payload.into(),
-        };
+        let k = stellar_strkey::ed25519::SignedPayload::new(*ed25519, payload.as_slice())
+            .map_err(|_| core::fmt::Error)?;
         let s = k.to_string();
         f.write_str(&s)?;
         Ok(())
@@ -217,11 +214,10 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
 impl core::str::FromStr for SignerKeyEd25519SignedPayload {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        let stellar_strkey::ed25519::SignedPayload { ed25519, payload } =
-            stellar_strkey::ed25519::SignedPayload::from_str(s)?;
+        let signed_payload = stellar_strkey::ed25519::SignedPayload::from_str(s)?;
         Ok(SignerKeyEd25519SignedPayload {
-            ed25519: Uint256(ed25519),
-            payload: payload.try_into()?,
+            ed25519: Uint256(*signed_payload.ed25519()),
+            payload: signed_payload.payload().try_into()?,
         })
     }
 }
@@ -240,16 +236,15 @@ impl core::str::FromStr for SignerKey {
             stellar_strkey::Strkey::HashX(stellar_strkey::HashX(h)) => {
                 Ok(SignerKey::HashX(Uint256(h)))
             }
-            stellar_strkey::Strkey::SignedPayloadEd25519(
-                stellar_strkey::ed25519::SignedPayload { ed25519, payload },
-            ) => Ok(SignerKey::Ed25519SignedPayload(
-                SignerKeyEd25519SignedPayload {
-                    ed25519: Uint256(ed25519),
-                    payload: payload.try_into()?,
-                },
-            )),
-            stellar_strkey::Strkey::PrivateKeyEd25519(_)
-            | stellar_strkey::Strkey::Contract(_)
+            stellar_strkey::Strkey::SignedPayloadEd25519(signed_payload) => {
+                Ok(SignerKey::Ed25519SignedPayload(
+                    SignerKeyEd25519SignedPayload {
+                        ed25519: Uint256(*signed_payload.ed25519()),
+                        payload: signed_payload.payload().try_into()?,
+                    },
+                ))
+            }
+            stellar_strkey::Strkey::Contract(_)
             | stellar_strkey::Strkey::MuxedAccountEd25519(_)
             | stellar_strkey::Strkey::LiquidityPool(_)
             | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
@@ -332,8 +327,7 @@ impl core::str::FromStr for ScAddress {
             )) => Ok(ScAddress::ClaimableBalance(
                 ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(claimable_balance)),
             )),
-            stellar_strkey::Strkey::PrivateKeyEd25519(_)
-            | stellar_strkey::Strkey::PreAuthTx(_)
+            stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_) => Err(Error::Invalid),
         }

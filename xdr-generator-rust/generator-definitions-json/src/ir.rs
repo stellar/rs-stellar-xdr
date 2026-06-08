@@ -164,16 +164,21 @@ pub fn build(spec: &ast::XdrSpec, resolved_features: Vec<String>) -> IR {
 
     let const_values = &type_info.const_values;
 
-    let definitions = spec.all_definitions()
+    let definitions = spec
+        .all_definitions()
         .map(|def| convert_definition(def, &wire_sizes, const_values, &enum_member_values))
         .collect();
 
     IR {
         version: 1,
-        files: spec.files.iter().map(|f| XdrFile {
-            name: f.name.clone(),
-            sha256: f.sha256.clone(),
-        }).collect(),
+        files: spec
+            .files
+            .iter()
+            .map(|f| XdrFile {
+                name: f.name.clone(),
+                sha256: f.sha256.clone(),
+            })
+            .collect(),
         resolved_features,
         definitions,
     }
@@ -192,10 +197,14 @@ fn convert_definition(
             fixed_size,
             source: s.source.clone(),
             file_index: s.file_index,
-            fields: s.members.iter().map(|m| Field {
-                name: m.name.clone(),
-                type_: convert_type(&m.type_, const_values),
-            }).collect(),
+            fields: s
+                .members
+                .iter()
+                .map(|m| Field {
+                    name: m.name.clone(),
+                    type_: convert_type(&m.type_, const_values),
+                })
+                .collect(),
         }),
         ast::Definition::Union(u) => Definition::Union(Union {
             name: u.name.clone(),
@@ -206,38 +215,54 @@ fn convert_definition(
                 name: u.discriminant.name.clone(),
                 type_: convert_type(&u.discriminant.type_, const_values),
             },
-            arms: u.arms.iter().map(|arm| {
-                let cases = arm.cases.iter().map(|c| match &c.value {
-                    ast::UnionCaseValue::Literal(literal) => UnionCase {
-                        value: i64::from(*literal),
-                        name: None,
-                    },
-                    ast::UnionCaseValue::Ident(ident) => {
-                        let value = enum_member_values.get(ident.as_str())
-                            .map(|&v| i64::from(v))
-                            .or_else(|| const_values.get(ident).copied())
-                            .unwrap_or_else(|| panic!(
-                                "union {}: unresolved case ident '{ident}'", u.name
-                            ));
-                        UnionCase { value, name: Some(ident.clone()) }
+            arms: u
+                .arms
+                .iter()
+                .map(|arm| {
+                    let cases = arm
+                        .cases
+                        .iter()
+                        .map(|c| match &c.value {
+                            ast::UnionCaseValue::Literal(literal) => UnionCase {
+                                value: i64::from(*literal),
+                                name: None,
+                            },
+                            ast::UnionCaseValue::Ident(ident) => {
+                                let value = enum_member_values
+                                    .get(ident.as_str())
+                                    .map(|&v| i64::from(v))
+                                    .or_else(|| const_values.get(ident).copied())
+                                    .unwrap_or_else(|| {
+                                        panic!("union {}: unresolved case ident '{ident}'", u.name)
+                                    });
+                                UnionCase {
+                                    value,
+                                    name: Some(ident.clone()),
+                                }
+                            }
+                        })
+                        .collect();
+                    UnionArm {
+                        cases,
+                        name: arm.name.clone(),
+                        type_: arm.type_.as_ref().map(|t| convert_type(t, const_values)),
                     }
-                }).collect();
-                UnionArm {
-                    cases,
-                    name: arm.name.clone(),
-                    type_: arm.type_.as_ref().map(|t| convert_type(t, const_values)),
-                }
-            }).collect(),
+                })
+                .collect(),
         }),
         ast::Definition::Enum(e) => Definition::Enum(Enum {
             name: e.name.clone(),
             source: e.source.clone(),
             file_index: e.file_index,
             member_prefix: e.member_prefix.clone(),
-            members: e.members.iter().map(|m| EnumMember {
-                name: m.name.clone(),
-                value: i64::from(m.value),
-            }).collect(),
+            members: e
+                .members
+                .iter()
+                .map(|m| EnumMember {
+                    name: m.name.clone(),
+                    value: i64::from(m.value),
+                })
+                .collect(),
         }),
         ast::Definition::Typedef(t) => Definition::Typedef(Typedef {
             name: t.name.clone(),
@@ -280,7 +305,10 @@ fn convert_type(ty: &ast::Type, const_values: &HashMap<String, i64>) -> TypeRef 
             element: Box::new(convert_type(element_type, const_values)),
             count: resolve_size(size, const_values),
         },
-        ast::Type::VarArray { element_type, max_size } => TypeRef::VarArray {
+        ast::Type::VarArray {
+            element_type,
+            max_size,
+        } => TypeRef::VarArray {
             element: Box::new(convert_type(element_type, const_values)),
             max_count: max_size.as_ref().map(|s| resolve_size(s, const_values)),
         },
@@ -365,7 +393,12 @@ fn compute_wire_size(
             }
             if arm_sizes.is_empty()
                 || arm_sizes.iter().any(|s| s.is_none())
-                || arm_sizes.iter().filter_map(|s| *s).collect::<HashSet<_>>().len() != 1
+                || arm_sizes
+                    .iter()
+                    .filter_map(|s| *s)
+                    .collect::<HashSet<_>>()
+                    .len()
+                    != 1
             {
                 None
             } else {
@@ -401,9 +434,10 @@ fn type_wire_size(
             elem_sz.checked_mul(count)
         }
         ast::Type::Ident(name) => compute_wire_size(ti, name, cache, in_progress),
-        ast::Type::OpaqueVar(_) | ast::Type::String(_) | ast::Type::VarArray { .. } | ast::Type::Optional(_) => {
-            None
-        }
+        ast::Type::OpaqueVar(_)
+        | ast::Type::String(_)
+        | ast::Type::VarArray { .. }
+        | ast::Type::Optional(_) => None,
     }
 }
 

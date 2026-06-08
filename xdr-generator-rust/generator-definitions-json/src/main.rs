@@ -1,15 +1,12 @@
 //! CLI entry point for emitting XDR definitions as a JSON AST.
-
-mod ir;
-
-#[cfg(test)]
-mod tests;
+//!
+//! This is a thin wrapper over the [`generator_definitions_json::generate`]
+//! library function. It exists so `xdr-definitions-json/xdr.json` can be
+//! generated without first building `stellar-xdr`. The same functionality is
+//! also available as `stellar-xdr xfile ast`.
 
 use clap::Parser;
-use std::collections::HashSet;
-use std::fs;
 use std::path::PathBuf;
-use xdr_parser::ast::{Definition, XdrSpec};
 
 /// XDR JSON AST emitter.
 #[derive(Parser, Debug)]
@@ -38,74 +35,7 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-
-    // Read all input files and sort by filename
-    let mut files: Vec<(PathBuf, String)> = Vec::new();
-    for path in &args.input {
-        let content = fs::read_to_string(path)?;
-        files.push((path.clone(), content));
-    }
-    files.sort_by(|a, b| a.0.cmp(&b.0));
-
-    // Build file list for the parser
-    let file_refs: Vec<(&str, &str)> = files
-        .iter()
-        .map(|(path, content)| (path.to_str().unwrap_or(""), content.as_str()))
-        .collect();
-
-    // Parse the XDR files
-    let mut spec = xdr_parser::parser::parse_files(&file_refs)?;
-
-    let features: HashSet<String> = args.feature.iter().map(|f| f.to_lowercase()).collect();
-    let mut resolved_features: Vec<String> = features.iter().cloned().collect();
-    resolved_features.sort();
-    filter_spec(&mut spec, &features);
-
-    let output = ir::build(&spec, resolved_features);
-    let json = serde_json::to_string_pretty(&output)?;
-    fs::write(&args.output, json)?;
-    eprintln!(
-        "JSON AST: {} ({} definitions)",
-        args.output.display(),
-        output.definitions.len(),
-    );
-
+    generator_definitions_json::generate(&args.input, &args.output, &args.feature)?;
+    eprintln!("JSON AST: {}", args.output.display());
     Ok(())
-}
-
-/// Filter an XDR spec in-place: remove definitions and sub-elements whose cfg
-/// evaluates to false under the given feature set, then clear all remaining
-/// cfg annotations.
-fn filter_spec(spec: &mut XdrSpec, features: &HashSet<String>) {
-    filter_definitions(&mut spec.definitions, features);
-    for ns in &mut spec.namespaces {
-        filter_definitions(&mut ns.definitions, features);
-    }
-}
-
-/// Filter a list of definitions: remove those whose cfg is false, filter
-/// sub-elements (union arms, enum members), and clear remaining cfg annotations.
-fn filter_definitions(defs: &mut Vec<Definition>, features: &HashSet<String>) {
-    defs.retain(|d| d.cfg().map_or(true, |cfg| cfg.evaluate(features)));
-
-    for def in defs.iter_mut() {
-        match def {
-            Definition::Union(u) => {
-                u.arms.retain_mut(|arm| {
-                    let keep = arm.cfg.as_ref().map_or(true, |cfg| cfg.evaluate(features));
-                    arm.cfg = None;
-                    keep
-                });
-            }
-            Definition::Enum(e) => {
-                e.members.retain_mut(|m| {
-                    let keep = m.cfg.as_ref().map_or(true, |cfg| cfg.evaluate(features));
-                    m.cfg = None;
-                    keep
-                });
-            }
-            Definition::Struct(_) | Definition::Typedef(_) | Definition::Const(_) => {}
-        }
-        def.set_cfg(None);
-    }
 }

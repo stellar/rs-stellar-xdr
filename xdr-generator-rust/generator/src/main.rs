@@ -1,19 +1,11 @@
 //! CLI entry point for the XDR code generator.
-
-mod generator;
-mod naming;
-mod options;
-mod output;
-mod types;
-
-#[cfg(test)]
-mod tests;
+//!
+//! This is a thin wrapper over the [`xdr_generator_rust::generate`] library
+//! function. It exists so `src/generated.rs` can be regenerated without first
+//! building `stellar-xdr` (which depends on the generated code). The same
+//! functionality is also available as `stellar-xdr xfile generate-rust`.
 
 use clap::Parser;
-use generator::RustGenerator;
-use options::RustOptions;
-use std::collections::HashSet;
-use std::fs;
 use std::path::PathBuf;
 
 /// XDR code generator.
@@ -44,38 +36,13 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-
-    // Read all input files and sort by filename
-    let mut files: Vec<(PathBuf, String)> = Vec::new();
-    for path in &args.input {
-        let content = fs::read_to_string(path)?;
-        files.push((path.clone(), content));
-    }
-    files.sort_by(|a, b| a.0.cmp(&b.0));
-
-    // Build file list for the parser
-    let file_refs: Vec<(&str, &str)> = files
-        .iter()
-        .map(|(path, content)| (path.to_str().unwrap_or(""), content.as_str()))
-        .collect();
-
-    // Parse the XDR files
-    let spec = xdr_parser::parser::parse_files(&file_refs)?;
-
-    let options = RustOptions {
-        custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
-        custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
-        no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
-    };
-
-    let generator = RustGenerator::new(&spec, options);
-
-    // Derive the per-type directory from the module file path:
-    // e.g. src/generated.rs -> src/generated/
-    let output_dir = args.output.with_extension("");
-    generator.generate_to_dir(&spec, &args.output, &output_dir)?;
-
+    xdr_generator_rust::generate(
+        &args.input,
+        &args.output,
+        &args.custom_default,
+        &args.custom_str,
+        &args.no_display_fromstr,
+    )?;
     eprintln!("Generated: {}", args.output.display());
-
     Ok(())
 }

@@ -40,47 +40,35 @@ impl TransactionResultMeta {
                 }
 
                 TransactionMeta::V2(operation_meta) => {
-                    let iter = operation_meta
-                        .operations
-                        .iter()
-                        .flat_map(|op| op.changes.0.iter())
-                        .chain(
-                            operation_meta
-                                .tx_changes_before
-                                .0
-                                .iter()
-                                .chain(operation_meta.tx_changes_after.0.iter()),
-                        );
+                    let iter = operation_meta.tx_changes_before.0.iter().chain(
+                        operation_meta
+                            .operations
+                            .iter()
+                            .flat_map(|op| op.changes.0.iter())
+                            .chain(operation_meta.tx_changes_after.0.iter()),
+                    );
                     Box::new(iter)
                 }
 
                 TransactionMeta::V3(operation_meta) => {
-                    let iter = operation_meta
-                        .operations
-                        .iter()
-                        .flat_map(|op| op.changes.0.iter())
-                        .chain(
-                            operation_meta
-                                .tx_changes_before
-                                .0
-                                .iter()
-                                .chain(operation_meta.tx_changes_after.0.iter()),
-                        );
+                    let iter = operation_meta.tx_changes_before.0.iter().chain(
+                        operation_meta
+                            .operations
+                            .iter()
+                            .flat_map(|op| op.changes.0.iter())
+                            .chain(operation_meta.tx_changes_after.0.iter()),
+                    );
                     Box::new(iter)
                 }
 
                 TransactionMeta::V4(operation_meta) => {
-                    let iter = operation_meta
-                        .operations
-                        .iter()
-                        .flat_map(|op| op.changes.0.iter())
-                        .chain(
-                            operation_meta
-                                .tx_changes_before
-                                .0
-                                .iter()
-                                .chain(operation_meta.tx_changes_after.0.iter()),
-                        );
+                    let iter = operation_meta.tx_changes_before.0.iter().chain(
+                        operation_meta
+                            .operations
+                            .iter()
+                            .flat_map(|op| op.changes.0.iter())
+                            .chain(operation_meta.tx_changes_after.0.iter()),
+                    );
                     Box::new(iter)
                 }
             };

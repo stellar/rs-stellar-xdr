@@ -1,13 +1,17 @@
 use crate::{
     LedgerEntryChange, OperationMeta, OperationMetaV2, TransactionMeta, TransactionResultMeta, VecM,
 };
+
+extern crate alloc;
+use alloc::boxed::Box;
+
 pub enum OperationsMetaRef<'a> {
     V0toV3(&'a VecM<OperationMeta>),
     V4(&'a VecM<OperationMetaV2>),
 }
 
-impl<'a> TransactionResultMeta {
-    pub fn operations(&'a self) -> OperationsMetaRef<'a> {
+impl TransactionResultMeta {
+    pub fn operations(&self) -> OperationsMetaRef<'_> {
         match &self.tx_apply_processing {
             TransactionMeta::V0(value) => OperationsMetaRef::V0toV3(&value),
             TransactionMeta::V1(value) => OperationsMetaRef::V0toV3(&value.operations),

@@ -31,11 +31,9 @@ impl TransactionResultMeta {
                 }
 
                 TransactionMeta::V1(operation_meta) => {
-                    let iter = operation_meta
-                        .operations
-                        .iter()
-                        .flat_map(|op| op.changes.0.iter())
-                        .chain(operation_meta.tx_changes.0.iter());
+                    let iter = operation_meta.tx_changes.0.iter().chain(
+                        operation_meta.operations.iter().flat_map(|op| op.changes.0.iter())
+                    );
                     Box::new(iter)
                 }
 

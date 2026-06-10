@@ -1,7 +1,5 @@
 #![cfg(feature = "alloc")]
 
-use std::vec;
-
 use stellar_xdr::transaction_meta::OperationsMetaRef;
 use stellar_xdr::LedgerEntryChange;
 use stellar_xdr::{
@@ -60,6 +58,7 @@ fn create_transaction_meta_v1(
     }
 }
 
+#[allow(dead_code)]
 fn create_transaction_meta_v2(
     tx_changes_before: LedgerEntryChanges,
     operations: Vec<OperationMeta>,
@@ -72,6 +71,7 @@ fn create_transaction_meta_v2(
     }
 }
 
+#[allow(dead_code)]
 fn create_transaction_meta_v3(
     tx_changes_before: LedgerEntryChanges,
     operations: Vec<OperationMeta>,
@@ -197,8 +197,8 @@ fn test_transaction_meta_v4_operations() {
             let second_ledger_name = &ops.get(1).unwrap().changes.get(0).unwrap().name();
             assert_eq!(*second_ledger_name, "Created");
 
-            let thrid_ledger_name = &ops.get(2).unwrap().changes.get(0).unwrap().name();
-            assert_eq!(*thrid_ledger_name, "Updated");
+            let third_ledger_name = &ops.get(2).unwrap().changes.get(0).unwrap().name();
+            assert_eq!(*third_ledger_name, "Updated");
         }
     }
 }
@@ -223,7 +223,7 @@ fn test_transaction_meta_v1_changes() {
     );
 
     let changes: Vec<&LedgerEntryChange> = transaction_result_meta_v1.changes().collect();
-    assert_eq!(changes.len(), 2);
+    assert_eq!(changes.len(), 5);
 }
 
 #[test]
@@ -235,13 +235,13 @@ fn test_transaction_meta_v4_changes() {
     let tx_changes_before = create_ledger_entry_changes(vec![ledger_entry_created]);
     let tx_changes_after = create_ledger_entry_changes(vec![ledger_entry_updated]);
     let tx_restored = create_ledger_entry_changes(vec![ledger_entry_restored]);
-    let fee_processing = create_ledger_entry_changes(vec![ledger_entry_fee_processing]); // 1
+    let fee_processing = create_ledger_entry_changes(vec![ledger_entry_fee_processing]);
     let operation1 = create_operation_meta_v2(tx_restored.clone());
     let operation2 = create_operation_meta_v2(tx_changes_before.clone());
     let operation3 = create_operation_meta_v2(tx_changes_after.clone());
     let transaction_meta_v4 = create_transaction_meta_v4(
         tx_changes_before,
-        vec![operation1, operation2, operation3], // 3
+        vec![operation1, operation2, operation3],
         tx_changes_after,
     );
 
@@ -252,5 +252,5 @@ fn test_transaction_meta_v4_changes() {
     );
 
     let changes: Vec<&LedgerEntryChange> = transaction_result_meta_v4.changes().collect();
-    assert_eq!(changes.len(), 3);
+    assert_eq!(changes.len(), 6);
 }

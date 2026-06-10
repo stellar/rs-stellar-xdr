@@ -17,7 +17,8 @@ impl<'a> TransactionResultMeta {
         }
     }
 
-    pub fn changes(&self) -> impl Iterator<Item = &LedgerEntryChange> {
+    pub fn changes(&self) -> Box<dyn Iterator<Item = &LedgerEntryChange> + '_> {
+        let fee_processing = self.fee_processing.0.iter();
         let tx_apply_processing_ledgers: Box<dyn Iterator<Item = &LedgerEntryChange>> =
             match &self.tx_apply_processing {
                 TransactionMeta::V0(operation_meta) => {
@@ -29,7 +30,8 @@ impl<'a> TransactionResultMeta {
                     let iter = operation_meta
                         .operations
                         .iter()
-                        .flat_map(|op| op.changes.0.iter());
+                        .flat_map(|op| op.changes.0.iter())
+                        .chain(operation_meta.tx_changes.0.iter());
                     Box::new(iter)
                 }
 
@@ -37,7 +39,14 @@ impl<'a> TransactionResultMeta {
                     let iter = operation_meta
                         .operations
                         .iter()
-                        .flat_map(|op| op.changes.0.iter());
+                        .flat_map(|op| op.changes.0.iter())
+                        .chain(
+                            operation_meta
+                                .tx_changes_before
+                                .0
+                                .iter()
+                                .chain(operation_meta.tx_changes_after.0.iter()),
+                        );
                     Box::new(iter)
                 }
 
@@ -45,7 +54,14 @@ impl<'a> TransactionResultMeta {
                     let iter = operation_meta
                         .operations
                         .iter()
-                        .flat_map(|op| op.changes.0.iter());
+                        .flat_map(|op| op.changes.0.iter())
+                        .chain(
+                            operation_meta
+                                .tx_changes_before
+                                .0
+                                .iter()
+                                .chain(operation_meta.tx_changes_after.0.iter()),
+                        );
                     Box::new(iter)
                 }
 
@@ -53,10 +69,17 @@ impl<'a> TransactionResultMeta {
                     let iter = operation_meta
                         .operations
                         .iter()
-                        .flat_map(|op| op.changes.0.iter());
+                        .flat_map(|op| op.changes.0.iter())
+                        .chain(
+                            operation_meta
+                                .tx_changes_before
+                                .0
+                                .iter()
+                                .chain(operation_meta.tx_changes_after.0.iter()),
+                        );
                     Box::new(iter)
                 }
             };
-        tx_apply_processing_ledgers
+        Box::new(fee_processing.chain(tx_apply_processing_ledgers))
     }
 }

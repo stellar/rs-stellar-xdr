@@ -21,6 +21,8 @@ pub enum Error {
     Arbitrary(#[from] arbitrary::Error),
     #[error("type doesn't have a text representation, use 'json' as output")]
     TextUnsupported,
+    #[error("could not generate a value whose JSON contains {hint:?} within {attempts} attempts")]
+    HintNotFound { hint: String, attempts: u64 },
 }
 
 /// Generate arbitrary XDR values
@@ -34,6 +36,17 @@ pub struct Cmd {
     // Output format to encode to
     #[arg(long = "output", value_enum, default_value_t)]
     pub output_format: OutputFormat,
+
+    /// Keep generating values until the value's JSON representation contains
+    /// this string. Useful for hinting toward a particular union/enum variant
+    /// or sub-value.
+    #[arg(long)]
+    pub hint: Option<String>,
+
+    /// Maximum number of generation attempts when --hint is set before giving
+    /// up.
+    #[arg(long, default_value_t = 1_000_000)]
+    pub hint_max_attempts: u64,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
@@ -63,9 +76,7 @@ macro_rules! run_x {
             let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
-            let r = rand::random::<[u8; 10_240]>();
-            let mut u = Unstructured::new(&r);
-            let v = crate::Type::arbitrary(r#type, &mut u)?;
+            let v = self.generate(r#type)?;
             match self.output_format {
                 OutputFormat::Single => {
                     let l = crate::Limits::none();
@@ -103,4 +114,78 @@ impl Cmd {
     }
 
     run_x!(run_inner);
+
+    /// Generate a single arbitrary value of the given type from fresh random
+    /// bytes.
+    fn generate_one(type_: crate::TypeVariant) -> Result<crate::Type, Error> {
+        let r = rand::random::<[u8; 10_240]>();
+        let mut u = Unstructured::new(&r);
+        Ok(crate::Type::arbitrary(type_, &mut u)?)
+    }
+
+    /// Generate an arbitrary value of the given type.
+    ///
+    /// If a `hint` is configured, values are generated repeatedly (up to
+    /// `hint_max_attempts` times) until one whose JSON representation contains
+    /// the hint is found.
+    fn generate(&self, type_: crate::TypeVariant) -> Result<crate::Type, Error> {
+        let Some(hint) = &self.hint else {
+            return Self::generate_one(type_);
+        };
+        for _ in 0..self.hint_max_attempts {
+            let v = Self::generate_one(type_)?;
+            if serde_json::to_string(&v)?.contains(hint) {
+                return Ok(v);
+            }
+        }
+        Err(Error::HintNotFound {
+            hint: hint.clone(),
+            attempts: self.hint_max_attempts,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hint_matches() {
+        let cmd = Cmd {
+            r#type: "TimeBounds".to_string(),
+            output_format: OutputFormat::Json,
+            hint: Some("min_time".into()),
+            hint_max_attempts: 1000,
+        };
+        let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
+        let v = cmd.generate(type_).unwrap();
+        assert!(serde_json::to_string(&v).unwrap().contains("min_time"));
+    }
+
+    #[test]
+    fn hint_not_found() {
+        let cmd = Cmd {
+            r#type: "TimeBounds".to_string(),
+            output_format: OutputFormat::Json,
+            hint: Some("zzz_does_not_exist_xyzzy".into()),
+            hint_max_attempts: 5,
+        };
+        let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
+        assert!(matches!(
+            cmd.generate(type_),
+            Err(Error::HintNotFound { .. })
+        ));
+    }
+
+    #[test]
+    fn no_hint_generates_once() {
+        let cmd = Cmd {
+            r#type: "TimeBounds".to_string(),
+            output_format: OutputFormat::Json,
+            hint: None,
+            hint_max_attempts: 1,
+        };
+        let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
+        assert!(cmd.generate(type_).is_ok());
+    }
 }

@@ -209,7 +209,7 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
             payload: payload
                 .as_slice()
                 .try_into()
-                .map_err(|_| core::fmt::Error)?,
+                .map_err(|()| core::fmt::Error)?,
         };
         let s = k.to_string();
         f.write_str(&s)?;

@@ -206,7 +206,10 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
         } = self;
         let k = stellar_strkey::ed25519::SignedPayload {
             ed25519: *ed25519,
-            payload: payload.into(),
+            payload: payload
+                .as_slice()
+                .try_into()
+                .map_err(|_| core::fmt::Error)?,
         };
         let s = k.to_string();
         f.write_str(&s)?;
@@ -221,7 +224,7 @@ impl core::str::FromStr for SignerKeyEd25519SignedPayload {
             stellar_strkey::ed25519::SignedPayload::from_str(s)?;
         Ok(SignerKeyEd25519SignedPayload {
             ed25519: Uint256(ed25519),
-            payload: payload.try_into()?,
+            payload: payload.as_slice().try_into()?,
         })
     }
 }
@@ -245,7 +248,7 @@ impl core::str::FromStr for SignerKey {
             ) => Ok(SignerKey::Ed25519SignedPayload(
                 SignerKeyEd25519SignedPayload {
                     ed25519: Uint256(ed25519),
-                    payload: payload.try_into()?,
+                    payload: payload.as_slice().try_into()?,
                 },
             )),
             stellar_strkey::Strkey::PrivateKeyEd25519(_)

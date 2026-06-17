@@ -7,7 +7,7 @@ authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 version = "27.0.0"
 edition = "2021"
-rust-version = "1.84.0"
+rust-version = "1.87.0"
 
 [[bin]]
 name = "stellar-xdr"

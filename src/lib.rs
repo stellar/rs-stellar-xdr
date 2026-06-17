@@ -6,8 +6,6 @@
 #![allow(clippy::tabs_in_doc_comments)]
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::doc_lazy_continuation)]
-// Pedantic lints raised by the newer clippy that ships with the bumped MSRV,
-// firing on the auto-generated code.
 #![allow(clippy::unnecessary_semicolon)]
 #![allow(clippy::non_std_lazy_statics)]
 #![allow(unused_attributes)]

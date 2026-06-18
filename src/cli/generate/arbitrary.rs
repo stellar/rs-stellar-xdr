@@ -46,7 +46,7 @@ pub struct Cmd {
     /// Maximum number of generation attempts when --hint is set before giving
     /// up.
     #[arg(long, default_value_t = 20_000)]
-    pub hint_max_attempts: u64,
+    pub hint_attempts: u64,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
@@ -126,13 +126,13 @@ impl Cmd {
     /// Generate an arbitrary value of the given type.
     ///
     /// If a `hint` is configured, values are generated repeatedly (up to
-    /// `hint_max_attempts` times) until one whose JSON representation contains
+    /// `hint_attempts` times) until one whose JSON representation contains
     /// the hint is found.
     fn generate(&self, type_: crate::TypeVariant) -> Result<crate::Type, Error> {
         let Some(hint) = &self.hint else {
             return Self::generate_one(type_);
         };
-        for _ in 0..self.hint_max_attempts {
+        for _ in 0..self.hint_attempts {
             let v = Self::generate_one(type_)?;
             if serde_json::to_string(&v)?.contains(hint) {
                 return Ok(v);
@@ -140,7 +140,7 @@ impl Cmd {
         }
         Err(Error::HintNotFound {
             hint: hint.clone(),
-            attempts: self.hint_max_attempts,
+            attempts: self.hint_attempts,
         })
     }
 }
@@ -155,7 +155,7 @@ mod tests {
             r#type: "TimeBounds".to_string(),
             output_format: OutputFormat::Json,
             hint: Some("min_time".into()),
-            hint_max_attempts: 1000,
+            hint_attempts: 1000,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         let v = cmd.generate(type_).unwrap();
@@ -168,7 +168,7 @@ mod tests {
             r#type: "TimeBounds".to_string(),
             output_format: OutputFormat::Json,
             hint: Some("zzz_does_not_exist_xyzzy".into()),
-            hint_max_attempts: 5,
+            hint_attempts: 5,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         assert!(matches!(
@@ -183,7 +183,7 @@ mod tests {
             r#type: "TimeBounds".to_string(),
             output_format: OutputFormat::Json,
             hint: None,
-            hint_max_attempts: 1,
+            hint_attempts: 1,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         assert!(cmd.generate(type_).is_ok());

@@ -45,7 +45,7 @@ pub struct Cmd {
 
     /// Maximum number of generation attempts when --hint is set before giving
     /// up.
-    #[arg(long, default_value_t = 1_000_000)]
+    #[arg(long, default_value_t = 20_000)]
     pub hint_max_attempts: u64,
 }
 

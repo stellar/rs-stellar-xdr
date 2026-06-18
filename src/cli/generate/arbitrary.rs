@@ -21,8 +21,8 @@ pub enum Error {
     Arbitrary(#[from] arbitrary::Error),
     #[error("type doesn't have a text representation, use 'json' as output")]
     TextUnsupported,
-    #[error("could not generate a value whose JSON contains {hint:?} within {attempts} attempts")]
-    HintNotFound { hint: String, attempts: u64 },
+    #[error("could not generate a value whose JSON contains all of {hints:?} within {attempts} attempts")]
+    HintNotFound { hints: Vec<String>, attempts: u64 },
 }
 
 /// Generate arbitrary XDR values
@@ -39,9 +39,10 @@ pub struct Cmd {
 
     /// Keep generating values until the value's JSON representation contains
     /// this string. Useful for hinting toward a particular union/enum variant
-    /// or sub-value.
+    /// or sub-value. Repeat the flag to require several substrings; all of
+    /// them must be present in the same value.
     #[arg(long)]
-    pub hint: Option<String>,
+    pub hint: Vec<String>,
 
     /// Maximum number of generation attempts when --hint is set before giving
     /// up.
@@ -125,21 +126,22 @@ impl Cmd {
 
     /// Generate an arbitrary value of the given type.
     ///
-    /// If a `hint` is configured, values are generated repeatedly (up to
-    /// `hint_attempts` times) until one whose JSON representation contains
-    /// the hint is found.
+    /// If any `hint`s are configured, values are generated repeatedly (up to
+    /// `hint_attempts` times) until one whose JSON representation contains all
+    /// of the hints is found.
     fn generate(&self, type_: crate::TypeVariant) -> Result<crate::Type, Error> {
-        let Some(hint) = &self.hint else {
+        if self.hint.is_empty() {
             return Self::generate_one(type_);
-        };
+        }
         for _ in 0..self.hint_attempts {
             let v = Self::generate_one(type_)?;
-            if serde_json::to_string(&v)?.contains(hint) {
+            let json = serde_json::to_string(&v)?;
+            if self.hint.iter().all(|hint| json.contains(hint)) {
                 return Ok(v);
             }
         }
         Err(Error::HintNotFound {
-            hint: hint.clone(),
+            hints: self.hint.clone(),
             attempts: self.hint_attempts,
         })
     }
@@ -154,7 +156,7 @@ mod tests {
         let cmd = Cmd {
             r#type: "TimeBounds".to_string(),
             output_format: OutputFormat::Json,
-            hint: Some("min_time".into()),
+            hint: vec!["min_time".into()],
             hint_attempts: 1000,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
@@ -163,11 +165,41 @@ mod tests {
     }
 
     #[test]
+    fn all_hints_match() {
+        let cmd = Cmd {
+            r#type: "TimeBounds".to_string(),
+            output_format: OutputFormat::Json,
+            hint: vec!["min_time".into(), "max_time".into()],
+            hint_attempts: 1000,
+        };
+        let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
+        let v = cmd.generate(type_).unwrap();
+        let json = serde_json::to_string(&v).unwrap();
+        assert!(json.contains("min_time"));
+        assert!(json.contains("max_time"));
+    }
+
+    #[test]
     fn hint_not_found() {
         let cmd = Cmd {
             r#type: "TimeBounds".to_string(),
             output_format: OutputFormat::Json,
-            hint: Some("zzz_does_not_exist_xyzzy".into()),
+            hint: vec!["zzz_does_not_exist_xyzzy".into()],
+            hint_attempts: 5,
+        };
+        let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
+        assert!(matches!(
+            cmd.generate(type_),
+            Err(Error::HintNotFound { .. })
+        ));
+    }
+
+    #[test]
+    fn not_all_hints_found() {
+        let cmd = Cmd {
+            r#type: "TimeBounds".to_string(),
+            output_format: OutputFormat::Json,
+            hint: vec!["min_time".into(), "zzz_does_not_exist_xyzzy".into()],
             hint_attempts: 5,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
@@ -182,7 +214,7 @@ mod tests {
         let cmd = Cmd {
             r#type: "TimeBounds".to_string(),
             output_format: OutputFormat::Json,
-            hint: None,
+            hint: vec![],
             hint_attempts: 1,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();

@@ -7,7 +7,7 @@ authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 version = "27.0.0"
 edition = "2021"
-rust-version = "1.84.0"
+rust-version = "1.87.0"
 
 [[bin]]
 name = "stellar-xdr"
@@ -20,7 +20,7 @@ crate-git-revision = "0.0.6"
 
 [dependencies]
 cfg_eval = { version = "0.1.2", optional = true }
-stellar-strkey = { version = "0.0.13", optional = true }
+stellar-strkey = { version = "0.0.18", optional = true }
 base64 = { version = "0.22.1", optional = true }
 serde = { version = "1.0.139", features = ["derive"], optional = true }
 serde_with = { version = "3.12.0", features = ["schemars_0_8"], optional = true }

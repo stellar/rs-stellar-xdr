@@ -361,6 +361,10 @@ impl core::fmt::Display for ScAddress {
             }
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
+            #[cfg(feature = "cap_0084")]
+            // CAP-0084 muxed contract addresses have no strkey encoding (none exists in
+            // stellar-strkey through 0.0.18); no canonical string form is defined yet.
+            ScAddress::MuxedContract(_) => Err(core::fmt::Error),
         }
     }
 }

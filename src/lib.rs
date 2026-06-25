@@ -121,6 +121,8 @@ pub const VERSION: Version = Version {
         "test_feature",
         #[cfg(feature = "cap_0083")]
         "cap_0083",
+        #[cfg(feature = "cap_0084")]
+        "cap_0084",
     ],
 };
 

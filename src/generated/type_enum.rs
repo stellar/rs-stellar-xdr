@@ -88,6 +88,8 @@ pub enum TypeVariant {
     ContractExecutable,
     ScAddressType,
     MuxedEd25519Account,
+    #[cfg(feature = "cap_0084")]
+    MuxedContract,
     ScAddress,
     ScVec,
     ScMap,
@@ -568,6 +570,8 @@ impl TypeVariant {
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
+        #[cfg(feature = "cap_0084")]
+        TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
@@ -1054,6 +1058,8 @@ impl TypeVariant {
         "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
+        #[cfg(feature = "cap_0084")]
+        "MuxedContract",
         "ScAddress",
         "ScVec",
         "ScMap",
@@ -1546,6 +1552,8 @@ impl TypeVariant {
             Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::MuxedEd25519Account => "MuxedEd25519Account",
+            #[cfg(feature = "cap_0084")]
+            Self::MuxedContract => "MuxedContract",
             Self::ScAddress => "ScAddress",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
@@ -2079,6 +2087,8 @@ impl TypeVariant {
             Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
             Self::MuxedEd25519Account => gen.into_root_schema_for::<MuxedEd25519Account>(),
+            #[cfg(feature = "cap_0084")]
+            Self::MuxedContract => gen.into_root_schema_for::<MuxedContract>(),
             Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
             Self::ScVec => gen.into_root_schema_for::<ScVec>(),
             Self::ScMap => gen.into_root_schema_for::<ScMap>(),
@@ -2783,6 +2793,8 @@ impl core::str::FromStr for TypeVariant {
             "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "MuxedEd25519Account" => Ok(Self::MuxedEd25519Account),
+            #[cfg(feature = "cap_0084")]
+            "MuxedContract" => Ok(Self::MuxedContract),
             "ScAddress" => Ok(Self::ScAddress),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
@@ -3299,6 +3311,8 @@ pub enum Type {
     ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     MuxedEd25519Account(Box<MuxedEd25519Account>),
+    #[cfg(feature = "cap_0084")]
+    MuxedContract(Box<MuxedContract>),
     ScAddress(Box<ScAddress>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
@@ -3781,6 +3795,8 @@ impl Type {
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
+        #[cfg(feature = "cap_0084")]
+        TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
@@ -4267,6 +4283,8 @@ impl Type {
         "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
+        #[cfg(feature = "cap_0084")]
+        "MuxedContract",
         "ScAddress",
         "ScVec",
         "ScMap",
@@ -5014,6 +5032,10 @@ impl Type {
                 Ok(Self::MuxedEd25519Account(Box::new(
                     MuxedEd25519Account::read_xdr(r)?,
                 )))
+            }),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => r.with_limited_depth(|r| {
+                Ok(Self::MuxedContract(Box::new(MuxedContract::read_xdr(r)?)))
             }),
             TypeVariant::ScAddress => {
                 r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
@@ -7140,6 +7162,11 @@ impl Type {
                 ReadXdrIter::<_, MuxedEd25519Account>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, MuxedContract>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
@@ -9226,6 +9253,11 @@ impl Type {
             TypeVariant::MuxedEd25519Account => Box::new(
                 ReadXdrIter::<_, Frame<MuxedEd25519Account>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, Frame<MuxedContract>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t.0)))),
             ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
@@ -11542,6 +11574,11 @@ impl Type {
                 ReadXdrIter::<_, MuxedEd25519Account>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, MuxedContract>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
@@ -13415,6 +13452,10 @@ impl Type {
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => {
+                Ok(Self::MuxedContract(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde_json::from_reader(r)?))),
@@ -14754,6 +14795,10 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => Ok(Self::MuxedContract(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
@@ -16242,6 +16287,10 @@ impl Type {
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 MuxedEd25519Account::arbitrary(u)?,
             ))),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => {
+                Ok(Self::MuxedContract(Box::new(MuxedContract::arbitrary(u)?)))
+            }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::arbitrary(u)?))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::arbitrary(u)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::arbitrary(u)?))),
@@ -17471,6 +17520,8 @@ impl Type {
             TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
             TypeVariant::ScAddressType => Self::ScAddressType(Box::default()),
             TypeVariant::MuxedEd25519Account => Self::MuxedEd25519Account(Box::default()),
+            #[cfg(feature = "cap_0084")]
+            TypeVariant::MuxedContract => Self::MuxedContract(Box::default()),
             TypeVariant::ScAddress => Self::ScAddress(Box::default()),
             TypeVariant::ScVec => Self::ScVec(Box::default()),
             TypeVariant::ScMap => Self::ScMap(Box::default()),
@@ -18125,6 +18176,8 @@ impl Type {
             Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::MuxedEd25519Account(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0084")]
+            Self::MuxedContract(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
@@ -18613,6 +18666,8 @@ impl Type {
             Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::MuxedEd25519Account(_) => "MuxedEd25519Account",
+            #[cfg(feature = "cap_0084")]
+            Self::MuxedContract(_) => "MuxedContract",
             Self::ScAddress(_) => "ScAddress",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
@@ -19137,6 +19192,8 @@ impl Type {
             Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::MuxedEd25519Account(_) => TypeVariant::MuxedEd25519Account,
+            #[cfg(feature = "cap_0084")]
+            Self::MuxedContract(_) => TypeVariant::MuxedContract,
             Self::ScAddress(_) => TypeVariant::ScAddress,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
@@ -19699,6 +19756,8 @@ impl WriteXdr for Type {
             Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
             Self::MuxedEd25519Account(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0084")]
+            Self::MuxedContract(v) => v.write_xdr(w),
             Self::ScAddress(v) => v.write_xdr(w),
             Self::ScVec(v) => v.write_xdr(w),
             Self::ScMap(v) => v.write_xdr(w),

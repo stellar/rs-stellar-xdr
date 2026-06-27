@@ -34,6 +34,8 @@ schemars = { version = "0.8.16", optional = true }
 ethnum = { version = "1.5.3", optional = true }
 rand = { version = "0.9.0", optional = true }
 sha2 = { version = "0.10.9", optional = true }
+xdr-generator-rust = { version = "0.1.0", path = "xdr-generator-rust/generator", optional = true }
+generator-definitions-json = { version = "0.1.0", path = "xdr-generator-rust/generator-definitions-json", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.89"
@@ -61,7 +63,7 @@ hex = []
 rand = ["dep:rand"]
 
 # Features for the CLI.
-cli = ["std", "type_enum", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum"]
+cli = ["std", "type_enum", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum", "dep:xdr-generator-rust", "dep:generator-definitions-json"]
 
 [package.metadata.docs.rs]
 all-features = true

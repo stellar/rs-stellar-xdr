@@ -95,7 +95,7 @@
       "type": "string"
     },
     "ContractExecutable": {
-      "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
+      "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; #ifdef CAP_0085_EXECUTABLE_REF case CONTRACT_EXECUTABLE_EXTERNAL_REF: ContractExecutableExternalRef external_ref; #endif }; ```",
       "oneOf": [
         {
           "type": "string",

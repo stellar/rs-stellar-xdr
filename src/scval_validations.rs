@@ -51,6 +51,12 @@ impl Validate for ScVal {
             }
             ScVal::Vec(None) | ScVal::Map(None) => Err(Error::Invalid),
             ScVal::Map(Some(m)) => m.validate(),
+
+            // CAP-0085: ExecutableTag wraps an ScString, which carries no
+            // structural validity constraints (like ScVal::String), so it is
+            // always valid. Flagged for reviewer confirmation.
+            #[cfg(feature = "cap_0085_executable_ref")]
+            ScVal::ExecutableTag(_) => Ok(()),
         }
     }
 }

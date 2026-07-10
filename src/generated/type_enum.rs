@@ -85,6 +85,8 @@ pub enum TypeVariant {
     UInt256Parts,
     Int256Parts,
     ContractExecutableType,
+    #[cfg(feature = "cap_0085_executable_ref")]
+    ContractExecutableExternalRef,
     ContractExecutable,
     ScAddressType,
     MuxedEd25519Account,
@@ -565,6 +567,8 @@ impl TypeVariant {
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
         TypeVariant::ContractExecutableType,
+        #[cfg(feature = "cap_0085_executable_ref")]
+        TypeVariant::ContractExecutableExternalRef,
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
@@ -1051,6 +1055,8 @@ impl TypeVariant {
         "UInt256Parts",
         "Int256Parts",
         "ContractExecutableType",
+        #[cfg(feature = "cap_0085_executable_ref")]
+        "ContractExecutableExternalRef",
         "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
@@ -1543,6 +1549,8 @@ impl TypeVariant {
             Self::UInt256Parts => "UInt256Parts",
             Self::Int256Parts => "Int256Parts",
             Self::ContractExecutableType => "ContractExecutableType",
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef => "ContractExecutableExternalRef",
             Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::MuxedEd25519Account => "MuxedEd25519Account",
@@ -2076,6 +2084,10 @@ impl TypeVariant {
             Self::UInt256Parts => gen.into_root_schema_for::<UInt256Parts>(),
             Self::Int256Parts => gen.into_root_schema_for::<Int256Parts>(),
             Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef => {
+                gen.into_root_schema_for::<ContractExecutableExternalRef>()
+            }
             Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
             Self::MuxedEd25519Account => gen.into_root_schema_for::<MuxedEd25519Account>(),
@@ -2780,6 +2792,8 @@ impl core::str::FromStr for TypeVariant {
             "UInt256Parts" => Ok(Self::UInt256Parts),
             "Int256Parts" => Ok(Self::Int256Parts),
             "ContractExecutableType" => Ok(Self::ContractExecutableType),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            "ContractExecutableExternalRef" => Ok(Self::ContractExecutableExternalRef),
             "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "MuxedEd25519Account" => Ok(Self::MuxedEd25519Account),
@@ -3296,6 +3310,8 @@ pub enum Type {
     UInt256Parts(Box<UInt256Parts>),
     Int256Parts(Box<Int256Parts>),
     ContractExecutableType(Box<ContractExecutableType>),
+    #[cfg(feature = "cap_0085_executable_ref")]
+    ContractExecutableExternalRef(Box<ContractExecutableExternalRef>),
     ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     MuxedEd25519Account(Box<MuxedEd25519Account>),
@@ -3778,6 +3794,8 @@ impl Type {
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
         TypeVariant::ContractExecutableType,
+        #[cfg(feature = "cap_0085_executable_ref")]
+        TypeVariant::ContractExecutableExternalRef,
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
@@ -4264,6 +4282,8 @@ impl Type {
         "UInt256Parts",
         "Int256Parts",
         "ContractExecutableType",
+        #[cfg(feature = "cap_0085_executable_ref")]
+        "ContractExecutableExternalRef",
         "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
@@ -5000,6 +5020,12 @@ impl Type {
             TypeVariant::ContractExecutableType => r.with_limited_depth(|r| {
                 Ok(Self::ContractExecutableType(Box::new(
                     ContractExecutableType::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutableExternalRef(Box::new(
+                    ContractExecutableExternalRef::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ContractExecutable => r.with_limited_depth(|r| {
@@ -7128,6 +7154,14 @@ impl Type {
                 ReadXdrIter::<_, ContractExecutableType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, ContractExecutableExternalRef>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
+            ),
             TypeVariant::ContractExecutable => Box::new(
                 ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
@@ -9214,6 +9248,14 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutableExternalRef>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t.0)))),
             ),
             TypeVariant::ContractExecutable => Box::new(
                 ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.limits.clone())
@@ -11530,6 +11572,11 @@ impl Type {
                 ReadXdrIter::<_, ContractExecutableType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, ContractExecutableExternalRef>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
+            ),
             TypeVariant::ContractExecutable => Box::new(
                 ReadXdrIter::<_, ContractExecutable>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
@@ -13406,6 +13453,10 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -14747,6 +14798,10 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
             TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -16233,6 +16288,10 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 ContractExecutableType::arbitrary(u)?,
             ))),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(ContractExecutableExternalRef::arbitrary(u)?),
+            )),
             TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
                 ContractExecutable::arbitrary(u)?,
             ))),
@@ -17468,6 +17527,10 @@ impl Type {
             TypeVariant::UInt256Parts => Self::UInt256Parts(Box::default()),
             TypeVariant::Int256Parts => Self::Int256Parts(Box::default()),
             TypeVariant::ContractExecutableType => Self::ContractExecutableType(Box::default()),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => {
+                Self::ContractExecutableExternalRef(Box::default())
+            }
             TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
             TypeVariant::ScAddressType => Self::ScAddressType(Box::default()),
             TypeVariant::MuxedEd25519Account => Self::MuxedEd25519Account(Box::default()),
@@ -18122,6 +18185,8 @@ impl Type {
             Self::UInt256Parts(ref v) => v.as_ref(),
             Self::Int256Parts(ref v) => v.as_ref(),
             Self::ContractExecutableType(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(ref v) => v.as_ref(),
             Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::MuxedEd25519Account(ref v) => v.as_ref(),
@@ -18610,6 +18675,8 @@ impl Type {
             Self::UInt256Parts(_) => "UInt256Parts",
             Self::Int256Parts(_) => "Int256Parts",
             Self::ContractExecutableType(_) => "ContractExecutableType",
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(_) => "ContractExecutableExternalRef",
             Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::MuxedEd25519Account(_) => "MuxedEd25519Account",
@@ -19134,6 +19201,8 @@ impl Type {
             Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
             Self::Int256Parts(_) => TypeVariant::Int256Parts,
             Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(_) => TypeVariant::ContractExecutableExternalRef,
             Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::MuxedEd25519Account(_) => TypeVariant::MuxedEd25519Account,
@@ -19696,6 +19765,8 @@ impl WriteXdr for Type {
             Self::UInt256Parts(v) => v.write_xdr(w),
             Self::Int256Parts(v) => v.write_xdr(w),
             Self::ContractExecutableType(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(v) => v.write_xdr(w),
             Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
             Self::MuxedEd25519Account(v) => v.write_xdr(w),

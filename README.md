@@ -33,15 +33,15 @@ Default features: `std`.
 Tiers of functionality:
 
 1. `std` – The std feature provides all functionality (types, encode,
-decode), and is the default feature set.
+   decode), and is the default feature set.
 2. `alloc` – The alloc feature uses `Box` and `Vec` types for recursive
-references and arrays, and is automatically enabled if the std feature is
-enabled. The default global allocator is used. Support for a custom
-allocator will be added in [#39]. No encode or decode capability exists,
-only types. Encode and decode capability will be added in [#46].
+   references and arrays, and is automatically enabled if the std feature is
+   enabled. The default global allocator is used. Support for a custom
+   allocator will be added in [#39]. No encode or decode capability exists,
+   only types. Encode and decode capability will be added in [#46].
 3. If std or alloc are not enabled recursive and array types requires static
-lifetime values. No encode or decode capability exists. Encode and decode
-capability will be added in [#47].
+   lifetime values. No encode or decode capability exists. Encode and decode
+   capability will be added in [#47].
 
 [#39]: https://github.com/stellar/rs-stellar-xdr/issues/39
 [#46]: https://github.com/stellar/rs-stellar-xdr/issues/46
@@ -50,16 +50,16 @@ capability will be added in [#47].
 Ancillary functionality:
 
 1. `type_enum` – Enables the generated dynamic `Type` and `TypeVariant`
-APIs for runtime-selected XDR decoding, encoding, schema generation.
+   APIs for runtime-selected XDR decoding, encoding, schema generation.
 2. `base64` – Enables support for base64 encoding and decoding.
 3. `serde` – Enables support for serializing and deserializing types with
-the serde crate.
+   the serde crate.
 4. `serde_json` – Enables support for built-in functionality specifically
-for serde_json. Often not required to use the types with serde_json, and
-only necessary to use utility functions that depend on serde_json.
+   for `serde_json`. Often not required to use the types with `serde_json`, and
+   only necessary to use utility functions that depend on `serde_json`.
 5. `arbitrary` – Enables support for interop with the arbitrary crate.
 6. `hex` – Enables support for hex in string representations of some types.
-Automatically enabled when serde is enabled.
+   Automatically enabled when serde is enabled.
 7. `schemars` – Enables support for JSON Schema generation. (Experimental)
 
 Features marked experimental may disappear at anytime, see breaking changes

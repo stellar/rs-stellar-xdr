@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// AuthCert is an XDR Struct defined as:
+/// `AuthCert` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AuthCert

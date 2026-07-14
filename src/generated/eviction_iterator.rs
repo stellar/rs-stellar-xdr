@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// EvictionIterator is an XDR Struct defined as:
+/// `EvictionIterator` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct EvictionIterator {

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OperationResult is an XDR Union defined as:
+/// `OperationResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union OperationResult switch (OperationResultCode code)

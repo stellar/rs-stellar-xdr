@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// AllowTrustOp is an XDR Struct defined as:
+/// `AllowTrustOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AllowTrustOp

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ExtendFootprintTtlResult is an XDR Union defined as:
+/// `ExtendFootprintTtlResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code)

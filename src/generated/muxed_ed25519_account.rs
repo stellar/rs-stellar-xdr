@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MuxedEd25519Account is an XDR Struct defined as:
+/// `MuxedEd25519Account` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct MuxedEd25519Account

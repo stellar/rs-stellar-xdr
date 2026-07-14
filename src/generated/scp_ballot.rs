@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpBallot is an XDR Struct defined as:
+/// `ScpBallot` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPBallot

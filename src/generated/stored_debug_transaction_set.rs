@@ -1,14 +1,14 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// StoredDebugTransactionSet is an XDR Struct defined as:
+/// `StoredDebugTransactionSet` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct StoredDebugTransactionSet
 /// {
-/// 	StoredTransactionSet txSet;
-/// 	uint32 ledgerSeq;
-/// 	StellarValue scpValue;
+///     StoredTransactionSet txSet;
+///     uint32 ledgerSeq;
+///     StellarValue scpValue;
 /// };
 /// ```
 ///

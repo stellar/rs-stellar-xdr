@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimAtomType is an XDR Enum defined as:
+/// `ClaimAtomType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimAtomType

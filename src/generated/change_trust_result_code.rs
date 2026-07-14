@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ChangeTrustResultCode is an XDR Enum defined as:
+/// `ChangeTrustResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ChangeTrustResultCode

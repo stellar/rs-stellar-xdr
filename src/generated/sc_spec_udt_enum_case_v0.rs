@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecUdtEnumCaseV0 is an XDR Struct defined as:
+/// `ScSpecUdtEnumCaseV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTEnumCaseV0

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractEventType is an XDR Enum defined as:
+/// `ContractEventType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractEventType

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScEnvMetaKind is an XDR Enum defined as:
+/// `ScEnvMetaKind` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCEnvMetaKind

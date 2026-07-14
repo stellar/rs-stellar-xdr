@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// BeginSponsoringFutureReservesResult is an XDR Union defined as:
+/// `BeginSponsoringFutureReservesResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union BeginSponsoringFutureReservesResult switch (

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// HostFunction is an XDR Union defined as:
+/// `HostFunction` is an XDR Union defined as:
 ///
 /// ```text
 /// union HostFunction switch (HostFunctionType type)

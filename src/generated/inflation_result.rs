@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InflationResult is an XDR Union defined as:
+/// `InflationResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union InflationResult switch (InflationResultCode code)

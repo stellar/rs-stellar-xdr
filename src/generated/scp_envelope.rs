@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpEnvelope is an XDR Struct defined as:
+/// `ScpEnvelope` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPEnvelope

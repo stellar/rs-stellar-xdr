@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// DataEntry is an XDR Struct defined as:
+/// `DataEntry` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DataEntry

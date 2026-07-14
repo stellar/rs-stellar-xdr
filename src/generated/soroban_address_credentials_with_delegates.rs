@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanAddressCredentialsWithDelegates is an XDR Struct defined as:
+/// `SorobanAddressCredentialsWithDelegates` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanAddressCredentialsWithDelegates

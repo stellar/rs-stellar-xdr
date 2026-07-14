@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingScpTiming is an XDR Struct defined as:
+/// `ConfigSettingScpTiming` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingSCPTiming {

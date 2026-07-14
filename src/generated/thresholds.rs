@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Thresholds is an XDR Typedef defined as:
+/// `Thresholds` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque Thresholds[4];

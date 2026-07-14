@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Hash is an XDR Typedef defined as:
+/// `Hash` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque Hash[32];

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TimeSlicedPeerDataList is an XDR Typedef defined as:
+/// `TimeSlicedPeerDataList` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>;

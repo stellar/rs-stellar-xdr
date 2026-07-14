@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractId is an XDR Typedef defined as:
+/// `ContractId` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash ContractID;

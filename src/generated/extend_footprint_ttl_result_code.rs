@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ExtendFootprintTtlResultCode is an XDR Enum defined as:
+/// `ExtendFootprintTtlResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ExtendFootprintTTLResultCode

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Curve25519Secret is an XDR Struct defined as:
+/// `Curve25519Secret` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Curve25519Secret

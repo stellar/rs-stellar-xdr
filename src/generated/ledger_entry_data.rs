@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerEntryData is an XDR NestedUnion defined as:
+/// `LedgerEntryData` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (LedgerEntryType type)

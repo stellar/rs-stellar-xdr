@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerKey is an XDR Union defined as:
+/// `LedgerKey` is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerKey switch (LedgerEntryType type)

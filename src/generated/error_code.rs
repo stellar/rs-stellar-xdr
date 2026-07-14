@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ErrorCode is an XDR Enum defined as:
+/// `ErrorCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ErrorCode

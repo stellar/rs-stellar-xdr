@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Int256Parts is an XDR Struct defined as:
+/// `Int256Parts` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Int256Parts {

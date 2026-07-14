@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanAuthorizedFunction is an XDR Union defined as:
+/// `SorobanAuthorizedFunction` is an XDR Union defined as:
 ///
 /// ```text
 /// union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type)

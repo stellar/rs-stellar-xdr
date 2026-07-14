@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// CreatePassiveSellOfferOp is an XDR Struct defined as:
+/// `CreatePassiveSellOfferOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreatePassiveSellOfferOp

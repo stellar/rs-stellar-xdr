@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Memo is an XDR Union defined as:
+/// `Memo` is an XDR Union defined as:
 ///
 /// ```text
 /// union Memo switch (MemoType type)

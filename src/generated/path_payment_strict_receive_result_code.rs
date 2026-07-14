@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PathPaymentStrictReceiveResultCode is an XDR Enum defined as:
+/// `PathPaymentStrictReceiveResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PathPaymentStrictReceiveResultCode

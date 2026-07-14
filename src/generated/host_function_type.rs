@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// HostFunctionType is an XDR Enum defined as:
+/// `HostFunctionType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum HostFunctionType

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanAuthorizationEntries is an XDR Typedef defined as:
+/// `SorobanAuthorizationEntries` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef SorobanAuthorizationEntry SorobanAuthorizationEntries<>;

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// BucketListType is an XDR Enum defined as:
+/// `BucketListType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum BucketListType

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TimeSlicedNodeData is an XDR Struct defined as:
+/// `TimeSlicedNodeData` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeSlicedNodeData

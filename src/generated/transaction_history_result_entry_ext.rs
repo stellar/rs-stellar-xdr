@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionHistoryResultEntryExt is an XDR NestedUnion defined as:
+/// `TransactionHistoryResultEntryExt` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (int v)

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SetTrustLineFlagsResultCode is an XDR Enum defined as:
+/// `SetTrustLineFlagsResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SetTrustLineFlagsResultCode

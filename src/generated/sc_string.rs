@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScString is an XDR Typedef defined as:
+/// `ScString` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef string SCString<>;

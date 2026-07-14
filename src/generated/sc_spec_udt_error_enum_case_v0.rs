@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecUdtErrorEnumCaseV0 is an XDR Struct defined as:
+/// `ScSpecUdtErrorEnumCaseV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecUDTErrorEnumCaseV0

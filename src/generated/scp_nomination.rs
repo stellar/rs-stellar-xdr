@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpNomination is an XDR Struct defined as:
+/// `ScpNomination` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPNomination

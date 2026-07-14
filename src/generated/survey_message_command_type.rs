@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SurveyMessageCommandType is an XDR Enum defined as:
+/// `SurveyMessageCommandType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SurveyMessageCommandType

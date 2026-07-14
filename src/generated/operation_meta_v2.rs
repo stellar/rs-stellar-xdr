@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OperationMetaV2 is an XDR Struct defined as:
+/// `OperationMetaV2` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct OperationMetaV2

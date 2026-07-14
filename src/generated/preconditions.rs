@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Preconditions is an XDR Union defined as:
+/// `Preconditions` is an XDR Union defined as:
 ///
 /// ```text
 /// union Preconditions switch (PreconditionType type)

@@ -258,7 +258,7 @@ impl RustGenerator {
             .join(", ");
 
         let type_kind = if s.is_nested {
-            "NestedStruct"
+            "Nested Struct"
         } else {
             "Struct"
         };
@@ -338,7 +338,7 @@ impl RustGenerator {
             })
             .collect();
 
-        let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
+        let type_kind = if u.is_nested { "Nested Union" } else { "Union" };
         let default_arm_cfg = u
             .arms
             .first()

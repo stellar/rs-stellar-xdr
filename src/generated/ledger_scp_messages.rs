@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerScpMessages is an XDR Struct defined as:
+/// `LedgerScpMessages` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerSCPMessages

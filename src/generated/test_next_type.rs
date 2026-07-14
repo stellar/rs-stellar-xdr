@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TestNextType is an XDR Struct defined as:
+/// `TestNextType` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TestNextType

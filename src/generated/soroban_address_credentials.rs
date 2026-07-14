@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanAddressCredentials is an XDR Struct defined as:
+/// `SorobanAddressCredentials` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanAddressCredentials

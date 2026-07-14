@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ParallelTxExecutionStage is an XDR Typedef defined as:
+/// `ParallelTxExecutionStage` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef DependentTxCluster ParallelTxExecutionStage<>;

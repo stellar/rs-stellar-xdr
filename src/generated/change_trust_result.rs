@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ChangeTrustResult is an XDR Union defined as:
+/// `ChangeTrustResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union ChangeTrustResult switch (ChangeTrustResultCode code)

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// NodeId is an XDR Typedef defined as:
+/// `NodeId` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef PublicKey NodeID;

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OfferEntryExt is an XDR NestedUnion defined as:
+/// `OfferEntryExt` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (int v)

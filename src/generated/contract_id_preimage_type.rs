@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractIdPreimageType is an XDR Enum defined as:
+/// `ContractIdPreimageType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractIDPreimageType

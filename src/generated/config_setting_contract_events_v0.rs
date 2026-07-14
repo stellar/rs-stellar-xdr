@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingContractEventsV0 is an XDR Struct defined as:
+/// `ConfigSettingContractEventsV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractEventsV0

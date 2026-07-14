@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimClaimableBalanceOp is an XDR Struct defined as:
+/// `ClaimClaimableBalanceOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimClaimableBalanceOp

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// AccountEntryExt is an XDR NestedUnion defined as:
+/// `AccountEntryExt` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (int v)

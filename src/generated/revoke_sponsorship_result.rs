@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// RevokeSponsorshipResult is an XDR Union defined as:
+/// `RevokeSponsorshipResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union RevokeSponsorshipResult switch (RevokeSponsorshipResultCode code)

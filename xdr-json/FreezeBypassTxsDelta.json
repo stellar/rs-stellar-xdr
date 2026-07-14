@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "FreezeBypassTxsDelta",
-  "description": "FreezeBypassTxsDelta is an XDR Struct defined as:\n\n```text struct FreezeBypassTxsDelta { Hash addTxs<>; Hash removeTxs<>; }; ```",
+  "description": "`FreezeBypassTxsDelta` is an XDR Struct defined as:\n\n```text struct FreezeBypassTxsDelta { Hash addTxs<>; Hash removeTxs<>; }; ```",
   "type": "object",
   "required": [
     "add_txs",

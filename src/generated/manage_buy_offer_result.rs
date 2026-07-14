@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ManageBuyOfferResult is an XDR Union defined as:
+/// `ManageBuyOfferResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union ManageBuyOfferResult switch (ManageBuyOfferResultCode code)

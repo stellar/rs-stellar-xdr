@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionSignaturePayloadTaggedTransaction is an XDR NestedUnion defined as:
+/// `TransactionSignaturePayloadTaggedTransaction` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (EnvelopeType type)

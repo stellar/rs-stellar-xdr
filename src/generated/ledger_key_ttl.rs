@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerKeyTtl is an XDR NestedStruct defined as:
+/// `LedgerKeyTtl` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

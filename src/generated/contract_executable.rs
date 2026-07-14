@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractExecutable is an XDR Union defined as:
+/// `ContractExecutable` is an XDR Union defined as:
 ///
 /// ```text
 /// union ContractExecutable switch (ContractExecutableType type)

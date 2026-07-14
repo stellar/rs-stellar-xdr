@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// CreateContractArgsV2 is an XDR Struct defined as:
+/// `CreateContractArgsV2` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct CreateContractArgsV2

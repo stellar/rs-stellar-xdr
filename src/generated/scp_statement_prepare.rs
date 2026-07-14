@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpStatementPrepare is an XDR NestedStruct defined as:
+/// `ScpStatementPrepare` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

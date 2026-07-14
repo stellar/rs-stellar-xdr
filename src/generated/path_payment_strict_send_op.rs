@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PathPaymentStrictSendOp is an XDR Struct defined as:
+/// `PathPaymentStrictSendOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PathPaymentStrictSendOp

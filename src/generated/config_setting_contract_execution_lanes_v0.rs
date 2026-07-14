@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingContractExecutionLanesV0 is an XDR Struct defined as:
+/// `ConfigSettingContractExecutionLanesV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractExecutionLanesV0

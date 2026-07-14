@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScNonceKey is an XDR Struct defined as:
+/// `ScNonceKey` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCNonceKey {

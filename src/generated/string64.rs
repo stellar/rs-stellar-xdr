@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// String64 is an XDR Typedef defined as:
+/// `String64` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef string string64<64>;

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// DontHave is an XDR Struct defined as:
+/// `DontHave` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DontHave

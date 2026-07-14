@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LiquidityPoolEntryConstantProduct is an XDR NestedStruct defined as:
+/// `LiquidityPoolEntryConstantProduct` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

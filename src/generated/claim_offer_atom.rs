@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimOfferAtom is an XDR Struct defined as:
+/// `ClaimOfferAtom` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClaimOfferAtom

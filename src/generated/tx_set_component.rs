@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TxSetComponent is an XDR Union defined as:
+/// `TxSetComponent` is an XDR Union defined as:
 ///
 /// ```text
 /// union TxSetComponent switch (TxSetComponentType type)

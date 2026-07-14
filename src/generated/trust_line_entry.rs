@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TrustLineEntry is an XDR Struct defined as:
+/// `TrustLineEntry` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TrustLineEntry

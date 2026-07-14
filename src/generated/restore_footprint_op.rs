@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// RestoreFootprintOp is an XDR Struct defined as:
+/// `RestoreFootprintOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct RestoreFootprintOp

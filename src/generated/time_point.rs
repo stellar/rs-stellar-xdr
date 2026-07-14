@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TimePoint is an XDR Typedef defined as:
+/// `TimePoint` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef uint64 TimePoint;

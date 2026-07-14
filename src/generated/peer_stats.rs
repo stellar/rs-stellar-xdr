@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PeerStats is an XDR Struct defined as:
+/// `PeerStats` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PeerStats

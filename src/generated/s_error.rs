@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SError is an XDR Struct defined as:
+/// `SError` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Error

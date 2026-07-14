@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionMetaV1 is an XDR Struct defined as:
+/// `TransactionMetaV1` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionMetaV1

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MemoType is an XDR Enum defined as:
+/// `MemoType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum MemoType

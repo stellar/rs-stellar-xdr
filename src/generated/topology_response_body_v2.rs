@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TopologyResponseBodyV2 is an XDR Struct defined as:
+/// `TopologyResponseBodyV2` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TopologyResponseBodyV2

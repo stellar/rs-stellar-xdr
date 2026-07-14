@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecEventV0 is an XDR Struct defined as:
+/// `ScSpecEventV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecEventV0

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ExtensionPoint is an XDR Union defined as:
+/// `ExtensionPoint` is an XDR Union defined as:
 ///
 /// ```text
 /// union ExtensionPoint switch (int v)

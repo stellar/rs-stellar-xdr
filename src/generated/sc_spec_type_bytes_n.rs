@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecTypeBytesN is an XDR Struct defined as:
+/// `ScSpecTypeBytesN` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeBytesN

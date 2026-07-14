@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SendMoreExtended is an XDR Struct defined as:
+/// `SendMoreExtended` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SendMoreExtended

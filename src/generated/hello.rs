@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Hello is an XDR Struct defined as:
+/// `Hello` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Hello

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerCloseMetaExt is an XDR Union defined as:
+/// `LedgerCloseMetaExt` is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerCloseMetaExt switch (int v)

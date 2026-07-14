@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// StellarValue is an XDR Struct defined as:
+/// `StellarValue` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct StellarValue

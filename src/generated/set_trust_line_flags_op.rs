@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SetTrustLineFlagsOp is an XDR Struct defined as:
+/// `SetTrustLineFlagsOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SetTrustLineFlagsOp

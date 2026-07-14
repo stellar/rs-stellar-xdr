@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScMetaV0 is an XDR Struct defined as:
+/// `ScMetaV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCMetaV0

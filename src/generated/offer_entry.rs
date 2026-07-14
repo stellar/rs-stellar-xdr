@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OfferEntry is an XDR Struct defined as:
+/// `OfferEntry` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct OfferEntry

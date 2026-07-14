@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MaxSigners is an XDR Const defined as:
+/// `MaxSigners` is an XDR Const defined as:
 ///
 /// ```text
 /// const MAX_SIGNERS = 20;

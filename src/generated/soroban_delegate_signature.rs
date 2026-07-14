@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanDelegateSignature is an XDR Struct defined as:
+/// `SorobanDelegateSignature` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanDelegateSignature

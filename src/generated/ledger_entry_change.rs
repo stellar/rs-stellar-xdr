@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerEntryChange is an XDR Union defined as:
+/// `LedgerEntryChange` is an XDR Union defined as:
 ///
 /// ```text
 /// union LedgerEntryChange switch (LedgerEntryChangeType type)

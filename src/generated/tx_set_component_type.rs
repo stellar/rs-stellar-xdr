@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TxSetComponentType is an XDR Enum defined as:
+/// `TxSetComponentType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TxSetComponentType

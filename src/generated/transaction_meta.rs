@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionMeta is an XDR Union defined as:
+/// `TransactionMeta` is an XDR Union defined as:
 ///
 /// ```text
 /// union TransactionMeta switch (int v)

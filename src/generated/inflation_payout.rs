@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InflationPayout is an XDR Struct defined as:
+/// `InflationPayout` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InflationPayout // or use PaymentResultAtom to limit types?

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigUpgradeSet is an XDR Struct defined as:
+/// `ConfigUpgradeSet` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigUpgradeSet {

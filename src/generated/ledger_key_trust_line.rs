@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerKeyTrustLine is an XDR NestedStruct defined as:
+/// `LedgerKeyTrustLine` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

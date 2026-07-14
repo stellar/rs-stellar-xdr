@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanAuthorizedInvocation is an XDR Struct defined as:
+/// `SorobanAuthorizedInvocation` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanAuthorizedInvocation

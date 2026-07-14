@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// CreateClaimableBalanceResult is an XDR Union defined as:
+/// `CreateClaimableBalanceResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union CreateClaimableBalanceResult switch (

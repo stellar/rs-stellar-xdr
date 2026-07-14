@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimableBalanceId is an XDR Union defined as:
+/// `ClaimableBalanceId` is an XDR Union defined as:
 ///
 /// ```text
 /// union ClaimableBalanceID switch (ClaimableBalanceIDType type)

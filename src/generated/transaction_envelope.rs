@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionEnvelope is an XDR Union defined as:
+/// `TransactionEnvelope` is an XDR Union defined as:
 ///
 /// ```text
 /// union TransactionEnvelope switch (EnvelopeType type)

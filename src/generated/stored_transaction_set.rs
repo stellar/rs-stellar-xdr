@@ -1,15 +1,15 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// StoredTransactionSet is an XDR Union defined as:
+/// `StoredTransactionSet` is an XDR Union defined as:
 ///
 /// ```text
 /// union StoredTransactionSet switch (int v)
 /// {
 /// case 0:
-/// 	TransactionSet txSet;
+///     TransactionSet txSet;
 /// case 1:
-/// 	GeneralizedTransactionSet generalizedTxSet;
+///     GeneralizedTransactionSet generalizedTxSet;
 /// };
 /// ```
 ///

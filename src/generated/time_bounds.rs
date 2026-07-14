@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TimeBounds is an XDR Struct defined as:
+/// `TimeBounds` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TimeBounds

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpStatement is an XDR Struct defined as:
+/// `ScpStatement` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPStatement

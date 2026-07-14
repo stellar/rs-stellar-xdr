@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LiquidityPoolWithdrawResult is an XDR Union defined as:
+/// `LiquidityPoolWithdrawResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code)

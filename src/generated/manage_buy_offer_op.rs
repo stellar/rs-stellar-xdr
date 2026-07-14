@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ManageBuyOfferOp is an XDR Struct defined as:
+/// `ManageBuyOfferOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ManageBuyOfferOp

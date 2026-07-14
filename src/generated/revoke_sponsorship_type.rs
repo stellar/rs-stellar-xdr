@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// RevokeSponsorshipType is an XDR Enum defined as:
+/// `RevokeSponsorshipType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum RevokeSponsorshipType

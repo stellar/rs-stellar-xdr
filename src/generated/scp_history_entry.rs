@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpHistoryEntry is an XDR Union defined as:
+/// `ScpHistoryEntry` is an XDR Union defined as:
 ///
 /// ```text
 /// union SCPHistoryEntry switch (int v)

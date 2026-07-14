@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScBytes is an XDR Typedef defined as:
+/// `ScBytes` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque SCBytes<>;

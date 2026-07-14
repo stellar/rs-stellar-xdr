@@ -39,7 +39,10 @@ pub(crate) fn source_comment(source: &str, kind: &str) -> String {
     }
     let trimmed = source.trim();
     let lines: Vec<&str> = trimmed.lines().collect();
-    let formatted: Vec<String> = lines.iter().map(|l| format!("/// {l}")).collect();
+    let formatted: Vec<String> = lines
+        .iter()
+        .map(|l| format!("/// {}", l.replace('\t', "    ")))
+        .collect();
     format!(
         " is an XDR {kind} defined as:\n///\n/// ```text\n{}\n/// ```\n///",
         formatted.join("\n")

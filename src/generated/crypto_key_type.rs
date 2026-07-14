@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// CryptoKeyType is an XDR Enum defined as:
+/// `CryptoKeyType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum CryptoKeyType

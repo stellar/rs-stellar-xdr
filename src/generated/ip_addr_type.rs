@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// IpAddrType is an XDR Enum defined as:
+/// `IpAddrType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum IPAddrType

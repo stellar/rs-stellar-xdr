@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MessageType is an XDR Enum defined as:
+/// `MessageType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum MessageType

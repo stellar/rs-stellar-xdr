@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecTypeMap is an XDR Struct defined as:
+/// `ScSpecTypeMap` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeMap

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// AuthenticatedMessage is an XDR Union defined as:
+/// `AuthenticatedMessage` is an XDR Union defined as:
 ///
 /// ```text
 /// union AuthenticatedMessage switch (uint32 v)

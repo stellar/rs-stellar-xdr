@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimantType is an XDR Enum defined as:
+/// `ClaimantType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimantType

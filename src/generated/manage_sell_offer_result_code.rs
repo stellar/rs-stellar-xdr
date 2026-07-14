@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ManageSellOfferResultCode is an XDR Enum defined as:
+/// `ManageSellOfferResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ManageSellOfferResultCode

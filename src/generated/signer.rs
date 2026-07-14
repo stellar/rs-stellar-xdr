@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Signer is an XDR Struct defined as:
+/// `Signer` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct Signer

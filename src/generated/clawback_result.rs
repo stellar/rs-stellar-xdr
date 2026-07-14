@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClawbackResult is an XDR Union defined as:
+/// `ClawbackResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union ClawbackResult switch (ClawbackResultCode code)

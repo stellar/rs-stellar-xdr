@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PathPaymentStrictReceiveResultSuccess is an XDR NestedStruct defined as:
+/// `PathPaymentStrictReceiveResultSuccess` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

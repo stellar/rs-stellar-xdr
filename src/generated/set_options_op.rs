@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SetOptionsOp is an XDR Struct defined as:
+/// `SetOptionsOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SetOptionsOp

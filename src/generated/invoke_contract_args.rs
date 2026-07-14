@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InvokeContractArgs is an XDR Struct defined as:
+/// `InvokeContractArgs` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InvokeContractArgs {

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingContractLedgerCostExtV0 is an XDR Struct defined as:
+/// `ConfigSettingContractLedgerCostExtV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractLedgerCostExtV0

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScVec is an XDR Typedef defined as:
+/// `ScVec` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef SCVal SCVec<>;

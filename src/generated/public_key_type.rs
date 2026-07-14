@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PublicKeyType is an XDR Enum defined as:
+/// `PublicKeyType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PublicKeyType

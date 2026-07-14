@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defined as:
+/// `SignedTimeSlicedSurveyStartCollectingMessage` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SignedTimeSlicedSurveyStartCollectingMessage

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerEntryChangeType is an XDR Enum defined as:
+/// `LedgerEntryChangeType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerEntryChangeType

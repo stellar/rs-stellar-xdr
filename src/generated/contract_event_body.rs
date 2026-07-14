@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractEventBody is an XDR NestedUnion defined as:
+/// `ContractEventBody` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (int v)

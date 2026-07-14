@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SignerKeyType is an XDR Enum defined as:
+/// `SignerKeyType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SignerKeyType

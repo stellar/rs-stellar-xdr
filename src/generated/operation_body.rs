@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OperationBody is an XDR NestedUnion defined as:
+/// `OperationBody` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (OperationType type)

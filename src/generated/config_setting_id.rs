@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingId is an XDR Enum defined as:
+/// `ConfigSettingId` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ConfigSettingID

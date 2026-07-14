@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// FloodAdvert is an XDR Struct defined as:
+/// `FloodAdvert` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FloodAdvert

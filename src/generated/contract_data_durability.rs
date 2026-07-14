@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractDataDurability is an XDR Enum defined as:
+/// `ContractDataDurability` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractDataDurability {

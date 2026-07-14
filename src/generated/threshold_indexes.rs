@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ThresholdIndexes is an XDR Enum defined as:
+/// `ThresholdIndexes` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ThresholdIndexes

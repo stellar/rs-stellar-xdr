@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LiquidityPoolDepositOp is an XDR Struct defined as:
+/// `LiquidityPoolDepositOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LiquidityPoolDepositOp

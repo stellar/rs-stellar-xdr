@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractIdPreimageFromAddress is an XDR NestedStruct defined as:
+/// `ContractIdPreimageFromAddress` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

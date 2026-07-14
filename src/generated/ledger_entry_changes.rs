@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerEntryChanges is an XDR Typedef defined as:
+/// `LedgerEntryChanges` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef LedgerEntryChange LedgerEntryChanges<>;

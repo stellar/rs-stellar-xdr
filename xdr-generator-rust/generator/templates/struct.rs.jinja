@@ -1,4 +1,4 @@
-/// {{ s.name }}{{ s.source_comment }}
+/// `{{ s.name }}`{{ s.source_comment }}
 {%- if let Some(cfg) = s.cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}

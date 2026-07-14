@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LiquidityPoolParameters is an XDR Union defined as:
+/// `LiquidityPoolParameters` is an XDR Union defined as:
 ///
 /// ```text
 /// union LiquidityPoolParameters switch (LiquidityPoolType type)

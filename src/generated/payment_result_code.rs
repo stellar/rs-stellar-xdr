@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PaymentResultCode is an XDR Enum defined as:
+/// `PaymentResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PaymentResultCode

@@ -1,4 +1,4 @@
-/// {{ u.name }}{{ u.source_comment }}
+/// `{{ u.name }}`{{ u.source_comment }}
 // union with discriminant {{ u.discriminant_type }}
 {%- if let Some(cfg) = u.cfg %}
 #[cfg({{ cfg }})]

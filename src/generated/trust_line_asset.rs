@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TrustLineAsset is an XDR Union defined as:
+/// `TrustLineAsset` is an XDR Union defined as:
 ///
 /// ```text
 /// union TrustLineAsset switch (AssetType type)

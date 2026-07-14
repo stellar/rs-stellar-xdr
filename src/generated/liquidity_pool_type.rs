@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LiquidityPoolType is an XDR Enum defined as:
+/// `LiquidityPoolType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LiquidityPoolType

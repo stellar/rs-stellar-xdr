@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// UInt128Parts is an XDR Struct defined as:
+/// `UInt128Parts` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct UInt128Parts {

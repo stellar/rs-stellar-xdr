@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// StateArchivalSettings is an XDR Struct defined as:
+/// `StateArchivalSettings` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct StateArchivalSettings {

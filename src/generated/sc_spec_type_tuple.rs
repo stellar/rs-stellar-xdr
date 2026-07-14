@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecTypeTuple is an XDR Struct defined as:
+/// `ScSpecTypeTuple` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeTuple

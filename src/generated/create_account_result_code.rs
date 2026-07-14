@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// CreateAccountResultCode is an XDR Enum defined as:
+/// `CreateAccountResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum CreateAccountResultCode

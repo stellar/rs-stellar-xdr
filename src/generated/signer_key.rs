@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SignerKey is an XDR Union defined as:
+/// `SignerKey` is an XDR Union defined as:
 ///
 /// ```text
 /// union SignerKey switch (SignerKeyType type)

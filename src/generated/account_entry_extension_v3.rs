@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// AccountEntryExtensionV3 is an XDR Struct defined as:
+/// `AccountEntryExtensionV3` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct AccountEntryExtensionV3

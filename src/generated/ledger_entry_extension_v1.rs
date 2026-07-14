@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerEntryExtensionV1 is an XDR Struct defined as:
+/// `LedgerEntryExtensionV1` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerEntryExtensionV1

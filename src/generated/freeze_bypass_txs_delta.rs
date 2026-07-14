@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// FreezeBypassTxsDelta is an XDR Struct defined as:
+/// `FreezeBypassTxsDelta` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FreezeBypassTxsDelta {

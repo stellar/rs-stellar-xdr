@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecUdtUnionCaseV0Kind is an XDR Enum defined as:
+/// `ScSpecUdtUnionCaseV0Kind` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecUDTUnionCaseV0Kind

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerCloseValueSignature is an XDR Struct defined as:
+/// `LedgerCloseValueSignature` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseValueSignature

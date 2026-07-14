@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// BumpSequenceOp is an XDR Struct defined as:
+/// `BumpSequenceOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct BumpSequenceOp

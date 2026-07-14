@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PublicKey is an XDR Union defined as:
+/// `PublicKey` is an XDR Union defined as:
 ///
 /// ```text
 /// union PublicKey switch (PublicKeyType type)

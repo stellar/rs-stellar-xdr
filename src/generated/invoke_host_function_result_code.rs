@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InvokeHostFunctionResultCode is an XDR Enum defined as:
+/// `InvokeHostFunctionResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum InvokeHostFunctionResultCode

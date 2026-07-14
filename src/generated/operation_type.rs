@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OperationType is an XDR Enum defined as:
+/// `OperationType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum OperationType

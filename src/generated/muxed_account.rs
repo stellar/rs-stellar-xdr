@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MuxedAccount is an XDR Union defined as:
+/// `MuxedAccount` is an XDR Union defined as:
 ///
 /// ```text
 /// union MuxedAccount switch (CryptoKeyType type)

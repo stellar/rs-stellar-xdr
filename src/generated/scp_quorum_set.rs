@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpQuorumSet is an XDR Struct defined as:
+/// `ScpQuorumSet` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPQuorumSet

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingContractComputeV0 is an XDR Struct defined as:
+/// `ConfigSettingContractComputeV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractComputeV0

@@ -1,14 +1,14 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PersistedScpStateV1 is an XDR Struct defined as:
+/// `PersistedScpStateV1` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PersistedSCPStateV1
 /// {
-/// 	// Tx sets are saved separately
-/// 	SCPEnvelope scpEnvelopes<>;
-/// 	SCPQuorumSet quorumSets<>;
+///     // Tx sets are saved separately
+///     SCPEnvelope scpEnvelopes<>;
+///     SCPQuorumSet quorumSets<>;
 /// };
 /// ```
 ///

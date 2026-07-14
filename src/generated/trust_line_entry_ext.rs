@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TrustLineEntryExt is an XDR NestedUnion defined as:
+/// `TrustLineEntryExt` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (int v)

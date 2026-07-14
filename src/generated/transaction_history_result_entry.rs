@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionHistoryResultEntry is an XDR Struct defined as:
+/// `TransactionHistoryResultEntry` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct TransactionHistoryResultEntry

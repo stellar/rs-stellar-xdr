@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LiquidityPoolDepositResultCode is an XDR Enum defined as:
+/// `LiquidityPoolDepositResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LiquidityPoolDepositResultCode

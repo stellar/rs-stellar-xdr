@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractExecutableType is an XDR Enum defined as:
+/// `ContractExecutableType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ContractExecutableType

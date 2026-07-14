@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpHistoryEntryV0 is an XDR Struct defined as:
+/// `ScpHistoryEntryV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCPHistoryEntryV0

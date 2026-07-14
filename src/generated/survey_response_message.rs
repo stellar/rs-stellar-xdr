@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SurveyResponseMessage is an XDR Struct defined as:
+/// `SurveyResponseMessage` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SurveyResponseMessage

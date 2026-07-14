@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InnerTransactionResult is an XDR Struct defined as:
+/// `InnerTransactionResult` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InnerTransactionResult

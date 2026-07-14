@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OperationResultTr is an XDR NestedUnion defined as:
+/// `OperationResultTr` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (OperationType type)

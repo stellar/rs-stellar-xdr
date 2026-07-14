@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigSettingContractParallelComputeV0 is an XDR Struct defined as:
+/// `ConfigSettingContractParallelComputeV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigSettingContractParallelComputeV0

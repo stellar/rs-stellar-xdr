@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Asset is an XDR Union defined as:
+/// `Asset` is an XDR Union defined as:
 ///
 /// ```text
 /// union Asset switch (AssetType type)

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ShortHashSeed is an XDR Struct defined as:
+/// `ShortHashSeed` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ShortHashSeed

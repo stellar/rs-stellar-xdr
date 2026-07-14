@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// DiagnosticEvent is an XDR Struct defined as:
+/// `DiagnosticEvent` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct DiagnosticEvent

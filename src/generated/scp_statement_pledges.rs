@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScpStatementPledges is an XDR NestedUnion defined as:
+/// `ScpStatementPledges` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (SCPStatementType type)

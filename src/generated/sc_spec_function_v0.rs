@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecFunctionV0 is an XDR Struct defined as:
+/// `ScSpecFunctionV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecFunctionV0

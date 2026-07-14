@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PreconditionType is an XDR Enum defined as:
+/// `PreconditionType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum PreconditionType

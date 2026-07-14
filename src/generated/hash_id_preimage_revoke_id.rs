@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// HashIdPreimageRevokeId is an XDR NestedStruct defined as:
+/// `HashIdPreimageRevokeId` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

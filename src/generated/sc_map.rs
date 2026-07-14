@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScMap is an XDR Typedef defined as:
+/// `ScMap` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef SCMapEntry SCMap<>;

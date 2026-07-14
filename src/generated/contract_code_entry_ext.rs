@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ContractCodeEntryExt is an XDR NestedUnion defined as:
+/// `ContractCodeEntryExt` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (int v)

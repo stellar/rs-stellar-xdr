@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClawbackResultCode is an XDR Enum defined as:
+/// `ClawbackResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClawbackResultCode

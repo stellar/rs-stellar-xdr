@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScEnvMetaEntry is an XDR Union defined as:
+/// `ScEnvMetaEntry` is an XDR Union defined as:
 ///
 /// ```text
 /// union SCEnvMetaEntry switch (SCEnvMetaKind kind)

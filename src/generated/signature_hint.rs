@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SignatureHint is an XDR Typedef defined as:
+/// `SignatureHint` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque SignatureHint[4];

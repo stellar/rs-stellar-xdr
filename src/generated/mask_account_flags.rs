@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MaskAccountFlags is an XDR Const defined as:
+/// `MaskAccountFlags` is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_ACCOUNT_FLAGS = 0x7;

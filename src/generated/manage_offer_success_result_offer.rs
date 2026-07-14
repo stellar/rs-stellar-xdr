@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ManageOfferSuccessResultOffer is an XDR NestedUnion defined as:
+/// `ManageOfferSuccessResultOffer` is an XDR Nested Union defined as:
 ///
 /// ```text
 /// union switch (ManageOfferEffect effect)

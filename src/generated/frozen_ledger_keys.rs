@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// FrozenLedgerKeys is an XDR Struct defined as:
+/// `FrozenLedgerKeys` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct FrozenLedgerKeys {

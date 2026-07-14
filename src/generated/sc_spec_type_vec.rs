@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecTypeVec is an XDR Struct defined as:
+/// `ScSpecTypeVec` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeVec

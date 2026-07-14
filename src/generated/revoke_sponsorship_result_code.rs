@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// RevokeSponsorshipResultCode is an XDR Enum defined as:
+/// `RevokeSponsorshipResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum RevokeSponsorshipResultCode

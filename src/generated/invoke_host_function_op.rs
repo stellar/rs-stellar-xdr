@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InvokeHostFunctionOp is an XDR Struct defined as:
+/// `InvokeHostFunctionOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct InvokeHostFunctionOp

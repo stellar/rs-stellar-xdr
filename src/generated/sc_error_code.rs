@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScErrorCode is an XDR Enum defined as:
+/// `ScErrorCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCErrorCode

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScError is an XDR Union defined as:
+/// `ScError` is an XDR Union defined as:
 ///
 /// ```text
 /// union SCError switch (SCErrorType type)

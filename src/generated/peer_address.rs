@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PeerAddress is an XDR Struct defined as:
+/// `PeerAddress` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PeerAddress

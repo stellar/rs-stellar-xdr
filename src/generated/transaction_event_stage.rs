@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TransactionEventStage is an XDR Enum defined as:
+/// `TransactionEventStage` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TransactionEventStage {

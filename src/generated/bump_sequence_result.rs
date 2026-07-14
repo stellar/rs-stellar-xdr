@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// BumpSequenceResult is an XDR Union defined as:
+/// `BumpSequenceResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union BumpSequenceResult switch (BumpSequenceResultCode code)

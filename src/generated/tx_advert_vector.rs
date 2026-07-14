@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TxAdvertVector is an XDR Typedef defined as:
+/// `TxAdvertVector` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecTypeUdt is an XDR Struct defined as:
+/// `ScSpecTypeUdt` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCSpecTypeUDT

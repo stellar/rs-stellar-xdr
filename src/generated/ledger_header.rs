@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerHeader is an XDR Struct defined as:
+/// `LedgerHeader` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerHeader

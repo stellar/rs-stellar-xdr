@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SponsorshipDescriptor is an XDR Typedef defined as:
+/// `SponsorshipDescriptor` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef AccountID* SponsorshipDescriptor;

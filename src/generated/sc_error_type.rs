@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScErrorType is an XDR Enum defined as:
+/// `ScErrorType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCErrorType

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// EncryptedBody is an XDR Typedef defined as:
+/// `EncryptedBody` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef opaque EncryptedBody<64000>;

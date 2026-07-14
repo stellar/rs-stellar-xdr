@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TrustLineFlags is an XDR Enum defined as:
+/// `TrustLineFlags` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum TrustLineFlags

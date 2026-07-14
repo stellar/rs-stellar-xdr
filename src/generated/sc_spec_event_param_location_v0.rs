@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecEventParamLocationV0 is an XDR Enum defined as:
+/// `ScSpecEventParamLocationV0` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecEventParamLocationV0

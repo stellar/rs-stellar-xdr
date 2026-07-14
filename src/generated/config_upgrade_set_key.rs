@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ConfigUpgradeSetKey is an XDR Struct defined as:
+/// `ConfigUpgradeSetKey` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ConfigUpgradeSetKey {

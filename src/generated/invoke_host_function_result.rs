@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// InvokeHostFunctionResult is an XDR Union defined as:
+/// `InvokeHostFunctionResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)

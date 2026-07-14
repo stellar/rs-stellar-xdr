@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerCloseMetaV0 is an XDR Struct defined as:
+/// `LedgerCloseMetaV0` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct LedgerCloseMetaV0

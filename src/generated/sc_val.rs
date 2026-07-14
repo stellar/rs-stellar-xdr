@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScVal is an XDR Union defined as:
+/// `ScVal` is an XDR Union defined as:
 ///
 /// ```text
 /// union SCVal switch (SCValType type)

@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanAuthorizedFunctionType is an XDR Enum defined as:
+/// `SorobanAuthorizedFunctionType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SorobanAuthorizedFunctionType

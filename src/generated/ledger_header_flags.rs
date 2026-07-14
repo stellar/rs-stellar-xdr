@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerHeaderFlags is an XDR Enum defined as:
+/// `LedgerHeaderFlags` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerHeaderFlags

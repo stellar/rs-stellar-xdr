@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScContractInstance is an XDR Struct defined as:
+/// `ScContractInstance` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SCContractInstance {

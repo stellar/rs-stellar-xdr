@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// LedgerUpgradeType is an XDR Enum defined as:
+/// `LedgerUpgradeType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum LedgerUpgradeType

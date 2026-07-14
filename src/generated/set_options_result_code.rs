@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SetOptionsResultCode is an XDR Enum defined as:
+/// `SetOptionsResultCode` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SetOptionsResultCode

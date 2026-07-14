@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PathPaymentStrictSendResult is an XDR Union defined as:
+/// `PathPaymentStrictSendResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union PathPaymentStrictSendResult switch (PathPaymentStrictSendResultCode code)

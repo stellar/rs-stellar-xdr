@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SorobanResources is an XDR Struct defined as:
+/// `SorobanResources` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct SorobanResources

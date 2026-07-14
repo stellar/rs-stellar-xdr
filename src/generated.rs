@@ -2476,14 +2476,14 @@ mod test_skip_whitespace {
 
 // NumberOrString ---------------------------------------------------------------
 
-/// NumberOrString is a serde_as serializer/deserializer.
+/// `NumberOrString` is a `serde_as` serializer/deserializer.
 ///
 /// It deserializers any integer that fits into a 64-bit value into an i64 or u64 field from either
 /// a JSON Number or JSON String value.
 ///
 /// It serializes always to a string.
 ///
-/// It has a JsonSchema implementation that only advertises that the allowed format is a String.
+/// It has a `JsonSchema` implementation that only advertises that the allowed format is a String.
 /// This is because the type is intended to soften the changing of fields from JSON Number to JSON
 /// String by permitting deserialization, but discourage new uses of JSON Number.
 #[cfg(feature = "serde")]

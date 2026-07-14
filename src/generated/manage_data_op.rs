@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ManageDataOp is an XDR Struct defined as:
+/// `ManageDataOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ManageDataOp

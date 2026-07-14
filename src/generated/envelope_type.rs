@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// EnvelopeType is an XDR Enum defined as:
+/// `EnvelopeType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum EnvelopeType

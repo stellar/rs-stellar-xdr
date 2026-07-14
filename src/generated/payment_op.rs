@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PaymentOp is an XDR Struct defined as:
+/// `PaymentOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PaymentOp

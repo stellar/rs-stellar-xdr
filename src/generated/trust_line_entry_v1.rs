@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TrustLineEntryV1 is an XDR NestedStruct defined as:
+/// `TrustLineEntryV1` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

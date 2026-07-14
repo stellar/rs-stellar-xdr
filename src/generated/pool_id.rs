@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PoolId is an XDR Typedef defined as:
+/// `PoolId` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash PoolID;

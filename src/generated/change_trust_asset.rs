@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ChangeTrustAsset is an XDR Union defined as:
+/// `ChangeTrustAsset` is an XDR Union defined as:
 ///
 /// ```text
 /// union ChangeTrustAsset switch (AssetType type)

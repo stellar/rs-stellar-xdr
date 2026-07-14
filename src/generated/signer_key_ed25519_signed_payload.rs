@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SignerKeyEd25519SignedPayload is an XDR NestedStruct defined as:
+/// `SignerKeyEd25519SignedPayload` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

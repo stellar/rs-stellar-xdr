@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// Claimant is an XDR Union defined as:
+/// `Claimant` is an XDR Union defined as:
 ///
 /// ```text
 /// union Claimant switch (ClaimantType type)

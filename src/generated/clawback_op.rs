@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClawbackOp is an XDR Struct defined as:
+/// `ClawbackOp` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct ClawbackOp

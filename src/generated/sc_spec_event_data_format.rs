@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecEventDataFormat is an XDR Enum defined as:
+/// `ScSpecEventDataFormat` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCSpecEventDataFormat

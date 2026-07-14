@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimableBalanceFlags is an XDR Enum defined as:
+/// `ClaimableBalanceFlags` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum ClaimableBalanceFlags

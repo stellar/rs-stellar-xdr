@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TxDemandVector is an XDR Typedef defined as:
+/// `TxDemandVector` is an XDR Typedef defined as:
 ///
 /// ```text
 /// typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;

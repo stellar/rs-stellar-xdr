@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SurveyResponseBody is an XDR Union defined as:
+/// `SurveyResponseBody` is an XDR Union defined as:
 ///
 /// ```text
 /// union SurveyResponseBody switch (SurveyMessageResponseType type)

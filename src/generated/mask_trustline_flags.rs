@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// MaskTrustlineFlags is an XDR Const defined as:
+/// `MaskTrustlineFlags` is an XDR Const defined as:
 ///
 /// ```text
 /// const MASK_TRUSTLINE_FLAGS = 1;

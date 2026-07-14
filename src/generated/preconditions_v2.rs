@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// PreconditionsV2 is an XDR Struct defined as:
+/// `PreconditionsV2` is an XDR Struct defined as:
 ///
 /// ```text
 /// struct PreconditionsV2

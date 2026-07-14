@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// CreateAccountResult is an XDR Union defined as:
+/// `CreateAccountResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union CreateAccountResult switch (CreateAccountResultCode code)

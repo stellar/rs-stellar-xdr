@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ClaimAtom is an XDR Union defined as:
+/// `ClaimAtom` is an XDR Union defined as:
 ///
 /// ```text
 /// union ClaimAtom switch (ClaimAtomType type)

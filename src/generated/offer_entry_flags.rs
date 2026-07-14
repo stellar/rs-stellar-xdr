@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// OfferEntryFlags is an XDR Enum defined as:
+/// `OfferEntryFlags` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum OfferEntryFlags

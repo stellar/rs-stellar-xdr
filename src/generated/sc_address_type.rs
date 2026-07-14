@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScAddressType is an XDR Enum defined as:
+/// `ScAddressType` is an XDR Enum defined as:
 ///
 /// ```text
 /// enum SCAddressType

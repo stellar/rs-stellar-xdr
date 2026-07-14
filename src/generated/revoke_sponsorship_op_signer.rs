@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// RevokeSponsorshipOpSigner is an XDR NestedStruct defined as:
+/// `RevokeSponsorshipOpSigner` is an XDR Nested Struct defined as:
 ///
 /// ```text
 /// struct

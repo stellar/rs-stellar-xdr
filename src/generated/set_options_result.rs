@@ -1,7 +1,7 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// SetOptionsResult is an XDR Union defined as:
+/// `SetOptionsResult` is an XDR Union defined as:
 ///
 /// ```text
 /// union SetOptionsResult switch (SetOptionsResultCode code)

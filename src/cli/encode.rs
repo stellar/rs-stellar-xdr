@@ -20,6 +20,8 @@ pub enum Error {
     WriteOutput(std::io::Error),
     #[error("error generating XDR: {0}")]
     WriteXdr(crate::Error),
+    #[error("unknown fields in JSON not present in the XDR type: {}", .0.join(", "))]
+    UnknownFields(Vec<String>),
 }
 
 impl From<crate::Error> for Error {
@@ -39,6 +41,26 @@ impl From<crate::Error> for Error {
             crate::Error::Json(_) => Error::ReadJson(e),
         }
     }
+}
+
+/// Deserialize a value of the given [`crate::TypeVariant`] from a JSON
+/// deserializer, returning [`Error::UnknownFields`] if the JSON contains any
+/// fields that are not part of the XDR type rather than silently ignoring
+/// them.
+fn deserialize_json_reject_unknown<'de, R: serde_json::de::Read<'de>>(
+    r#type: crate::TypeVariant,
+    de: &mut serde_json::Deserializer<R>,
+) -> Result<crate::Type, Error> {
+    let mut unknown = Vec::new();
+    let t = {
+        let mut record = |path: serde_ignored::Path<'_>| unknown.push(path.to_string());
+        let tracked = serde_ignored::Deserializer::new(&mut *de, &mut record);
+        crate::Type::deserialize(r#type, tracked).map_err(crate::Error::from)?
+    };
+    if !unknown.is_empty() {
+        return Err(Error::UnknownFields(unknown));
+    }
+    Ok(t)
 }
 
 #[derive(Args, Debug, Clone)]
@@ -101,14 +123,18 @@ macro_rules! run_x {
                 match self.input_format {
                     InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
-                            let t = crate::Type::from_json(r#type, f)?;
+                            let mut de = serde_json::Deserializer::from_reader(f);
+                            let t = deserialize_json_reject_unknown(r#type, &mut de)?;
+                            de.end().map_err(|e| Error::from(crate::Error::from(e)))?;
                             let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
                                 .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
-                            let t = crate::Type::from_json(r#type, f)?;
+                            let mut de = serde_json::Deserializer::from_reader(f);
+                            let t = deserialize_json_reject_unknown(r#type, &mut de)?;
+                            de.end().map_err(|e| Error::from(crate::Error::from(e)))?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
@@ -117,9 +143,11 @@ macro_rules! run_x {
                             let mut de =
                                 serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
                             loop {
-                                let t = match crate::Type::deserialize_json(r#type, &mut de) {
+                                let t = match deserialize_json_reject_unknown(r#type, &mut de) {
                                     Ok(t) => t,
-                                    Err(crate::Error::Json(ref inner)) if inner.is_eof() => {
+                                    Err(Error::ReadJson(crate::Error::Json(ref inner)))
+                                        if inner.is_eof() =>
+                                    {
                                         break;
                                     }
                                     Err(e) => Err(e)?,
@@ -154,4 +182,53 @@ impl Cmd {
     }
 
     run_x!(run_inner);
+}
+
+#[cfg(test)]
+mod test {
+    use super::{deserialize_json_reject_unknown, Error};
+    use crate::{Limits, Type, TypeVariant, WriteXdr};
+
+    fn encode(r#type: TypeVariant, json: &str) -> Result<Type, Error> {
+        let mut de = serde_json::Deserializer::from_str(json);
+        let t = deserialize_json_reject_unknown(r#type, &mut de)?;
+        de.end().map_err(|e| Error::from(crate::Error::from(e)))?;
+        Ok(t)
+    }
+
+    // The scenario reported in https://github.com/stellar/rs-stellar-xdr/issues/554:
+    // JSON with a field not present in the XDR type must error rather than be
+    // silently dropped.
+    #[test]
+    fn unknown_field_is_rejected() {
+        let json = r#"{"updated_entry":[{"contract_execution_lanes":{"ledger_max_tx_count":100,"additional_setting_bad":100}}]}"#;
+        let err = encode(TypeVariant::ConfigUpgradeSet, json).unwrap_err();
+        match err {
+            Error::UnknownFields(fields) => assert!(
+                fields.iter().any(|f| f.contains("additional_setting_bad")),
+                "unexpected fields: {fields:?}",
+            ),
+            e => panic!("expected UnknownFields, got: {e:?}"),
+        }
+    }
+
+    // The same input without the extra field still encodes to the expected XDR.
+    #[test]
+    fn known_fields_encode_to_expected_xdr() {
+        let json =
+            r#"{"updated_entry":[{"contract_execution_lanes":{"ledger_max_tx_count":100}}]}"#;
+        let t = encode(TypeVariant::ConfigUpgradeSet, json).unwrap();
+        assert_eq!(
+            t.to_xdr_base64(Limits::none()).unwrap(),
+            "AAAAAQAAAAsAAABk",
+        );
+    }
+
+    // An unknown field directly on a top-level struct is also rejected.
+    #[test]
+    fn top_level_unknown_field_is_rejected() {
+        let json = r#"{"ledger_max_tx_count":100,"bogus":1}"#;
+        let err = encode(TypeVariant::ConfigSettingContractExecutionLanesV0, json).unwrap_err();
+        assert!(matches!(err, Error::UnknownFields(_)), "got: {err:?}");
+    }
 }

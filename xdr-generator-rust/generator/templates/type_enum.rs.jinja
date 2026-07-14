@@ -319,6 +319,27 @@ impl Type {
         }
     }
 
+    /// Deserialize the given variant from any [`serde::Deserializer`].
+    ///
+    /// Unlike [`Type::from_json`] and [`Type::deserialize_json`], which are
+    /// specialised to `serde_json`, this dispatches to the inner type's
+    /// [`serde::Deserialize`] implementation for an arbitrary deserializer.
+    /// It exists so callers can wrap a deserializer (for example with
+    /// `serde_ignored` to detect unknown fields) and still select the type to
+    /// decode dynamically by [`TypeVariant`].
+    #[cfg(all(feature = "serde", feature = "alloc"))]
+    #[allow(clippy::too_many_lines)]
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(v: TypeVariant, d: D) -> Result<Self, D::Error> {
+        match v {
+{%- for t in type_variant_enum.types %}
+{%- if let Some(cfg) = t.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => Ok(Self::{{ t.name }}(Box::new(serde::de::Deserialize::deserialize(d)?))),
+{%- endfor %}
+        }
+    }
+
     #[cfg(feature = "arbitrary")]
     #[allow(clippy::too_many_lines)]
     pub fn arbitrary(v: TypeVariant, u: &mut arbitrary::Unstructured<'_>) -> Result<Self, Error> {

@@ -16016,6 +16016,1531 @@ impl Type {
         }
     }
 
+    /// Deserialize the given variant from any [`serde::Deserializer`].
+    ///
+    /// Unlike [`Type::from_json`] and [`Type::deserialize_json`], which are
+    /// specialised to `serde_json`, this dispatches to the inner type's
+    /// [`serde::Deserialize`] implementation for an arbitrary deserializer.
+    /// It exists so callers can wrap a deserializer (for example with
+    /// `serde_ignored` to detect unknown fields) and still select the type to
+    /// decode dynamically by [`TypeVariant`].
+    #[cfg(all(feature = "serde", feature = "alloc"))]
+    #[allow(clippy::too_many_lines)]
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(
+        v: TypeVariant,
+        d: D,
+    ) -> Result<Self, D::Error> {
+        match v {
+            TypeVariant::Value => Ok(Self::Value(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::ScpBallot => Ok(Self::ScpBallot(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpStatementType => Ok(Self::ScpStatementType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpNomination => Ok(Self::ScpNomination(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpStatement => Ok(Self::ScpStatement(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpStatementPledges => Ok(Self::ScpStatementPledges(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpStatementPrepare => Ok(Self::ScpStatementPrepare(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpStatementConfirm => Ok(Self::ScpStatementConfirm(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpStatementExternalize => Ok(Self::ScpStatementExternalize(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpEnvelope => Ok(Self::ScpEnvelope(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpQuorumSet => Ok(Self::ScpQuorumSet(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::EncodedLedgerKey => Ok(Self::EncodedLedgerKey(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => {
+                Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractComputeV0 => {
+                Ok(Self::ConfigSettingContractComputeV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractParallelComputeV0 => {
+                Ok(Self::ConfigSettingContractParallelComputeV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostExtV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractEventsV0 => Ok(Self::ConfigSettingContractEventsV0(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                Ok(Self::ConfigSettingContractBandwidthV0(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ContractCostType => Ok(Self::ContractCostType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractCostParamEntry => Ok(Self::ContractCostParamEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::StateArchivalSettings => Ok(Self::StateArchivalSettings(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ConfigSettingScpTiming => Ok(Self::ConfigSettingScpTiming(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FrozenLedgerKeys => Ok(Self::FrozenLedgerKeys(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FrozenLedgerKeysDelta => Ok(Self::FrozenLedgerKeysDelta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FreezeBypassTxs => Ok(Self::FreezeBypassTxs(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FreezeBypassTxsDelta => Ok(Self::FreezeBypassTxsDelta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScEnvMetaKind => Ok(Self::ScEnvMetaKind(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScEnvMetaEntry => Ok(Self::ScEnvMetaEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => {
+                Ok(Self::ScEnvMetaEntryInterfaceVersion(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ScMetaV0 => Ok(Self::ScMetaV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScMetaKind => Ok(Self::ScMetaKind(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScMetaEntry => Ok(Self::ScMetaEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecType => Ok(Self::ScSpecType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeOption => Ok(Self::ScSpecTypeOption(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeResult => Ok(Self::ScSpecTypeResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeVec => Ok(Self::ScSpecTypeVec(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeMap => Ok(Self::ScSpecTypeMap(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeTuple => Ok(Self::ScSpecTypeTuple(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeBytesN => Ok(Self::ScSpecTypeBytesN(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeUdt => Ok(Self::ScSpecTypeUdt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecTypeDef => Ok(Self::ScSpecTypeDef(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtStructFieldV0 => Ok(Self::ScSpecUdtStructFieldV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtStructV0 => Ok(Self::ScSpecUdtStructV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Ok(Self::ScSpecUdtUnionCaseVoidV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Ok(Self::ScSpecUdtUnionCaseTupleV0(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Ok(Self::ScSpecUdtUnionCaseV0Kind(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Ok(Self::ScSpecUdtUnionCaseV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionV0 => Ok(Self::ScSpecUdtUnionV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Ok(Self::ScSpecUdtEnumCaseV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumV0 => Ok(Self::ScSpecUdtEnumV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Ok(Self::ScSpecUdtErrorEnumCaseV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Ok(Self::ScSpecUdtErrorEnumV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecFunctionInputV0 => Ok(Self::ScSpecFunctionInputV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecEventParamLocationV0 => Ok(Self::ScSpecEventParamLocationV0(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ScSpecEventParamV0 => Ok(Self::ScSpecEventParamV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecEventDataFormat => Ok(Self::ScSpecEventDataFormat(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecEventV0 => Ok(Self::ScSpecEventV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScValType => Ok(Self::ScValType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScErrorType => Ok(Self::ScErrorType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScErrorCode => Ok(Self::ScErrorCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScError => Ok(Self::ScError(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::UInt128Parts => Ok(Self::UInt128Parts(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::UInt256Parts => Ok(Self::UInt256Parts(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Int256Parts => Ok(Self::Int256Parts(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScAddressType => Ok(Self::ScAddressType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScVal => Ok(Self::ScVal(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMetaBatch => Ok(Self::LedgerCloseMetaBatch(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::StoredDebugTransactionSet => Ok(Self::StoredDebugTransactionSet(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::PersistedScpStateV0 => Ok(Self::PersistedScpStateV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PersistedScpStateV1 => Ok(Self::PersistedScpStateV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PersistedScpState => Ok(Self::PersistedScpState(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::String32 => Ok(Self::String32(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::String64 => Ok(Self::String64(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SequenceNumber => Ok(Self::SequenceNumber(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DataValue => Ok(Self::DataValue(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AssetCode12 => Ok(Self::AssetCode12(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AssetType => Ok(Self::AssetType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AssetCode => Ok(Self::AssetCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AlphaNum4 => Ok(Self::AlphaNum4(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AlphaNum12 => Ok(Self::AlphaNum12(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Asset => Ok(Self::Asset(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Price => Ok(Self::Price(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Liabilities => Ok(Self::Liabilities(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ThresholdIndexes => Ok(Self::ThresholdIndexes(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryType => Ok(Self::LedgerEntryType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Signer => Ok(Self::Signer(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::AccountFlags => Ok(Self::AccountFlags(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SponsorshipDescriptor => Ok(Self::SponsorshipDescriptor(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV3 => Ok(Self::AccountEntryExtensionV3(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV2 => Ok(Self::AccountEntryExtensionV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV2Ext => Ok(Self::AccountEntryExtensionV2Ext(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::AccountEntryExtensionV1 => Ok(Self::AccountEntryExtensionV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV1Ext => Ok(Self::AccountEntryExtensionV1Ext(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::AccountEntry => Ok(Self::AccountEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountEntryExt => Ok(Self::AccountEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TrustLineFlags => Ok(Self::TrustLineFlags(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolType => Ok(Self::LiquidityPoolType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TrustLineAsset => Ok(Self::TrustLineAsset(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TrustLineEntryExtensionV2 => Ok(Self::TrustLineEntryExtensionV2(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TrustLineEntryExtensionV2Ext => Ok(Self::TrustLineEntryExtensionV2Ext(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TrustLineEntry => Ok(Self::TrustLineEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TrustLineEntryExt => Ok(Self::TrustLineEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TrustLineEntryV1 => Ok(Self::TrustLineEntryV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TrustLineEntryV1Ext => Ok(Self::TrustLineEntryV1Ext(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OfferEntryFlags => Ok(Self::OfferEntryFlags(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OfferEntry => Ok(Self::OfferEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OfferEntryExt => Ok(Self::OfferEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DataEntry => Ok(Self::DataEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DataEntryExt => Ok(Self::DataEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimPredicateType => Ok(Self::ClaimPredicateType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimPredicate => Ok(Self::ClaimPredicate(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimantType => Ok(Self::ClaimantType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Claimant => Ok(Self::Claimant(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimantV0 => Ok(Self::ClaimantV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimableBalanceFlags => Ok(Self::ClaimableBalanceFlags(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => {
+                Ok(Self::ClaimableBalanceEntryExtensionV1(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
+                Ok(Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ClaimableBalanceEntry => Ok(Self::ClaimableBalanceEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimableBalanceEntryExt => Ok(Self::ClaimableBalanceEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolConstantProductParameters => {
+                Ok(Self::LiquidityPoolConstantProductParameters(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::LiquidityPoolEntry => Ok(Self::LiquidityPoolEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolEntryBody => Ok(Self::LiquidityPoolEntryBody(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolEntryConstantProduct => {
+                Ok(Self::LiquidityPoolEntryConstantProduct(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ContractDataDurability => Ok(Self::ContractDataDurability(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractCodeCostInputs => Ok(Self::ContractCodeCostInputs(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractCodeEntryExt => Ok(Self::ContractCodeEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractCodeEntryV1 => Ok(Self::ContractCodeEntryV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TtlEntry => Ok(Self::TtlEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryExtensionV1Ext => Ok(Self::LedgerEntryExtensionV1Ext(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::LedgerEntry => Ok(Self::LedgerEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryData => Ok(Self::LedgerEntryData(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryExt => Ok(Self::LedgerEntryExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKey => Ok(Self::LedgerKey(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyAccount => Ok(Self::LedgerKeyAccount(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyTrustLine => Ok(Self::LedgerKeyTrustLine(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyOffer => Ok(Self::LedgerKeyOffer(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyData => Ok(Self::LedgerKeyData(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyClaimableBalance => Ok(Self::LedgerKeyClaimableBalance(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::LedgerKeyLiquidityPool => Ok(Self::LedgerKeyLiquidityPool(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyContractData => Ok(Self::LedgerKeyContractData(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyContractCode => Ok(Self::LedgerKeyContractCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyConfigSetting => Ok(Self::LedgerKeyConfigSetting(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerKeyTtl => Ok(Self::LedgerKeyTtl(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::EnvelopeType => Ok(Self::EnvelopeType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BucketListType => Ok(Self::BucketListType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BucketEntryType => Ok(Self::BucketEntryType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::BucketMetadata => Ok(Self::BucketMetadata(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BucketMetadataExt => Ok(Self::BucketMetadataExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BucketEntry => Ok(Self::BucketEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::UpgradeType => Ok(Self::UpgradeType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::StellarValueType => Ok(Self::StellarValueType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseValueSignature => Ok(Self::LedgerCloseValueSignature(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::StellarValue => Ok(Self::StellarValue(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerHeaderExtensionV1 => Ok(Self::LedgerHeaderExtensionV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerHeaderExtensionV1Ext => Ok(Self::LedgerHeaderExtensionV1Ext(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::LedgerHeader => Ok(Self::LedgerHeader(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerHeaderExt => Ok(Self::LedgerHeaderExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerUpgradeType => Ok(Self::LedgerUpgradeType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ConfigUpgradeSetKey => Ok(Self::ConfigUpgradeSetKey(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerUpgrade => Ok(Self::LedgerUpgrade(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ConfigUpgradeSet => Ok(Self::ConfigUpgradeSet(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DependentTxCluster => Ok(Self::DependentTxCluster(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ParallelTxsComponent => Ok(Self::ParallelTxsComponent(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TxSetComponent => Ok(Self::TxSetComponent(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => {
+                Ok(Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::TransactionPhase => Ok(Self::TransactionPhase(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionSet => Ok(Self::TransactionSet(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionSetV1 => Ok(Self::TransactionSetV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::GeneralizedTransactionSet => Ok(Self::GeneralizedTransactionSet(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionResultPair => Ok(Self::TransactionResultPair(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionResultSet => Ok(Self::TransactionResultSet(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionHistoryEntry => Ok(Self::TransactionHistoryEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionHistoryEntryExt => Ok(Self::TransactionHistoryEntryExt(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionHistoryResultEntry => Ok(Self::TransactionHistoryResultEntry(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionHistoryResultEntryExt => {
+                Ok(Self::TransactionHistoryResultEntryExt(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::LedgerHeaderHistoryEntry => Ok(Self::LedgerHeaderHistoryEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerHeaderHistoryEntryExt => Ok(Self::LedgerHeaderHistoryEntryExt(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::LedgerScpMessages => Ok(Self::LedgerScpMessages(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpHistoryEntryV0 => Ok(Self::ScpHistoryEntryV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ScpHistoryEntry => Ok(Self::ScpHistoryEntry(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryChangeType => Ok(Self::LedgerEntryChangeType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryChange => Ok(Self::LedgerEntryChange(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerEntryChanges => Ok(Self::LedgerEntryChanges(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationMeta => Ok(Self::OperationMeta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionMetaV1 => Ok(Self::TransactionMetaV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionMetaV2 => Ok(Self::TransactionMetaV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractEventType => Ok(Self::ContractEventType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractEvent => Ok(Self::ContractEvent(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractEventBody => Ok(Self::ContractEventBody(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractEventV0 => Ok(Self::ContractEventV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanTransactionMetaExtV1 => Ok(Self::SorobanTransactionMetaExtV1(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanTransactionMetaExt => Ok(Self::SorobanTransactionMetaExt(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanTransactionMeta => Ok(Self::SorobanTransactionMeta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationMetaV2 => Ok(Self::OperationMetaV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanTransactionMetaV2 => Ok(Self::SorobanTransactionMetaV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionEventStage => Ok(Self::TransactionEventStage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionEvent => Ok(Self::TransactionEvent(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => {
+                Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::TransactionMeta => Ok(Self::TransactionMeta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionResultMetaV1 => Ok(Self::TransactionResultMetaV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV0 => Ok(Self::LedgerCloseMetaV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMetaExtV1 => Ok(Self::LedgerCloseMetaExtV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMetaExt => Ok(Self::LedgerCloseMetaExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ErrorCode => Ok(Self::ErrorCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SError => Ok(Self::SError(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::SendMore => Ok(Self::SendMore(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SendMoreExtended => Ok(Self::SendMoreExtended(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AuthCert => Ok(Self::AuthCert(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Hello => Ok(Self::Hello(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Auth => Ok(Self::Auth(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::IpAddrType => Ok(Self::IpAddrType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PeerAddress => Ok(Self::PeerAddress(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PeerAddressIp => Ok(Self::PeerAddressIp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::MessageType => Ok(Self::MessageType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DontHave => Ok(Self::DontHave(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SurveyMessageCommandType => Ok(Self::SurveyMessageCommandType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SurveyMessageResponseType => Ok(Self::SurveyMessageResponseType(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => {
+                Ok(Self::TimeSlicedSurveyStartCollectingMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
+                Ok(Self::SignedTimeSlicedSurveyStartCollectingMessage(
+                    Box::new(serde::de::Deserialize::deserialize(d)?),
+                ))
+            }
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => {
+                Ok(Self::TimeSlicedSurveyStopCollectingMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => {
+                Ok(Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SurveyRequestMessage => Ok(Self::SurveyRequestMessage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TimeSlicedSurveyRequestMessage => {
+                Ok(Self::TimeSlicedSurveyRequestMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => {
+                Ok(Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::EncryptedBody => Ok(Self::EncryptedBody(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SurveyResponseMessage => Ok(Self::SurveyResponseMessage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TimeSlicedSurveyResponseMessage => {
+                Ok(Self::TimeSlicedSurveyResponseMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => {
+                Ok(Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TimeSlicedNodeData => Ok(Self::TimeSlicedNodeData(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TimeSlicedPeerData => Ok(Self::TimeSlicedPeerData(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TimeSlicedPeerDataList => Ok(Self::TimeSlicedPeerDataList(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TopologyResponseBodyV2 => Ok(Self::TopologyResponseBodyV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SurveyResponseBody => Ok(Self::SurveyResponseBody(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TxAdvertVector => Ok(Self::TxAdvertVector(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FloodAdvert => Ok(Self::FloodAdvert(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TxDemandVector => Ok(Self::TxDemandVector(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FloodDemand => Ok(Self::FloodDemand(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::StellarMessage => Ok(Self::StellarMessage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AuthenticatedMessage => Ok(Self::AuthenticatedMessage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AuthenticatedMessageV0 => Ok(Self::AuthenticatedMessageV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolParameters => Ok(Self::LiquidityPoolParameters(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::MuxedAccount => Ok(Self::MuxedAccount(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::MuxedAccountMed25519 => Ok(Self::MuxedAccountMed25519(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::DecoratedSignature => Ok(Self::DecoratedSignature(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationType => Ok(Self::OperationType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreateAccountOp => Ok(Self::CreateAccountOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PaymentOp => Ok(Self::PaymentOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PathPaymentStrictReceiveOp => Ok(Self::PathPaymentStrictReceiveOp(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::PathPaymentStrictSendOp => Ok(Self::PathPaymentStrictSendOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageSellOfferOp => Ok(Self::ManageSellOfferOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageBuyOfferOp => Ok(Self::ManageBuyOfferOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreatePassiveSellOfferOp => Ok(Self::CreatePassiveSellOfferOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SetOptionsOp => Ok(Self::SetOptionsOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ChangeTrustAsset => Ok(Self::ChangeTrustAsset(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ChangeTrustOp => Ok(Self::ChangeTrustOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AllowTrustOp => Ok(Self::AllowTrustOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageDataOp => Ok(Self::ManageDataOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BumpSequenceOp => Ok(Self::BumpSequenceOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreateClaimableBalanceOp => Ok(Self::CreateClaimableBalanceOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimClaimableBalanceOp => Ok(Self::ClaimClaimableBalanceOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BeginSponsoringFutureReservesOp => {
+                Ok(Self::BeginSponsoringFutureReservesOp(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::RevokeSponsorshipType => Ok(Self::RevokeSponsorshipType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::RevokeSponsorshipOp => Ok(Self::RevokeSponsorshipOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::RevokeSponsorshipOpSigner => Ok(Self::RevokeSponsorshipOpSigner(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ClawbackOp => Ok(Self::ClawbackOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClawbackClaimableBalanceOp => Ok(Self::ClawbackClaimableBalanceOp(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SetTrustLineFlagsOp => Ok(Self::SetTrustLineFlagsOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolDepositOp => Ok(Self::LiquidityPoolDepositOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolWithdrawOp => Ok(Self::LiquidityPoolWithdrawOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HostFunctionType => Ok(Self::HostFunctionType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractIdPreimageType => Ok(Self::ContractIdPreimageType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractIdPreimage => Ok(Self::ContractIdPreimage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractIdPreimageFromAddress => Ok(Self::ContractIdPreimageFromAddress(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreateContractArgsV2 => Ok(Self::CreateContractArgsV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InvokeContractArgs => Ok(Self::InvokeContractArgs(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HostFunction => Ok(Self::HostFunction(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanAuthorizedFunctionType => Ok(Self::SorobanAuthorizedFunctionType(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanAuthorizedFunction => Ok(Self::SorobanAuthorizedFunction(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanAuthorizedInvocation => Ok(Self::SorobanAuthorizedInvocation(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanDelegateSignature => Ok(Self::SorobanDelegateSignature(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanAddressCredentialsWithDelegates => {
+                Ok(Self::SorobanAddressCredentialsWithDelegates(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanCredentials => Ok(Self::SorobanCredentials(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SorobanAuthorizationEntries => Ok(Self::SorobanAuthorizationEntries(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ExtendFootprintTtlOp => Ok(Self::ExtendFootprintTtlOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::RestoreFootprintOp => Ok(Self::RestoreFootprintOp(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Operation => Ok(Self::Operation(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationBody => Ok(Self::OperationBody(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HashIdPreimage => Ok(Self::HashIdPreimage(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HashIdPreimageOperationId => Ok(Self::HashIdPreimageOperationId(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::HashIdPreimageRevokeId => Ok(Self::HashIdPreimageRevokeId(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HashIdPreimageSorobanAuthorization => {
+                Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationWithAddress(
+                    Box::new(serde::de::Deserialize::deserialize(d)?),
+                ))
+            }
+            TypeVariant::MemoType => Ok(Self::MemoType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Memo => Ok(Self::Memo(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerBounds => Ok(Self::LedgerBounds(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PreconditionsV2 => Ok(Self::PreconditionsV2(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PreconditionType => Ok(Self::PreconditionType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Preconditions => Ok(Self::Preconditions(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanResourcesExtV0 => Ok(Self::SorobanResourcesExtV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SorobanTransactionDataExt => Ok(Self::SorobanTransactionDataExt(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionV0 => Ok(Self::TransactionV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionV0Ext => Ok(Self::TransactionV0Ext(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionV0Envelope => Ok(Self::TransactionV0Envelope(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Transaction => Ok(Self::Transaction(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionExt => Ok(Self::TransactionExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionV1Envelope => Ok(Self::TransactionV1Envelope(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FeeBumpTransaction => Ok(Self::FeeBumpTransaction(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FeeBumpTransactionInnerTx => Ok(Self::FeeBumpTransactionInnerTx(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::FeeBumpTransactionExt => Ok(Self::FeeBumpTransactionExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::FeeBumpTransactionEnvelope => Ok(Self::FeeBumpTransactionEnvelope(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionEnvelope => Ok(Self::TransactionEnvelope(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionSignaturePayload => Ok(Self::TransactionSignaturePayload(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
+                Ok(Self::TransactionSignaturePayloadTaggedTransaction(
+                    Box::new(serde::de::Deserialize::deserialize(d)?),
+                ))
+            }
+            TypeVariant::ClaimAtomType => Ok(Self::ClaimAtomType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimOfferAtomV0 => Ok(Self::ClaimOfferAtomV0(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimOfferAtom => Ok(Self::ClaimOfferAtom(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimLiquidityAtom => Ok(Self::ClaimLiquidityAtom(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimAtom => Ok(Self::ClaimAtom(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreateAccountResultCode => Ok(Self::CreateAccountResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreateAccountResult => Ok(Self::CreateAccountResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PaymentResultCode => Ok(Self::PaymentResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PaymentResult => Ok(Self::PaymentResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PathPaymentStrictReceiveResultCode => {
+                Ok(Self::PathPaymentStrictReceiveResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SimplePaymentResult => Ok(Self::SimplePaymentResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PathPaymentStrictReceiveResult => {
+                Ok(Self::PathPaymentStrictReceiveResult(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => {
+                Ok(Self::PathPaymentStrictReceiveResultSuccess(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::PathPaymentStrictSendResultCode => {
+                Ok(Self::PathPaymentStrictSendResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::PathPaymentStrictSendResult => Ok(Self::PathPaymentStrictSendResult(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::PathPaymentStrictSendResultSuccess => {
+                Ok(Self::PathPaymentStrictSendResultSuccess(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ManageSellOfferResultCode => Ok(Self::ManageSellOfferResultCode(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ManageOfferEffect => Ok(Self::ManageOfferEffect(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageOfferSuccessResult => Ok(Self::ManageOfferSuccessResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageOfferSuccessResultOffer => Ok(Self::ManageOfferSuccessResultOffer(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ManageSellOfferResult => Ok(Self::ManageSellOfferResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageBuyOfferResultCode => Ok(Self::ManageBuyOfferResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageBuyOfferResult => Ok(Self::ManageBuyOfferResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SetOptionsResultCode => Ok(Self::SetOptionsResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SetOptionsResult => Ok(Self::SetOptionsResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ChangeTrustResultCode => Ok(Self::ChangeTrustResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ChangeTrustResult => Ok(Self::ChangeTrustResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AllowTrustResultCode => Ok(Self::AllowTrustResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AllowTrustResult => Ok(Self::AllowTrustResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountMergeResultCode => Ok(Self::AccountMergeResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::AccountMergeResult => Ok(Self::AccountMergeResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InflationResultCode => Ok(Self::InflationResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InflationPayout => Ok(Self::InflationPayout(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InflationResult => Ok(Self::InflationResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageDataResultCode => Ok(Self::ManageDataResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ManageDataResult => Ok(Self::ManageDataResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BumpSequenceResultCode => Ok(Self::BumpSequenceResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BumpSequenceResult => Ok(Self::BumpSequenceResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CreateClaimableBalanceResultCode => {
+                Ok(Self::CreateClaimableBalanceResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::CreateClaimableBalanceResult => Ok(Self::CreateClaimableBalanceResult(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ClaimClaimableBalanceResultCode => {
+                Ok(Self::ClaimClaimableBalanceResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ClaimClaimableBalanceResult => Ok(Self::ClaimClaimableBalanceResult(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => {
+                Ok(Self::BeginSponsoringFutureReservesResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::BeginSponsoringFutureReservesResult => {
+                Ok(Self::BeginSponsoringFutureReservesResult(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::EndSponsoringFutureReservesResultCode => {
+                Ok(Self::EndSponsoringFutureReservesResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::EndSponsoringFutureReservesResult => {
+                Ok(Self::EndSponsoringFutureReservesResult(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::RevokeSponsorshipResultCode => Ok(Self::RevokeSponsorshipResultCode(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::RevokeSponsorshipResult => Ok(Self::RevokeSponsorshipResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClawbackResultCode => Ok(Self::ClawbackResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClawbackResult => Ok(Self::ClawbackResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClawbackClaimableBalanceResultCode => {
+                Ok(Self::ClawbackClaimableBalanceResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::ClawbackClaimableBalanceResult => {
+                Ok(Self::ClawbackClaimableBalanceResult(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::SetTrustLineFlagsResultCode => Ok(Self::SetTrustLineFlagsResultCode(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::SetTrustLineFlagsResult => Ok(Self::SetTrustLineFlagsResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::LiquidityPoolDepositResultCode => {
+                Ok(Self::LiquidityPoolDepositResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::LiquidityPoolDepositResult => Ok(Self::LiquidityPoolDepositResult(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::LiquidityPoolWithdrawResultCode => {
+                Ok(Self::LiquidityPoolWithdrawResultCode(Box::new(
+                    serde::de::Deserialize::deserialize(d)?,
+                )))
+            }
+            TypeVariant::LiquidityPoolWithdrawResult => Ok(Self::LiquidityPoolWithdrawResult(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::InvokeHostFunctionResultCode => Ok(Self::InvokeHostFunctionResultCode(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::InvokeHostFunctionResult => Ok(Self::InvokeHostFunctionResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ExtendFootprintTtlResultCode => Ok(Self::ExtendFootprintTtlResultCode(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::ExtendFootprintTtlResult => Ok(Self::ExtendFootprintTtlResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::RestoreFootprintResultCode => Ok(Self::RestoreFootprintResultCode(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::RestoreFootprintResult => Ok(Self::RestoreFootprintResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationResult => Ok(Self::OperationResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::OperationResultTr => Ok(Self::OperationResultTr(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionResultCode => Ok(Self::TransactionResultCode(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InnerTransactionResult => Ok(Self::InnerTransactionResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::InnerTransactionResultResult => Ok(Self::InnerTransactionResultResult(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::InnerTransactionResultExt => Ok(Self::InnerTransactionResultExt(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::InnerTransactionResultPair => Ok(Self::InnerTransactionResultPair(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::TransactionResult => Ok(Self::TransactionResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionResultResult => Ok(Self::TransactionResultResult(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::TransactionResultExt => Ok(Self::TransactionResultExt(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Hash => Ok(Self::Hash(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Int32 => Ok(Self::Int32(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::Int64 => Ok(Self::Int64(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Duration => Ok(Self::Duration(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::CryptoKeyType => Ok(Self::CryptoKeyType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PublicKeyType => Ok(Self::PublicKeyType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SignerKeyType => Ok(Self::SignerKeyType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::PublicKey => Ok(Self::PublicKey(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SignerKey => Ok(Self::SignerKey(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SignerKeyEd25519SignedPayload => Ok(Self::SignerKeyEd25519SignedPayload(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::Signature => Ok(Self::Signature(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SignatureHint => Ok(Self::SignatureHint(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::NodeId => Ok(Self::NodeId(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::Curve25519Public => Ok(Self::Curve25519Public(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HmacSha256Key => Ok(Self::HmacSha256Key(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::HmacSha256Mac => Ok(Self::HmacSha256Mac(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ShortHashSeed => Ok(Self::ShortHashSeed(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::BinaryFuseFilterType => Ok(Self::BinaryFuseFilterType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::SerializedBinaryFuseFilter => Ok(Self::SerializedBinaryFuseFilter(
+                Box::new(serde::de::Deserialize::deserialize(d)?),
+            )),
+            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(serde::de::Deserialize::deserialize(
+                d,
+            )?))),
+            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => Ok(Self::TestNextType(Box::new(
+                serde::de::Deserialize::deserialize(d)?,
+            ))),
+        }
+    }
+
     #[cfg(feature = "arbitrary")]
     #[allow(clippy::too_many_lines)]
     pub fn arbitrary(v: TypeVariant, u: &mut arbitrary::Unstructured<'_>) -> Result<Self, Error> {

@@ -77,7 +77,7 @@ macro_rules! run_x {
             let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
-            let v = self.generate(r#type)?;
+            let (v, hint_json) = self.generate(r#type)?;
             match self.output_format {
                 OutputFormat::Single => {
                     let l = crate::Limits::none();
@@ -87,9 +87,10 @@ macro_rules! run_x {
                     let l = crate::Limits::none();
                     println!("{}", v.to_xdr_base64(l)?)
                 }
-                OutputFormat::Json => {
-                    println!("{}", serde_json::to_string(&v)?);
-                }
+                OutputFormat::Json => match hint_json {
+                    Some(json) => println!("{json}"),
+                    None => println!("{}", serde_json::to_string(&v)?),
+                },
                 OutputFormat::JsonFormatted => {
                     println!("{}", serde_json::to_string_pretty(&v)?);
                 }
@@ -128,16 +129,19 @@ impl Cmd {
     ///
     /// If any `hint`s are configured, values are generated repeatedly (up to
     /// `hint_attempts` times) until one whose JSON representation contains all
-    /// of the hints is found.
-    fn generate(&self, type_: crate::TypeVariant) -> Result<crate::Type, Error> {
+    /// of the hints is found. In that case the matching value's compact JSON,
+    /// already computed to test the hints, is returned alongside the value so
+    /// callers can reuse it instead of serializing again. When no hints are
+    /// configured no JSON is computed and `None` is returned.
+    fn generate(&self, type_: crate::TypeVariant) -> Result<(crate::Type, Option<String>), Error> {
         if self.hint.is_empty() {
-            return Self::generate_one(type_);
+            return Ok((Self::generate_one(type_)?, None));
         }
         for _ in 0..self.hint_attempts {
             let v = Self::generate_one(type_)?;
             let json = serde_json::to_string(&v)?;
             if self.hint.iter().all(|hint| json.contains(hint)) {
-                return Ok(v);
+                return Ok((v, Some(json)));
             }
         }
         Err(Error::HintNotFound {
@@ -160,8 +164,10 @@ mod tests {
             hint_attempts: 1000,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
-        let v = cmd.generate(type_).unwrap();
-        assert!(serde_json::to_string(&v).unwrap().contains("min_time"));
+        let (v, json) = cmd.generate(type_).unwrap();
+        let json = json.expect("a hinted search returns the computed json");
+        assert!(json.contains("min_time"));
+        assert_eq!(json, serde_json::to_string(&v).unwrap());
     }
 
     #[test]
@@ -173,8 +179,8 @@ mod tests {
             hint_attempts: 1000,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
-        let v = cmd.generate(type_).unwrap();
-        let json = serde_json::to_string(&v).unwrap();
+        let (_v, json) = cmd.generate(type_).unwrap();
+        let json = json.expect("a hinted search returns the computed json");
         assert!(json.contains("min_time"));
         assert!(json.contains("max_time"));
     }
@@ -218,6 +224,7 @@ mod tests {
             hint_attempts: 1,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
-        assert!(cmd.generate(type_).is_ok());
+        let (_v, json) = cmd.generate(type_).unwrap();
+        assert!(json.is_none());
     }
 }

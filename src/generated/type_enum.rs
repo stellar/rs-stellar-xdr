@@ -16195,11 +16195,13 @@ impl Type {
             })
             .map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))
             .map_err(Error::Json),
-            TypeVariant::ConfigSettingContractBandwidthV0 => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))
-            .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
             TypeVariant::ContractCostType => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
@@ -16806,11 +16808,13 @@ impl Type {
             })
             .map(|t| Self::ClaimableBalanceFlags(Box::new(t)))
             .map_err(Error::Json),
-            TypeVariant::ClaimableBalanceEntryExtensionV1 => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))
-            .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))
+                .map_err(Error::Json)
+            }
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
                 serde_ignored::deserialize(r, |path| {
                     ignored.borrow_mut().push(path.to_string());
@@ -17160,11 +17164,13 @@ impl Type {
             })
             .map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))
             .map_err(Error::Json),
-            TypeVariant::TransactionHistoryResultEntryExt => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))
-            .map_err(Error::Json),
+            TypeVariant::TransactionHistoryResultEntryExt => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))
+                .map_err(Error::Json)
+            }
             TypeVariant::LedgerHeaderHistoryEntry => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
@@ -18168,11 +18174,13 @@ impl Type {
             })
             .map(|t| Self::BumpSequenceResult(Box::new(t)))
             .map_err(Error::Json),
-            TypeVariant::CreateClaimableBalanceResultCode => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))
-            .map_err(Error::Json),
+            TypeVariant::CreateClaimableBalanceResultCode => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))
+                .map_err(Error::Json)
+            }
             TypeVariant::CreateClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })

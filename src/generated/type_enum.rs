@@ -16071,6 +16071,2391 @@ impl Type {
         }
     }
 
+    #[cfg(all(feature = "std", feature = "serde_json", feature = "cli"))]
+    #[allow(clippy::too_many_lines)]
+    pub fn deserialize_json_with_ignored_fields<'r, R: serde_json::de::Read<'r>>(
+        v: TypeVariant,
+        r: &mut serde_json::de::Deserializer<R>,
+    ) -> Result<(Self, Vec<String>), Error> {
+        let ignored = std::cell::RefCell::new(Vec::new());
+        let t = match v {
+            TypeVariant::Value => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Value(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpBallot => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpBallot(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpStatementType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpStatementType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpNomination => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpNomination(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpStatement => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpStatement(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpStatementPledges => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpStatementPledges(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpStatementPrepare => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpStatementPrepare(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpStatementConfirm => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpStatementConfirm(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpStatementExternalize => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpStatementExternalize(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpEnvelope => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpEnvelope(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpQuorumSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpQuorumSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::EncodedLedgerKey => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EncodedLedgerKey(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractComputeV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractEventsV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractBandwidthV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCostType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCostType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCostParamEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCostParamEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StateArchivalSettings => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StateArchivalSettings(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::EvictionIterator => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EvictionIterator(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingScpTiming => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingScpTiming(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FrozenLedgerKeys => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FrozenLedgerKeys(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FrozenLedgerKeysDelta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FrozenLedgerKeysDelta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FreezeBypassTxs => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FreezeBypassTxs(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FreezeBypassTxsDelta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FreezeBypassTxsDelta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCostParams => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCostParams(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigSettingEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScEnvMetaKind => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScEnvMetaKind(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScEnvMetaEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScEnvMetaEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScEnvMetaEntryInterfaceVersion(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScMetaV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScMetaV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScMetaKind => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScMetaKind(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScMetaEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScMetaEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeOption => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeOption(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeVec => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeVec(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeMap => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeMap(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeTuple => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeTuple(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeBytesN => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeBytesN(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeUdt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeUdt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecTypeDef => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecTypeDef(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtStructFieldV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtStructV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtStructV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtEnumCaseV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtEnumV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecUdtErrorEnumV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecFunctionInputV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecFunctionV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecFunctionV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecEventParamLocationV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecEventParamLocationV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecEventParamV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecEventParamV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecEventDataFormat => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecEventDataFormat(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecEventV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecEventV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecEntryKind => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecEntryKind(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSpecEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSpecEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScBytes => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScBytes(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScString => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScString(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScSymbol => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScSymbol(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScValType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScValType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScErrorType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScErrorType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScErrorCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScErrorCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScError => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScError(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::UInt128Parts => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::UInt128Parts(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Int128Parts => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Int128Parts(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::UInt256Parts => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::UInt256Parts(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Int256Parts => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Int256Parts(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractExecutableType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractExecutableType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScAddressType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScAddressType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::MuxedEd25519Account => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::MuxedEd25519Account(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScAddress => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScAddress(Box::new(t)))
+                .map_err(Error::Json),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractExecutableExternalRef(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractExecutable => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractExecutable(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScVec => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScVec(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScMap => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScMap(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScNonceKey => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScNonceKey(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScContractInstance => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScContractInstance(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScVal => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScVal(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScMapEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScMapEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaBatch => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StoredTransactionSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StoredTransactionSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StoredDebugTransactionSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StoredDebugTransactionSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PersistedScpStateV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PersistedScpStateV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PersistedScpStateV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PersistedScpStateV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PersistedScpState => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PersistedScpState(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Thresholds => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Thresholds(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::String32 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::String32(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::String64 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::String64(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SequenceNumber => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SequenceNumber(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DataValue => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DataValue(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AssetCode4 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AssetCode4(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AssetCode12 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AssetCode12(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AssetType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AssetType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AssetCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AssetCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AlphaNum4 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AlphaNum4(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AlphaNum12 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AlphaNum12(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Asset => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Asset(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Price => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Price(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Liabilities => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Liabilities(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ThresholdIndexes => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ThresholdIndexes(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Signer => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Signer(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountFlags => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountFlags(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SponsorshipDescriptor => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SponsorshipDescriptor(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV3 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntryExtensionV3(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntryExtensionV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV2Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntryExtensionV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineFlags => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineFlags(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineAsset => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineAsset(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineEntryExtensionV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineEntryExtensionV2Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineEntryV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineEntryV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TrustLineEntryV1Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OfferEntryFlags => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OfferEntryFlags(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OfferEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OfferEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OfferEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OfferEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DataEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DataEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DataEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DataEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimPredicateType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimPredicateType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimPredicate => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimPredicate(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimantType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimantType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Claimant => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Claimant(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimantV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimantV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceFlags => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceFlags(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolConstantProductParameters => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolEntryBody => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolEntryConstantProduct => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractDataDurability => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractDataDurability(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractDataEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractDataEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCodeCostInputs => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCodeCostInputs(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCodeEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCodeEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCodeEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCodeEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractCodeEntryV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractCodeEntryV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TtlEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TtlEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryExtensionV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryData => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryData(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKey => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKey(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyAccount => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyAccount(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyTrustLine => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyTrustLine(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyOffer => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyOffer(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyData => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyData(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyClaimableBalance => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyLiquidityPool => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyContractData => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyContractData(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyContractCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyContractCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyConfigSetting => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerKeyTtl => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerKeyTtl(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::EnvelopeType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EnvelopeType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BucketListType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BucketListType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BucketEntryType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BucketEntryType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HotArchiveBucketEntryType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BucketMetadata => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BucketMetadata(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BucketMetadataExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BucketMetadataExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BucketEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BucketEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HotArchiveBucketEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HotArchiveBucketEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::UpgradeType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::UpgradeType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StellarValueType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StellarValueType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseValueSignature => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseValueSignature(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StellarValue => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StellarValue(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StellarValueExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StellarValueExt(Box::new(t)))
+                .map_err(Error::Json),
+            #[cfg(feature = "cap_0083")]
+            TypeVariant::StellarValueProposedValue => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StellarValueProposedValue(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeaderFlags => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeaderFlags(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeaderExtensionV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeaderExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeader => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeader(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeaderExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeaderExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerUpgradeType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerUpgradeType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigUpgradeSetKey => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerUpgrade => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerUpgrade(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ConfigUpgradeSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigUpgradeSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TxSetComponentType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TxSetComponentType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DependentTxCluster => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DependentTxCluster(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ParallelTxExecutionStage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ParallelTxExecutionStage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ParallelTxsComponent => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ParallelTxsComponent(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TxSetComponent => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TxSetComponent(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionPhase => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionPhase(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionSetV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionSetV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::GeneralizedTransactionSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::GeneralizedTransactionSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultPair => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultPair(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultSet => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultSet(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionHistoryEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionHistoryEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionHistoryEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionHistoryResultEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionHistoryResultEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeaderHistoryEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerHeaderHistoryEntryExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerScpMessages => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerScpMessages(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpHistoryEntryV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpHistoryEntryV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ScpHistoryEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ScpHistoryEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryChangeType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryChangeType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryChange => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryChange(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerEntryChanges => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerEntryChanges(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationMeta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationMeta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionMetaV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionMetaV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionMetaV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionMetaV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractEventType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractEventType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractEvent => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractEvent(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractEventBody => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractEventBody(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractEventV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractEventV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DiagnosticEvent => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DiagnosticEvent(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMetaExtV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMetaExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanTransactionMetaExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMeta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanTransactionMeta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionMetaV3 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionMetaV3(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationMetaV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationMetaV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMetaV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanTransactionMetaV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionEventStage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionEventStage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionEvent => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionEvent(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionMetaV4 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionMetaV4(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionMeta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionMeta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultMeta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultMeta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultMetaV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultMetaV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::UpgradeEntryMeta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::UpgradeEntryMeta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMetaV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaExtV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMetaExtV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMetaExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaV1 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMetaV1(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMetaV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerCloseMeta => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerCloseMeta(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ErrorCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ErrorCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SError => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SError(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SendMore => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SendMore(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SendMoreExtended => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SendMoreExtended(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AuthCert => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AuthCert(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Hello => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Hello(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Auth => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Auth(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::IpAddrType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::IpAddrType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PeerAddress => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PeerAddress(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PeerAddressIp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PeerAddressIp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::MessageType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::MessageType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DontHave => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DontHave(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SurveyMessageCommandType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SurveyMessageCommandType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SurveyMessageResponseType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SurveyMessageResponseType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedSurveyStartCollectingMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedSurveyStopCollectingMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SurveyRequestMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SurveyRequestMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyRequestMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyRequestMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::EncryptedBody => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EncryptedBody(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SurveyResponseMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SurveyResponseMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyResponseMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyResponseMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PeerStats => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PeerStats(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedNodeData => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedNodeData(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedPeerData => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedPeerData(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeSlicedPeerDataList => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedPeerDataList(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TopologyResponseBodyV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TopologyResponseBodyV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SurveyResponseBody => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SurveyResponseBody(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TxAdvertVector => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TxAdvertVector(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FloodAdvert => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FloodAdvert(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TxDemandVector => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TxDemandVector(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FloodDemand => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FloodDemand(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::StellarMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::StellarMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AuthenticatedMessage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AuthenticatedMessage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AuthenticatedMessageV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AuthenticatedMessageV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolParameters => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolParameters(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::MuxedAccount => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::MuxedAccount(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::MuxedAccountMed25519 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::MuxedAccountMed25519(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::DecoratedSignature => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::DecoratedSignature(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateAccountOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateAccountOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PaymentOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PaymentOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageSellOfferOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageSellOfferOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageBuyOfferOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageBuyOfferOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreatePassiveSellOfferOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SetOptionsOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SetOptionsOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ChangeTrustAsset => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ChangeTrustAsset(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ChangeTrustOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ChangeTrustOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AllowTrustOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AllowTrustOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageDataOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageDataOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BumpSequenceOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BumpSequenceOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateClaimableBalanceOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimClaimableBalanceOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BeginSponsoringFutureReservesOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RevokeSponsorshipType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RevokeSponsorshipOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipOpSigner => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClawbackOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClawbackClaimableBalanceOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SetTrustLineFlagsOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolDepositOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolWithdrawOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HostFunctionType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HostFunctionType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractIdPreimageType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractIdPreimageType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractIdPreimage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractIdPreimage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractIdPreimageFromAddress => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateContractArgs => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateContractArgs(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateContractArgsV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateContractArgsV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InvokeContractArgs => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InvokeContractArgs(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HostFunction => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HostFunction(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizedFunctionType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizedFunction => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizedInvocation => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAddressCredentials => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAddressCredentials(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanDelegateSignature => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanDelegateSignature(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAddressCredentialsWithDelegates => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAddressCredentialsWithDelegates(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanCredentialsType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanCredentialsType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanCredentials => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanCredentials(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizationEntry => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizationEntries => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAuthorizationEntries(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InvokeHostFunctionOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ExtendFootprintTtlOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ExtendFootprintTtlOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RestoreFootprintOp => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RestoreFootprintOp(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Operation => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Operation(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationBody => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationBody(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HashIdPreimage => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimage(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HashIdPreimageOperationId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageOperationId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HashIdPreimageRevokeId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HashIdPreimageContractId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageContractId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HashIdPreimageSorobanAuthorization => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageSorobanAuthorizationWithAddress(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::MemoType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::MemoType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Memo => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Memo(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimeBounds => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeBounds(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerBounds => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerBounds(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PreconditionsV2 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PreconditionsV2(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PreconditionType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PreconditionType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Preconditions => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Preconditions(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LedgerFootprint => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LedgerFootprint(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanResources => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanResources(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanResourcesExtV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanResourcesExtV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanTransactionData => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanTransactionData(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SorobanTransactionDataExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanTransactionDataExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionV0Ext => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionV0Ext(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionV0Envelope => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionV0Envelope(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Transaction => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Transaction(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionV1Envelope => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionV1Envelope(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FeeBumpTransaction => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FeeBumpTransaction(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FeeBumpTransactionInnerTx => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FeeBumpTransactionExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FeeBumpTransactionExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::FeeBumpTransactionEnvelope => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionEnvelope => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionEnvelope(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionSignaturePayload => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionSignaturePayload(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimAtomType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimAtomType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimOfferAtomV0 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimOfferAtomV0(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimOfferAtom => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimOfferAtom(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimLiquidityAtom => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimLiquidityAtom(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimAtom => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimAtom(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateAccountResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateAccountResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateAccountResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateAccountResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PaymentResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PaymentResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PaymentResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PaymentResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SimplePaymentResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SimplePaymentResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendResultSuccess => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageSellOfferResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageSellOfferResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageOfferEffect => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageOfferEffect(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageOfferSuccessResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageOfferSuccessResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageOfferSuccessResultOffer => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageSellOfferResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageSellOfferResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageBuyOfferResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageBuyOfferResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageBuyOfferResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SetOptionsResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SetOptionsResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SetOptionsResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SetOptionsResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ChangeTrustResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ChangeTrustResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ChangeTrustResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ChangeTrustResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AllowTrustResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AllowTrustResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AllowTrustResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AllowTrustResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountMergeResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountMergeResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountMergeResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountMergeResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InflationResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InflationResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InflationPayout => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InflationPayout(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InflationResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InflationResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageDataResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageDataResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ManageDataResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ManageDataResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BumpSequenceResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BumpSequenceResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BumpSequenceResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BumpSequenceResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateClaimableBalanceResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CreateClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimClaimableBalanceResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BeginSponsoringFutureReservesResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::EndSponsoringFutureReservesResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::EndSponsoringFutureReservesResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RevokeSponsorshipResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClawbackResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClawbackResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClawbackClaimableBalanceResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClawbackClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SetTrustLineFlagsResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SetTrustLineFlagsResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolDepositResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolDepositResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolWithdrawResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::LiquidityPoolWithdrawResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InvokeHostFunctionResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ExtendFootprintTtlResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ExtendFootprintTtlResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ExtendFootprintTtlResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RestoreFootprintResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RestoreFootprintResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::RestoreFootprintResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::RestoreFootprintResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::OperationResultTr => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::OperationResultTr(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultCode => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultCode(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InnerTransactionResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InnerTransactionResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InnerTransactionResultResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InnerTransactionResultResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InnerTransactionResultExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InnerTransactionResultExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::InnerTransactionResultPair => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InnerTransactionResultPair(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultResult => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultResult(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TransactionResultExt => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionResultExt(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Hash => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Hash(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Uint256 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Uint256(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Uint32 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Uint32(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Int32 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Int32(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Uint64 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Uint64(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Int64 => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Int64(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::TimePoint => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimePoint(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Duration => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Duration(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ExtensionPoint => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ExtensionPoint(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::CryptoKeyType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CryptoKeyType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PublicKeyType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PublicKeyType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignerKeyType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignerKeyType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PublicKey => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PublicKey(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignerKey => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignerKey(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignerKeyEd25519SignedPayload => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Signature => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Signature(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SignatureHint => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignatureHint(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::NodeId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::NodeId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::AccountId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::AccountId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ContractId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ContractId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Curve25519Secret => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Curve25519Secret(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::Curve25519Public => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::Curve25519Public(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HmacSha256Key => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HmacSha256Key(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::HmacSha256Mac => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HmacSha256Mac(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ShortHashSeed => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ShortHashSeed(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::BinaryFuseFilterType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BinaryFuseFilterType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::SerializedBinaryFuseFilter => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::PoolId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PoolId(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceIdType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceIdType(Box::new(t)))
+                .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceId => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceId(Box::new(t)))
+                .map_err(Error::Json),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TestNextType(Box::new(t)))
+                .map_err(Error::Json),
+        }?;
+        Ok((t, ignored.into_inner()))
+    }
+
     #[cfg(feature = "arbitrary")]
     #[allow(clippy::too_many_lines)]
     pub fn arbitrary(v: TypeVariant, u: &mut arbitrary::Unstructured<'_>) -> Result<Self, Error> {

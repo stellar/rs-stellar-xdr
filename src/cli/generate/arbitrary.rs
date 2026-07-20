@@ -133,13 +133,21 @@ impl Cmd {
     /// already computed to test the hints, is returned alongside the value so
     /// callers can reuse it instead of serializing again. When no hints are
     /// configured no JSON is computed and `None` is returned.
+    ///
+    /// An attempt that fails to generate or serialize is treated as unlucky
+    /// rather than fatal: it is skipped and the search continues with fresh
+    /// randomness, so a single bad draw doesn't abort the whole search.
     fn generate(&self, type_: crate::TypeVariant) -> Result<(crate::Type, Option<String>), Error> {
         if self.hint.is_empty() {
             return Ok((Self::generate_one(type_)?, None));
         }
         for _ in 0..self.hint_attempts {
-            let v = Self::generate_one(type_)?;
-            let json = serde_json::to_string(&v)?;
+            let Ok(v) = Self::generate_one(type_) else {
+                continue;
+            };
+            let Ok(json) = serde_json::to_string(&v) else {
+                continue;
+            };
             if self.hint.iter().all(|hint| json.contains(hint)) {
                 return Ok((v, Some(json)));
             }

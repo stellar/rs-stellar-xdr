@@ -89,7 +89,7 @@ impl Default for OutputFormat {
     }
 }
 
-fn check_ignored_fields(ignored: Vec<String>) -> Result<(), Error> {
+fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
     if ignored.is_empty() {
         return Ok(());
     }
@@ -115,7 +115,7 @@ macro_rules! run_x {
                             let (t, ignored) = crate::Type::deserialize_json_with_ignored_fields(
                                 r#type, &mut de,
                             )?;
-                            check_ignored_fields(ignored)?;
+                            check_ignored_fields(&ignored)?;
                             let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
@@ -127,7 +127,7 @@ macro_rules! run_x {
                             let (t, ignored) = crate::Type::deserialize_json_with_ignored_fields(
                                 r#type, &mut de,
                             )?;
-                            check_ignored_fields(ignored)?;
+                            check_ignored_fields(&ignored)?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
@@ -143,7 +143,7 @@ macro_rules! run_x {
                                     }
                                     Err(e) => Err(e)?,
                                 };
-                                check_ignored_fields(ignored)?;
+                                check_ignored_fields(&ignored)?;
                                 let l = crate::Limits::none();
                                 stdout()
                                     .write_all(&t.to_xdr(l)?)

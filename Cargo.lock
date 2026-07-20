@@ -672,6 +672,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_ignored"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b516445dac1e3535b6d658a7b528d771153dfb272ed4180ca4617a20550365ff"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_json"
 version = "1.0.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -679,15 +688,6 @@ checksum = "020ff22c755c2ed3f8cf162dbb41a7268d934702f3ed3631656ea597e08fc3db"
 dependencies = [
  "itoa",
  "ryu",
- "serde",
-]
-
-[[package]]
-name = "serde_ignored"
-version = "0.1.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b516445dac1e3535b6d658a7b528d771153dfb272ed4180ca4617a20550365ff"
-dependencies = [
  "serde",
 ]
 
@@ -759,6 +759,7 @@ dependencies = [
  "rand",
  "schemars",
  "serde",
+ "serde_ignored",
  "serde_json",
  "serde_with",
  "sha2",

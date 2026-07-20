@@ -20,8 +20,8 @@ pub enum Error {
     WriteOutput(std::io::Error),
     #[error("error generating XDR: {0}")]
     WriteXdr(crate::Error),
-    #[error("unknown fields in JSON input: {0}")]
-    UnknownFields(String),
+    #[error("unknown fields in JSON input: {}", .0.join(", "))]
+    UnknownFields(Vec<String>),
 }
 
 impl From<crate::Error> for Error {
@@ -93,7 +93,7 @@ fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
     if ignored.is_empty() {
         return Ok(());
     }
-    Err(Error::UnknownFields(ignored.join(", ")))
+    Err(Error::UnknownFields(ignored.to_vec()))
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next

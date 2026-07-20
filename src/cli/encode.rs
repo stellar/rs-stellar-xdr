@@ -110,26 +110,18 @@ macro_rules! run_x {
                 match self.input_format {
                     InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
-                            let mut de =
-                                serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
-                            let (t, ignored) = crate::Type::deserialize_json_with_ignored_fields(
-                                r#type, &mut de,
-                            )?;
+                            let (t, ignored) =
+                                crate::Type::from_json_with_ignored_fields(r#type, f)?;
                             check_ignored_fields(&ignored)?;
-                            de.end().map_err(crate::Error::Json)?;
                             let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
                                 .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
-                            let mut de =
-                                serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
-                            let (t, ignored) = crate::Type::deserialize_json_with_ignored_fields(
-                                r#type, &mut de,
-                            )?;
+                            let (t, ignored) =
+                                crate::Type::from_json_with_ignored_fields(r#type, f)?;
                             check_ignored_fields(&ignored)?;
-                            de.end().map_err(crate::Error::Json)?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?

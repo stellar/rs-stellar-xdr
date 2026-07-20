@@ -320,6 +320,14 @@ impl Type {
     }
 
     #[cfg(all(feature = "std", feature = "serde_json", feature = "cli"))]
+    pub fn from_json_with_ignored_fields(v: TypeVariant, r: impl Read) -> Result<(Self, Vec<String>), Error> {
+        let mut de = serde_json::Deserializer::from_reader(r);
+        let result = Self::deserialize_json_with_ignored_fields(v, &mut de)?;
+        de.end().map_err(Error::Json)?;
+        Ok(result)
+    }
+
+    #[cfg(all(feature = "std", feature = "serde_json", feature = "cli"))]
     #[allow(clippy::too_many_lines)]
     pub fn deserialize_json_with_ignored_fields<'r, R: serde_json::de::Read<'r>>(v: TypeVariant, r: &mut serde_json::de::Deserializer<R>) -> Result<(Self, Vec<String>), Error> {
         let ignored = std::cell::RefCell::new(Vec::new());

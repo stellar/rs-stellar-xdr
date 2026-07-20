@@ -89,13 +89,6 @@ impl Default for OutputFormat {
     }
 }
 
-fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
-    if ignored.is_empty() {
-        return Ok(());
-    }
-    Err(Error::UnknownFields(ignored.to_vec()))
-}
-
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
 // channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
@@ -168,4 +161,11 @@ impl Cmd {
     }
 
     run_x!(run_inner);
+}
+
+fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
+    if ignored.is_empty() {
+        return Ok(());
+    }
+    Err(Error::UnknownFields(ignored.to_vec()))
 }

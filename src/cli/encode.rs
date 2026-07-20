@@ -116,6 +116,7 @@ macro_rules! run_x {
                                 r#type, &mut de,
                             )?;
                             check_ignored_fields(&ignored)?;
+                            de.end().map_err(crate::Error::Json)?;
                             let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
@@ -128,6 +129,7 @@ macro_rules! run_x {
                                 r#type, &mut de,
                             )?;
                             check_ignored_fields(&ignored)?;
+                            de.end().map_err(crate::Error::Json)?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
@@ -175,4 +177,3 @@ impl Cmd {
 
     run_x!(run_inner);
 }
-

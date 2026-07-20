@@ -62,8 +62,10 @@ arbitrary = ["std", "dep:arbitrary"]
 hex = []
 rand = ["dep:rand"]
 
+serde_ignored = ["std", "serde_json", "dep:serde_ignored"]
+
 # Features for the CLI.
-cli = ["std", "type_enum", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum", "dep:serde_ignored"]
+cli = ["std", "type_enum", "base64", "serde", "serde_json", "schemars", "arbitrary", "rand", "dep:clap", "dep:thiserror", "dep:ethnum", "serde_ignored"]
 
 [package.metadata.docs.rs]
 all-features = true

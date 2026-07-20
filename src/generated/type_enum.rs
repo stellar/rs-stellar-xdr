@@ -16071,7 +16071,7 @@ impl Type {
         }
     }
 
-    #[cfg(all(feature = "std", feature = "serde_json", feature = "cli"))]
+    #[cfg(feature = "serde_ignored")]
     pub fn from_json_collecting_ignored_fields(
         v: TypeVariant,
         r: impl Read,
@@ -16082,7 +16082,7 @@ impl Type {
         Ok(result)
     }
 
-    #[cfg(all(feature = "std", feature = "serde_json", feature = "cli"))]
+    #[cfg(feature = "serde_ignored")]
     #[allow(clippy::too_many_lines)]
     pub fn deserialize_json_collecting_ignored_fields<'r, R: serde_json::de::Read<'r>>(
         v: TypeVariant,

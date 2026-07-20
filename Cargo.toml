@@ -16,7 +16,7 @@ required-features = ["cli"]
 doctest = false
 
 [build-dependencies]
-crate-git-revision = "0.0.6"
+crate-git-revision = "0.0.9"
 
 [dependencies]
 cfg_eval = { version = "0.1.2", optional = true }
@@ -47,6 +47,7 @@ alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 # Features from the XDR
 test_feature = []
 cap_0083 = []
+cap_0085_executable_ref = []
 
 # Features available without any new dependencies.
 type_enum = []

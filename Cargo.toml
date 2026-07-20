@@ -61,7 +61,6 @@ schemars = ["alloc", "serde", "serde_json", "dep:schemars"]
 arbitrary = ["std", "dep:arbitrary"]
 hex = []
 rand = ["dep:rand"]
-
 serde_ignored = ["std", "serde_json", "dep:serde_ignored"]
 
 # Features for the CLI.

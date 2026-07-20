@@ -76,6 +76,9 @@ pub enum TypeVariant {
     ScSpecEventV0,
     ScSpecEntryKind,
     ScSpecEntry,
+    ScBytes,
+    ScString,
+    ScSymbol,
     ScValType,
     ScErrorType,
     ScErrorCode,
@@ -85,17 +88,16 @@ pub enum TypeVariant {
     UInt256Parts,
     Int256Parts,
     ContractExecutableType,
-    ContractExecutable,
     ScAddressType,
     MuxedEd25519Account,
     #[cfg(feature = "cap_0084_muxed_contract")]
     MuxedContract,
     ScAddress,
+    #[cfg(feature = "cap_0085_executable_ref")]
+    ContractExecutableExternalRef,
+    ContractExecutable,
     ScVec,
     ScMap,
-    ScBytes,
-    ScString,
-    ScSymbol,
     ScNonceKey,
     ScContractInstance,
     ScVal,
@@ -558,6 +560,9 @@ impl TypeVariant {
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
         TypeVariant::ScValType,
         TypeVariant::ScErrorType,
         TypeVariant::ScErrorCode,
@@ -567,17 +572,16 @@ impl TypeVariant {
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
         TypeVariant::ContractExecutableType,
-        TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
         #[cfg(feature = "cap_0084_muxed_contract")]
         TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
+        #[cfg(feature = "cap_0085_executable_ref")]
+        TypeVariant::ContractExecutableExternalRef,
+        TypeVariant::ContractExecutable,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
-        TypeVariant::ScBytes,
-        TypeVariant::ScString,
-        TypeVariant::ScSymbol,
         TypeVariant::ScNonceKey,
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
@@ -1046,6 +1050,9 @@ impl TypeVariant {
         "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
         "ScValType",
         "ScErrorType",
         "ScErrorCode",
@@ -1055,17 +1062,16 @@ impl TypeVariant {
         "UInt256Parts",
         "Int256Parts",
         "ContractExecutableType",
-        "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
         #[cfg(feature = "cap_0084_muxed_contract")]
         "MuxedContract",
         "ScAddress",
+        #[cfg(feature = "cap_0085_executable_ref")]
+        "ContractExecutableExternalRef",
+        "ContractExecutable",
         "ScVec",
         "ScMap",
-        "ScBytes",
-        "ScString",
-        "ScSymbol",
         "ScNonceKey",
         "ScContractInstance",
         "ScVal",
@@ -1540,6 +1546,9 @@ impl TypeVariant {
             Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
+            Self::ScBytes => "ScBytes",
+            Self::ScString => "ScString",
+            Self::ScSymbol => "ScSymbol",
             Self::ScValType => "ScValType",
             Self::ScErrorType => "ScErrorType",
             Self::ScErrorCode => "ScErrorCode",
@@ -1549,17 +1558,16 @@ impl TypeVariant {
             Self::UInt256Parts => "UInt256Parts",
             Self::Int256Parts => "Int256Parts",
             Self::ContractExecutableType => "ContractExecutableType",
-            Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::MuxedEd25519Account => "MuxedEd25519Account",
             #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract => "MuxedContract",
             Self::ScAddress => "ScAddress",
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef => "ContractExecutableExternalRef",
+            Self::ContractExecutable => "ContractExecutable",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
-            Self::ScBytes => "ScBytes",
-            Self::ScString => "ScString",
-            Self::ScSymbol => "ScSymbol",
             Self::ScNonceKey => "ScNonceKey",
             Self::ScContractInstance => "ScContractInstance",
             Self::ScVal => "ScVal",
@@ -2075,6 +2083,9 @@ impl TypeVariant {
             Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
+            Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
+            Self::ScString => gen.into_root_schema_for::<ScString>(),
+            Self::ScSymbol => gen.into_root_schema_for::<ScSymbol>(),
             Self::ScValType => gen.into_root_schema_for::<ScValType>(),
             Self::ScErrorType => gen.into_root_schema_for::<ScErrorType>(),
             Self::ScErrorCode => gen.into_root_schema_for::<ScErrorCode>(),
@@ -2084,17 +2095,18 @@ impl TypeVariant {
             Self::UInt256Parts => gen.into_root_schema_for::<UInt256Parts>(),
             Self::Int256Parts => gen.into_root_schema_for::<Int256Parts>(),
             Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
-            Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
             Self::MuxedEd25519Account => gen.into_root_schema_for::<MuxedEd25519Account>(),
             #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract => gen.into_root_schema_for::<MuxedContract>(),
             Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef => {
+                gen.into_root_schema_for::<ContractExecutableExternalRef>()
+            }
+            Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScVec => gen.into_root_schema_for::<ScVec>(),
             Self::ScMap => gen.into_root_schema_for::<ScMap>(),
-            Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
-            Self::ScString => gen.into_root_schema_for::<ScString>(),
-            Self::ScSymbol => gen.into_root_schema_for::<ScSymbol>(),
             Self::ScNonceKey => gen.into_root_schema_for::<ScNonceKey>(),
             Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
             Self::ScVal => gen.into_root_schema_for::<ScVal>(),
@@ -2781,6 +2793,9 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
+            "ScBytes" => Ok(Self::ScBytes),
+            "ScString" => Ok(Self::ScString),
+            "ScSymbol" => Ok(Self::ScSymbol),
             "ScValType" => Ok(Self::ScValType),
             "ScErrorType" => Ok(Self::ScErrorType),
             "ScErrorCode" => Ok(Self::ScErrorCode),
@@ -2790,17 +2805,16 @@ impl core::str::FromStr for TypeVariant {
             "UInt256Parts" => Ok(Self::UInt256Parts),
             "Int256Parts" => Ok(Self::Int256Parts),
             "ContractExecutableType" => Ok(Self::ContractExecutableType),
-            "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "MuxedEd25519Account" => Ok(Self::MuxedEd25519Account),
             #[cfg(feature = "cap_0084_muxed_contract")]
             "MuxedContract" => Ok(Self::MuxedContract),
             "ScAddress" => Ok(Self::ScAddress),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            "ContractExecutableExternalRef" => Ok(Self::ContractExecutableExternalRef),
+            "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
-            "ScBytes" => Ok(Self::ScBytes),
-            "ScString" => Ok(Self::ScString),
-            "ScSymbol" => Ok(Self::ScSymbol),
             "ScNonceKey" => Ok(Self::ScNonceKey),
             "ScContractInstance" => Ok(Self::ScContractInstance),
             "ScVal" => Ok(Self::ScVal),
@@ -3299,6 +3313,9 @@ pub enum Type {
     ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
+    ScBytes(Box<ScBytes>),
+    ScString(Box<ScString>),
+    ScSymbol(Box<ScSymbol>),
     ScValType(Box<ScValType>),
     ScErrorType(Box<ScErrorType>),
     ScErrorCode(Box<ScErrorCode>),
@@ -3308,17 +3325,16 @@ pub enum Type {
     UInt256Parts(Box<UInt256Parts>),
     Int256Parts(Box<Int256Parts>),
     ContractExecutableType(Box<ContractExecutableType>),
-    ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     MuxedEd25519Account(Box<MuxedEd25519Account>),
     #[cfg(feature = "cap_0084_muxed_contract")]
     MuxedContract(Box<MuxedContract>),
     ScAddress(Box<ScAddress>),
+    #[cfg(feature = "cap_0085_executable_ref")]
+    ContractExecutableExternalRef(Box<ContractExecutableExternalRef>),
+    ContractExecutable(Box<ContractExecutable>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
-    ScBytes(Box<ScBytes>),
-    ScString(Box<ScString>),
-    ScSymbol(Box<ScSymbol>),
     ScNonceKey(Box<ScNonceKey>),
     ScContractInstance(Box<ScContractInstance>),
     ScVal(Box<ScVal>),
@@ -3783,6 +3799,9 @@ impl Type {
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
         TypeVariant::ScValType,
         TypeVariant::ScErrorType,
         TypeVariant::ScErrorCode,
@@ -3792,17 +3811,16 @@ impl Type {
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
         TypeVariant::ContractExecutableType,
-        TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
         #[cfg(feature = "cap_0084_muxed_contract")]
         TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
+        #[cfg(feature = "cap_0085_executable_ref")]
+        TypeVariant::ContractExecutableExternalRef,
+        TypeVariant::ContractExecutable,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
-        TypeVariant::ScBytes,
-        TypeVariant::ScString,
-        TypeVariant::ScSymbol,
         TypeVariant::ScNonceKey,
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
@@ -4271,6 +4289,9 @@ impl Type {
         "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
         "ScValType",
         "ScErrorType",
         "ScErrorCode",
@@ -4280,17 +4301,16 @@ impl Type {
         "UInt256Parts",
         "Int256Parts",
         "ContractExecutableType",
-        "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
         #[cfg(feature = "cap_0084_muxed_contract")]
         "MuxedContract",
         "ScAddress",
+        #[cfg(feature = "cap_0085_executable_ref")]
+        "ContractExecutableExternalRef",
+        "ContractExecutable",
         "ScVec",
         "ScMap",
-        "ScBytes",
-        "ScString",
-        "ScSymbol",
         "ScNonceKey",
         "ScContractInstance",
         "ScVal",
@@ -4991,6 +5011,15 @@ impl Type {
             TypeVariant::ScSpecEntry => {
                 r.with_limited_depth(|r| Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::read_xdr(r)?))))
             }
+            TypeVariant::ScBytes => {
+                r.with_limited_depth(|r| Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))))
+            }
+            TypeVariant::ScString => {
+                r.with_limited_depth(|r| Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))))
+            }
+            TypeVariant::ScSymbol => {
+                r.with_limited_depth(|r| Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))))
+            }
             TypeVariant::ScValType => {
                 r.with_limited_depth(|r| Ok(Self::ScValType(Box::new(ScValType::read_xdr(r)?))))
             }
@@ -5020,11 +5049,6 @@ impl Type {
                     ContractExecutableType::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ContractExecutable => r.with_limited_depth(|r| {
-                Ok(Self::ContractExecutable(Box::new(
-                    ContractExecutable::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ScAddressType => r.with_limited_depth(|r| {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
             }),
@@ -5040,20 +5064,22 @@ impl Type {
             TypeVariant::ScAddress => {
                 r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
             }
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutableExternalRef(Box::new(
+                    ContractExecutableExternalRef::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractExecutable => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutable(Box::new(
+                    ContractExecutable::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ScVec => {
                 r.with_limited_depth(|r| Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))))
             }
             TypeVariant::ScMap => {
                 r.with_limited_depth(|r| Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))))
-            }
-            TypeVariant::ScBytes => {
-                r.with_limited_depth(|r| Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))))
-            }
-            TypeVariant::ScString => {
-                r.with_limited_depth(|r| Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))))
-            }
-            TypeVariant::ScSymbol => {
-                r.with_limited_depth(|r| Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))))
             }
             TypeVariant::ScNonceKey => {
                 r.with_limited_depth(|r| Ok(Self::ScNonceKey(Box::new(ScNonceKey::read_xdr(r)?))))
@@ -7114,6 +7140,18 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, ScValType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
@@ -7150,10 +7188,6 @@ impl Type {
                 ReadXdrIter::<_, ContractExecutableType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
-            TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
-            ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
@@ -7171,6 +7205,18 @@ impl Type {
                 ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, ContractExecutableExternalRef>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
+            ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, ScVec>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
@@ -7178,18 +7224,6 @@ impl Type {
             TypeVariant::ScMap => Box::new(
                 ReadXdrIter::<_, ScMap>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
-            ),
-            TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
-            ),
-            TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
-            ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, ScNonceKey>::new(&mut r.inner, r.limits.clone())
@@ -9203,6 +9237,18 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScSpecEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t.0)))),
             ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
+            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, Frame<ScValType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t.0)))),
@@ -9242,10 +9288,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t.0)))),
             ),
-            TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
-            ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
@@ -9263,6 +9305,18 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
             ),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutableExternalRef>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
+            ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, Frame<ScVec>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
@@ -9270,18 +9324,6 @@ impl Type {
             TypeVariant::ScMap => Box::new(
                 ReadXdrIter::<_, Frame<ScMap>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
-            ),
-            TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
-            ),
-            TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, Frame<ScNonceKey>>::new(&mut r.inner, r.limits.clone())
@@ -11526,6 +11568,18 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, ScValType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
@@ -11562,10 +11616,6 @@ impl Type {
                 ReadXdrIter::<_, ContractExecutableType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
-            TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, ContractExecutable>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
-            ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
@@ -11583,6 +11633,15 @@ impl Type {
                 ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, ContractExecutableExternalRef>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
+            ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, ScVec>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
@@ -11590,18 +11649,6 @@ impl Type {
             TypeVariant::ScMap => Box::new(
                 ReadXdrIter::<_, ScMap>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
-            ),
-            TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, ScBytes>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
-            ),
-            TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, ScString>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
-            ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, ScNonceKey>::new(dec, r.limits.clone())
@@ -13420,6 +13467,9 @@ impl Type {
             TypeVariant::ScSpecEntry => {
                 Ok(Self::ScSpecEntry(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScErrorType => {
                 Ok(Self::ScErrorType(Box::new(serde_json::from_reader(r)?)))
@@ -13443,9 +13493,6 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(serde_json::from_reader(r)?)))
             }
@@ -13457,11 +13504,15 @@ impl Type {
                 Ok(Self::MuxedContract(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ScString => Ok(Self::ScString(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
                 serde_json::from_reader(r)?,
@@ -14761,6 +14812,15 @@ impl Type {
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -14788,9 +14848,6 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::ScAddressType => Ok(Self::ScAddressType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -14804,21 +14861,19 @@ impl Type {
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde::de::Deserialize::deserialize(
                 r,
             )?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde::de::Deserialize::deserialize(
                 r,
             )?))),
-            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScString => Ok(Self::ScString(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -16263,6 +16318,9 @@ impl Type {
                 ScSpecEntryKind::arbitrary(u)?,
             ))),
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::arbitrary(u)?))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::arbitrary(u)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::arbitrary(u)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::arbitrary(u)?))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(ScValType::arbitrary(u)?))),
             TypeVariant::ScErrorType => Ok(Self::ScErrorType(Box::new(ScErrorType::arbitrary(u)?))),
             TypeVariant::ScErrorCode => Ok(Self::ScErrorCode(Box::new(ScErrorCode::arbitrary(u)?))),
@@ -16278,9 +16336,6 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 ContractExecutableType::arbitrary(u)?,
             ))),
-            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
-                ContractExecutable::arbitrary(u)?,
-            ))),
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::arbitrary(u)?)))
             }
@@ -16292,11 +16347,15 @@ impl Type {
                 Ok(Self::MuxedContract(Box::new(MuxedContract::arbitrary(u)?)))
             }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::arbitrary(u)?))),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(ContractExecutableExternalRef::arbitrary(u)?),
+            )),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                ContractExecutable::arbitrary(u)?,
+            ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::arbitrary(u)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::arbitrary(u)?))),
-            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::arbitrary(u)?))),
-            TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::arbitrary(u)?))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::arbitrary(u)?))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(ScNonceKey::arbitrary(u)?))),
             TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
                 ScContractInstance::arbitrary(u)?,
@@ -17508,6 +17567,9 @@ impl Type {
             TypeVariant::ScSpecEventV0 => Self::ScSpecEventV0(Box::default()),
             TypeVariant::ScSpecEntryKind => Self::ScSpecEntryKind(Box::default()),
             TypeVariant::ScSpecEntry => Self::ScSpecEntry(Box::default()),
+            TypeVariant::ScBytes => Self::ScBytes(Box::default()),
+            TypeVariant::ScString => Self::ScString(Box::default()),
+            TypeVariant::ScSymbol => Self::ScSymbol(Box::default()),
             TypeVariant::ScValType => Self::ScValType(Box::default()),
             TypeVariant::ScErrorType => Self::ScErrorType(Box::default()),
             TypeVariant::ScErrorCode => Self::ScErrorCode(Box::default()),
@@ -17517,17 +17579,18 @@ impl Type {
             TypeVariant::UInt256Parts => Self::UInt256Parts(Box::default()),
             TypeVariant::Int256Parts => Self::Int256Parts(Box::default()),
             TypeVariant::ContractExecutableType => Self::ContractExecutableType(Box::default()),
-            TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
             TypeVariant::ScAddressType => Self::ScAddressType(Box::default()),
             TypeVariant::MuxedEd25519Account => Self::MuxedEd25519Account(Box::default()),
             #[cfg(feature = "cap_0084_muxed_contract")]
             TypeVariant::MuxedContract => Self::MuxedContract(Box::default()),
             TypeVariant::ScAddress => Self::ScAddress(Box::default()),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            TypeVariant::ContractExecutableExternalRef => {
+                Self::ContractExecutableExternalRef(Box::default())
+            }
+            TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
             TypeVariant::ScVec => Self::ScVec(Box::default()),
             TypeVariant::ScMap => Self::ScMap(Box::default()),
-            TypeVariant::ScBytes => Self::ScBytes(Box::default()),
-            TypeVariant::ScString => Self::ScString(Box::default()),
-            TypeVariant::ScSymbol => Self::ScSymbol(Box::default()),
             TypeVariant::ScNonceKey => Self::ScNonceKey(Box::default()),
             TypeVariant::ScContractInstance => Self::ScContractInstance(Box::default()),
             TypeVariant::ScVal => Self::ScVal(Box::default()),
@@ -18164,6 +18227,9 @@ impl Type {
             Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
+            Self::ScBytes(ref v) => v.as_ref(),
+            Self::ScString(ref v) => v.as_ref(),
+            Self::ScSymbol(ref v) => v.as_ref(),
             Self::ScValType(ref v) => v.as_ref(),
             Self::ScErrorType(ref v) => v.as_ref(),
             Self::ScErrorCode(ref v) => v.as_ref(),
@@ -18173,17 +18239,16 @@ impl Type {
             Self::UInt256Parts(ref v) => v.as_ref(),
             Self::Int256Parts(ref v) => v.as_ref(),
             Self::ContractExecutableType(ref v) => v.as_ref(),
-            Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::MuxedEd25519Account(ref v) => v.as_ref(),
             #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(ref v) => v.as_ref(),
+            Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
-            Self::ScBytes(ref v) => v.as_ref(),
-            Self::ScString(ref v) => v.as_ref(),
-            Self::ScSymbol(ref v) => v.as_ref(),
             Self::ScNonceKey(ref v) => v.as_ref(),
             Self::ScContractInstance(ref v) => v.as_ref(),
             Self::ScVal(ref v) => v.as_ref(),
@@ -18654,6 +18719,9 @@ impl Type {
             Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
+            Self::ScBytes(_) => "ScBytes",
+            Self::ScString(_) => "ScString",
+            Self::ScSymbol(_) => "ScSymbol",
             Self::ScValType(_) => "ScValType",
             Self::ScErrorType(_) => "ScErrorType",
             Self::ScErrorCode(_) => "ScErrorCode",
@@ -18663,17 +18731,16 @@ impl Type {
             Self::UInt256Parts(_) => "UInt256Parts",
             Self::Int256Parts(_) => "Int256Parts",
             Self::ContractExecutableType(_) => "ContractExecutableType",
-            Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::MuxedEd25519Account(_) => "MuxedEd25519Account",
             #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract(_) => "MuxedContract",
             Self::ScAddress(_) => "ScAddress",
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(_) => "ContractExecutableExternalRef",
+            Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
-            Self::ScBytes(_) => "ScBytes",
-            Self::ScString(_) => "ScString",
-            Self::ScSymbol(_) => "ScSymbol",
             Self::ScNonceKey(_) => "ScNonceKey",
             Self::ScContractInstance(_) => "ScContractInstance",
             Self::ScVal(_) => "ScVal",
@@ -19180,6 +19247,9 @@ impl Type {
             Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
+            Self::ScBytes(_) => TypeVariant::ScBytes,
+            Self::ScString(_) => TypeVariant::ScString,
+            Self::ScSymbol(_) => TypeVariant::ScSymbol,
             Self::ScValType(_) => TypeVariant::ScValType,
             Self::ScErrorType(_) => TypeVariant::ScErrorType,
             Self::ScErrorCode(_) => TypeVariant::ScErrorCode,
@@ -19189,17 +19259,16 @@ impl Type {
             Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
             Self::Int256Parts(_) => TypeVariant::Int256Parts,
             Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
-            Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::MuxedEd25519Account(_) => TypeVariant::MuxedEd25519Account,
             #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract(_) => TypeVariant::MuxedContract,
             Self::ScAddress(_) => TypeVariant::ScAddress,
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(_) => TypeVariant::ContractExecutableExternalRef,
+            Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
-            Self::ScBytes(_) => TypeVariant::ScBytes,
-            Self::ScString(_) => TypeVariant::ScString,
-            Self::ScSymbol(_) => TypeVariant::ScSymbol,
             Self::ScNonceKey(_) => TypeVariant::ScNonceKey,
             Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
             Self::ScVal(_) => TypeVariant::ScVal,
@@ -19744,6 +19813,9 @@ impl WriteXdr for Type {
             Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),
+            Self::ScBytes(v) => v.write_xdr(w),
+            Self::ScString(v) => v.write_xdr(w),
+            Self::ScSymbol(v) => v.write_xdr(w),
             Self::ScValType(v) => v.write_xdr(w),
             Self::ScErrorType(v) => v.write_xdr(w),
             Self::ScErrorCode(v) => v.write_xdr(w),
@@ -19753,17 +19825,16 @@ impl WriteXdr for Type {
             Self::UInt256Parts(v) => v.write_xdr(w),
             Self::Int256Parts(v) => v.write_xdr(w),
             Self::ContractExecutableType(v) => v.write_xdr(w),
-            Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
             Self::MuxedEd25519Account(v) => v.write_xdr(w),
             #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract(v) => v.write_xdr(w),
             Self::ScAddress(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ContractExecutableExternalRef(v) => v.write_xdr(w),
+            Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScVec(v) => v.write_xdr(w),
             Self::ScMap(v) => v.write_xdr(w),
-            Self::ScBytes(v) => v.write_xdr(w),
-            Self::ScString(v) => v.write_xdr(w),
-            Self::ScSymbol(v) => v.write_xdr(w),
             Self::ScNonceKey(v) => v.write_xdr(w),
             Self::ScContractInstance(v) => v.write_xdr(w),
             Self::ScVal(v) => v.write_xdr(w),

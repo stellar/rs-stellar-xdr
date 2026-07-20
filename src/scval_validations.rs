@@ -32,6 +32,9 @@ impl Validate for ScVal {
             | ScVal::LedgerKeyNonce(_)
             | ScVal::ContractInstance(_) => Ok(()),
 
+            #[cfg(feature = "cap_0085_executable_ref")]
+            ScVal::ExecutableTag(_) => Ok(()),
+
             ScVal::Vec(Some(v)) => {
                 for e in v.iter() {
                     e.validate()?;

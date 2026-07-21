@@ -16547,6 +16547,12 @@ impl Type {
             })
             .map(|t| Self::MuxedEd25519Account(Box::new(t)))
             .map_err(Error::Json),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MuxedContract(Box::new(t)))
+            .map_err(Error::Json),
             TypeVariant::ScAddress => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })

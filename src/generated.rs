@@ -4366,6 +4366,9 @@ pub use sc_address_type::*;
 mod muxed_ed25519_account;
 #[allow(unused_imports)]
 pub use muxed_ed25519_account::*;
+mod muxed_contract;
+#[allow(unused_imports)]
+pub use muxed_contract::*;
 mod sc_address;
 #[allow(unused_imports)]
 pub use sc_address::*;

@@ -56,28 +56,59 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
     {
         use serde::Deserialize;
         #[derive(Deserialize)]
-        #[serde(deny_unknown_fields)]
         struct SignerKeyEd25519SignedPayload {
             ed25519: Uint256,
             payload: BytesM<64>,
         }
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum SignerKeyEd25519SignedPayloadOrString<'a> {
-            Str(&'a str),
-            String(String),
-            SignerKeyEd25519SignedPayload(SignerKeyEd25519SignedPayload),
-        }
-        match SignerKeyEd25519SignedPayloadOrString::deserialize(deserializer)? {
-            SignerKeyEd25519SignedPayloadOrString::Str(s) => {
-                s.parse().map_err(serde::de::Error::custom)
+        if cfg!(feature = "serde_ignored") {
+            // With the serde_ignored feature enabled, deserialize transparently
+            // through the given deserializer so unknown fields remain observable
+            // by serde_ignored at runtime. An untagged enum can't be used here
+            // because it buffers the input, hiding ignored fields from
+            // serde_ignored.
+            struct V;
+            impl<'de> serde::de::Visitor<'de> for V {
+                type Value = self::SignerKeyEd25519SignedPayload;
+                fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    f.write_str("SignerKeyEd25519SignedPayload as a string or a map")
+                }
+                fn visit_str<E>(self, s: &str) -> core::result::Result<Self::Value, E>
+                where
+                    E: serde::de::Error,
+                {
+                    s.parse().map_err(serde::de::Error::custom)
+                }
+                fn visit_map<A>(self, map: A) -> core::result::Result<Self::Value, A::Error>
+                where
+                    A: serde::de::MapAccess<'de>,
+                {
+                    let SignerKeyEd25519SignedPayload { ed25519, payload } =
+                        <SignerKeyEd25519SignedPayload as serde::Deserialize>::deserialize(
+                            serde::de::value::MapAccessDeserializer::new(map),
+                        )?;
+                    Ok(self::SignerKeyEd25519SignedPayload { ed25519, payload })
+                }
             }
-            SignerKeyEd25519SignedPayloadOrString::String(s) => {
-                s.parse().map_err(serde::de::Error::custom)
+            deserializer.deserialize_any(V)
+        } else {
+            #[derive(Deserialize)]
+            #[serde(untagged)]
+            enum SignerKeyEd25519SignedPayloadOrString<'a> {
+                Str(&'a str),
+                String(String),
+                SignerKeyEd25519SignedPayload(SignerKeyEd25519SignedPayload),
             }
-            SignerKeyEd25519SignedPayloadOrString::SignerKeyEd25519SignedPayload(
-                SignerKeyEd25519SignedPayload { ed25519, payload },
-            ) => Ok(self::SignerKeyEd25519SignedPayload { ed25519, payload }),
+            match SignerKeyEd25519SignedPayloadOrString::deserialize(deserializer)? {
+                SignerKeyEd25519SignedPayloadOrString::Str(s) => {
+                    s.parse().map_err(serde::de::Error::custom)
+                }
+                SignerKeyEd25519SignedPayloadOrString::String(s) => {
+                    s.parse().map_err(serde::de::Error::custom)
+                }
+                SignerKeyEd25519SignedPayloadOrString::SignerKeyEd25519SignedPayload(
+                    SignerKeyEd25519SignedPayload { ed25519, payload },
+                ) => Ok(self::SignerKeyEd25519SignedPayload { ed25519, payload }),
+            }
         }
     }
 }

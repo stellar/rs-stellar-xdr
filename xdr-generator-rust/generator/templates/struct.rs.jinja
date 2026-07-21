@@ -73,27 +73,61 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
         use serde::Deserialize;
         #[derive(Deserialize)]
-        #[serde(deny_unknown_fields)]
         struct {{ s.name }} {
 {%- for m in s.members %}
             {{ m.name }}: {{ m.type_ref }},
 {%- endfor %}
         }
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum {{ s.name }}OrString<'a> {
-            Str(&'a str),
-            String(String),
-            {{ s.name }}({{ s.name }}),
-        }
-        match {{ s.name }}OrString::deserialize(deserializer)? {
-            {{ s.name }}OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
-            {{ s.name }}OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
-            {{ s.name }}OrString::{{ s.name }}({{ s.name }} {
-                {{ s.member_names }},
-            }) => Ok(self::{{ s.name }} {
-                {{ s.member_names }},
-            }),
+        if cfg!(feature = "serde_ignored") {
+            // With the serde_ignored feature enabled, deserialize transparently
+            // through the given deserializer so unknown fields remain observable
+            // by serde_ignored at runtime. An untagged enum can't be used here
+            // because it buffers the input, hiding ignored fields from
+            // serde_ignored.
+            struct V;
+            impl<'de> serde::de::Visitor<'de> for V {
+                type Value = self::{{ s.name }};
+                fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    f.write_str("{{ s.name }} as a string or a map")
+                }
+                fn visit_str<E>(self, s: &str) -> core::result::Result<Self::Value, E>
+                where
+                    E: serde::de::Error,
+                {
+                    s.parse().map_err(serde::de::Error::custom)
+                }
+                fn visit_map<A>(self, map: A) -> core::result::Result<Self::Value, A::Error>
+                where
+                    A: serde::de::MapAccess<'de>,
+                {
+                    let {{ s.name }} {
+                        {{ s.member_names }},
+                    } = <{{ s.name }} as serde::Deserialize>::deserialize(
+                        serde::de::value::MapAccessDeserializer::new(map),
+                    )?;
+                    Ok(self::{{ s.name }} {
+                        {{ s.member_names }},
+                    })
+                }
+            }
+            deserializer.deserialize_any(V)
+        } else {
+            #[derive(Deserialize)]
+            #[serde(untagged)]
+            enum {{ s.name }}OrString<'a> {
+                Str(&'a str),
+                String(String),
+                {{ s.name }}({{ s.name }}),
+            }
+            match {{ s.name }}OrString::deserialize(deserializer)? {
+                {{ s.name }}OrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+                {{ s.name }}OrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+                {{ s.name }}OrString::{{ s.name }}({{ s.name }} {
+                    {{ s.member_names }},
+                }) => Ok(self::{{ s.name }} {
+                    {{ s.member_names }},
+                }),
+            }
         }
     }
 }

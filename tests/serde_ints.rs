@@ -1,6 +1,6 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use stellar_xdr::{ConfigSettingEntry, ScNonceKey, ScVal, SequenceNumber};
+use stellar_xdr::{ConfigSettingEntry, Int128Parts, ScNonceKey, ScVal, SequenceNumber};
 
 #[test]
 fn test_serde_typedef_64bit() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,6 +40,19 @@ fn test_serde_struct_field_64bit() -> Result<(), Box<dyn std::error::Error>> {
     let x_rt = serde_json::from_str::<ScNonceKey>(&s)?;
     assert_eq!(x_rt, x);
     Ok(())
+}
+
+#[test]
+fn test_serde_128bit_struct_form_rejects_unknown_fields() {
+    // The struct form of the 128-bit parts types deserializes via an untagged
+    // enum, which serde_ignored cannot see through. The inner struct is marked
+    // deny_unknown_fields so unknown fields are rejected rather than silently
+    // ignored.
+    let ok = serde_json::from_str::<Int128Parts>(r#"{"hi":1,"lo":2}"#);
+    assert!(ok.is_ok(), "valid struct form should deserialize: {ok:?}");
+
+    let err = serde_json::from_str::<Int128Parts>(r#"{"hi":1,"lo":2,"bogus":3}"#);
+    assert!(err.is_err(), "unknown field should be rejected");
 }
 
 #[test]

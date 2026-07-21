@@ -73,6 +73,7 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error> where D: serde::Deserializer<'de> {
         use serde::Deserialize;
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct {{ s.name }} {
 {%- for m in s.members %}
             {{ m.name }}: {{ m.type_ref }},

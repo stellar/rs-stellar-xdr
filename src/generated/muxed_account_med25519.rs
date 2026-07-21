@@ -54,6 +54,7 @@ impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
     {
         use serde::Deserialize;
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct MuxedAccountMed25519 {
             id: u64,
             ed25519: Uint256,

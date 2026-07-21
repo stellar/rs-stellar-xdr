@@ -53,6 +53,7 @@ impl<'de> serde::Deserialize<'de> for Int128Parts {
     {
         use serde::Deserialize;
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct Int128Parts {
             hi: i64,
             lo: u64,

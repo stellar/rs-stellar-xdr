@@ -56,6 +56,7 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
     {
         use serde::Deserialize;
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct SignerKeyEd25519SignedPayload {
             ed25519: Uint256,
             payload: BytesM<64>,

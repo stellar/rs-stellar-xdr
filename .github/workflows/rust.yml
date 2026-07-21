@@ -129,6 +129,13 @@ jobs:
       # Rust will frequently add new warnings and checks.
       if: matrix.rust == 'msrv'
       run: echo RUSTFLAGS='-Dwarnings -Dclippy::all -Dclippy::pedantic' >> $GITHUB_ENV
+    - name: Reduce test debug info on the msrv to keep linking within memory
+      # cargo test links a separate binary per integration test, each embedding
+      # the crate's debug info. On the msrv toolchain the cli feature set links
+      # these in parallel using enough memory to exhaust the runner and have it
+      # killed. Dropping test debug info keeps linking within the memory limit.
+      if: matrix.rust == 'msrv'
+      run: echo CARGO_PROFILE_TEST_DEBUG=0 >> $GITHUB_ENV
     - run: rustup update
     - run: cargo version
     - run: cargo test ${{ matrix.feature-args }}

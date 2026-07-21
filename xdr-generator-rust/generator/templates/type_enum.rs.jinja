@@ -319,6 +319,31 @@ impl Type {
         }
     }
 
+    #[cfg(feature = "serde_ignored")]
+    pub fn from_json_collecting_ignored_fields(v: TypeVariant, r: impl Read) -> Result<(Self, Vec<String>), Error> {
+        let mut de = serde_json::Deserializer::from_reader(r);
+        let result = Self::deserialize_json_collecting_ignored_fields(v, &mut de)?;
+        de.end().map_err(Error::Json)?;
+        Ok(result)
+    }
+
+    #[cfg(feature = "serde_ignored")]
+    #[allow(clippy::too_many_lines)]
+    pub fn deserialize_json_collecting_ignored_fields<'r, R: serde_json::de::Read<'r>>(v: TypeVariant, r: &mut serde_json::de::Deserializer<R>) -> Result<(Self, Vec<String>), Error> {
+        let ignored = std::cell::RefCell::new(Vec::new());
+        let t = match v {
+{%- for t in type_variant_enum.types %}
+{%- if let Some(cfg) = t.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+            TypeVariant::{{ t.name }} => serde_ignored::deserialize(r, |path| { ignored.borrow_mut().push(path.to_string()); })
+                .map(|t| Self::{{ t.name }}(Box::new(t)))
+                .map_err(Error::Json),
+{%- endfor %}
+        }?;
+        Ok((t, ignored.into_inner()))
+    }
+
     #[cfg(feature = "arbitrary")]
     #[allow(clippy::too_many_lines)]
     pub fn arbitrary(v: TypeVariant, u: &mut arbitrary::Unstructured<'_>) -> Result<Self, Error> {

@@ -161,3 +161,6 @@ pub(crate) mod num256;
 
 #[cfg(feature = "alloc")]
 pub(crate) mod num128;
+
+#[cfg(feature = "alloc")]
+pub mod transaction_meta;

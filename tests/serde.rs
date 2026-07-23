@@ -86,17 +86,19 @@ fn test_serde_type_field_uses_sep51_json_key() -> Result<(), Box<dyn std::error:
         ..Default::default()
     };
 
-    // Serializes with the SEP-51 JSON key `type`, not the previous escaped `type_`.
-    let json = serde_json::to_string(&event)?;
-    assert!(json.contains(r#""type":"#), "expected `type` key in {json}");
-    assert!(!json.contains("type_"), "unexpected `type_` key in {json}");
+    // The SEP-51 JSON uses the key `type`, not the previously escaped `type_`.
+    let json = r#"{"ext":"v0","contract_id":null,"type":"contract","body":{"v0":{"topics":[],"data":{"bool":false}}}}"#;
+    // The legacy JSON that older versions of this crate emitted, using `type_`.
+    let legacy_json = r#"{"ext":"v0","contract_id":null,"type_":"contract","body":{"v0":{"topics":[],"data":{"bool":false}}}}"#;
+
+    // Serializes with the SEP-51 key `type`.
+    assert_eq!(serde_json::to_string(&event)?, json);
 
     // Deserializes from the SEP-51 key `type`.
-    assert_eq!(serde_json::from_str::<ContractEvent>(&json)?, event);
+    assert_eq!(serde_json::from_str::<ContractEvent>(json)?, event);
 
     // The legacy escaped key `type_` is still accepted via a serde alias.
-    let legacy = json.replace(r#""type":"#, r#""type_":"#);
-    assert_eq!(serde_json::from_str::<ContractEvent>(&legacy)?, event);
+    assert_eq!(serde_json::from_str::<ContractEvent>(legacy_json)?, event);
 
     Ok(())
 }

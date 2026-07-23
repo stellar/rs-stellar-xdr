@@ -12,7 +12,7 @@
     "segment_count",
     "segment_count_length",
     "segment_length",
-    "type_"
+    "type"
   ],
   "properties": {
     "$schema": {
@@ -54,7 +54,7 @@
       "format": "uint32",
       "minimum": 0.0
     },
-    "type_": {
+    "type": {
       "$ref": "#/definitions/BinaryFuseFilterType"
     }
   },

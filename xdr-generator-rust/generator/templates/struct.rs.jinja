@@ -30,6 +30,13 @@ pub struct {{ s.name }} {
         serde_as(as = "{{ serde_as }}")
     )]
 {%- endif %}
+{%- if let Some(rename) = m.serde_rename %}
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "{{ rename }}", alias = "{{ m.name }}")
+    )]
+    #[cfg_attr(feature = "schemars", schemars(rename = "{{ rename }}"))]
+{%- endif %}
     pub {{ m.name }}: {{ m.type_ref }},
 {%- endfor %}
 }

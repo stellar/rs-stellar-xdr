@@ -671,7 +671,7 @@
       "type": "object",
       "required": [
         "req_hash",
-        "type_"
+        "type"
       ],
       "properties": {
         "req_hash": {
@@ -681,7 +681,7 @@
           "contentEncoding": "hex",
           "contentMediaType": "application/binary"
         },
-        "type_": {
+        "type": {
           "$ref": "#/definitions/MessageType"
         }
       }

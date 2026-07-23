@@ -2,7 +2,7 @@
 
 use stellar_xdr::{BytesM, Hash, StringM, VecM};
 
-use stellar_xdr::{AccountId, Int128Parts};
+use stellar_xdr::{AccountId, ContractEvent, ContractEventType, Int128Parts};
 
 use std::str::FromStr;
 
@@ -76,5 +76,25 @@ fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::err
         serde_json::from_str::<Int128Parts>(r#"{"hi":1,"lo":2}"#)?,
         Int128Parts { hi: 1, lo: 2 },
     );
+    Ok(())
+}
+
+#[test]
+fn test_serde_type_field_uses_unescaped_json_key() -> Result<(), Box<dyn std::error::Error>> {
+    let mut event = ContractEvent::default();
+    event.type_ = ContractEventType::Contract;
+
+    // Serializes with the SEP-51 JSON key `type`, not the escaped Rust name `type_`.
+    let json = serde_json::to_string(&event)?;
+    assert!(json.contains(r#""type":"#), "expected `type` key in {json}");
+    assert!(!json.contains("type_"), "unexpected `type_` key in {json}");
+
+    // Deserializes from the correct SEP-51 key `type`.
+    assert_eq!(serde_json::from_str::<ContractEvent>(&json)?, event);
+
+    // Deserializes from the legacy escaped key `type_` (backward-compat alias).
+    let legacy = json.replace(r#""type":"#, r#""type_":"#);
+    assert_eq!(serde_json::from_str::<ContractEvent>(&legacy)?, event);
+
     Ok(())
 }

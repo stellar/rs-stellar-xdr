@@ -81,8 +81,10 @@ fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::err
 
 #[test]
 fn test_serde_type_field_uses_unescaped_json_key() -> Result<(), Box<dyn std::error::Error>> {
-    let mut event = ContractEvent::default();
-    event.type_ = ContractEventType::Contract;
+    let event = ContractEvent {
+        type_: ContractEventType::Contract,
+        ..Default::default()
+    };
 
     // Serializes with the SEP-51 JSON key `type`, not the escaped Rust name `type_`.
     let json = serde_json::to_string(&event)?;

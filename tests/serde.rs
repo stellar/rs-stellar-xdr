@@ -82,7 +82,7 @@ fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::err
 #[test]
 fn test_serde_type_field_uses_sep51_json_key() -> Result<(), Box<dyn std::error::Error>> {
     let event = ContractEvent {
-        r#type: ContractEventType::Contract,
+        type_: ContractEventType::Contract,
         ..Default::default()
     };
 

@@ -17,18 +17,15 @@ pub(crate) fn field_name(name: &str) -> String {
     escape_field_name(&snake)
 }
 
-/// When a field name is keyword-escaped to a raw identifier (e.g. `type` ->
-/// `r#type`), serde derives the JSON key from the bare keyword (`type`). Prior
-/// versions escaped the field with a trailing underscore (`type_`) and
-/// serialized it as such, so return that legacy key to keep accepting it on
-/// deserialization via `#[serde(alias = ...)]`. Returns `None` when no escaping
-/// occurred.
-pub(crate) fn field_serde_alias(name: &str) -> Option<String> {
+/// If the Rust field name for an XDR field was keyword-escaped away from its
+/// plain snake_case name (e.g. `type` -> `type_`), return the correct JSON key
+/// (the unescaped snake_case name). Returns `None` when no escaping occurred.
+pub(crate) fn field_json_rename(name: &str) -> Option<String> {
     let snake = name.to_snake_case();
-    if escape_field_name(&snake).starts_with("r#") {
-        Some(format!("{snake}_"))
-    } else {
+    if escape_field_name(&snake) == snake {
         None
+    } else {
+        Some(snake)
     }
 }
 
@@ -42,9 +39,7 @@ fn escape_type_name(name: &str) -> String {
 
 fn escape_field_name(name: &str) -> String {
     match name {
-        // Emit the raw identifier so the Rust field is literally named `type`
-        // and serde/schemars derive the JSON key `type` from it directly.
-        "type" => "r#type".to_string(),
+        "type" => "type_".to_string(),
         _ => name.to_string(),
     }
 }

@@ -23,8 +23,12 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DontHave {
-    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(alias = "type_"))]
-    pub r#type: MessageType,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "type", alias = "type_")
+    )]
+    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
+    pub type_: MessageType,
     pub req_hash: Uint256,
 }
 
@@ -33,7 +37,7 @@ impl ReadXdr for DontHave {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                r#type: MessageType::read_xdr(r)?,
+                type_: MessageType::read_xdr(r)?,
                 req_hash: Uint256::read_xdr(r)?,
             })
         })
@@ -44,7 +48,7 @@ impl WriteXdr for DontHave {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.r#type.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
             self.req_hash.write_xdr(w)?;
             Ok(())
         })

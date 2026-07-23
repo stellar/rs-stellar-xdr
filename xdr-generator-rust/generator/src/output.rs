@@ -58,10 +58,9 @@ pub struct StructMemberOutput {
     pub type_ref: String,
     pub turbofish_type: String,
     pub serde_as_type: Option<String>,
-    /// Legacy JSON key to accept on deserialization when the field name was
-    /// keyword-escaped to a raw identifier (e.g. `type_` for `r#type`). `None`
-    /// when the name was not escaped.
-    pub serde_alias: Option<String>,
+    /// The correct SEP-51 JSON key when the Rust field name was keyword-escaped
+    /// (e.g. `type_` -> JSON `type`). `None` when the name was not escaped.
+    pub serde_rename: Option<String>,
 }
 
 pub struct EnumOutput {

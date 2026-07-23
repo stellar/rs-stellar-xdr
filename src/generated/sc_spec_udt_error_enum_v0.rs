@@ -7,7 +7,7 @@ use super::*;
 /// struct SCSpecUDTErrorEnumV0
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string lib<80>;
+///     SCSpecUDTDef lib<>;
 ///     string name<60>;
 ///     SCSpecUDTErrorEnumCaseV0 cases<>;
 /// };
@@ -26,7 +26,7 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtErrorEnumV0 {
     pub doc: StringM<1024>,
-    pub lib: StringM<80>,
+    pub lib: VecM<ScSpecUdtDef>,
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtErrorEnumCaseV0>,
 }
@@ -37,7 +37,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
-                lib: StringM::<80>::read_xdr(r)?,
+                lib: VecM::<ScSpecUdtDef>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
                 cases: VecM::<ScSpecUdtErrorEnumCaseV0>::read_xdr(r)?,
             })

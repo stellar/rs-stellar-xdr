@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScSpecUdtDef",
+  "description": "ScSpecUdtDef is an XDR Union defined as:\n\n```text union SCSpecUDTDef switch (SCSpecUDTDefKind kind) { case SC_SPEC_UDT_DEF_LIB: string lib<80>; case SC_SPEC_UDT_DEF_HASH: opaque hash[8]; }; ```",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "lib"
+      ],
+      "properties": {
+        "lib": {
+          "$ref": "#/definitions/StringM<80>"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "hash"
+      ],
+      "properties": {
+        "hash": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 8,
+          "minItems": 8
+        }
+      }
+    }
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "StringM<80>": {
+      "type": "string",
+      "maxLength": 80
+    }
+  }
+}

@@ -39,7 +39,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract-spec.x",
-        "f0655f82e0a28a79e067c02f427cc709db1e4323a50c9b85f730f812b9612dbd",
+        "b27809686dd06902d7a6ceee8f385b101054a0dc14bda358bae85395c73f4042",
     ),
     (
         "xdr/Stellar-contract.x",
@@ -4261,9 +4261,18 @@ pub use sc_spec_type_bytes_n::*;
 mod sc_spec_type_udt;
 #[allow(unused_imports)]
 pub use sc_spec_type_udt::*;
+mod sc_spec_type_udtv2;
+#[allow(unused_imports)]
+pub use sc_spec_type_udtv2::*;
 mod sc_spec_type_def;
 #[allow(unused_imports)]
 pub use sc_spec_type_def::*;
+mod sc_spec_udt_def_kind;
+#[allow(unused_imports)]
+pub use sc_spec_udt_def_kind::*;
+mod sc_spec_udt_def;
+#[allow(unused_imports)]
+pub use sc_spec_udt_def::*;
 mod sc_spec_udt_struct_field_v0;
 #[allow(unused_imports)]
 pub use sc_spec_udt_struct_field_v0::*;

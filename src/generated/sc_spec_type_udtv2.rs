@@ -1,15 +1,13 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecUdtUnionV0 is an XDR Struct defined as:
+/// ScSpecTypeUdtv2 is an XDR Struct defined as:
 ///
 /// ```text
-/// struct SCSpecUDTUnionV0
+/// struct SCSpecTypeUDTV2
 /// {
-///     string doc<SC_SPEC_DOC_LIMIT>;
-///     SCSpecUDTDef lib<>;
+///     opaque hash[8];
 ///     string name<60>;
-///     SCSpecUDTUnionCaseV0 cases<>;
 /// };
 /// ```
 ///
@@ -24,35 +22,29 @@ use super::*;
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecUdtUnionV0 {
-    pub doc: StringM<1024>,
-    pub lib: VecM<ScSpecUdtDef>,
+pub struct ScSpecTypeUdtv2 {
+    pub hash: [u8; 8],
     pub name: StringM<60>,
-    pub cases: VecM<ScSpecUdtUnionCaseV0>,
 }
 
-impl ReadXdr for ScSpecUdtUnionV0 {
+impl ReadXdr for ScSpecTypeUdtv2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
-                lib: VecM::<ScSpecUdtDef>::read_xdr(r)?,
+                hash: <[u8; 8]>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                cases: VecM::<ScSpecUdtUnionCaseV0>::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionV0 {
+impl WriteXdr for ScSpecTypeUdtv2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
+            self.hash.write_xdr(w)?;
             self.name.write_xdr(w)?;
-            self.cases.write_xdr(w)?;
             Ok(())
         })
     }

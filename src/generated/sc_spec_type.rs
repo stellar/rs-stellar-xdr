@@ -37,7 +37,8 @@ use super::*;
 ///     SC_SPEC_TYPE_BYTES_N = 1006,
 ///
 ///     // User defined types.
-///     SC_SPEC_TYPE_UDT = 2000
+///     SC_SPEC_TYPE_UDT = 2000,
+///     SC_SPEC_TYPE_UDT_V2 = 2001
 /// };
 /// ```
 ///
@@ -80,6 +81,7 @@ pub enum ScSpecType {
     Tuple = 1005,
     BytesN = 1006,
     Udt = 2000,
+    UdtV2 = 2001,
 }
 
 impl ScSpecType {
@@ -110,6 +112,7 @@ impl ScSpecType {
         ScSpecType::Tuple,
         ScSpecType::BytesN,
         ScSpecType::Udt,
+        ScSpecType::UdtV2,
     ];
     pub const VARIANTS: [ScSpecType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -147,6 +150,7 @@ impl ScSpecType {
         "Tuple",
         "BytesN",
         "Udt",
+        "UdtV2",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -187,6 +191,7 @@ impl ScSpecType {
             Self::Tuple => "Tuple",
             Self::BytesN => "BytesN",
             Self::Udt => "Udt",
+            Self::UdtV2 => "UdtV2",
         }
     }
 
@@ -248,6 +253,7 @@ impl TryFrom<i32> for ScSpecType {
             1005 => ScSpecType::Tuple,
             1006 => ScSpecType::BytesN,
             2000 => ScSpecType::Udt,
+            2001 => ScSpecType::UdtV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

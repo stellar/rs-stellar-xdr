@@ -7,7 +7,7 @@ use super::*;
 /// struct SCSpecEventV0
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string lib<80>;
+///     SCSpecUDTDef lib<>;
 ///     SCSymbol name;
 ///     SCSymbol prefixTopics<2>;
 ///     SCSpecEventParamV0 params<>;
@@ -28,7 +28,7 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecEventV0 {
     pub doc: StringM<1024>,
-    pub lib: StringM<80>,
+    pub lib: VecM<ScSpecUdtDef>,
     pub name: ScSymbol,
     pub prefix_topics: VecM<ScSymbol, 2>,
     pub params: VecM<ScSpecEventParamV0>,
@@ -41,7 +41,7 @@ impl ReadXdr for ScSpecEventV0 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
-                lib: StringM::<80>::read_xdr(r)?,
+                lib: VecM::<ScSpecUdtDef>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
                 prefix_topics: VecM::<ScSymbol, 2>::read_xdr(r)?,
                 params: VecM::<ScSpecEventParamV0>::read_xdr(r)?,

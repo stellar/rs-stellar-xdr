@@ -27,12 +27,8 @@ use super::*;
 pub struct ScSpecEventParamV0 {
     pub doc: StringM<1024>,
     pub name: StringM<30>,
-    #[cfg_attr(
-        all(feature = "serde", feature = "alloc"),
-        serde(rename = "type", alias = "type_")
-    )]
-    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
-    pub type_: ScSpecTypeDef,
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(alias = "type_"))]
+    pub r#type: ScSpecTypeDef,
     pub location: ScSpecEventParamLocationV0,
 }
 
@@ -43,7 +39,7 @@ impl ReadXdr for ScSpecEventParamV0 {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
                 name: StringM::<30>::read_xdr(r)?,
-                type_: ScSpecTypeDef::read_xdr(r)?,
+                r#type: ScSpecTypeDef::read_xdr(r)?,
                 location: ScSpecEventParamLocationV0::read_xdr(r)?,
             })
         })
@@ -56,7 +52,7 @@ impl WriteXdr for ScSpecEventParamV0 {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
+            self.r#type.write_xdr(w)?;
             self.location.write_xdr(w)?;
             Ok(())
         })

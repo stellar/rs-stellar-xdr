@@ -40,12 +40,8 @@ use super::*;
 pub struct ContractEvent {
     pub ext: ExtensionPoint,
     pub contract_id: Option<ContractId>,
-    #[cfg_attr(
-        all(feature = "serde", feature = "alloc"),
-        serde(rename = "type", alias = "type_")
-    )]
-    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
-    pub type_: ContractEventType,
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(alias = "type_"))]
+    pub r#type: ContractEventType,
     pub body: ContractEventBody,
 }
 
@@ -56,7 +52,7 @@ impl ReadXdr for ContractEvent {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
                 contract_id: Option::<ContractId>::read_xdr(r)?,
-                type_: ContractEventType::read_xdr(r)?,
+                r#type: ContractEventType::read_xdr(r)?,
                 body: ContractEventBody::read_xdr(r)?,
             })
         })
@@ -69,7 +65,7 @@ impl WriteXdr for ContractEvent {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.contract_id.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
+            self.r#type.write_xdr(w)?;
             self.body.write_xdr(w)?;
             Ok(())
         })

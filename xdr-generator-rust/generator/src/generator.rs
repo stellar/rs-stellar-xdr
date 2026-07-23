@@ -9,7 +9,7 @@ use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
 
 use crate::naming::{
-    case_value, field_json_rename, field_name, mod_name, source_comment, type_name,
+    case_value, field_name, field_serde_alias, mod_name, source_comment, type_name,
 };
 use crate::options::RustOptions;
 use crate::output::{
@@ -426,7 +426,7 @@ impl RustGenerator {
         custom_str: bool,
     ) -> StructMemberOutput {
         let name = field_name(&m.name);
-        let serde_rename = field_json_rename(&m.name);
+        let serde_alias = field_serde_alias(&m.name);
         let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
 
         StructMemberOutput {
@@ -434,7 +434,7 @@ impl RustGenerator {
             type_ref: resolved.type_ref,
             turbofish_type: resolved.turbofish_type,
             serde_as_type: resolved.serde_as_type,
-            serde_rename,
+            serde_alias,
         }
     }
 

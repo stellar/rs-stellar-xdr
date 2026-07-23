@@ -36,12 +36,8 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerializedBinaryFuseFilter {
-    #[cfg_attr(
-        all(feature = "serde", feature = "alloc"),
-        serde(rename = "type", alias = "type_")
-    )]
-    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
-    pub type_: BinaryFuseFilterType,
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(alias = "type_"))]
+    pub r#type: BinaryFuseFilterType,
     pub input_hash_seed: ShortHashSeed,
     pub filter_seed: ShortHashSeed,
     pub segment_length: u32,
@@ -57,7 +53,7 @@ impl ReadXdr for SerializedBinaryFuseFilter {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                type_: BinaryFuseFilterType::read_xdr(r)?,
+                r#type: BinaryFuseFilterType::read_xdr(r)?,
                 input_hash_seed: ShortHashSeed::read_xdr(r)?,
                 filter_seed: ShortHashSeed::read_xdr(r)?,
                 segment_length: u32::read_xdr(r)?,
@@ -75,7 +71,7 @@ impl WriteXdr for SerializedBinaryFuseFilter {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.type_.write_xdr(w)?;
+            self.r#type.write_xdr(w)?;
             self.input_hash_seed.write_xdr(w)?;
             self.filter_seed.write_xdr(w)?;
             self.segment_length.write_xdr(w)?;

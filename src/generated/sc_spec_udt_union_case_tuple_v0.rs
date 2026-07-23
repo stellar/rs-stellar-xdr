@@ -26,12 +26,8 @@ use super::*;
 pub struct ScSpecUdtUnionCaseTupleV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
-    #[cfg_attr(
-        all(feature = "serde", feature = "alloc"),
-        serde(rename = "type", alias = "type_")
-    )]
-    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
-    pub type_: VecM<ScSpecTypeDef>,
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(alias = "type_"))]
+    pub r#type: VecM<ScSpecTypeDef>,
 }
 
 impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
@@ -41,7 +37,7 @@ impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                type_: VecM::<ScSpecTypeDef>::read_xdr(r)?,
+                r#type: VecM::<ScSpecTypeDef>::read_xdr(r)?,
             })
         })
     }
@@ -53,7 +49,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
+            self.r#type.write_xdr(w)?;
             Ok(())
         })
     }

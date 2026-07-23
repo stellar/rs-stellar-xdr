@@ -80,21 +80,21 @@ fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::err
 }
 
 #[test]
-fn test_serde_type_field_uses_unescaped_json_key() -> Result<(), Box<dyn std::error::Error>> {
+fn test_serde_type_field_uses_sep51_json_key() -> Result<(), Box<dyn std::error::Error>> {
     let event = ContractEvent {
-        type_: ContractEventType::Contract,
+        r#type: ContractEventType::Contract,
         ..Default::default()
     };
 
-    // Serializes with the SEP-51 JSON key `type`, not the escaped Rust name `type_`.
+    // Serializes with the SEP-51 JSON key `type`, not the previous escaped `type_`.
     let json = serde_json::to_string(&event)?;
     assert!(json.contains(r#""type":"#), "expected `type` key in {json}");
     assert!(!json.contains("type_"), "unexpected `type_` key in {json}");
 
-    // Deserializes from the correct SEP-51 key `type`.
+    // Deserializes from the SEP-51 key `type`.
     assert_eq!(serde_json::from_str::<ContractEvent>(&json)?, event);
 
-    // Deserializes from the legacy escaped key `type_` (backward-compat alias).
+    // The legacy escaped key `type_` is still accepted via a serde alias.
     let legacy = json.replace(r#""type":"#, r#""type_":"#);
     assert_eq!(serde_json::from_str::<ContractEvent>(&legacy)?, event);
 

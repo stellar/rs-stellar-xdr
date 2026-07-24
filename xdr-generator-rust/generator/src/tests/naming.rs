@@ -1,4 +1,4 @@
-use crate::naming::{field_name, type_name};
+use crate::naming::{field_json_rename, field_name, type_name};
 
 #[test]
 fn test_type_name_snake_case() {
@@ -54,6 +54,16 @@ fn test_field_name_already_snake_case() {
 #[test]
 fn test_field_name_escape_type() {
     assert_eq!(field_name("type"), "type_");
+}
+
+#[test]
+fn test_field_json_rename_type() {
+    assert_eq!(field_json_rename("type"), Some("type".to_string()));
+}
+
+#[test]
+fn test_field_json_rename_non_keyword() {
+    assert_eq!(field_json_rename("public_key"), None);
 }
 
 #[test]

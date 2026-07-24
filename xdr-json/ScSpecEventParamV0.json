@@ -7,7 +7,7 @@
     "doc",
     "location",
     "name",
-    "type_"
+    "type"
   ],
   "properties": {
     "$schema": {
@@ -22,7 +22,7 @@
     "name": {
       "$ref": "#/definitions/StringM<30>"
     },
-    "type_": {
+    "type": {
       "$ref": "#/definitions/ScSpecTypeDef"
     }
   },

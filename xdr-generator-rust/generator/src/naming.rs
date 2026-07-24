@@ -17,6 +17,18 @@ pub(crate) fn field_name(name: &str) -> String {
     escape_field_name(&snake)
 }
 
+/// If the Rust field name for an XDR field was keyword-escaped away from its
+/// plain snake_case name (e.g. `type` -> `type_`), return the correct JSON key
+/// (the unescaped snake_case name). Returns `None` when no escaping occurred.
+pub(crate) fn field_json_rename(name: &str) -> Option<String> {
+    let snake = name.to_snake_case();
+    if escape_field_name(&snake) == snake {
+        None
+    } else {
+        Some(snake)
+    }
+}
+
 fn escape_type_name(name: &str) -> String {
     match name {
         "type" => "type_".to_string(),

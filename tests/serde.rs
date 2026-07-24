@@ -2,7 +2,7 @@
 
 use stellar_xdr::{BytesM, Hash, StringM, VecM};
 
-use stellar_xdr::{AccountId, Int128Parts};
+use stellar_xdr::{AccountId, ContractEvent, ContractEventType, Int128Parts};
 
 use std::str::FromStr;
 
@@ -76,5 +76,29 @@ fn test_structs_that_ser_to_string_and_dual_der() -> Result<(), Box<dyn std::err
         serde_json::from_str::<Int128Parts>(r#"{"hi":1,"lo":2}"#)?,
         Int128Parts { hi: 1, lo: 2 },
     );
+    Ok(())
+}
+
+#[test]
+fn test_serde_type_field_uses_sep51_json_key() -> Result<(), Box<dyn std::error::Error>> {
+    let event = ContractEvent {
+        type_: ContractEventType::Contract,
+        ..Default::default()
+    };
+
+    // The SEP-51 JSON uses the key `type`, not the previously escaped `type_`.
+    let json = r#"{"ext":"v0","contract_id":null,"type":"contract","body":{"v0":{"topics":[],"data":{"bool":false}}}}"#;
+    // The legacy JSON that older versions of this crate emitted, using `type_`.
+    let legacy_json = r#"{"ext":"v0","contract_id":null,"type_":"contract","body":{"v0":{"topics":[],"data":{"bool":false}}}}"#;
+
+    // Serializes with the SEP-51 key `type`.
+    assert_eq!(serde_json::to_string(&event)?, json);
+
+    // Deserializes from the SEP-51 key `type`.
+    assert_eq!(serde_json::from_str::<ContractEvent>(json)?, event);
+
+    // The legacy escaped key `type_` is still accepted via a serde alias.
+    assert_eq!(serde_json::from_str::<ContractEvent>(legacy_json)?, event);
+
     Ok(())
 }

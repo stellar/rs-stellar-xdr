@@ -26,6 +26,11 @@ use super::*;
 pub struct ScSpecFunctionInputV0 {
     pub doc: StringM<1024>,
     pub name: StringM<30>,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "type", alias = "type_")
+    )]
+    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
     pub type_: ScSpecTypeDef,
 }
 

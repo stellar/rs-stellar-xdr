@@ -242,7 +242,7 @@
       "required": [
         "doc",
         "name",
-        "type_"
+        "type"
       ],
       "properties": {
         "doc": {
@@ -251,7 +251,7 @@
         "name": {
           "$ref": "#/definitions/StringM<30>"
         },
-        "type_": {
+        "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
         }
       }

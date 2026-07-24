@@ -119,6 +119,31 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
     }
 }
 
+impl ConfigSettingContractLedgerCostV0 {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_u32(self.ledger_max_disk_read_entries);
+        w.write_u32(self.ledger_max_disk_read_bytes);
+        w.write_u32(self.ledger_max_write_ledger_entries);
+        w.write_u32(self.ledger_max_write_bytes);
+        w.write_u32(self.tx_max_disk_read_entries);
+        w.write_u32(self.tx_max_disk_read_bytes);
+        w.write_u32(self.tx_max_write_ledger_entries);
+        w.write_u32(self.tx_max_write_bytes);
+        w.write_i64(self.fee_disk_read_ledger_entry);
+        w.write_i64(self.fee_write_ledger_entry);
+        w.write_i64(self.fee_disk_read1_kb);
+        w.write_i64(self.soroban_state_target_size_bytes);
+        w.write_i64(self.rent_fee1_kb_soroban_state_size_low);
+        w.write_i64(self.rent_fee1_kb_soroban_state_size_high);
+        w.write_u32(self.soroban_state_rent_fee_growth_factor);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -140,5 +165,10 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
             self.soroban_state_rent_fee_growth_factor.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

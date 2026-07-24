@@ -41,6 +41,19 @@ impl ReadXdr for ContractExecutableExternalRef {
 }
 
 #[cfg(feature = "cap_0085_executable_ref")]
+impl ContractExecutableExternalRef {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.executable_owner.const_to_xdr(w);
+        self.tag.const_to_xdr(w);
+        w.leave_depth();
+    }
+}
+
+#[cfg(feature = "cap_0085_executable_ref")]
 impl WriteXdr for ContractExecutableExternalRef {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49,5 +62,10 @@ impl WriteXdr for ContractExecutableExternalRef {
             self.tag.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

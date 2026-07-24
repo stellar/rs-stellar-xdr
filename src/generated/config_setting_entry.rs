@@ -329,6 +329,93 @@ impl ReadXdr for ConfigSettingEntry {
     }
 }
 
+impl ConfigSettingEntry {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractMaxSizeBytes(v) => {
+                w.write_u32(*v);
+            }
+            Self::ContractComputeV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractLedgerCostV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractHistoricalDataV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractEventsV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractBandwidthV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractCostParamsCpuInstructions(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractCostParamsMemoryBytes(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractDataKeySizeBytes(v) => {
+                w.write_u32(*v);
+            }
+            Self::ContractDataEntrySizeBytes(v) => {
+                w.write_u32(*v);
+            }
+            Self::StateArchival(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractExecutionLanes(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::LiveSorobanStateSizeWindow(v) => {
+                w.enter_depth();
+                let __s0 = v.0.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    w.write_u64(__s0[__i0]);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::EvictionIterator(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractParallelComputeV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractLedgerCostExtV0(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ScpTiming(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::FrozenLedgerKeys(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::FrozenLedgerKeysDelta(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::FreezeBypassTxs(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::FreezeBypassTxsDelta(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -360,5 +447,10 @@ impl WriteXdr for ConfigSettingEntry {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

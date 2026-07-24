@@ -723,6 +723,17 @@ impl ReadXdr for ContractCostType {
     }
 }
 
+impl ContractCostType {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_i32(*self as i32);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ContractCostType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -730,5 +741,10 @@ impl WriteXdr for ContractCostType {
             let i: i32 = (*self).into();
             i.write_xdr(w)
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

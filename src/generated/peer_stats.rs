@@ -132,6 +132,31 @@ impl ReadXdr for PeerStats {
     }
 }
 
+impl PeerStats {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.id.const_to_xdr(w);
+        w.write_len_prefixed(self.version_str.0.as_slice());
+        w.write_u64(self.messages_read);
+        w.write_u64(self.messages_written);
+        w.write_u64(self.bytes_read);
+        w.write_u64(self.bytes_written);
+        w.write_u64(self.seconds_connected);
+        w.write_u64(self.unique_flood_bytes_recv);
+        w.write_u64(self.duplicate_flood_bytes_recv);
+        w.write_u64(self.unique_fetch_bytes_recv);
+        w.write_u64(self.duplicate_fetch_bytes_recv);
+        w.write_u64(self.unique_flood_message_recv);
+        w.write_u64(self.duplicate_flood_message_recv);
+        w.write_u64(self.unique_fetch_message_recv);
+        w.write_u64(self.duplicate_fetch_message_recv);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for PeerStats {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -153,5 +178,10 @@ impl WriteXdr for PeerStats {
             self.duplicate_fetch_message_recv.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -301,6 +301,61 @@ impl ReadXdr for ScSpecTypeDef {
     }
 }
 
+impl ScSpecTypeDef {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Val => {}
+            Self::Bool => {}
+            Self::Void => {}
+            Self::Error => {}
+            Self::U32 => {}
+            Self::I32 => {}
+            Self::U64 => {}
+            Self::I64 => {}
+            Self::Timepoint => {}
+            Self::Duration => {}
+            Self::U128 => {}
+            Self::I128 => {}
+            Self::U256 => {}
+            Self::I256 => {}
+            Self::Bytes => {}
+            Self::String => {}
+            Self::Symbol => {}
+            Self::Address => {}
+            Self::MuxedAddress => {}
+            Self::Option(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Result(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Vec(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Map(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Tuple(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::BytesN(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Udt(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -337,5 +392,10 @@ impl WriteXdr for ScSpecTypeDef {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -66,6 +66,25 @@ impl ReadXdr for SerializedBinaryFuseFilter {
     }
 }
 
+impl SerializedBinaryFuseFilter {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.type_.const_to_xdr(w);
+        self.input_hash_seed.const_to_xdr(w);
+        self.filter_seed.const_to_xdr(w);
+        w.write_u32(self.segment_length);
+        w.write_u32(self.segement_length_mask);
+        w.write_u32(self.segment_count);
+        w.write_u32(self.segment_count_length);
+        w.write_u32(self.fingerprint_length);
+        w.write_len_prefixed(self.fingerprints.0.as_slice());
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for SerializedBinaryFuseFilter {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -81,5 +100,10 @@ impl WriteXdr for SerializedBinaryFuseFilter {
             self.fingerprints.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

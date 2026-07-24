@@ -68,6 +68,22 @@ impl ReadXdr for ClaimOfferAtom {
     }
 }
 
+impl ClaimOfferAtom {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.seller_id.const_to_xdr(w);
+        w.write_i64(self.offer_id);
+        self.asset_sold.const_to_xdr(w);
+        w.write_i64(self.amount_sold);
+        self.asset_bought.const_to_xdr(w);
+        w.write_i64(self.amount_bought);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -80,5 +96,10 @@ impl WriteXdr for ClaimOfferAtom {
             self.amount_bought.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

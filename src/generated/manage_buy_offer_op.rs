@@ -59,6 +59,21 @@ impl ReadXdr for ManageBuyOfferOp {
     }
 }
 
+impl ManageBuyOfferOp {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.selling.const_to_xdr(w);
+        self.buying.const_to_xdr(w);
+        w.write_i64(self.buy_amount);
+        self.price.const_to_xdr(w);
+        w.write_i64(self.offer_id);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -70,5 +85,10 @@ impl WriteXdr for ManageBuyOfferOp {
             self.offer_id.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

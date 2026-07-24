@@ -45,6 +45,18 @@ impl ReadXdr for ChangeTrustOp {
     }
 }
 
+impl ChangeTrustOp {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.line.const_to_xdr(w);
+        w.write_i64(self.limit);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -53,5 +65,10 @@ impl WriteXdr for ChangeTrustOp {
             self.limit.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

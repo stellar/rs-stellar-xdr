@@ -58,6 +58,8 @@ pub struct StructMemberOutput {
     pub type_ref: String,
     pub turbofish_type: String,
     pub serde_as_type: Option<String>,
+    /// Const-encoding statements for this member (see `const_encode`).
+    pub const_write: String,
 }
 
 pub struct EnumOutput {
@@ -87,6 +89,9 @@ pub struct UnionOutput {
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
     pub default_arm_cfg: Option<String>,
+    /// Const-encoding statements for the discriminant (see `const_encode`).
+    /// The discriminant value is bound to the local `d` before this runs.
+    pub discriminant_const_write: String,
 }
 
 pub struct UnionArmOutput {
@@ -97,6 +102,9 @@ pub struct UnionArmOutput {
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
     pub cfg: Option<String>,
+    /// Const-encoding statements for a non-void arm value (see `const_encode`).
+    /// The arm value (a reference) is bound to the local `v` before this runs.
+    pub const_write: Option<String>,
 }
 
 pub struct TypedefAliasOutput {
@@ -123,6 +131,8 @@ pub struct TypedefNewtypeOutput {
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
     pub cfg: Option<String>,
+    /// Const-encoding statements for the inner value (see `const_encode`).
+    pub const_write: String,
 }
 
 pub struct ConstOutput {

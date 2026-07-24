@@ -344,6 +344,9 @@ impl RustGenerator {
             .first()
             .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
+        let discriminant_const_write =
+            crate::const_encode::discriminant_body(&u.discriminant.type_, &self.type_info);
+
         UnionOutput {
             name,
             source_comment: source_comment(&u.source, type_kind),
@@ -353,6 +356,7 @@ impl RustGenerator {
             arms,
             cfg,
             default_arm_cfg,
+            discriminant_const_write,
         }
     }
 
@@ -400,6 +404,7 @@ impl RustGenerator {
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             cfg,
+            const_write: crate::const_encode::newtype_body(&t.type_, &self.type_info),
         })
     }
 
@@ -425,12 +430,14 @@ impl RustGenerator {
     ) -> StructMemberOutput {
         let name = field_name(&m.name);
         let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
+        let const_write = crate::const_encode::member_body(&m.type_, &self.type_info, &name);
 
         StructMemberOutput {
             name,
             type_ref: resolved.type_ref,
             turbofish_type: resolved.turbofish_type,
             serde_as_type: resolved.serde_as_type,
+            const_write,
         }
     }
 
@@ -458,6 +465,11 @@ impl RustGenerator {
                     .as_ref()
                     .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str));
 
+                let const_write = arm
+                    .type_
+                    .as_ref()
+                    .map(|t| crate::const_encode::union_arm_body(t, &self.type_info));
+
                 UnionArmOutput {
                     case_name,
                     case_value: case_value_expr,
@@ -466,6 +478,7 @@ impl RustGenerator {
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
+                    const_write,
                 }
             })
             .collect()

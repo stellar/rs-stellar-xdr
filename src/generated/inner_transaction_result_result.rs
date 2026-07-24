@@ -245,6 +245,61 @@ impl ReadXdr for InnerTransactionResultResult {
     }
 }
 
+impl InnerTransactionResultResult {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxSuccess(v) => {
+                w.enter_depth();
+                let __s0 = v.0.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    __s0[__i0].const_to_xdr(w);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::TxFailed(v) => {
+                w.enter_depth();
+                let __s0 = v.0.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    __s0[__i0].const_to_xdr(w);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::TxTooEarly => {}
+            Self::TxTooLate => {}
+            Self::TxMissingOperation => {}
+            Self::TxBadSeq => {}
+            Self::TxBadAuth => {}
+            Self::TxInsufficientBalance => {}
+            Self::TxNoAccount => {}
+            Self::TxInsufficientFee => {}
+            Self::TxBadAuthExtra => {}
+            Self::TxInternalError => {}
+            Self::TxNotSupported => {}
+            Self::TxBadSponsorship => {}
+            Self::TxBadMinSeqAgeOrGap => {}
+            Self::TxMalformed => {}
+            Self::TxSorobanInvalid => {}
+            Self::TxFrozenKeyAccessed => {}
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -273,5 +328,10 @@ impl WriteXdr for InnerTransactionResultResult {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -63,6 +63,20 @@ impl ReadXdr for ConfigSettingContractComputeV0 {
     }
 }
 
+impl ConfigSettingContractComputeV0 {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_i64(self.ledger_max_instructions);
+        w.write_i64(self.tx_max_instructions);
+        w.write_i64(self.fee_rate_per_instructions_increment);
+        w.write_u32(self.tx_memory_limit);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -73,5 +87,10 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
             self.tx_memory_limit.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

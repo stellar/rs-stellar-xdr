@@ -1,0 +1,1 @@
+{ w.enter_depth(); let {{ slice }} = {{ acc }}.0.as_slice(); let {{ len }} = {{ slice }}.len(); w.write_length_prefix({{ len }}); let mut {{ index }} = 0usize; while {{ index }} < {{ len }} { {{ elem }} {{ index }} += 1; } w.leave_depth(); }

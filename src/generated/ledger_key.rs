@@ -242,6 +242,51 @@ impl ReadXdr for LedgerKey {
     }
 }
 
+impl LedgerKey {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Trustline(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Offer(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Data(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ClaimableBalance(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::LiquidityPool(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractData(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractCode(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ConfigSetting(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Ttl(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -262,5 +307,10 @@ impl WriteXdr for LedgerKey {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

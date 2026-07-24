@@ -213,6 +213,38 @@ impl ReadXdr for PathPaymentStrictSendResult {
     }
 }
 
+impl PathPaymentStrictSendResult {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Malformed => {}
+            Self::Underfunded => {}
+            Self::SrcNoTrust => {}
+            Self::SrcNotAuthorized => {}
+            Self::NoDestination => {}
+            Self::NoTrust => {}
+            Self::NotAuthorized => {}
+            Self::LineFull => {}
+            Self::NoIssuer(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::TooFewOffers => {}
+            Self::OfferCrossSelf => {}
+            Self::UnderDestmin => {}
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -236,5 +268,10 @@ impl WriteXdr for PathPaymentStrictSendResult {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

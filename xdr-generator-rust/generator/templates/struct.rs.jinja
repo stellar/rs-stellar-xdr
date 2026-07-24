@@ -53,6 +53,22 @@ impl ReadXdr for {{ s.name }} {
 {% if let Some(cfg) = s.cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
+impl {{ s.name }} {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+{%- for m in s.members %}
+        {{ m.const_write }}
+{%- endfor %}
+        w.leave_depth();
+    }
+}
+
+{% if let Some(cfg) = s.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
 impl WriteXdr for {{ s.name }} {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -62,6 +78,11 @@ impl WriteXdr for {{ s.name }} {
 {%- endfor %}
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }
 {%- if s.is_custom_str %}

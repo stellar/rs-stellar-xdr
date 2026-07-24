@@ -39,6 +39,29 @@ impl ReadXdr for LedgerScpMessages {
     }
 }
 
+impl LedgerScpMessages {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_u32(self.ledger_seq);
+        {
+            w.enter_depth();
+            let __s0 = self.messages.0.as_slice();
+            let __len0 = __s0.len();
+            w.write_length_prefix(__len0);
+            let mut __i0 = 0usize;
+            while __i0 < __len0 {
+                __s0[__i0].const_to_xdr(w);
+                __i0 += 1;
+            }
+            w.leave_depth();
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47,5 +70,10 @@ impl WriteXdr for LedgerScpMessages {
             self.messages.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -39,6 +39,18 @@ impl ReadXdr for ContractIdPreimageFromAddress {
     }
 }
 
+impl ContractIdPreimageFromAddress {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.address.const_to_xdr(w);
+        self.salt.const_to_xdr(w);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47,5 +59,10 @@ impl WriteXdr for ContractIdPreimageFromAddress {
             self.salt.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

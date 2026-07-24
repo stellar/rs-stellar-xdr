@@ -365,6 +365,102 @@ impl ReadXdr for OperationResultTr {
     }
 }
 
+impl OperationResultTr {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::CreateAccount(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Payment(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::PathPaymentStrictReceive(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ManageSellOffer(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::CreatePassiveSellOffer(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::SetOptions(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ChangeTrust(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::AllowTrust(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::AccountMerge(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Inflation(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ManageData(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::BumpSequence(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ManageBuyOffer(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::PathPaymentStrictSend(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::CreateClaimableBalance(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ClaimClaimableBalance(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::BeginSponsoringFutureReserves(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::EndSponsoringFutureReserves(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::RevokeSponsorship(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Clawback(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ClawbackClaimableBalance(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::SetTrustLineFlags(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::LiquidityPoolDeposit(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::LiquidityPoolWithdraw(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::InvokeHostFunction(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ExtendFootprintTtl(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::RestoreFootprint(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -402,5 +498,10 @@ impl WriteXdr for OperationResultTr {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

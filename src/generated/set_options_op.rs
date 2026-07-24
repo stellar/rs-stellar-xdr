@@ -67,6 +67,133 @@ impl ReadXdr for SetOptionsOp {
     }
 }
 
+impl SetOptionsOp {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        {
+            w.enter_depth();
+            match &self.inflation_dest {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.clear_flags {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    w.write_u32(*__v0);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.set_flags {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    w.write_u32(*__v0);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.master_weight {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    w.write_u32(*__v0);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.low_threshold {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    w.write_u32(*__v0);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.med_threshold {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    w.write_u32(*__v0);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.high_threshold {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    w.write_u32(*__v0);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.home_domain {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.signer {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for SetOptionsOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -82,5 +209,10 @@ impl WriteXdr for SetOptionsOp {
             self.signer.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

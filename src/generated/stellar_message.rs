@@ -308,6 +308,93 @@ impl ReadXdr for StellarMessage {
     }
 }
 
+impl StellarMessage {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ErrorMsg(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Hello(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Auth(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::DontHave(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Peers(v) => {
+                w.enter_depth();
+                let __s0 = v.0.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    __s0[__i0].const_to_xdr(w);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::GetTxSet(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::TxSet(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::GeneralizedTxSet(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Transaction(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::TimeSlicedSurveyRequest(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::TimeSlicedSurveyResponse(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::TimeSlicedSurveyStartCollecting(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::TimeSlicedSurveyStopCollecting(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::GetScpQuorumset(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ScpQuorumset(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ScpMessage(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::GetScpState(v) => {
+                w.write_u32(*v);
+            }
+            Self::SendMore(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::SendMoreExtended(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::FloodAdvert(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::FloodDemand(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -339,5 +426,10 @@ impl WriteXdr for StellarMessage {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -145,6 +145,33 @@ impl ReadXdr for SignerKey {
     }
 }
 
+impl SignerKey {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ed25519(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::PreAuthTx(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::HashX(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Ed25519SignedPayload(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -159,5 +186,10 @@ impl WriteXdr for SignerKey {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

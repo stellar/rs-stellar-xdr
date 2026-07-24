@@ -331,6 +331,107 @@ impl ReadXdr for ScVal {
     }
 }
 
+impl ScVal {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Bool(v) => {
+                w.write_bool(*v);
+            }
+            Self::Void => {}
+            Self::Error(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::U32(v) => {
+                w.write_u32(*v);
+            }
+            Self::I32(v) => {
+                w.write_i32(*v);
+            }
+            Self::U64(v) => {
+                w.write_u64(*v);
+            }
+            Self::I64(v) => {
+                w.write_i64(*v);
+            }
+            Self::Timepoint(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Duration(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::U128(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::I128(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::U256(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::I256(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Bytes(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::String(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Symbol(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Vec(v) => {
+                w.enter_depth();
+                match v {
+                    Some(__v0) => {
+                        w.write_u32(1);
+                        __v0.const_to_xdr(w);
+                    }
+                    None => {
+                        w.write_u32(0);
+                    }
+                }
+                w.leave_depth();
+            }
+            Self::Map(v) => {
+                w.enter_depth();
+                match v {
+                    Some(__v0) => {
+                        w.write_u32(1);
+                        __v0.const_to_xdr(w);
+                    }
+                    None => {
+                        w.write_u32(0);
+                    }
+                }
+                w.leave_depth();
+            }
+            Self::Address(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::ContractInstance(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::LedgerKeyContractInstance => {}
+            Self::LedgerKeyNonce(v) => {
+                v.const_to_xdr(w);
+            }
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ExecutableTag(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -365,5 +466,10 @@ impl WriteXdr for ScVal {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

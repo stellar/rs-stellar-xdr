@@ -39,6 +39,18 @@ impl ReadXdr for ClaimantV0 {
     }
 }
 
+impl ClaimantV0 {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.destination.const_to_xdr(w);
+        self.predicate.const_to_xdr(w);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ClaimantV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -47,5 +59,10 @@ impl WriteXdr for ClaimantV0 {
             self.predicate.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

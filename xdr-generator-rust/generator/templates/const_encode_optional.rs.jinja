@@ -1,0 +1,1 @@
+{ w.enter_depth(); match {{ scrutinee }} { Some({{ var }}) => { w.write_u32(1); {{ inner }} } None => { w.write_u32(0); } } w.leave_depth(); }

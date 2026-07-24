@@ -66,6 +66,21 @@ impl ReadXdr for LiquidityPoolEntryConstantProduct {
     }
 }
 
+impl LiquidityPoolEntryConstantProduct {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.params.const_to_xdr(w);
+        w.write_i64(self.reserve_a);
+        w.write_i64(self.reserve_b);
+        w.write_i64(self.total_pool_shares);
+        w.write_i64(self.pool_shares_trust_line_count);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -77,5 +92,10 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
             self.pool_shares_trust_line_count.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

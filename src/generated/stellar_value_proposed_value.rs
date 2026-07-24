@@ -48,6 +48,21 @@ impl ReadXdr for StellarValueProposedValue {
 }
 
 #[cfg(feature = "cap_0083")]
+impl StellarValueProposedValue {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.tx_set_hash.const_to_xdr(w);
+        self.previous_ledger_hash.const_to_xdr(w);
+        w.write_u32(self.previous_ledger_version);
+        self.lc_value_signature.const_to_xdr(w);
+        w.leave_depth();
+    }
+}
+
+#[cfg(feature = "cap_0083")]
 impl WriteXdr for StellarValueProposedValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -58,5 +73,10 @@ impl WriteXdr for StellarValueProposedValue {
             self.lc_value_signature.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -69,6 +69,26 @@ impl ReadXdr for TimeSlicedNodeData {
     }
 }
 
+impl TimeSlicedNodeData {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_u32(self.added_authenticated_peers);
+        w.write_u32(self.dropped_authenticated_peers);
+        w.write_u32(self.total_inbound_peer_count);
+        w.write_u32(self.total_outbound_peer_count);
+        w.write_u32(self.p75_scp_first_to_self_latency_ms);
+        w.write_u32(self.p75_scp_self_to_other_latency_ms);
+        w.write_u32(self.lost_sync_count);
+        w.write_bool(self.is_validator);
+        w.write_u32(self.max_inbound_peer_count);
+        w.write_u32(self.max_outbound_peer_count);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for TimeSlicedNodeData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -85,5 +105,10 @@ impl WriteXdr for TimeSlicedNodeData {
             self.max_outbound_peer_count.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

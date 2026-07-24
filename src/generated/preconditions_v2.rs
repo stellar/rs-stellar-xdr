@@ -74,6 +74,69 @@ impl ReadXdr for PreconditionsV2 {
     }
 }
 
+impl PreconditionsV2 {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        {
+            w.enter_depth();
+            match &self.time_bounds {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.ledger_bounds {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            match &self.min_seq_num {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        self.min_seq_age.const_to_xdr(w);
+        w.write_u32(self.min_seq_ledger_gap);
+        {
+            w.enter_depth();
+            let __s0 = self.extra_signers.0.as_slice();
+            let __len0 = __s0.len();
+            w.write_length_prefix(__len0);
+            let mut __i0 = 0usize;
+            while __i0 < __len0 {
+                __s0[__i0].const_to_xdr(w);
+                __i0 += 1;
+            }
+            w.leave_depth();
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -86,5 +149,10 @@ impl WriteXdr for PreconditionsV2 {
             self.extra_signers.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

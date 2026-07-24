@@ -82,6 +82,49 @@ impl ReadXdr for AccountEntry {
     }
 }
 
+impl AccountEntry {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        self.account_id.const_to_xdr(w);
+        w.write_i64(self.balance);
+        self.seq_num.const_to_xdr(w);
+        w.write_u32(self.num_sub_entries);
+        {
+            w.enter_depth();
+            match &self.inflation_dest {
+                Some(__v0) => {
+                    w.write_u32(1);
+                    __v0.const_to_xdr(w);
+                }
+                None => {
+                    w.write_u32(0);
+                }
+            }
+            w.leave_depth();
+        }
+        w.write_u32(self.flags);
+        self.home_domain.const_to_xdr(w);
+        self.thresholds.const_to_xdr(w);
+        {
+            w.enter_depth();
+            let __s0 = self.signers.0.as_slice();
+            let __len0 = __s0.len();
+            w.write_length_prefix(__len0);
+            let mut __i0 = 0usize;
+            while __i0 < __len0 {
+                __s0[__i0].const_to_xdr(w);
+                __i0 += 1;
+            }
+            w.leave_depth();
+        }
+        self.ext.const_to_xdr(w);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -98,5 +141,10 @@ impl WriteXdr for AccountEntry {
             self.ext.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

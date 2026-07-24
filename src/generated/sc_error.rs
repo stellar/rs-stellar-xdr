@@ -175,6 +175,51 @@ impl ReadXdr for ScError {
     }
 }
 
+impl ScError {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_to_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Contract(v) => {
+                w.write_u32(*v);
+            }
+            Self::WasmVm(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Context(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Storage(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Object(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Crypto(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Events(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Budget(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Value(v) => {
+                v.const_to_xdr(w);
+            }
+            Self::Auth(v) => {
+                v.const_to_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for ScError {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -195,5 +240,10 @@ impl WriteXdr for ScError {
             };
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

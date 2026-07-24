@@ -82,6 +82,26 @@ impl ReadXdr for StateArchivalSettings {
     }
 }
 
+impl StateArchivalSettings {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const implementation underlying `to_xdr`.
+    #[cfg(feature = "std")]
+    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_u32(self.max_entry_ttl);
+        w.write_u32(self.min_temporary_ttl);
+        w.write_u32(self.min_persistent_ttl);
+        w.write_i64(self.persistent_rent_rate_denominator);
+        w.write_i64(self.temp_rent_rate_denominator);
+        w.write_u32(self.max_entries_to_archive);
+        w.write_u32(self.live_soroban_state_size_window_sample_size);
+        w.write_u32(self.live_soroban_state_size_window_sample_period);
+        w.write_u32(self.eviction_scan_size);
+        w.write_u32(self.starting_eviction_scan_level);
+        w.leave_depth();
+    }
+}
+
 impl WriteXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -100,5 +120,10 @@ impl WriteXdr for StateArchivalSettings {
             self.starting_eviction_scan_level.write_xdr(w)?;
             Ok(())
         })
+    }
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
+        to_xdr_via_const(self, &limits, Self::const_to_xdr)
     }
 }

@@ -1,5 +1,6 @@
 //! CLI entry point for the XDR code generator.
 
+mod const_encode;
 mod generator;
 mod naming;
 mod options;

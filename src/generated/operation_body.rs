@@ -499,44 +499,6 @@ impl OperationBody {
 impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::CreateAccount(v) => v.write_xdr(w)?,
-                Self::Payment(v) => v.write_xdr(w)?,
-                Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
-                Self::ManageSellOffer(v) => v.write_xdr(w)?,
-                Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
-                Self::SetOptions(v) => v.write_xdr(w)?,
-                Self::ChangeTrust(v) => v.write_xdr(w)?,
-                Self::AllowTrust(v) => v.write_xdr(w)?,
-                Self::AccountMerge(v) => v.write_xdr(w)?,
-                Self::Inflation => ().write_xdr(w)?,
-                Self::ManageData(v) => v.write_xdr(w)?,
-                Self::BumpSequence(v) => v.write_xdr(w)?,
-                Self::ManageBuyOffer(v) => v.write_xdr(w)?,
-                Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
-                Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
-                Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
-                Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
-                Self::EndSponsoringFutureReserves => ().write_xdr(w)?,
-                Self::RevokeSponsorship(v) => v.write_xdr(w)?,
-                Self::Clawback(v) => v.write_xdr(w)?,
-                Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
-                Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
-                Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
-                Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
-                Self::InvokeHostFunction(v) => v.write_xdr(w)?,
-                Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
-                Self::RestoreFootprint(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

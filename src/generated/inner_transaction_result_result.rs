@@ -346,35 +346,6 @@ impl InnerTransactionResultResult {
 impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::TxSuccess(v) => v.write_xdr(w)?,
-                Self::TxFailed(v) => v.write_xdr(w)?,
-                Self::TxTooEarly => ().write_xdr(w)?,
-                Self::TxTooLate => ().write_xdr(w)?,
-                Self::TxMissingOperation => ().write_xdr(w)?,
-                Self::TxBadSeq => ().write_xdr(w)?,
-                Self::TxBadAuth => ().write_xdr(w)?,
-                Self::TxInsufficientBalance => ().write_xdr(w)?,
-                Self::TxNoAccount => ().write_xdr(w)?,
-                Self::TxInsufficientFee => ().write_xdr(w)?,
-                Self::TxBadAuthExtra => ().write_xdr(w)?,
-                Self::TxInternalError => ().write_xdr(w)?,
-                Self::TxNotSupported => ().write_xdr(w)?,
-                Self::TxBadSponsorship => ().write_xdr(w)?,
-                Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
-                Self::TxMalformed => ().write_xdr(w)?,
-                Self::TxSorobanInvalid => ().write_xdr(w)?,
-                Self::TxFrozenKeyAccessed => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

@@ -45,8 +45,16 @@ impl ScSpecTypeResult {
     #[cfg(feature = "std")]
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.ok_type.const_write_xdr(w);
-        self.error_type.const_write_xdr(w);
+        {
+            w.enter_depth();
+            self.ok_type.const_write_xdr(w);
+            w.leave_depth();
+        }
+        {
+            w.enter_depth();
+            self.error_type.const_write_xdr(w);
+            w.leave_depth();
+        }
         w.leave_depth();
     }
     /// The exact XDR-encoded length of this value, in bytes.
@@ -97,15 +105,6 @@ impl ScSpecTypeResult {
 impl WriteXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ok_type.write_xdr(w)?;
-            self.error_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

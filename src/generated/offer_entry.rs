@@ -142,21 +142,6 @@ impl OfferEntry {
 impl WriteXdr for OfferEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.seller_id.write_xdr(w)?;
-            self.offer_id.write_xdr(w)?;
-            self.selling.write_xdr(w)?;
-            self.buying.write_xdr(w)?;
-            self.amount.write_xdr(w)?;
-            self.price.write_xdr(w)?;
-            self.flags.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

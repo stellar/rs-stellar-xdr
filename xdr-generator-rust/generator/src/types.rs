@@ -40,6 +40,13 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
     TypeMapping::new(type_, type_info, None).base_type_ref()
 }
 
+/// Whether a type reference is cyclic with respect to `parent_type`, and thus
+/// wrapped in `Box` by [`type_ref`]. Used to mirror the extra depth level a
+/// `Box` consumes when serializing.
+pub(crate) fn is_cyclic(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> bool {
+    TypeMapping::new(type_, Some(type_info), parent_type).is_cyclic()
+}
+
 /// Convert a Size to a Rust string representation.
 pub(crate) fn size_to_string(size: &Size) -> String {
     match size {

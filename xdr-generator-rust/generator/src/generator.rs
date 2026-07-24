@@ -430,7 +430,7 @@ impl RustGenerator {
     ) -> StructMemberOutput {
         let name = field_name(&m.name);
         let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
-        let const_write = crate::const_encode::member_body(&m.type_, &self.type_info, &name);
+        let const_write = crate::const_encode::member_body(&m.type_, &self.type_info, parent, &name);
 
         StructMemberOutput {
             name,
@@ -468,7 +468,7 @@ impl RustGenerator {
                 let const_write = arm
                     .type_
                     .as_ref()
-                    .map(|t| crate::const_encode::union_arm_body(t, &self.type_info));
+                    .map(|t| crate::const_encode::union_arm_body(t, &self.type_info, parent));
 
                 UnionArmOutput {
                     case_name,

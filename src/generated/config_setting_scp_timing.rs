@@ -108,19 +108,6 @@ impl ConfigSettingScpTiming {
 impl WriteXdr for ConfigSettingScpTiming {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_target_close_time_milliseconds.write_xdr(w)?;
-            self.nomination_timeout_initial_milliseconds.write_xdr(w)?;
-            self.nomination_timeout_increment_milliseconds
-                .write_xdr(w)?;
-            self.ballot_timeout_initial_milliseconds.write_xdr(w)?;
-            self.ballot_timeout_increment_milliseconds.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

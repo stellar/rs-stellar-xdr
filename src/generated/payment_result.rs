@@ -254,27 +254,6 @@ impl PaymentResult {
 impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Success => ().write_xdr(w)?,
-                Self::Malformed => ().write_xdr(w)?,
-                Self::Underfunded => ().write_xdr(w)?,
-                Self::SrcNoTrust => ().write_xdr(w)?,
-                Self::SrcNotAuthorized => ().write_xdr(w)?,
-                Self::NoDestination => ().write_xdr(w)?,
-                Self::NoTrust => ().write_xdr(w)?,
-                Self::NotAuthorized => ().write_xdr(w)?,
-                Self::LineFull => ().write_xdr(w)?,
-                Self::NoIssuer => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

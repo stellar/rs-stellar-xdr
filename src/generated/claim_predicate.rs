@@ -216,7 +216,11 @@ impl ClaimPredicate {
                 match v {
                     Some(__v0) => {
                         w.write_u32(1);
-                        __v0.const_write_xdr(w);
+                        {
+                            w.enter_depth();
+                            __v0.const_write_xdr(w);
+                            w.leave_depth();
+                        }
                     }
                     None => {
                         w.write_u32(0);
@@ -281,23 +285,6 @@ impl ClaimPredicate {
 impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Unconditional => ().write_xdr(w)?,
-                Self::And(v) => v.write_xdr(w)?,
-                Self::Or(v) => v.write_xdr(w)?,
-                Self::Not(v) => v.write_xdr(w)?,
-                Self::BeforeAbsoluteTime(v) => v.write_xdr(w)?,
-                Self::BeforeRelativeTime(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

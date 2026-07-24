@@ -331,19 +331,29 @@ impl ScSpecTypeDef {
             Self::Address => {}
             Self::MuxedAddress => {}
             Self::Option(v) => {
+                w.enter_depth();
                 v.const_write_xdr(w);
+                w.leave_depth();
             }
             Self::Result(v) => {
+                w.enter_depth();
                 v.const_write_xdr(w);
+                w.leave_depth();
             }
             Self::Vec(v) => {
+                w.enter_depth();
                 v.const_write_xdr(w);
+                w.leave_depth();
             }
             Self::Map(v) => {
+                w.enter_depth();
                 v.const_write_xdr(w);
+                w.leave_depth();
             }
             Self::Tuple(v) => {
+                w.enter_depth();
                 v.const_write_xdr(w);
+                w.leave_depth();
             }
             Self::BytesN(v) => {
                 v.const_write_xdr(w);
@@ -402,43 +412,6 @@ impl ScSpecTypeDef {
 impl WriteXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Val => ().write_xdr(w)?,
-                Self::Bool => ().write_xdr(w)?,
-                Self::Void => ().write_xdr(w)?,
-                Self::Error => ().write_xdr(w)?,
-                Self::U32 => ().write_xdr(w)?,
-                Self::I32 => ().write_xdr(w)?,
-                Self::U64 => ().write_xdr(w)?,
-                Self::I64 => ().write_xdr(w)?,
-                Self::Timepoint => ().write_xdr(w)?,
-                Self::Duration => ().write_xdr(w)?,
-                Self::U128 => ().write_xdr(w)?,
-                Self::I128 => ().write_xdr(w)?,
-                Self::U256 => ().write_xdr(w)?,
-                Self::I256 => ().write_xdr(w)?,
-                Self::Bytes => ().write_xdr(w)?,
-                Self::String => ().write_xdr(w)?,
-                Self::Symbol => ().write_xdr(w)?,
-                Self::Address => ().write_xdr(w)?,
-                Self::MuxedAddress => ().write_xdr(w)?,
-                Self::Option(v) => v.write_xdr(w)?,
-                Self::Result(v) => v.write_xdr(w)?,
-                Self::Vec(v) => v.write_xdr(w)?,
-                Self::Map(v) => v.write_xdr(w)?,
-                Self::Tuple(v) => v.write_xdr(w)?,
-                Self::BytesN(v) => v.write_xdr(w)?,
-                Self::Udt(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

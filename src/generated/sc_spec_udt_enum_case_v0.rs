@@ -101,16 +101,6 @@ impl ScSpecUdtEnumCaseV0 {
 impl WriteXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.value.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

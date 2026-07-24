@@ -109,18 +109,6 @@ impl SurveyRequestMessage {
 impl WriteXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.surveyor_peer_id.write_xdr(w)?;
-            self.surveyed_peer_id.write_xdr(w)?;
-            self.ledger_num.write_xdr(w)?;
-            self.encryption_key.write_xdr(w)?;
-            self.command_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

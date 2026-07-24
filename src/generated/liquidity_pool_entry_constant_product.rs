@@ -127,18 +127,6 @@ impl LiquidityPoolEntryConstantProduct {
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.params.write_xdr(w)?;
-            self.reserve_a.write_xdr(w)?;
-            self.reserve_b.write_xdr(w)?;
-            self.total_pool_shares.write_xdr(w)?;
-            self.pool_shares_trust_line_count.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

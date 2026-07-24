@@ -81,11 +81,19 @@ fn reference(acc: &str, is_ref: bool) -> String {
 /// e.g. the `v` of an `Option` or union arm match). Method calls and field
 /// accesses work uniformly on both because Rust auto-references and
 /// auto-dereferences the receiver; only by-value and by-reference uses differ.
+///
+/// `parent` is the type being generated (for cyclic detection) and `boxed`
+/// marks positions where a cyclic ident is `Box`-wrapped by `type_ref` (direct
+/// fields and `Option` contents, but not array/vec elements). At such a
+/// position a `Box` consumes its own depth level in `WriteXdr`, which is
+/// mirrored here.
 fn encode_type(
     type_: &Type,
     type_info: &TypeInfo,
     acc: &str,
     is_ref: bool,
+    parent: Option<&str>,
+    boxed: bool,
     counter: &mut u32,
 ) -> String {
     match type_ {
@@ -106,7 +114,12 @@ fn encode_type(
             // ident is a generated type with its own `const_write_xdr` (method
             // resolution transparently dereferences a `Box` for cyclic types).
             if let Some(builtin) = type_info.resolve_typedef_to_builtin(type_) {
-                encode_type(builtin, type_info, acc, is_ref, counter)
+                encode_type(builtin, type_info, acc, is_ref, parent, boxed, counter)
+            } else if boxed && crate::types::is_cyclic(type_, parent, type_info) {
+                // A cyclic ident here is `Box`-wrapped, and `<Box<_> as
+                // WriteXdr>::write_xdr` consumes its own depth level. Mirror it
+                // around the (auto-dereferenced) call.
+                format!("{{ w.enter_depth(); {acc}.const_write_xdr(w); w.leave_depth(); }}")
             } else {
                 format!("{acc}.const_write_xdr(w);")
             }
@@ -114,7 +127,7 @@ fn encode_type(
         Type::Optional(inner) => {
             let n = next(counter);
             let var = format!("__v{n}");
-            let inner_encode = encode_type(inner, type_info, &var, true, counter);
+            let inner_encode = encode_type(inner, type_info, &var, true, parent, true, counter);
             OptionalEncode {
                 scrutinee: reference(acc, is_ref),
                 var,
@@ -126,8 +139,15 @@ fn encode_type(
         Type::Array { element_type, size } => {
             let n = next(counter);
             let index = format!("__i{n}");
-            let elem =
-                encode_type(element_type, type_info, &format!("{acc}[{index}]"), false, counter);
+            let elem = encode_type(
+                element_type,
+                type_info,
+                &format!("{acc}[{index}]"),
+                false,
+                parent,
+                false,
+                counter,
+            );
             ArrayEncode {
                 index,
                 size: size_literal(size, type_info),
@@ -141,8 +161,15 @@ fn encode_type(
             let slice = format!("__s{n}");
             let index = format!("__i{n}");
             let len = format!("__len{n}");
-            let elem =
-                encode_type(element_type, type_info, &format!("{slice}[{index}]"), false, counter);
+            let elem = encode_type(
+                element_type,
+                type_info,
+                &format!("{slice}[{index}]"),
+                false,
+                parent,
+                false,
+                counter,
+            );
             VarArrayEncode {
                 acc: acc.to_string(),
                 slice,
@@ -161,28 +188,48 @@ fn size_literal(size: &Size, type_info: &TypeInfo) -> String {
     type_info.size_to_literal(size)
 }
 
-/// Emit the const-encoding statements for a single struct member.
-pub(crate) fn member_body(type_: &Type, type_info: &TypeInfo, member_name: &str) -> String {
+/// Emit the const-encoding statements for a single struct member. `parent` is
+/// the struct's type name, matching the `resolve_type` call that decided any
+/// `Box` wrapping.
+pub(crate) fn member_body(
+    type_: &Type,
+    type_info: &TypeInfo,
+    parent: &str,
+    member_name: &str,
+) -> String {
     let mut counter = 0;
-    encode_type(type_, type_info, &format!("self.{member_name}"), false, &mut counter)
+    encode_type(
+        type_,
+        type_info,
+        &format!("self.{member_name}"),
+        false,
+        Some(parent),
+        true,
+        &mut counter,
+    )
 }
 
 /// Emit the const-encoding statements for a union's discriminant. The
-/// discriminant value is bound to the local `d` before this code runs.
+/// discriminant value is bound to the local `d` before this code runs. A
+/// discriminant is never `Box`-wrapped.
 pub(crate) fn discriminant_body(type_: &Type, type_info: &TypeInfo) -> String {
     let mut counter = 0;
-    encode_type(type_, type_info, "d", false, &mut counter)
+    encode_type(type_, type_info, "d", false, None, false, &mut counter)
 }
 
 /// Emit the const-encoding statements for a non-void union arm. The arm value
-/// is bound to the reference `v` before this code runs.
-pub(crate) fn union_arm_body(type_: &Type, type_info: &TypeInfo) -> String {
+/// is bound to the reference `v` before this code runs. `parent` is the
+/// union's type name, matching the `resolve_type` call that decided any `Box`
+/// wrapping.
+pub(crate) fn union_arm_body(type_: &Type, type_info: &TypeInfo, parent: &str) -> String {
     let mut counter = 0;
-    encode_type(type_, type_info, "v", true, &mut counter)
+    encode_type(type_, type_info, "v", true, Some(parent), true, &mut counter)
 }
 
-/// Emit the const-encoding statements for a typedef newtype's inner value.
+/// Emit the const-encoding statements for a typedef newtype's inner value. A
+/// newtype's inner type is resolved without a parent, so it is never
+/// `Box`-wrapped.
 pub(crate) fn newtype_body(type_: &Type, type_info: &TypeInfo) -> String {
     let mut counter = 0;
-    encode_type(type_, type_info, "self.0", false, &mut counter)
+    encode_type(type_, type_info, "self.0", false, None, false, &mut counter)
 }

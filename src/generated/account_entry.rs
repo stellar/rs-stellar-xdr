@@ -171,23 +171,6 @@ impl AccountEntry {
 impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.account_id.write_xdr(w)?;
-            self.balance.write_xdr(w)?;
-            self.seq_num.write_xdr(w)?;
-            self.num_sub_entries.write_xdr(w)?;
-            self.inflation_dest.write_xdr(w)?;
-            self.flags.write_xdr(w)?;
-            self.home_domain.write_xdr(w)?;
-            self.thresholds.write_xdr(w)?;
-            self.signers.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

@@ -462,38 +462,6 @@ impl ConfigSettingEntry {
 impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ContractMaxSizeBytes(v) => v.write_xdr(w)?,
-                Self::ContractComputeV0(v) => v.write_xdr(w)?,
-                Self::ContractLedgerCostV0(v) => v.write_xdr(w)?,
-                Self::ContractHistoricalDataV0(v) => v.write_xdr(w)?,
-                Self::ContractEventsV0(v) => v.write_xdr(w)?,
-                Self::ContractBandwidthV0(v) => v.write_xdr(w)?,
-                Self::ContractCostParamsCpuInstructions(v) => v.write_xdr(w)?,
-                Self::ContractCostParamsMemoryBytes(v) => v.write_xdr(w)?,
-                Self::ContractDataKeySizeBytes(v) => v.write_xdr(w)?,
-                Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
-                Self::StateArchival(v) => v.write_xdr(w)?,
-                Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
-                Self::LiveSorobanStateSizeWindow(v) => v.write_xdr(w)?,
-                Self::EvictionIterator(v) => v.write_xdr(w)?,
-                Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
-                Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
-                Self::ScpTiming(v) => v.write_xdr(w)?,
-                Self::FrozenLedgerKeys(v) => v.write_xdr(w)?,
-                Self::FrozenLedgerKeysDelta(v) => v.write_xdr(w)?,
-                Self::FreezeBypassTxs(v) => v.write_xdr(w)?,
-                Self::FreezeBypassTxsDelta(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

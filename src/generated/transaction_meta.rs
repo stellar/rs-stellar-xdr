@@ -224,22 +224,6 @@ impl TransactionMeta {
 impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
-                Self::V3(v) => v.write_xdr(w)?,
-                Self::V4(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

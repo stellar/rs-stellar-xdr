@@ -266,27 +266,6 @@ impl ScError {
 impl WriteXdr for ScError {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Contract(v) => v.write_xdr(w)?,
-                Self::WasmVm(v) => v.write_xdr(w)?,
-                Self::Context(v) => v.write_xdr(w)?,
-                Self::Storage(v) => v.write_xdr(w)?,
-                Self::Object(v) => v.write_xdr(w)?,
-                Self::Crypto(v) => v.write_xdr(w)?,
-                Self::Events(v) => v.write_xdr(w)?,
-                Self::Budget(v) => v.write_xdr(w)?,
-                Self::Value(v) => v.write_xdr(w)?,
-                Self::Auth(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

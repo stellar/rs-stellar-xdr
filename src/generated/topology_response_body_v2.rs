@@ -101,16 +101,6 @@ impl TopologyResponseBodyV2 {
 impl WriteXdr for TopologyResponseBodyV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.inbound_peers.write_xdr(w)?;
-            self.outbound_peers.write_xdr(w)?;
-            self.node_data.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

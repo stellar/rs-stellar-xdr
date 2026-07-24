@@ -103,15 +103,6 @@ impl ConfigSettingContractEventsV0 {
 impl WriteXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_max_contract_events_size_bytes.write_xdr(w)?;
-            self.fee_contract_events1_kb.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

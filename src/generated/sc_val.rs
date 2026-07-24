@@ -478,41 +478,6 @@ impl ScVal {
 impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Bool(v) => v.write_xdr(w)?,
-                Self::Void => ().write_xdr(w)?,
-                Self::Error(v) => v.write_xdr(w)?,
-                Self::U32(v) => v.write_xdr(w)?,
-                Self::I32(v) => v.write_xdr(w)?,
-                Self::U64(v) => v.write_xdr(w)?,
-                Self::I64(v) => v.write_xdr(w)?,
-                Self::Timepoint(v) => v.write_xdr(w)?,
-                Self::Duration(v) => v.write_xdr(w)?,
-                Self::U128(v) => v.write_xdr(w)?,
-                Self::I128(v) => v.write_xdr(w)?,
-                Self::U256(v) => v.write_xdr(w)?,
-                Self::I256(v) => v.write_xdr(w)?,
-                Self::Bytes(v) => v.write_xdr(w)?,
-                Self::String(v) => v.write_xdr(w)?,
-                Self::Symbol(v) => v.write_xdr(w)?,
-                Self::Vec(v) => v.write_xdr(w)?,
-                Self::Map(v) => v.write_xdr(w)?,
-                Self::Address(v) => v.write_xdr(w)?,
-                Self::ContractInstance(v) => v.write_xdr(w)?,
-                Self::LedgerKeyContractInstance => ().write_xdr(w)?,
-                Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                #[cfg(feature = "cap_0085_executable_ref")]
-                Self::ExecutableTag(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

@@ -96,16 +96,7 @@ impl SignerKeyEd25519SignedPayload {
 impl WriteXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ed25519.write_xdr(w)?;
-            self.payload.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }
 #[cfg(all(feature = "serde", feature = "alloc"))]

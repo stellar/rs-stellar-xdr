@@ -148,25 +148,6 @@ impl StateArchivalSettings {
 impl WriteXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.max_entry_ttl.write_xdr(w)?;
-            self.min_temporary_ttl.write_xdr(w)?;
-            self.min_persistent_ttl.write_xdr(w)?;
-            self.persistent_rent_rate_denominator.write_xdr(w)?;
-            self.temp_rent_rate_denominator.write_xdr(w)?;
-            self.max_entries_to_archive.write_xdr(w)?;
-            self.live_soroban_state_size_window_sample_size
-                .write_xdr(w)?;
-            self.live_soroban_state_size_window_sample_period
-                .write_xdr(w)?;
-            self.eviction_scan_size.write_xdr(w)?;
-            self.starting_eviction_scan_level.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

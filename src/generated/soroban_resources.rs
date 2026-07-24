@@ -110,17 +110,6 @@ impl SorobanResources {
 impl WriteXdr for SorobanResources {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.footprint.write_xdr(w)?;
-            self.instructions.write_xdr(w)?;
-            self.disk_read_bytes.write_xdr(w)?;
-            self.write_bytes.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

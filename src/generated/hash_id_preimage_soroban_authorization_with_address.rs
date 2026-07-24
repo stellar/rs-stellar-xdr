@@ -113,18 +113,6 @@ impl HashIdPreimageSorobanAuthorizationWithAddress {
 impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.network_id.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            self.signature_expiration_ledger.write_xdr(w)?;
-            self.address.write_xdr(w)?;
-            self.invocation.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

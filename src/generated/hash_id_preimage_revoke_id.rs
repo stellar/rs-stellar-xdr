@@ -109,18 +109,6 @@ impl HashIdPreimageRevokeId {
 impl WriteXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.source_account.write_xdr(w)?;
-            self.seq_num.write_xdr(w)?;
-            self.op_num.write_xdr(w)?;
-            self.liquidity_pool_id.write_xdr(w)?;
-            self.asset.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

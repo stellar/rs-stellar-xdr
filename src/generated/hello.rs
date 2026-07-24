@@ -125,22 +125,6 @@ impl Hello {
 impl WriteXdr for Hello {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_version.write_xdr(w)?;
-            self.overlay_version.write_xdr(w)?;
-            self.overlay_min_version.write_xdr(w)?;
-            self.network_id.write_xdr(w)?;
-            self.version_str.write_xdr(w)?;
-            self.listening_port.write_xdr(w)?;
-            self.peer_id.write_xdr(w)?;
-            self.cert.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

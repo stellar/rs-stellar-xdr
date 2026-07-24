@@ -994,6 +994,24 @@ pub(crate) fn to_xdr_via_const<T>(
     Ok(buf)
 }
 
+/// Serializes `value` through its const serializer into a limited writer.
+///
+/// This is how every generated type implements [`WriteXdr::write_xdr`]: the
+/// value is serialized with `const_write_xdr` (honoring `w`'s limits), then the
+/// resulting bytes are written to `w`. The single const serializer is therefore
+/// the one source of truth for both `write_xdr` and (via its default) `to_xdr`.
+#[cfg(feature = "std")]
+pub(crate) fn write_xdr_via_const<T, W: Write>(
+    value: &T,
+    w: &mut Limited<W>,
+    encode: fn(&T, &mut ConstWriter<'_>),
+) -> Result<(), Error> {
+    let bytes = to_xdr_via_const(value, &w.limits, encode)?;
+    w.consume_len(bytes.len())?;
+    w.write_all(&bytes)?;
+    Ok(())
+}
+
 impl ReadXdr for i32 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {

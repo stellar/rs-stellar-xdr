@@ -240,23 +240,6 @@ impl ScSpecEntry {
 impl WriteXdr for ScSpecEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::FunctionV0(v) => v.write_xdr(w)?,
-                Self::UdtStructV0(v) => v.write_xdr(w)?,
-                Self::UdtUnionV0(v) => v.write_xdr(w)?,
-                Self::UdtEnumV0(v) => v.write_xdr(w)?,
-                Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
-                Self::EventV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

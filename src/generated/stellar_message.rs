@@ -441,38 +441,6 @@ impl StellarMessage {
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ErrorMsg(v) => v.write_xdr(w)?,
-                Self::Hello(v) => v.write_xdr(w)?,
-                Self::Auth(v) => v.write_xdr(w)?,
-                Self::DontHave(v) => v.write_xdr(w)?,
-                Self::Peers(v) => v.write_xdr(w)?,
-                Self::GetTxSet(v) => v.write_xdr(w)?,
-                Self::TxSet(v) => v.write_xdr(w)?,
-                Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
-                Self::Transaction(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyRequest(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyResponse(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyStartCollecting(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyStopCollecting(v) => v.write_xdr(w)?,
-                Self::GetScpQuorumset(v) => v.write_xdr(w)?,
-                Self::ScpQuorumset(v) => v.write_xdr(w)?,
-                Self::ScpMessage(v) => v.write_xdr(w)?,
-                Self::GetScpState(v) => v.write_xdr(w)?,
-                Self::SendMore(v) => v.write_xdr(w)?,
-                Self::SendMoreExtended(v) => v.write_xdr(w)?,
-                Self::FloodAdvert(v) => v.write_xdr(w)?,
-                Self::FloodDemand(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

@@ -135,23 +135,6 @@ impl TimeSlicedNodeData {
 impl WriteXdr for TimeSlicedNodeData {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.added_authenticated_peers.write_xdr(w)?;
-            self.dropped_authenticated_peers.write_xdr(w)?;
-            self.total_inbound_peer_count.write_xdr(w)?;
-            self.total_outbound_peer_count.write_xdr(w)?;
-            self.p75_scp_first_to_self_latency_ms.write_xdr(w)?;
-            self.p75_scp_self_to_other_latency_ms.write_xdr(w)?;
-            self.lost_sync_count.write_xdr(w)?;
-            self.is_validator.write_xdr(w)?;
-            self.max_inbound_peer_count.write_xdr(w)?;
-            self.max_outbound_peer_count.write_xdr(w)?;
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

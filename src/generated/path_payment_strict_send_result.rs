@@ -291,30 +291,6 @@ impl PathPaymentStrictSendResult {
 impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Success(v) => v.write_xdr(w)?,
-                Self::Malformed => ().write_xdr(w)?,
-                Self::Underfunded => ().write_xdr(w)?,
-                Self::SrcNoTrust => ().write_xdr(w)?,
-                Self::SrcNotAuthorized => ().write_xdr(w)?,
-                Self::NoDestination => ().write_xdr(w)?,
-                Self::NoTrust => ().write_xdr(w)?,
-                Self::NotAuthorized => ().write_xdr(w)?,
-                Self::LineFull => ().write_xdr(w)?,
-                Self::NoIssuer(v) => v.write_xdr(w)?,
-                Self::TooFewOffers => ().write_xdr(w)?,
-                Self::OfferCrossSelf => ().write_xdr(w)?,
-                Self::UnderDestmin => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-
-    #[cfg(feature = "std")]
-    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_write_xdr)
+        write_xdr_via_const(self, w, Self::const_write_xdr)
     }
 }

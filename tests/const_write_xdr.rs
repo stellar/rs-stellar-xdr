@@ -100,3 +100,31 @@ fn const_write_xdr_in_const_context() {
         MemoType::Id.to_xdr(Limits::none()).unwrap()
     );
 }
+
+#[test]
+fn xdr_len_and_to_xdr_array_match_to_xdr() {
+    let tb = TimeBounds {
+        min_time: TimePoint(1),
+        max_time: TimePoint(2),
+    };
+    let bytes = tb.to_xdr(Limits::none()).unwrap();
+    assert_eq!(tb.xdr_len(), bytes.len());
+    // Two u64s => 16 bytes.
+    let arr = tb.to_xdr_array::<16>();
+    assert_eq!(arr.as_slice(), bytes.as_slice());
+}
+
+// Compile-time serialization to a fixed array, the way a proc-macro would emit
+// it: size the array with `xdr_len`, then fill it with `to_xdr_array`.
+const TB: TimeBounds = TimeBounds {
+    min_time: TimePoint(1),
+    max_time: TimePoint(0x0102_0304_0506_0708),
+};
+const TB_LEN: usize = TB.xdr_len();
+const TB_XDR: [u8; TB_LEN] = TB.to_xdr_array::<TB_LEN>();
+
+#[test]
+fn to_xdr_array_in_const_context() {
+    assert_eq!(TB_LEN, 16);
+    assert_eq!(TB_XDR.to_vec(), TB.to_xdr(Limits::none()).unwrap());
+}

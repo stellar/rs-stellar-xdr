@@ -228,6 +228,7 @@ impl {{ u.name }} {
         }
         w.leave_depth();
     }
+{% include "const_xdr_array.rs.jinja" %}
 }
 
 {% if let Some(cfg) = u.cfg -%}

@@ -181,6 +181,7 @@ impl {{ e.name }} {
         w.write_i32(*self as i32);
         w.leave_depth();
     }
+{% include "const_xdr_array.rs.jinja" %}
 }
 
 {% if let Some(cfg) = e.cfg -%}

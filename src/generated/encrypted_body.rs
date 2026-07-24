@@ -61,6 +61,49 @@ impl EncryptedBody {
         w.write_len_prefixed(self.0 .0.as_slice());
         w.leave_depth();
     }
+    /// The exact XDR-encoded length of this value, in bytes.
+    ///
+    /// Evaluable in a const context, so a caller (such as a proc-macro) can
+    /// size a buffer for [`Self::to_xdr_array`] at compile time.
+    #[cfg(feature = "std")]
+    #[must_use]
+    pub const fn xdr_len(&self) -> usize {
+        let limits = Limits {
+            depth: u32::MAX,
+            len: usize::MAX,
+        };
+        let mut empty: [u8; 0] = [];
+        let mut w = ConstWriter::new(&mut empty, &limits);
+        self.const_write_xdr(&mut w);
+        w.position()
+    }
+
+    /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
+    /// operations.
+    ///
+    /// `N` must equal [`Self::xdr_len`]. It is intended for callers, such as a
+    /// proc-macro, that compute the length with `xdr_len` and pass it as `N`;
+    /// `to_xdr_array` itself does not need to call `xdr_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `N` does not equal the value's [`Self::xdr_len`].
+    #[cfg(feature = "std")]
+    #[must_use]
+    pub const fn to_xdr_array<const N: usize>(&self) -> [u8; N] {
+        let limits = Limits {
+            depth: u32::MAX,
+            len: usize::MAX,
+        };
+        let mut buf = [0u8; N];
+        let mut w = ConstWriter::new(&mut buf, &limits);
+        self.const_write_xdr(&mut w);
+        assert!(
+            w.position() == N,
+            "to_xdr_array: N does not equal the XDR-encoded length"
+        );
+        buf
+    }
 }
 
 impl WriteXdr for EncryptedBody {

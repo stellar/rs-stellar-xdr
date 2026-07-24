@@ -176,6 +176,7 @@ impl {{ t.name }} {
         {{ t.const_write }}
         w.leave_depth();
     }
+{% include "const_xdr_array.rs.jinja" %}
 }
 
 {% if let Some(cfg) = t.cfg -%}

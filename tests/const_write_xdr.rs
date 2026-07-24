@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-//! Tests for the const XDR serializer (`const_to_xdr`) that underlies `to_xdr`.
+//! Tests for the const XDR serializer (`const_write_xdr`) that underlies `to_xdr`.
 
 use std::io::Cursor;
 use stellar_xdr::{
@@ -17,7 +17,7 @@ fn streamed<T: WriteXdr>(v: &T) -> Vec<u8> {
 }
 
 #[test]
-fn const_to_xdr_matches_write_xdr() {
+fn const_write_xdr_matches_write_xdr() {
     // Newtype over a scalar.
     let tp = TimePoint(0x0102_0304_0506_0708);
     assert_eq!(tp.to_xdr(Limits::none()).unwrap(), streamed(&tp));
@@ -52,7 +52,7 @@ fn const_to_xdr_matches_write_xdr() {
 }
 
 #[test]
-fn const_to_xdr_round_trips() {
+fn const_write_xdr_round_trips() {
     let tb = TimeBounds {
         min_time: TimePoint(1),
         max_time: TimePoint(2),
@@ -62,7 +62,7 @@ fn const_to_xdr_round_trips() {
 }
 
 #[test]
-fn const_to_xdr_respects_limits() {
+fn const_write_xdr_respects_limits() {
     // A 32-byte fixed opaque needs 32 bytes; a smaller length budget must error,
     // matching write_xdr's limit behavior.
     let u = Uint256([0u8; 32]);
@@ -86,14 +86,14 @@ const MEMOTYPE_ID_XDR: [u8; 4] = {
                 len: usize::MAX,
             },
         );
-        MemoType::Id.const_to_xdr(&mut w);
+        MemoType::Id.const_write_xdr(&mut w);
         w.position()
     };
     buf
 };
 
 #[test]
-fn const_to_xdr_in_const_context() {
+fn const_write_xdr_in_const_context() {
     assert_eq!(MEMOTYPE_ID_XDR, [0, 0, 0, 2]);
     assert_eq!(
         MEMOTYPE_ID_XDR.to_vec(),

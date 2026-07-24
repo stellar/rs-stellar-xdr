@@ -51,7 +51,7 @@ impl Liabilities {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         w.write_i64(self.buying);
         w.write_i64(self.selling);
@@ -71,6 +71,6 @@ impl WriteXdr for Liabilities {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

@@ -54,9 +54,9 @@ impl SorobanResources {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.footprint.const_to_xdr(w);
+        self.footprint.const_write_xdr(w);
         w.write_u32(self.instructions);
         w.write_u32(self.disk_read_bytes);
         w.write_u32(self.write_bytes);
@@ -78,6 +78,6 @@ impl WriteXdr for SorobanResources {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

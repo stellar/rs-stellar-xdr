@@ -51,7 +51,7 @@ impl ConfigSettingScpTiming {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         w.write_u32(self.ledger_target_close_time_milliseconds);
         w.write_u32(self.nomination_timeout_initial_milliseconds);
@@ -78,6 +78,6 @@ impl WriteXdr for ConfigSettingScpTiming {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

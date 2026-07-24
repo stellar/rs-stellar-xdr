@@ -43,10 +43,10 @@ impl AlphaNum12 {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.asset_code.const_to_xdr(w);
-        self.issuer.const_to_xdr(w);
+        self.asset_code.const_write_xdr(w);
+        self.issuer.const_write_xdr(w);
         w.leave_depth();
     }
 }
@@ -63,6 +63,6 @@ impl WriteXdr for AlphaNum12 {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

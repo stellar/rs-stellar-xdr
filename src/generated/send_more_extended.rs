@@ -43,7 +43,7 @@ impl SendMoreExtended {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         w.write_u32(self.num_messages);
         w.write_u32(self.num_bytes);
@@ -63,6 +63,6 @@ impl WriteXdr for SendMoreExtended {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

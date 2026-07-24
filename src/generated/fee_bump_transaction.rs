@@ -63,12 +63,12 @@ impl FeeBumpTransaction {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.fee_source.const_to_xdr(w);
+        self.fee_source.const_write_xdr(w);
         w.write_i64(self.fee);
-        self.inner_tx.const_to_xdr(w);
-        self.ext.const_to_xdr(w);
+        self.inner_tx.const_write_xdr(w);
+        self.ext.const_write_xdr(w);
         w.leave_depth();
     }
 }
@@ -87,6 +87,6 @@ impl WriteXdr for FeeBumpTransaction {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

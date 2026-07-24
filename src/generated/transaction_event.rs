@@ -42,10 +42,10 @@ impl TransactionEvent {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.stage.const_to_xdr(w);
-        self.event.const_to_xdr(w);
+        self.stage.const_write_xdr(w);
+        self.event.const_write_xdr(w);
         w.leave_depth();
     }
 }
@@ -62,6 +62,6 @@ impl WriteXdr for TransactionEvent {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

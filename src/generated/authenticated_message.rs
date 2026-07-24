@@ -124,14 +124,14 @@ impl AuthenticatedMessage {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         let d = self.discriminant();
         w.write_u32(d);
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => {
-                v.const_to_xdr(w);
+                v.const_write_xdr(w);
             }
         }
         w.leave_depth();
@@ -153,6 +153,6 @@ impl WriteXdr for AuthenticatedMessage {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

@@ -142,10 +142,10 @@ impl ClawbackClaimableBalanceResult {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         let d = self.discriminant();
-        d.const_to_xdr(w);
+        d.const_write_xdr(w);
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => {}
@@ -175,6 +175,6 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

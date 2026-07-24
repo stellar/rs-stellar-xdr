@@ -54,13 +54,13 @@ impl TransactionResultMetaV1 {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.ext.const_to_xdr(w);
-        self.result.const_to_xdr(w);
-        self.fee_processing.const_to_xdr(w);
-        self.tx_apply_processing.const_to_xdr(w);
-        self.post_tx_apply_fee_processing.const_to_xdr(w);
+        self.ext.const_write_xdr(w);
+        self.result.const_write_xdr(w);
+        self.fee_processing.const_write_xdr(w);
+        self.tx_apply_processing.const_write_xdr(w);
+        self.post_tx_apply_fee_processing.const_write_xdr(w);
         w.leave_depth();
     }
 }
@@ -80,6 +80,6 @@ impl WriteXdr for TransactionResultMetaV1 {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

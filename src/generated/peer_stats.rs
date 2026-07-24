@@ -136,9 +136,9 @@ impl PeerStats {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.id.const_to_xdr(w);
+        self.id.const_write_xdr(w);
         w.write_len_prefixed(self.version_str.0.as_slice());
         w.write_u64(self.messages_read);
         w.write_u64(self.messages_written);
@@ -182,6 +182,6 @@ impl WriteXdr for PeerStats {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

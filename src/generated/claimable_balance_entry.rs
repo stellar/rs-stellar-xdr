@@ -72,9 +72,9 @@ impl ClaimableBalanceEntry {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.balance_id.const_to_xdr(w);
+        self.balance_id.const_write_xdr(w);
         {
             w.enter_depth();
             let __s0 = self.claimants.0.as_slice();
@@ -82,14 +82,14 @@ impl ClaimableBalanceEntry {
             w.write_length_prefix(__len0);
             let mut __i0 = 0usize;
             while __i0 < __len0 {
-                __s0[__i0].const_to_xdr(w);
+                __s0[__i0].const_write_xdr(w);
                 __i0 += 1;
             }
             w.leave_depth();
         }
-        self.asset.const_to_xdr(w);
+        self.asset.const_write_xdr(w);
         w.write_i64(self.amount);
-        self.ext.const_to_xdr(w);
+        self.ext.const_write_xdr(w);
         w.leave_depth();
     }
 }
@@ -109,6 +109,6 @@ impl WriteXdr for ClaimableBalanceEntry {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

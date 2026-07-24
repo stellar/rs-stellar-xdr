@@ -57,7 +57,7 @@ impl AccountEntryExtensionV2 {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         w.write_u32(self.num_sponsored);
         w.write_u32(self.num_sponsoring);
@@ -68,12 +68,12 @@ impl AccountEntryExtensionV2 {
             w.write_length_prefix(__len0);
             let mut __i0 = 0usize;
             while __i0 < __len0 {
-                __s0[__i0].const_to_xdr(w);
+                __s0[__i0].const_write_xdr(w);
                 __i0 += 1;
             }
             w.leave_depth();
         }
-        self.ext.const_to_xdr(w);
+        self.ext.const_write_xdr(w);
         w.leave_depth();
     }
 }
@@ -92,6 +92,6 @@ impl WriteXdr for AccountEntryExtensionV2 {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

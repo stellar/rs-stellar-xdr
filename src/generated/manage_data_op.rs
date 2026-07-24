@@ -43,15 +43,15 @@ impl ManageDataOp {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.data_name.const_to_xdr(w);
+        self.data_name.const_write_xdr(w);
         {
             w.enter_depth();
             match &self.data_value {
                 Some(__v0) => {
                     w.write_u32(1);
-                    __v0.const_to_xdr(w);
+                    __v0.const_write_xdr(w);
                 }
                 None => {
                     w.write_u32(0);
@@ -75,6 +75,6 @@ impl WriteXdr for ManageDataOp {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

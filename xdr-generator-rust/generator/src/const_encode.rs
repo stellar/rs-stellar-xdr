@@ -1,6 +1,6 @@
 //! Emission of const XDR serialization code.
 //!
-//! For each generated type an inherent `const fn const_to_xdr` is emitted that
+//! For each generated type an inherent `const fn const_write_xdr` is emitted that
 //! serializes the value through a `ConstWriter` (defined in `header.rs`). This
 //! module drives the recursion over each field's type; the actual Rust code it
 //! emits lives in the jinja templates (`const_encode_*.rs.jinja`) and, for the
@@ -10,7 +10,7 @@
 //! `WriteXdr::write_xdr` implementations, including their depth and length
 //! limit accounting, but expressed with only const-compatible operations:
 //! `while` loops instead of `for`, direct calls to each concrete field type's
-//! own `const_to_xdr` instead of trait dispatch, and a `ConstWriter` that
+//! own `const_write_xdr` instead of trait dispatch, and a `ConstWriter` that
 //! records errors internally (see `header.rs`) instead of returning a
 //! `Result`, which cannot be dropped in a const function.
 
@@ -103,12 +103,12 @@ fn encode_type(
         Type::Ident(_) => {
             // A typedef of a builtin scalar is emitted as a transparent Rust
             // type alias, so encode it as the underlying scalar. Every other
-            // ident is a generated type with its own `const_to_xdr` (method
+            // ident is a generated type with its own `const_write_xdr` (method
             // resolution transparently dereferences a `Box` for cyclic types).
             if let Some(builtin) = type_info.resolve_typedef_to_builtin(type_) {
                 encode_type(builtin, type_info, acc, is_ref, counter)
             } else {
-                format!("{acc}.const_to_xdr(w);")
+                format!("{acc}.const_write_xdr(w);")
             }
         }
         Type::Optional(inner) => {

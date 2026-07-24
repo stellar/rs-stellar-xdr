@@ -67,12 +67,12 @@ impl PathPaymentStrictReceiveOp {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const implementation underlying `to_xdr`.
     #[cfg(feature = "std")]
-    pub const fn const_to_xdr(&self, w: &mut ConstWriter) {
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        self.send_asset.const_to_xdr(w);
+        self.send_asset.const_write_xdr(w);
         w.write_i64(self.send_max);
-        self.destination.const_to_xdr(w);
-        self.dest_asset.const_to_xdr(w);
+        self.destination.const_write_xdr(w);
+        self.dest_asset.const_write_xdr(w);
         w.write_i64(self.dest_amount);
         {
             w.enter_depth();
@@ -81,7 +81,7 @@ impl PathPaymentStrictReceiveOp {
             w.write_length_prefix(__len0);
             let mut __i0 = 0usize;
             while __i0 < __len0 {
-                __s0[__i0].const_to_xdr(w);
+                __s0[__i0].const_write_xdr(w);
                 __i0 += 1;
             }
             w.leave_depth();
@@ -106,6 +106,6 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 
     #[cfg(feature = "std")]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>, Error> {
-        to_xdr_via_const(self, &limits, Self::const_to_xdr)
+        to_xdr_via_const(self, &limits, Self::const_write_xdr)
     }
 }

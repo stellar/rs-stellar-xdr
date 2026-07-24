@@ -367,8 +367,8 @@ impl ReadXdr for OperationResultTr {
 
 impl OperationResultTr {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
-    /// operations. This is the const implementation underlying `to_xdr`.
-    #[cfg(feature = "std")]
+    /// operations. This is the const counterpart to [`WriteXdr::write_xdr`].
+    #[cfg(feature = "const")]
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         let d = self.discriminant();
@@ -462,10 +462,10 @@ impl OperationResultTr {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
-    /// size a buffer for [`Self::to_xdr_array`] at compile time.
-    #[cfg(feature = "std")]
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[cfg(feature = "const")]
     #[must_use]
-    pub const fn xdr_len(&self) -> usize {
+    pub const fn const_xdr_len(&self) -> usize {
         let limits = Limits {
             depth: u32::MAX,
             len: usize::MAX,
@@ -477,18 +477,18 @@ impl OperationResultTr {
     }
 
     /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
-    /// operations.
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
     ///
-    /// `N` must equal [`Self::xdr_len`]. It is intended for callers, such as a
-    /// proc-macro, that compute the length with `xdr_len` and pass it as `N`;
-    /// `to_xdr_array` itself does not need to call `xdr_len`.
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
     ///
     /// # Panics
     ///
-    /// Panics if `N` does not equal the value's [`Self::xdr_len`].
-    #[cfg(feature = "std")]
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[cfg(feature = "const")]
     #[must_use]
-    pub const fn to_xdr_array<const N: usize>(&self) -> [u8; N] {
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
         let limits = Limits {
             depth: u32::MAX,
             len: usize::MAX,
@@ -498,7 +498,7 @@ impl OperationResultTr {
         self.const_write_xdr(&mut w);
         assert!(
             w.position() == N,
-            "to_xdr_array: N does not equal the XDR-encoded length"
+            "const_to_xdr: N does not equal the XDR-encoded length"
         );
         buf
     }
@@ -507,6 +507,39 @@ impl OperationResultTr {
 impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        write_xdr_via_const(self, w, Self::const_write_xdr)
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::CreateAccount(v) => v.write_xdr(w)?,
+                Self::Payment(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
+                Self::ManageSellOffer(v) => v.write_xdr(w)?,
+                Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
+                Self::SetOptions(v) => v.write_xdr(w)?,
+                Self::ChangeTrust(v) => v.write_xdr(w)?,
+                Self::AllowTrust(v) => v.write_xdr(w)?,
+                Self::AccountMerge(v) => v.write_xdr(w)?,
+                Self::Inflation(v) => v.write_xdr(w)?,
+                Self::ManageData(v) => v.write_xdr(w)?,
+                Self::BumpSequence(v) => v.write_xdr(w)?,
+                Self::ManageBuyOffer(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
+                Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
+                Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
+                Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::EndSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::RevokeSponsorship(v) => v.write_xdr(w)?,
+                Self::Clawback(v) => v.write_xdr(w)?,
+                Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
+                Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+                Self::InvokeHostFunction(v) => v.write_xdr(w)?,
+                Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
+                Self::RestoreFootprint(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }

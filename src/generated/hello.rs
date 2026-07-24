@@ -62,8 +62,8 @@ impl ReadXdr for Hello {
 
 impl Hello {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
-    /// operations. This is the const implementation underlying `to_xdr`.
-    #[cfg(feature = "std")]
+    /// operations. This is the const counterpart to [`WriteXdr::write_xdr`].
+    #[cfg(feature = "const")]
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         w.write_u32(self.ledger_version);
@@ -80,10 +80,10 @@ impl Hello {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
-    /// size a buffer for [`Self::to_xdr_array`] at compile time.
-    #[cfg(feature = "std")]
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[cfg(feature = "const")]
     #[must_use]
-    pub const fn xdr_len(&self) -> usize {
+    pub const fn const_xdr_len(&self) -> usize {
         let limits = Limits {
             depth: u32::MAX,
             len: usize::MAX,
@@ -95,18 +95,18 @@ impl Hello {
     }
 
     /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
-    /// operations.
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
     ///
-    /// `N` must equal [`Self::xdr_len`]. It is intended for callers, such as a
-    /// proc-macro, that compute the length with `xdr_len` and pass it as `N`;
-    /// `to_xdr_array` itself does not need to call `xdr_len`.
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
     ///
     /// # Panics
     ///
-    /// Panics if `N` does not equal the value's [`Self::xdr_len`].
-    #[cfg(feature = "std")]
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[cfg(feature = "const")]
     #[must_use]
-    pub const fn to_xdr_array<const N: usize>(&self) -> [u8; N] {
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
         let limits = Limits {
             depth: u32::MAX,
             len: usize::MAX,
@@ -116,7 +116,7 @@ impl Hello {
         self.const_write_xdr(&mut w);
         assert!(
             w.position() == N,
-            "to_xdr_array: N does not equal the XDR-encoded length"
+            "const_to_xdr: N does not equal the XDR-encoded length"
         );
         buf
     }
@@ -125,6 +125,17 @@ impl Hello {
 impl WriteXdr for Hello {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        write_xdr_via_const(self, w, Self::const_write_xdr)
+        w.with_limited_depth(|w| {
+            self.ledger_version.write_xdr(w)?;
+            self.overlay_version.write_xdr(w)?;
+            self.overlay_min_version.write_xdr(w)?;
+            self.network_id.write_xdr(w)?;
+            self.version_str.write_xdr(w)?;
+            self.listening_port.write_xdr(w)?;
+            self.peer_id.write_xdr(w)?;
+            self.cert.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            Ok(())
+        })
     }
 }

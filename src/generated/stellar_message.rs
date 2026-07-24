@@ -310,8 +310,8 @@ impl ReadXdr for StellarMessage {
 
 impl StellarMessage {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
-    /// operations. This is the const implementation underlying `to_xdr`.
-    #[cfg(feature = "std")]
+    /// operations. This is the const counterpart to [`WriteXdr::write_xdr`].
+    #[cfg(feature = "const")]
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         let d = self.discriminant();
@@ -396,10 +396,10 @@ impl StellarMessage {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
-    /// size a buffer for [`Self::to_xdr_array`] at compile time.
-    #[cfg(feature = "std")]
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[cfg(feature = "const")]
     #[must_use]
-    pub const fn xdr_len(&self) -> usize {
+    pub const fn const_xdr_len(&self) -> usize {
         let limits = Limits {
             depth: u32::MAX,
             len: usize::MAX,
@@ -411,18 +411,18 @@ impl StellarMessage {
     }
 
     /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
-    /// operations.
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
     ///
-    /// `N` must equal [`Self::xdr_len`]. It is intended for callers, such as a
-    /// proc-macro, that compute the length with `xdr_len` and pass it as `N`;
-    /// `to_xdr_array` itself does not need to call `xdr_len`.
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
     ///
     /// # Panics
     ///
-    /// Panics if `N` does not equal the value's [`Self::xdr_len`].
-    #[cfg(feature = "std")]
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[cfg(feature = "const")]
     #[must_use]
-    pub const fn to_xdr_array<const N: usize>(&self) -> [u8; N] {
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
         let limits = Limits {
             depth: u32::MAX,
             len: usize::MAX,
@@ -432,7 +432,7 @@ impl StellarMessage {
         self.const_write_xdr(&mut w);
         assert!(
             w.position() == N,
-            "to_xdr_array: N does not equal the XDR-encoded length"
+            "const_to_xdr: N does not equal the XDR-encoded length"
         );
         buf
     }
@@ -441,6 +441,33 @@ impl StellarMessage {
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        write_xdr_via_const(self, w, Self::const_write_xdr)
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ErrorMsg(v) => v.write_xdr(w)?,
+                Self::Hello(v) => v.write_xdr(w)?,
+                Self::Auth(v) => v.write_xdr(w)?,
+                Self::DontHave(v) => v.write_xdr(w)?,
+                Self::Peers(v) => v.write_xdr(w)?,
+                Self::GetTxSet(v) => v.write_xdr(w)?,
+                Self::TxSet(v) => v.write_xdr(w)?,
+                Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
+                Self::Transaction(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyRequest(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyResponse(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyStartCollecting(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyStopCollecting(v) => v.write_xdr(w)?,
+                Self::GetScpQuorumset(v) => v.write_xdr(w)?,
+                Self::ScpQuorumset(v) => v.write_xdr(w)?,
+                Self::ScpMessage(v) => v.write_xdr(w)?,
+                Self::GetScpState(v) => v.write_xdr(w)?,
+                Self::SendMore(v) => v.write_xdr(w)?,
+                Self::SendMoreExtended(v) => v.write_xdr(w)?,
+                Self::FloodAdvert(v) => v.write_xdr(w)?,
+                Self::FloodDemand(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }

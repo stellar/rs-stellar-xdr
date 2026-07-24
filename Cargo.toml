@@ -45,6 +45,10 @@ default = ["std"]
 std = ["alloc", "dep:sha2"]
 alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 
+# Const XDR serialization (const_write_xdr / const_to_xdr / const_xdr_len).
+# Available without std; requires alloc for variable-length types.
+const = ["alloc"]
+
 # Features from the XDR
 test_feature = []
 cap_0083 = []

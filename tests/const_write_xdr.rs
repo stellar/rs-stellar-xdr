@@ -1,15 +1,15 @@
-#![cfg(feature = "std")]
+#![cfg(all(feature = "const", feature = "std"))]
 
-//! Tests for the const XDR serializer (`const_write_xdr`) that underlies `to_xdr`.
+//! Tests for the const XDR serializers: `const_write_xdr`, `const_to_xdr`, and
+//! `const_xdr_len`. Compared against the streaming `write_xdr` (needs `std`).
 
 use std::io::Cursor;
 use stellar_xdr::{
-    ConstWriter, Hash, Limited, Limits, Memo, MemoType, ReadXdr, TimeBounds, TimePoint, Uint256,
-    WriteXdr,
+    ConstError, ConstWriter, Hash, Limited, Limits, Memo, MemoType, ReadXdr, TimeBounds, TimePoint,
+    Uint256, WriteXdr,
 };
 
-/// Serialize via the streaming `write_xdr` path, independently of `to_xdr`
-/// (which now goes through the const path), so the two can be compared.
+/// Serialize via the streaming `write_xdr` path, for comparison.
 fn streamed<T: WriteXdr>(v: &T) -> Vec<u8> {
     let mut w = Limited::new(Cursor::new(Vec::new()), Limits::none());
     v.write_xdr(&mut w).unwrap();
@@ -17,29 +17,30 @@ fn streamed<T: WriteXdr>(v: &T) -> Vec<u8> {
 }
 
 #[test]
-fn const_write_xdr_matches_write_xdr() {
-    // Newtype over a scalar.
-    let tp = TimePoint(0x0102_0304_0506_0708);
-    assert_eq!(tp.to_xdr(Limits::none()).unwrap(), streamed(&tp));
+fn const_len_and_array_match_write_xdr() {
+    // Fixed-length opaque newtype: 32 bytes, no length prefix.
+    let u = Uint256([7u8; 32]);
+    assert_eq!(u.const_xdr_len(), streamed(&u).len());
+    assert_eq!(u.const_to_xdr::<32>().as_slice(), streamed(&u).as_slice());
 
-    // Struct of newtypes.
+    // Struct of newtypes over scalars: 2 * u64 = 16 bytes.
     let tb = TimeBounds {
         min_time: TimePoint(1),
         max_time: TimePoint(u64::MAX),
     };
-    assert_eq!(tb.to_xdr(Limits::none()).unwrap(), streamed(&tb));
+    assert_eq!(tb.const_xdr_len(), streamed(&tb).len());
+    assert_eq!(tb.const_to_xdr::<16>().as_slice(), streamed(&tb).as_slice());
 
-    // Fixed-length opaque newtype.
-    let u = Uint256([7u8; 32]);
-    assert_eq!(u.to_xdr(Limits::none()).unwrap(), streamed(&u));
-
-    // Enum.
+    // Enum: 4 bytes.
     assert_eq!(
-        MemoType::Id.to_xdr(Limits::none()).unwrap(),
-        streamed(&MemoType::Id)
+        MemoType::Id.const_to_xdr::<4>().as_slice(),
+        streamed(&MemoType::Id).as_slice()
     );
+}
 
-    // Union: void, length-prefixed-and-padded string, scalar, and newtype arms.
+#[test]
+fn const_write_xdr_matches_write_xdr() {
+    // Union arms: void, length-prefixed-and-padded string, scalar, newtype.
     let memos = [
         Memo::None,
         Memo::Text("hello".as_bytes().to_vec().try_into().unwrap()),
@@ -47,84 +48,52 @@ fn const_write_xdr_matches_write_xdr() {
         Memo::Hash(Hash([9u8; 32])),
     ];
     for m in memos {
-        assert_eq!(m.to_xdr(Limits::none()).unwrap(), streamed(&m), "{m:?}");
+        let n = m.const_xdr_len();
+        let mut buf = vec![0u8; n];
+        let mut w = ConstWriter::new(&mut buf, &Limits::none());
+        m.const_write_xdr(&mut w);
+        assert_eq!(w.error(), None);
+        assert_eq!(buf, streamed(&m), "{m:?}");
     }
 }
 
 #[test]
-fn const_write_xdr_round_trips() {
+fn const_round_trips() {
     let tb = TimeBounds {
         min_time: TimePoint(1),
         max_time: TimePoint(2),
     };
-    let bytes = tb.to_xdr(Limits::none()).unwrap();
-    assert_eq!(TimeBounds::from_xdr(&bytes, Limits::none()).unwrap(), tb);
+    let bytes = tb.const_to_xdr::<16>();
+    assert_eq!(TimeBounds::from_xdr(bytes, Limits::none()).unwrap(), tb);
 }
 
 #[test]
 fn const_write_xdr_respects_limits() {
-    // A 32-byte fixed opaque needs 32 bytes; a smaller length budget must error,
-    // matching write_xdr's limit behavior.
     let u = Uint256([0u8; 32]);
-    assert_eq!(u.to_xdr(Limits::len(16)), Err(stellar_xdr::Error::LengthLimitExceeded));
-    assert!(u.to_xdr(Limits::len(32)).is_ok());
 
-    // A depth limit of zero fails immediately, as it does for write_xdr.
-    assert_eq!(u.to_xdr(Limits::depth(0)), Err(stellar_xdr::Error::DepthLimitExceeded));
-}
+    let mut buf = [0u8; 32];
+    let mut w = ConstWriter::new(&mut buf, &Limits::depth(0));
+    u.const_write_xdr(&mut w);
+    assert_eq!(w.error(), Some(ConstError::DepthLimitExceeded));
 
-/// The const serializer is usable in a `const` context.
-const MEMOTYPE_ID_XDR: [u8; 4] = {
-    let mut buf = [0u8; 4];
-    // The writer borrows `buf`; scope it so the borrow ends before `buf` is
-    // returned.
-    let _len = {
-        let mut w = ConstWriter::new(
-            &mut buf,
-            &Limits {
-                depth: u32::MAX,
-                len: usize::MAX,
-            },
-        );
-        MemoType::Id.const_write_xdr(&mut w);
-        w.position()
-    };
-    buf
-};
-
-#[test]
-fn const_write_xdr_in_const_context() {
-    assert_eq!(MEMOTYPE_ID_XDR, [0, 0, 0, 2]);
-    assert_eq!(
-        MEMOTYPE_ID_XDR.to_vec(),
-        MemoType::Id.to_xdr(Limits::none()).unwrap()
-    );
-}
-
-#[test]
-fn xdr_len_and_to_xdr_array_match_to_xdr() {
-    let tb = TimeBounds {
-        min_time: TimePoint(1),
-        max_time: TimePoint(2),
-    };
-    let bytes = tb.to_xdr(Limits::none()).unwrap();
-    assert_eq!(tb.xdr_len(), bytes.len());
-    // Two u64s => 16 bytes.
-    let arr = tb.to_xdr_array::<16>();
-    assert_eq!(arr.as_slice(), bytes.as_slice());
+    // A 32-byte value needs 32 bytes; a 16-byte budget must fail.
+    let mut buf2 = [0u8; 32];
+    let mut w2 = ConstWriter::new(&mut buf2, &Limits::len(16));
+    u.const_write_xdr(&mut w2);
+    assert_eq!(w2.error(), Some(ConstError::LengthLimitExceeded));
 }
 
 // Compile-time serialization to a fixed array, the way a proc-macro would emit
-// it: size the array with `xdr_len`, then fill it with `to_xdr_array`.
+// it: size the array with `const_xdr_len`, then fill it with `const_to_xdr`.
 const TB: TimeBounds = TimeBounds {
     min_time: TimePoint(1),
     max_time: TimePoint(0x0102_0304_0506_0708),
 };
-const TB_LEN: usize = TB.xdr_len();
-const TB_XDR: [u8; TB_LEN] = TB.to_xdr_array::<TB_LEN>();
+const TB_LEN: usize = TB.const_xdr_len();
+const TB_XDR: [u8; TB_LEN] = TB.const_to_xdr::<TB_LEN>();
 
 #[test]
-fn to_xdr_array_in_const_context() {
+fn const_context() {
     assert_eq!(TB_LEN, 16);
-    assert_eq!(TB_XDR.to_vec(), TB.to_xdr(Limits::none()).unwrap());
+    assert_eq!(TB_XDR.to_vec(), streamed(&TB));
 }

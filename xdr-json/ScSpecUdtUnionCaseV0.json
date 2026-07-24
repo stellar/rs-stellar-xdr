@@ -48,7 +48,7 @@
       }
     },
     "ScSpecTypeDef": {
-      "description": "ScSpecTypeDef is an XDR Union defined as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: case SC_SPEC_TYPE_MUXED_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; }; ```",
+      "description": "ScSpecTypeDef is an XDR Union defined as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: case SC_SPEC_TYPE_MUXED_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; case SC_SPEC_TYPE_UDT_V2: SCSpecTypeUDTV2 udtV2; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -150,6 +150,17 @@
               "$ref": "#/definitions/ScSpecTypeUdt"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "udt_v2"
+          ],
+          "properties": {
+            "udt_v2": {
+              "$ref": "#/definitions/ScSpecTypeUdtv2"
+            }
+          }
         }
       ]
     },
@@ -220,6 +231,29 @@
         "name"
       ],
       "properties": {
+        "name": {
+          "$ref": "#/definitions/StringM<60>"
+        }
+      }
+    },
+    "ScSpecTypeUdtv2": {
+      "description": "ScSpecTypeUdtv2 is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDTV2 { opaque id[8]; string name<60>; }; ```",
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 8,
+          "minItems": 8
+        },
         "name": {
           "$ref": "#/definitions/StringM<60>"
         }

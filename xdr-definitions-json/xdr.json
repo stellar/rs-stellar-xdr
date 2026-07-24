@@ -19,7 +19,7 @@
     },
     {
       "name": "xdr/Stellar-contract-spec.x",
-      "sha256": "f0655f82e0a28a79e067c02f427cc709db1e4323a50c9b85f730f812b9612dbd"
+      "sha256": "deea6f35d5454fcf662b1006d21594f0bb79884c54ed60601eaf3082046e0009"
     },
     {
       "name": "xdr/Stellar-contract.x",
@@ -1896,7 +1896,7 @@
     {
       "kind": "enum",
       "name": "SCSpecType",
-      "source": "enum SCSpecType\n{\n    SC_SPEC_TYPE_VAL = 0,\n\n    // Types with no parameters.\n    SC_SPEC_TYPE_BOOL = 1,\n    SC_SPEC_TYPE_VOID = 2,\n    SC_SPEC_TYPE_ERROR = 3,\n    SC_SPEC_TYPE_U32 = 4,\n    SC_SPEC_TYPE_I32 = 5,\n    SC_SPEC_TYPE_U64 = 6,\n    SC_SPEC_TYPE_I64 = 7,\n    SC_SPEC_TYPE_TIMEPOINT = 8,\n    SC_SPEC_TYPE_DURATION = 9,\n    SC_SPEC_TYPE_U128 = 10,\n    SC_SPEC_TYPE_I128 = 11,\n    SC_SPEC_TYPE_U256 = 12,\n    SC_SPEC_TYPE_I256 = 13,\n    SC_SPEC_TYPE_BYTES = 14,\n    SC_SPEC_TYPE_STRING = 16,\n    SC_SPEC_TYPE_SYMBOL = 17,\n    SC_SPEC_TYPE_ADDRESS = 19,\n    SC_SPEC_TYPE_MUXED_ADDRESS = 20,\n\n    // Types with parameters.\n    SC_SPEC_TYPE_OPTION = 1000,\n    SC_SPEC_TYPE_RESULT = 1001,\n    SC_SPEC_TYPE_VEC = 1002,\n    SC_SPEC_TYPE_MAP = 1004,\n    SC_SPEC_TYPE_TUPLE = 1005,\n    SC_SPEC_TYPE_BYTES_N = 1006,\n\n    // User defined types.\n    SC_SPEC_TYPE_UDT = 2000\n};",
+      "source": "enum SCSpecType\n{\n    SC_SPEC_TYPE_VAL = 0,\n\n    // Types with no parameters.\n    SC_SPEC_TYPE_BOOL = 1,\n    SC_SPEC_TYPE_VOID = 2,\n    SC_SPEC_TYPE_ERROR = 3,\n    SC_SPEC_TYPE_U32 = 4,\n    SC_SPEC_TYPE_I32 = 5,\n    SC_SPEC_TYPE_U64 = 6,\n    SC_SPEC_TYPE_I64 = 7,\n    SC_SPEC_TYPE_TIMEPOINT = 8,\n    SC_SPEC_TYPE_DURATION = 9,\n    SC_SPEC_TYPE_U128 = 10,\n    SC_SPEC_TYPE_I128 = 11,\n    SC_SPEC_TYPE_U256 = 12,\n    SC_SPEC_TYPE_I256 = 13,\n    SC_SPEC_TYPE_BYTES = 14,\n    SC_SPEC_TYPE_STRING = 16,\n    SC_SPEC_TYPE_SYMBOL = 17,\n    SC_SPEC_TYPE_ADDRESS = 19,\n    SC_SPEC_TYPE_MUXED_ADDRESS = 20,\n\n    // Types with parameters.\n    SC_SPEC_TYPE_OPTION = 1000,\n    SC_SPEC_TYPE_RESULT = 1001,\n    SC_SPEC_TYPE_VEC = 1002,\n    SC_SPEC_TYPE_MAP = 1004,\n    SC_SPEC_TYPE_TUPLE = 1005,\n    SC_SPEC_TYPE_BYTES_N = 1006,\n\n    // User defined types.\n    SC_SPEC_TYPE_UDT = 2000,\n    SC_SPEC_TYPE_UDT_V2 = 2001\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_TYPE_",
       "members": [
@@ -2003,6 +2003,10 @@
         {
           "name": "SC_SPEC_TYPE_UDT",
           "value": 2000
+        },
+        {
+          "name": "SC_SPEC_TYPE_UDT_V2",
+          "value": 2001
         }
       ]
     },
@@ -2137,10 +2141,33 @@
       ]
     },
     {
+      "kind": "struct",
+      "name": "SCSpecTypeUDTV2",
+      "fixed_size": null,
+      "source": "struct SCSpecTypeUDTV2\n{\n    opaque id[8];\n    string name<60>;\n};",
+      "file_index": 4,
+      "fields": [
+        {
+          "name": "id",
+          "type": {
+            "kind": "opaque_fixed",
+            "size": 8
+          }
+        },
+        {
+          "name": "name",
+          "type": {
+            "kind": "string",
+            "max_size": 60
+          }
+        }
+      ]
+    },
+    {
       "kind": "union",
       "name": "SCSpecTypeDef",
       "fixed_size": null,
-      "source": "union SCSpecTypeDef switch (SCSpecType type)\n{\ncase SC_SPEC_TYPE_VAL:\ncase SC_SPEC_TYPE_BOOL:\ncase SC_SPEC_TYPE_VOID:\ncase SC_SPEC_TYPE_ERROR:\ncase SC_SPEC_TYPE_U32:\ncase SC_SPEC_TYPE_I32:\ncase SC_SPEC_TYPE_U64:\ncase SC_SPEC_TYPE_I64:\ncase SC_SPEC_TYPE_TIMEPOINT:\ncase SC_SPEC_TYPE_DURATION:\ncase SC_SPEC_TYPE_U128:\ncase SC_SPEC_TYPE_I128:\ncase SC_SPEC_TYPE_U256:\ncase SC_SPEC_TYPE_I256:\ncase SC_SPEC_TYPE_BYTES:\ncase SC_SPEC_TYPE_STRING:\ncase SC_SPEC_TYPE_SYMBOL:\ncase SC_SPEC_TYPE_ADDRESS:\ncase SC_SPEC_TYPE_MUXED_ADDRESS:\n    void;\ncase SC_SPEC_TYPE_OPTION:\n    SCSpecTypeOption option;\ncase SC_SPEC_TYPE_RESULT:\n    SCSpecTypeResult result;\ncase SC_SPEC_TYPE_VEC:\n    SCSpecTypeVec vec;\ncase SC_SPEC_TYPE_MAP:\n    SCSpecTypeMap map;\ncase SC_SPEC_TYPE_TUPLE:\n    SCSpecTypeTuple tuple;\ncase SC_SPEC_TYPE_BYTES_N:\n    SCSpecTypeBytesN bytesN;\ncase SC_SPEC_TYPE_UDT:\n    SCSpecTypeUDT udt;\n};",
+      "source": "union SCSpecTypeDef switch (SCSpecType type)\n{\ncase SC_SPEC_TYPE_VAL:\ncase SC_SPEC_TYPE_BOOL:\ncase SC_SPEC_TYPE_VOID:\ncase SC_SPEC_TYPE_ERROR:\ncase SC_SPEC_TYPE_U32:\ncase SC_SPEC_TYPE_I32:\ncase SC_SPEC_TYPE_U64:\ncase SC_SPEC_TYPE_I64:\ncase SC_SPEC_TYPE_TIMEPOINT:\ncase SC_SPEC_TYPE_DURATION:\ncase SC_SPEC_TYPE_U128:\ncase SC_SPEC_TYPE_I128:\ncase SC_SPEC_TYPE_U256:\ncase SC_SPEC_TYPE_I256:\ncase SC_SPEC_TYPE_BYTES:\ncase SC_SPEC_TYPE_STRING:\ncase SC_SPEC_TYPE_SYMBOL:\ncase SC_SPEC_TYPE_ADDRESS:\ncase SC_SPEC_TYPE_MUXED_ADDRESS:\n    void;\ncase SC_SPEC_TYPE_OPTION:\n    SCSpecTypeOption option;\ncase SC_SPEC_TYPE_RESULT:\n    SCSpecTypeResult result;\ncase SC_SPEC_TYPE_VEC:\n    SCSpecTypeVec vec;\ncase SC_SPEC_TYPE_MAP:\n    SCSpecTypeMap map;\ncase SC_SPEC_TYPE_TUPLE:\n    SCSpecTypeTuple tuple;\ncase SC_SPEC_TYPE_BYTES_N:\n    SCSpecTypeBytesN bytesN;\ncase SC_SPEC_TYPE_UDT:\n    SCSpecTypeUDT udt;\ncase SC_SPEC_TYPE_UDT_V2:\n    SCSpecTypeUDTV2 udtV2;\n};",
       "file_index": 4,
       "discriminant": {
         "name": "type",
@@ -2320,6 +2347,19 @@
           "type": {
             "kind": "ref",
             "name": "SCSpecTypeUDT"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 2001,
+              "name": "SC_SPEC_TYPE_UDT_V2"
+            }
+          ],
+          "name": "udtV2",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecTypeUDTV2"
           }
         }
       ]

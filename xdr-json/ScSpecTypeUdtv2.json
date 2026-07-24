@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScSpecTypeUdtv2",
+  "description": "ScSpecTypeUdtv2 is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDTV2 { opaque id[8]; string name<60>; }; ```",
+  "type": "object",
+  "required": [
+    "id",
+    "name"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      },
+      "maxItems": 8,
+      "minItems": 8
+    },
+    "name": {
+      "$ref": "#/definitions/StringM<60>"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "StringM<60>": {
+      "type": "string",
+      "maxLength": 60
+    }
+  }
+}

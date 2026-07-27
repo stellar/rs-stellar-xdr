@@ -8,17 +8,12 @@ pub struct Cmd {
     pub output: OutputFormat,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Default, Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputFormat {
+    #[default]
     Plain,
     Json,
     JsonFormatted,
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::Plain
-    }
 }
 
 impl Cmd {

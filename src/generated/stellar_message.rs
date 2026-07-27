@@ -482,3 +482,133 @@ impl WriteXdr for StellarMessageRef<'_> {
         })
     }
 }
+#[cfg(feature = "const")]
+impl StellarMessageRef<'_> {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const counterpart to the owned type's
+    /// [`WriteXdr::write_xdr`].
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_write_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ErrorMsg(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::Hello(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::Auth(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::DontHave(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::Peers(v) => {
+                w.enter_depth();
+                let __s0 = v.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    __s0[__i0].const_write_xdr(w);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::GetTxSet(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TxSet(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::GeneralizedTxSet(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::Transaction(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TimeSlicedSurveyRequest(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TimeSlicedSurveyResponse(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TimeSlicedSurveyStartCollecting(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TimeSlicedSurveyStopCollecting(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::GetScpQuorumset(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::ScpQuorumset(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::ScpMessage(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::GetScpState(v) => {
+                w.write_u32(*v);
+            }
+            Self::SendMore(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::SendMoreExtended(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::FloodAdvert(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::FloodDemand(v) => {
+                v.const_write_xdr(w);
+            }
+        }
+        w.leave_depth();
+    }
+    /// The exact XDR-encoded length of this value, in bytes.
+    ///
+    /// Evaluable in a const context, so a caller (such as a proc-macro) can
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[cfg(feature = "const")]
+    #[must_use]
+    pub const fn const_xdr_len(&self) -> usize {
+        let limits = Limits {
+            depth: u32::MAX,
+            len: usize::MAX,
+        };
+        let mut empty: [u8; 0] = [];
+        let mut w = ConstWriter::new(&mut empty, &limits);
+        self.const_write_xdr(&mut w);
+        w.position()
+    }
+
+    /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
+    ///
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[cfg(feature = "const")]
+    #[must_use]
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
+        let limits = Limits {
+            depth: u32::MAX,
+            len: usize::MAX,
+        };
+        let mut buf = [0u8; N];
+        let mut w = ConstWriter::new(&mut buf, &limits);
+        self.const_write_xdr(&mut w);
+        assert!(
+            w.position() == N,
+            "const_to_xdr: N does not equal the XDR-encoded length"
+        );
+        buf
+    }
+}

@@ -72,6 +72,8 @@ pub struct StructMemberOutput {
     pub ref_type_ref: String,
     /// Expression converting the member from `Ref` form to owned form.
     pub from_ref_expr: String,
+    /// Const-encoding statements serializing this member via a `ConstWriter`.
+    pub const_write: String,
 }
 
 pub struct EnumOutput {
@@ -97,6 +99,9 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
+    /// Const-encoding statements serializing the discriminant (bound to `d`)
+    /// via a `ConstWriter`.
+    pub discriminant_const_write: String,
     /// True when the type contains heap-allocated data and a borrowing
     /// `{name}Ref<'a>` type is generated for it.
     pub requires_ref: bool,
@@ -124,6 +129,9 @@ pub struct UnionArmOutput {
     /// Expression converting the payload from `Ref` form to owned form, with
     /// the payload bound by reference to `value`.
     pub from_ref_expr: Option<String>,
+    /// Const-encoding statements serializing this arm's payload (bound by
+    /// reference to `v`) via a `ConstWriter`; `None` for a void arm.
+    pub const_write: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -161,6 +169,9 @@ pub struct TypedefNewtypeOutput {
     pub ref_type_ref: String,
     /// Expression converting the inner value from `Ref` form to owned form.
     pub from_ref_expr: String,
+    /// Const-encoding statements serializing the inner value via a
+    /// `ConstWriter`.
+    pub const_write: String,
     pub cfg: Option<String>,
 }
 

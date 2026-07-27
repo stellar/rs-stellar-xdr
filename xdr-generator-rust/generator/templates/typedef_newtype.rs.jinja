@@ -343,3 +343,25 @@ impl WriteXdr for {{ t.name }}Ref<'_> {
 }
 {%- endif %}
 
+
+{#- Const XDR serializers: on the borrowing Ref type when the type owns heap
+    data, otherwise on the owned newtype itself. #}
+{% if let Some(cfg) = t.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "const")]
+{%- if t.requires_ref %}
+impl {{ t.name }}Ref<'_> {
+{%- else %}
+impl {{ t.name }} {
+{%- endif %}
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const counterpart to the owned type's
+    /// [`WriteXdr::write_xdr`].
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        {{ t.const_write }}
+        w.leave_depth();
+    }
+{% include "const_xdr_array.rs.jinja" %}
+}

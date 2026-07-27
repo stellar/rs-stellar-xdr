@@ -403,6 +403,10 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
+            discriminant_const_write: crate::const_encode::discriminant_body(
+                &u.discriminant.type_,
+                &self.type_info,
+            ),
             requires_ref,
             ref_needs_phantom,
             ref_phantom_cfg,
@@ -468,6 +472,7 @@ impl RustGenerator {
             ref_needs_phantom: requires_ref && !resolved.ref_type_ref.contains("'a"),
             ref_type_ref: resolved.ref_type_ref,
             from_ref_expr: resolved.from_ref_expr,
+            const_write: crate::const_encode::newtype_body(&t.type_, &self.type_info),
             cfg,
         })
     }
@@ -503,6 +508,7 @@ impl RustGenerator {
             &format!("v.{name}"),
             false,
         );
+        let const_write = crate::const_encode::member_body(&m.type_, &self.type_info, parent, &name);
 
         StructMemberOutput {
             name,
@@ -512,6 +518,7 @@ impl RustGenerator {
             serde_rename,
             ref_type_ref: resolved.ref_type_ref,
             from_ref_expr: resolved.from_ref_expr,
+            const_write,
         }
     }
 
@@ -554,6 +561,10 @@ impl RustGenerator {
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     ref_type_ref: resolved.as_ref().map(|r| r.ref_type_ref.clone()),
                     from_ref_expr: resolved.as_ref().map(|r| r.from_ref_expr.clone()),
+                    const_write: arm
+                        .type_
+                        .as_ref()
+                        .map(|t| crate::const_encode::union_arm_body(t, &self.type_info, parent)),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }

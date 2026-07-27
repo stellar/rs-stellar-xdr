@@ -182,3 +182,20 @@ impl WriteXdr for {{ e.name }} {
     }
 }
 
+
+{#- Const XDR serializer. Enums own no heap data, so this lives on the enum
+    itself. #}
+{% if let Some(cfg) = e.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "const")]
+impl {{ e.name }} {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const counterpart to [`WriteXdr::write_xdr`].
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        w.write_i32(*self as i32);
+        w.leave_depth();
+    }
+{% include "const_xdr_array.rs.jinja" %}
+}

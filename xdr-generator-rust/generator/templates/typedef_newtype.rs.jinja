@@ -304,7 +304,11 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+{%- if t.ref_needs_phantom %}
+pub struct {{ t.name }}Ref<'a>(pub {{ t.ref_type_ref }}, pub core::marker::PhantomData<&'a ()>);
+{%- else %}
 pub struct {{ t.name }}Ref<'a>(pub {{ t.ref_type_ref }});
+{%- endif %}
 
 {% if let Some(cfg) = t.cfg -%}
 #[cfg({{ cfg }})]

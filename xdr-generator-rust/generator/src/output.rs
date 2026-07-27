@@ -53,6 +53,10 @@ pub struct StructOutput {
     /// True when the type contains heap-allocated data and a borrowing
     /// `{name}Ref<'a>` type is generated for it.
     pub requires_ref: bool,
+    /// True when the Ref struct has no lifetime-using member (the type
+    /// requires a Ref variant only because a same-named definition in another
+    /// cfg branch contains heap data) and needs a phantom member to bind `'a`.
+    pub ref_needs_phantom: bool,
     pub cfg: Option<String>,
 }
 
@@ -96,9 +100,11 @@ pub struct UnionOutput {
     /// True when the type contains heap-allocated data and a borrowing
     /// `{name}Ref<'a>` type is generated for it.
     pub requires_ref: bool,
-    /// When `Some`, the `Ref` enum gets an uninhabited phantom variant under
-    /// this cfg to bind the `'a` lifetime when all lifetime-using arms are
-    /// compiled out.
+    /// True when the `Ref` enum gets an uninhabited phantom variant to bind
+    /// the `'a` lifetime when all lifetime-using arms are compiled out.
+    pub ref_needs_phantom: bool,
+    /// The cfg for the phantom variant (the negation of the lifetime-using
+    /// arms' cfgs), or `None` for an unconditional phantom variant.
     pub ref_phantom_cfg: Option<String>,
     pub cfg: Option<String>,
     /// Cfg for the first arm, used to gate the Default impl when the
@@ -147,6 +153,10 @@ pub struct TypedefNewtypeOutput {
     /// True when the type contains heap-allocated data and a borrowing
     /// `{name}Ref<'a>` type is generated for it.
     pub requires_ref: bool,
+    /// True when the Ref newtype's inner type does not use `'a` (the type
+    /// requires a Ref variant only because a same-named definition in another
+    /// cfg branch contains heap data) and needs a phantom member to bind it.
+    pub ref_needs_phantom: bool,
     /// The inner type in the borrowing `Ref` form of the newtype.
     pub ref_type_ref: String,
     /// Expression converting the inner value from `Ref` form to owned form.

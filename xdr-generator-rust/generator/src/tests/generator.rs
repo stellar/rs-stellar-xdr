@@ -208,3 +208,130 @@ fn test_ifdef_generates_cfg_on_const() {
 pub const MAX_SIZE: u32 = 100;"#,
     );
 }
+
+#[test]
+fn test_ifdef_same_name_ref_phantom_struct() {
+    // Foo requires a Ref variant because the FEATURE_X branch contains heap
+    // data; the heap-free branch must bind the Ref lifetime with a phantom
+    // member.
+    let output = generate_from_xdr(
+        r#"
+        #ifdef FEATURE_X
+        struct Foo { string s<10>; };
+        #else
+        struct Foo { int y; };
+        #endif
+    "#,
+    );
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FooRef<'a> {
+    pub s: StringMRef<'a, 10>,
+}"#,
+    );
+    assert_contains(
+        &output,
+        r#"#[cfg(not(feature = "feature_x"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FooRef<'a> {
+    pub y: i32,
+    /// Binds the `'a` lifetime when no member borrows.
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<&'a ()>,
+}"#,
+    );
+}
+
+#[test]
+fn test_ifdef_same_name_ref_phantom_typedef() {
+    let output = generate_from_xdr(
+        r#"
+        #ifdef FEATURE_X
+        typedef string Foo<10>;
+        #else
+        typedef opaque Foo[4];
+        #endif
+    "#,
+    );
+    assert_contains(
+        &output,
+        r#"pub struct FooRef<'a>(pub StringMRef<'a, 10>);"#,
+    );
+    assert_contains(
+        &output,
+        r#"pub struct FooRef<'a>(pub [u8; 4], pub core::marker::PhantomData<&'a ()>);"#,
+    );
+}
+
+#[test]
+fn test_ifdef_same_name_ref_phantom_union() {
+    let output = generate_from_xdr(
+        r#"
+        #ifdef FEATURE_X
+        union Foo switch (int v) { case 0: string s<10>; };
+        #else
+        union Foo switch (int v) { case 0: int y; };
+        #endif
+    "#,
+    );
+    // The parser propagates a definition-level #ifdef cfg onto each union
+    // arm, so the lifetime-using arm is cfg-gated and the phantom variant
+    // appears under the negated cfg (harmlessly dead, since the whole enum is
+    // gated on the positive cfg).
+    assert_contains(
+        &output,
+        r#"pub enum FooRef<'a> {
+    #[cfg(feature = "feature_x")]
+    V0(StringMRef<'a, 10>),
+    /// Uninhabited variant binding the `'a` lifetime when every
+    /// lifetime-using variant is compiled out.
+    #[cfg(not(feature = "feature_x"))]
+    #[doc(hidden)]
+    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
+}"#,
+    );
+    // The heap-free branch has no lifetime-using arm at all, so its phantom
+    // variant is unconditional.
+    assert_contains(
+        &output,
+        r#"pub enum FooRef<'a> {
+    #[cfg(not(feature = "feature_x"))]
+    V0(i32),
+    /// Uninhabited variant binding the `'a` lifetime when every
+    /// lifetime-using variant is compiled out.
+    #[doc(hidden)]
+    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
+}"#,
+    );
+}
+
+#[test]
+fn test_cfg_arm_only_heap_union_ref_phantom_cfg() {
+    // The union requires a Ref variant only via the cfg-gated arm, so the
+    // phantom variant appears under the negated cfg.
+    let output = generate_from_xdr(
+        r#"
+        union Foo switch (int v) {
+            case 0: int y;
+            #ifdef FEATURE_X
+            case 1: string s<10>;
+            #endif
+        };
+    "#,
+    );
+    assert_contains(
+        &output,
+        r#"pub enum FooRef<'a> {
+    V0(i32),
+    #[cfg(feature = "feature_x")]
+    V1(StringMRef<'a, 10>),
+    /// Uninhabited variant binding the `'a` lifetime when every
+    /// lifetime-using variant is compiled out.
+    #[cfg(not(feature = "feature_x"))]
+    #[doc(hidden)]
+    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
+}"#,
+    );
+}

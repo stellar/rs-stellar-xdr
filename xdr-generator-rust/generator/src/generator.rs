@@ -275,6 +275,12 @@ impl RustGenerator {
             "Struct"
         };
         let requires_ref = self.ref_required.contains(&name);
+        // When the type requires a Ref variant only because a same-named
+        // definition in another cfg branch contains heap data, this
+        // definition's Ref struct has no lifetime-using member and needs a
+        // phantom member to bind `'a`.
+        let ref_needs_phantom =
+            requires_ref && !members.iter().any(|m| m.ref_type_ref.contains("'a"));
         StructOutput {
             name,
             source_comment: source_comment(&s.source, type_kind),
@@ -283,6 +289,7 @@ impl RustGenerator {
             members,
             member_names,
             requires_ref,
+            ref_needs_phantom,
             cfg,
         }
     }
@@ -363,34 +370,31 @@ impl RustGenerator {
         // If every lifetime-using arm of the Ref enum is behind a cfg, the
         // enum would fail to compile (unused lifetime) when those cfgs are
         // disabled. Emit an uninhabited phantom variant that binds the
-        // lifetime under the negation of those cfgs.
-        let ref_phantom_cfg = if requires_ref {
-            let lifetime_arm_cfgs: Vec<&UnionArmOutput> = arms
-                .iter()
-                .filter(|a| {
-                    a.ref_type_ref
-                        .as_ref()
-                        .is_some_and(|t| t.contains("'a"))
-                })
-                .collect();
-            if lifetime_arm_cfgs.iter().all(|a| a.cfg.is_some()) {
+        // lifetime under the negation of those cfgs. When there are no
+        // lifetime-using arms at all (the type requires a Ref variant only
+        // because a same-named definition in another cfg branch contains heap
+        // data), the phantom variant is emitted unconditionally.
+        let lifetime_arm_cfgs: Vec<&UnionArmOutput> = arms
+            .iter()
+            .filter(|a| a.ref_type_ref.as_ref().is_some_and(|t| t.contains("'a")))
+            .collect();
+        let (ref_needs_phantom, ref_phantom_cfg) =
+            if requires_ref && lifetime_arm_cfgs.iter().all(|a| a.cfg.is_some()) {
                 let mut cfgs: Vec<String> = lifetime_arm_cfgs
                     .iter()
                     .filter_map(|a| a.cfg.clone())
                     .collect();
                 cfgs.sort();
                 cfgs.dedup();
-                Some(if cfgs.len() == 1 {
-                    format!("not({})", cfgs[0])
-                } else {
-                    format!("not(any({}))", cfgs.join(", "))
-                })
+                let cfg = match cfgs.len() {
+                    0 => None,
+                    1 => Some(format!("not({})", cfgs[0])),
+                    _ => Some(format!("not(any({}))", cfgs.join(", "))),
+                };
+                (true, cfg)
             } else {
-                None
-            }
-        } else {
-            None
-        };
+                (false, None)
+            };
 
         UnionOutput {
             name,
@@ -400,6 +404,7 @@ impl RustGenerator {
             discriminant_type,
             arms,
             requires_ref,
+            ref_needs_phantom,
             ref_phantom_cfg,
             cfg,
             default_arm_cfg,
@@ -441,6 +446,8 @@ impl RustGenerator {
             _ => None,
         };
 
+        let requires_ref = self.ref_required.contains(&name);
+
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
             name: name.clone(),
             source_comment: source_comment(&t.source, "Typedef"),
@@ -457,7 +464,8 @@ impl RustGenerator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-            requires_ref: self.ref_required.contains(&name),
+            requires_ref,
+            ref_needs_phantom: requires_ref && !resolved.ref_type_ref.contains("'a"),
             ref_type_ref: resolved.ref_type_ref,
             from_ref_expr: resolved.from_ref_expr,
             cfg,

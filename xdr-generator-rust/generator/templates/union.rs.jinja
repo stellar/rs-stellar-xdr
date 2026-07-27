@@ -246,10 +246,12 @@ pub enum {{ u.name }}Ref<'a> {
     {{ arm.case_name }}({{ arm.ref_type_ref.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
-{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
+{%- if u.ref_needs_phantom %}
     /// Uninhabited variant binding the `'a` lifetime when every
     /// lifetime-using variant is compiled out.
+{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
     #[cfg({{ phantom_cfg }})]
+{%- endif %}
     #[doc(hidden)]
     _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
 {%- endif %}
@@ -274,8 +276,10 @@ impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
             {{ u.name }}Ref::{{ arm.case_name }}(value) => Self::{{ arm.case_name }}({{ arm.from_ref_expr.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
+{%- if u.ref_needs_phantom %}
 {%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
             #[cfg({{ phantom_cfg }})]
+{%- endif %}
             {{ u.name }}Ref::_Phantom(never, _) => match *never {},
 {%- endif %}
         }

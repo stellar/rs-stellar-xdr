@@ -116,6 +116,11 @@ pub struct {{ s.name }}Ref<'a> {
 {%- for m in s.members %}
     pub {{ m.name }}: {{ m.ref_type_ref }},
 {%- endfor %}
+{%- if s.ref_needs_phantom %}
+    /// Binds the `'a` lifetime when no member borrows.
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<&'a ()>,
+{%- endif %}
 }
 
 {% if let Some(cfg) = s.cfg -%}

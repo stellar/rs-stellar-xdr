@@ -136,3 +136,38 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
         })
     }
 }
+
+/// TransactionSignaturePayloadTaggedTransactionRef is a borrowing equivalent of [`TransactionSignaturePayloadTaggedTransaction`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionSignaturePayloadTaggedTransactionRef<'a> {
+    Tx(TransactionRef<'a>),
+    TxFeeBump(FeeBumpTransactionRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionSignaturePayloadTaggedTransactionRef<'_>>
+    for TransactionSignaturePayloadTaggedTransaction
+{
+    #[must_use]
+    fn from(v: &TransactionSignaturePayloadTaggedTransactionRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TransactionSignaturePayloadTaggedTransactionRef::Tx(value) => Self::Tx(value.into()),
+            TransactionSignaturePayloadTaggedTransactionRef::TxFeeBump(value) => {
+                Self::TxFeeBump(value.into())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionSignaturePayloadTaggedTransactionRef<'_>>
+    for TransactionSignaturePayloadTaggedTransaction
+{
+    #[must_use]
+    fn from(v: TransactionSignaturePayloadTaggedTransactionRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

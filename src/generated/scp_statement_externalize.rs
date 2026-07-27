@@ -53,3 +53,32 @@ impl WriteXdr for ScpStatementExternalize {
         })
     }
 }
+
+/// ScpStatementExternalizeRef is a borrowing equivalent of [`ScpStatementExternalize`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpStatementExternalizeRef<'a> {
+    pub commit: ScpBallotRef<'a>,
+    pub n_h: u32,
+    pub commit_quorum_set_hash: Hash,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
+    #[must_use]
+    fn from(v: &ScpStatementExternalizeRef<'_>) -> Self {
+        Self {
+            commit: (&v.commit).into(),
+            n_h: v.n_h,
+            commit_quorum_set_hash: v.commit_quorum_set_hash.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
+    #[must_use]
+    fn from(v: ScpStatementExternalizeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

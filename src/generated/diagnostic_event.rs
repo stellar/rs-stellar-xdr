@@ -49,3 +49,30 @@ impl WriteXdr for DiagnosticEvent {
         })
     }
 }
+
+/// DiagnosticEventRef is a borrowing equivalent of [`DiagnosticEvent`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DiagnosticEventRef<'a> {
+    pub in_successful_contract_call: bool,
+    pub event: ContractEventRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&DiagnosticEventRef<'_>> for DiagnosticEvent {
+    #[must_use]
+    fn from(v: &DiagnosticEventRef<'_>) -> Self {
+        Self {
+            in_successful_contract_call: v.in_successful_contract_call,
+            event: (&v.event).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<DiagnosticEventRef<'_>> for DiagnosticEvent {
+    #[must_use]
+    fn from(v: DiagnosticEventRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

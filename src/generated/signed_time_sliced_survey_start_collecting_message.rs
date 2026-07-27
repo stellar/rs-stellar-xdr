@@ -49,3 +49,34 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
         })
     }
 }
+
+/// SignedTimeSlicedSurveyStartCollectingMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyStartCollectingMessage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignedTimeSlicedSurveyStartCollectingMessageRef<'a> {
+    pub signature: SignatureRef<'a>,
+    pub start_collecting: TimeSlicedSurveyStartCollectingMessage,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SignedTimeSlicedSurveyStartCollectingMessageRef<'_>>
+    for SignedTimeSlicedSurveyStartCollectingMessage
+{
+    #[must_use]
+    fn from(v: &SignedTimeSlicedSurveyStartCollectingMessageRef<'_>) -> Self {
+        Self {
+            signature: (&v.signature).into(),
+            start_collecting: v.start_collecting.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SignedTimeSlicedSurveyStartCollectingMessageRef<'_>>
+    for SignedTimeSlicedSurveyStartCollectingMessage
+{
+    #[must_use]
+    fn from(v: SignedTimeSlicedSurveyStartCollectingMessageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -49,3 +49,30 @@ impl WriteXdr for ScpEnvelope {
         })
     }
 }
+
+/// ScpEnvelopeRef is a borrowing equivalent of [`ScpEnvelope`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpEnvelopeRef<'a> {
+    pub statement: ScpStatementRef<'a>,
+    pub signature: SignatureRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpEnvelopeRef<'_>> for ScpEnvelope {
+    #[must_use]
+    fn from(v: &ScpEnvelopeRef<'_>) -> Self {
+        Self {
+            statement: (&v.statement).into(),
+            signature: (&v.signature).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpEnvelopeRef<'_>> for ScpEnvelope {
+    #[must_use]
+    fn from(v: ScpEnvelopeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

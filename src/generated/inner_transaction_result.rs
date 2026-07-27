@@ -91,3 +91,32 @@ impl WriteXdr for InnerTransactionResult {
         })
     }
 }
+
+/// InnerTransactionResultRef is a borrowing equivalent of [`InnerTransactionResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InnerTransactionResultRef<'a> {
+    pub fee_charged: i64,
+    pub result: InnerTransactionResultResultRef<'a>,
+    pub ext: InnerTransactionResultExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&InnerTransactionResultRef<'_>> for InnerTransactionResult {
+    #[must_use]
+    fn from(v: &InnerTransactionResultRef<'_>) -> Self {
+        Self {
+            fee_charged: v.fee_charged,
+            result: (&v.result).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<InnerTransactionResultRef<'_>> for InnerTransactionResult {
+    #[must_use]
+    fn from(v: InnerTransactionResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -49,3 +49,30 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
         })
     }
 }
+
+/// TimeSlicedSurveyResponseMessageRef is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TimeSlicedSurveyResponseMessageRef<'a> {
+    pub response: SurveyResponseMessageRef<'a>,
+    pub nonce: u32,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
+    #[must_use]
+    fn from(v: &TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
+        Self {
+            response: (&v.response).into(),
+            nonce: v.nonce,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
+    #[must_use]
+    fn from(v: TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

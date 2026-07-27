@@ -89,3 +89,32 @@ impl WriteXdr for ScpStatement {
         })
     }
 }
+
+/// ScpStatementRef is a borrowing equivalent of [`ScpStatement`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpStatementRef<'a> {
+    pub node_id: NodeId,
+    pub slot_index: u64,
+    pub pledges: ScpStatementPledgesRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpStatementRef<'_>> for ScpStatement {
+    #[must_use]
+    fn from(v: &ScpStatementRef<'_>) -> Self {
+        Self {
+            node_id: v.node_id.clone(),
+            slot_index: v.slot_index,
+            pledges: (&v.pledges).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpStatementRef<'_>> for ScpStatement {
+    #[must_use]
+    fn from(v: ScpStatementRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -49,3 +49,30 @@ impl WriteXdr for ContractEventV0 {
         })
     }
 }
+
+/// ContractEventV0Ref is a borrowing equivalent of [`ContractEventV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContractEventV0Ref<'a> {
+    pub topics: VecMRef<'a, ScValRef<'a>>,
+    pub data: ScValRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ContractEventV0Ref<'_>> for ContractEventV0 {
+    #[must_use]
+    fn from(v: &ContractEventV0Ref<'_>) -> Self {
+        Self {
+            topics: v.topics.to_vecm_from(),
+            data: (&v.data).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractEventV0Ref<'_>> for ContractEventV0 {
+    #[must_use]
+    fn from(v: ContractEventV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

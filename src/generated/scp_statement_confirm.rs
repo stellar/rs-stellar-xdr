@@ -61,3 +61,36 @@ impl WriteXdr for ScpStatementConfirm {
         })
     }
 }
+
+/// ScpStatementConfirmRef is a borrowing equivalent of [`ScpStatementConfirm`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpStatementConfirmRef<'a> {
+    pub ballot: ScpBallotRef<'a>,
+    pub n_prepared: u32,
+    pub n_commit: u32,
+    pub n_h: u32,
+    pub quorum_set_hash: Hash,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
+    #[must_use]
+    fn from(v: &ScpStatementConfirmRef<'_>) -> Self {
+        Self {
+            ballot: (&v.ballot).into(),
+            n_prepared: v.n_prepared,
+            n_commit: v.n_commit,
+            n_h: v.n_h,
+            quorum_set_hash: v.quorum_set_hash.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
+    #[must_use]
+    fn from(v: ScpStatementConfirmRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

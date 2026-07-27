@@ -48,3 +48,30 @@ impl WriteXdr for TransactionEvent {
         })
     }
 }
+
+/// TransactionEventRef is a borrowing equivalent of [`TransactionEvent`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionEventRef<'a> {
+    pub stage: TransactionEventStage,
+    pub event: ContractEventRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionEventRef<'_>> for TransactionEvent {
+    #[must_use]
+    fn from(v: &TransactionEventRef<'_>) -> Self {
+        Self {
+            stage: v.stage,
+            event: (&v.event).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionEventRef<'_>> for TransactionEvent {
+    #[must_use]
+    fn from(v: TransactionEventRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -161,3 +161,43 @@ impl WriteXdr for ContractExecutable {
         })
     }
 }
+
+/// ContractExecutableRef is a borrowing equivalent of [`ContractExecutable`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractExecutableRef<'a> {
+    Wasm(Hash),
+    StellarAsset,
+    #[cfg(feature = "cap_0085_executable_ref")]
+    ExternalRef(ContractExecutableExternalRefRef<'a>),
+    /// Uninhabited variant binding the `'a` lifetime when every
+    /// lifetime-using variant is compiled out.
+    #[cfg(not(feature = "cap_0085_executable_ref"))]
+    #[doc(hidden)]
+    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ContractExecutableRef<'_>> for ContractExecutable {
+    #[must_use]
+    fn from(v: &ContractExecutableRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ContractExecutableRef::Wasm(value) => Self::Wasm(value.clone()),
+            ContractExecutableRef::StellarAsset => Self::StellarAsset,
+            #[cfg(feature = "cap_0085_executable_ref")]
+            ContractExecutableRef::ExternalRef(value) => Self::ExternalRef(value.into()),
+            #[cfg(not(feature = "cap_0085_executable_ref"))]
+            ContractExecutableRef::_Phantom(never, _) => match *never {},
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractExecutableRef<'_>> for ContractExecutable {
+    #[must_use]
+    fn from(v: ContractExecutableRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

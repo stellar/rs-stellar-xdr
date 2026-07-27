@@ -107,3 +107,24 @@ impl AsRef<[u8]> for EncryptedBody {
         self.0 .0
     }
 }
+
+/// EncryptedBodyRef is a borrowing equivalent of [`EncryptedBody`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EncryptedBodyRef<'a>(pub BytesMRef<'a, 64000>);
+
+#[cfg(feature = "alloc")]
+impl From<&EncryptedBodyRef<'_>> for EncryptedBody {
+    #[must_use]
+    fn from(v: &EncryptedBodyRef<'_>) -> Self {
+        Self(v.0.to_bytesm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<EncryptedBodyRef<'_>> for EncryptedBody {
+    #[must_use]
+    fn from(v: EncryptedBodyRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -107,3 +107,24 @@ impl AsRef<[u8]> for Value {
         self.0 .0
     }
 }
+
+/// ValueRef is a borrowing equivalent of [`Value`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ValueRef<'a>(pub BytesMRef<'a>);
+
+#[cfg(feature = "alloc")]
+impl From<&ValueRef<'_>> for Value {
+    #[must_use]
+    fn from(v: &ValueRef<'_>) -> Self {
+        Self(v.0.to_bytesm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ValueRef<'_>> for Value {
+    #[must_use]
+    fn from(v: ValueRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

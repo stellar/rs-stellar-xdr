@@ -92,3 +92,32 @@ impl WriteXdr for TransactionResult {
         })
     }
 }
+
+/// TransactionResultRef is a borrowing equivalent of [`TransactionResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionResultRef<'a> {
+    pub fee_charged: i64,
+    pub result: TransactionResultResultRef<'a>,
+    pub ext: TransactionResultExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionResultRef<'_>> for TransactionResult {
+    #[must_use]
+    fn from(v: &TransactionResultRef<'_>) -> Self {
+        Self {
+            fee_charged: v.fee_charged,
+            result: (&v.result).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionResultRef<'_>> for TransactionResult {
+    #[must_use]
+    fn from(v: TransactionResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -60,3 +60,37 @@ impl WriteXdr for StellarValueProposedValue {
         })
     }
 }
+
+/// StellarValueProposedValueRef is a borrowing equivalent of [`StellarValueProposedValue`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[cfg(feature = "cap_0083")]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct StellarValueProposedValueRef<'a> {
+    pub tx_set_hash: Hash,
+    pub previous_ledger_hash: Hash,
+    pub previous_ledger_version: u32,
+    pub lc_value_signature: LedgerCloseValueSignatureRef<'a>,
+}
+
+#[cfg(feature = "cap_0083")]
+#[cfg(feature = "alloc")]
+impl From<&StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
+    #[must_use]
+    fn from(v: &StellarValueProposedValueRef<'_>) -> Self {
+        Self {
+            tx_set_hash: v.tx_set_hash.clone(),
+            previous_ledger_hash: v.previous_ledger_hash.clone(),
+            previous_ledger_version: v.previous_ledger_version,
+            lc_value_signature: (&v.lc_value_signature).into(),
+        }
+    }
+}
+
+#[cfg(feature = "cap_0083")]
+#[cfg(feature = "alloc")]
+impl From<StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
+    #[must_use]
+    fn from(v: StellarValueProposedValueRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -1,9 +1,9 @@
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use askama::Template;
 use xdr_parser::ast::{
-    Const, Definition, Enum, Struct, StructMember, Typedef, Union, UnionArm, XdrSpec,
+    Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm, XdrSpec,
 };
 use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
@@ -23,12 +23,22 @@ use crate::types::{base_type_ref, resolve_type, size_to_string, type_ref};
 pub struct RustGenerator {
     options: RustOptions,
     type_info: TypeInfo,
+    /// Rust type names of generated types that directly or transitively
+    /// contain heap-allocated data (`VecM`, `BytesM`, `StringM`, or `Box` for
+    /// cyclic references), and therefore have a borrowing `Ref` variant
+    /// generated for them.
+    ref_required: HashSet<String>,
 }
 
 impl RustGenerator {
     pub fn new(spec: &XdrSpec, options: RustOptions) -> Self {
         let type_info = TypeInfo::build(spec, &type_name);
-        Self { options, type_info }
+        let ref_required = compute_ref_required(spec);
+        Self {
+            options,
+            type_info,
+            ref_required,
+        }
     }
 
     /// Generate Rust code from the spec and write it to the output file.
@@ -264,6 +274,7 @@ impl RustGenerator {
         } else {
             "Struct"
         };
+        let requires_ref = self.ref_required.contains(&name);
         StructOutput {
             name,
             source_comment: source_comment(&s.source, type_kind),
@@ -271,6 +282,7 @@ impl RustGenerator {
             is_custom_str: custom_str,
             members,
             member_names,
+            requires_ref,
             cfg,
         }
     }
@@ -346,6 +358,40 @@ impl RustGenerator {
             .first()
             .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
+        let requires_ref = self.ref_required.contains(&name);
+
+        // If every lifetime-using arm of the Ref enum is behind a cfg, the
+        // enum would fail to compile (unused lifetime) when those cfgs are
+        // disabled. Emit an uninhabited phantom variant that binds the
+        // lifetime under the negation of those cfgs.
+        let ref_phantom_cfg = if requires_ref {
+            let lifetime_arm_cfgs: Vec<&UnionArmOutput> = arms
+                .iter()
+                .filter(|a| {
+                    a.ref_type_ref
+                        .as_ref()
+                        .is_some_and(|t| t.contains("'a"))
+                })
+                .collect();
+            if lifetime_arm_cfgs.iter().all(|a| a.cfg.is_some()) {
+                let mut cfgs: Vec<String> = lifetime_arm_cfgs
+                    .iter()
+                    .filter_map(|a| a.cfg.clone())
+                    .collect();
+                cfgs.sort();
+                cfgs.dedup();
+                Some(if cfgs.len() == 1 {
+                    format!("not({})", cfgs[0])
+                } else {
+                    format!("not(any({}))", cfgs.join(", "))
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         UnionOutput {
             name,
             source_comment: source_comment(&u.source, type_kind),
@@ -353,6 +399,8 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
+            requires_ref,
+            ref_phantom_cfg,
             cfg,
             default_arm_cfg,
         }
@@ -377,7 +425,15 @@ impl RustGenerator {
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str);
+        let resolved = resolve_type(
+            &t.type_,
+            None,
+            &self.type_info,
+            custom_str,
+            &self.ref_required,
+            "v.0",
+            false,
+        );
 
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
@@ -386,7 +442,7 @@ impl RustGenerator {
         };
 
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
-            name,
+            name: name.clone(),
             source_comment: source_comment(&t.source, "Typedef"),
             has_default: !custom_default,
             is_var_array: is_var_array_type,
@@ -401,6 +457,9 @@ impl RustGenerator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+            requires_ref: self.ref_required.contains(&name),
+            ref_type_ref: resolved.ref_type_ref,
+            from_ref_expr: resolved.from_ref_expr,
             cfg,
         })
     }
@@ -427,7 +486,15 @@ impl RustGenerator {
     ) -> StructMemberOutput {
         let name = field_name(&m.name);
         let serde_rename = field_json_rename(&m.name);
-        let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
+        let resolved = resolve_type(
+            &m.type_,
+            Some(parent),
+            &self.type_info,
+            custom_str,
+            &self.ref_required,
+            &format!("v.{name}"),
+            false,
+        );
 
         StructMemberOutput {
             name,
@@ -435,6 +502,8 @@ impl RustGenerator {
             turbofish_type: resolved.turbofish_type,
             serde_as_type: resolved.serde_as_type,
             serde_rename,
+            ref_type_ref: resolved.ref_type_ref,
+            from_ref_expr: resolved.from_ref_expr,
         }
     }
 
@@ -457,10 +526,17 @@ impl RustGenerator {
                     discriminant_prefix,
                 );
 
-                let resolved = arm
-                    .type_
-                    .as_ref()
-                    .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str));
+                let resolved = arm.type_.as_ref().map(|t| {
+                    resolve_type(
+                        t,
+                        Some(parent),
+                        &self.type_info,
+                        custom_str,
+                        &self.ref_required,
+                        "value",
+                        true,
+                    )
+                });
 
                 UnionArmOutput {
                     case_name,
@@ -468,10 +544,115 @@ impl RustGenerator {
                     is_void: arm.type_.is_none(),
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
+                    ref_type_ref: resolved.as_ref().map(|r| r.ref_type_ref.clone()),
+                    from_ref_expr: resolved.as_ref().map(|r| r.from_ref_expr.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }
             })
             .collect()
+    }
+}
+
+// =============================================================================
+// Ref requirement analysis
+// =============================================================================
+
+/// Compute the set of Rust type names that need a borrowing `Ref` variant:
+/// types that are, or transitively contain, heap-allocated data (`VecM`,
+/// `BytesM`, `StringM`), including types that participate in reference cycles
+/// (which the generator breaks with heap-allocated `Box`es).
+fn compute_ref_required(spec: &XdrSpec) -> HashSet<String> {
+    let mut defs_by_name: HashMap<String, Vec<&Definition>> = HashMap::new();
+    for def in spec.all_definitions() {
+        defs_by_name
+            .entry(type_name(def.name()))
+            .or_default()
+            .push(def);
+    }
+
+    let mut memo: HashMap<String, bool> = HashMap::new();
+    let mut stack: HashSet<String> = HashSet::new();
+    for name in defs_by_name.keys() {
+        requires_ref_name(name, &defs_by_name, &mut memo, &mut stack);
+    }
+
+    memo.into_iter()
+        .filter_map(|(name, required)| required.then_some(name))
+        .collect()
+}
+
+/// Whether the type with the given Rust name requires a `Ref` variant.
+///
+/// A name currently on the recursion stack indicates a reference cycle. Valid
+/// XDR breaks cycles with optional or variable-length types, both of which the
+/// generator maps to heap allocations (`Box` or `VecM`), so any type on a
+/// cycle requires a `Ref` variant.
+fn requires_ref_name(
+    name: &str,
+    defs_by_name: &HashMap<String, Vec<&Definition>>,
+    memo: &mut HashMap<String, bool>,
+    stack: &mut HashSet<String>,
+) -> bool {
+    if let Some(&required) = memo.get(name) {
+        return required;
+    }
+    if stack.contains(name) {
+        return true;
+    }
+    let Some(defs) = defs_by_name.get(name) else {
+        return false;
+    };
+    stack.insert(name.to_string());
+    let required = defs
+        .iter()
+        .any(|def| def_requires_ref(def, defs_by_name, memo, stack));
+    stack.remove(name);
+    memo.insert(name.to_string(), required);
+    required
+}
+
+fn def_requires_ref(
+    def: &Definition,
+    defs_by_name: &HashMap<String, Vec<&Definition>>,
+    memo: &mut HashMap<String, bool>,
+    stack: &mut HashSet<String>,
+) -> bool {
+    match def {
+        Definition::Struct(s) => s
+            .members
+            .iter()
+            .any(|m| type_requires_ref(&m.type_, defs_by_name, memo, stack)),
+        Definition::Union(u) => u.arms.iter().any(|arm| {
+            arm.type_
+                .as_ref()
+                .is_some_and(|t| type_requires_ref(t, defs_by_name, memo, stack))
+        }),
+        Definition::Typedef(t) => type_requires_ref(&t.type_, defs_by_name, memo, stack),
+        Definition::Enum(_) | Definition::Const(_) => false,
+    }
+}
+
+fn type_requires_ref(
+    type_: &Type,
+    defs_by_name: &HashMap<String, Vec<&Definition>>,
+    memo: &mut HashMap<String, bool>,
+    stack: &mut HashSet<String>,
+) -> bool {
+    match type_ {
+        Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } => true,
+        Type::Int
+        | Type::UnsignedInt
+        | Type::Hyper
+        | Type::UnsignedHyper
+        | Type::Float
+        | Type::Double
+        | Type::Bool
+        | Type::OpaqueFixed(_) => false,
+        Type::Ident(name) => requires_ref_name(&type_name(name), defs_by_name, memo, stack),
+        Type::Optional(inner) => type_requires_ref(inner, defs_by_name, memo, stack),
+        Type::Array { element_type, .. } => {
+            type_requires_ref(element_type, defs_by_name, memo, stack)
+        }
     }
 }

@@ -49,3 +49,30 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
         })
     }
 }
+
+/// PathPaymentStrictSendResultSuccessRef is a borrowing equivalent of [`PathPaymentStrictSendResultSuccess`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PathPaymentStrictSendResultSuccessRef<'a> {
+    pub offers: VecMRef<'a, ClaimAtom>,
+    pub last: SimplePaymentResult,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PathPaymentStrictSendResultSuccessRef<'_>> for PathPaymentStrictSendResultSuccess {
+    #[must_use]
+    fn from(v: &PathPaymentStrictSendResultSuccessRef<'_>) -> Self {
+        Self {
+            offers: v.offers.to_vecm(),
+            last: v.last.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PathPaymentStrictSendResultSuccessRef<'_>> for PathPaymentStrictSendResultSuccess {
+    #[must_use]
+    fn from(v: PathPaymentStrictSendResultSuccessRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

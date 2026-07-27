@@ -107,3 +107,24 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
         self.0 .0
     }
 }
+
+/// ParallelTxExecutionStageRef is a borrowing equivalent of [`ParallelTxExecutionStage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ParallelTxExecutionStageRef<'a>(pub VecMRef<'a, DependentTxClusterRef<'a>>);
+
+#[cfg(feature = "alloc")]
+impl From<&ParallelTxExecutionStageRef<'_>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn from(v: &ParallelTxExecutionStageRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ParallelTxExecutionStageRef<'_>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn from(v: ParallelTxExecutionStageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

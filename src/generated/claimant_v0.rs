@@ -49,3 +49,30 @@ impl WriteXdr for ClaimantV0 {
         })
     }
 }
+
+/// ClaimantV0Ref is a borrowing equivalent of [`ClaimantV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ClaimantV0Ref<'a> {
+    pub destination: AccountId,
+    pub predicate: ClaimPredicateRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ClaimantV0Ref<'_>> for ClaimantV0 {
+    #[must_use]
+    fn from(v: &ClaimantV0Ref<'_>) -> Self {
+        Self {
+            destination: v.destination.clone(),
+            predicate: (&v.predicate).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ClaimantV0Ref<'_>> for ClaimantV0 {
+    #[must_use]
+    fn from(v: ClaimantV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

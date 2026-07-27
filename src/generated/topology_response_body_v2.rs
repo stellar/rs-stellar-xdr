@@ -53,3 +53,32 @@ impl WriteXdr for TopologyResponseBodyV2 {
         })
     }
 }
+
+/// TopologyResponseBodyV2Ref is a borrowing equivalent of [`TopologyResponseBodyV2`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TopologyResponseBodyV2Ref<'a> {
+    pub inbound_peers: TimeSlicedPeerDataListRef<'a>,
+    pub outbound_peers: TimeSlicedPeerDataListRef<'a>,
+    pub node_data: TimeSlicedNodeData,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
+    #[must_use]
+    fn from(v: &TopologyResponseBodyV2Ref<'_>) -> Self {
+        Self {
+            inbound_peers: (&v.inbound_peers).into(),
+            outbound_peers: (&v.outbound_peers).into(),
+            node_data: v.node_data.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
+    #[must_use]
+    fn from(v: TopologyResponseBodyV2Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

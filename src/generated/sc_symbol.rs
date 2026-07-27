@@ -107,3 +107,24 @@ impl AsRef<[u8]> for ScSymbol {
         self.0 .0
     }
 }
+
+/// ScSymbolRef is a borrowing equivalent of [`ScSymbol`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSymbolRef<'a>(pub StringMRef<'a, 32>);
+
+#[cfg(feature = "alloc")]
+impl From<&ScSymbolRef<'_>> for ScSymbol {
+    #[must_use]
+    fn from(v: &ScSymbolRef<'_>) -> Self {
+        Self(v.0.to_stringm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSymbolRef<'_>> for ScSymbol {
+    #[must_use]
+    fn from(v: ScSymbolRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -107,3 +107,24 @@ impl AsRef<[u8]> for EncodedLedgerKey {
         self.0 .0
     }
 }
+
+/// EncodedLedgerKeyRef is a borrowing equivalent of [`EncodedLedgerKey`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EncodedLedgerKeyRef<'a>(pub BytesMRef<'a>);
+
+#[cfg(feature = "alloc")]
+impl From<&EncodedLedgerKeyRef<'_>> for EncodedLedgerKey {
+    #[must_use]
+    fn from(v: &EncodedLedgerKeyRef<'_>) -> Self {
+        Self(v.0.to_bytesm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<EncodedLedgerKeyRef<'_>> for EncodedLedgerKey {
+    #[must_use]
+    fn from(v: EncodedLedgerKeyRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

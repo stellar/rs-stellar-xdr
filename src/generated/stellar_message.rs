@@ -341,3 +341,78 @@ impl WriteXdr for StellarMessage {
         })
     }
 }
+
+/// StellarMessageRef is a borrowing equivalent of [`StellarMessage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum StellarMessageRef<'a> {
+    ErrorMsg(SErrorRef<'a>),
+    Hello(HelloRef<'a>),
+    Auth(Auth),
+    DontHave(DontHave),
+    Peers(VecMRef<'a, PeerAddress, 100>),
+    GetTxSet(Uint256),
+    TxSet(TransactionSetRef<'a>),
+    GeneralizedTxSet(GeneralizedTransactionSetRef<'a>),
+    Transaction(TransactionEnvelopeRef<'a>),
+    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessageRef<'a>),
+    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessageRef<'a>),
+    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessageRef<'a>),
+    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessageRef<'a>),
+    GetScpQuorumset(Uint256),
+    ScpQuorumset(ScpQuorumSetRef<'a>),
+    ScpMessage(ScpEnvelopeRef<'a>),
+    GetScpState(u32),
+    SendMore(SendMore),
+    SendMoreExtended(SendMoreExtended),
+    FloodAdvert(FloodAdvertRef<'a>),
+    FloodDemand(FloodDemandRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&StellarMessageRef<'_>> for StellarMessage {
+    #[must_use]
+    fn from(v: &StellarMessageRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            StellarMessageRef::ErrorMsg(value) => Self::ErrorMsg(value.into()),
+            StellarMessageRef::Hello(value) => Self::Hello(value.into()),
+            StellarMessageRef::Auth(value) => Self::Auth(value.clone()),
+            StellarMessageRef::DontHave(value) => Self::DontHave(value.clone()),
+            StellarMessageRef::Peers(value) => Self::Peers(value.to_vecm()),
+            StellarMessageRef::GetTxSet(value) => Self::GetTxSet(value.clone()),
+            StellarMessageRef::TxSet(value) => Self::TxSet(value.into()),
+            StellarMessageRef::GeneralizedTxSet(value) => Self::GeneralizedTxSet(value.into()),
+            StellarMessageRef::Transaction(value) => Self::Transaction(value.into()),
+            StellarMessageRef::TimeSlicedSurveyRequest(value) => {
+                Self::TimeSlicedSurveyRequest(value.into())
+            }
+            StellarMessageRef::TimeSlicedSurveyResponse(value) => {
+                Self::TimeSlicedSurveyResponse(value.into())
+            }
+            StellarMessageRef::TimeSlicedSurveyStartCollecting(value) => {
+                Self::TimeSlicedSurveyStartCollecting(value.into())
+            }
+            StellarMessageRef::TimeSlicedSurveyStopCollecting(value) => {
+                Self::TimeSlicedSurveyStopCollecting(value.into())
+            }
+            StellarMessageRef::GetScpQuorumset(value) => Self::GetScpQuorumset(value.clone()),
+            StellarMessageRef::ScpQuorumset(value) => Self::ScpQuorumset(value.into()),
+            StellarMessageRef::ScpMessage(value) => Self::ScpMessage(value.into()),
+            StellarMessageRef::GetScpState(value) => Self::GetScpState(*value),
+            StellarMessageRef::SendMore(value) => Self::SendMore(value.clone()),
+            StellarMessageRef::SendMoreExtended(value) => Self::SendMoreExtended(value.clone()),
+            StellarMessageRef::FloodAdvert(value) => Self::FloodAdvert(value.into()),
+            StellarMessageRef::FloodDemand(value) => Self::FloodDemand(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<StellarMessageRef<'_>> for StellarMessage {
+    #[must_use]
+    fn from(v: StellarMessageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

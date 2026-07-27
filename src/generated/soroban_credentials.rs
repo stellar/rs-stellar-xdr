@@ -165,3 +165,38 @@ impl WriteXdr for SorobanCredentials {
         })
     }
 }
+
+/// SorobanCredentialsRef is a borrowing equivalent of [`SorobanCredentials`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanCredentialsRef<'a> {
+    SourceAccount,
+    Address(SorobanAddressCredentialsRef<'a>),
+    AddressV2(SorobanAddressCredentialsRef<'a>),
+    AddressWithDelegates(SorobanAddressCredentialsWithDelegatesRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanCredentialsRef<'_>> for SorobanCredentials {
+    #[must_use]
+    fn from(v: &SorobanCredentialsRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            SorobanCredentialsRef::SourceAccount => Self::SourceAccount,
+            SorobanCredentialsRef::Address(value) => Self::Address(value.into()),
+            SorobanCredentialsRef::AddressV2(value) => Self::AddressV2(value.into()),
+            SorobanCredentialsRef::AddressWithDelegates(value) => {
+                Self::AddressWithDelegates(value.into())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanCredentialsRef<'_>> for SorobanCredentials {
+    #[must_use]
+    fn from(v: SorobanCredentialsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

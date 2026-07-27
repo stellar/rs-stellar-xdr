@@ -49,3 +49,30 @@ impl WriteXdr for LedgerKeyData {
         })
     }
 }
+
+/// LedgerKeyDataRef is a borrowing equivalent of [`LedgerKeyData`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerKeyDataRef<'a> {
+    pub account_id: AccountId,
+    pub data_name: String64Ref<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerKeyDataRef<'_>> for LedgerKeyData {
+    #[must_use]
+    fn from(v: &LedgerKeyDataRef<'_>) -> Self {
+        Self {
+            account_id: v.account_id.clone(),
+            data_name: (&v.data_name).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerKeyDataRef<'_>> for LedgerKeyData {
+    #[must_use]
+    fn from(v: LedgerKeyDataRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

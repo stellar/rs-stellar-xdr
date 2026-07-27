@@ -57,3 +57,32 @@ impl WriteXdr for AuthCert {
         })
     }
 }
+
+/// AuthCertRef is a borrowing equivalent of [`AuthCert`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AuthCertRef<'a> {
+    pub pubkey: Curve25519Public,
+    pub expiration: u64,
+    pub sig: SignatureRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&AuthCertRef<'_>> for AuthCert {
+    #[must_use]
+    fn from(v: &AuthCertRef<'_>) -> Self {
+        Self {
+            pubkey: v.pubkey.clone(),
+            expiration: v.expiration,
+            sig: (&v.sig).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AuthCertRef<'_>> for AuthCert {
+    #[must_use]
+    fn from(v: AuthCertRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

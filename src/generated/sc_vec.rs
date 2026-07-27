@@ -107,3 +107,24 @@ impl AsRef<[ScVal]> for ScVec {
         self.0 .0
     }
 }
+
+/// ScVecRef is a borrowing equivalent of [`ScVec`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScVecRef<'a>(pub VecMRef<'a, ScValRef<'a>>);
+
+#[cfg(feature = "alloc")]
+impl From<&ScVecRef<'_>> for ScVec {
+    #[must_use]
+    fn from(v: &ScVecRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScVecRef<'_>> for ScVec {
+    #[must_use]
+    fn from(v: ScVecRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

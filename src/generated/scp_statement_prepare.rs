@@ -65,3 +65,38 @@ impl WriteXdr for ScpStatementPrepare {
         })
     }
 }
+
+/// ScpStatementPrepareRef is a borrowing equivalent of [`ScpStatementPrepare`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpStatementPrepareRef<'a> {
+    pub quorum_set_hash: Hash,
+    pub ballot: ScpBallotRef<'a>,
+    pub prepared: Option<ScpBallotRef<'a>>,
+    pub prepared_prime: Option<ScpBallotRef<'a>>,
+    pub n_c: u32,
+    pub n_h: u32,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
+    #[must_use]
+    fn from(v: &ScpStatementPrepareRef<'_>) -> Self {
+        Self {
+            quorum_set_hash: v.quorum_set_hash.clone(),
+            ballot: (&v.ballot).into(),
+            prepared: v.prepared.as_ref().map(Into::into),
+            prepared_prime: v.prepared_prime.as_ref().map(Into::into),
+            n_c: v.n_c,
+            n_h: v.n_h,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
+    #[must_use]
+    fn from(v: ScpStatementPrepareRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

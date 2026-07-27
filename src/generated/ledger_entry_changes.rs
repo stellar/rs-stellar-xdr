@@ -107,3 +107,24 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
         self.0 .0
     }
 }
+
+/// LedgerEntryChangesRef is a borrowing equivalent of [`LedgerEntryChanges`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerEntryChangesRef<'a>(pub VecMRef<'a, LedgerEntryChangeRef<'a>>);
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerEntryChangesRef<'_>> for LedgerEntryChanges {
+    #[must_use]
+    fn from(v: &LedgerEntryChangesRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerEntryChangesRef<'_>> for LedgerEntryChanges {
+    #[must_use]
+    fn from(v: LedgerEntryChangesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

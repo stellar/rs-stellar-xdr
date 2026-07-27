@@ -62,3 +62,34 @@ impl WriteXdr for SorobanResources {
         })
     }
 }
+
+/// SorobanResourcesRef is a borrowing equivalent of [`SorobanResources`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanResourcesRef<'a> {
+    pub footprint: LedgerFootprintRef<'a>,
+    pub instructions: u32,
+    pub disk_read_bytes: u32,
+    pub write_bytes: u32,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanResourcesRef<'_>> for SorobanResources {
+    #[must_use]
+    fn from(v: &SorobanResourcesRef<'_>) -> Self {
+        Self {
+            footprint: (&v.footprint).into(),
+            instructions: v.instructions,
+            disk_read_bytes: v.disk_read_bytes,
+            write_bytes: v.write_bytes,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanResourcesRef<'_>> for SorobanResources {
+    #[must_use]
+    fn from(v: SorobanResourcesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

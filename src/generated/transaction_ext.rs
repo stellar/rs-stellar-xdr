@@ -135,3 +135,32 @@ impl WriteXdr for TransactionExt {
         })
     }
 }
+
+/// TransactionExtRef is a borrowing equivalent of [`TransactionExt`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionExtRef<'a> {
+    V0,
+    V1(SorobanTransactionDataRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionExtRef<'_>> for TransactionExt {
+    #[must_use]
+    fn from(v: &TransactionExtRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TransactionExtRef::V0 => Self::V0,
+            TransactionExtRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionExtRef<'_>> for TransactionExt {
+    #[must_use]
+    fn from(v: TransactionExtRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -86,3 +86,32 @@ impl WriteXdr for LedgerEntry {
         })
     }
 }
+
+/// LedgerEntryRef is a borrowing equivalent of [`LedgerEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerEntryRef<'a> {
+    pub last_modified_ledger_seq: u32,
+    pub data: LedgerEntryDataRef<'a>,
+    pub ext: LedgerEntryExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerEntryRef<'_>> for LedgerEntry {
+    #[must_use]
+    fn from(v: &LedgerEntryRef<'_>) -> Self {
+        Self {
+            last_modified_ledger_seq: v.last_modified_ledger_seq,
+            data: (&v.data).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerEntryRef<'_>> for LedgerEntry {
+    #[must_use]
+    fn from(v: LedgerEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

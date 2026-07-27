@@ -60,3 +60,32 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
         })
     }
 }
+
+/// LedgerHeaderHistoryEntryRef is a borrowing equivalent of [`LedgerHeaderHistoryEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerHeaderHistoryEntryRef<'a> {
+    pub hash: Hash,
+    pub header: LedgerHeaderRef<'a>,
+    pub ext: LedgerHeaderHistoryEntryExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerHeaderHistoryEntryRef<'_>> for LedgerHeaderHistoryEntry {
+    #[must_use]
+    fn from(v: &LedgerHeaderHistoryEntryRef<'_>) -> Self {
+        Self {
+            hash: v.hash.clone(),
+            header: (&v.header).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerHeaderHistoryEntryRef<'_>> for LedgerHeaderHistoryEntry {
+    #[must_use]
+    fn from(v: LedgerHeaderHistoryEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

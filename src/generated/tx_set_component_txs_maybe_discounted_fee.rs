@@ -53,3 +53,30 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
         })
     }
 }
+
+/// TxSetComponentTxsMaybeDiscountedFeeRef is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TxSetComponentTxsMaybeDiscountedFeeRef<'a> {
+    pub base_fee: Option<i64>,
+    pub txs: VecMRef<'a, TransactionEnvelopeRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
+    #[must_use]
+    fn from(v: &TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
+        Self {
+            base_fee: v.base_fee,
+            txs: v.txs.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
+    #[must_use]
+    fn from(v: TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

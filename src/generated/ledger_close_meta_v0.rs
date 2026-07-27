@@ -70,3 +70,36 @@ impl WriteXdr for LedgerCloseMetaV0 {
         })
     }
 }
+
+/// LedgerCloseMetaV0Ref is a borrowing equivalent of [`LedgerCloseMetaV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaV0Ref<'a> {
+    pub ledger_header: LedgerHeaderHistoryEntryRef<'a>,
+    pub tx_set: TransactionSetRef<'a>,
+    pub tx_processing: VecMRef<'a, TransactionResultMetaRef<'a>>,
+    pub upgrades_processing: VecMRef<'a, UpgradeEntryMetaRef<'a>>,
+    pub scp_info: VecMRef<'a, ScpHistoryEntryRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
+    #[must_use]
+    fn from(v: &LedgerCloseMetaV0Ref<'_>) -> Self {
+        Self {
+            ledger_header: (&v.ledger_header).into(),
+            tx_set: (&v.tx_set).into(),
+            tx_processing: v.tx_processing.to_vecm_from(),
+            upgrades_processing: v.upgrades_processing.to_vecm_from(),
+            scp_info: v.scp_info.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
+    #[must_use]
+    fn from(v: LedgerCloseMetaV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

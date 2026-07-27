@@ -60,3 +60,32 @@ impl WriteXdr for TransactionHistoryResultEntry {
         })
     }
 }
+
+/// TransactionHistoryResultEntryRef is a borrowing equivalent of [`TransactionHistoryResultEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionHistoryResultEntryRef<'a> {
+    pub ledger_seq: u32,
+    pub tx_result_set: TransactionResultSetRef<'a>,
+    pub ext: TransactionHistoryResultEntryExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntry {
+    #[must_use]
+    fn from(v: &TransactionHistoryResultEntryRef<'_>) -> Self {
+        Self {
+            ledger_seq: v.ledger_seq,
+            tx_result_set: (&v.tx_result_set).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntry {
+    #[must_use]
+    fn from(v: TransactionHistoryResultEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

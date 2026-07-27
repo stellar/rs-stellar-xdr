@@ -107,3 +107,24 @@ impl AsRef<[u8]> for UpgradeType {
         self.0 .0
     }
 }
+
+/// UpgradeTypeRef is a borrowing equivalent of [`UpgradeType`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct UpgradeTypeRef<'a>(pub BytesMRef<'a, 128>);
+
+#[cfg(feature = "alloc")]
+impl From<&UpgradeTypeRef<'_>> for UpgradeType {
+    #[must_use]
+    fn from(v: &UpgradeTypeRef<'_>) -> Self {
+        Self(v.0.to_bytesm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<UpgradeTypeRef<'_>> for UpgradeType {
+    #[must_use]
+    fn from(v: UpgradeTypeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

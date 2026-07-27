@@ -49,3 +49,30 @@ impl WriteXdr for LedgerFootprint {
         })
     }
 }
+
+/// LedgerFootprintRef is a borrowing equivalent of [`LedgerFootprint`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerFootprintRef<'a> {
+    pub read_only: VecMRef<'a, LedgerKeyRef<'a>>,
+    pub read_write: VecMRef<'a, LedgerKeyRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerFootprintRef<'_>> for LedgerFootprint {
+    #[must_use]
+    fn from(v: &LedgerFootprintRef<'_>) -> Self {
+        Self {
+            read_only: v.read_only.to_vecm_from(),
+            read_write: v.read_write.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerFootprintRef<'_>> for LedgerFootprint {
+    #[must_use]
+    fn from(v: LedgerFootprintRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

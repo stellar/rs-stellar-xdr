@@ -49,3 +49,30 @@ impl WriteXdr for UpgradeEntryMeta {
         })
     }
 }
+
+/// UpgradeEntryMetaRef is a borrowing equivalent of [`UpgradeEntryMeta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct UpgradeEntryMetaRef<'a> {
+    pub upgrade: LedgerUpgrade,
+    pub changes: LedgerEntryChangesRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&UpgradeEntryMetaRef<'_>> for UpgradeEntryMeta {
+    #[must_use]
+    fn from(v: &UpgradeEntryMetaRef<'_>) -> Self {
+        Self {
+            upgrade: v.upgrade.clone(),
+            changes: (&v.changes).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<UpgradeEntryMetaRef<'_>> for UpgradeEntryMeta {
+    #[must_use]
+    fn from(v: UpgradeEntryMetaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

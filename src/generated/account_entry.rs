@@ -100,3 +100,46 @@ impl WriteXdr for AccountEntry {
         })
     }
 }
+
+/// AccountEntryRef is a borrowing equivalent of [`AccountEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AccountEntryRef<'a> {
+    pub account_id: AccountId,
+    pub balance: i64,
+    pub seq_num: SequenceNumber,
+    pub num_sub_entries: u32,
+    pub inflation_dest: Option<AccountId>,
+    pub flags: u32,
+    pub home_domain: String32Ref<'a>,
+    pub thresholds: Thresholds,
+    pub signers: VecMRef<'a, SignerRef<'a>, 20>,
+    pub ext: AccountEntryExtRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&AccountEntryRef<'_>> for AccountEntry {
+    #[must_use]
+    fn from(v: &AccountEntryRef<'_>) -> Self {
+        Self {
+            account_id: v.account_id.clone(),
+            balance: v.balance,
+            seq_num: v.seq_num.clone(),
+            num_sub_entries: v.num_sub_entries,
+            inflation_dest: v.inflation_dest.clone(),
+            flags: v.flags,
+            home_domain: (&v.home_domain).into(),
+            thresholds: v.thresholds.clone(),
+            signers: v.signers.to_vecm_from(),
+            ext: (&v.ext).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AccountEntryRef<'_>> for AccountEntry {
+    #[must_use]
+    fn from(v: AccountEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

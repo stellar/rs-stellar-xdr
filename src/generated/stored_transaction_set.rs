@@ -135,3 +135,32 @@ impl WriteXdr for StoredTransactionSet {
         })
     }
 }
+
+/// StoredTransactionSetRef is a borrowing equivalent of [`StoredTransactionSet`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum StoredTransactionSetRef<'a> {
+    V0(TransactionSetRef<'a>),
+    V1(GeneralizedTransactionSetRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&StoredTransactionSetRef<'_>> for StoredTransactionSet {
+    #[must_use]
+    fn from(v: &StoredTransactionSetRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            StoredTransactionSetRef::V0(value) => Self::V0(value.into()),
+            StoredTransactionSetRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<StoredTransactionSetRef<'_>> for StoredTransactionSet {
+    #[must_use]
+    fn from(v: StoredTransactionSetRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -51,3 +51,30 @@ impl WriteXdr for TransactionV1Envelope {
         })
     }
 }
+
+/// TransactionV1EnvelopeRef is a borrowing equivalent of [`TransactionV1Envelope`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionV1EnvelopeRef<'a> {
+    pub tx: TransactionRef<'a>,
+    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionV1EnvelopeRef<'_>> for TransactionV1Envelope {
+    #[must_use]
+    fn from(v: &TransactionV1EnvelopeRef<'_>) -> Self {
+        Self {
+            tx: (&v.tx).into(),
+            signatures: v.signatures.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionV1EnvelopeRef<'_>> for TransactionV1Envelope {
+    #[must_use]
+    fn from(v: TransactionV1EnvelopeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -49,3 +49,30 @@ impl WriteXdr for Signer {
         })
     }
 }
+
+/// SignerRef is a borrowing equivalent of [`Signer`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignerRef<'a> {
+    pub key: SignerKeyRef<'a>,
+    pub weight: u32,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SignerRef<'_>> for Signer {
+    #[must_use]
+    fn from(v: &SignerRef<'_>) -> Self {
+        Self {
+            key: (&v.key).into(),
+            weight: v.weight,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SignerRef<'_>> for Signer {
+    #[must_use]
+    fn from(v: SignerRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

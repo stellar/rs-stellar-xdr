@@ -49,3 +49,30 @@ impl WriteXdr for ScpHistoryEntryV0 {
         })
     }
 }
+
+/// ScpHistoryEntryV0Ref is a borrowing equivalent of [`ScpHistoryEntryV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpHistoryEntryV0Ref<'a> {
+    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
+    pub ledger_messages: LedgerScpMessagesRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
+    #[must_use]
+    fn from(v: &ScpHistoryEntryV0Ref<'_>) -> Self {
+        Self {
+            quorum_sets: v.quorum_sets.to_vecm_from(),
+            ledger_messages: (&v.ledger_messages).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
+    #[must_use]
+    fn from(v: ScpHistoryEntryV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

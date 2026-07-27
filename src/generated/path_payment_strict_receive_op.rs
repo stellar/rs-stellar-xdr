@@ -77,3 +77,38 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
         })
     }
 }
+
+/// PathPaymentStrictReceiveOpRef is a borrowing equivalent of [`PathPaymentStrictReceiveOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PathPaymentStrictReceiveOpRef<'a> {
+    pub send_asset: Asset,
+    pub send_max: i64,
+    pub destination: MuxedAccount,
+    pub dest_asset: Asset,
+    pub dest_amount: i64,
+    pub path: VecMRef<'a, Asset, 5>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PathPaymentStrictReceiveOpRef<'_>> for PathPaymentStrictReceiveOp {
+    #[must_use]
+    fn from(v: &PathPaymentStrictReceiveOpRef<'_>) -> Self {
+        Self {
+            send_asset: v.send_asset.clone(),
+            send_max: v.send_max,
+            destination: v.destination.clone(),
+            dest_asset: v.dest_asset.clone(),
+            dest_amount: v.dest_amount,
+            path: v.path.to_vecm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PathPaymentStrictReceiveOpRef<'_>> for PathPaymentStrictReceiveOp {
+    #[must_use]
+    fn from(v: PathPaymentStrictReceiveOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

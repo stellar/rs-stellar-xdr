@@ -128,3 +128,30 @@ impl WriteXdr for ScpHistoryEntry {
         })
     }
 }
+
+/// ScpHistoryEntryRef is a borrowing equivalent of [`ScpHistoryEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScpHistoryEntryRef<'a> {
+    V0(ScpHistoryEntryV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
+    #[must_use]
+    fn from(v: &ScpHistoryEntryRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScpHistoryEntryRef::V0(value) => Self::V0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
+    #[must_use]
+    fn from(v: ScpHistoryEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

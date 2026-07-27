@@ -45,3 +45,28 @@ impl WriteXdr for FloodDemand {
         })
     }
 }
+
+/// FloodDemandRef is a borrowing equivalent of [`FloodDemand`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FloodDemandRef<'a> {
+    pub tx_hashes: TxDemandVectorRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FloodDemandRef<'_>> for FloodDemand {
+    #[must_use]
+    fn from(v: &FloodDemandRef<'_>) -> Self {
+        Self {
+            tx_hashes: (&v.tx_hashes).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FloodDemandRef<'_>> for FloodDemand {
+    #[must_use]
+    fn from(v: FloodDemandRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

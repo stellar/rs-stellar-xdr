@@ -88,3 +88,38 @@ impl WriteXdr for PreconditionsV2 {
         })
     }
 }
+
+/// PreconditionsV2Ref is a borrowing equivalent of [`PreconditionsV2`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PreconditionsV2Ref<'a> {
+    pub time_bounds: Option<TimeBounds>,
+    pub ledger_bounds: Option<LedgerBounds>,
+    pub min_seq_num: Option<SequenceNumber>,
+    pub min_seq_age: Duration,
+    pub min_seq_ledger_gap: u32,
+    pub extra_signers: VecMRef<'a, SignerKeyRef<'a>, 2>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PreconditionsV2Ref<'_>> for PreconditionsV2 {
+    #[must_use]
+    fn from(v: &PreconditionsV2Ref<'_>) -> Self {
+        Self {
+            time_bounds: v.time_bounds.clone(),
+            ledger_bounds: v.ledger_bounds.clone(),
+            min_seq_num: v.min_seq_num.clone(),
+            min_seq_age: v.min_seq_age.clone(),
+            min_seq_ledger_gap: v.min_seq_ledger_gap,
+            extra_signers: v.extra_signers.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PreconditionsV2Ref<'_>> for PreconditionsV2 {
+    #[must_use]
+    fn from(v: PreconditionsV2Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

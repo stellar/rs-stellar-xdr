@@ -56,3 +56,30 @@ impl WriteXdr for ParallelTxsComponent {
         })
     }
 }
+
+/// ParallelTxsComponentRef is a borrowing equivalent of [`ParallelTxsComponent`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ParallelTxsComponentRef<'a> {
+    pub base_fee: Option<i64>,
+    pub execution_stages: VecMRef<'a, ParallelTxExecutionStageRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
+    #[must_use]
+    fn from(v: &ParallelTxsComponentRef<'_>) -> Self {
+        Self {
+            base_fee: v.base_fee,
+            execution_stages: v.execution_stages.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
+    #[must_use]
+    fn from(v: ParallelTxsComponentRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

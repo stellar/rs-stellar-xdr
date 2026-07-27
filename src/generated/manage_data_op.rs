@@ -49,3 +49,30 @@ impl WriteXdr for ManageDataOp {
         })
     }
 }
+
+/// ManageDataOpRef is a borrowing equivalent of [`ManageDataOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ManageDataOpRef<'a> {
+    pub data_name: String64Ref<'a>,
+    pub data_value: Option<DataValueRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ManageDataOpRef<'_>> for ManageDataOp {
+    #[must_use]
+    fn from(v: &ManageDataOpRef<'_>) -> Self {
+        Self {
+            data_name: (&v.data_name).into(),
+            data_value: v.data_value.as_ref().map(Into::into),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ManageDataOpRef<'_>> for ManageDataOp {
+    #[must_use]
+    fn from(v: ManageDataOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

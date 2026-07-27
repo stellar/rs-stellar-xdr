@@ -129,3 +129,30 @@ impl WriteXdr for GeneralizedTransactionSet {
         })
     }
 }
+
+/// GeneralizedTransactionSetRef is a borrowing equivalent of [`GeneralizedTransactionSet`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum GeneralizedTransactionSetRef<'a> {
+    V1(TransactionSetV1Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
+    #[must_use]
+    fn from(v: &GeneralizedTransactionSetRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            GeneralizedTransactionSetRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
+    #[must_use]
+    fn from(v: GeneralizedTransactionSetRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

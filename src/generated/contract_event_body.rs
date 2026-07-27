@@ -132,3 +132,30 @@ impl WriteXdr for ContractEventBody {
         })
     }
 }
+
+/// ContractEventBodyRef is a borrowing equivalent of [`ContractEventBody`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractEventBodyRef<'a> {
+    V0(ContractEventV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ContractEventBodyRef<'_>> for ContractEventBody {
+    #[must_use]
+    fn from(v: &ContractEventBodyRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ContractEventBodyRef::V0(value) => Self::V0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractEventBodyRef<'_>> for ContractEventBody {
+    #[must_use]
+    fn from(v: ContractEventBodyRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

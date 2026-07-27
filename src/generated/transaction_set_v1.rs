@@ -49,3 +49,30 @@ impl WriteXdr for TransactionSetV1 {
         })
     }
 }
+
+/// TransactionSetV1Ref is a borrowing equivalent of [`TransactionSetV1`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionSetV1Ref<'a> {
+    pub previous_ledger_hash: Hash,
+    pub phases: VecMRef<'a, TransactionPhaseRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionSetV1Ref<'_>> for TransactionSetV1 {
+    #[must_use]
+    fn from(v: &TransactionSetV1Ref<'_>) -> Self {
+        Self {
+            previous_ledger_hash: v.previous_ledger_hash.clone(),
+            phases: v.phases.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionSetV1Ref<'_>> for TransactionSetV1 {
+    #[must_use]
+    fn from(v: TransactionSetV1Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

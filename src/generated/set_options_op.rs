@@ -84,3 +84,44 @@ impl WriteXdr for SetOptionsOp {
         })
     }
 }
+
+/// SetOptionsOpRef is a borrowing equivalent of [`SetOptionsOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SetOptionsOpRef<'a> {
+    pub inflation_dest: Option<AccountId>,
+    pub clear_flags: Option<u32>,
+    pub set_flags: Option<u32>,
+    pub master_weight: Option<u32>,
+    pub low_threshold: Option<u32>,
+    pub med_threshold: Option<u32>,
+    pub high_threshold: Option<u32>,
+    pub home_domain: Option<String32Ref<'a>>,
+    pub signer: Option<SignerRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SetOptionsOpRef<'_>> for SetOptionsOp {
+    #[must_use]
+    fn from(v: &SetOptionsOpRef<'_>) -> Self {
+        Self {
+            inflation_dest: v.inflation_dest.clone(),
+            clear_flags: v.clear_flags,
+            set_flags: v.set_flags,
+            master_weight: v.master_weight,
+            low_threshold: v.low_threshold,
+            med_threshold: v.med_threshold,
+            high_threshold: v.high_threshold,
+            home_domain: v.home_domain.as_ref().map(Into::into),
+            signer: v.signer.as_ref().map(Into::into),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SetOptionsOpRef<'_>> for SetOptionsOp {
+    #[must_use]
+    fn from(v: SetOptionsOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -167,3 +167,36 @@ impl WriteXdr for StellarValueExt {
         })
     }
 }
+
+/// StellarValueExtRef is a borrowing equivalent of [`StellarValueExt`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum StellarValueExtRef<'a> {
+    Basic,
+    Signed(LedgerCloseValueSignatureRef<'a>),
+    #[cfg(feature = "cap_0083")]
+    EmptyTxSet(StellarValueProposedValueRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&StellarValueExtRef<'_>> for StellarValueExt {
+    #[must_use]
+    fn from(v: &StellarValueExtRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            StellarValueExtRef::Basic => Self::Basic,
+            StellarValueExtRef::Signed(value) => Self::Signed(value.into()),
+            #[cfg(feature = "cap_0083")]
+            StellarValueExtRef::EmptyTxSet(value) => Self::EmptyTxSet(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<StellarValueExtRef<'_>> for StellarValueExt {
+    #[must_use]
+    fn from(v: StellarValueExtRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

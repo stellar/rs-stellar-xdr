@@ -53,3 +53,32 @@ impl WriteXdr for TransactionResultMeta {
         })
     }
 }
+
+/// TransactionResultMetaRef is a borrowing equivalent of [`TransactionResultMeta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionResultMetaRef<'a> {
+    pub result: TransactionResultPairRef<'a>,
+    pub fee_processing: LedgerEntryChangesRef<'a>,
+    pub tx_apply_processing: TransactionMetaRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionResultMetaRef<'_>> for TransactionResultMeta {
+    #[must_use]
+    fn from(v: &TransactionResultMetaRef<'_>) -> Self {
+        Self {
+            result: (&v.result).into(),
+            fee_processing: (&v.fee_processing).into(),
+            tx_apply_processing: (&v.tx_apply_processing).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionResultMetaRef<'_>> for TransactionResultMeta {
+    #[must_use]
+    fn from(v: TransactionResultMetaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

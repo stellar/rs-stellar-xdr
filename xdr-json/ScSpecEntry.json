@@ -101,7 +101,7 @@
         "doc",
         "location",
         "name",
-        "type_"
+        "type"
       ],
       "properties": {
         "doc": {
@@ -113,7 +113,7 @@
         "name": {
           "$ref": "#/definitions/StringM<30>"
         },
-        "type_": {
+        "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
         }
       }
@@ -164,7 +164,7 @@
       "required": [
         "doc",
         "name",
-        "type_"
+        "type"
       ],
       "properties": {
         "doc": {
@@ -173,7 +173,7 @@
         "name": {
           "$ref": "#/definitions/StringM<30>"
         },
-        "type_": {
+        "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
         }
       }
@@ -520,7 +520,7 @@
       "required": [
         "doc",
         "name",
-        "type_"
+        "type"
       ],
       "properties": {
         "doc": {
@@ -529,7 +529,7 @@
         "name": {
           "$ref": "#/definitions/StringM<30>"
         },
-        "type_": {
+        "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
         }
       }
@@ -568,7 +568,7 @@
       "required": [
         "doc",
         "name",
-        "type_"
+        "type"
       ],
       "properties": {
         "doc": {
@@ -577,7 +577,7 @@
         "name": {
           "$ref": "#/definitions/StringM<60>"
         },
-        "type_": {
+        "type": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ScSpecTypeDef"

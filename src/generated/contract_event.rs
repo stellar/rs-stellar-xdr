@@ -40,6 +40,11 @@ use super::*;
 pub struct ContractEvent {
     pub ext: ExtensionPoint,
     pub contract_id: Option<ContractId>,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "type", alias = "type_")
+    )]
+    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
     pub type_: ContractEventType,
     pub body: ContractEventBody,
 }

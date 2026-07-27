@@ -1675,7 +1675,7 @@
       "required": [
         "body",
         "ext",
-        "type_"
+        "type"
       ],
       "properties": {
         "body": {
@@ -1694,7 +1694,7 @@
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
         },
-        "type_": {
+        "type": {
           "$ref": "#/definitions/ContractEventType"
         }
       }

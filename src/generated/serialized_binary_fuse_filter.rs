@@ -36,6 +36,11 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerializedBinaryFuseFilter {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "type", alias = "type_")
+    )]
+    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
     pub type_: BinaryFuseFilterType,
     pub input_hash_seed: ShortHashSeed,
     pub filter_seed: ShortHashSeed,

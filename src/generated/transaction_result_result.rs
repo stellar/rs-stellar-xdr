@@ -295,3 +295,72 @@ impl WriteXdr for TransactionResultResult {
         })
     }
 }
+
+/// TransactionResultResultRef is a borrowing equivalent of [`TransactionResultResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionResultResultRef<'a> {
+    TxFeeBumpInnerSuccess(InnerTransactionResultPairRef<'a>),
+    TxFeeBumpInnerFailed(InnerTransactionResultPairRef<'a>),
+    TxSuccess(VecMRef<'a, OperationResultRef<'a>>),
+    TxFailed(VecMRef<'a, OperationResultRef<'a>>),
+    TxTooEarly,
+    TxTooLate,
+    TxMissingOperation,
+    TxBadSeq,
+    TxBadAuth,
+    TxInsufficientBalance,
+    TxNoAccount,
+    TxInsufficientFee,
+    TxBadAuthExtra,
+    TxInternalError,
+    TxNotSupported,
+    TxBadSponsorship,
+    TxBadMinSeqAgeOrGap,
+    TxMalformed,
+    TxSorobanInvalid,
+    TxFrozenKeyAccessed,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionResultResultRef<'_>> for TransactionResultResult {
+    #[must_use]
+    fn from(v: &TransactionResultResultRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TransactionResultResultRef::TxFeeBumpInnerSuccess(value) => {
+                Self::TxFeeBumpInnerSuccess(value.into())
+            }
+            TransactionResultResultRef::TxFeeBumpInnerFailed(value) => {
+                Self::TxFeeBumpInnerFailed(value.into())
+            }
+            TransactionResultResultRef::TxSuccess(value) => Self::TxSuccess(value.to_vecm_from()),
+            TransactionResultResultRef::TxFailed(value) => Self::TxFailed(value.to_vecm_from()),
+            TransactionResultResultRef::TxTooEarly => Self::TxTooEarly,
+            TransactionResultResultRef::TxTooLate => Self::TxTooLate,
+            TransactionResultResultRef::TxMissingOperation => Self::TxMissingOperation,
+            TransactionResultResultRef::TxBadSeq => Self::TxBadSeq,
+            TransactionResultResultRef::TxBadAuth => Self::TxBadAuth,
+            TransactionResultResultRef::TxInsufficientBalance => Self::TxInsufficientBalance,
+            TransactionResultResultRef::TxNoAccount => Self::TxNoAccount,
+            TransactionResultResultRef::TxInsufficientFee => Self::TxInsufficientFee,
+            TransactionResultResultRef::TxBadAuthExtra => Self::TxBadAuthExtra,
+            TransactionResultResultRef::TxInternalError => Self::TxInternalError,
+            TransactionResultResultRef::TxNotSupported => Self::TxNotSupported,
+            TransactionResultResultRef::TxBadSponsorship => Self::TxBadSponsorship,
+            TransactionResultResultRef::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
+            TransactionResultResultRef::TxMalformed => Self::TxMalformed,
+            TransactionResultResultRef::TxSorobanInvalid => Self::TxSorobanInvalid,
+            TransactionResultResultRef::TxFrozenKeyAccessed => Self::TxFrozenKeyAccessed,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionResultResultRef<'_>> for TransactionResultResult {
+    #[must_use]
+    fn from(v: TransactionResultResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

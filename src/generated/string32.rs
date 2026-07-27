@@ -107,3 +107,24 @@ impl AsRef<[u8]> for String32 {
         self.0 .0
     }
 }
+
+/// String32Ref is a borrowing equivalent of [`String32`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct String32Ref<'a>(pub StringMRef<'a, 32>);
+
+#[cfg(feature = "alloc")]
+impl From<&String32Ref<'_>> for String32 {
+    #[must_use]
+    fn from(v: &String32Ref<'_>) -> Self {
+        Self(v.0.to_stringm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<String32Ref<'_>> for String32 {
+    #[must_use]
+    fn from(v: String32Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

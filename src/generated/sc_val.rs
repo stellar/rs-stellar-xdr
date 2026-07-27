@@ -358,3 +358,76 @@ impl WriteXdr for ScVal {
         })
     }
 }
+
+/// ScValRef is a borrowing equivalent of [`ScVal`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScValRef<'a> {
+    Bool(bool),
+    Void,
+    Error(ScError),
+    U32(u32),
+    I32(i32),
+    U64(u64),
+    I64(i64),
+    Timepoint(TimePoint),
+    Duration(Duration),
+    U128(UInt128Parts),
+    I128(Int128Parts),
+    U256(UInt256Parts),
+    I256(Int256Parts),
+    Bytes(ScBytesRef<'a>),
+    String(ScStringRef<'a>),
+    Symbol(ScSymbolRef<'a>),
+    Vec(Option<ScVecRef<'a>>),
+    Map(Option<ScMapRef<'a>>),
+    Address(ScAddress),
+    ContractInstance(ScContractInstanceRef<'a>),
+    LedgerKeyContractInstance,
+    LedgerKeyNonce(ScNonceKey),
+    #[cfg(feature = "cap_0085_executable_ref")]
+    ExecutableTag(ScStringRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScValRef<'_>> for ScVal {
+    #[must_use]
+    fn from(v: &ScValRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScValRef::Bool(value) => Self::Bool(*value),
+            ScValRef::Void => Self::Void,
+            ScValRef::Error(value) => Self::Error(value.clone()),
+            ScValRef::U32(value) => Self::U32(*value),
+            ScValRef::I32(value) => Self::I32(*value),
+            ScValRef::U64(value) => Self::U64(*value),
+            ScValRef::I64(value) => Self::I64(*value),
+            ScValRef::Timepoint(value) => Self::Timepoint(value.clone()),
+            ScValRef::Duration(value) => Self::Duration(value.clone()),
+            ScValRef::U128(value) => Self::U128(value.clone()),
+            ScValRef::I128(value) => Self::I128(value.clone()),
+            ScValRef::U256(value) => Self::U256(value.clone()),
+            ScValRef::I256(value) => Self::I256(value.clone()),
+            ScValRef::Bytes(value) => Self::Bytes(value.into()),
+            ScValRef::String(value) => Self::String(value.into()),
+            ScValRef::Symbol(value) => Self::Symbol(value.into()),
+            ScValRef::Vec(value) => Self::Vec(value.as_ref().map(Into::into)),
+            ScValRef::Map(value) => Self::Map(value.as_ref().map(Into::into)),
+            ScValRef::Address(value) => Self::Address(value.clone()),
+            ScValRef::ContractInstance(value) => Self::ContractInstance(value.into()),
+            ScValRef::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
+            ScValRef::LedgerKeyNonce(value) => Self::LedgerKeyNonce(value.clone()),
+            #[cfg(feature = "cap_0085_executable_ref")]
+            ScValRef::ExecutableTag(value) => Self::ExecutableTag(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScValRef<'_>> for ScVal {
+    #[must_use]
+    fn from(v: ScValRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

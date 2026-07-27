@@ -53,3 +53,32 @@ impl WriteXdr for ScpNomination {
         })
     }
 }
+
+/// ScpNominationRef is a borrowing equivalent of [`ScpNomination`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpNominationRef<'a> {
+    pub quorum_set_hash: Hash,
+    pub votes: VecMRef<'a, ValueRef<'a>>,
+    pub accepted: VecMRef<'a, ValueRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpNominationRef<'_>> for ScpNomination {
+    #[must_use]
+    fn from(v: &ScpNominationRef<'_>) -> Self {
+        Self {
+            quorum_set_hash: v.quorum_set_hash.clone(),
+            votes: v.votes.to_vecm_from(),
+            accepted: v.accepted.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpNominationRef<'_>> for ScpNomination {
+    #[must_use]
+    fn from(v: ScpNominationRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

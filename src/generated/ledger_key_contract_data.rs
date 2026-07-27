@@ -53,3 +53,32 @@ impl WriteXdr for LedgerKeyContractData {
         })
     }
 }
+
+/// LedgerKeyContractDataRef is a borrowing equivalent of [`LedgerKeyContractData`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerKeyContractDataRef<'a> {
+    pub contract: ScAddress,
+    pub key: ScValRef<'a>,
+    pub durability: ContractDataDurability,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
+    #[must_use]
+    fn from(v: &LedgerKeyContractDataRef<'_>) -> Self {
+        Self {
+            contract: v.contract.clone(),
+            key: (&v.key).into(),
+            durability: v.durability,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
+    #[must_use]
+    fn from(v: LedgerKeyContractDataRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -48,3 +48,30 @@ impl WriteXdr for FrozenLedgerKeysDelta {
         })
     }
 }
+
+/// FrozenLedgerKeysDeltaRef is a borrowing equivalent of [`FrozenLedgerKeysDelta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FrozenLedgerKeysDeltaRef<'a> {
+    pub keys_to_freeze: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
+    pub keys_to_unfreeze: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FrozenLedgerKeysDeltaRef<'_>> for FrozenLedgerKeysDelta {
+    #[must_use]
+    fn from(v: &FrozenLedgerKeysDeltaRef<'_>) -> Self {
+        Self {
+            keys_to_freeze: v.keys_to_freeze.to_vecm_from(),
+            keys_to_unfreeze: v.keys_to_unfreeze.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FrozenLedgerKeysDeltaRef<'_>> for FrozenLedgerKeysDelta {
+    #[must_use]
+    fn from(v: FrozenLedgerKeysDeltaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

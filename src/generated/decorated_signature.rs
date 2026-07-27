@@ -49,3 +49,30 @@ impl WriteXdr for DecoratedSignature {
         })
     }
 }
+
+/// DecoratedSignatureRef is a borrowing equivalent of [`DecoratedSignature`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DecoratedSignatureRef<'a> {
+    pub hint: SignatureHint,
+    pub signature: SignatureRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&DecoratedSignatureRef<'_>> for DecoratedSignature {
+    #[must_use]
+    fn from(v: &DecoratedSignatureRef<'_>) -> Self {
+        Self {
+            hint: v.hint.clone(),
+            signature: (&v.signature).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<DecoratedSignatureRef<'_>> for DecoratedSignature {
+    #[must_use]
+    fn from(v: DecoratedSignatureRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

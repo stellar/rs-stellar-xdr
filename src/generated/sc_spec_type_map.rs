@@ -49,3 +49,30 @@ impl WriteXdr for ScSpecTypeMap {
         })
     }
 }
+
+/// ScSpecTypeMapRef is a borrowing equivalent of [`ScSpecTypeMap`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecTypeMapRef<'a> {
+    pub key_type: &'a ScSpecTypeDefRef<'a>,
+    pub value_type: &'a ScSpecTypeDefRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeMapRef<'_>> for ScSpecTypeMap {
+    #[must_use]
+    fn from(v: &ScSpecTypeMapRef<'_>) -> Self {
+        Self {
+            key_type: Box::new(v.key_type.into()),
+            value_type: Box::new(v.value_type.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeMapRef<'_>> for ScSpecTypeMap {
+    #[must_use]
+    fn from(v: ScSpecTypeMapRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

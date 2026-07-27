@@ -44,3 +44,28 @@ impl WriteXdr for FreezeBypassTxs {
         })
     }
 }
+
+/// FreezeBypassTxsRef is a borrowing equivalent of [`FreezeBypassTxs`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FreezeBypassTxsRef<'a> {
+    pub tx_hashes: VecMRef<'a, Hash>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
+    #[must_use]
+    fn from(v: &FreezeBypassTxsRef<'_>) -> Self {
+        Self {
+            tx_hashes: v.tx_hashes.to_vecm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
+    #[must_use]
+    fn from(v: FreezeBypassTxsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

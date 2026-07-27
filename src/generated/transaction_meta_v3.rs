@@ -65,3 +65,36 @@ impl WriteXdr for TransactionMetaV3 {
         })
     }
 }
+
+/// TransactionMetaV3Ref is a borrowing equivalent of [`TransactionMetaV3`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionMetaV3Ref<'a> {
+    pub ext: ExtensionPoint,
+    pub tx_changes_before: LedgerEntryChangesRef<'a>,
+    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
+    pub tx_changes_after: LedgerEntryChangesRef<'a>,
+    pub soroban_meta: Option<SorobanTransactionMetaRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
+    #[must_use]
+    fn from(v: &TransactionMetaV3Ref<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            tx_changes_before: (&v.tx_changes_before).into(),
+            operations: v.operations.to_vecm_from(),
+            tx_changes_after: (&v.tx_changes_after).into(),
+            soroban_meta: v.soroban_meta.as_ref().map(Into::into),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
+    #[must_use]
+    fn from(v: TransactionMetaV3Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

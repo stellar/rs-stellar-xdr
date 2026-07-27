@@ -107,3 +107,24 @@ impl AsRef<[ScMapEntry]> for ScMap {
         self.0 .0
     }
 }
+
+/// ScMapRef is a borrowing equivalent of [`ScMap`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScMapRef<'a>(pub VecMRef<'a, ScMapEntryRef<'a>>);
+
+#[cfg(feature = "alloc")]
+impl From<&ScMapRef<'_>> for ScMap {
+    #[must_use]
+    fn from(v: &ScMapRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScMapRef<'_>> for ScMap {
+    #[must_use]
+    fn from(v: ScMapRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

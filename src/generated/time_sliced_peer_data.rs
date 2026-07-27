@@ -49,3 +49,30 @@ impl WriteXdr for TimeSlicedPeerData {
         })
     }
 }
+
+/// TimeSlicedPeerDataRef is a borrowing equivalent of [`TimeSlicedPeerData`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TimeSlicedPeerDataRef<'a> {
+    pub peer_stats: PeerStatsRef<'a>,
+    pub average_latency_ms: u32,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
+    #[must_use]
+    fn from(v: &TimeSlicedPeerDataRef<'_>) -> Self {
+        Self {
+            peer_stats: (&v.peer_stats).into(),
+            average_latency_ms: v.average_latency_ms,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
+    #[must_use]
+    fn from(v: TimeSlicedPeerDataRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

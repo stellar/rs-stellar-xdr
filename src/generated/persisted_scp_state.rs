@@ -135,3 +135,32 @@ impl WriteXdr for PersistedScpState {
         })
     }
 }
+
+/// PersistedScpStateRef is a borrowing equivalent of [`PersistedScpState`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum PersistedScpStateRef<'a> {
+    V0(PersistedScpStateV0Ref<'a>),
+    V1(PersistedScpStateV1Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PersistedScpStateRef<'_>> for PersistedScpState {
+    #[must_use]
+    fn from(v: &PersistedScpStateRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            PersistedScpStateRef::V0(value) => Self::V0(value.into()),
+            PersistedScpStateRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PersistedScpStateRef<'_>> for PersistedScpState {
+    #[must_use]
+    fn from(v: PersistedScpStateRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

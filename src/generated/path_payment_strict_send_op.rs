@@ -77,3 +77,38 @@ impl WriteXdr for PathPaymentStrictSendOp {
         })
     }
 }
+
+/// PathPaymentStrictSendOpRef is a borrowing equivalent of [`PathPaymentStrictSendOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PathPaymentStrictSendOpRef<'a> {
+    pub send_asset: Asset,
+    pub send_amount: i64,
+    pub destination: MuxedAccount,
+    pub dest_asset: Asset,
+    pub dest_min: i64,
+    pub path: VecMRef<'a, Asset, 5>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
+    #[must_use]
+    fn from(v: &PathPaymentStrictSendOpRef<'_>) -> Self {
+        Self {
+            send_asset: v.send_asset.clone(),
+            send_amount: v.send_amount,
+            destination: v.destination.clone(),
+            dest_asset: v.dest_asset.clone(),
+            dest_min: v.dest_min,
+            path: v.path.to_vecm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
+    #[must_use]
+    fn from(v: PathPaymentStrictSendOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

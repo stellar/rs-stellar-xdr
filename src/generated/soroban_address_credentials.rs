@@ -61,3 +61,34 @@ impl WriteXdr for SorobanAddressCredentials {
         })
     }
 }
+
+/// SorobanAddressCredentialsRef is a borrowing equivalent of [`SorobanAddressCredentials`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanAddressCredentialsRef<'a> {
+    pub address: ScAddress,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
+    pub signature: ScValRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
+    #[must_use]
+    fn from(v: &SorobanAddressCredentialsRef<'_>) -> Self {
+        Self {
+            address: v.address.clone(),
+            nonce: v.nonce,
+            signature_expiration_ledger: v.signature_expiration_ledger,
+            signature: (&v.signature).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
+    #[must_use]
+    fn from(v: SorobanAddressCredentialsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -98,3 +98,44 @@ impl WriteXdr for LedgerCloseMetaV1 {
         })
     }
 }
+
+/// LedgerCloseMetaV1Ref is a borrowing equivalent of [`LedgerCloseMetaV1`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaV1Ref<'a> {
+    pub ext: LedgerCloseMetaExt,
+    pub ledger_header: LedgerHeaderHistoryEntryRef<'a>,
+    pub tx_set: GeneralizedTransactionSetRef<'a>,
+    pub tx_processing: VecMRef<'a, TransactionResultMetaRef<'a>>,
+    pub upgrades_processing: VecMRef<'a, UpgradeEntryMetaRef<'a>>,
+    pub scp_info: VecMRef<'a, ScpHistoryEntryRef<'a>>,
+    pub total_byte_size_of_live_soroban_state: u64,
+    pub evicted_keys: VecMRef<'a, LedgerKeyRef<'a>>,
+    pub unused: VecMRef<'a, LedgerEntryRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerCloseMetaV1Ref<'_>> for LedgerCloseMetaV1 {
+    #[must_use]
+    fn from(v: &LedgerCloseMetaV1Ref<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            ledger_header: (&v.ledger_header).into(),
+            tx_set: (&v.tx_set).into(),
+            tx_processing: v.tx_processing.to_vecm_from(),
+            upgrades_processing: v.upgrades_processing.to_vecm_from(),
+            scp_info: v.scp_info.to_vecm_from(),
+            total_byte_size_of_live_soroban_state: v.total_byte_size_of_live_soroban_state,
+            evicted_keys: v.evicted_keys.to_vecm_from(),
+            unused: v.unused.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerCloseMetaV1Ref<'_>> for LedgerCloseMetaV1 {
+    #[must_use]
+    fn from(v: LedgerCloseMetaV1Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

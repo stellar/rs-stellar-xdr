@@ -49,3 +49,30 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
         })
     }
 }
+
+/// RevokeSponsorshipOpSignerRef is a borrowing equivalent of [`RevokeSponsorshipOpSigner`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct RevokeSponsorshipOpSignerRef<'a> {
+    pub account_id: AccountId,
+    pub signer_key: SignerKeyRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
+    #[must_use]
+    fn from(v: &RevokeSponsorshipOpSignerRef<'_>) -> Self {
+        Self {
+            account_id: v.account_id.clone(),
+            signer_key: (&v.signer_key).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
+    #[must_use]
+    fn from(v: RevokeSponsorshipOpSignerRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

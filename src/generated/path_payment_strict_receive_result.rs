@@ -239,3 +239,54 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
         })
     }
 }
+
+/// PathPaymentStrictReceiveResultRef is a borrowing equivalent of [`PathPaymentStrictReceiveResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum PathPaymentStrictReceiveResultRef<'a> {
+    Success(PathPaymentStrictReceiveResultSuccessRef<'a>),
+    Malformed,
+    Underfunded,
+    SrcNoTrust,
+    SrcNotAuthorized,
+    NoDestination,
+    NoTrust,
+    NotAuthorized,
+    LineFull,
+    NoIssuer(Asset),
+    TooFewOffers,
+    OfferCrossSelf,
+    OverSendmax,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PathPaymentStrictReceiveResultRef<'_>> for PathPaymentStrictReceiveResult {
+    #[must_use]
+    fn from(v: &PathPaymentStrictReceiveResultRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            PathPaymentStrictReceiveResultRef::Success(value) => Self::Success(value.into()),
+            PathPaymentStrictReceiveResultRef::Malformed => Self::Malformed,
+            PathPaymentStrictReceiveResultRef::Underfunded => Self::Underfunded,
+            PathPaymentStrictReceiveResultRef::SrcNoTrust => Self::SrcNoTrust,
+            PathPaymentStrictReceiveResultRef::SrcNotAuthorized => Self::SrcNotAuthorized,
+            PathPaymentStrictReceiveResultRef::NoDestination => Self::NoDestination,
+            PathPaymentStrictReceiveResultRef::NoTrust => Self::NoTrust,
+            PathPaymentStrictReceiveResultRef::NotAuthorized => Self::NotAuthorized,
+            PathPaymentStrictReceiveResultRef::LineFull => Self::LineFull,
+            PathPaymentStrictReceiveResultRef::NoIssuer(value) => Self::NoIssuer(value.clone()),
+            PathPaymentStrictReceiveResultRef::TooFewOffers => Self::TooFewOffers,
+            PathPaymentStrictReceiveResultRef::OfferCrossSelf => Self::OfferCrossSelf,
+            PathPaymentStrictReceiveResultRef::OverSendmax => Self::OverSendmax,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PathPaymentStrictReceiveResultRef<'_>> for PathPaymentStrictReceiveResult {
+    #[must_use]
+    fn from(v: PathPaymentStrictReceiveResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

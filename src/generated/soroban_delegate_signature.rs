@@ -53,3 +53,32 @@ impl WriteXdr for SorobanDelegateSignature {
         })
     }
 }
+
+/// SorobanDelegateSignatureRef is a borrowing equivalent of [`SorobanDelegateSignature`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanDelegateSignatureRef<'a> {
+    pub address: ScAddress,
+    pub signature: ScValRef<'a>,
+    pub nested_delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
+    #[must_use]
+    fn from(v: &SorobanDelegateSignatureRef<'_>) -> Self {
+        Self {
+            address: v.address.clone(),
+            signature: (&v.signature).into(),
+            nested_delegates: v.nested_delegates.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
+    #[must_use]
+    fn from(v: SorobanDelegateSignatureRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

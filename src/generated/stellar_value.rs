@@ -80,3 +80,34 @@ impl WriteXdr for StellarValue {
         })
     }
 }
+
+/// StellarValueRef is a borrowing equivalent of [`StellarValue`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct StellarValueRef<'a> {
+    pub tx_set_hash: Hash,
+    pub close_time: TimePoint,
+    pub upgrades: VecMRef<'a, UpgradeTypeRef<'a>, 6>,
+    pub ext: StellarValueExtRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&StellarValueRef<'_>> for StellarValue {
+    #[must_use]
+    fn from(v: &StellarValueRef<'_>) -> Self {
+        Self {
+            tx_set_hash: v.tx_set_hash.clone(),
+            close_time: v.close_time.clone(),
+            upgrades: v.upgrades.to_vecm_from(),
+            ext: (&v.ext).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<StellarValueRef<'_>> for StellarValue {
+    #[must_use]
+    fn from(v: StellarValueRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

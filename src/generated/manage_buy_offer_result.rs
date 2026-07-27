@@ -231,3 +231,54 @@ impl WriteXdr for ManageBuyOfferResult {
         })
     }
 }
+
+/// ManageBuyOfferResultRef is a borrowing equivalent of [`ManageBuyOfferResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ManageBuyOfferResultRef<'a> {
+    Success(ManageOfferSuccessResultRef<'a>),
+    Malformed,
+    SellNoTrust,
+    BuyNoTrust,
+    SellNotAuthorized,
+    BuyNotAuthorized,
+    LineFull,
+    Underfunded,
+    CrossSelf,
+    SellNoIssuer,
+    BuyNoIssuer,
+    NotFound,
+    LowReserve,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ManageBuyOfferResultRef<'_>> for ManageBuyOfferResult {
+    #[must_use]
+    fn from(v: &ManageBuyOfferResultRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ManageBuyOfferResultRef::Success(value) => Self::Success(value.into()),
+            ManageBuyOfferResultRef::Malformed => Self::Malformed,
+            ManageBuyOfferResultRef::SellNoTrust => Self::SellNoTrust,
+            ManageBuyOfferResultRef::BuyNoTrust => Self::BuyNoTrust,
+            ManageBuyOfferResultRef::SellNotAuthorized => Self::SellNotAuthorized,
+            ManageBuyOfferResultRef::BuyNotAuthorized => Self::BuyNotAuthorized,
+            ManageBuyOfferResultRef::LineFull => Self::LineFull,
+            ManageBuyOfferResultRef::Underfunded => Self::Underfunded,
+            ManageBuyOfferResultRef::CrossSelf => Self::CrossSelf,
+            ManageBuyOfferResultRef::SellNoIssuer => Self::SellNoIssuer,
+            ManageBuyOfferResultRef::BuyNoIssuer => Self::BuyNoIssuer,
+            ManageBuyOfferResultRef::NotFound => Self::NotFound,
+            ManageBuyOfferResultRef::LowReserve => Self::LowReserve,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ManageBuyOfferResultRef<'_>> for ManageBuyOfferResult {
+    #[must_use]
+    fn from(v: ManageBuyOfferResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

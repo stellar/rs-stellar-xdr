@@ -128,3 +128,30 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
         })
     }
 }
+
+/// FeeBumpTransactionInnerTxRef is a borrowing equivalent of [`FeeBumpTransactionInnerTx`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum FeeBumpTransactionInnerTxRef<'a> {
+    Tx(TransactionV1EnvelopeRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
+    #[must_use]
+    fn from(v: &FeeBumpTransactionInnerTxRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            FeeBumpTransactionInnerTxRef::Tx(value) => Self::Tx(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
+    #[must_use]
+    fn from(v: FeeBumpTransactionInnerTxRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

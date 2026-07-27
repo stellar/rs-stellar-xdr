@@ -48,3 +48,30 @@ impl WriteXdr for FreezeBypassTxsDelta {
         })
     }
 }
+
+/// FreezeBypassTxsDeltaRef is a borrowing equivalent of [`FreezeBypassTxsDelta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FreezeBypassTxsDeltaRef<'a> {
+    pub add_txs: VecMRef<'a, Hash>,
+    pub remove_txs: VecMRef<'a, Hash>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FreezeBypassTxsDeltaRef<'_>> for FreezeBypassTxsDelta {
+    #[must_use]
+    fn from(v: &FreezeBypassTxsDeltaRef<'_>) -> Self {
+        Self {
+            add_txs: v.add_txs.to_vecm(),
+            remove_txs: v.remove_txs.to_vecm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FreezeBypassTxsDeltaRef<'_>> for FreezeBypassTxsDelta {
+    #[must_use]
+    fn from(v: FreezeBypassTxsDeltaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

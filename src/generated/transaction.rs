@@ -86,3 +86,40 @@ impl WriteXdr for Transaction {
         })
     }
 }
+
+/// TransactionRef is a borrowing equivalent of [`Transaction`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionRef<'a> {
+    pub source_account: MuxedAccount,
+    pub fee: u32,
+    pub seq_num: SequenceNumber,
+    pub cond: PreconditionsRef<'a>,
+    pub memo: MemoRef<'a>,
+    pub operations: VecMRef<'a, OperationRef<'a>, 100>,
+    pub ext: TransactionExtRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionRef<'_>> for Transaction {
+    #[must_use]
+    fn from(v: &TransactionRef<'_>) -> Self {
+        Self {
+            source_account: v.source_account.clone(),
+            fee: v.fee,
+            seq_num: v.seq_num.clone(),
+            cond: (&v.cond).into(),
+            memo: (&v.memo).into(),
+            operations: v.operations.to_vecm_from(),
+            ext: (&v.ext).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionRef<'_>> for Transaction {
+    #[must_use]
+    fn from(v: TransactionRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -74,3 +74,40 @@ impl WriteXdr for TransactionV0 {
         })
     }
 }
+
+/// TransactionV0Ref is a borrowing equivalent of [`TransactionV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionV0Ref<'a> {
+    pub source_account_ed25519: Uint256,
+    pub fee: u32,
+    pub seq_num: SequenceNumber,
+    pub time_bounds: Option<TimeBounds>,
+    pub memo: MemoRef<'a>,
+    pub operations: VecMRef<'a, OperationRef<'a>, 100>,
+    pub ext: TransactionV0Ext,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionV0Ref<'_>> for TransactionV0 {
+    #[must_use]
+    fn from(v: &TransactionV0Ref<'_>) -> Self {
+        Self {
+            source_account_ed25519: v.source_account_ed25519.clone(),
+            fee: v.fee,
+            seq_num: v.seq_num.clone(),
+            time_bounds: v.time_bounds.clone(),
+            memo: (&v.memo).into(),
+            operations: v.operations.to_vecm_from(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionV0Ref<'_>> for TransactionV0 {
+    #[must_use]
+    fn from(v: TransactionV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

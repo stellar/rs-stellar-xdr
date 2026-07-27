@@ -65,3 +65,40 @@ impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddress {
         })
     }
 }
+
+/// HashIdPreimageSorobanAuthorizationWithAddressRef is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct HashIdPreimageSorobanAuthorizationWithAddressRef<'a> {
+    pub network_id: Hash,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
+    pub address: ScAddress,
+    pub invocation: SorobanAuthorizedInvocationRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
+    for HashIdPreimageSorobanAuthorizationWithAddress
+{
+    #[must_use]
+    fn from(v: &HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
+        Self {
+            network_id: v.network_id.clone(),
+            nonce: v.nonce,
+            signature_expiration_ledger: v.signature_expiration_ledger,
+            address: v.address.clone(),
+            invocation: (&v.invocation).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
+    for HashIdPreimageSorobanAuthorizationWithAddress
+{
+    #[must_use]
+    fn from(v: HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

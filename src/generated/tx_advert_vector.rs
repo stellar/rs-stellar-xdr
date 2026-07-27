@@ -107,3 +107,24 @@ impl AsRef<[Hash]> for TxAdvertVector {
         self.0 .0
     }
 }
+
+/// TxAdvertVectorRef is a borrowing equivalent of [`TxAdvertVector`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TxAdvertVectorRef<'a>(pub VecMRef<'a, Hash, 1000>);
+
+#[cfg(feature = "alloc")]
+impl From<&TxAdvertVectorRef<'_>> for TxAdvertVector {
+    #[must_use]
+    fn from(v: &TxAdvertVectorRef<'_>) -> Self {
+        Self(v.0.to_vecm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TxAdvertVectorRef<'_>> for TxAdvertVector {
+    #[must_use]
+    fn from(v: TxAdvertVectorRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

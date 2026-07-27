@@ -58,3 +58,32 @@ impl WriteXdr for LedgerCloseMetaBatch {
         })
     }
 }
+
+/// LedgerCloseMetaBatchRef is a borrowing equivalent of [`LedgerCloseMetaBatch`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaBatchRef<'a> {
+    pub start_sequence: u32,
+    pub end_sequence: u32,
+    pub ledger_close_metas: VecMRef<'a, LedgerCloseMetaRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
+    #[must_use]
+    fn from(v: &LedgerCloseMetaBatchRef<'_>) -> Self {
+        Self {
+            start_sequence: v.start_sequence,
+            end_sequence: v.end_sequence,
+            ledger_close_metas: v.ledger_close_metas.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
+    #[must_use]
+    fn from(v: LedgerCloseMetaBatchRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

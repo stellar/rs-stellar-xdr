@@ -135,3 +135,32 @@ impl WriteXdr for TransactionPhase {
         })
     }
 }
+
+/// TransactionPhaseRef is a borrowing equivalent of [`TransactionPhase`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionPhaseRef<'a> {
+    V0(VecMRef<'a, TxSetComponentRef<'a>>),
+    V1(ParallelTxsComponentRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionPhaseRef<'_>> for TransactionPhase {
+    #[must_use]
+    fn from(v: &TransactionPhaseRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TransactionPhaseRef::V0(value) => Self::V0(value.to_vecm_from()),
+            TransactionPhaseRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionPhaseRef<'_>> for TransactionPhase {
+    #[must_use]
+    fn from(v: TransactionPhaseRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -161,3 +161,36 @@ impl WriteXdr for SignerKey {
         })
     }
 }
+
+/// SignerKeyRef is a borrowing equivalent of [`SignerKey`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum SignerKeyRef<'a> {
+    Ed25519(Uint256),
+    PreAuthTx(Uint256),
+    HashX(Uint256),
+    Ed25519SignedPayload(SignerKeyEd25519SignedPayloadRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SignerKeyRef<'_>> for SignerKey {
+    #[must_use]
+    fn from(v: &SignerKeyRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            SignerKeyRef::Ed25519(value) => Self::Ed25519(value.clone()),
+            SignerKeyRef::PreAuthTx(value) => Self::PreAuthTx(value.clone()),
+            SignerKeyRef::HashX(value) => Self::HashX(value.clone()),
+            SignerKeyRef::Ed25519SignedPayload(value) => Self::Ed25519SignedPayload(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SignerKeyRef<'_>> for SignerKey {
+    #[must_use]
+    fn from(v: SignerKeyRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -63,3 +63,34 @@ impl WriteXdr for SorobanTransactionMeta {
         })
     }
 }
+
+/// SorobanTransactionMetaRef is a borrowing equivalent of [`SorobanTransactionMeta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanTransactionMetaRef<'a> {
+    pub ext: SorobanTransactionMetaExt,
+    pub events: VecMRef<'a, ContractEventRef<'a>>,
+    pub return_value: ScValRef<'a>,
+    pub diagnostic_events: VecMRef<'a, DiagnosticEventRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
+    #[must_use]
+    fn from(v: &SorobanTransactionMetaRef<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            events: v.events.to_vecm_from(),
+            return_value: (&v.return_value).into(),
+            diagnostic_events: v.diagnostic_events.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
+    #[must_use]
+    fn from(v: SorobanTransactionMetaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

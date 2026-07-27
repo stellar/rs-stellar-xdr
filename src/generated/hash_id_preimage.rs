@@ -209,3 +209,42 @@ impl WriteXdr for HashIdPreimage {
         })
     }
 }
+
+/// HashIdPreimageRef is a borrowing equivalent of [`HashIdPreimage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum HashIdPreimageRef<'a> {
+    OpId(HashIdPreimageOperationId),
+    PoolRevokeOpId(HashIdPreimageRevokeId),
+    ContractId(HashIdPreimageContractId),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorizationRef<'a>),
+    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&HashIdPreimageRef<'_>> for HashIdPreimage {
+    #[must_use]
+    fn from(v: &HashIdPreimageRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            HashIdPreimageRef::OpId(value) => Self::OpId(value.clone()),
+            HashIdPreimageRef::PoolRevokeOpId(value) => Self::PoolRevokeOpId(value.clone()),
+            HashIdPreimageRef::ContractId(value) => Self::ContractId(value.clone()),
+            HashIdPreimageRef::SorobanAuthorization(value) => {
+                Self::SorobanAuthorization(value.into())
+            }
+            HashIdPreimageRef::SorobanAuthorizationWithAddress(value) => {
+                Self::SorobanAuthorizationWithAddress(value.into())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<HashIdPreimageRef<'_>> for HashIdPreimage {
+    #[must_use]
+    fn from(v: HashIdPreimageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -45,3 +45,28 @@ impl WriteXdr for ScSpecTypeUdt {
         })
     }
 }
+
+/// ScSpecTypeUdtRef is a borrowing equivalent of [`ScSpecTypeUdt`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecTypeUdtRef<'a> {
+    pub name: StringMRef<'a, 60>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
+    #[must_use]
+    fn from(v: &ScSpecTypeUdtRef<'_>) -> Self {
+        Self {
+            name: v.name.to_stringm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
+    #[must_use]
+    fn from(v: ScSpecTypeUdtRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

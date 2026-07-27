@@ -144,3 +144,32 @@ impl WriteXdr for RevokeSponsorshipOp {
         })
     }
 }
+
+/// RevokeSponsorshipOpRef is a borrowing equivalent of [`RevokeSponsorshipOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum RevokeSponsorshipOpRef<'a> {
+    LedgerEntry(LedgerKeyRef<'a>),
+    Signer(RevokeSponsorshipOpSignerRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
+    #[must_use]
+    fn from(v: &RevokeSponsorshipOpRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            RevokeSponsorshipOpRef::LedgerEntry(value) => Self::LedgerEntry(value.into()),
+            RevokeSponsorshipOpRef::Signer(value) => Self::Signer(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
+    #[must_use]
+    fn from(v: RevokeSponsorshipOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

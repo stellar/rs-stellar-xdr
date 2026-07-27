@@ -45,3 +45,28 @@ impl WriteXdr for TransactionResultSet {
         })
     }
 }
+
+/// TransactionResultSetRef is a borrowing equivalent of [`TransactionResultSet`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionResultSetRef<'a> {
+    pub results: VecMRef<'a, TransactionResultPairRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionResultSetRef<'_>> for TransactionResultSet {
+    #[must_use]
+    fn from(v: &TransactionResultSetRef<'_>) -> Self {
+        Self {
+            results: v.results.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionResultSetRef<'_>> for TransactionResultSet {
+    #[must_use]
+    fn from(v: TransactionResultSetRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

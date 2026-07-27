@@ -49,3 +49,30 @@ impl WriteXdr for ScMetaV0 {
         })
     }
 }
+
+/// ScMetaV0Ref is a borrowing equivalent of [`ScMetaV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScMetaV0Ref<'a> {
+    pub key: StringMRef<'a>,
+    pub val: StringMRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScMetaV0Ref<'_>> for ScMetaV0 {
+    #[must_use]
+    fn from(v: &ScMetaV0Ref<'_>) -> Self {
+        Self {
+            key: v.key.to_stringm(),
+            val: v.val.to_stringm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScMetaV0Ref<'_>> for ScMetaV0 {
+    #[must_use]
+    fn from(v: ScMetaV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

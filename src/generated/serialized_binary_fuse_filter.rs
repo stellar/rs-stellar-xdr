@@ -88,3 +88,44 @@ impl WriteXdr for SerializedBinaryFuseFilter {
         })
     }
 }
+
+/// SerializedBinaryFuseFilterRef is a borrowing equivalent of [`SerializedBinaryFuseFilter`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SerializedBinaryFuseFilterRef<'a> {
+    pub type_: BinaryFuseFilterType,
+    pub input_hash_seed: ShortHashSeed,
+    pub filter_seed: ShortHashSeed,
+    pub segment_length: u32,
+    pub segement_length_mask: u32,
+    pub segment_count: u32,
+    pub segment_count_length: u32,
+    pub fingerprint_length: u32,
+    pub fingerprints: BytesMRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
+    #[must_use]
+    fn from(v: &SerializedBinaryFuseFilterRef<'_>) -> Self {
+        Self {
+            type_: v.type_,
+            input_hash_seed: v.input_hash_seed.clone(),
+            filter_seed: v.filter_seed.clone(),
+            segment_length: v.segment_length,
+            segement_length_mask: v.segement_length_mask,
+            segment_count: v.segment_count,
+            segment_count_length: v.segment_count_length,
+            fingerprint_length: v.fingerprint_length,
+            fingerprints: v.fingerprints.to_bytesm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
+    #[must_use]
+    fn from(v: SerializedBinaryFuseFilterRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

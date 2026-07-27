@@ -135,3 +135,32 @@ impl WriteXdr for AccountEntryExt {
         })
     }
 }
+
+/// AccountEntryExtRef is a borrowing equivalent of [`AccountEntryExt`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum AccountEntryExtRef<'a> {
+    V0,
+    V1(AccountEntryExtensionV1Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&AccountEntryExtRef<'_>> for AccountEntryExt {
+    #[must_use]
+    fn from(v: &AccountEntryExtRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            AccountEntryExtRef::V0 => Self::V0,
+            AccountEntryExtRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AccountEntryExtRef<'_>> for AccountEntryExt {
+    #[must_use]
+    fn from(v: AccountEntryExtRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

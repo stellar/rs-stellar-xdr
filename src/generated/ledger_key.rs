@@ -264,3 +264,48 @@ impl WriteXdr for LedgerKey {
         })
     }
 }
+
+/// LedgerKeyRef is a borrowing equivalent of [`LedgerKey`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum LedgerKeyRef<'a> {
+    Account(LedgerKeyAccount),
+    Trustline(LedgerKeyTrustLine),
+    Offer(LedgerKeyOffer),
+    Data(LedgerKeyDataRef<'a>),
+    ClaimableBalance(LedgerKeyClaimableBalance),
+    LiquidityPool(LedgerKeyLiquidityPool),
+    ContractData(LedgerKeyContractDataRef<'a>),
+    ContractCode(LedgerKeyContractCode),
+    ConfigSetting(LedgerKeyConfigSetting),
+    Ttl(LedgerKeyTtl),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerKeyRef<'_>> for LedgerKey {
+    #[must_use]
+    fn from(v: &LedgerKeyRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            LedgerKeyRef::Account(value) => Self::Account(value.clone()),
+            LedgerKeyRef::Trustline(value) => Self::Trustline(value.clone()),
+            LedgerKeyRef::Offer(value) => Self::Offer(value.clone()),
+            LedgerKeyRef::Data(value) => Self::Data(value.into()),
+            LedgerKeyRef::ClaimableBalance(value) => Self::ClaimableBalance(value.clone()),
+            LedgerKeyRef::LiquidityPool(value) => Self::LiquidityPool(value.clone()),
+            LedgerKeyRef::ContractData(value) => Self::ContractData(value.into()),
+            LedgerKeyRef::ContractCode(value) => Self::ContractCode(value.clone()),
+            LedgerKeyRef::ConfigSetting(value) => Self::ConfigSetting(value.clone()),
+            LedgerKeyRef::Ttl(value) => Self::Ttl(value.clone()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerKeyRef<'_>> for LedgerKey {
+    #[must_use]
+    fn from(v: LedgerKeyRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -65,3 +65,38 @@ impl WriteXdr for ScSpecEventV0 {
         })
     }
 }
+
+/// ScSpecEventV0Ref is a borrowing equivalent of [`ScSpecEventV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecEventV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub lib: StringMRef<'a, 80>,
+    pub name: ScSymbolRef<'a>,
+    pub prefix_topics: VecMRef<'a, ScSymbolRef<'a>, 2>,
+    pub params: VecMRef<'a, ScSpecEventParamV0Ref<'a>>,
+    pub data_format: ScSpecEventDataFormat,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
+    #[must_use]
+    fn from(v: &ScSpecEventV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            lib: v.lib.to_stringm(),
+            name: (&v.name).into(),
+            prefix_topics: v.prefix_topics.to_vecm_from(),
+            params: v.params.to_vecm_from(),
+            data_format: v.data_format,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
+    #[must_use]
+    fn from(v: ScSpecEventV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

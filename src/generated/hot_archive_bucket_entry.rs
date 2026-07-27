@@ -150,3 +150,34 @@ impl WriteXdr for HotArchiveBucketEntry {
         })
     }
 }
+
+/// HotArchiveBucketEntryRef is a borrowing equivalent of [`HotArchiveBucketEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum HotArchiveBucketEntryRef<'a> {
+    Archived(LedgerEntryRef<'a>),
+    Live(LedgerKeyRef<'a>),
+    Metaentry(BucketMetadata),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
+    #[must_use]
+    fn from(v: &HotArchiveBucketEntryRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            HotArchiveBucketEntryRef::Archived(value) => Self::Archived(value.into()),
+            HotArchiveBucketEntryRef::Live(value) => Self::Live(value.into()),
+            HotArchiveBucketEntryRef::Metaentry(value) => Self::Metaentry(value.clone()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
+    #[must_use]
+    fn from(v: HotArchiveBucketEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

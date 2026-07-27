@@ -49,3 +49,30 @@ impl WriteXdr for ScSpecTypeResult {
         })
     }
 }
+
+/// ScSpecTypeResultRef is a borrowing equivalent of [`ScSpecTypeResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecTypeResultRef<'a> {
+    pub ok_type: &'a ScSpecTypeDefRef<'a>,
+    pub error_type: &'a ScSpecTypeDefRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
+    #[must_use]
+    fn from(v: &ScSpecTypeResultRef<'_>) -> Self {
+        Self {
+            ok_type: Box::new(v.ok_type.into()),
+            error_type: Box::new(v.error_type.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
+    #[must_use]
+    fn from(v: ScSpecTypeResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

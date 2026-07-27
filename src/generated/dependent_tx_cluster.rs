@@ -107,3 +107,24 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
         self.0 .0
     }
 }
+
+/// DependentTxClusterRef is a borrowing equivalent of [`DependentTxCluster`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DependentTxClusterRef<'a>(pub VecMRef<'a, TransactionEnvelopeRef<'a>>);
+
+#[cfg(feature = "alloc")]
+impl From<&DependentTxClusterRef<'_>> for DependentTxCluster {
+    #[must_use]
+    fn from(v: &DependentTxClusterRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<DependentTxClusterRef<'_>> for DependentTxCluster {
+    #[must_use]
+    fn from(v: DependentTxClusterRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

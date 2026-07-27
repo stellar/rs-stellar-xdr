@@ -133,3 +133,30 @@ impl WriteXdr for AuthenticatedMessage {
         })
     }
 }
+
+/// AuthenticatedMessageRef is a borrowing equivalent of [`AuthenticatedMessage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum AuthenticatedMessageRef<'a> {
+    V0(AuthenticatedMessageV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
+    #[must_use]
+    fn from(v: &AuthenticatedMessageRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            AuthenticatedMessageRef::V0(value) => Self::V0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
+    #[must_use]
+    fn from(v: AuthenticatedMessageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

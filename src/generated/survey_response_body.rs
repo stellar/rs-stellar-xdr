@@ -134,3 +134,32 @@ impl WriteXdr for SurveyResponseBody {
         })
     }
 }
+
+/// SurveyResponseBodyRef is a borrowing equivalent of [`SurveyResponseBody`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum SurveyResponseBodyRef<'a> {
+    SurveyTopologyResponseV2(TopologyResponseBodyV2Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SurveyResponseBodyRef<'_>> for SurveyResponseBody {
+    #[must_use]
+    fn from(v: &SurveyResponseBodyRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            SurveyResponseBodyRef::SurveyTopologyResponseV2(value) => {
+                Self::SurveyTopologyResponseV2(value.into())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SurveyResponseBodyRef<'_>> for SurveyResponseBody {
+    #[must_use]
+    fn from(v: SurveyResponseBodyRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -167,3 +167,38 @@ impl WriteXdr for SorobanAuthorizedFunction {
         })
     }
 }
+
+/// SorobanAuthorizedFunctionRef is a borrowing equivalent of [`SorobanAuthorizedFunction`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanAuthorizedFunctionRef<'a> {
+    ContractFn(InvokeContractArgsRef<'a>),
+    CreateContractHostFn(CreateContractArgsRef<'a>),
+    CreateContractV2HostFn(CreateContractArgsV2Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
+    #[must_use]
+    fn from(v: &SorobanAuthorizedFunctionRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            SorobanAuthorizedFunctionRef::ContractFn(value) => Self::ContractFn(value.into()),
+            SorobanAuthorizedFunctionRef::CreateContractHostFn(value) => {
+                Self::CreateContractHostFn(value.into())
+            }
+            SorobanAuthorizedFunctionRef::CreateContractV2HostFn(value) => {
+                Self::CreateContractV2HostFn(value.into())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
+    #[must_use]
+    fn from(v: SorobanAuthorizedFunctionRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

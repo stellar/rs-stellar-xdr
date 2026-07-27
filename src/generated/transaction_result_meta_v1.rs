@@ -63,3 +63,36 @@ impl WriteXdr for TransactionResultMetaV1 {
         })
     }
 }
+
+/// TransactionResultMetaV1Ref is a borrowing equivalent of [`TransactionResultMetaV1`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionResultMetaV1Ref<'a> {
+    pub ext: ExtensionPoint,
+    pub result: TransactionResultPairRef<'a>,
+    pub fee_processing: LedgerEntryChangesRef<'a>,
+    pub tx_apply_processing: TransactionMetaRef<'a>,
+    pub post_tx_apply_fee_processing: LedgerEntryChangesRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionResultMetaV1Ref<'_>> for TransactionResultMetaV1 {
+    #[must_use]
+    fn from(v: &TransactionResultMetaV1Ref<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            result: (&v.result).into(),
+            fee_processing: (&v.fee_processing).into(),
+            tx_apply_processing: (&v.tx_apply_processing).into(),
+            post_tx_apply_fee_processing: (&v.post_tx_apply_fee_processing).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionResultMetaV1Ref<'_>> for TransactionResultMetaV1 {
+    #[must_use]
+    fn from(v: TransactionResultMetaV1Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

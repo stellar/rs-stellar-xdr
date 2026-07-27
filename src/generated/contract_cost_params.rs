@@ -107,3 +107,24 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
         self.0 .0
     }
 }
+
+/// ContractCostParamsRef is a borrowing equivalent of [`ContractCostParams`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContractCostParamsRef<'a>(pub VecMRef<'a, ContractCostParamEntry, 1024>);
+
+#[cfg(feature = "alloc")]
+impl From<&ContractCostParamsRef<'_>> for ContractCostParams {
+    #[must_use]
+    fn from(v: &ContractCostParamsRef<'_>) -> Self {
+        Self(v.0.to_vecm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractCostParamsRef<'_>> for ContractCostParams {
+    #[must_use]
+    fn from(v: ContractCostParamsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

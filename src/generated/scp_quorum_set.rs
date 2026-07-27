@@ -53,3 +53,32 @@ impl WriteXdr for ScpQuorumSet {
         })
     }
 }
+
+/// ScpQuorumSetRef is a borrowing equivalent of [`ScpQuorumSet`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpQuorumSetRef<'a> {
+    pub threshold: u32,
+    pub validators: VecMRef<'a, NodeId>,
+    pub inner_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpQuorumSetRef<'_>> for ScpQuorumSet {
+    #[must_use]
+    fn from(v: &ScpQuorumSetRef<'_>) -> Self {
+        Self {
+            threshold: v.threshold,
+            validators: v.validators.to_vecm(),
+            inner_sets: v.inner_sets.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpQuorumSetRef<'_>> for ScpQuorumSet {
+    #[must_use]
+    fn from(v: ScpQuorumSetRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

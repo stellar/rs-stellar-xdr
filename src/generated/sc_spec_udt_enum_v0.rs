@@ -57,3 +57,34 @@ impl WriteXdr for ScSpecUdtEnumV0 {
         })
     }
 }
+
+/// ScSpecUdtEnumV0Ref is a borrowing equivalent of [`ScSpecUdtEnumV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecUdtEnumV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub lib: StringMRef<'a, 80>,
+    pub name: StringMRef<'a, 60>,
+    pub cases: VecMRef<'a, ScSpecUdtEnumCaseV0Ref<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecUdtEnumV0Ref<'_>> for ScSpecUdtEnumV0 {
+    #[must_use]
+    fn from(v: &ScSpecUdtEnumV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            lib: v.lib.to_stringm(),
+            name: v.name.to_stringm(),
+            cases: v.cases.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecUdtEnumV0Ref<'_>> for ScSpecUdtEnumV0 {
+    #[must_use]
+    fn from(v: ScSpecUdtEnumV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

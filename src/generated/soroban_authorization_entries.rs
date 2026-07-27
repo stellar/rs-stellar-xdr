@@ -107,3 +107,24 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
         self.0 .0
     }
 }
+
+/// SorobanAuthorizationEntriesRef is a borrowing equivalent of [`SorobanAuthorizationEntries`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanAuthorizationEntriesRef<'a>(pub VecMRef<'a, SorobanAuthorizationEntryRef<'a>>);
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn from(v: &SorobanAuthorizationEntriesRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
+    #[must_use]
+    fn from(v: SorobanAuthorizationEntriesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

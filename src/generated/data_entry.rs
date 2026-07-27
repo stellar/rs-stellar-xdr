@@ -64,3 +64,34 @@ impl WriteXdr for DataEntry {
         })
     }
 }
+
+/// DataEntryRef is a borrowing equivalent of [`DataEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DataEntryRef<'a> {
+    pub account_id: AccountId,
+    pub data_name: String64Ref<'a>,
+    pub data_value: DataValueRef<'a>,
+    pub ext: DataEntryExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&DataEntryRef<'_>> for DataEntry {
+    #[must_use]
+    fn from(v: &DataEntryRef<'_>) -> Self {
+        Self {
+            account_id: v.account_id.clone(),
+            data_name: (&v.data_name).into(),
+            data_value: (&v.data_value).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<DataEntryRef<'_>> for DataEntry {
+    #[must_use]
+    fn from(v: DataEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

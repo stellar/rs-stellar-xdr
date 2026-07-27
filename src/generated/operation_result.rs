@@ -238,3 +238,42 @@ impl WriteXdr for OperationResult {
         })
     }
 }
+
+/// OperationResultRef is a borrowing equivalent of [`OperationResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum OperationResultRef<'a> {
+    OpInner(OperationResultTrRef<'a>),
+    OpBadAuth,
+    OpNoAccount,
+    OpNotSupported,
+    OpTooManySubentries,
+    OpExceededWorkLimit,
+    OpTooManySponsoring,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&OperationResultRef<'_>> for OperationResult {
+    #[must_use]
+    fn from(v: &OperationResultRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            OperationResultRef::OpInner(value) => Self::OpInner(value.into()),
+            OperationResultRef::OpBadAuth => Self::OpBadAuth,
+            OperationResultRef::OpNoAccount => Self::OpNoAccount,
+            OperationResultRef::OpNotSupported => Self::OpNotSupported,
+            OperationResultRef::OpTooManySubentries => Self::OpTooManySubentries,
+            OperationResultRef::OpExceededWorkLimit => Self::OpExceededWorkLimit,
+            OperationResultRef::OpTooManySponsoring => Self::OpTooManySponsoring,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<OperationResultRef<'_>> for OperationResult {
+    #[must_use]
+    fn from(v: OperationResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

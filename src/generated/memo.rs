@@ -168,3 +168,38 @@ impl WriteXdr for Memo {
         })
     }
 }
+
+/// MemoRef is a borrowing equivalent of [`Memo`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum MemoRef<'a> {
+    None,
+    Text(StringMRef<'a, 28>),
+    Id(u64),
+    Hash(Hash),
+    Return(Hash),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&MemoRef<'_>> for Memo {
+    #[must_use]
+    fn from(v: &MemoRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            MemoRef::None => Self::None,
+            MemoRef::Text(value) => Self::Text(value.to_stringm()),
+            MemoRef::Id(value) => Self::Id(*value),
+            MemoRef::Hash(value) => Self::Hash(value.clone()),
+            MemoRef::Return(value) => Self::Return(value.clone()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<MemoRef<'_>> for Memo {
+    #[must_use]
+    fn from(v: MemoRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

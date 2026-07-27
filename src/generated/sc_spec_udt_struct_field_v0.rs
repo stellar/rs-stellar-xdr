@@ -58,3 +58,32 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
         })
     }
 }
+
+/// ScSpecUdtStructFieldV0Ref is a borrowing equivalent of [`ScSpecUdtStructFieldV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecUdtStructFieldV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub name: StringMRef<'a, 30>,
+    pub type_: ScSpecTypeDefRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecUdtStructFieldV0Ref<'_>> for ScSpecUdtStructFieldV0 {
+    #[must_use]
+    fn from(v: &ScSpecUdtStructFieldV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            name: v.name.to_stringm(),
+            type_: (&v.type_).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecUdtStructFieldV0Ref<'_>> for ScSpecUdtStructFieldV0 {
+    #[must_use]
+    fn from(v: ScSpecUdtStructFieldV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

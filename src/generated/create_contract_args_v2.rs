@@ -54,3 +54,32 @@ impl WriteXdr for CreateContractArgsV2 {
         })
     }
 }
+
+/// CreateContractArgsV2Ref is a borrowing equivalent of [`CreateContractArgsV2`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct CreateContractArgsV2Ref<'a> {
+    pub contract_id_preimage: ContractIdPreimage,
+    pub executable: ContractExecutableRef<'a>,
+    pub constructor_args: VecMRef<'a, ScValRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
+    #[must_use]
+    fn from(v: &CreateContractArgsV2Ref<'_>) -> Self {
+        Self {
+            contract_id_preimage: v.contract_id_preimage.clone(),
+            executable: (&v.executable).into(),
+            constructor_args: v.constructor_args.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
+    #[must_use]
+    fn from(v: CreateContractArgsV2Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

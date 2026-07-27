@@ -72,3 +72,32 @@ impl WriteXdr for SorobanTransactionData {
         })
     }
 }
+
+/// SorobanTransactionDataRef is a borrowing equivalent of [`SorobanTransactionData`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanTransactionDataRef<'a> {
+    pub ext: SorobanTransactionDataExtRef<'a>,
+    pub resources: SorobanResourcesRef<'a>,
+    pub resource_fee: i64,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanTransactionDataRef<'_>> for SorobanTransactionData {
+    #[must_use]
+    fn from(v: &SorobanTransactionDataRef<'_>) -> Self {
+        Self {
+            ext: (&v.ext).into(),
+            resources: (&v.resources).into(),
+            resource_fee: v.resource_fee,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanTransactionDataRef<'_>> for SorobanTransactionData {
+    #[must_use]
+    fn from(v: SorobanTransactionDataRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

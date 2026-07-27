@@ -71,3 +71,34 @@ impl WriteXdr for FeeBumpTransaction {
         })
     }
 }
+
+/// FeeBumpTransactionRef is a borrowing equivalent of [`FeeBumpTransaction`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FeeBumpTransactionRef<'a> {
+    pub fee_source: MuxedAccount,
+    pub fee: i64,
+    pub inner_tx: FeeBumpTransactionInnerTxRef<'a>,
+    pub ext: FeeBumpTransactionExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
+    #[must_use]
+    fn from(v: &FeeBumpTransactionRef<'_>) -> Self {
+        Self {
+            fee_source: v.fee_source.clone(),
+            fee: v.fee,
+            inner_tx: (&v.inner_tx).into(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
+    #[must_use]
+    fn from(v: FeeBumpTransactionRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

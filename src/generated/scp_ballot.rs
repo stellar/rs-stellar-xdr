@@ -49,3 +49,30 @@ impl WriteXdr for ScpBallot {
         })
     }
 }
+
+/// ScpBallotRef is a borrowing equivalent of [`ScpBallot`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScpBallotRef<'a> {
+    pub counter: u32,
+    pub value: ValueRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpBallotRef<'_>> for ScpBallot {
+    #[must_use]
+    fn from(v: &ScpBallotRef<'_>) -> Self {
+        Self {
+            counter: v.counter,
+            value: (&v.value).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpBallotRef<'_>> for ScpBallot {
+    #[must_use]
+    fn from(v: ScpBallotRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

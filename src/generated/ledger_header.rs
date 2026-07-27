@@ -134,3 +134,56 @@ impl WriteXdr for LedgerHeader {
         })
     }
 }
+
+/// LedgerHeaderRef is a borrowing equivalent of [`LedgerHeader`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerHeaderRef<'a> {
+    pub ledger_version: u32,
+    pub previous_ledger_hash: Hash,
+    pub scp_value: StellarValueRef<'a>,
+    pub tx_set_result_hash: Hash,
+    pub bucket_list_hash: Hash,
+    pub ledger_seq: u32,
+    pub total_coins: i64,
+    pub fee_pool: i64,
+    pub inflation_seq: u32,
+    pub id_pool: u64,
+    pub base_fee: u32,
+    pub base_reserve: u32,
+    pub max_tx_set_size: u32,
+    pub skip_list: [Hash; 4],
+    pub ext: LedgerHeaderExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerHeaderRef<'_>> for LedgerHeader {
+    #[must_use]
+    fn from(v: &LedgerHeaderRef<'_>) -> Self {
+        Self {
+            ledger_version: v.ledger_version,
+            previous_ledger_hash: v.previous_ledger_hash.clone(),
+            scp_value: (&v.scp_value).into(),
+            tx_set_result_hash: v.tx_set_result_hash.clone(),
+            bucket_list_hash: v.bucket_list_hash.clone(),
+            ledger_seq: v.ledger_seq,
+            total_coins: v.total_coins,
+            fee_pool: v.fee_pool,
+            inflation_seq: v.inflation_seq,
+            id_pool: v.id_pool,
+            base_fee: v.base_fee,
+            base_reserve: v.base_reserve,
+            max_tx_set_size: v.max_tx_set_size,
+            skip_list: v.skip_list.clone(),
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerHeaderRef<'_>> for LedgerHeader {
+    #[must_use]
+    fn from(v: LedgerHeaderRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

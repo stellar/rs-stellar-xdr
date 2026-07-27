@@ -75,3 +75,34 @@ impl WriteXdr for ContractEvent {
         })
     }
 }
+
+/// ContractEventRef is a borrowing equivalent of [`ContractEvent`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContractEventRef<'a> {
+    pub ext: ExtensionPoint,
+    pub contract_id: Option<ContractId>,
+    pub type_: ContractEventType,
+    pub body: ContractEventBodyRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ContractEventRef<'_>> for ContractEvent {
+    #[must_use]
+    fn from(v: &ContractEventRef<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            contract_id: v.contract_id.clone(),
+            type_: v.type_,
+            body: (&v.body).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractEventRef<'_>> for ContractEvent {
+    #[must_use]
+    fn from(v: ContractEventRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

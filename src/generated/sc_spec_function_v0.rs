@@ -57,3 +57,34 @@ impl WriteXdr for ScSpecFunctionV0 {
         })
     }
 }
+
+/// ScSpecFunctionV0Ref is a borrowing equivalent of [`ScSpecFunctionV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecFunctionV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub name: ScSymbolRef<'a>,
+    pub inputs: VecMRef<'a, ScSpecFunctionInputV0Ref<'a>>,
+    pub outputs: VecMRef<'a, ScSpecTypeDefRef<'a>, 1>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
+    #[must_use]
+    fn from(v: &ScSpecFunctionV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            name: (&v.name).into(),
+            inputs: v.inputs.to_vecm_from(),
+            outputs: v.outputs.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
+    #[must_use]
+    fn from(v: ScSpecFunctionV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

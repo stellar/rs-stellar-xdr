@@ -404,3 +404,110 @@ impl WriteXdr for OperationResultTr {
         })
     }
 }
+
+/// OperationResultTrRef is a borrowing equivalent of [`OperationResultTr`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum OperationResultTrRef<'a> {
+    CreateAccount(CreateAccountResult),
+    Payment(PaymentResult),
+    PathPaymentStrictReceive(PathPaymentStrictReceiveResultRef<'a>),
+    ManageSellOffer(ManageSellOfferResultRef<'a>),
+    CreatePassiveSellOffer(ManageSellOfferResultRef<'a>),
+    SetOptions(SetOptionsResult),
+    ChangeTrust(ChangeTrustResult),
+    AllowTrust(AllowTrustResult),
+    AccountMerge(AccountMergeResult),
+    Inflation(InflationResultRef<'a>),
+    ManageData(ManageDataResult),
+    BumpSequence(BumpSequenceResult),
+    ManageBuyOffer(ManageBuyOfferResultRef<'a>),
+    PathPaymentStrictSend(PathPaymentStrictSendResultRef<'a>),
+    CreateClaimableBalance(CreateClaimableBalanceResult),
+    ClaimClaimableBalance(ClaimClaimableBalanceResult),
+    BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult),
+    EndSponsoringFutureReserves(EndSponsoringFutureReservesResult),
+    RevokeSponsorship(RevokeSponsorshipResult),
+    Clawback(ClawbackResult),
+    ClawbackClaimableBalance(ClawbackClaimableBalanceResult),
+    SetTrustLineFlags(SetTrustLineFlagsResult),
+    LiquidityPoolDeposit(LiquidityPoolDepositResult),
+    LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
+    InvokeHostFunction(InvokeHostFunctionResult),
+    ExtendFootprintTtl(ExtendFootprintTtlResult),
+    RestoreFootprint(RestoreFootprintResult),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&OperationResultTrRef<'_>> for OperationResultTr {
+    #[must_use]
+    fn from(v: &OperationResultTrRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            OperationResultTrRef::CreateAccount(value) => Self::CreateAccount(value.clone()),
+            OperationResultTrRef::Payment(value) => Self::Payment(value.clone()),
+            OperationResultTrRef::PathPaymentStrictReceive(value) => {
+                Self::PathPaymentStrictReceive(value.into())
+            }
+            OperationResultTrRef::ManageSellOffer(value) => Self::ManageSellOffer(value.into()),
+            OperationResultTrRef::CreatePassiveSellOffer(value) => {
+                Self::CreatePassiveSellOffer(value.into())
+            }
+            OperationResultTrRef::SetOptions(value) => Self::SetOptions(value.clone()),
+            OperationResultTrRef::ChangeTrust(value) => Self::ChangeTrust(value.clone()),
+            OperationResultTrRef::AllowTrust(value) => Self::AllowTrust(value.clone()),
+            OperationResultTrRef::AccountMerge(value) => Self::AccountMerge(value.clone()),
+            OperationResultTrRef::Inflation(value) => Self::Inflation(value.into()),
+            OperationResultTrRef::ManageData(value) => Self::ManageData(value.clone()),
+            OperationResultTrRef::BumpSequence(value) => Self::BumpSequence(value.clone()),
+            OperationResultTrRef::ManageBuyOffer(value) => Self::ManageBuyOffer(value.into()),
+            OperationResultTrRef::PathPaymentStrictSend(value) => {
+                Self::PathPaymentStrictSend(value.into())
+            }
+            OperationResultTrRef::CreateClaimableBalance(value) => {
+                Self::CreateClaimableBalance(value.clone())
+            }
+            OperationResultTrRef::ClaimClaimableBalance(value) => {
+                Self::ClaimClaimableBalance(value.clone())
+            }
+            OperationResultTrRef::BeginSponsoringFutureReserves(value) => {
+                Self::BeginSponsoringFutureReserves(value.clone())
+            }
+            OperationResultTrRef::EndSponsoringFutureReserves(value) => {
+                Self::EndSponsoringFutureReserves(value.clone())
+            }
+            OperationResultTrRef::RevokeSponsorship(value) => {
+                Self::RevokeSponsorship(value.clone())
+            }
+            OperationResultTrRef::Clawback(value) => Self::Clawback(value.clone()),
+            OperationResultTrRef::ClawbackClaimableBalance(value) => {
+                Self::ClawbackClaimableBalance(value.clone())
+            }
+            OperationResultTrRef::SetTrustLineFlags(value) => {
+                Self::SetTrustLineFlags(value.clone())
+            }
+            OperationResultTrRef::LiquidityPoolDeposit(value) => {
+                Self::LiquidityPoolDeposit(value.clone())
+            }
+            OperationResultTrRef::LiquidityPoolWithdraw(value) => {
+                Self::LiquidityPoolWithdraw(value.clone())
+            }
+            OperationResultTrRef::InvokeHostFunction(value) => {
+                Self::InvokeHostFunction(value.clone())
+            }
+            OperationResultTrRef::ExtendFootprintTtl(value) => {
+                Self::ExtendFootprintTtl(value.clone())
+            }
+            OperationResultTrRef::RestoreFootprint(value) => Self::RestoreFootprint(value.clone()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<OperationResultTrRef<'_>> for OperationResultTr {
+    #[must_use]
+    fn from(v: OperationResultTrRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

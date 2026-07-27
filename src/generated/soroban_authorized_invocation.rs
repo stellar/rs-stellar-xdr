@@ -49,3 +49,30 @@ impl WriteXdr for SorobanAuthorizedInvocation {
         })
     }
 }
+
+/// SorobanAuthorizedInvocationRef is a borrowing equivalent of [`SorobanAuthorizedInvocation`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanAuthorizedInvocationRef<'a> {
+    pub function: SorobanAuthorizedFunctionRef<'a>,
+    pub sub_invocations: VecMRef<'a, SorobanAuthorizedInvocationRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
+    #[must_use]
+    fn from(v: &SorobanAuthorizedInvocationRef<'_>) -> Self {
+        Self {
+            function: (&v.function).into(),
+            sub_invocations: v.sub_invocations.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
+    #[must_use]
+    fn from(v: SorobanAuthorizedInvocationRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

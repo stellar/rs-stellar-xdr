@@ -45,3 +45,28 @@ impl WriteXdr for ScSpecTypeOption {
         })
     }
 }
+
+/// ScSpecTypeOptionRef is a borrowing equivalent of [`ScSpecTypeOption`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecTypeOptionRef<'a> {
+    pub value_type: &'a ScSpecTypeDefRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
+    #[must_use]
+    fn from(v: &ScSpecTypeOptionRef<'_>) -> Self {
+        Self {
+            value_type: Box::new(v.value_type.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
+    #[must_use]
+    fn from(v: ScSpecTypeOptionRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

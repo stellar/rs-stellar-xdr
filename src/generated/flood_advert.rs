@@ -45,3 +45,28 @@ impl WriteXdr for FloodAdvert {
         })
     }
 }
+
+/// FloodAdvertRef is a borrowing equivalent of [`FloodAdvert`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FloodAdvertRef<'a> {
+    pub tx_hashes: TxAdvertVectorRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FloodAdvertRef<'_>> for FloodAdvert {
+    #[must_use]
+    fn from(v: &FloodAdvertRef<'_>) -> Self {
+        Self {
+            tx_hashes: (&v.tx_hashes).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FloodAdvertRef<'_>> for FloodAdvert {
+    #[must_use]
+    fn from(v: FloodAdvertRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

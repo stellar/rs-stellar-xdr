@@ -51,3 +51,30 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
         })
     }
 }
+
+/// FeeBumpTransactionEnvelopeRef is a borrowing equivalent of [`FeeBumpTransactionEnvelope`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FeeBumpTransactionEnvelopeRef<'a> {
+    pub tx: FeeBumpTransactionRef<'a>,
+    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FeeBumpTransactionEnvelopeRef<'_>> for FeeBumpTransactionEnvelope {
+    #[must_use]
+    fn from(v: &FeeBumpTransactionEnvelopeRef<'_>) -> Self {
+        Self {
+            tx: (&v.tx).into(),
+            signatures: v.signatures.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FeeBumpTransactionEnvelopeRef<'_>> for FeeBumpTransactionEnvelope {
+    #[must_use]
+    fn from(v: FeeBumpTransactionEnvelopeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

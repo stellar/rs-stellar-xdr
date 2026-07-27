@@ -53,3 +53,32 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
         })
     }
 }
+
+/// ScSpecUdtErrorEnumCaseV0Ref is a borrowing equivalent of [`ScSpecUdtErrorEnumCaseV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecUdtErrorEnumCaseV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub name: StringMRef<'a, 60>,
+    pub value: u32,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecUdtErrorEnumCaseV0Ref<'_>> for ScSpecUdtErrorEnumCaseV0 {
+    #[must_use]
+    fn from(v: &ScSpecUdtErrorEnumCaseV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            name: v.name.to_stringm(),
+            value: v.value,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecUdtErrorEnumCaseV0Ref<'_>> for ScSpecUdtErrorEnumCaseV0 {
+    #[must_use]
+    fn from(v: ScSpecUdtErrorEnumCaseV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

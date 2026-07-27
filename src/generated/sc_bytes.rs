@@ -107,3 +107,24 @@ impl AsRef<[u8]> for ScBytes {
         self.0 .0
     }
 }
+
+/// ScBytesRef is a borrowing equivalent of [`ScBytes`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScBytesRef<'a>(pub BytesMRef<'a>);
+
+#[cfg(feature = "alloc")]
+impl From<&ScBytesRef<'_>> for ScBytes {
+    #[must_use]
+    fn from(v: &ScBytesRef<'_>) -> Self {
+        Self(v.0.to_bytesm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScBytesRef<'_>> for ScBytes {
+    #[must_use]
+    fn from(v: ScBytesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

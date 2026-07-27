@@ -49,3 +49,30 @@ impl WriteXdr for ScMapEntry {
         })
     }
 }
+
+/// ScMapEntryRef is a borrowing equivalent of [`ScMapEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScMapEntryRef<'a> {
+    pub key: ScValRef<'a>,
+    pub val: ScValRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScMapEntryRef<'_>> for ScMapEntry {
+    #[must_use]
+    fn from(v: &ScMapEntryRef<'_>) -> Self {
+        Self {
+            key: (&v.key).into(),
+            val: (&v.val).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScMapEntryRef<'_>> for ScMapEntry {
+    #[must_use]
+    fn from(v: ScMapEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

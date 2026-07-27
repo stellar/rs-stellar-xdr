@@ -48,3 +48,30 @@ impl WriteXdr for ScContractInstance {
         })
     }
 }
+
+/// ScContractInstanceRef is a borrowing equivalent of [`ScContractInstance`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScContractInstanceRef<'a> {
+    pub executable: ContractExecutableRef<'a>,
+    pub storage: Option<ScMapRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScContractInstanceRef<'_>> for ScContractInstance {
+    #[must_use]
+    fn from(v: &ScContractInstanceRef<'_>) -> Self {
+        Self {
+            executable: (&v.executable).into(),
+            storage: v.storage.as_ref().map(Into::into),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScContractInstanceRef<'_>> for ScContractInstance {
+    #[must_use]
+    fn from(v: ScContractInstanceRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

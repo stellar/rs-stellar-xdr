@@ -50,6 +50,9 @@ pub struct StructOutput {
     pub is_custom_str: bool,
     pub members: Vec<StructMemberOutput>,
     pub member_names: String,
+    /// True when the type contains heap-allocated data and a borrowing
+    /// `{name}Ref<'a>` type is generated for it.
+    pub requires_ref: bool,
     pub cfg: Option<String>,
 }
 
@@ -61,6 +64,10 @@ pub struct StructMemberOutput {
     /// The correct SEP-51 JSON key when the Rust field name was keyword-escaped
     /// (e.g. `type_` -> JSON `type`). `None` when the name was not escaped.
     pub serde_rename: Option<String>,
+    /// The member's type in the borrowing `Ref` form of the parent type.
+    pub ref_type_ref: String,
+    /// Expression converting the member from `Ref` form to owned form.
+    pub from_ref_expr: String,
 }
 
 pub struct EnumOutput {
@@ -86,6 +93,13 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
+    /// True when the type contains heap-allocated data and a borrowing
+    /// `{name}Ref<'a>` type is generated for it.
+    pub requires_ref: bool,
+    /// When `Some`, the `Ref` enum gets an uninhabited phantom variant under
+    /// this cfg to bind the `'a` lifetime when all lifetime-using arms are
+    /// compiled out.
+    pub ref_phantom_cfg: Option<String>,
     pub cfg: Option<String>,
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
@@ -99,6 +113,11 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
+    /// The arm's payload type in the borrowing `Ref` form of the parent type.
+    pub ref_type_ref: Option<String>,
+    /// Expression converting the payload from `Ref` form to owned form, with
+    /// the payload bound by reference to `value`.
+    pub from_ref_expr: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -125,6 +144,13 @@ pub struct TypedefNewtypeOutput {
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
+    /// True when the type contains heap-allocated data and a borrowing
+    /// `{name}Ref<'a>` type is generated for it.
+    pub requires_ref: bool,
+    /// The inner type in the borrowing `Ref` form of the newtype.
+    pub ref_type_ref: String,
+    /// Expression converting the inner value from `Ref` form to owned form.
+    pub from_ref_expr: String,
     pub cfg: Option<String>,
 }
 

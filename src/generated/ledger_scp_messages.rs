@@ -49,3 +49,30 @@ impl WriteXdr for LedgerScpMessages {
         })
     }
 }
+
+/// LedgerScpMessagesRef is a borrowing equivalent of [`LedgerScpMessages`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerScpMessagesRef<'a> {
+    pub ledger_seq: u32,
+    pub messages: VecMRef<'a, ScpEnvelopeRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerScpMessagesRef<'_>> for LedgerScpMessages {
+    #[must_use]
+    fn from(v: &LedgerScpMessagesRef<'_>) -> Self {
+        Self {
+            ledger_seq: v.ledger_seq,
+            messages: v.messages.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerScpMessagesRef<'_>> for LedgerScpMessages {
+    #[must_use]
+    fn from(v: LedgerScpMessagesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

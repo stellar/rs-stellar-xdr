@@ -107,3 +107,24 @@ impl AsRef<[Hash]> for TxDemandVector {
         self.0 .0
     }
 }
+
+/// TxDemandVectorRef is a borrowing equivalent of [`TxDemandVector`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TxDemandVectorRef<'a>(pub VecMRef<'a, Hash, 1000>);
+
+#[cfg(feature = "alloc")]
+impl From<&TxDemandVectorRef<'_>> for TxDemandVector {
+    #[must_use]
+    fn from(v: &TxDemandVectorRef<'_>) -> Self {
+        Self(v.0.to_vecm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TxDemandVectorRef<'_>> for TxDemandVector {
+    #[must_use]
+    fn from(v: TxDemandVectorRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

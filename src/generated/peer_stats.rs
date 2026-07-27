@@ -155,3 +155,56 @@ impl WriteXdr for PeerStats {
         })
     }
 }
+
+/// PeerStatsRef is a borrowing equivalent of [`PeerStats`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PeerStatsRef<'a> {
+    pub id: NodeId,
+    pub version_str: StringMRef<'a, 100>,
+    pub messages_read: u64,
+    pub messages_written: u64,
+    pub bytes_read: u64,
+    pub bytes_written: u64,
+    pub seconds_connected: u64,
+    pub unique_flood_bytes_recv: u64,
+    pub duplicate_flood_bytes_recv: u64,
+    pub unique_fetch_bytes_recv: u64,
+    pub duplicate_fetch_bytes_recv: u64,
+    pub unique_flood_message_recv: u64,
+    pub duplicate_flood_message_recv: u64,
+    pub unique_fetch_message_recv: u64,
+    pub duplicate_fetch_message_recv: u64,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PeerStatsRef<'_>> for PeerStats {
+    #[must_use]
+    fn from(v: &PeerStatsRef<'_>) -> Self {
+        Self {
+            id: v.id.clone(),
+            version_str: v.version_str.to_stringm(),
+            messages_read: v.messages_read,
+            messages_written: v.messages_written,
+            bytes_read: v.bytes_read,
+            bytes_written: v.bytes_written,
+            seconds_connected: v.seconds_connected,
+            unique_flood_bytes_recv: v.unique_flood_bytes_recv,
+            duplicate_flood_bytes_recv: v.duplicate_flood_bytes_recv,
+            unique_fetch_bytes_recv: v.unique_fetch_bytes_recv,
+            duplicate_fetch_bytes_recv: v.duplicate_fetch_bytes_recv,
+            unique_flood_message_recv: v.unique_flood_message_recv,
+            duplicate_flood_message_recv: v.duplicate_flood_message_recv,
+            unique_fetch_message_recv: v.unique_fetch_message_recv,
+            duplicate_fetch_message_recv: v.duplicate_fetch_message_recv,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PeerStatsRef<'_>> for PeerStats {
+    #[must_use]
+    fn from(v: PeerStatsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

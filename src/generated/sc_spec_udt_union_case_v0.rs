@@ -142,3 +142,32 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
         })
     }
 }
+
+/// ScSpecUdtUnionCaseV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecUdtUnionCaseV0Ref<'a> {
+    VoidV0(ScSpecUdtUnionCaseVoidV0Ref<'a>),
+    TupleV0(ScSpecUdtUnionCaseTupleV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
+    #[must_use]
+    fn from(v: &ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScSpecUdtUnionCaseV0Ref::VoidV0(value) => Self::VoidV0(value.into()),
+            ScSpecUdtUnionCaseV0Ref::TupleV0(value) => Self::TupleV0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
+    #[must_use]
+    fn from(v: ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

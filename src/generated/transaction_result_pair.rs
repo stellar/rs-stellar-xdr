@@ -49,3 +49,30 @@ impl WriteXdr for TransactionResultPair {
         })
     }
 }
+
+/// TransactionResultPairRef is a borrowing equivalent of [`TransactionResultPair`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionResultPairRef<'a> {
+    pub transaction_hash: Hash,
+    pub result: TransactionResultRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionResultPairRef<'_>> for TransactionResultPair {
+    #[must_use]
+    fn from(v: &TransactionResultPairRef<'_>) -> Self {
+        Self {
+            transaction_hash: v.transaction_hash.clone(),
+            result: (&v.result).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionResultPairRef<'_>> for TransactionResultPair {
+    #[must_use]
+    fn from(v: TransactionResultPairRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -62,3 +62,34 @@ impl WriteXdr for ScSpecEventParamV0 {
         })
     }
 }
+
+/// ScSpecEventParamV0Ref is a borrowing equivalent of [`ScSpecEventParamV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecEventParamV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub name: StringMRef<'a, 30>,
+    pub type_: ScSpecTypeDefRef<'a>,
+    pub location: ScSpecEventParamLocationV0,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecEventParamV0Ref<'_>> for ScSpecEventParamV0 {
+    #[must_use]
+    fn from(v: &ScSpecEventParamV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            name: v.name.to_stringm(),
+            type_: (&v.type_).into(),
+            location: v.location,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecEventParamV0Ref<'_>> for ScSpecEventParamV0 {
+    #[must_use]
+    fn from(v: ScSpecEventParamV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

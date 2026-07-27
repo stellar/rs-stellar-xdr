@@ -77,3 +77,44 @@ impl WriteXdr for Hello {
         })
     }
 }
+
+/// HelloRef is a borrowing equivalent of [`Hello`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct HelloRef<'a> {
+    pub ledger_version: u32,
+    pub overlay_version: u32,
+    pub overlay_min_version: u32,
+    pub network_id: Hash,
+    pub version_str: StringMRef<'a, 100>,
+    pub listening_port: i32,
+    pub peer_id: NodeId,
+    pub cert: AuthCertRef<'a>,
+    pub nonce: Uint256,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&HelloRef<'_>> for Hello {
+    #[must_use]
+    fn from(v: &HelloRef<'_>) -> Self {
+        Self {
+            ledger_version: v.ledger_version,
+            overlay_version: v.overlay_version,
+            overlay_min_version: v.overlay_min_version,
+            network_id: v.network_id.clone(),
+            version_str: v.version_str.to_stringm(),
+            listening_port: v.listening_port,
+            peer_id: v.peer_id.clone(),
+            cert: (&v.cert).into(),
+            nonce: v.nonce.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<HelloRef<'_>> for Hello {
+    #[must_use]
+    fn from(v: HelloRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -80,3 +80,30 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
         }
     }
 }
+
+/// SignerKeyEd25519SignedPayloadRef is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignerKeyEd25519SignedPayloadRef<'a> {
+    pub ed25519: Uint256,
+    pub payload: BytesMRef<'a, 64>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
+    #[must_use]
+    fn from(v: &SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
+        Self {
+            ed25519: v.ed25519.clone(),
+            payload: v.payload.to_bytesm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
+    #[must_use]
+    fn from(v: SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -74,3 +74,40 @@ impl WriteXdr for TransactionMetaV4 {
         })
     }
 }
+
+/// TransactionMetaV4Ref is a borrowing equivalent of [`TransactionMetaV4`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionMetaV4Ref<'a> {
+    pub ext: ExtensionPoint,
+    pub tx_changes_before: LedgerEntryChangesRef<'a>,
+    pub operations: VecMRef<'a, OperationMetaV2Ref<'a>>,
+    pub tx_changes_after: LedgerEntryChangesRef<'a>,
+    pub soroban_meta: Option<SorobanTransactionMetaV2Ref<'a>>,
+    pub events: VecMRef<'a, TransactionEventRef<'a>>,
+    pub diagnostic_events: VecMRef<'a, DiagnosticEventRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionMetaV4Ref<'_>> for TransactionMetaV4 {
+    #[must_use]
+    fn from(v: &TransactionMetaV4Ref<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            tx_changes_before: (&v.tx_changes_before).into(),
+            operations: v.operations.to_vecm_from(),
+            tx_changes_after: (&v.tx_changes_after).into(),
+            soroban_meta: v.soroban_meta.as_ref().map(Into::into),
+            events: v.events.to_vecm_from(),
+            diagnostic_events: v.diagnostic_events.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionMetaV4Ref<'_>> for TransactionMetaV4 {
+    #[must_use]
+    fn from(v: TransactionMetaV4Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

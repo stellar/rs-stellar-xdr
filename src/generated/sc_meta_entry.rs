@@ -128,3 +128,30 @@ impl WriteXdr for ScMetaEntry {
         })
     }
 }
+
+/// ScMetaEntryRef is a borrowing equivalent of [`ScMetaEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScMetaEntryRef<'a> {
+    ScMetaV0(ScMetaV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScMetaEntryRef<'_>> for ScMetaEntry {
+    #[must_use]
+    fn from(v: &ScMetaEntryRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScMetaEntryRef::ScMetaV0(value) => Self::ScMetaV0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScMetaEntryRef<'_>> for ScMetaEntry {
+    #[must_use]
+    fn from(v: ScMetaEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

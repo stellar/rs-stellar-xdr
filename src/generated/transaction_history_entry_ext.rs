@@ -135,3 +135,32 @@ impl WriteXdr for TransactionHistoryEntryExt {
         })
     }
 }
+
+/// TransactionHistoryEntryExtRef is a borrowing equivalent of [`TransactionHistoryEntryExt`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionHistoryEntryExtRef<'a> {
+    V0,
+    V1(GeneralizedTransactionSetRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
+    #[must_use]
+    fn from(v: &TransactionHistoryEntryExtRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TransactionHistoryEntryExtRef::V0 => Self::V0,
+            TransactionHistoryEntryExtRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
+    #[must_use]
+    fn from(v: TransactionHistoryEntryExtRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

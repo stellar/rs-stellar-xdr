@@ -179,3 +179,40 @@ impl WriteXdr for ScSpecEntry {
         })
     }
 }
+
+/// ScSpecEntryRef is a borrowing equivalent of [`ScSpecEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecEntryRef<'a> {
+    FunctionV0(ScSpecFunctionV0Ref<'a>),
+    UdtStructV0(ScSpecUdtStructV0Ref<'a>),
+    UdtUnionV0(ScSpecUdtUnionV0Ref<'a>),
+    UdtEnumV0(ScSpecUdtEnumV0Ref<'a>),
+    UdtErrorEnumV0(ScSpecUdtErrorEnumV0Ref<'a>),
+    EventV0(ScSpecEventV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecEntryRef<'_>> for ScSpecEntry {
+    #[must_use]
+    fn from(v: &ScSpecEntryRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScSpecEntryRef::FunctionV0(value) => Self::FunctionV0(value.into()),
+            ScSpecEntryRef::UdtStructV0(value) => Self::UdtStructV0(value.into()),
+            ScSpecEntryRef::UdtUnionV0(value) => Self::UdtUnionV0(value.into()),
+            ScSpecEntryRef::UdtEnumV0(value) => Self::UdtEnumV0(value.into()),
+            ScSpecEntryRef::UdtErrorEnumV0(value) => Self::UdtErrorEnumV0(value.into()),
+            ScSpecEntryRef::EventV0(value) => Self::EventV0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecEntryRef<'_>> for ScSpecEntry {
+    #[must_use]
+    fn from(v: ScSpecEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

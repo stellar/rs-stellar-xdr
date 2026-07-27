@@ -232,3 +232,54 @@ impl WriteXdr for ManageSellOfferResult {
         })
     }
 }
+
+/// ManageSellOfferResultRef is a borrowing equivalent of [`ManageSellOfferResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ManageSellOfferResultRef<'a> {
+    Success(ManageOfferSuccessResultRef<'a>),
+    Malformed,
+    SellNoTrust,
+    BuyNoTrust,
+    SellNotAuthorized,
+    BuyNotAuthorized,
+    LineFull,
+    Underfunded,
+    CrossSelf,
+    SellNoIssuer,
+    BuyNoIssuer,
+    NotFound,
+    LowReserve,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ManageSellOfferResultRef<'_>> for ManageSellOfferResult {
+    #[must_use]
+    fn from(v: &ManageSellOfferResultRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ManageSellOfferResultRef::Success(value) => Self::Success(value.into()),
+            ManageSellOfferResultRef::Malformed => Self::Malformed,
+            ManageSellOfferResultRef::SellNoTrust => Self::SellNoTrust,
+            ManageSellOfferResultRef::BuyNoTrust => Self::BuyNoTrust,
+            ManageSellOfferResultRef::SellNotAuthorized => Self::SellNotAuthorized,
+            ManageSellOfferResultRef::BuyNotAuthorized => Self::BuyNotAuthorized,
+            ManageSellOfferResultRef::LineFull => Self::LineFull,
+            ManageSellOfferResultRef::Underfunded => Self::Underfunded,
+            ManageSellOfferResultRef::CrossSelf => Self::CrossSelf,
+            ManageSellOfferResultRef::SellNoIssuer => Self::SellNoIssuer,
+            ManageSellOfferResultRef::BuyNoIssuer => Self::BuyNoIssuer,
+            ManageSellOfferResultRef::NotFound => Self::NotFound,
+            ManageSellOfferResultRef::LowReserve => Self::LowReserve,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ManageSellOfferResultRef<'_>> for ManageSellOfferResult {
+    #[must_use]
+    fn from(v: ManageSellOfferResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -154,3 +154,36 @@ impl WriteXdr for BucketEntry {
         })
     }
 }
+
+/// BucketEntryRef is a borrowing equivalent of [`BucketEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum BucketEntryRef<'a> {
+    Liveentry(LedgerEntryRef<'a>),
+    Initentry(LedgerEntryRef<'a>),
+    Deadentry(LedgerKeyRef<'a>),
+    Metaentry(BucketMetadata),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&BucketEntryRef<'_>> for BucketEntry {
+    #[must_use]
+    fn from(v: &BucketEntryRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            BucketEntryRef::Liveentry(value) => Self::Liveentry(value.into()),
+            BucketEntryRef::Initentry(value) => Self::Initentry(value.into()),
+            BucketEntryRef::Deadentry(value) => Self::Deadentry(value.into()),
+            BucketEntryRef::Metaentry(value) => Self::Metaentry(value.clone()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<BucketEntryRef<'_>> for BucketEntry {
+    #[must_use]
+    fn from(v: BucketEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

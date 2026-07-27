@@ -45,3 +45,28 @@ impl WriteXdr for ScSpecTypeVec {
         })
     }
 }
+
+/// ScSpecTypeVecRef is a borrowing equivalent of [`ScSpecTypeVec`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecTypeVecRef<'a> {
+    pub element_type: &'a ScSpecTypeDefRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeVecRef<'_>> for ScSpecTypeVec {
+    #[must_use]
+    fn from(v: &ScSpecTypeVecRef<'_>) -> Self {
+        Self {
+            element_type: Box::new(v.element_type.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeVecRef<'_>> for ScSpecTypeVec {
+    #[must_use]
+    fn from(v: ScSpecTypeVecRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

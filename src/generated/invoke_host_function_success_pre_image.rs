@@ -49,3 +49,30 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
         })
     }
 }
+
+/// InvokeHostFunctionSuccessPreImageRef is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InvokeHostFunctionSuccessPreImageRef<'a> {
+    pub return_value: ScValRef<'a>,
+    pub events: VecMRef<'a, ContractEventRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
+    #[must_use]
+    fn from(v: &InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
+        Self {
+            return_value: (&v.return_value).into(),
+            events: v.events.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
+    #[must_use]
+    fn from(v: InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -59,3 +59,30 @@ impl WriteXdr for ManageOfferSuccessResult {
         })
     }
 }
+
+/// ManageOfferSuccessResultRef is a borrowing equivalent of [`ManageOfferSuccessResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ManageOfferSuccessResultRef<'a> {
+    pub offers_claimed: VecMRef<'a, ClaimAtom>,
+    pub offer: ManageOfferSuccessResultOffer,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
+    #[must_use]
+    fn from(v: &ManageOfferSuccessResultRef<'_>) -> Self {
+        Self {
+            offers_claimed: v.offers_claimed.to_vecm(),
+            offer: v.offer.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
+    #[must_use]
+    fn from(v: ManageOfferSuccessResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

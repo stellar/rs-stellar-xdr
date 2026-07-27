@@ -132,3 +132,30 @@ impl WriteXdr for Claimant {
         })
     }
 }
+
+/// ClaimantRef is a borrowing equivalent of [`Claimant`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ClaimantRef<'a> {
+    ClaimantTypeV0(ClaimantV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ClaimantRef<'_>> for Claimant {
+    #[must_use]
+    fn from(v: &ClaimantRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ClaimantRef::ClaimantTypeV0(value) => Self::ClaimantTypeV0(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ClaimantRef<'_>> for Claimant {
+    #[must_use]
+    fn from(v: ClaimantRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

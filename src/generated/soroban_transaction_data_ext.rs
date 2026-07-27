@@ -135,3 +135,32 @@ impl WriteXdr for SorobanTransactionDataExt {
         })
     }
 }
+
+/// SorobanTransactionDataExtRef is a borrowing equivalent of [`SorobanTransactionDataExt`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanTransactionDataExtRef<'a> {
+    V0,
+    V1(SorobanResourcesExtV0Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
+    #[must_use]
+    fn from(v: &SorobanTransactionDataExtRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            SorobanTransactionDataExtRef::V0 => Self::V0,
+            SorobanTransactionDataExtRef::V1(value) => Self::V1(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
+    #[must_use]
+    fn from(v: SorobanTransactionDataExtRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -339,3 +339,80 @@ impl WriteXdr for ScSpecTypeDef {
         })
     }
 }
+
+/// ScSpecTypeDefRef is a borrowing equivalent of [`ScSpecTypeDef`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecTypeDefRef<'a> {
+    Val,
+    Bool,
+    Void,
+    Error,
+    U32,
+    I32,
+    U64,
+    I64,
+    Timepoint,
+    Duration,
+    U128,
+    I128,
+    U256,
+    I256,
+    Bytes,
+    String,
+    Symbol,
+    Address,
+    MuxedAddress,
+    Option(&'a ScSpecTypeOptionRef<'a>),
+    Result(&'a ScSpecTypeResultRef<'a>),
+    Vec(&'a ScSpecTypeVecRef<'a>),
+    Map(&'a ScSpecTypeMapRef<'a>),
+    Tuple(&'a ScSpecTypeTupleRef<'a>),
+    BytesN(ScSpecTypeBytesN),
+    Udt(ScSpecTypeUdtRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
+    #[must_use]
+    fn from(v: &ScSpecTypeDefRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScSpecTypeDefRef::Val => Self::Val,
+            ScSpecTypeDefRef::Bool => Self::Bool,
+            ScSpecTypeDefRef::Void => Self::Void,
+            ScSpecTypeDefRef::Error => Self::Error,
+            ScSpecTypeDefRef::U32 => Self::U32,
+            ScSpecTypeDefRef::I32 => Self::I32,
+            ScSpecTypeDefRef::U64 => Self::U64,
+            ScSpecTypeDefRef::I64 => Self::I64,
+            ScSpecTypeDefRef::Timepoint => Self::Timepoint,
+            ScSpecTypeDefRef::Duration => Self::Duration,
+            ScSpecTypeDefRef::U128 => Self::U128,
+            ScSpecTypeDefRef::I128 => Self::I128,
+            ScSpecTypeDefRef::U256 => Self::U256,
+            ScSpecTypeDefRef::I256 => Self::I256,
+            ScSpecTypeDefRef::Bytes => Self::Bytes,
+            ScSpecTypeDefRef::String => Self::String,
+            ScSpecTypeDefRef::Symbol => Self::Symbol,
+            ScSpecTypeDefRef::Address => Self::Address,
+            ScSpecTypeDefRef::MuxedAddress => Self::MuxedAddress,
+            ScSpecTypeDefRef::Option(value) => Self::Option(Box::new((*value).into())),
+            ScSpecTypeDefRef::Result(value) => Self::Result(Box::new((*value).into())),
+            ScSpecTypeDefRef::Vec(value) => Self::Vec(Box::new((*value).into())),
+            ScSpecTypeDefRef::Map(value) => Self::Map(Box::new((*value).into())),
+            ScSpecTypeDefRef::Tuple(value) => Self::Tuple(Box::new((*value).into())),
+            ScSpecTypeDefRef::BytesN(value) => Self::BytesN(value.clone()),
+            ScSpecTypeDefRef::Udt(value) => Self::Udt(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
+    #[must_use]
+    fn from(v: ScSpecTypeDefRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

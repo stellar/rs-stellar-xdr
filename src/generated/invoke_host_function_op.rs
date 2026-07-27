@@ -51,3 +51,30 @@ impl WriteXdr for InvokeHostFunctionOp {
         })
     }
 }
+
+/// InvokeHostFunctionOpRef is a borrowing equivalent of [`InvokeHostFunctionOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InvokeHostFunctionOpRef<'a> {
+    pub host_function: HostFunctionRef<'a>,
+    pub auth: VecMRef<'a, SorobanAuthorizationEntryRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
+    #[must_use]
+    fn from(v: &InvokeHostFunctionOpRef<'_>) -> Self {
+        Self {
+            host_function: (&v.host_function).into(),
+            auth: v.auth.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
+    #[must_use]
+    fn from(v: InvokeHostFunctionOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

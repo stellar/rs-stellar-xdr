@@ -107,3 +107,24 @@ impl AsRef<[u8]> for String64 {
         self.0 .0
     }
 }
+
+/// String64Ref is a borrowing equivalent of [`String64`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct String64Ref<'a>(pub StringMRef<'a, 64>);
+
+#[cfg(feature = "alloc")]
+impl From<&String64Ref<'_>> for String64 {
+    #[must_use]
+    fn from(v: &String64Ref<'_>) -> Self {
+        Self(v.0.to_stringm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<String64Ref<'_>> for String64 {
+    #[must_use]
+    fn from(v: String64Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

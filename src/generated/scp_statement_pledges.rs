@@ -176,3 +176,36 @@ impl WriteXdr for ScpStatementPledges {
         })
     }
 }
+
+/// ScpStatementPledgesRef is a borrowing equivalent of [`ScpStatementPledges`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScpStatementPledgesRef<'a> {
+    Prepare(ScpStatementPrepareRef<'a>),
+    Confirm(ScpStatementConfirmRef<'a>),
+    Externalize(ScpStatementExternalizeRef<'a>),
+    Nominate(ScpNominationRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScpStatementPledgesRef<'_>> for ScpStatementPledges {
+    #[must_use]
+    fn from(v: &ScpStatementPledgesRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScpStatementPledgesRef::Prepare(value) => Self::Prepare(value.into()),
+            ScpStatementPledgesRef::Confirm(value) => Self::Confirm(value.into()),
+            ScpStatementPledgesRef::Externalize(value) => Self::Externalize(value.into()),
+            ScpStatementPledgesRef::Nominate(value) => Self::Nominate(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScpStatementPledgesRef<'_>> for ScpStatementPledges {
+    #[must_use]
+    fn from(v: ScpStatementPledgesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

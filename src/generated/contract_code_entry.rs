@@ -63,3 +63,32 @@ impl WriteXdr for ContractCodeEntry {
         })
     }
 }
+
+/// ContractCodeEntryRef is a borrowing equivalent of [`ContractCodeEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContractCodeEntryRef<'a> {
+    pub ext: ContractCodeEntryExt,
+    pub hash: Hash,
+    pub code: BytesMRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ContractCodeEntryRef<'_>> for ContractCodeEntry {
+    #[must_use]
+    fn from(v: &ContractCodeEntryRef<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            hash: v.hash.clone(),
+            code: v.code.to_bytesm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractCodeEntryRef<'_>> for ContractCodeEntry {
+    #[must_use]
+    fn from(v: ContractCodeEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

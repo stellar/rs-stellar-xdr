@@ -53,3 +53,32 @@ impl WriteXdr for StoredDebugTransactionSet {
         })
     }
 }
+
+/// StoredDebugTransactionSetRef is a borrowing equivalent of [`StoredDebugTransactionSet`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct StoredDebugTransactionSetRef<'a> {
+    pub tx_set: StoredTransactionSetRef<'a>,
+    pub ledger_seq: u32,
+    pub scp_value: StellarValueRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
+    #[must_use]
+    fn from(v: &StoredDebugTransactionSetRef<'_>) -> Self {
+        Self {
+            tx_set: (&v.tx_set).into(),
+            ledger_seq: v.ledger_seq,
+            scp_value: (&v.scp_value).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
+    #[must_use]
+    fn from(v: StoredDebugTransactionSetRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

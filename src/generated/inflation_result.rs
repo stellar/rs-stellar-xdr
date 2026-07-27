@@ -138,3 +138,32 @@ impl WriteXdr for InflationResult {
         })
     }
 }
+
+/// InflationResultRef is a borrowing equivalent of [`InflationResult`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum InflationResultRef<'a> {
+    Success(VecMRef<'a, InflationPayout>),
+    NotTime,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&InflationResultRef<'_>> for InflationResult {
+    #[must_use]
+    fn from(v: &InflationResultRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            InflationResultRef::Success(value) => Self::Success(value.to_vecm()),
+            InflationResultRef::NotTime => Self::NotTime,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<InflationResultRef<'_>> for InflationResult {
+    #[must_use]
+    fn from(v: InflationResultRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

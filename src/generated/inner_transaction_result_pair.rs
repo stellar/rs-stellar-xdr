@@ -49,3 +49,30 @@ impl WriteXdr for InnerTransactionResultPair {
         })
     }
 }
+
+/// InnerTransactionResultPairRef is a borrowing equivalent of [`InnerTransactionResultPair`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InnerTransactionResultPairRef<'a> {
+    pub transaction_hash: Hash,
+    pub result: InnerTransactionResultRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&InnerTransactionResultPairRef<'_>> for InnerTransactionResultPair {
+    #[must_use]
+    fn from(v: &InnerTransactionResultPairRef<'_>) -> Self {
+        Self {
+            transaction_hash: v.transaction_hash.clone(),
+            result: (&v.result).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<InnerTransactionResultPairRef<'_>> for InnerTransactionResultPair {
+    #[must_use]
+    fn from(v: InnerTransactionResultPairRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

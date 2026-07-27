@@ -81,3 +81,36 @@ impl WriteXdr for ClaimableBalanceEntry {
         })
     }
 }
+
+/// ClaimableBalanceEntryRef is a borrowing equivalent of [`ClaimableBalanceEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ClaimableBalanceEntryRef<'a> {
+    pub balance_id: ClaimableBalanceId,
+    pub claimants: VecMRef<'a, ClaimantRef<'a>, 10>,
+    pub asset: Asset,
+    pub amount: i64,
+    pub ext: ClaimableBalanceEntryExt,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ClaimableBalanceEntryRef<'_>> for ClaimableBalanceEntry {
+    #[must_use]
+    fn from(v: &ClaimableBalanceEntryRef<'_>) -> Self {
+        Self {
+            balance_id: v.balance_id.clone(),
+            claimants: v.claimants.to_vecm_from(),
+            asset: v.asset.clone(),
+            amount: v.amount,
+            ext: v.ext.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ClaimableBalanceEntryRef<'_>> for ClaimableBalanceEntry {
+    #[must_use]
+    fn from(v: ClaimableBalanceEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

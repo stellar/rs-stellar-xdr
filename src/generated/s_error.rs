@@ -49,3 +49,30 @@ impl WriteXdr for SError {
         })
     }
 }
+
+/// SErrorRef is a borrowing equivalent of [`SError`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SErrorRef<'a> {
+    pub code: ErrorCode,
+    pub msg: StringMRef<'a, 100>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SErrorRef<'_>> for SError {
+    #[must_use]
+    fn from(v: &SErrorRef<'_>) -> Self {
+        Self {
+            code: v.code,
+            msg: v.msg.to_stringm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SErrorRef<'_>> for SError {
+    #[must_use]
+    fn from(v: SErrorRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

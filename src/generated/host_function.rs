@@ -167,3 +167,38 @@ impl WriteXdr for HostFunction {
         })
     }
 }
+
+/// HostFunctionRef is a borrowing equivalent of [`HostFunction`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum HostFunctionRef<'a> {
+    InvokeContract(InvokeContractArgsRef<'a>),
+    CreateContract(CreateContractArgsRef<'a>),
+    UploadContractWasm(BytesMRef<'a>),
+    CreateContractV2(CreateContractArgsV2Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&HostFunctionRef<'_>> for HostFunction {
+    #[must_use]
+    fn from(v: &HostFunctionRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            HostFunctionRef::InvokeContract(value) => Self::InvokeContract(value.into()),
+            HostFunctionRef::CreateContract(value) => Self::CreateContract(value.into()),
+            HostFunctionRef::UploadContractWasm(value) => {
+                Self::UploadContractWasm(value.to_bytesm())
+            }
+            HostFunctionRef::CreateContractV2(value) => Self::CreateContractV2(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<HostFunctionRef<'_>> for HostFunction {
+    #[must_use]
+    fn from(v: HostFunctionRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

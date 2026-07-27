@@ -107,3 +107,24 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
         self.0 .0
     }
 }
+
+/// TimeSlicedPeerDataListRef is a borrowing equivalent of [`TimeSlicedPeerDataList`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TimeSlicedPeerDataListRef<'a>(pub VecMRef<'a, TimeSlicedPeerDataRef<'a>, 25>);
+
+#[cfg(feature = "alloc")]
+impl From<&TimeSlicedPeerDataListRef<'_>> for TimeSlicedPeerDataList {
+    #[must_use]
+    fn from(v: &TimeSlicedPeerDataListRef<'_>) -> Self {
+        Self(v.0.to_vecm_from())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TimeSlicedPeerDataListRef<'_>> for TimeSlicedPeerDataList {
+    #[must_use]
+    fn from(v: TimeSlicedPeerDataListRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

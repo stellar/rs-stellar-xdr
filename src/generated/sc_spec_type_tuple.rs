@@ -45,3 +45,28 @@ impl WriteXdr for ScSpecTypeTuple {
         })
     }
 }
+
+/// ScSpecTypeTupleRef is a borrowing equivalent of [`ScSpecTypeTuple`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecTypeTupleRef<'a> {
+    pub value_types: VecMRef<'a, ScSpecTypeDefRef<'a>, 12>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
+    #[must_use]
+    fn from(v: &ScSpecTypeTupleRef<'_>) -> Self {
+        Self {
+            value_types: v.value_types.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
+    #[must_use]
+    fn from(v: ScSpecTypeTupleRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

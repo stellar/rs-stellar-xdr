@@ -44,3 +44,28 @@ impl WriteXdr for ConfigUpgradeSet {
         })
     }
 }
+
+/// ConfigUpgradeSetRef is a borrowing equivalent of [`ConfigUpgradeSet`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ConfigUpgradeSetRef<'a> {
+    pub updated_entry: VecMRef<'a, ConfigSettingEntryRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
+    #[must_use]
+    fn from(v: &ConfigUpgradeSetRef<'_>) -> Self {
+        Self {
+            updated_entry: v.updated_entry.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
+    #[must_use]
+    fn from(v: ConfigUpgradeSetRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

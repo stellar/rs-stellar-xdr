@@ -45,3 +45,28 @@ impl WriteXdr for OperationMeta {
         })
     }
 }
+
+/// OperationMetaRef is a borrowing equivalent of [`OperationMeta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OperationMetaRef<'a> {
+    pub changes: LedgerEntryChangesRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&OperationMetaRef<'_>> for OperationMeta {
+    #[must_use]
+    fn from(v: &OperationMetaRef<'_>) -> Self {
+        Self {
+            changes: (&v.changes).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<OperationMetaRef<'_>> for OperationMeta {
+    #[must_use]
+    fn from(v: OperationMetaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

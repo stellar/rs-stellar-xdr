@@ -57,3 +57,32 @@ impl WriteXdr for AuthenticatedMessageV0 {
         })
     }
 }
+
+/// AuthenticatedMessageV0Ref is a borrowing equivalent of [`AuthenticatedMessageV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AuthenticatedMessageV0Ref<'a> {
+    pub sequence: u64,
+    pub message: StellarMessageRef<'a>,
+    pub mac: HmacSha256Mac,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
+    #[must_use]
+    fn from(v: &AuthenticatedMessageV0Ref<'_>) -> Self {
+        Self {
+            sequence: v.sequence,
+            message: (&v.message).into(),
+            mac: v.mac.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
+    #[must_use]
+    fn from(v: AuthenticatedMessageV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

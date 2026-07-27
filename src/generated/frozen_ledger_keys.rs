@@ -44,3 +44,28 @@ impl WriteXdr for FrozenLedgerKeys {
         })
     }
 }
+
+/// FrozenLedgerKeysRef is a borrowing equivalent of [`FrozenLedgerKeys`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FrozenLedgerKeysRef<'a> {
+    pub keys: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&FrozenLedgerKeysRef<'_>> for FrozenLedgerKeys {
+    #[must_use]
+    fn from(v: &FrozenLedgerKeysRef<'_>) -> Self {
+        Self {
+            keys: v.keys.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<FrozenLedgerKeysRef<'_>> for FrozenLedgerKeys {
+    #[must_use]
+    fn from(v: FrozenLedgerKeysRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

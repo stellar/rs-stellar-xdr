@@ -61,3 +61,36 @@ impl WriteXdr for ContractDataEntry {
         })
     }
 }
+
+/// ContractDataEntryRef is a borrowing equivalent of [`ContractDataEntry`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContractDataEntryRef<'a> {
+    pub ext: ExtensionPoint,
+    pub contract: ScAddress,
+    pub key: ScValRef<'a>,
+    pub durability: ContractDataDurability,
+    pub val: ScValRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ContractDataEntryRef<'_>> for ContractDataEntry {
+    #[must_use]
+    fn from(v: &ContractDataEntryRef<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            contract: v.contract.clone(),
+            key: (&v.key).into(),
+            durability: v.durability,
+            val: (&v.val).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ContractDataEntryRef<'_>> for ContractDataEntry {
+    #[must_use]
+    fn from(v: ContractDataEntryRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -49,3 +49,34 @@ impl WriteXdr for SorobanAddressCredentialsWithDelegates {
         })
     }
 }
+
+/// SorobanAddressCredentialsWithDelegatesRef is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SorobanAddressCredentialsWithDelegatesRef<'a> {
+    pub address_credentials: SorobanAddressCredentialsRef<'a>,
+    pub delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SorobanAddressCredentialsWithDelegatesRef<'_>>
+    for SorobanAddressCredentialsWithDelegates
+{
+    #[must_use]
+    fn from(v: &SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
+        Self {
+            address_credentials: (&v.address_credentials).into(),
+            delegates: v.delegates.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SorobanAddressCredentialsWithDelegatesRef<'_>>
+    for SorobanAddressCredentialsWithDelegates
+{
+    #[must_use]
+    fn from(v: SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

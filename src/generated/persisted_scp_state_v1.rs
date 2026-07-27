@@ -50,3 +50,30 @@ impl WriteXdr for PersistedScpStateV1 {
         })
     }
 }
+
+/// PersistedScpStateV1Ref is a borrowing equivalent of [`PersistedScpStateV1`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PersistedScpStateV1Ref<'a> {
+    pub scp_envelopes: VecMRef<'a, ScpEnvelopeRef<'a>>,
+    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
+    #[must_use]
+    fn from(v: &PersistedScpStateV1Ref<'_>) -> Self {
+        Self {
+            scp_envelopes: v.scp_envelopes.to_vecm_from(),
+            quorum_sets: v.quorum_sets.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
+    #[must_use]
+    fn from(v: PersistedScpStateV1Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

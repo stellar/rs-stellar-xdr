@@ -58,3 +58,32 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
         })
     }
 }
+
+/// ScSpecUdtUnionCaseTupleV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecUdtUnionCaseTupleV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub name: StringMRef<'a, 60>,
+    pub type_: VecMRef<'a, ScSpecTypeDefRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
+    #[must_use]
+    fn from(v: &ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            name: v.name.to_stringm(),
+            type_: v.type_.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
+    #[must_use]
+    fn from(v: ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

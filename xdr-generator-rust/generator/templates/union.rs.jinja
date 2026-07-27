@@ -226,4 +226,71 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
+{%- if u.requires_ref %}
+
+/// {{ u.name }}Ref is a borrowing equivalent of [`{{ u.name }}`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+{%- if let Some(cfg) = u.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum {{ u.name }}Ref<'a> {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+    #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+    {{ arm.case_name }},
+{%- else %}
+    {{ arm.case_name }}({{ arm.ref_type_ref.as_ref().unwrap() }}),
+{%- endif %}
+{%- endfor %}
+{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
+    /// Uninhabited variant binding the `'a` lifetime when every
+    /// lifetime-using variant is compiled out.
+    #[cfg({{ phantom_cfg }})]
+    #[doc(hidden)]
+    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
+{%- endif %}
+}
+
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
+    #[must_use]
+    fn from(v: &{{ u.name }}Ref<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+            {{ u.name }}Ref::{{ arm.case_name }} => Self::{{ arm.case_name }},
+{%- else %}
+            {{ u.name }}Ref::{{ arm.case_name }}(value) => Self::{{ arm.case_name }}({{ arm.from_ref_expr.as_ref().unwrap() }}),
+{%- endif %}
+{%- endfor %}
+{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
+            #[cfg({{ phantom_cfg }})]
+            {{ u.name }}Ref::_Phantom(never, _) => match *never {},
+{%- endif %}
+        }
+    }
+}
+
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<{{ u.name }}Ref<'_>> for {{ u.name }} {
+    #[must_use]
+    fn from(v: {{ u.name }}Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}
+{%- endif %}
 

@@ -57,3 +57,32 @@ impl WriteXdr for CreateClaimableBalanceOp {
         })
     }
 }
+
+/// CreateClaimableBalanceOpRef is a borrowing equivalent of [`CreateClaimableBalanceOp`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct CreateClaimableBalanceOpRef<'a> {
+    pub asset: Asset,
+    pub amount: i64,
+    pub claimants: VecMRef<'a, ClaimantRef<'a>, 10>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
+    #[must_use]
+    fn from(v: &CreateClaimableBalanceOpRef<'_>) -> Self {
+        Self {
+            asset: v.asset.clone(),
+            amount: v.amount,
+            claimants: v.claimants.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
+    #[must_use]
+    fn from(v: CreateClaimableBalanceOpRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

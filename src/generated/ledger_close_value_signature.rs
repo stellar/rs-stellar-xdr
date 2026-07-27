@@ -49,3 +49,30 @@ impl WriteXdr for LedgerCloseValueSignature {
         })
     }
 }
+
+/// LedgerCloseValueSignatureRef is a borrowing equivalent of [`LedgerCloseValueSignature`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseValueSignatureRef<'a> {
+    pub node_id: NodeId,
+    pub signature: SignatureRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
+    #[must_use]
+    fn from(v: &LedgerCloseValueSignatureRef<'_>) -> Self {
+        Self {
+            node_id: v.node_id.clone(),
+            signature: (&v.signature).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
+    #[must_use]
+    fn from(v: LedgerCloseValueSignatureRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

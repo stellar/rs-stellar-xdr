@@ -110,3 +110,30 @@ impl WriteXdr for Operation {
         })
     }
 }
+
+/// OperationRef is a borrowing equivalent of [`Operation`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OperationRef<'a> {
+    pub source_account: Option<MuxedAccount>,
+    pub body: OperationBodyRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&OperationRef<'_>> for Operation {
+    #[must_use]
+    fn from(v: &OperationRef<'_>) -> Self {
+        Self {
+            source_account: v.source_account.clone(),
+            body: (&v.body).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<OperationRef<'_>> for Operation {
+    #[must_use]
+    fn from(v: OperationRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

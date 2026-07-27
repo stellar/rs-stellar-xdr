@@ -55,3 +55,32 @@ impl WriteXdr for TransactionMetaV2 {
         })
     }
 }
+
+/// TransactionMetaV2Ref is a borrowing equivalent of [`TransactionMetaV2`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionMetaV2Ref<'a> {
+    pub tx_changes_before: LedgerEntryChangesRef<'a>,
+    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
+    pub tx_changes_after: LedgerEntryChangesRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionMetaV2Ref<'_>> for TransactionMetaV2 {
+    #[must_use]
+    fn from(v: &TransactionMetaV2Ref<'_>) -> Self {
+        Self {
+            tx_changes_before: (&v.tx_changes_before).into(),
+            operations: v.operations.to_vecm_from(),
+            tx_changes_after: (&v.tx_changes_after).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionMetaV2Ref<'_>> for TransactionMetaV2 {
+    #[must_use]
+    fn from(v: TransactionMetaV2Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

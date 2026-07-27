@@ -296,4 +296,36 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     }
 }
 {%- endif %}
+{%- if t.requires_ref %}
+
+/// {{ t.name }}Ref is a borrowing equivalent of [`{{ t.name }}`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+{%- if let Some(cfg) = t.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct {{ t.name }}Ref<'a>(pub {{ t.ref_type_ref }});
+
+{% if let Some(cfg) = t.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<&{{ t.name }}Ref<'_>> for {{ t.name }} {
+    #[must_use]
+    fn from(v: &{{ t.name }}Ref<'_>) -> Self {
+        Self({{ t.from_ref_expr }})
+    }
+}
+
+{% if let Some(cfg) = t.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<{{ t.name }}Ref<'_>> for {{ t.name }} {
+    #[must_use]
+    fn from(v: {{ t.name }}Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}
+{%- endif %}
 

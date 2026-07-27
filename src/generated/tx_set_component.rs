@@ -138,3 +138,32 @@ impl WriteXdr for TxSetComponent {
         })
     }
 }
+
+/// TxSetComponentRef is a borrowing equivalent of [`TxSetComponent`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TxSetComponentRef<'a> {
+    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TxSetComponentRef<'_>> for TxSetComponent {
+    #[must_use]
+    fn from(v: &TxSetComponentRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TxSetComponentRef::TxsetCompTxsMaybeDiscountedFee(value) => {
+                Self::TxsetCompTxsMaybeDiscountedFee(value.into())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TxSetComponentRef<'_>> for TxSetComponent {
+    #[must_use]
+    fn from(v: TxSetComponentRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

@@ -55,3 +55,32 @@ impl WriteXdr for OperationMetaV2 {
         })
     }
 }
+
+/// OperationMetaV2Ref is a borrowing equivalent of [`OperationMetaV2`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OperationMetaV2Ref<'a> {
+    pub ext: ExtensionPoint,
+    pub changes: LedgerEntryChangesRef<'a>,
+    pub events: VecMRef<'a, ContractEventRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&OperationMetaV2Ref<'_>> for OperationMetaV2 {
+    #[must_use]
+    fn from(v: &OperationMetaV2Ref<'_>) -> Self {
+        Self {
+            ext: v.ext.clone(),
+            changes: (&v.changes).into(),
+            events: v.events.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<OperationMetaV2Ref<'_>> for OperationMetaV2 {
+    #[must_use]
+    fn from(v: OperationMetaV2Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

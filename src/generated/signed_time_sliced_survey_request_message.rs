@@ -49,3 +49,30 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
         })
     }
 }
+
+/// SignedTimeSlicedSurveyRequestMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignedTimeSlicedSurveyRequestMessageRef<'a> {
+    pub request_signature: SignatureRef<'a>,
+    pub request: TimeSlicedSurveyRequestMessage,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
+    #[must_use]
+    fn from(v: &SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
+        Self {
+            request_signature: (&v.request_signature).into(),
+            request: v.request.clone(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
+    #[must_use]
+    fn from(v: SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

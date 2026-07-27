@@ -141,3 +141,34 @@ impl WriteXdr for TransactionEnvelope {
         })
     }
 }
+
+/// TransactionEnvelopeRef is a borrowing equivalent of [`TransactionEnvelope`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionEnvelopeRef<'a> {
+    TxV0(TransactionV0EnvelopeRef<'a>),
+    Tx(TransactionV1EnvelopeRef<'a>),
+    TxFeeBump(FeeBumpTransactionEnvelopeRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionEnvelopeRef<'_>> for TransactionEnvelope {
+    #[must_use]
+    fn from(v: &TransactionEnvelopeRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            TransactionEnvelopeRef::TxV0(value) => Self::TxV0(value.into()),
+            TransactionEnvelopeRef::Tx(value) => Self::Tx(value.into()),
+            TransactionEnvelopeRef::TxFeeBump(value) => Self::TxFeeBump(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionEnvelopeRef<'_>> for TransactionEnvelope {
+    #[must_use]
+    fn from(v: TransactionEnvelopeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

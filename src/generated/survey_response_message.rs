@@ -61,3 +61,36 @@ impl WriteXdr for SurveyResponseMessage {
         })
     }
 }
+
+/// SurveyResponseMessageRef is a borrowing equivalent of [`SurveyResponseMessage`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SurveyResponseMessageRef<'a> {
+    pub surveyor_peer_id: NodeId,
+    pub surveyed_peer_id: NodeId,
+    pub ledger_num: u32,
+    pub command_type: SurveyMessageCommandType,
+    pub encrypted_body: EncryptedBodyRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
+    #[must_use]
+    fn from(v: &SurveyResponseMessageRef<'_>) -> Self {
+        Self {
+            surveyor_peer_id: v.surveyor_peer_id.clone(),
+            surveyed_peer_id: v.surveyed_peer_id.clone(),
+            ledger_num: v.ledger_num,
+            command_type: v.command_type,
+            encrypted_body: (&v.encrypted_body).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
+    #[must_use]
+    fn from(v: SurveyResponseMessageRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

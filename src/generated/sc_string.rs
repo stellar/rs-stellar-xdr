@@ -107,3 +107,24 @@ impl AsRef<[u8]> for ScString {
         self.0 .0
     }
 }
+
+/// ScStringRef is a borrowing equivalent of [`ScString`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScStringRef<'a>(pub StringMRef<'a>);
+
+#[cfg(feature = "alloc")]
+impl From<&ScStringRef<'_>> for ScString {
+    #[must_use]
+    fn from(v: &ScStringRef<'_>) -> Self {
+        Self(v.0.to_stringm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScStringRef<'_>> for ScString {
+    #[must_use]
+    fn from(v: ScStringRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

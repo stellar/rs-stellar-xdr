@@ -57,3 +57,30 @@ impl WriteXdr for AccountEntryExtensionV1 {
         })
     }
 }
+
+/// AccountEntryExtensionV1Ref is a borrowing equivalent of [`AccountEntryExtensionV1`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AccountEntryExtensionV1Ref<'a> {
+    pub liabilities: Liabilities,
+    pub ext: AccountEntryExtensionV1ExtRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
+    #[must_use]
+    fn from(v: &AccountEntryExtensionV1Ref<'_>) -> Self {
+        Self {
+            liabilities: v.liabilities.clone(),
+            ext: (&v.ext).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
+    #[must_use]
+    fn from(v: AccountEntryExtensionV1Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

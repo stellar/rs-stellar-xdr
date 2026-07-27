@@ -49,3 +49,30 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
         })
     }
 }
+
+/// ScSpecUdtUnionCaseVoidV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseVoidV0`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScSpecUdtUnionCaseVoidV0Ref<'a> {
+    pub doc: StringMRef<'a, 1024>,
+    pub name: StringMRef<'a, 60>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&ScSpecUdtUnionCaseVoidV0Ref<'_>> for ScSpecUdtUnionCaseVoidV0 {
+    #[must_use]
+    fn from(v: &ScSpecUdtUnionCaseVoidV0Ref<'_>) -> Self {
+        Self {
+            doc: v.doc.to_stringm(),
+            name: v.name.to_stringm(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScSpecUdtUnionCaseVoidV0Ref<'_>> for ScSpecUdtUnionCaseVoidV0 {
+    #[must_use]
+    fn from(v: ScSpecUdtUnionCaseVoidV0Ref<'_>) -> Self {
+        Self::from(&v)
+    }
+}

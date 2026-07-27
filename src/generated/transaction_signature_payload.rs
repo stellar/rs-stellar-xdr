@@ -57,3 +57,30 @@ impl WriteXdr for TransactionSignaturePayload {
         })
     }
 }
+
+/// TransactionSignaturePayloadRef is a borrowing equivalent of [`TransactionSignaturePayload`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionSignaturePayloadRef<'a> {
+    pub network_id: Hash,
+    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionRef<'a>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
+    #[must_use]
+    fn from(v: &TransactionSignaturePayloadRef<'_>) -> Self {
+        Self {
+            network_id: v.network_id.clone(),
+            tagged_transaction: (&v.tagged_transaction).into(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
+    #[must_use]
+    fn from(v: TransactionSignaturePayloadRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

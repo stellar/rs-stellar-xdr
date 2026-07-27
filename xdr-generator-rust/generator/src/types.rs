@@ -1,4 +1,6 @@
-use xdr_parser::ast::{Size, Type};
+use std::collections::HashSet;
+
+use xdr_parser::ast::{Definition, Size, Type};
 use xdr_parser::types::TypeInfo;
 
 use crate::naming::type_name;
@@ -9,16 +11,30 @@ pub struct ResolvedType {
     pub turbofish_type: String,
     pub serde_as_type: Option<String>,
     pub element_type: String,
+    /// The Rust type used in the borrowing `Ref` variant of the containing
+    /// type, e.g. `VecMRef<'a, OperationRef<'a>, 100>` for `VecM<Operation, 100>`.
+    pub ref_type_ref: String,
+    /// An expression converting `access` (a place expression of the
+    /// `ref_type_ref` type) into the owned `type_ref` type.
+    pub from_ref_expr: String,
 }
 
 /// Resolve all Rust type information for an XDR type in one call.
 ///
 /// When `custom_str` is true, `serde_as_type` is forced to `None`.
+///
+/// `ref_required` is the set of Rust type names that have a borrowing `Ref`
+/// variant. `access` is the place expression used to build `from_ref_expr`,
+/// and `access_is_ref` is true when `access` is a reference to the value (a
+/// `match` binding) rather than a place of it.
 pub(crate) fn resolve_type(
     type_: &Type,
     parent: Option<&str>,
     type_info: &TypeInfo,
     custom_str: bool,
+    ref_required: &HashSet<String>,
+    access: &str,
+    access_is_ref: bool,
 ) -> ResolvedType {
     let m = TypeMapping::new(type_, Some(type_info), parent);
     ResolvedType {
@@ -26,6 +42,8 @@ pub(crate) fn resolve_type(
         turbofish_type: m.turbofish_type(),
         serde_as_type: if custom_str { None } else { m.serde_as_type() },
         element_type: m.element_type(),
+        ref_type_ref: m.ref_type_ref(ref_required),
+        from_ref_expr: m.from_ref_expr(ref_required, access, access_is_ref),
     }
 }
 
@@ -165,6 +183,231 @@ impl<'a> TypeMapping<'a> {
             }
             Type::Array { .. } | Type::VarArray { .. } => base,
             _ => format!("Box<{base}>"),
+        }
+    }
+
+    /// The Rust type used for this XDR type in a borrowing `Ref` type,
+    /// without the reference wrapping applied for cyclic types.
+    ///
+    /// Mirrors `base_type_ref`, mapping heap-owning types to their borrowing
+    /// equivalents: `VecM` to `VecMRef`, `BytesM` to `BytesMRef`, `StringM` to
+    /// `StringMRef`, and idents of types with a `Ref` variant to that variant.
+    fn ref_base_type_ref(&self, ref_required: &HashSet<String>) -> String {
+        match self.type_ {
+            Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+            | Type::OpaqueFixed(_) => self.base_type_ref(),
+            Type::OpaqueVar(max) => match max {
+                Some(size) => format!("BytesMRef<'a, {}>", self.resolve_size(size)),
+                None => "BytesMRef<'a>".to_string(),
+            },
+            Type::String(max) => match max {
+                Some(size) => format!("StringMRef<'a, {}>", self.resolve_size(size)),
+                None => "StringMRef<'a>".to_string(),
+            },
+            Type::Ident(_) => {
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).ref_base_type_ref(ref_required);
+                    }
+                }
+                if let Type::Ident(name) = self.type_ {
+                    let name = type_name(name);
+                    if ref_required.contains(&name) {
+                        format!("{name}Ref<'a>")
+                    } else {
+                        name
+                    }
+                } else {
+                    unreachable!()
+                }
+            }
+            Type::Optional(inner) => {
+                format!("Option<{}>", self.child(inner).ref_base_type_ref(ref_required))
+            }
+            Type::Array { element_type, size } => {
+                format!(
+                    "[{}; {}]",
+                    self.child(element_type).ref_base_type_ref(ref_required),
+                    self.resolve_size(size)
+                )
+            }
+            Type::VarArray {
+                element_type,
+                max_size,
+            } => {
+                let elem = self.child(element_type).ref_base_type_ref(ref_required);
+                match max_size {
+                    Some(size) => format!("VecMRef<'a, {elem}, {}>", self.resolve_size(size)),
+                    None => format!("VecMRef<'a, {elem}>"),
+                }
+            }
+        }
+    }
+
+    /// The Rust type used for this XDR type in a borrowing `Ref` type.
+    ///
+    /// Mirrors `type_ref`: where the owned type wraps cyclic references in
+    /// `Box`, the `Ref` type uses a plain reference instead.
+    fn ref_type_ref(&self, ref_required: &HashSet<String>) -> String {
+        let base = self.ref_base_type_ref(ref_required);
+
+        if !self.is_cyclic() {
+            return base;
+        }
+
+        match self.type_ {
+            Type::Optional(inner) => {
+                let inner_ref = self.child(inner).ref_base_type_ref(ref_required);
+                format!("Option<&'a {inner_ref}>")
+            }
+            Type::Array { .. } | Type::VarArray { .. } => base,
+            _ => format!("&'a {base}"),
+        }
+    }
+
+    /// Whether the `Ref` mapping of this type borrows data (uses the `'a`
+    /// lifetime) rather than being the same owned type.
+    fn ref_borrows(&self, ref_required: &HashSet<String>) -> bool {
+        self.ref_type_ref(ref_required).contains("'a")
+    }
+
+    /// Whether the owned Rust form of this type is `Copy`.
+    ///
+    /// Builtins and fixed opaques are `Copy`, as are generated enums, options
+    /// and fixed arrays of `Copy` types, and typedef aliases of builtins.
+    /// Generated structs, unions, and typedef newtypes derive `Clone` but not
+    /// `Copy`.
+    fn is_copy(&self) -> bool {
+        if self.is_cyclic() {
+            // Wrapped in `Box` in the owned form.
+            return false;
+        }
+        match self.type_ {
+            Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+            | Type::OpaqueFixed(_) => true,
+            Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } => false,
+            Type::Optional(inner) => self.child(inner).is_copy(),
+            Type::Array { element_type, .. } => self.child(element_type).is_copy(),
+            Type::Ident(name) => {
+                if let Some(ti) = self.type_info {
+                    if ti.resolve_typedef_to_builtin(self.type_).is_some() {
+                        return true;
+                    }
+                    matches!(
+                        ti.definitions.get(&type_name(name)),
+                        Some(Definition::Enum(_))
+                    )
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
+    /// The expression for reading a `Copy` value out of `access`.
+    fn copy_expr(access: &str, access_is_ref: bool) -> String {
+        if access_is_ref {
+            format!("*{access}")
+        } else {
+            access.to_string()
+        }
+    }
+
+    /// An expression converting `access` (a place expression of this type's
+    /// `ref_type_ref` form) into the owned `type_ref` form.
+    ///
+    /// When `access_is_ref` is true, `access` is a reference to the `Ref`
+    /// form (a `match` binding) rather than a place of it.
+    fn from_ref_expr(
+        &self,
+        ref_required: &HashSet<String>,
+        access: &str,
+        access_is_ref: bool,
+    ) -> String {
+        let cyclic = self.is_cyclic();
+        match self.type_ {
+            Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+            | Type::OpaqueFixed(_) => Self::copy_expr(access, access_is_ref),
+            Type::OpaqueVar(_) => format!("{access}.to_bytesm()"),
+            Type::String(_) => format!("{access}.to_stringm()"),
+            Type::VarArray { element_type, .. } => {
+                if self.child(element_type).ref_borrows(ref_required) {
+                    format!("{access}.to_vecm_from()")
+                } else {
+                    format!("{access}.to_vecm()")
+                }
+            }
+            Type::Ident(_) => {
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self
+                            .child(builtin)
+                            .from_ref_expr(ref_required, access, access_is_ref);
+                    }
+                }
+                if let Type::Ident(name) = self.type_ {
+                    let name = type_name(name);
+                    if cyclic {
+                        // Ref form is `&'a {name}Ref<'a>`, owned form is `Box<{name}>`.
+                        if access_is_ref {
+                            format!("Box::new((*{access}).into())")
+                        } else {
+                            format!("Box::new({access}.into())")
+                        }
+                    } else if ref_required.contains(&name) {
+                        if access_is_ref {
+                            format!("{access}.into()")
+                        } else {
+                            format!("(&{access}).into()")
+                        }
+                    } else if self.is_copy() {
+                        Self::copy_expr(access, access_is_ref)
+                    } else {
+                        format!("{access}.clone()")
+                    }
+                } else {
+                    unreachable!()
+                }
+            }
+            Type::Optional(inner) => {
+                if cyclic {
+                    // Ref form is `Option<&'a TRef<'a>>`, owned form is `Option<Box<T>>`.
+                    format!("{access}.map(|v| Box::new(v.into()))")
+                } else if self.child(inner).ref_borrows(ref_required) {
+                    format!("{access}.as_ref().map(Into::into)")
+                } else if self.is_copy() {
+                    Self::copy_expr(access, access_is_ref)
+                } else {
+                    format!("{access}.clone()")
+                }
+            }
+            Type::Array { element_type, .. } => {
+                if self.child(element_type).ref_borrows(ref_required) {
+                    format!("core::array::from_fn(|i| (&{access}[i]).into())")
+                } else if self.is_copy() {
+                    Self::copy_expr(access, access_is_ref)
+                } else {
+                    format!("{access}.clone()")
+                }
+            }
         }
     }
 

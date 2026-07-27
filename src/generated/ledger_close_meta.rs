@@ -142,3 +142,34 @@ impl WriteXdr for LedgerCloseMeta {
         })
     }
 }
+
+/// LedgerCloseMetaRef is a borrowing equivalent of [`LedgerCloseMeta`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum LedgerCloseMetaRef<'a> {
+    V0(LedgerCloseMetaV0Ref<'a>),
+    V1(LedgerCloseMetaV1Ref<'a>),
+    V2(LedgerCloseMetaV2Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerCloseMetaRef<'_>> for LedgerCloseMeta {
+    #[must_use]
+    fn from(v: &LedgerCloseMetaRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            LedgerCloseMetaRef::V0(value) => Self::V0(value.into()),
+            LedgerCloseMetaRef::V1(value) => Self::V1(value.into()),
+            LedgerCloseMetaRef::V2(value) => Self::V2(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerCloseMetaRef<'_>> for LedgerCloseMeta {
+    #[must_use]
+    fn from(v: LedgerCloseMetaRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

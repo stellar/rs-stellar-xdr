@@ -162,3 +162,38 @@ impl WriteXdr for LedgerEntryChange {
         })
     }
 }
+
+/// LedgerEntryChangeRef is a borrowing equivalent of [`LedgerEntryChange`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum LedgerEntryChangeRef<'a> {
+    Created(LedgerEntryRef<'a>),
+    Updated(LedgerEntryRef<'a>),
+    Removed(LedgerKeyRef<'a>),
+    State(LedgerEntryRef<'a>),
+    Restored(LedgerEntryRef<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&LedgerEntryChangeRef<'_>> for LedgerEntryChange {
+    #[must_use]
+    fn from(v: &LedgerEntryChangeRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            LedgerEntryChangeRef::Created(value) => Self::Created(value.into()),
+            LedgerEntryChangeRef::Updated(value) => Self::Updated(value.into()),
+            LedgerEntryChangeRef::Removed(value) => Self::Removed(value.into()),
+            LedgerEntryChangeRef::State(value) => Self::State(value.into()),
+            LedgerEntryChangeRef::Restored(value) => Self::Restored(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LedgerEntryChangeRef<'_>> for LedgerEntryChange {
+    #[must_use]
+    fn from(v: LedgerEntryChangeRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

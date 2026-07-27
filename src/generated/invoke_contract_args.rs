@@ -52,3 +52,32 @@ impl WriteXdr for InvokeContractArgs {
         })
     }
 }
+
+/// InvokeContractArgsRef is a borrowing equivalent of [`InvokeContractArgs`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InvokeContractArgsRef<'a> {
+    pub contract_address: ScAddress,
+    pub function_name: ScSymbolRef<'a>,
+    pub args: VecMRef<'a, ScValRef<'a>>,
+}
+
+#[cfg(feature = "alloc")]
+impl From<&InvokeContractArgsRef<'_>> for InvokeContractArgs {
+    #[must_use]
+    fn from(v: &InvokeContractArgsRef<'_>) -> Self {
+        Self {
+            contract_address: v.contract_address.clone(),
+            function_name: (&v.function_name).into(),
+            args: v.args.to_vecm_from(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<InvokeContractArgsRef<'_>> for InvokeContractArgs {
+    #[must_use]
+    fn from(v: InvokeContractArgsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

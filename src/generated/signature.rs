@@ -107,3 +107,24 @@ impl AsRef<[u8]> for Signature {
         self.0 .0
     }
 }
+
+/// SignatureRef is a borrowing equivalent of [`Signature`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignatureRef<'a>(pub BytesMRef<'a, 64>);
+
+#[cfg(feature = "alloc")]
+impl From<&SignatureRef<'_>> for Signature {
+    #[must_use]
+    fn from(v: &SignatureRef<'_>) -> Self {
+        Self(v.0.to_bytesm())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SignatureRef<'_>> for Signature {
+    #[must_use]
+    fn from(v: SignatureRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

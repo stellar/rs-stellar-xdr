@@ -146,3 +146,34 @@ impl WriteXdr for Preconditions {
         })
     }
 }
+
+/// PreconditionsRef is a borrowing equivalent of [`Preconditions`], usable in
+/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum PreconditionsRef<'a> {
+    None,
+    Time(TimeBounds),
+    V2(PreconditionsV2Ref<'a>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<&PreconditionsRef<'_>> for Preconditions {
+    #[must_use]
+    fn from(v: &PreconditionsRef<'_>) -> Self {
+        #[allow(clippy::match_same_arms)]
+        match v {
+            PreconditionsRef::None => Self::None,
+            PreconditionsRef::Time(value) => Self::Time(value.clone()),
+            PreconditionsRef::V2(value) => Self::V2(value.into()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<PreconditionsRef<'_>> for Preconditions {
+    #[must_use]
+    fn from(v: PreconditionsRef<'_>) -> Self {
+        Self::from(&v)
+    }
+}

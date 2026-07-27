@@ -1463,8 +1463,20 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
 ///
 /// Usable in const contexts to build values of the generated `Ref` types from
 /// slices of fixed-size arrays, without heap allocation.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VecMRef<'a, T, const MAX: u32 = { u32::MAX }>(&'a [T]);
+
+// Copy and Clone are implemented manually because the derived impls would
+// require `T: Copy`/`T: Clone`, and the wrapped `&[T]` is copyable for any
+// `T`.
+impl<T, const MAX: u32> Copy for VecMRef<'_, T, MAX> {}
+
+#[allow(clippy::expl_impl_clone_on_copy)]
+impl<T, const MAX: u32> Clone for VecMRef<'_, T, MAX> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
 
 impl<T, const MAX: u32> Deref for VecMRef<'_, T, MAX> {
     type Target = [T];

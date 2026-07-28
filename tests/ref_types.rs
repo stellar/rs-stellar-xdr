@@ -2,10 +2,9 @@
 
 use stellar_xdr::{
     Asset, BytesMRef, ClaimPredicateRef, DecoratedSignatureRef, Error, MemoRef, MuxedAccount,
-    OperationBodyRef, OperationRef, PaymentOp, PreconditionsRef, ScBytesRef, ScSymbolRef,
-    ScValRef, ScVecRef, SequenceNumber, SignatureHint, SignatureRef, StringMRef,
-    TransactionEnvelopeRef, TransactionExtRef, TransactionRef, TransactionV1EnvelopeRef, Uint256,
-    VecMRef,
+    OperationBodyRef, OperationRef, PaymentOp, PreconditionsRef, ScBytesRef, ScSymbolRef, ScValRef,
+    ScVecRef, SequenceNumber, SignatureHint, SignatureRef, StringMRef, TransactionEnvelopeRef,
+    TransactionExtRef, TransactionRef, TransactionV1EnvelopeRef, Uint256, VecMRef,
 };
 
 // A complete transaction envelope built entirely in a const context from
@@ -67,12 +66,11 @@ const SCVAL: ScValRef = ScValRef::Vec(Some(ScVecRef(VecMRef::new(&[
 // A cyclic type built in a const context: where the owned type boxes the
 // cycle (`Option<Box<ClaimPredicate>>`), the Ref type borrows instead.
 
-const PREDICATE: ClaimPredicateRef = ClaimPredicateRef::Not(Some(&ClaimPredicateRef::And(
-    VecMRef::new(&[
+const PREDICATE: ClaimPredicateRef =
+    ClaimPredicateRef::Not(Some(&ClaimPredicateRef::And(VecMRef::new(&[
         ClaimPredicateRef::Unconditional,
         ClaimPredicateRef::BeforeAbsoluteTime(123),
-    ]),
-)));
+    ]))));
 
 #[test]
 fn const_constructed_values() {
@@ -118,7 +116,10 @@ fn bytesm_ref_construction_limits() {
     let v = BytesMRef::<3>::try_new(b"abc").unwrap();
     assert_eq!(v.len(), 3);
     assert_eq!(v.as_slice(), b"abc");
-    assert_eq!(BytesMRef::<2>::try_new(b"abc"), Err(Error::LengthExceedsMax));
+    assert_eq!(
+        BytesMRef::<2>::try_new(b"abc"),
+        Err(Error::LengthExceedsMax)
+    );
 }
 
 #[test]

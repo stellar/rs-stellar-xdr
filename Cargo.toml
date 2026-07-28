@@ -45,11 +45,6 @@ default = ["std"]
 std = ["alloc", "dep:sha2"]
 alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 
-# Const XDR serialization (const_write_xdr / const_to_xdr / const_xdr_len) on
-# the borrowing `Ref` types. Depends on nothing: usable in no_std, no-alloc
-# const contexts.
-const = []
-
 # Features from the XDR
 test_feature = []
 cap_0083 = []
@@ -57,6 +52,7 @@ cap_0085_executable_ref = []
 
 # Features available without any new dependencies.
 type_enum = []
+const = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]

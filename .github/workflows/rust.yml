@@ -11,9 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # type_enum, serde_ignored and test_feature are folded into the feature group
-  # rather than toggled independently, keeping the powerset (and so the build
-  # and test matrices) well under GitHub's 256-job-per-matrix limit.
   CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,type_enum,serde_ignored,test_feature
 
 jobs:

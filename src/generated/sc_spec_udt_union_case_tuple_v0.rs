@@ -87,3 +87,15 @@ impl From<ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecUdtUnionCaseTupleV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

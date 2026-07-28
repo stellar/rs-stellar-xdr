@@ -511,3 +511,79 @@ impl From<OperationResultTrRef<'_>> for OperationResultTr {
         Self::from(&v)
     }
 }
+
+impl OperationResultTrRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> OperationType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::CreateAccount(_) => OperationType::CreateAccount,
+            Self::Payment(_) => OperationType::Payment,
+            Self::PathPaymentStrictReceive(_) => OperationType::PathPaymentStrictReceive,
+            Self::ManageSellOffer(_) => OperationType::ManageSellOffer,
+            Self::CreatePassiveSellOffer(_) => OperationType::CreatePassiveSellOffer,
+            Self::SetOptions(_) => OperationType::SetOptions,
+            Self::ChangeTrust(_) => OperationType::ChangeTrust,
+            Self::AllowTrust(_) => OperationType::AllowTrust,
+            Self::AccountMerge(_) => OperationType::AccountMerge,
+            Self::Inflation(_) => OperationType::Inflation,
+            Self::ManageData(_) => OperationType::ManageData,
+            Self::BumpSequence(_) => OperationType::BumpSequence,
+            Self::ManageBuyOffer(_) => OperationType::ManageBuyOffer,
+            Self::PathPaymentStrictSend(_) => OperationType::PathPaymentStrictSend,
+            Self::CreateClaimableBalance(_) => OperationType::CreateClaimableBalance,
+            Self::ClaimClaimableBalance(_) => OperationType::ClaimClaimableBalance,
+            Self::BeginSponsoringFutureReserves(_) => OperationType::BeginSponsoringFutureReserves,
+            Self::EndSponsoringFutureReserves(_) => OperationType::EndSponsoringFutureReserves,
+            Self::RevokeSponsorship(_) => OperationType::RevokeSponsorship,
+            Self::Clawback(_) => OperationType::Clawback,
+            Self::ClawbackClaimableBalance(_) => OperationType::ClawbackClaimableBalance,
+            Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
+            Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
+            Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
+            Self::ExtendFootprintTtl(_) => OperationType::ExtendFootprintTtl,
+            Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
+        }
+    }
+}
+
+impl WriteXdr for OperationResultTrRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::CreateAccount(v) => v.write_xdr(w)?,
+                Self::Payment(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
+                Self::ManageSellOffer(v) => v.write_xdr(w)?,
+                Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
+                Self::SetOptions(v) => v.write_xdr(w)?,
+                Self::ChangeTrust(v) => v.write_xdr(w)?,
+                Self::AllowTrust(v) => v.write_xdr(w)?,
+                Self::AccountMerge(v) => v.write_xdr(w)?,
+                Self::Inflation(v) => v.write_xdr(w)?,
+                Self::ManageData(v) => v.write_xdr(w)?,
+                Self::BumpSequence(v) => v.write_xdr(w)?,
+                Self::ManageBuyOffer(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
+                Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
+                Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
+                Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::EndSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::RevokeSponsorship(v) => v.write_xdr(w)?,
+                Self::Clawback(v) => v.write_xdr(w)?,
+                Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
+                Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+                Self::InvokeHostFunction(v) => v.write_xdr(w)?,
+                Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
+                Self::RestoreFootprint(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

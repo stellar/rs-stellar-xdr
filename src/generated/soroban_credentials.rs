@@ -200,3 +200,33 @@ impl From<SorobanCredentialsRef<'_>> for SorobanCredentials {
         Self::from(&v)
     }
 }
+
+impl SorobanCredentialsRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> SorobanCredentialsType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount => SorobanCredentialsType::SourceAccount,
+            Self::Address(_) => SorobanCredentialsType::Address,
+            Self::AddressV2(_) => SorobanCredentialsType::AddressV2,
+            Self::AddressWithDelegates(_) => SorobanCredentialsType::AddressWithDelegates,
+        }
+    }
+}
+
+impl WriteXdr for SorobanCredentialsRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::SourceAccount => ().write_xdr(w)?,
+                Self::Address(v) => v.write_xdr(w)?,
+                Self::AddressV2(v) => v.write_xdr(w)?,
+                Self::AddressWithDelegates(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

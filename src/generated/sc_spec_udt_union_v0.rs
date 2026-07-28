@@ -88,3 +88,16 @@ impl From<ScSpecUdtUnionV0Ref<'_>> for ScSpecUdtUnionV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecUdtUnionV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.cases.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

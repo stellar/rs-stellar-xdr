@@ -202,3 +202,33 @@ impl From<SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
         Self::from(&v)
     }
 }
+
+impl SorobanAuthorizedFunctionRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> SorobanAuthorizedFunctionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractFn(_) => SorobanAuthorizedFunctionType::ContractFn,
+            Self::CreateContractHostFn(_) => SorobanAuthorizedFunctionType::CreateContractHostFn,
+            Self::CreateContractV2HostFn(_) => {
+                SorobanAuthorizedFunctionType::CreateContractV2HostFn
+            }
+        }
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedFunctionRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ContractFn(v) => v.write_xdr(w)?,
+                Self::CreateContractHostFn(v) => v.write_xdr(w)?,
+                Self::CreateContractV2HostFn(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

@@ -100,3 +100,18 @@ impl From<ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecEventV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.prefix_topics.write_xdr(w)?;
+            self.params.write_xdr(w)?;
+            self.data_format.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

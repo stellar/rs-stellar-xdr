@@ -143,3 +143,22 @@ impl From<AccountEntryRef<'_>> for AccountEntry {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for AccountEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.balance.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.num_sub_entries.write_xdr(w)?;
+            self.inflation_dest.write_xdr(w)?;
+            self.flags.write_xdr(w)?;
+            self.home_domain.write_xdr(w)?;
+            self.thresholds.write_xdr(w)?;
+            self.signers.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

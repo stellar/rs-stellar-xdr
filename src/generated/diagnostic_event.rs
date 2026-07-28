@@ -76,3 +76,14 @@ impl From<DiagnosticEventRef<'_>> for DiagnosticEvent {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for DiagnosticEventRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.in_successful_contract_call.write_xdr(w)?;
+            self.event.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -167,3 +167,29 @@ impl From<TxSetComponentRef<'_>> for TxSetComponent {
         Self::from(&v)
     }
 }
+
+impl TxSetComponentRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> TxSetComponentType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxsetCompTxsMaybeDiscountedFee(_) => {
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee
+            }
+        }
+    }
+}
+
+impl WriteXdr for TxSetComponentRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::TxsetCompTxsMaybeDiscountedFee(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

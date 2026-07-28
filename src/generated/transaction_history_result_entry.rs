@@ -89,3 +89,15 @@ impl From<TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntr
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionHistoryResultEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ledger_seq.write_xdr(w)?;
+            self.tx_result_set.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -231,3 +231,37 @@ impl From<ClaimPredicateRef<'_>> for ClaimPredicate {
         Self::from(&v)
     }
 }
+
+impl ClaimPredicateRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ClaimPredicateType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Unconditional => ClaimPredicateType::Unconditional,
+            Self::And(_) => ClaimPredicateType::And,
+            Self::Or(_) => ClaimPredicateType::Or,
+            Self::Not(_) => ClaimPredicateType::Not,
+            Self::BeforeAbsoluteTime(_) => ClaimPredicateType::BeforeAbsoluteTime,
+            Self::BeforeRelativeTime(_) => ClaimPredicateType::BeforeRelativeTime,
+        }
+    }
+}
+
+impl WriteXdr for ClaimPredicateRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Unconditional => ().write_xdr(w)?,
+                Self::And(v) => v.write_xdr(w)?,
+                Self::Or(v) => v.write_xdr(w)?,
+                Self::Not(v) => v.write_xdr(w)?,
+                Self::BeforeAbsoluteTime(v) => v.write_xdr(w)?,
+                Self::BeforeRelativeTime(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

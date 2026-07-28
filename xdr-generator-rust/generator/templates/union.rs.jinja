@@ -296,5 +296,65 @@ impl From<{{ u.name }}Ref<'_>> for {{ u.name }} {
         Self::from(&v)
     }
 }
+
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+impl {{ u.name }}Ref<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
+        #[allow(clippy::match_same_arms)]
+        match self {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+            Self::{{ arm.case_name }} => {{ arm.case_value }},
+{%- else %}
+            Self::{{ arm.case_name }}(_) => {{ arm.case_value }},
+{%- endif %}
+{%- endfor %}
+{%- if u.ref_needs_phantom %}
+{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
+            #[cfg({{ phantom_cfg }})]
+{%- endif %}
+            Self::_Phantom(never, _) => match *never {},
+{%- endif %}
+        }
+    }
+}
+
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+impl WriteXdr for {{ u.name }}Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+                #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+                Self::{{ arm.case_name }} => ().write_xdr(w)?,
+{%- else %}
+                Self::{{ arm.case_name }}(v) => v.write_xdr(w)?,
+{%- endif %}
+{%- endfor %}
+{%- if u.ref_needs_phantom %}
+{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
+                #[cfg({{ phantom_cfg }})]
+{%- endif %}
+                Self::_Phantom(never, _) => match *never {},
+{%- endif %}
+            };
+            Ok(())
+        })
+    }
+}
 {%- endif %}
 

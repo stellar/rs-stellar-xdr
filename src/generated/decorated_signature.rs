@@ -76,3 +76,14 @@ impl From<DecoratedSignatureRef<'_>> for DecoratedSignature {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for DecoratedSignatureRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.hint.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

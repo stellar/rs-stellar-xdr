@@ -283,3 +283,51 @@ impl From<ManageSellOfferResultRef<'_>> for ManageSellOfferResult {
         Self::from(&v)
     }
 }
+
+impl ManageSellOfferResultRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ManageSellOfferResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => ManageSellOfferResultCode::Success,
+            Self::Malformed => ManageSellOfferResultCode::Malformed,
+            Self::SellNoTrust => ManageSellOfferResultCode::SellNoTrust,
+            Self::BuyNoTrust => ManageSellOfferResultCode::BuyNoTrust,
+            Self::SellNotAuthorized => ManageSellOfferResultCode::SellNotAuthorized,
+            Self::BuyNotAuthorized => ManageSellOfferResultCode::BuyNotAuthorized,
+            Self::LineFull => ManageSellOfferResultCode::LineFull,
+            Self::Underfunded => ManageSellOfferResultCode::Underfunded,
+            Self::CrossSelf => ManageSellOfferResultCode::CrossSelf,
+            Self::SellNoIssuer => ManageSellOfferResultCode::SellNoIssuer,
+            Self::BuyNoIssuer => ManageSellOfferResultCode::BuyNoIssuer,
+            Self::NotFound => ManageSellOfferResultCode::NotFound,
+            Self::LowReserve => ManageSellOfferResultCode::LowReserve,
+        }
+    }
+}
+
+impl WriteXdr for ManageSellOfferResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::SellNoTrust => ().write_xdr(w)?,
+                Self::BuyNoTrust => ().write_xdr(w)?,
+                Self::SellNotAuthorized => ().write_xdr(w)?,
+                Self::BuyNotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::CrossSelf => ().write_xdr(w)?,
+                Self::SellNoIssuer => ().write_xdr(w)?,
+                Self::BuyNoIssuer => ().write_xdr(w)?,
+                Self::NotFound => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

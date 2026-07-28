@@ -76,3 +76,14 @@ impl From<SignedTimeSlicedSurveyResponseMessageRef<'_>> for SignedTimeSlicedSurv
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SignedTimeSlicedSurveyResponseMessageRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.response_signature.write_xdr(w)?;
+            self.response.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

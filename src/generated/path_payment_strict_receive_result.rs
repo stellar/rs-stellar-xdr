@@ -290,3 +290,51 @@ impl From<PathPaymentStrictReceiveResultRef<'_>> for PathPaymentStrictReceiveRes
         Self::from(&v)
     }
 }
+
+impl PathPaymentStrictReceiveResultRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => PathPaymentStrictReceiveResultCode::Success,
+            Self::Malformed => PathPaymentStrictReceiveResultCode::Malformed,
+            Self::Underfunded => PathPaymentStrictReceiveResultCode::Underfunded,
+            Self::SrcNoTrust => PathPaymentStrictReceiveResultCode::SrcNoTrust,
+            Self::SrcNotAuthorized => PathPaymentStrictReceiveResultCode::SrcNotAuthorized,
+            Self::NoDestination => PathPaymentStrictReceiveResultCode::NoDestination,
+            Self::NoTrust => PathPaymentStrictReceiveResultCode::NoTrust,
+            Self::NotAuthorized => PathPaymentStrictReceiveResultCode::NotAuthorized,
+            Self::LineFull => PathPaymentStrictReceiveResultCode::LineFull,
+            Self::NoIssuer(_) => PathPaymentStrictReceiveResultCode::NoIssuer,
+            Self::TooFewOffers => PathPaymentStrictReceiveResultCode::TooFewOffers,
+            Self::OfferCrossSelf => PathPaymentStrictReceiveResultCode::OfferCrossSelf,
+            Self::OverSendmax => PathPaymentStrictReceiveResultCode::OverSendmax,
+        }
+    }
+}
+
+impl WriteXdr for PathPaymentStrictReceiveResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::SrcNoTrust => ().write_xdr(w)?,
+                Self::SrcNotAuthorized => ().write_xdr(w)?,
+                Self::NoDestination => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::NoIssuer(v) => v.write_xdr(w)?,
+                Self::TooFewOffers => ().write_xdr(w)?,
+                Self::OfferCrossSelf => ().write_xdr(w)?,
+                Self::OverSendmax => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

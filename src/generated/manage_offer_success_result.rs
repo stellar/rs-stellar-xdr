@@ -86,3 +86,14 @@ impl From<ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ManageOfferSuccessResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.offers_claimed.write_xdr(w)?;
+            self.offer.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

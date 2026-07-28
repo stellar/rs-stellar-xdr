@@ -131,3 +131,20 @@ impl From<LedgerCloseMetaV2Ref<'_>> for LedgerCloseMetaV2 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerCloseMetaV2Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.ledger_header.write_xdr(w)?;
+            self.tx_set.write_xdr(w)?;
+            self.tx_processing.write_xdr(w)?;
+            self.upgrades_processing.write_xdr(w)?;
+            self.scp_info.write_xdr(w)?;
+            self.total_byte_size_of_live_soroban_state.write_xdr(w)?;
+            self.evicted_keys.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

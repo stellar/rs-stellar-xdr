@@ -129,3 +129,21 @@ impl From<SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SerializedBinaryFuseFilterRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.type_.write_xdr(w)?;
+            self.input_hash_seed.write_xdr(w)?;
+            self.filter_seed.write_xdr(w)?;
+            self.segment_length.write_xdr(w)?;
+            self.segement_length_mask.write_xdr(w)?;
+            self.segment_count.write_xdr(w)?;
+            self.segment_count_length.write_xdr(w)?;
+            self.fingerprint_length.write_xdr(w)?;
+            self.fingerprints.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

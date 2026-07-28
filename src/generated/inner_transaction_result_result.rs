@@ -340,3 +340,61 @@ impl From<InnerTransactionResultResultRef<'_>> for InnerTransactionResultResult 
         Self::from(&v)
     }
 }
+
+impl InnerTransactionResultResultRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> TransactionResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxSuccess(_) => TransactionResultCode::TxSuccess,
+            Self::TxFailed(_) => TransactionResultCode::TxFailed,
+            Self::TxTooEarly => TransactionResultCode::TxTooEarly,
+            Self::TxTooLate => TransactionResultCode::TxTooLate,
+            Self::TxMissingOperation => TransactionResultCode::TxMissingOperation,
+            Self::TxBadSeq => TransactionResultCode::TxBadSeq,
+            Self::TxBadAuth => TransactionResultCode::TxBadAuth,
+            Self::TxInsufficientBalance => TransactionResultCode::TxInsufficientBalance,
+            Self::TxNoAccount => TransactionResultCode::TxNoAccount,
+            Self::TxInsufficientFee => TransactionResultCode::TxInsufficientFee,
+            Self::TxBadAuthExtra => TransactionResultCode::TxBadAuthExtra,
+            Self::TxInternalError => TransactionResultCode::TxInternalError,
+            Self::TxNotSupported => TransactionResultCode::TxNotSupported,
+            Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
+            Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
+            Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
+            Self::TxFrozenKeyAccessed => TransactionResultCode::TxFrozenKeyAccessed,
+        }
+    }
+}
+
+impl WriteXdr for InnerTransactionResultResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::TxSuccess(v) => v.write_xdr(w)?,
+                Self::TxFailed(v) => v.write_xdr(w)?,
+                Self::TxTooEarly => ().write_xdr(w)?,
+                Self::TxTooLate => ().write_xdr(w)?,
+                Self::TxMissingOperation => ().write_xdr(w)?,
+                Self::TxBadSeq => ().write_xdr(w)?,
+                Self::TxBadAuth => ().write_xdr(w)?,
+                Self::TxInsufficientBalance => ().write_xdr(w)?,
+                Self::TxNoAccount => ().write_xdr(w)?,
+                Self::TxInsufficientFee => ().write_xdr(w)?,
+                Self::TxBadAuthExtra => ().write_xdr(w)?,
+                Self::TxInternalError => ().write_xdr(w)?,
+                Self::TxNotSupported => ().write_xdr(w)?,
+                Self::TxBadSponsorship => ().write_xdr(w)?,
+                Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
+                Self::TxMalformed => ().write_xdr(w)?,
+                Self::TxSorobanInvalid => ().write_xdr(w)?,
+                Self::TxFrozenKeyAccessed => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

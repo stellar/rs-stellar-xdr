@@ -159,3 +159,27 @@ impl From<ClaimantRef<'_>> for Claimant {
         Self::from(&v)
     }
 }
+
+impl ClaimantRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ClaimantType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimantTypeV0(_) => ClaimantType::ClaimantTypeV0,
+        }
+    }
+}
+
+impl WriteXdr for ClaimantRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ClaimantTypeV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

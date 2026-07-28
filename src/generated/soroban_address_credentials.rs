@@ -92,3 +92,16 @@ impl From<SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanAddressCredentialsRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.address.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.signature_expiration_ledger.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

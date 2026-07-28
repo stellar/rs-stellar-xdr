@@ -69,3 +69,13 @@ impl From<ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ConfigUpgradeSetRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.updated_entry.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

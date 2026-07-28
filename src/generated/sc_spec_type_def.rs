@@ -416,3 +416,77 @@ impl From<ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
         Self::from(&v)
     }
 }
+
+impl ScSpecTypeDefRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Val => ScSpecType::Val,
+            Self::Bool => ScSpecType::Bool,
+            Self::Void => ScSpecType::Void,
+            Self::Error => ScSpecType::Error,
+            Self::U32 => ScSpecType::U32,
+            Self::I32 => ScSpecType::I32,
+            Self::U64 => ScSpecType::U64,
+            Self::I64 => ScSpecType::I64,
+            Self::Timepoint => ScSpecType::Timepoint,
+            Self::Duration => ScSpecType::Duration,
+            Self::U128 => ScSpecType::U128,
+            Self::I128 => ScSpecType::I128,
+            Self::U256 => ScSpecType::U256,
+            Self::I256 => ScSpecType::I256,
+            Self::Bytes => ScSpecType::Bytes,
+            Self::String => ScSpecType::String,
+            Self::Symbol => ScSpecType::Symbol,
+            Self::Address => ScSpecType::Address,
+            Self::MuxedAddress => ScSpecType::MuxedAddress,
+            Self::Option(_) => ScSpecType::Option,
+            Self::Result(_) => ScSpecType::Result,
+            Self::Vec(_) => ScSpecType::Vec,
+            Self::Map(_) => ScSpecType::Map,
+            Self::Tuple(_) => ScSpecType::Tuple,
+            Self::BytesN(_) => ScSpecType::BytesN,
+            Self::Udt(_) => ScSpecType::Udt,
+        }
+    }
+}
+
+impl WriteXdr for ScSpecTypeDefRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Val => ().write_xdr(w)?,
+                Self::Bool => ().write_xdr(w)?,
+                Self::Void => ().write_xdr(w)?,
+                Self::Error => ().write_xdr(w)?,
+                Self::U32 => ().write_xdr(w)?,
+                Self::I32 => ().write_xdr(w)?,
+                Self::U64 => ().write_xdr(w)?,
+                Self::I64 => ().write_xdr(w)?,
+                Self::Timepoint => ().write_xdr(w)?,
+                Self::Duration => ().write_xdr(w)?,
+                Self::U128 => ().write_xdr(w)?,
+                Self::I128 => ().write_xdr(w)?,
+                Self::U256 => ().write_xdr(w)?,
+                Self::I256 => ().write_xdr(w)?,
+                Self::Bytes => ().write_xdr(w)?,
+                Self::String => ().write_xdr(w)?,
+                Self::Symbol => ().write_xdr(w)?,
+                Self::Address => ().write_xdr(w)?,
+                Self::MuxedAddress => ().write_xdr(w)?,
+                Self::Option(v) => v.write_xdr(w)?,
+                Self::Result(v) => v.write_xdr(w)?,
+                Self::Vec(v) => v.write_xdr(w)?,
+                Self::Map(v) => v.write_xdr(w)?,
+                Self::Tuple(v) => v.write_xdr(w)?,
+                Self::BytesN(v) => v.write_xdr(w)?,
+                Self::Udt(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

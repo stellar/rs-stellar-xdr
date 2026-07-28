@@ -101,3 +101,15 @@ impl From<SorobanTransactionDataRef<'_>> for SorobanTransactionData {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanTransactionDataRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.resources.write_xdr(w)?;
+            self.resource_fee.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

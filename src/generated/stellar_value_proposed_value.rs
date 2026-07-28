@@ -91,3 +91,17 @@ impl From<StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
         Self::from(&v)
     }
 }
+
+#[cfg(feature = "cap_0083")]
+impl WriteXdr for StellarValueProposedValueRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.tx_set_hash.write_xdr(w)?;
+            self.previous_ledger_hash.write_xdr(w)?;
+            self.previous_ledger_version.write_xdr(w)?;
+            self.lc_value_signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

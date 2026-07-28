@@ -148,5 +148,20 @@ impl From<{{ s.name }}Ref<'_>> for {{ s.name }} {
         Self::from(&v)
     }
 }
+
+{% if let Some(cfg) = s.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+impl WriteXdr for {{ s.name }}Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+{%- for m in s.members %}
+            self.{{ m.name }}.write_xdr(w)?;
+{%- endfor %}
+            Ok(())
+        })
+    }
+}
 {%- endif %}
 

@@ -89,3 +89,15 @@ impl From<LedgerHeaderHistoryEntryRef<'_>> for LedgerHeaderHistoryEntry {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerHeaderHistoryEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.hash.write_xdr(w)?;
+            self.header.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

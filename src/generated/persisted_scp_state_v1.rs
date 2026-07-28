@@ -77,3 +77,14 @@ impl From<PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for PersistedScpStateV1Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.scp_envelopes.write_xdr(w)?;
+            self.quorum_sets.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

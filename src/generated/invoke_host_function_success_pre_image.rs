@@ -76,3 +76,14 @@ impl From<InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSucces
         Self::from(&v)
     }
 }
+
+impl WriteXdr for InvokeHostFunctionSuccessPreImageRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.return_value.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

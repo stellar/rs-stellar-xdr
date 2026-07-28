@@ -76,3 +76,14 @@ impl From<ScMetaV0Ref<'_>> for ScMetaV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScMetaV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -459,3 +459,71 @@ impl From<ConfigSettingEntryRef<'_>> for ConfigSettingEntry {
         Self::from(&v)
     }
 }
+
+impl ConfigSettingEntryRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ConfigSettingId {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractMaxSizeBytes(_) => ConfigSettingId::ContractMaxSizeBytes,
+            Self::ContractComputeV0(_) => ConfigSettingId::ContractComputeV0,
+            Self::ContractLedgerCostV0(_) => ConfigSettingId::ContractLedgerCostV0,
+            Self::ContractHistoricalDataV0(_) => ConfigSettingId::ContractHistoricalDataV0,
+            Self::ContractEventsV0(_) => ConfigSettingId::ContractEventsV0,
+            Self::ContractBandwidthV0(_) => ConfigSettingId::ContractBandwidthV0,
+            Self::ContractCostParamsCpuInstructions(_) => {
+                ConfigSettingId::ContractCostParamsCpuInstructions
+            }
+            Self::ContractCostParamsMemoryBytes(_) => {
+                ConfigSettingId::ContractCostParamsMemoryBytes
+            }
+            Self::ContractDataKeySizeBytes(_) => ConfigSettingId::ContractDataKeySizeBytes,
+            Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
+            Self::StateArchival(_) => ConfigSettingId::StateArchival,
+            Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
+            Self::LiveSorobanStateSizeWindow(_) => ConfigSettingId::LiveSorobanStateSizeWindow,
+            Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
+            Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
+            Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
+            Self::ScpTiming(_) => ConfigSettingId::ScpTiming,
+            Self::FrozenLedgerKeys(_) => ConfigSettingId::FrozenLedgerKeys,
+            Self::FrozenLedgerKeysDelta(_) => ConfigSettingId::FrozenLedgerKeysDelta,
+            Self::FreezeBypassTxs(_) => ConfigSettingId::FreezeBypassTxs,
+            Self::FreezeBypassTxsDelta(_) => ConfigSettingId::FreezeBypassTxsDelta,
+        }
+    }
+}
+
+impl WriteXdr for ConfigSettingEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ContractMaxSizeBytes(v) => v.write_xdr(w)?,
+                Self::ContractComputeV0(v) => v.write_xdr(w)?,
+                Self::ContractLedgerCostV0(v) => v.write_xdr(w)?,
+                Self::ContractHistoricalDataV0(v) => v.write_xdr(w)?,
+                Self::ContractEventsV0(v) => v.write_xdr(w)?,
+                Self::ContractBandwidthV0(v) => v.write_xdr(w)?,
+                Self::ContractCostParamsCpuInstructions(v) => v.write_xdr(w)?,
+                Self::ContractCostParamsMemoryBytes(v) => v.write_xdr(w)?,
+                Self::ContractDataKeySizeBytes(v) => v.write_xdr(w)?,
+                Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
+                Self::StateArchival(v) => v.write_xdr(w)?,
+                Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
+                Self::LiveSorobanStateSizeWindow(v) => v.write_xdr(w)?,
+                Self::EvictionIterator(v) => v.write_xdr(w)?,
+                Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
+                Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
+                Self::ScpTiming(v) => v.write_xdr(w)?,
+                Self::FrozenLedgerKeys(v) => v.write_xdr(w)?,
+                Self::FrozenLedgerKeysDelta(v) => v.write_xdr(w)?,
+                Self::FreezeBypassTxs(v) => v.write_xdr(w)?,
+                Self::FreezeBypassTxsDelta(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

@@ -75,3 +75,14 @@ impl From<FrozenLedgerKeysDeltaRef<'_>> for FrozenLedgerKeysDelta {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for FrozenLedgerKeysDeltaRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.keys_to_freeze.write_xdr(w)?;
+            self.keys_to_unfreeze.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

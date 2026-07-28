@@ -82,3 +82,15 @@ impl From<StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for StoredDebugTransactionSetRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.tx_set.write_xdr(w)?;
+            self.ledger_seq.write_xdr(w)?;
+            self.scp_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

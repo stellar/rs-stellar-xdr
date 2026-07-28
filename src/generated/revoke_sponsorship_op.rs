@@ -173,3 +173,29 @@ impl From<RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
         Self::from(&v)
     }
 }
+
+impl RevokeSponsorshipOpRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> RevokeSponsorshipType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LedgerEntry(_) => RevokeSponsorshipType::LedgerEntry,
+            Self::Signer(_) => RevokeSponsorshipType::Signer,
+        }
+    }
+}
+
+impl WriteXdr for RevokeSponsorshipOpRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::LedgerEntry(v) => v.write_xdr(w)?,
+                Self::Signer(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

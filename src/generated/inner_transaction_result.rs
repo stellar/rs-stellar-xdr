@@ -120,3 +120,15 @@ impl From<InnerTransactionResultRef<'_>> for InnerTransactionResult {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for InnerTransactionResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.fee_charged.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

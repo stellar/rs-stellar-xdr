@@ -76,3 +76,14 @@ impl From<PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictRec
         Self::from(&v)
     }
 }
+
+impl WriteXdr for PathPaymentStrictReceiveResultSuccessRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.offers.write_xdr(w)?;
+            self.last.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

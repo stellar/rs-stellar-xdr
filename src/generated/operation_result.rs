@@ -277,3 +277,39 @@ impl From<OperationResultRef<'_>> for OperationResult {
         Self::from(&v)
     }
 }
+
+impl OperationResultRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> OperationResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::OpInner(_) => OperationResultCode::OpInner,
+            Self::OpBadAuth => OperationResultCode::OpBadAuth,
+            Self::OpNoAccount => OperationResultCode::OpNoAccount,
+            Self::OpNotSupported => OperationResultCode::OpNotSupported,
+            Self::OpTooManySubentries => OperationResultCode::OpTooManySubentries,
+            Self::OpExceededWorkLimit => OperationResultCode::OpExceededWorkLimit,
+            Self::OpTooManySponsoring => OperationResultCode::OpTooManySponsoring,
+        }
+    }
+}
+
+impl WriteXdr for OperationResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::OpInner(v) => v.write_xdr(w)?,
+                Self::OpBadAuth => ().write_xdr(w)?,
+                Self::OpNoAccount => ().write_xdr(w)?,
+                Self::OpNotSupported => ().write_xdr(w)?,
+                Self::OpTooManySubentries => ().write_xdr(w)?,
+                Self::OpExceededWorkLimit => ().write_xdr(w)?,
+                Self::OpTooManySponsoring => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

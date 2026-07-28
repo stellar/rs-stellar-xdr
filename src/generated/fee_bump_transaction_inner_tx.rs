@@ -155,3 +155,27 @@ impl From<FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
         Self::from(&v)
     }
 }
+
+impl FeeBumpTransactionInnerTxRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Tx(_) => EnvelopeType::Tx,
+        }
+    }
+}
+
+impl WriteXdr for FeeBumpTransactionInnerTxRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Tx(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

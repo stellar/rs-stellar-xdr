@@ -112,3 +112,18 @@ impl From<PathPaymentStrictReceiveOpRef<'_>> for PathPaymentStrictReceiveOp {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for PathPaymentStrictReceiveOpRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.send_asset.write_xdr(w)?;
+            self.send_max.write_xdr(w)?;
+            self.destination.write_xdr(w)?;
+            self.dest_asset.write_xdr(w)?;
+            self.dest_amount.write_xdr(w)?;
+            self.path.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

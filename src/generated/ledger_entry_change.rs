@@ -197,3 +197,35 @@ impl From<LedgerEntryChangeRef<'_>> for LedgerEntryChange {
         Self::from(&v)
     }
 }
+
+impl LedgerEntryChangeRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> LedgerEntryChangeType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Created(_) => LedgerEntryChangeType::Created,
+            Self::Updated(_) => LedgerEntryChangeType::Updated,
+            Self::Removed(_) => LedgerEntryChangeType::Removed,
+            Self::State(_) => LedgerEntryChangeType::State,
+            Self::Restored(_) => LedgerEntryChangeType::Restored,
+        }
+    }
+}
+
+impl WriteXdr for LedgerEntryChangeRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Created(v) => v.write_xdr(w)?,
+                Self::Updated(v) => v.write_xdr(w)?,
+                Self::Removed(v) => v.write_xdr(w)?,
+                Self::State(v) => v.write_xdr(w)?,
+                Self::Restored(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

@@ -76,3 +76,14 @@ impl From<TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TimeSlicedPeerDataRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.peer_stats.write_xdr(w)?;
+            self.average_latency_ms.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

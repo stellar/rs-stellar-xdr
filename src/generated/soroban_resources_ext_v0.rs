@@ -73,3 +73,13 @@ impl From<SorobanResourcesExtV0Ref<'_>> for SorobanResourcesExtV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanResourcesExtV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.archived_soroban_entries.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

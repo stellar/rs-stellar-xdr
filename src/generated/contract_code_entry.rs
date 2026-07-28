@@ -92,3 +92,15 @@ impl From<ContractCodeEntryRef<'_>> for ContractCodeEntry {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ContractCodeEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.hash.write_xdr(w)?;
+            self.code.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

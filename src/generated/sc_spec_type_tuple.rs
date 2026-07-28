@@ -70,3 +70,13 @@ impl From<ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecTypeTupleRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.value_types.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

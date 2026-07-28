@@ -250,4 +250,26 @@ mod alloc {
         let decoded = TransactionEnvelope::from_xdr(bytes, Limits::none()).unwrap();
         assert_eq!(owned, decoded);
     }
+
+    // Ref types encode directly via WriteXdr, producing bytes identical to
+    // the owned types'.
+    #[cfg(feature = "std")]
+    #[test]
+    fn ref_write_xdr_matches_owned() {
+        use stellar_xdr::{Limits, WriteXdr};
+        assert_eq!(
+            ENVELOPE.to_xdr(Limits::none()).unwrap(),
+            owned_envelope().to_xdr(Limits::none()).unwrap()
+        );
+        assert_eq!(
+            SCVAL.to_xdr(Limits::none()).unwrap(),
+            ScVal::from(&SCVAL).to_xdr(Limits::none()).unwrap()
+        );
+        assert_eq!(
+            PREDICATE.to_xdr(Limits::none()).unwrap(),
+            ClaimPredicate::from(&PREDICATE)
+                .to_xdr(Limits::none())
+                .unwrap()
+        );
+    }
 }

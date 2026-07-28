@@ -94,3 +94,17 @@ impl From<ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScpStatementConfirmRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ballot.write_xdr(w)?;
+            self.n_prepared.write_xdr(w)?;
+            self.n_commit.write_xdr(w)?;
+            self.n_h.write_xdr(w)?;
+            self.quorum_set_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

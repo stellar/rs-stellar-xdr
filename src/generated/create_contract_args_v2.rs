@@ -83,3 +83,15 @@ impl From<CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for CreateContractArgsV2Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.contract_id_preimage.write_xdr(w)?;
+            self.executable.write_xdr(w)?;
+            self.constructor_args.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -78,3 +78,14 @@ impl From<InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for InvokeHostFunctionOpRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.host_function.write_xdr(w)?;
+            self.auth.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

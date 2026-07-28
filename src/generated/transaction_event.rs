@@ -75,3 +75,14 @@ impl From<TransactionEventRef<'_>> for TransactionEvent {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionEventRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.stage.write_xdr(w)?;
+            self.event.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -111,3 +111,19 @@ impl From<TransactionMetaV4Ref<'_>> for TransactionMetaV4 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionMetaV4Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.tx_changes_before.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.tx_changes_after.write_xdr(w)?;
+            self.soroban_meta.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            self.diagnostic_events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

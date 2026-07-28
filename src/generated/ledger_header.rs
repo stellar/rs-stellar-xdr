@@ -187,3 +187,27 @@ impl From<LedgerHeaderRef<'_>> for LedgerHeader {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerHeaderRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ledger_version.write_xdr(w)?;
+            self.previous_ledger_hash.write_xdr(w)?;
+            self.scp_value.write_xdr(w)?;
+            self.tx_set_result_hash.write_xdr(w)?;
+            self.bucket_list_hash.write_xdr(w)?;
+            self.ledger_seq.write_xdr(w)?;
+            self.total_coins.write_xdr(w)?;
+            self.fee_pool.write_xdr(w)?;
+            self.inflation_seq.write_xdr(w)?;
+            self.id_pool.write_xdr(w)?;
+            self.base_fee.write_xdr(w)?;
+            self.base_reserve.write_xdr(w)?;
+            self.max_tx_set_size.write_xdr(w)?;
+            self.skip_list.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

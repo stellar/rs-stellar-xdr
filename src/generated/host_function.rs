@@ -202,3 +202,33 @@ impl From<HostFunctionRef<'_>> for HostFunction {
         Self::from(&v)
     }
 }
+
+impl HostFunctionRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> HostFunctionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::InvokeContract(_) => HostFunctionType::InvokeContract,
+            Self::CreateContract(_) => HostFunctionType::CreateContract,
+            Self::UploadContractWasm(_) => HostFunctionType::UploadContractWasm,
+            Self::CreateContractV2(_) => HostFunctionType::CreateContractV2,
+        }
+    }
+}
+
+impl WriteXdr for HostFunctionRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::InvokeContract(v) => v.write_xdr(w)?,
+                Self::CreateContract(v) => v.write_xdr(w)?,
+                Self::UploadContractWasm(v) => v.write_xdr(w)?,
+                Self::CreateContractV2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

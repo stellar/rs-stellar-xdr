@@ -76,3 +76,14 @@ impl From<ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScpHistoryEntryV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.quorum_sets.write_xdr(w)?;
+            self.ledger_messages.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

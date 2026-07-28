@@ -194,3 +194,33 @@ impl From<SignerKeyRef<'_>> for SignerKey {
         Self::from(&v)
     }
 }
+
+impl SignerKeyRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> SignerKeyType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ed25519(_) => SignerKeyType::Ed25519,
+            Self::PreAuthTx(_) => SignerKeyType::PreAuthTx,
+            Self::HashX(_) => SignerKeyType::HashX,
+            Self::Ed25519SignedPayload(_) => SignerKeyType::Ed25519SignedPayload,
+        }
+    }
+}
+
+impl WriteXdr for SignerKeyRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Ed25519(v) => v.write_xdr(w)?,
+                Self::PreAuthTx(v) => v.write_xdr(w)?,
+                Self::HashX(v) => v.write_xdr(w)?,
+                Self::Ed25519SignedPayload(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

@@ -94,3 +94,17 @@ impl From<SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SurveyResponseMessageRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.surveyor_peer_id.write_xdr(w)?;
+            self.surveyed_peer_id.write_xdr(w)?;
+            self.ledger_num.write_xdr(w)?;
+            self.command_type.write_xdr(w)?;
+            self.encrypted_body.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

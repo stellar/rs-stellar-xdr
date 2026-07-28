@@ -93,3 +93,16 @@ impl From<ScSpecEventParamV0Ref<'_>> for ScSpecEventParamV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecEventParamV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            self.location.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

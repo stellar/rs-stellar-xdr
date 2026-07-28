@@ -171,3 +171,29 @@ impl From<TransactionSignaturePayloadTaggedTransactionRef<'_>>
         Self::from(&v)
     }
 }
+
+impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Tx(_) => EnvelopeType::Tx,
+            Self::TxFeeBump(_) => EnvelopeType::TxFeeBump,
+        }
+    }
+}
+
+impl WriteXdr for TransactionSignaturePayloadTaggedTransactionRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Tx(v) => v.write_xdr(w)?,
+                Self::TxFeeBump(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

@@ -102,3 +102,16 @@ impl From<FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for FeeBumpTransactionRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.fee_source.write_xdr(w)?;
+            self.fee.write_xdr(w)?;
+            self.inner_tx.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

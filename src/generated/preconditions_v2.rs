@@ -123,3 +123,18 @@ impl From<PreconditionsV2Ref<'_>> for PreconditionsV2 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for PreconditionsV2Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.time_bounds.write_xdr(w)?;
+            self.ledger_bounds.write_xdr(w)?;
+            self.min_seq_num.write_xdr(w)?;
+            self.min_seq_age.write_xdr(w)?;
+            self.min_seq_ledger_gap.write_xdr(w)?;
+            self.extra_signers.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

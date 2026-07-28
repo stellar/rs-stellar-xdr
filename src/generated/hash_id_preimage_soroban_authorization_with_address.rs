@@ -102,3 +102,17 @@ impl From<HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
         Self::from(&v)
     }
 }
+
+impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.network_id.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.signature_expiration_ledger.write_xdr(w)?;
+            self.address.write_xdr(w)?;
+            self.invocation.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

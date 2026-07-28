@@ -118,3 +118,15 @@ impl From<ScpStatementRef<'_>> for ScpStatement {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScpStatementRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.node_id.write_xdr(w)?;
+            self.slot_index.write_xdr(w)?;
+            self.pledges.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

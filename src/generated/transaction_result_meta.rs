@@ -82,3 +82,15 @@ impl From<TransactionResultMetaRef<'_>> for TransactionResultMeta {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionResultMetaRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.result.write_xdr(w)?;
+            self.fee_processing.write_xdr(w)?;
+            self.tx_apply_processing.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

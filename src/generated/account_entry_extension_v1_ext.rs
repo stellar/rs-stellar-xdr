@@ -164,3 +164,29 @@ impl From<AccountEntryExtensionV1ExtRef<'_>> for AccountEntryExtensionV1Ext {
         Self::from(&v)
     }
 }
+
+impl AccountEntryExtensionV1ExtRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+            Self::V2(_) => 2,
+        }
+    }
+}
+
+impl WriteXdr for AccountEntryExtensionV1ExtRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

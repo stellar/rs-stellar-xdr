@@ -82,3 +82,15 @@ impl From<LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerKeyContractDataRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.contract.write_xdr(w)?;
+            self.key.write_xdr(w)?;
+            self.durability.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

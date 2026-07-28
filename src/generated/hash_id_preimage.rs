@@ -248,3 +248,37 @@ impl From<HashIdPreimageRef<'_>> for HashIdPreimage {
         Self::from(&v)
     }
 }
+
+impl HashIdPreimageRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::OpId(_) => EnvelopeType::OpId,
+            Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
+            Self::ContractId(_) => EnvelopeType::ContractId,
+            Self::SorobanAuthorization(_) => EnvelopeType::SorobanAuthorization,
+            Self::SorobanAuthorizationWithAddress(_) => {
+                EnvelopeType::SorobanAuthorizationWithAddress
+            }
+        }
+    }
+}
+
+impl WriteXdr for HashIdPreimageRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::OpId(v) => v.write_xdr(w)?,
+                Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
+                Self::ContractId(v) => v.write_xdr(w)?,
+                Self::SorobanAuthorization(v) => v.write_xdr(w)?,
+                Self::SorobanAuthorizationWithAddress(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

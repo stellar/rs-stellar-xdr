@@ -70,3 +70,13 @@ impl From<ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecTypeUdtRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.name.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

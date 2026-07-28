@@ -216,3 +216,37 @@ impl From<ScSpecEntryRef<'_>> for ScSpecEntry {
         Self::from(&v)
     }
 }
+
+impl ScSpecEntryRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecEntryKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::FunctionV0(_) => ScSpecEntryKind::FunctionV0,
+            Self::UdtStructV0(_) => ScSpecEntryKind::UdtStructV0,
+            Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
+            Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
+            Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
+            Self::EventV0(_) => ScSpecEntryKind::EventV0,
+        }
+    }
+}
+
+impl WriteXdr for ScSpecEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::FunctionV0(v) => v.write_xdr(w)?,
+                Self::UdtStructV0(v) => v.write_xdr(w)?,
+                Self::UdtUnionV0(v) => v.write_xdr(w)?,
+                Self::UdtEnumV0(v) => v.write_xdr(w)?,
+                Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
+                Self::EventV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

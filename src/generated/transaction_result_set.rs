@@ -70,3 +70,13 @@ impl From<TransactionResultSetRef<'_>> for TransactionResultSet {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionResultSetRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.results.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

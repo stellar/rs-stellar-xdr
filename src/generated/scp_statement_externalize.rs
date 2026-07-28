@@ -82,3 +82,15 @@ impl From<ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScpStatementExternalizeRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.commit.write_xdr(w)?;
+            self.n_h.write_xdr(w)?;
+            self.commit_quorum_set_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -167,3 +167,29 @@ impl From<InflationResultRef<'_>> for InflationResult {
         Self::from(&v)
     }
 }
+
+impl InflationResultRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> InflationResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => InflationResultCode::Success,
+            Self::NotTime => InflationResultCode::NotTime,
+        }
+    }
+}
+
+impl WriteXdr for InflationResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::NotTime => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

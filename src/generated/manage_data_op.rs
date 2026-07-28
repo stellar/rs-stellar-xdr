@@ -76,3 +76,14 @@ impl From<ManageDataOpRef<'_>> for ManageDataOp {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ManageDataOpRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.data_name.write_xdr(w)?;
+            self.data_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -84,3 +84,14 @@ impl From<TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionSignaturePayloadRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.network_id.write_xdr(w)?;
+            self.tagged_transaction.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

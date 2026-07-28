@@ -78,3 +78,14 @@ impl From<TransactionV0EnvelopeRef<'_>> for TransactionV0Envelope {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionV0EnvelopeRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.tx.write_xdr(w)?;
+            self.signatures.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

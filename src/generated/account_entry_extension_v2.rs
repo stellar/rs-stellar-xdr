@@ -96,3 +96,16 @@ impl From<AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for AccountEntryExtensionV2Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.num_sponsored.write_xdr(w)?;
+            self.num_sponsoring.write_xdr(w)?;
+            self.signer_sponsoring_i_ds.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

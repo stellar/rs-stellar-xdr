@@ -76,3 +76,14 @@ impl From<LedgerFootprintRef<'_>> for LedgerFootprint {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerFootprintRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.read_only.write_xdr(w)?;
+            self.read_write.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

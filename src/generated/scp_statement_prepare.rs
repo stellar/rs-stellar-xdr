@@ -100,3 +100,18 @@ impl From<ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScpStatementPrepareRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.quorum_set_hash.write_xdr(w)?;
+            self.ballot.write_xdr(w)?;
+            self.prepared.write_xdr(w)?;
+            self.prepared_prime.write_xdr(w)?;
+            self.n_c.write_xdr(w)?;
+            self.n_h.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

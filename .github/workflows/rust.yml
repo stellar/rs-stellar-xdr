@@ -11,11 +11,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # const is excluded from the powerset and tested on its own in the `const`
-  # job below: it gates const-only serialization code and is not meant to be
-  # combined with other features, so powersetting it would only double the
-  # build/test matrix (past GitHub's 256-job-per-matrix limit) for no coverage.
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default,const --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand
+  # The powerset is trimmed to stay under GitHub's 256-job-per-matrix limit.
+  # const is excluded and tested on its own in the `const` job below: it gates
+  # const-only serialization code and is not meant to be combined with other
+  # features, so powersetting it would only double the matrix for no coverage.
+  # serde_ignored and type_enum are folded into the feature group rather than
+  # toggled independently, which keeps the combination count down.
+  CARGO_HACK_ARGS: --feature-powerset --exclude-features default,const --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,serde_ignored,type_enum
 
 jobs:
 

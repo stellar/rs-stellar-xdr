@@ -75,3 +75,14 @@ impl From<ScContractInstanceRef<'_>> for ScContractInstance {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScContractInstanceRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.executable.write_xdr(w)?;
+            self.storage.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

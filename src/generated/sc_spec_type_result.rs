@@ -76,3 +76,14 @@ impl From<ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecTypeResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ok_type.write_xdr(w)?;
+            self.error_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

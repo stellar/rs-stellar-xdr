@@ -209,3 +209,33 @@ impl From<ScpStatementPledgesRef<'_>> for ScpStatementPledges {
         Self::from(&v)
     }
 }
+
+impl ScpStatementPledgesRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ScpStatementType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Prepare(_) => ScpStatementType::Prepare,
+            Self::Confirm(_) => ScpStatementType::Confirm,
+            Self::Externalize(_) => ScpStatementType::Externalize,
+            Self::Nominate(_) => ScpStatementType::Nominate,
+        }
+    }
+}
+
+impl WriteXdr for ScpStatementPledgesRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Prepare(v) => v.write_xdr(w)?,
+                Self::Confirm(v) => v.write_xdr(w)?,
+                Self::Externalize(v) => v.write_xdr(w)?,
+                Self::Nominate(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

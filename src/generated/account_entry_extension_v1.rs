@@ -84,3 +84,14 @@ impl From<AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for AccountEntryExtensionV1Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.liabilities.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

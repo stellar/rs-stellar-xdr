@@ -164,3 +164,29 @@ impl From<TransactionPhaseRef<'_>> for TransactionPhase {
         Self::from(&v)
     }
 }
+
+impl TransactionPhaseRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+            Self::V1(_) => 1,
+        }
+    }
+}
+
+impl WriteXdr for TransactionPhaseRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

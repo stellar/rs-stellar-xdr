@@ -289,3 +289,51 @@ impl From<PathPaymentStrictSendResultRef<'_>> for PathPaymentStrictSendResult {
         Self::from(&v)
     }
 }
+
+impl PathPaymentStrictSendResultRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> PathPaymentStrictSendResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => PathPaymentStrictSendResultCode::Success,
+            Self::Malformed => PathPaymentStrictSendResultCode::Malformed,
+            Self::Underfunded => PathPaymentStrictSendResultCode::Underfunded,
+            Self::SrcNoTrust => PathPaymentStrictSendResultCode::SrcNoTrust,
+            Self::SrcNotAuthorized => PathPaymentStrictSendResultCode::SrcNotAuthorized,
+            Self::NoDestination => PathPaymentStrictSendResultCode::NoDestination,
+            Self::NoTrust => PathPaymentStrictSendResultCode::NoTrust,
+            Self::NotAuthorized => PathPaymentStrictSendResultCode::NotAuthorized,
+            Self::LineFull => PathPaymentStrictSendResultCode::LineFull,
+            Self::NoIssuer(_) => PathPaymentStrictSendResultCode::NoIssuer,
+            Self::TooFewOffers => PathPaymentStrictSendResultCode::TooFewOffers,
+            Self::OfferCrossSelf => PathPaymentStrictSendResultCode::OfferCrossSelf,
+            Self::UnderDestmin => PathPaymentStrictSendResultCode::UnderDestmin,
+        }
+    }
+}
+
+impl WriteXdr for PathPaymentStrictSendResultRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::SrcNoTrust => ().write_xdr(w)?,
+                Self::SrcNotAuthorized => ().write_xdr(w)?,
+                Self::NoDestination => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::NoIssuer(v) => v.write_xdr(w)?,
+                Self::TooFewOffers => ().write_xdr(w)?,
+                Self::OfferCrossSelf => ().write_xdr(w)?,
+                Self::UnderDestmin => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

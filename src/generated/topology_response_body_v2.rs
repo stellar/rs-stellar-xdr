@@ -82,3 +82,15 @@ impl From<TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TopologyResponseBodyV2Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.inbound_peers.write_xdr(w)?;
+            self.outbound_peers.write_xdr(w)?;
+            self.node_data.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

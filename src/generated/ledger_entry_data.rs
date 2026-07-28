@@ -268,3 +268,45 @@ impl From<LedgerEntryDataRef<'_>> for LedgerEntryData {
         Self::from(&v)
     }
 }
+
+impl LedgerEntryDataRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> LedgerEntryType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(_) => LedgerEntryType::Account,
+            Self::Trustline(_) => LedgerEntryType::Trustline,
+            Self::Offer(_) => LedgerEntryType::Offer,
+            Self::Data(_) => LedgerEntryType::Data,
+            Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
+            Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ContractCode(_) => LedgerEntryType::ContractCode,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
+            Self::Ttl(_) => LedgerEntryType::Ttl,
+        }
+    }
+}
+
+impl WriteXdr for LedgerEntryDataRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Account(v) => v.write_xdr(w)?,
+                Self::Trustline(v) => v.write_xdr(w)?,
+                Self::Offer(v) => v.write_xdr(w)?,
+                Self::Data(v) => v.write_xdr(w)?,
+                Self::ClaimableBalance(v) => v.write_xdr(w)?,
+                Self::LiquidityPool(v) => v.write_xdr(w)?,
+                Self::ContractData(v) => v.write_xdr(w)?,
+                Self::ContractCode(v) => v.write_xdr(w)?,
+                Self::ConfigSetting(v) => v.write_xdr(w)?,
+                Self::Ttl(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

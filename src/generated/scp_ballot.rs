@@ -76,3 +76,14 @@ impl From<ScpBallotRef<'_>> for ScpBallot {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScpBallotRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.counter.write_xdr(w)?;
+            self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

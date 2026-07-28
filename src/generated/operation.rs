@@ -137,3 +137,14 @@ impl From<OperationRef<'_>> for Operation {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for OperationRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.source_account.write_xdr(w)?;
+            self.body.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

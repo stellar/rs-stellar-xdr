@@ -111,3 +111,19 @@ impl From<TransactionV0Ref<'_>> for TransactionV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.source_account_ed25519.write_xdr(w)?;
+            self.fee.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.time_bounds.write_xdr(w)?;
+            self.memo.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

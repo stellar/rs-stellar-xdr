@@ -187,3 +187,33 @@ impl From<BucketEntryRef<'_>> for BucketEntry {
         Self::from(&v)
     }
 }
+
+impl BucketEntryRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> BucketEntryType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Liveentry(_) => BucketEntryType::Liveentry,
+            Self::Initentry(_) => BucketEntryType::Initentry,
+            Self::Deadentry(_) => BucketEntryType::Deadentry,
+            Self::Metaentry(_) => BucketEntryType::Metaentry,
+        }
+    }
+}
+
+impl WriteXdr for BucketEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Liveentry(v) => v.write_xdr(w)?,
+                Self::Initentry(v) => v.write_xdr(w)?,
+                Self::Deadentry(v) => v.write_xdr(w)?,
+                Self::Metaentry(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

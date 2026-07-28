@@ -107,3 +107,14 @@ impl From<SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayloa
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SignerKeyEd25519SignedPayloadRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ed25519.write_xdr(w)?;
+            self.payload.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

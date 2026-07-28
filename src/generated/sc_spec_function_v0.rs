@@ -88,3 +88,16 @@ impl From<ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ScSpecFunctionV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.inputs.write_xdr(w)?;
+            self.outputs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -76,3 +76,14 @@ impl From<TransactionSetV1Ref<'_>> for TransactionSetV1 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionSetV1Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.previous_ledger_hash.write_xdr(w)?;
+            self.phases.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

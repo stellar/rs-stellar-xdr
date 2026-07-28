@@ -76,3 +76,14 @@ impl From<LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerCloseValueSignatureRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.node_id.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

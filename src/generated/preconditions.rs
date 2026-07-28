@@ -177,3 +177,31 @@ impl From<PreconditionsRef<'_>> for Preconditions {
         Self::from(&v)
     }
 }
+
+impl PreconditionsRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> PreconditionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::None => PreconditionType::None,
+            Self::Time(_) => PreconditionType::Time,
+            Self::V2(_) => PreconditionType::V2,
+        }
+    }
+}
+
+impl WriteXdr for PreconditionsRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::None => ().write_xdr(w)?,
+                Self::Time(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

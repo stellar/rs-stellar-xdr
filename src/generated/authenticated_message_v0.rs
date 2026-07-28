@@ -86,3 +86,15 @@ impl From<AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for AuthenticatedMessageV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.sequence.write_xdr(w)?;
+            self.message.write_xdr(w)?;
+            self.mac.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

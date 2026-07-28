@@ -939,6 +939,16 @@ impl<T: WriteXdr> WriteXdr for Box<T> {
     }
 }
 
+// Gated on alloc because in no-alloc builds `Box<T>` is an alias for
+// `&'static T`, and this impl would overlap with the `Box<T>` impl above.
+#[cfg(feature = "alloc")]
+impl<T: WriteXdr> WriteXdr for &T {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        T::write_xdr(self, w)
+    }
+}
+
 impl ReadXdr for () {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {
@@ -1669,6 +1679,42 @@ impl<'a, T, const MAX: u32> From<&'a VecM<T, MAX>> for VecMRef<'a, T, MAX> {
     }
 }
 
+impl<const MAX: u32> WriteXdr for VecMRef<'_, u8, MAX> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
+
+            w.consume_len(self.len())?;
+            let padding = pad_len(self.len());
+            w.consume_len(padding)?;
+
+            w.write_all(self.0)?;
+
+            w.write_all(&[0u8; 3][..padding])?;
+
+            Ok(())
+        })
+    }
+}
+
+impl<T: WriteXdr, const MAX: u32> WriteXdr for VecMRef<'_, T, MAX> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
+
+            for t in self.0 {
+                t.write_xdr(w)?;
+            }
+
+            Ok(())
+        })
+    }
+}
+
 // BytesM ------------------------------------------------------------------------
 
 #[cfg(feature = "alloc")]
@@ -2189,6 +2235,26 @@ impl<'a, const MAX: u32> From<&'a BytesM<MAX>> for BytesMRef<'a, MAX> {
     #[must_use]
     fn from(v: &'a BytesM<MAX>) -> Self {
         Self(<BytesM<MAX> as AsRef<[u8]>>::as_ref(v))
+    }
+}
+
+impl<const MAX: u32> WriteXdr for BytesMRef<'_, MAX> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
+
+            w.consume_len(self.len())?;
+            let padding = pad_len(self.len());
+            w.consume_len(padding)?;
+
+            w.write_all(self.0)?;
+
+            w.write_all(&[0u8; 3][..padding])?;
+
+            Ok(())
+        })
     }
 }
 
@@ -2740,6 +2806,26 @@ impl<'a, const MAX: u32> From<&'a StringM<MAX>> for StringMRef<'a, MAX> {
     #[must_use]
     fn from(v: &'a StringM<MAX>) -> Self {
         Self(<StringM<MAX> as AsRef<[u8]>>::as_ref(v))
+    }
+}
+
+impl<const MAX: u32> WriteXdr for StringMRef<'_, MAX> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
+
+            w.consume_len(self.len())?;
+            let padding = pad_len(self.len());
+            w.consume_len(padding)?;
+
+            w.write_all(self.0)?;
+
+            w.write_all(&[0u8; 3][..padding])?;
+
+            Ok(())
+        })
     }
 }
 

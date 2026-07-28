@@ -160,3 +160,27 @@ impl From<AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
         Self::from(&v)
     }
 }
+
+impl AuthenticatedMessageRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> u32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+        }
+    }
+}
+
+impl WriteXdr for AuthenticatedMessageRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

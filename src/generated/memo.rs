@@ -203,3 +203,35 @@ impl From<MemoRef<'_>> for Memo {
         Self::from(&v)
     }
 }
+
+impl MemoRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> MemoType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::None => MemoType::None,
+            Self::Text(_) => MemoType::Text,
+            Self::Id(_) => MemoType::Id,
+            Self::Hash(_) => MemoType::Hash,
+            Self::Return(_) => MemoType::Return,
+        }
+    }
+}
+
+impl WriteXdr for MemoRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::None => ().write_xdr(w)?,
+                Self::Text(v) => v.write_xdr(w)?,
+                Self::Id(v) => v.write_xdr(w)?,
+                Self::Hash(v) => v.write_xdr(w)?,
+                Self::Return(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

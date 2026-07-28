@@ -115,3 +115,15 @@ impl From<LedgerEntryRef<'_>> for LedgerEntry {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.last_modified_ledger_seq.write_xdr(w)?;
+            self.data.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

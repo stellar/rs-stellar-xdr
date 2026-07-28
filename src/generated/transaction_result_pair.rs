@@ -76,3 +76,14 @@ impl From<TransactionResultPairRef<'_>> for TransactionResultPair {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TransactionResultPairRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.transaction_hash.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

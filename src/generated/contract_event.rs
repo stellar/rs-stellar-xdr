@@ -106,3 +106,16 @@ impl From<ContractEventRef<'_>> for ContractEvent {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ContractEventRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.contract_id.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            self.body.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

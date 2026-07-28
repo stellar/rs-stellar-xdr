@@ -93,3 +93,16 @@ impl From<SorobanResourcesRef<'_>> for SorobanResources {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanResourcesRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.footprint.write_xdr(w)?;
+            self.instructions.write_xdr(w)?;
+            self.disk_read_bytes.write_xdr(w)?;
+            self.write_bytes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

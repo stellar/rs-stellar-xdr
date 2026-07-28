@@ -83,3 +83,14 @@ impl From<ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ParallelTxsComponentRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.base_fee.write_xdr(w)?;
+            self.execution_stages.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

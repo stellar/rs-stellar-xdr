@@ -114,3 +114,17 @@ impl From<ClaimableBalanceEntryRef<'_>> for ClaimableBalanceEntry {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ClaimableBalanceEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.balance_id.write_xdr(w)?;
+            self.claimants.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

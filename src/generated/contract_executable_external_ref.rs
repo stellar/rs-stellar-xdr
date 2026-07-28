@@ -81,3 +81,15 @@ impl From<ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRe
         Self::from(&v)
     }
 }
+
+#[cfg(feature = "cap_0085_executable_ref")]
+impl WriteXdr for ContractExecutableExternalRefRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.executable_owner.write_xdr(w)?;
+            self.tag.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

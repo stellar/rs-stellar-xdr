@@ -201,3 +201,37 @@ impl From<ContractExecutableRef<'_>> for ContractExecutable {
         Self::from(&v)
     }
 }
+
+impl ContractExecutableRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ContractExecutableType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Wasm(_) => ContractExecutableType::Wasm,
+            Self::StellarAsset => ContractExecutableType::StellarAsset,
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ExternalRef(_) => ContractExecutableType::ExternalRef,
+            #[cfg(not(feature = "cap_0085_executable_ref"))]
+            Self::_Phantom(never, _) => match *never {},
+        }
+    }
+}
+
+impl WriteXdr for ContractExecutableRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Wasm(v) => v.write_xdr(w)?,
+                Self::StellarAsset => ().write_xdr(w)?,
+                #[cfg(feature = "cap_0085_executable_ref")]
+                Self::ExternalRef(v) => v.write_xdr(w)?,
+                #[cfg(not(feature = "cap_0085_executable_ref"))]
+                Self::_Phantom(never, _) => match *never {},
+            };
+            Ok(())
+        })
+    }
+}

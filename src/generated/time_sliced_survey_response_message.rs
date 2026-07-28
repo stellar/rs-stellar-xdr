@@ -76,3 +76,14 @@ impl From<TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMe
         Self::from(&v)
     }
 }
+
+impl WriteXdr for TimeSlicedSurveyResponseMessageRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.response.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

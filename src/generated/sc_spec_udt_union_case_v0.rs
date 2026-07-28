@@ -171,3 +171,29 @@ impl From<ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
         Self::from(&v)
     }
 }
+
+impl ScSpecUdtUnionCaseV0Ref<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::VoidV0(_) => ScSpecUdtUnionCaseV0Kind::VoidV0,
+            Self::TupleV0(_) => ScSpecUdtUnionCaseV0Kind::TupleV0,
+        }
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::VoidV0(v) => v.write_xdr(w)?,
+                Self::TupleV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

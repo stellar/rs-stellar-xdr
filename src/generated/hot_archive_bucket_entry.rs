@@ -181,3 +181,31 @@ impl From<HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
         Self::from(&v)
     }
 }
+
+impl HotArchiveBucketEntryRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> HotArchiveBucketEntryType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Archived(_) => HotArchiveBucketEntryType::Archived,
+            Self::Live(_) => HotArchiveBucketEntryType::Live,
+            Self::Metaentry(_) => HotArchiveBucketEntryType::Metaentry,
+        }
+    }
+}
+
+impl WriteXdr for HotArchiveBucketEntryRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Archived(v) => v.write_xdr(w)?,
+                Self::Live(v) => v.write_xdr(w)?,
+                Self::Metaentry(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

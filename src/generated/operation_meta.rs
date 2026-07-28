@@ -70,3 +70,13 @@ impl From<OperationMetaRef<'_>> for OperationMeta {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for OperationMetaRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.changes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

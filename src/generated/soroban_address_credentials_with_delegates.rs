@@ -80,3 +80,14 @@ impl From<SorobanAddressCredentialsWithDelegatesRef<'_>>
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanAddressCredentialsWithDelegatesRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.address_credentials.write_xdr(w)?;
+            self.delegates.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

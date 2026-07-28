@@ -70,3 +70,13 @@ impl From<FloodAdvertRef<'_>> for FloodAdvert {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for FloodAdvertRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.tx_hashes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

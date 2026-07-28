@@ -200,3 +200,33 @@ impl From<StellarValueExtRef<'_>> for StellarValueExt {
         Self::from(&v)
     }
 }
+
+impl StellarValueExtRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> StellarValueType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Basic => StellarValueType::Basic,
+            Self::Signed(_) => StellarValueType::Signed,
+            #[cfg(feature = "cap_0083")]
+            Self::EmptyTxSet(_) => StellarValueType::EmptyTxSet,
+        }
+    }
+}
+
+impl WriteXdr for StellarValueExtRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Basic => ().write_xdr(w)?,
+                Self::Signed(v) => v.write_xdr(w)?,
+                #[cfg(feature = "cap_0083")]
+                Self::EmptyTxSet(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

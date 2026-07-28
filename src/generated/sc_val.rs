@@ -440,3 +440,73 @@ impl From<ScValRef<'_>> for ScVal {
         Self::from(&v)
     }
 }
+
+impl ScValRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> ScValType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Bool(_) => ScValType::Bool,
+            Self::Void => ScValType::Void,
+            Self::Error(_) => ScValType::Error,
+            Self::U32(_) => ScValType::U32,
+            Self::I32(_) => ScValType::I32,
+            Self::U64(_) => ScValType::U64,
+            Self::I64(_) => ScValType::I64,
+            Self::Timepoint(_) => ScValType::Timepoint,
+            Self::Duration(_) => ScValType::Duration,
+            Self::U128(_) => ScValType::U128,
+            Self::I128(_) => ScValType::I128,
+            Self::U256(_) => ScValType::U256,
+            Self::I256(_) => ScValType::I256,
+            Self::Bytes(_) => ScValType::Bytes,
+            Self::String(_) => ScValType::String,
+            Self::Symbol(_) => ScValType::Symbol,
+            Self::Vec(_) => ScValType::Vec,
+            Self::Map(_) => ScValType::Map,
+            Self::Address(_) => ScValType::Address,
+            Self::ContractInstance(_) => ScValType::ContractInstance,
+            Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
+            Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
+            #[cfg(feature = "cap_0085_executable_ref")]
+            Self::ExecutableTag(_) => ScValType::ExecutableTag,
+        }
+    }
+}
+
+impl WriteXdr for ScValRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Bool(v) => v.write_xdr(w)?,
+                Self::Void => ().write_xdr(w)?,
+                Self::Error(v) => v.write_xdr(w)?,
+                Self::U32(v) => v.write_xdr(w)?,
+                Self::I32(v) => v.write_xdr(w)?,
+                Self::U64(v) => v.write_xdr(w)?,
+                Self::I64(v) => v.write_xdr(w)?,
+                Self::Timepoint(v) => v.write_xdr(w)?,
+                Self::Duration(v) => v.write_xdr(w)?,
+                Self::U128(v) => v.write_xdr(w)?,
+                Self::I128(v) => v.write_xdr(w)?,
+                Self::U256(v) => v.write_xdr(w)?,
+                Self::I256(v) => v.write_xdr(w)?,
+                Self::Bytes(v) => v.write_xdr(w)?,
+                Self::String(v) => v.write_xdr(w)?,
+                Self::Symbol(v) => v.write_xdr(w)?,
+                Self::Vec(v) => v.write_xdr(w)?,
+                Self::Map(v) => v.write_xdr(w)?,
+                Self::Address(v) => v.write_xdr(w)?,
+                Self::ContractInstance(v) => v.write_xdr(w)?,
+                Self::LedgerKeyContractInstance => ().write_xdr(w)?,
+                Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
+                #[cfg(feature = "cap_0085_executable_ref")]
+                Self::ExecutableTag(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

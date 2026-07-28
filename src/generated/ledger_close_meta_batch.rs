@@ -87,3 +87,15 @@ impl From<LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for LedgerCloseMetaBatchRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.start_sequence.write_xdr(w)?;
+            self.end_sequence.write_xdr(w)?;
+            self.ledger_close_metas.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

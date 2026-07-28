@@ -156,3 +156,27 @@ impl From<GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
         Self::from(&v)
     }
 }
+
+impl GeneralizedTransactionSetRef<'_> {
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V1(_) => 1,
+        }
+    }
+}
+
+impl WriteXdr for GeneralizedTransactionSetRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}

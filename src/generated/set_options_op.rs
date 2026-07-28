@@ -125,3 +125,21 @@ impl From<SetOptionsOpRef<'_>> for SetOptionsOp {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SetOptionsOpRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.inflation_dest.write_xdr(w)?;
+            self.clear_flags.write_xdr(w)?;
+            self.set_flags.write_xdr(w)?;
+            self.master_weight.write_xdr(w)?;
+            self.low_threshold.write_xdr(w)?;
+            self.med_threshold.write_xdr(w)?;
+            self.high_threshold.write_xdr(w)?;
+            self.home_domain.write_xdr(w)?;
+            self.signer.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

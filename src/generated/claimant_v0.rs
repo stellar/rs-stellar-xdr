@@ -76,3 +76,14 @@ impl From<ClaimantV0Ref<'_>> for ClaimantV0 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for ClaimantV0Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.destination.write_xdr(w)?;
+            self.predicate.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

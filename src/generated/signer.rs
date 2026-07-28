@@ -76,3 +76,14 @@ impl From<SignerRef<'_>> for Signer {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SignerRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            self.weight.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

@@ -81,3 +81,15 @@ impl From<InvokeContractArgsRef<'_>> for InvokeContractArgs {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for InvokeContractArgsRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.contract_address.write_xdr(w)?;
+            self.function_name.write_xdr(w)?;
+            self.args.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

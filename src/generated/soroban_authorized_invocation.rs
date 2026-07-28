@@ -76,3 +76,14 @@ impl From<SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanAuthorizedInvocationRef<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.function.write_xdr(w)?;
+            self.sub_invocations.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

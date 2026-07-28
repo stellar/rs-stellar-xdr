@@ -77,3 +77,14 @@ impl From<SorobanTransactionMetaV2Ref<'_>> for SorobanTransactionMetaV2 {
         Self::from(&v)
     }
 }
+
+impl WriteXdr for SorobanTransactionMetaV2Ref<'_> {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.return_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}

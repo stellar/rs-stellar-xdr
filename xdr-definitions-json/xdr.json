@@ -3467,7 +3467,7 @@
     {
       "kind": "enum",
       "name": "SCAddressType",
-      "source": "enum SCAddressType\n{\n    SC_ADDRESS_TYPE_ACCOUNT = 0,\n    SC_ADDRESS_TYPE_CONTRACT = 1,\n    SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2,\n    SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3,\n    SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4\n};",
+      "source": "enum SCAddressType\n{\n    SC_ADDRESS_TYPE_ACCOUNT = 0,\n    SC_ADDRESS_TYPE_CONTRACT = 1,\n    SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2,\n    SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3,\n    SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4\n#ifdef CAP_0084_MUXED_CONTRACT\n    ,\n    SC_ADDRESS_TYPE_MUXED_CONTRACT = 5\n#endif\n};",
       "file_index": 5,
       "member_prefix": "SC_ADDRESS_TYPE_",
       "members": [
@@ -3520,7 +3520,7 @@
       "kind": "union",
       "name": "SCAddress",
       "fixed_size": null,
-      "source": "union SCAddress switch (SCAddressType type)\n{\ncase SC_ADDRESS_TYPE_ACCOUNT:\n    AccountID accountId;\ncase SC_ADDRESS_TYPE_CONTRACT:\n    ContractID contractId;\ncase SC_ADDRESS_TYPE_MUXED_ACCOUNT:\n    MuxedEd25519Account muxedAccount;\ncase SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:\n    ClaimableBalanceID claimableBalanceId;\ncase SC_ADDRESS_TYPE_LIQUIDITY_POOL:\n    PoolID liquidityPoolId;\n};",
+      "source": "union SCAddress switch (SCAddressType type)\n{\ncase SC_ADDRESS_TYPE_ACCOUNT:\n    AccountID accountId;\ncase SC_ADDRESS_TYPE_CONTRACT:\n    ContractID contractId;\ncase SC_ADDRESS_TYPE_MUXED_ACCOUNT:\n    MuxedEd25519Account muxedAccount;\ncase SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:\n    ClaimableBalanceID claimableBalanceId;\ncase SC_ADDRESS_TYPE_LIQUIDITY_POOL:\n    PoolID liquidityPoolId;\n#ifdef CAP_0084_MUXED_CONTRACT\ncase SC_ADDRESS_TYPE_MUXED_CONTRACT:\n    MuxedContract muxedContract;\n#endif\n};",
       "file_index": 5,
       "discriminant": {
         "name": "type",

@@ -1,7 +1,4 @@
-use crate::ast::{
-    CfgExpr, Definition, Enum, EnumMember, Size, Struct, StructMember, Type, Typedef, Union,
-    UnionArm, UnionCase, UnionCaseValue, UnionDiscriminant,
-};
+use crate::ast::{CfgExpr, Definition, Enum, EnumMember, Size, Struct, StructMember, Type, Typedef};
 use crate::parser::parse;
 
 #[test]

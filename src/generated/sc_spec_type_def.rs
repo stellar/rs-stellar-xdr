@@ -40,6 +40,8 @@ use super::*;
 ///     SCSpecTypeBytesN bytesN;
 /// case SC_SPEC_TYPE_UDT:
 ///     SCSpecTypeUDT udt;
+/// case SC_SPEC_TYPE_UDT_V2:
+///     SCSpecTypeUDTV2 udtV2;
 /// };
 /// ```
 ///
@@ -82,6 +84,7 @@ pub enum ScSpecTypeDef {
     Tuple(Box<ScSpecTypeTuple>),
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdt),
+    UdtV2(ScSpecTypeUdtv2),
 }
 
 #[cfg(feature = "alloc")]
@@ -119,6 +122,7 @@ impl ScSpecTypeDef {
         ScSpecType::Tuple,
         ScSpecType::BytesN,
         ScSpecType::Udt,
+        ScSpecType::UdtV2,
     ];
     pub const VARIANTS: [ScSpecType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -156,6 +160,7 @@ impl ScSpecTypeDef {
         "Tuple",
         "BytesN",
         "Udt",
+        "UdtV2",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -196,6 +201,7 @@ impl ScSpecTypeDef {
             Self::Tuple(_) => "Tuple",
             Self::BytesN(_) => "BytesN",
             Self::Udt(_) => "Udt",
+            Self::UdtV2(_) => "UdtV2",
         }
     }
 
@@ -229,6 +235,7 @@ impl ScSpecTypeDef {
             Self::Tuple(_) => ScSpecType::Tuple,
             Self::BytesN(_) => ScSpecType::BytesN,
             Self::Udt(_) => ScSpecType::Udt,
+            Self::UdtV2(_) => ScSpecType::UdtV2,
         }
     }
 
@@ -293,6 +300,7 @@ impl ReadXdr for ScSpecTypeDef {
                 ScSpecType::Tuple => Self::Tuple(Box::<ScSpecTypeTuple>::read_xdr(r)?),
                 ScSpecType::BytesN => Self::BytesN(ScSpecTypeBytesN::read_xdr(r)?),
                 ScSpecType::Udt => Self::Udt(ScSpecTypeUdt::read_xdr(r)?),
+                ScSpecType::UdtV2 => Self::UdtV2(ScSpecTypeUdtv2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -334,6 +342,7 @@ impl WriteXdr for ScSpecTypeDef {
                 Self::Tuple(v) => v.write_xdr(w)?,
                 Self::BytesN(v) => v.write_xdr(w)?,
                 Self::Udt(v) => v.write_xdr(w)?,
+                Self::UdtV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -371,6 +380,7 @@ pub enum ScSpecTypeDefRef<'a> {
     Tuple(&'a ScSpecTypeTupleRef<'a>),
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdtRef<'a>),
+    UdtV2(ScSpecTypeUdtv2Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
@@ -405,6 +415,7 @@ impl From<&ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
             ScSpecTypeDefRef::Tuple(value) => Self::Tuple(Box::new((*value).into())),
             ScSpecTypeDefRef::BytesN(value) => Self::BytesN(value.clone()),
             ScSpecTypeDefRef::Udt(value) => Self::Udt(value.into()),
+            ScSpecTypeDefRef::UdtV2(value) => Self::UdtV2(value.into()),
         }
     }
 }
@@ -448,6 +459,7 @@ impl ScSpecTypeDefRef<'_> {
             Self::Tuple(_) => ScSpecType::Tuple,
             Self::BytesN(_) => ScSpecType::BytesN,
             Self::Udt(_) => ScSpecType::Udt,
+            Self::UdtV2(_) => ScSpecType::UdtV2,
         }
     }
 }
@@ -485,6 +497,7 @@ impl WriteXdr for ScSpecTypeDefRef<'_> {
                 Self::Tuple(v) => v.write_xdr(w)?,
                 Self::BytesN(v) => v.write_xdr(w)?,
                 Self::Udt(v) => v.write_xdr(w)?,
+                Self::UdtV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -549,6 +562,9 @@ impl ScSpecTypeDefRef<'_> {
                 v.const_write_xdr(w);
             }
             Self::Udt(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::UdtV2(v) => {
                 v.const_write_xdr(w);
             }
         }

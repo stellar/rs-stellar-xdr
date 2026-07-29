@@ -56,6 +56,7 @@ pub enum TypeVariant {
     ScSpecTypeTuple,
     ScSpecTypeBytesN,
     ScSpecTypeUdt,
+    ScSpecTypeUdtv2,
     ScSpecTypeDef,
     ScSpecUdtStructFieldV0,
     ScSpecUdtStructV0,
@@ -538,6 +539,7 @@ impl TypeVariant {
         TypeVariant::ScSpecTypeTuple,
         TypeVariant::ScSpecTypeBytesN,
         TypeVariant::ScSpecTypeUdt,
+        TypeVariant::ScSpecTypeUdtv2,
         TypeVariant::ScSpecTypeDef,
         TypeVariant::ScSpecUdtStructFieldV0,
         TypeVariant::ScSpecUdtStructV0,
@@ -1026,6 +1028,7 @@ impl TypeVariant {
         "ScSpecTypeTuple",
         "ScSpecTypeBytesN",
         "ScSpecTypeUdt",
+        "ScSpecTypeUdtv2",
         "ScSpecTypeDef",
         "ScSpecUdtStructFieldV0",
         "ScSpecUdtStructV0",
@@ -1520,6 +1523,7 @@ impl TypeVariant {
             Self::ScSpecTypeTuple => "ScSpecTypeTuple",
             Self::ScSpecTypeBytesN => "ScSpecTypeBytesN",
             Self::ScSpecTypeUdt => "ScSpecTypeUdt",
+            Self::ScSpecTypeUdtv2 => "ScSpecTypeUdtv2",
             Self::ScSpecTypeDef => "ScSpecTypeDef",
             Self::ScSpecUdtStructFieldV0 => "ScSpecUdtStructFieldV0",
             Self::ScSpecUdtStructV0 => "ScSpecUdtStructV0",
@@ -2045,6 +2049,7 @@ impl TypeVariant {
             Self::ScSpecTypeTuple => gen.into_root_schema_for::<ScSpecTypeTuple>(),
             Self::ScSpecTypeBytesN => gen.into_root_schema_for::<ScSpecTypeBytesN>(),
             Self::ScSpecTypeUdt => gen.into_root_schema_for::<ScSpecTypeUdt>(),
+            Self::ScSpecTypeUdtv2 => gen.into_root_schema_for::<ScSpecTypeUdtv2>(),
             Self::ScSpecTypeDef => gen.into_root_schema_for::<ScSpecTypeDef>(),
             Self::ScSpecUdtStructFieldV0 => gen.into_root_schema_for::<ScSpecUdtStructFieldV0>(),
             Self::ScSpecUdtStructV0 => gen.into_root_schema_for::<ScSpecUdtStructV0>(),
@@ -2763,6 +2768,7 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecTypeTuple" => Ok(Self::ScSpecTypeTuple),
             "ScSpecTypeBytesN" => Ok(Self::ScSpecTypeBytesN),
             "ScSpecTypeUdt" => Ok(Self::ScSpecTypeUdt),
+            "ScSpecTypeUdtv2" => Ok(Self::ScSpecTypeUdtv2),
             "ScSpecTypeDef" => Ok(Self::ScSpecTypeDef),
             "ScSpecUdtStructFieldV0" => Ok(Self::ScSpecUdtStructFieldV0),
             "ScSpecUdtStructV0" => Ok(Self::ScSpecUdtStructV0),
@@ -3281,6 +3287,7 @@ pub enum Type {
     ScSpecTypeTuple(Box<ScSpecTypeTuple>),
     ScSpecTypeBytesN(Box<ScSpecTypeBytesN>),
     ScSpecTypeUdt(Box<ScSpecTypeUdt>),
+    ScSpecTypeUdtv2(Box<ScSpecTypeUdtv2>),
     ScSpecTypeDef(Box<ScSpecTypeDef>),
     ScSpecUdtStructFieldV0(Box<ScSpecUdtStructFieldV0>),
     ScSpecUdtStructV0(Box<ScSpecUdtStructV0>),
@@ -3765,6 +3772,7 @@ impl Type {
         TypeVariant::ScSpecTypeTuple,
         TypeVariant::ScSpecTypeBytesN,
         TypeVariant::ScSpecTypeUdt,
+        TypeVariant::ScSpecTypeUdtv2,
         TypeVariant::ScSpecTypeDef,
         TypeVariant::ScSpecUdtStructFieldV0,
         TypeVariant::ScSpecUdtStructV0,
@@ -4253,6 +4261,7 @@ impl Type {
         "ScSpecTypeTuple",
         "ScSpecTypeBytesN",
         "ScSpecTypeUdt",
+        "ScSpecTypeUdtv2",
         "ScSpecTypeDef",
         "ScSpecUdtStructFieldV0",
         "ScSpecUdtStructV0",
@@ -4898,6 +4907,11 @@ impl Type {
             }),
             TypeVariant::ScSpecTypeUdt => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::read_xdr(r)?)))
+            }),
+            TypeVariant::ScSpecTypeUdtv2 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeUdtv2(Box::new(ScSpecTypeUdtv2::read_xdr(
+                    r,
+                )?)))
             }),
             TypeVariant::ScSpecTypeDef => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::read_xdr(r)?)))
@@ -7038,6 +7052,10 @@ impl Type {
                 ReadXdrIter::<_, ScSpecTypeUdt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
             ),
+            TypeVariant::ScSpecTypeUdtv2 => Box::new(
+                ReadXdrIter::<_, ScSpecTypeUdtv2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdtv2(Box::new(t)))),
+            ),
             TypeVariant::ScSpecTypeDef => Box::new(
                 ReadXdrIter::<_, ScSpecTypeDef>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
@@ -9111,6 +9129,10 @@ impl Type {
             TypeVariant::ScSpecTypeUdt => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecTypeUdt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeUdtv2 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeUdtv2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdtv2(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeDef => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecTypeDef>>::new(&mut r.inner, r.limits.clone())
@@ -11456,6 +11478,10 @@ impl Type {
                 ReadXdrIter::<_, ScSpecTypeUdt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
             ),
+            TypeVariant::ScSpecTypeUdtv2 => Box::new(
+                ReadXdrIter::<_, ScSpecTypeUdtv2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdtv2(Box::new(t)))),
+            ),
             TypeVariant::ScSpecTypeDef => Box::new(
                 ReadXdrIter::<_, ScSpecTypeDef>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
@@ -13370,6 +13396,9 @@ impl Type {
             TypeVariant::ScSpecTypeUdt => {
                 Ok(Self::ScSpecTypeUdt(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ScSpecTypeUdtv2 => {
+                Ok(Self::ScSpecTypeUdtv2(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ScSpecTypeDef => {
                 Ok(Self::ScSpecTypeDef(Box::new(serde_json::from_reader(r)?)))
             }
@@ -14709,6 +14738,9 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecTypeUdt => Ok(Self::ScSpecTypeUdt(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecTypeUdtv2 => Ok(Self::ScSpecTypeUdtv2(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecTypeDef => Ok(Self::ScSpecTypeDef(Box::new(
@@ -16331,6 +16363,11 @@ impl Type {
                 ignored.borrow_mut().push(path.to_string());
             })
             .map(|t| Self::ScSpecTypeUdt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeUdtv2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeUdtv2(Box::new(t)))
             .map_err(Error::Json),
             TypeVariant::ScSpecTypeDef => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
@@ -18675,6 +18712,9 @@ impl Type {
             TypeVariant::ScSpecTypeUdt => {
                 Ok(Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::arbitrary(u)?)))
             }
+            TypeVariant::ScSpecTypeUdtv2 => Ok(Self::ScSpecTypeUdtv2(Box::new(
+                ScSpecTypeUdtv2::arbitrary(u)?,
+            ))),
             TypeVariant::ScSpecTypeDef => {
                 Ok(Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::arbitrary(u)?)))
             }
@@ -19954,6 +19994,7 @@ impl Type {
             TypeVariant::ScSpecTypeTuple => Self::ScSpecTypeTuple(Box::default()),
             TypeVariant::ScSpecTypeBytesN => Self::ScSpecTypeBytesN(Box::default()),
             TypeVariant::ScSpecTypeUdt => Self::ScSpecTypeUdt(Box::default()),
+            TypeVariant::ScSpecTypeUdtv2 => Self::ScSpecTypeUdtv2(Box::default()),
             TypeVariant::ScSpecTypeDef => Self::ScSpecTypeDef(Box::default()),
             TypeVariant::ScSpecUdtStructFieldV0 => Self::ScSpecUdtStructFieldV0(Box::default()),
             TypeVariant::ScSpecUdtStructV0 => Self::ScSpecUdtStructV0(Box::default()),
@@ -20616,6 +20657,7 @@ impl Type {
             Self::ScSpecTypeTuple(ref v) => v.as_ref(),
             Self::ScSpecTypeBytesN(ref v) => v.as_ref(),
             Self::ScSpecTypeUdt(ref v) => v.as_ref(),
+            Self::ScSpecTypeUdtv2(ref v) => v.as_ref(),
             Self::ScSpecTypeDef(ref v) => v.as_ref(),
             Self::ScSpecUdtStructFieldV0(ref v) => v.as_ref(),
             Self::ScSpecUdtStructV0(ref v) => v.as_ref(),
@@ -21106,6 +21148,7 @@ impl Type {
             Self::ScSpecTypeTuple(_) => "ScSpecTypeTuple",
             Self::ScSpecTypeBytesN(_) => "ScSpecTypeBytesN",
             Self::ScSpecTypeUdt(_) => "ScSpecTypeUdt",
+            Self::ScSpecTypeUdtv2(_) => "ScSpecTypeUdtv2",
             Self::ScSpecTypeDef(_) => "ScSpecTypeDef",
             Self::ScSpecUdtStructFieldV0(_) => "ScSpecUdtStructFieldV0",
             Self::ScSpecUdtStructV0(_) => "ScSpecUdtStructV0",
@@ -21632,6 +21675,7 @@ impl Type {
             Self::ScSpecTypeTuple(_) => TypeVariant::ScSpecTypeTuple,
             Self::ScSpecTypeBytesN(_) => TypeVariant::ScSpecTypeBytesN,
             Self::ScSpecTypeUdt(_) => TypeVariant::ScSpecTypeUdt,
+            Self::ScSpecTypeUdtv2(_) => TypeVariant::ScSpecTypeUdtv2,
             Self::ScSpecTypeDef(_) => TypeVariant::ScSpecTypeDef,
             Self::ScSpecUdtStructFieldV0(_) => TypeVariant::ScSpecUdtStructFieldV0,
             Self::ScSpecUdtStructV0(_) => TypeVariant::ScSpecUdtStructV0,
@@ -22196,6 +22240,7 @@ impl WriteXdr for Type {
             Self::ScSpecTypeTuple(v) => v.write_xdr(w),
             Self::ScSpecTypeBytesN(v) => v.write_xdr(w),
             Self::ScSpecTypeUdt(v) => v.write_xdr(w),
+            Self::ScSpecTypeUdtv2(v) => v.write_xdr(w),
             Self::ScSpecTypeDef(v) => v.write_xdr(w),
             Self::ScSpecUdtStructFieldV0(v) => v.write_xdr(w),
             Self::ScSpecUdtStructV0(v) => v.write_xdr(w),

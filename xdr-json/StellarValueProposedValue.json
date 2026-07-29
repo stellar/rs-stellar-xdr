@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "StellarValueProposedValue",
+  "description": "StellarValueProposedValue is an XDR NestedStruct defined as:\n\n```text struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
+  "type": "object",
+  "required": [
+    "lc_value_signature",
+    "previous_ledger_hash",
+    "previous_ledger_version",
+    "tx_set_hash"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "lc_value_signature": {
+      "$ref": "#/definitions/LedgerCloseValueSignature"
+    },
+    "previous_ledger_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "previous_ledger_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "tx_set_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "LedgerCloseValueSignature": {
+      "description": "LedgerCloseValueSignature is an XDR Struct defined as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
+      "type": "object",
+      "required": [
+        "node_id",
+        "signature"
+      ],
+      "properties": {
+        "node_id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "signature": {
+          "$ref": "#/definitions/Signature"
+        }
+      }
+    },
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defined as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

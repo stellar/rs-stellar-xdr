@@ -13,7 +13,6 @@ use super::*;
 ///         }
 /// ```
 ///
-#[cfg(feature = "cap_0083")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -32,7 +31,6 @@ pub struct StellarValueProposedValue {
     pub lc_value_signature: LedgerCloseValueSignature,
 }
 
-#[cfg(feature = "cap_0083")]
 impl ReadXdr for StellarValueProposedValue {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -47,7 +45,6 @@ impl ReadXdr for StellarValueProposedValue {
     }
 }
 
-#[cfg(feature = "cap_0083")]
 impl WriteXdr for StellarValueProposedValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

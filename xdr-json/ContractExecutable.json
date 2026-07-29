@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractExecutable",
-  "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; #ifdef CAP_0085_EXECUTABLE_REF case CONTRACT_EXECUTABLE_EXTERNAL_REF: ContractExecutableExternalRef external_ref; #endif }; ```",
+  "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; case CONTRACT_EXECUTABLE_EXTERNAL_REF: ContractExecutableExternalRef external_ref; }; ```",
   "oneOf": [
     {
       "type": "string",
@@ -23,6 +23,17 @@
           "contentMediaType": "application/binary"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "external_ref"
+      ],
+      "properties": {
+        "external_ref": {
+          "$ref": "#/definitions/ContractExecutableExternalRef"
+        }
+      }
     }
   ],
   "properties": {
@@ -30,5 +41,34 @@
       "type": "string"
     }
   },
-  "unevaluatedProperties": false
+  "unevaluatedProperties": false,
+  "definitions": {
+    "ContractExecutableExternalRef": {
+      "description": "ContractExecutableExternalRef is an XDR Struct defined as:\n\n```text struct ContractExecutableExternalRef { SCAddress executable_owner; SCString tag; }; ```",
+      "type": "object",
+      "required": [
+        "executable_owner",
+        "tag"
+      ],
+      "properties": {
+        "executable_owner": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "tag": {
+          "$ref": "#/definitions/ScString"
+        }
+      }
+    },
+    "ScAddress": {
+      "type": "string"
+    },
+    "ScString": {
+      "description": "ScString is an XDR Typedef defined as:\n\n```text typedef string SCString<>; ```",
+      "$ref": "#/definitions/StringM<4294967295>"
+    },
+    "StringM<4294967295>": {
+      "type": "string",
+      "maxLength": 4294967295
+    }
+  }
 }

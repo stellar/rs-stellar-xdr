@@ -43,7 +43,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract.x",
-        "1e088e19eb379537fd823cb300216e1e73b341c1accb4ba0fcf2871a3ccfb691",
+        "b87e9474002c0a089a8aa6f4c4e76e74fa497a7c20e3656532f0ac7762374e4e",
     ),
     (
         "xdr/Stellar-exporter.x",
@@ -59,7 +59,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-ledger.x",
-        "4c09454575c291e41b8f514255562a261f8f1cdefa7e8a20062b1108571621b5",
+        "b6dec791414821d0bae7a11abb4a6b6143ce3e09d0030c580c9ece1815418b13",
     ),
     (
         "xdr/Stellar-overlay.x",
@@ -4366,6 +4366,9 @@ pub use sc_address_type::*;
 mod muxed_ed25519_account;
 #[allow(unused_imports)]
 pub use muxed_ed25519_account::*;
+mod muxed_contract;
+#[allow(unused_imports)]
+pub use muxed_contract::*;
 mod sc_address;
 #[allow(unused_imports)]
 pub use sc_address::*;

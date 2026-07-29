@@ -90,8 +90,9 @@ pub enum TypeVariant {
     ContractExecutableType,
     ScAddressType,
     MuxedEd25519Account,
+    #[cfg(feature = "cap_0084_muxed_contract")]
+    MuxedContract,
     ScAddress,
-    #[cfg(feature = "cap_0085_executable_ref")]
     ContractExecutableExternalRef,
     ContractExecutable,
     ScVec,
@@ -196,7 +197,6 @@ pub enum TypeVariant {
     LedgerCloseValueSignature,
     StellarValue,
     StellarValueExt,
-    #[cfg(feature = "cap_0083")]
     StellarValueProposedValue,
     LedgerHeaderFlags,
     LedgerHeaderExtensionV1,
@@ -572,8 +572,9 @@ impl TypeVariant {
         TypeVariant::ContractExecutableType,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
-        #[cfg(feature = "cap_0085_executable_ref")]
         TypeVariant::ContractExecutableExternalRef,
         TypeVariant::ContractExecutable,
         TypeVariant::ScVec,
@@ -678,7 +679,6 @@ impl TypeVariant {
         TypeVariant::LedgerCloseValueSignature,
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
-        #[cfg(feature = "cap_0083")]
         TypeVariant::StellarValueProposedValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
@@ -1060,8 +1060,9 @@ impl TypeVariant {
         "ContractExecutableType",
         "ScAddressType",
         "MuxedEd25519Account",
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        "MuxedContract",
         "ScAddress",
-        #[cfg(feature = "cap_0085_executable_ref")]
         "ContractExecutableExternalRef",
         "ContractExecutable",
         "ScVec",
@@ -1166,7 +1167,6 @@ impl TypeVariant {
         "LedgerCloseValueSignature",
         "StellarValue",
         "StellarValueExt",
-        #[cfg(feature = "cap_0083")]
         "StellarValueProposedValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
@@ -1554,8 +1554,9 @@ impl TypeVariant {
             Self::ContractExecutableType => "ContractExecutableType",
             Self::ScAddressType => "ScAddressType",
             Self::MuxedEd25519Account => "MuxedEd25519Account",
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract => "MuxedContract",
             Self::ScAddress => "ScAddress",
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ContractExecutableExternalRef => "ContractExecutableExternalRef",
             Self::ContractExecutable => "ContractExecutable",
             Self::ScVec => "ScVec",
@@ -1662,7 +1663,6 @@ impl TypeVariant {
             Self::LedgerCloseValueSignature => "LedgerCloseValueSignature",
             Self::StellarValue => "StellarValue",
             Self::StellarValueExt => "StellarValueExt",
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue => "StellarValueProposedValue",
             Self::LedgerHeaderFlags => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1 => "LedgerHeaderExtensionV1",
@@ -2089,8 +2089,9 @@ impl TypeVariant {
             Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
             Self::MuxedEd25519Account => gen.into_root_schema_for::<MuxedEd25519Account>(),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract => gen.into_root_schema_for::<MuxedContract>(),
             Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ContractExecutableExternalRef => {
                 gen.into_root_schema_for::<ContractExecutableExternalRef>()
             }
@@ -2225,7 +2226,6 @@ impl TypeVariant {
             }
             Self::StellarValue => gen.into_root_schema_for::<StellarValue>(),
             Self::StellarValueExt => gen.into_root_schema_for::<StellarValueExt>(),
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue => {
                 gen.into_root_schema_for::<StellarValueProposedValue>()
             }
@@ -2797,8 +2797,9 @@ impl core::str::FromStr for TypeVariant {
             "ContractExecutableType" => Ok(Self::ContractExecutableType),
             "ScAddressType" => Ok(Self::ScAddressType),
             "MuxedEd25519Account" => Ok(Self::MuxedEd25519Account),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            "MuxedContract" => Ok(Self::MuxedContract),
             "ScAddress" => Ok(Self::ScAddress),
-            #[cfg(feature = "cap_0085_executable_ref")]
             "ContractExecutableExternalRef" => Ok(Self::ContractExecutableExternalRef),
             "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScVec" => Ok(Self::ScVec),
@@ -2905,7 +2906,6 @@ impl core::str::FromStr for TypeVariant {
             "LedgerCloseValueSignature" => Ok(Self::LedgerCloseValueSignature),
             "StellarValue" => Ok(Self::StellarValue),
             "StellarValueExt" => Ok(Self::StellarValueExt),
-            #[cfg(feature = "cap_0083")]
             "StellarValueProposedValue" => Ok(Self::StellarValueProposedValue),
             "LedgerHeaderFlags" => Ok(Self::LedgerHeaderFlags),
             "LedgerHeaderExtensionV1" => Ok(Self::LedgerHeaderExtensionV1),
@@ -3315,8 +3315,9 @@ pub enum Type {
     ContractExecutableType(Box<ContractExecutableType>),
     ScAddressType(Box<ScAddressType>),
     MuxedEd25519Account(Box<MuxedEd25519Account>),
+    #[cfg(feature = "cap_0084_muxed_contract")]
+    MuxedContract(Box<MuxedContract>),
     ScAddress(Box<ScAddress>),
-    #[cfg(feature = "cap_0085_executable_ref")]
     ContractExecutableExternalRef(Box<ContractExecutableExternalRef>),
     ContractExecutable(Box<ContractExecutable>),
     ScVec(Box<ScVec>),
@@ -3421,7 +3422,6 @@ pub enum Type {
     LedgerCloseValueSignature(Box<LedgerCloseValueSignature>),
     StellarValue(Box<StellarValue>),
     StellarValueExt(Box<StellarValueExt>),
-    #[cfg(feature = "cap_0083")]
     StellarValueProposedValue(Box<StellarValueProposedValue>),
     LedgerHeaderFlags(Box<LedgerHeaderFlags>),
     LedgerHeaderExtensionV1(Box<LedgerHeaderExtensionV1>),
@@ -3799,8 +3799,9 @@ impl Type {
         TypeVariant::ContractExecutableType,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
-        #[cfg(feature = "cap_0085_executable_ref")]
         TypeVariant::ContractExecutableExternalRef,
         TypeVariant::ContractExecutable,
         TypeVariant::ScVec,
@@ -3905,7 +3906,6 @@ impl Type {
         TypeVariant::LedgerCloseValueSignature,
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
-        #[cfg(feature = "cap_0083")]
         TypeVariant::StellarValueProposedValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
@@ -4287,8 +4287,9 @@ impl Type {
         "ContractExecutableType",
         "ScAddressType",
         "MuxedEd25519Account",
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        "MuxedContract",
         "ScAddress",
-        #[cfg(feature = "cap_0085_executable_ref")]
         "ContractExecutableExternalRef",
         "ContractExecutable",
         "ScVec",
@@ -4393,7 +4394,6 @@ impl Type {
         "LedgerCloseValueSignature",
         "StellarValue",
         "StellarValueExt",
-        #[cfg(feature = "cap_0083")]
         "StellarValueProposedValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
@@ -5039,10 +5039,13 @@ impl Type {
                     MuxedEd25519Account::read_xdr(r)?,
                 )))
             }),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => r.with_limited_depth(|r| {
+                Ok(Self::MuxedContract(Box::new(MuxedContract::read_xdr(r)?)))
+            }),
             TypeVariant::ScAddress => {
                 r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
             }
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => r.with_limited_depth(|r| {
                 Ok(Self::ContractExecutableExternalRef(Box::new(
                     ContractExecutableExternalRef::read_xdr(r)?,
@@ -5471,7 +5474,6 @@ impl Type {
                     r,
                 )?)))
             }),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => r.with_limited_depth(|r| {
                 Ok(Self::StellarValueProposedValue(Box::new(
                     StellarValueProposedValue::read_xdr(r)?,
@@ -7174,11 +7176,15 @@ impl Type {
                 ReadXdrIter::<_, MuxedEd25519Account>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, MuxedContract>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => Box::new(
                 ReadXdrIter::<_, ContractExecutableExternalRef>::new(
                     &mut r.inner,
@@ -7610,7 +7616,6 @@ impl Type {
                 ReadXdrIter::<_, StellarValueExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, StellarValueProposedValue>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
@@ -9269,11 +9274,15 @@ impl Type {
                 ReadXdrIter::<_, Frame<MuxedEd25519Account>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t.0)))),
             ),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, Frame<MuxedContract>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t.0)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
             ),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => Box::new(
                 ReadXdrIter::<_, Frame<ContractExecutableExternalRef>>::new(
                     &mut r.inner,
@@ -9762,7 +9771,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<StellarValueExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t.0)))),
             ),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, Frame<StellarValueProposedValue>>::new(
                     &mut r.inner,
@@ -11592,11 +11600,15 @@ impl Type {
                 ReadXdrIter::<_, MuxedEd25519Account>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, MuxedContract>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => Box::new(
                 ReadXdrIter::<_, ContractExecutableExternalRef>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
@@ -12016,7 +12028,6 @@ impl Type {
                 ReadXdrIter::<_, StellarValueExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, StellarValueProposedValue>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
@@ -13462,8 +13473,11 @@ impl Type {
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => {
+                Ok(Self::MuxedContract(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
                 Box::new(serde_json::from_reader(r)?),
             )),
@@ -13730,7 +13744,6 @@ impl Type {
             TypeVariant::StellarValueExt => {
                 Ok(Self::StellarValueExt(Box::new(serde_json::from_reader(r)?)))
             }
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
                 Box::new(serde_json::from_reader(r)?),
             )),
@@ -14813,10 +14826,13 @@ impl Type {
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Ok(Self::MuxedContract(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
@@ -15137,7 +15153,6 @@ impl Type {
             TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
@@ -16502,12 +16517,17 @@ impl Type {
             })
             .map(|t| Self::MuxedEd25519Account(Box::new(t)))
             .map_err(Error::Json),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MuxedContract(Box::new(t)))
+            .map_err(Error::Json),
             TypeVariant::ScAddress => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
             .map(|t| Self::ScAddress(Box::new(t)))
             .map_err(Error::Json),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
@@ -17036,7 +17056,6 @@ impl Type {
             })
             .map(|t| Self::StellarValueExt(Box::new(t)))
             .map_err(Error::Json),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
@@ -18757,8 +18776,11 @@ impl Type {
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 MuxedEd25519Account::arbitrary(u)?,
             ))),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => {
+                Ok(Self::MuxedContract(Box::new(MuxedContract::arbitrary(u)?)))
+            }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::arbitrary(u)?))),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
                 Box::new(ContractExecutableExternalRef::arbitrary(u)?),
             )),
@@ -19023,7 +19045,6 @@ impl Type {
             TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
                 StellarValueExt::arbitrary(u)?,
             ))),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
                 Box::new(StellarValueProposedValue::arbitrary(u)?),
             )),
@@ -19992,8 +20013,9 @@ impl Type {
             TypeVariant::ContractExecutableType => Self::ContractExecutableType(Box::default()),
             TypeVariant::ScAddressType => Self::ScAddressType(Box::default()),
             TypeVariant::MuxedEd25519Account => Self::MuxedEd25519Account(Box::default()),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Self::MuxedContract(Box::default()),
             TypeVariant::ScAddress => Self::ScAddress(Box::default()),
-            #[cfg(feature = "cap_0085_executable_ref")]
             TypeVariant::ContractExecutableExternalRef => {
                 Self::ContractExecutableExternalRef(Box::default())
             }
@@ -20126,7 +20148,6 @@ impl Type {
             }
             TypeVariant::StellarValue => Self::StellarValue(Box::default()),
             TypeVariant::StellarValueExt => Self::StellarValueExt(Box::default()),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => {
                 Self::StellarValueProposedValue(Box::default())
             }
@@ -20650,8 +20671,9 @@ impl Type {
             Self::ContractExecutableType(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::MuxedEd25519Account(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ContractExecutableExternalRef(ref v) => v.as_ref(),
             Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
@@ -20756,7 +20778,6 @@ impl Type {
             Self::LedgerCloseValueSignature(ref v) => v.as_ref(),
             Self::StellarValue(ref v) => v.as_ref(),
             Self::StellarValueExt(ref v) => v.as_ref(),
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(ref v) => v.as_ref(),
             Self::LedgerHeaderFlags(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1(ref v) => v.as_ref(),
@@ -21140,8 +21161,9 @@ impl Type {
             Self::ContractExecutableType(_) => "ContractExecutableType",
             Self::ScAddressType(_) => "ScAddressType",
             Self::MuxedEd25519Account(_) => "MuxedEd25519Account",
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(_) => "MuxedContract",
             Self::ScAddress(_) => "ScAddress",
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ContractExecutableExternalRef(_) => "ContractExecutableExternalRef",
             Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScVec(_) => "ScVec",
@@ -21248,7 +21270,6 @@ impl Type {
             Self::LedgerCloseValueSignature(_) => "LedgerCloseValueSignature",
             Self::StellarValue(_) => "StellarValue",
             Self::StellarValueExt(_) => "StellarValueExt",
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(_) => "StellarValueProposedValue",
             Self::LedgerHeaderFlags(_) => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1(_) => "LedgerHeaderExtensionV1",
@@ -21666,8 +21687,9 @@ impl Type {
             Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::MuxedEd25519Account(_) => TypeVariant::MuxedEd25519Account,
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(_) => TypeVariant::MuxedContract,
             Self::ScAddress(_) => TypeVariant::ScAddress,
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ContractExecutableExternalRef(_) => TypeVariant::ContractExecutableExternalRef,
             Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScVec(_) => TypeVariant::ScVec,
@@ -21780,7 +21802,6 @@ impl Type {
             Self::LedgerCloseValueSignature(_) => TypeVariant::LedgerCloseValueSignature,
             Self::StellarValue(_) => TypeVariant::StellarValue,
             Self::StellarValueExt(_) => TypeVariant::StellarValueExt,
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(_) => TypeVariant::StellarValueProposedValue,
             Self::LedgerHeaderFlags(_) => TypeVariant::LedgerHeaderFlags,
             Self::LedgerHeaderExtensionV1(_) => TypeVariant::LedgerHeaderExtensionV1,
@@ -22230,8 +22251,9 @@ impl WriteXdr for Type {
             Self::ContractExecutableType(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
             Self::MuxedEd25519Account(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(v) => v.write_xdr(w),
             Self::ScAddress(v) => v.write_xdr(w),
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ContractExecutableExternalRef(v) => v.write_xdr(w),
             Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScVec(v) => v.write_xdr(w),
@@ -22336,7 +22358,6 @@ impl WriteXdr for Type {
             Self::LedgerCloseValueSignature(v) => v.write_xdr(w),
             Self::StellarValue(v) => v.write_xdr(w),
             Self::StellarValueExt(v) => v.write_xdr(w),
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(v) => v.write_xdr(w),
             Self::LedgerHeaderFlags(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1(v) => v.write_xdr(w),

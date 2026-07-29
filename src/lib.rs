@@ -119,10 +119,8 @@ pub const VERSION: Version = Version {
     features: &[
         #[cfg(feature = "test_feature")]
         "test_feature",
-        #[cfg(feature = "cap_0083")]
-        "cap_0083",
-        #[cfg(feature = "cap_0085_executable_ref")]
-        "cap_0085_executable_ref",
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        "cap_0084_muxed_contract",
     ],
 };
 

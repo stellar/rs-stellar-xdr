@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ContractExecutableType",
-  "description": "ContractExecutableType is an XDR Enum defined as:\n\n```text enum ContractExecutableType { CONTRACT_EXECUTABLE_WASM = 0, CONTRACT_EXECUTABLE_STELLAR_ASSET = 1 #ifdef CAP_0085_EXECUTABLE_REF ,CONTRACT_EXECUTABLE_EXTERNAL_REF = 2 #endif }; ```",
+  "description": "ContractExecutableType is an XDR Enum defined as:\n\n```text enum ContractExecutableType { CONTRACT_EXECUTABLE_WASM = 0, CONTRACT_EXECUTABLE_STELLAR_ASSET = 1, CONTRACT_EXECUTABLE_EXTERNAL_REF = 2 }; ```",
   "type": "string",
   "enum": [
     "wasm",
-    "stellar_asset"
+    "stellar_asset",
+    "external_ref"
   ]
 }

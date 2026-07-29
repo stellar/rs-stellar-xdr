@@ -1745,7 +1745,7 @@
       }
     },
     "ContractExecutable": {
-      "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; #ifdef CAP_0085_EXECUTABLE_REF case CONTRACT_EXECUTABLE_EXTERNAL_REF: ContractExecutableExternalRef external_ref; #endif }; ```",
+      "description": "ContractExecutable is an XDR Union defined as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; case CONTRACT_EXECUTABLE_EXTERNAL_REF: ContractExecutableExternalRef external_ref; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -1767,8 +1767,35 @@
               "contentMediaType": "application/binary"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "external_ref"
+          ],
+          "properties": {
+            "external_ref": {
+              "$ref": "#/definitions/ContractExecutableExternalRef"
+            }
+          }
         }
       ]
+    },
+    "ContractExecutableExternalRef": {
+      "description": "ContractExecutableExternalRef is an XDR Struct defined as:\n\n```text struct ContractExecutableExternalRef { SCAddress executable_owner; SCString tag; }; ```",
+      "type": "object",
+      "required": [
+        "executable_owner",
+        "tag"
+      ],
+      "properties": {
+        "executable_owner": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "tag": {
+          "$ref": "#/definitions/ScString"
+        }
+      }
     },
     "ContractId": {
       "type": "string"
@@ -5329,7 +5356,7 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "ScVal": {
-      "description": "ScVal is an XDR Union defined as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\n#ifdef CAP_0085_EXECUTABLE_REF case SCV_EXECUTABLE_TAG: SCString executable_tag; #endif }; ```",
+      "description": "ScVal is an XDR Union defined as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_EXECUTABLE_TAG: SCString executable_tag; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -5572,6 +5599,17 @@
           "properties": {
             "ledger_key_nonce": {
               "$ref": "#/definitions/ScNonceKey"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "executable_tag"
+          ],
+          "properties": {
+            "executable_tag": {
+              "$ref": "#/definitions/ScString"
             }
           }
         }
@@ -6549,7 +6587,7 @@
       }
     },
     "StellarValue": {
-      "description": "StellarValue is an XDR Struct defined as:\n\n```text struct StellarValue { Hash txSetHash;      // transaction set to apply to previous ledger TimePoint closeTime; // network close time\n\n// upgrades to apply to the previous ledger (usually empty) // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop // unknown steps during consensus if needed. // see notes below on 'LedgerUpgrade' for more detail // max size is dictated by number of upgrade types (+ room for future) UpgradeType upgrades<6>;\n\n// reserved for future use union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; #ifdef CAP_0083 case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; #endif } ext; }; ```",
+      "description": "StellarValue is an XDR Struct defined as:\n\n```text struct StellarValue { Hash txSetHash;      // transaction set to apply to previous ledger TimePoint closeTime; // network close time\n\n// upgrades to apply to the previous ledger (usually empty) // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop // unknown steps during consensus if needed. // see notes below on 'LedgerUpgrade' for more detail // max size is dictated by number of upgrade types (+ room for future) UpgradeType upgrades<6>;\n\n// reserved for future use union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; } ext; }; ```",
       "type": "object",
       "required": [
         "close_time",
@@ -6581,7 +6619,7 @@
       }
     },
     "StellarValueExt": {
-      "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; #ifdef CAP_0083 case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; #endif } ```",
+      "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -6599,8 +6637,53 @@
               "$ref": "#/definitions/LedgerCloseValueSignature"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "empty_tx_set"
+          ],
+          "properties": {
+            "empty_tx_set": {
+              "$ref": "#/definitions/StellarValueProposedValue"
+            }
+          }
         }
       ]
+    },
+    "StellarValueProposedValue": {
+      "description": "StellarValueProposedValue is an XDR NestedStruct defined as:\n\n```text struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
+      "type": "object",
+      "required": [
+        "lc_value_signature",
+        "previous_ledger_hash",
+        "previous_ledger_version",
+        "tx_set_hash"
+      ],
+      "properties": {
+        "lc_value_signature": {
+          "$ref": "#/definitions/LedgerCloseValueSignature"
+        },
+        "previous_ledger_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "previous_ledger_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
     },
     "String32": {
       "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",

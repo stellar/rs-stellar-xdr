@@ -23,7 +23,6 @@ use super::*;
 ///         void;
 ///     case STELLAR_VALUE_SIGNED:
 ///         LedgerCloseValueSignature lcValueSignature;
-/// #ifdef CAP_0083
 ///     case STELLAR_VALUE_EMPTY_TX_SET:
 ///         struct
 ///         {
@@ -32,7 +31,6 @@ use super::*;
 ///             uint32 previousLedgerVersion;
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         } proposedValue;
-/// #endif
 ///     }
 ///     ext;
 /// };

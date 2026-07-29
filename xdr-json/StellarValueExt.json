@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "StellarValueExt",
-  "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; #ifdef CAP_0083 case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; #endif } ```",
+  "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; } ```",
   "oneOf": [
     {
       "type": "string",
@@ -17,6 +17,17 @@
       "properties": {
         "signed": {
           "$ref": "#/definitions/LedgerCloseValueSignature"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "empty_tx_set"
+      ],
+      "properties": {
+        "empty_tx_set": {
+          "$ref": "#/definitions/StellarValueProposedValue"
         }
       }
     }
@@ -53,6 +64,40 @@
       "maxLength": 128,
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
+    },
+    "StellarValueProposedValue": {
+      "description": "StellarValueProposedValue is an XDR NestedStruct defined as:\n\n```text struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
+      "type": "object",
+      "required": [
+        "lc_value_signature",
+        "previous_ledger_hash",
+        "previous_ledger_version",
+        "tx_set_hash"
+      ],
+      "properties": {
+        "lc_value_signature": {
+          "$ref": "#/definitions/LedgerCloseValueSignature"
+        },
+        "previous_ledger_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "previous_ledger_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
     }
   }
 }

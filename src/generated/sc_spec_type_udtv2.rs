@@ -7,7 +7,6 @@ use super::*;
 /// struct SCSpecTypeUDTV2
 /// {
 ///     opaque id[8];
-///     string name<60>;
 /// };
 /// ```
 ///
@@ -24,7 +23,6 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeUdtv2 {
     pub id: [u8; 8],
-    pub name: StringM<60>,
 }
 
 impl ReadXdr for ScSpecTypeUdtv2 {
@@ -33,7 +31,6 @@ impl ReadXdr for ScSpecTypeUdtv2 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 id: <[u8; 8]>::read_xdr(r)?,
-                name: StringM::<60>::read_xdr(r)?,
             })
         })
     }
@@ -44,58 +41,18 @@ impl WriteXdr for ScSpecTypeUdtv2 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ScSpecTypeUdtv2Ref is a borrowing equivalent of [`ScSpecTypeUdtv2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeUdtv2Ref<'a> {
-    pub id: [u8; 8],
-    pub name: StringMRef<'a, 60>,
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeUdtv2Ref<'_>> for ScSpecTypeUdtv2 {
-    #[must_use]
-    fn from(v: &ScSpecTypeUdtv2Ref<'_>) -> Self {
-        Self {
-            id: v.id,
-            name: v.name.to_stringm(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeUdtv2Ref<'_>> for ScSpecTypeUdtv2 {
-    #[must_use]
-    fn from(v: ScSpecTypeUdtv2Ref<'_>) -> Self {
-        Self::from(&v)
-    }
-}
-
-impl WriteXdr for ScSpecTypeUdtv2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.id.write_xdr(w)?;
-            self.name.write_xdr(w)?;
             Ok(())
         })
     }
 }
 #[cfg(feature = "const")]
-impl ScSpecTypeUdtv2Ref<'_> {
+impl ScSpecTypeUdtv2 {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const counterpart to the owned type's
     /// [`WriteXdr::write_xdr`].
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
         w.write_fixed_opaque(&self.id);
-        w.write_len_prefixed(self.name.as_slice());
         w.leave_depth();
     }
     /// The exact XDR-encoded length of this value, in bytes.

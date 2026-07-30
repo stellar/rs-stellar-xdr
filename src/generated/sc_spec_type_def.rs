@@ -380,7 +380,7 @@ pub enum ScSpecTypeDefRef<'a> {
     Tuple(&'a ScSpecTypeTupleRef<'a>),
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdtRef<'a>),
-    UdtV2(ScSpecTypeUdtv2Ref<'a>),
+    UdtV2(ScSpecTypeUdtv2),
 }
 
 #[cfg(feature = "alloc")]
@@ -415,7 +415,7 @@ impl From<&ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
             ScSpecTypeDefRef::Tuple(value) => Self::Tuple(Box::new((*value).into())),
             ScSpecTypeDefRef::BytesN(value) => Self::BytesN(value.clone()),
             ScSpecTypeDefRef::Udt(value) => Self::Udt(value.into()),
-            ScSpecTypeDefRef::UdtV2(value) => Self::UdtV2(value.into()),
+            ScSpecTypeDefRef::UdtV2(value) => Self::UdtV2(value.clone()),
         }
     }
 }

@@ -64,10 +64,8 @@ use super::*;
 /// case SCV_LEDGER_KEY_NONCE:
 ///     SCNonceKey nonce_key;
 ///
-/// #ifdef CAP_0085_EXECUTABLE_REF
 /// case SCV_EXECUTABLE_TAG:
 ///     SCString executable_tag;
-/// #endif    
 /// };
 /// ```
 ///
@@ -118,7 +116,6 @@ pub enum ScVal {
     ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    #[cfg(feature = "cap_0085_executable_ref")]
     ExecutableTag(ScString),
 }
 
@@ -153,7 +150,6 @@ impl ScVal {
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
-        #[cfg(feature = "cap_0085_executable_ref")]
         ScValType::ExecutableTag,
     ];
     pub const VARIANTS: [ScValType; Self::_VARIANTS.len()] = {
@@ -188,7 +184,6 @@ impl ScVal {
         "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
-        #[cfg(feature = "cap_0085_executable_ref")]
         "ExecutableTag",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
@@ -226,7 +221,6 @@ impl ScVal {
             Self::ContractInstance(_) => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExecutableTag(_) => "ExecutableTag",
         }
     }
@@ -257,7 +251,6 @@ impl ScVal {
             Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExecutableTag(_) => ScValType::ExecutableTag,
         }
     }
@@ -321,7 +314,6 @@ impl ReadXdr for ScVal {
                 }
                 ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
                 ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
-                #[cfg(feature = "cap_0085_executable_ref")]
                 ScValType::ExecutableTag => Self::ExecutableTag(ScString::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
@@ -360,7 +352,6 @@ impl WriteXdr for ScVal {
                 Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                #[cfg(feature = "cap_0085_executable_ref")]
                 Self::ExecutableTag(v) => v.write_xdr(w)?,
             };
             Ok(())

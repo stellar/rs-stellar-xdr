@@ -10,10 +10,8 @@ use super::*;
 ///     Hash wasm_hash;
 /// case CONTRACT_EXECUTABLE_STELLAR_ASSET:
 ///     void;
-/// #ifdef CAP_0085_EXECUTABLE_REF
 /// case CONTRACT_EXECUTABLE_EXTERNAL_REF:
 ///     ContractExecutableExternalRef external_ref;
-/// #endif
 /// };
 /// ```
 ///
@@ -32,7 +30,6 @@ use super::*;
 pub enum ContractExecutable {
     Wasm(Hash),
     StellarAsset,
-    #[cfg(feature = "cap_0085_executable_ref")]
     ExternalRef(ContractExecutableExternalRef),
 }
 
@@ -47,7 +44,6 @@ impl ContractExecutable {
     const _VARIANTS: &[ContractExecutableType] = &[
         ContractExecutableType::Wasm,
         ContractExecutableType::StellarAsset,
-        #[cfg(feature = "cap_0085_executable_ref")]
         ContractExecutableType::ExternalRef,
     ];
     pub const VARIANTS: [ContractExecutableType; Self::_VARIANTS.len()] = {
@@ -59,12 +55,7 @@ impl ContractExecutable {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Wasm",
-        "StellarAsset",
-        #[cfg(feature = "cap_0085_executable_ref")]
-        "ExternalRef",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset", "ExternalRef"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -80,7 +71,6 @@ impl ContractExecutable {
         match self {
             Self::Wasm(_) => "Wasm",
             Self::StellarAsset => "StellarAsset",
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExternalRef(_) => "ExternalRef",
         }
     }
@@ -91,7 +81,6 @@ impl ContractExecutable {
         match self {
             Self::Wasm(_) => ContractExecutableType::Wasm,
             Self::StellarAsset => ContractExecutableType::StellarAsset,
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExternalRef(_) => ContractExecutableType::ExternalRef,
         }
     }
@@ -133,7 +122,6 @@ impl ReadXdr for ContractExecutable {
             let v = match dv {
                 ContractExecutableType::Wasm => Self::Wasm(Hash::read_xdr(r)?),
                 ContractExecutableType::StellarAsset => Self::StellarAsset,
-                #[cfg(feature = "cap_0085_executable_ref")]
                 ContractExecutableType::ExternalRef => {
                     Self::ExternalRef(ContractExecutableExternalRef::read_xdr(r)?)
                 }
@@ -154,7 +142,6 @@ impl WriteXdr for ContractExecutable {
             match self {
                 Self::Wasm(v) => v.write_xdr(w)?,
                 Self::StellarAsset => ().write_xdr(w)?,
-                #[cfg(feature = "cap_0085_executable_ref")]
                 Self::ExternalRef(v) => v.write_xdr(w)?,
             };
             Ok(())

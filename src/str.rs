@@ -361,6 +361,13 @@ impl core::fmt::Display for ScAddress {
             }
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
+            // Muxed contract addresses (CAP-0084) have no strkey encoding yet
+            // (stellar-strkey has no variant for them), so there is no string
+            // representation to produce. Needs to be updated once SEP-23 is
+            // updated. This block should only be ungated after that is complete
+            // and we return the proper encoding here.
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            ScAddress::MuxedContract(_) => Err(core::fmt::Error),
         }
     }
 }

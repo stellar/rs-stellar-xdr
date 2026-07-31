@@ -10,7 +10,6 @@ use super::*;
 /// };
 /// ```
 ///
-#[cfg(feature = "cap_0085_executable_ref")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -27,7 +26,6 @@ pub struct ContractExecutableExternalRef {
     pub tag: ScString,
 }
 
-#[cfg(feature = "cap_0085_executable_ref")]
 impl ReadXdr for ContractExecutableExternalRef {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -40,7 +38,6 @@ impl ReadXdr for ContractExecutableExternalRef {
     }
 }
 
-#[cfg(feature = "cap_0085_executable_ref")]
 impl WriteXdr for ContractExecutableExternalRef {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

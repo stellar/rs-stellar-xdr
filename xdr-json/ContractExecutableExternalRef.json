@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ContractExecutableExternalRef",
+  "description": "ContractExecutableExternalRef is an XDR Struct defined as:\n\n```text struct ContractExecutableExternalRef { SCAddress executable_owner; SCString tag; }; ```",
+  "type": "object",
+  "required": [
+    "executable_owner",
+    "tag"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "executable_owner": {
+      "$ref": "#/definitions/ScAddress"
+    },
+    "tag": {
+      "$ref": "#/definitions/ScString"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "ScAddress": {
+      "type": "string"
+    },
+    "ScString": {
+      "description": "ScString is an XDR Typedef defined as:\n\n```text typedef string SCString<>; ```",
+      "$ref": "#/definitions/StringM<4294967295>"
+    },
+    "StringM<4294967295>": {
+      "type": "string",
+      "maxLength": 4294967295
+    }
+  }
+}

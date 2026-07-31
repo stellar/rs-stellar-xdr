@@ -56,11 +56,9 @@ use super::*;
 ///     // symbolic SCVals used as the key for ledger entries for a contract's
 ///     // instance and an address' nonce, respectively.
 ///     SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,
-///     SCV_LEDGER_KEY_NONCE = 21
+///     SCV_LEDGER_KEY_NONCE = 21,
 ///
-/// #ifdef CAP_0085_EXECUTABLE_REF
-///     ,SCV_EXECUTABLE_TAG = 22
-/// #endif
+///     SCV_EXECUTABLE_TAG = 22
 /// };
 /// ```
 ///
@@ -99,7 +97,6 @@ pub enum ScValType {
     ContractInstance = 19,
     LedgerKeyContractInstance = 20,
     LedgerKeyNonce = 21,
-    #[cfg(feature = "cap_0085_executable_ref")]
     ExecutableTag = 22,
 }
 
@@ -127,7 +124,6 @@ impl ScValType {
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
-        #[cfg(feature = "cap_0085_executable_ref")]
         ScValType::ExecutableTag,
     ];
     pub const VARIANTS: [ScValType; Self::_VARIANTS.len()] = {
@@ -162,7 +158,6 @@ impl ScValType {
         "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
-        #[cfg(feature = "cap_0085_executable_ref")]
         "ExecutableTag",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
@@ -200,7 +195,6 @@ impl ScValType {
             Self::ContractInstance => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce => "LedgerKeyNonce",
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExecutableTag => "ExecutableTag",
         }
     }
@@ -259,7 +253,6 @@ impl TryFrom<i32> for ScValType {
             19 => ScValType::ContractInstance,
             20 => ScValType::LedgerKeyContractInstance,
             21 => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "cap_0085_executable_ref")]
             22 => ScValType::ExecutableTag,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),

@@ -16,6 +16,10 @@ use super::*;
 ///     ClaimableBalanceID claimableBalanceId;
 /// case SC_ADDRESS_TYPE_LIQUIDITY_POOL:
 ///     PoolID liquidityPoolId;
+/// #ifdef CAP_0084_MUXED_CONTRACT
+/// case SC_ADDRESS_TYPE_MUXED_CONTRACT:
+///     MuxedContract muxedContract;
+/// #endif
 /// };
 /// ```
 ///
@@ -34,6 +38,8 @@ pub enum ScAddress {
     MuxedAccount(MuxedEd25519Account),
     ClaimableBalance(ClaimableBalanceId),
     LiquidityPool(PoolId),
+    #[cfg(feature = "cap_0084_muxed_contract")]
+    MuxedContract(MuxedContract),
 }
 
 #[cfg(feature = "alloc")]
@@ -50,6 +56,8 @@ impl ScAddress {
         ScAddressType::MuxedAccount,
         ScAddressType::ClaimableBalance,
         ScAddressType::LiquidityPool,
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        ScAddressType::MuxedContract,
     ];
     pub const VARIANTS: [ScAddressType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -66,6 +74,8 @@ impl ScAddress {
         "MuxedAccount",
         "ClaimableBalance",
         "LiquidityPool",
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        "MuxedContract",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -85,6 +95,8 @@ impl ScAddress {
             Self::MuxedAccount(_) => "MuxedAccount",
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(_) => "MuxedContract",
         }
     }
 
@@ -97,6 +109,8 @@ impl ScAddress {
             Self::MuxedAccount(_) => ScAddressType::MuxedAccount,
             Self::ClaimableBalance(_) => ScAddressType::ClaimableBalance,
             Self::LiquidityPool(_) => ScAddressType::LiquidityPool,
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(_) => ScAddressType::MuxedContract,
         }
     }
 
@@ -144,6 +158,8 @@ impl ReadXdr for ScAddress {
                     Self::ClaimableBalance(ClaimableBalanceId::read_xdr(r)?)
                 }
                 ScAddressType::LiquidityPool => Self::LiquidityPool(PoolId::read_xdr(r)?),
+                #[cfg(feature = "cap_0084_muxed_contract")]
+                ScAddressType::MuxedContract => Self::MuxedContract(MuxedContract::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -164,6 +180,8 @@ impl WriteXdr for ScAddress {
                 Self::MuxedAccount(v) => v.write_xdr(w)?,
                 Self::ClaimableBalance(v) => v.write_xdr(w)?,
                 Self::LiquidityPool(v) => v.write_xdr(w)?,
+                #[cfg(feature = "cap_0084_muxed_contract")]
+                Self::MuxedContract(v) => v.write_xdr(w)?,
             };
             Ok(())
         })

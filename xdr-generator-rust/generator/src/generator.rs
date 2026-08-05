@@ -1,9 +1,10 @@
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use askama::Template;
 use xdr_parser::ast::{
-    Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm, XdrSpec,
+    CfgExpr, Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm,
+    XdrSpec,
 };
 use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
@@ -25,20 +26,43 @@ pub struct RustGenerator {
     type_info: TypeInfo,
     /// Rust type names of generated types that directly or transitively
     /// contain heap-allocated data (`VecM`, `BytesM`, `StringM`, or `Box` for
-    /// cyclic references), and therefore have a borrowing `Ref` variant
-    /// generated for them.
+    /// cyclic references) under some cfg, and therefore have a borrowing `Ref`
+    /// form generated for them.
     ref_required: HashSet<String>,
+    /// Per-definition borrow conditions, keyed by Rust type name and the
+    /// definition's cfg, which distinguishes same-named `#ifdef`/`#else`
+    /// branches from one another.
+    def_borrow: HashMap<(String, Option<String>), BorrowCfg>,
 }
 
 impl RustGenerator {
     pub fn new(spec: &XdrSpec, options: RustOptions) -> Self {
         let type_info = TypeInfo::build(spec, &type_name);
-        let ref_required = compute_ref_required(spec);
+        let mut analysis = BorrowAnalysis::build(spec);
+        let ref_required = analysis.ref_required();
+        let def_borrow = spec
+            .all_definitions()
+            .map(|def| {
+                let key = (type_name(def.name()), def.cfg().map(CfgExpr::render));
+                (key, analysis.of_def(def))
+            })
+            .collect();
         Self {
             options,
             type_info,
             ref_required,
+            def_borrow,
         }
+    }
+
+    /// How to emit the borrowing `Ref` form of a definition.
+    fn ref_emit_for(&self, name: &str, cfg: Option<&str>) -> RefEmit {
+        let borrow = self
+            .def_borrow
+            .get(&(name.to_string(), cfg.map(ToString::to_string)))
+            .cloned()
+            .unwrap_or(BorrowCfg::Never);
+        ref_emit(self.ref_required.contains(name), &borrow, cfg)
     }
 
     /// Generate Rust code from the spec and write it to the output file.
@@ -274,13 +298,7 @@ impl RustGenerator {
         } else {
             "Struct"
         };
-        let requires_ref = self.ref_required.contains(&name);
-        // When the type requires a Ref variant only because a same-named
-        // definition in another cfg branch contains heap data, this
-        // definition's Ref struct has no lifetime-using member and needs a
-        // phantom member to bind `'a`.
-        let ref_needs_phantom =
-            requires_ref && !members.iter().any(|m| m.ref_type_ref.contains("'a"));
+        let r = self.ref_emit_for(&name, cfg.as_deref());
         StructOutput {
             name,
             source_comment: source_comment(&s.source, type_kind),
@@ -288,8 +306,10 @@ impl RustGenerator {
             is_custom_str: custom_str,
             members,
             member_names,
-            requires_ref,
-            ref_needs_phantom,
+            emit_ref: r.emit_ref,
+            ref_cfg: r.ref_cfg,
+            emit_ref_alias: r.emit_ref_alias,
+            ref_alias_cfg: r.ref_alias_cfg,
             cfg,
         }
     }
@@ -365,36 +385,7 @@ impl RustGenerator {
             .first()
             .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
-        let requires_ref = self.ref_required.contains(&name);
-
-        // If every lifetime-using arm of the Ref enum is behind a cfg, the
-        // enum would fail to compile (unused lifetime) when those cfgs are
-        // disabled. Emit an uninhabited phantom variant that binds the
-        // lifetime under the negation of those cfgs. When there are no
-        // lifetime-using arms at all (the type requires a Ref variant only
-        // because a same-named definition in another cfg branch contains heap
-        // data), the phantom variant is emitted unconditionally.
-        let lifetime_arm_cfgs: Vec<&UnionArmOutput> = arms
-            .iter()
-            .filter(|a| a.ref_type_ref.as_ref().is_some_and(|t| t.contains("'a")))
-            .collect();
-        let (ref_needs_phantom, ref_phantom_cfg) =
-            if requires_ref && lifetime_arm_cfgs.iter().all(|a| a.cfg.is_some()) {
-                let mut cfgs: Vec<String> = lifetime_arm_cfgs
-                    .iter()
-                    .filter_map(|a| a.cfg.clone())
-                    .collect();
-                cfgs.sort();
-                cfgs.dedup();
-                let cfg = match cfgs.len() {
-                    0 => None,
-                    1 => Some(format!("not({})", cfgs[0])),
-                    _ => Some(format!("not(any({}))", cfgs.join(", "))),
-                };
-                (true, cfg)
-            } else {
-                (false, None)
-            };
+        let r = self.ref_emit_for(&name, cfg.as_deref());
 
         UnionOutput {
             name,
@@ -403,9 +394,10 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
-            requires_ref,
-            ref_needs_phantom,
-            ref_phantom_cfg,
+            emit_ref: r.emit_ref,
+            ref_cfg: r.ref_cfg,
+            emit_ref_alias: r.emit_ref_alias,
+            ref_alias_cfg: r.ref_alias_cfg,
             cfg,
             default_arm_cfg,
         }
@@ -446,7 +438,7 @@ impl RustGenerator {
             _ => None,
         };
 
-        let requires_ref = self.ref_required.contains(&name);
+        let r = self.ref_emit_for(&name, cfg.as_deref());
 
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
             name: name.clone(),
@@ -464,8 +456,10 @@ impl RustGenerator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-            requires_ref,
-            ref_needs_phantom: requires_ref && !resolved.ref_type_ref.contains("'a"),
+            emit_ref: r.emit_ref,
+            ref_cfg: r.ref_cfg,
+            emit_ref_alias: r.emit_ref_alias,
+            ref_alias_cfg: r.ref_alias_cfg,
             ref_type_ref: resolved.ref_type_ref,
             from_ref_expr: resolved.from_ref_expr,
             cfg,
@@ -562,105 +556,231 @@ impl RustGenerator {
     }
 }
 
-// =============================================================================
-// Ref requirement analysis
-// =============================================================================
-
-/// Compute the set of Rust type names that need a borrowing `Ref` variant:
-/// types that are, or transitively contain, heap-allocated data (`VecM`,
-/// `BytesM`, `StringM`), including types that participate in reference cycles
-/// (which the generator breaks with heap-allocated `Box`es).
-fn compute_ref_required(spec: &XdrSpec) -> HashSet<String> {
-    let mut defs_by_name: HashMap<String, Vec<&Definition>> = HashMap::new();
-    for def in spec.all_definitions() {
-        defs_by_name
-            .entry(type_name(def.name()))
-            .or_default()
-            .push(def);
+/// Combine a definition's cfg with an additional condition, rendered as the
+/// inside of a `#[cfg(...)]`.
+fn combine_cfg(def_cfg: Option<&str>, extra: &str) -> String {
+    match def_cfg {
+        Some(def) => format!("all({def}, {extra})"),
+        None => extra.to_string(),
     }
-
-    let mut memo: HashMap<String, bool> = HashMap::new();
-    let mut stack: HashSet<String> = HashSet::new();
-    for name in defs_by_name.keys() {
-        requires_ref_name(name, &defs_by_name, &mut memo, &mut stack);
-    }
-
-    memo.into_iter()
-        .filter_map(|(name, required)| required.then_some(name))
-        .collect()
 }
 
-/// Whether the type with the given Rust name requires a `Ref` variant.
+// =============================================================================
+// Borrow analysis
+// =============================================================================
+
+/// The cfg condition under which a type's `Ref` form actually borrows, i.e.
+/// under which its `'a` lifetime is used.
 ///
-/// A name currently on the recursion stack indicates a reference cycle. Valid
-/// XDR breaks cycles with optional or variable-length types, both of which the
-/// generator maps to heap allocations (`Box` or `VecM`), so any type on a
-/// cycle requires a `Ref` variant.
-fn requires_ref_name(
-    name: &str,
-    defs_by_name: &HashMap<String, Vec<&Definition>>,
-    memo: &mut HashMap<String, bool>,
-    stack: &mut HashSet<String>,
-) -> bool {
-    if let Some(&required) = memo.get(name) {
-        return required;
-    }
-    if stack.contains(name) {
-        return true;
-    }
-    let Some(defs) = defs_by_name.get(name) else {
-        return false;
-    };
-    stack.insert(name.to_string());
-    let required = defs
-        .iter()
-        .any(|def| def_requires_ref(def, defs_by_name, memo, stack));
-    stack.remove(name);
-    memo.insert(name.to_string(), required);
-    required
+/// A `Ref` type may borrow unconditionally, never, or only under some cfgs —
+/// when the heap-allocated data it holds sits behind a cfg-gated union arm, or
+/// is reached through a type that itself only holds heap data under a cfg.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum BorrowCfg {
+    /// Holds no heap-allocated data under any cfg, so it needs no `Ref` form.
+    Never,
+    /// Always borrows, so its `Ref` form is unconditional.
+    Always,
+    /// Borrows under the disjunction of these cfg predicates.
+    When(BTreeSet<String>),
 }
 
-fn def_requires_ref(
-    def: &Definition,
-    defs_by_name: &HashMap<String, Vec<&Definition>>,
-    memo: &mut HashMap<String, bool>,
-    stack: &mut HashSet<String>,
-) -> bool {
-    match def {
-        Definition::Struct(s) => s
-            .members
-            .iter()
-            .any(|m| type_requires_ref(&m.type_, defs_by_name, memo, stack)),
-        Definition::Union(u) => u.arms.iter().any(|arm| {
-            arm.type_
-                .as_ref()
-                .is_some_and(|t| type_requires_ref(t, defs_by_name, memo, stack))
-        }),
-        Definition::Typedef(t) => type_requires_ref(&t.type_, defs_by_name, memo, stack),
-        Definition::Enum(_) | Definition::Const(_) => false,
-    }
-}
-
-fn type_requires_ref(
-    type_: &Type,
-    defs_by_name: &HashMap<String, Vec<&Definition>>,
-    memo: &mut HashMap<String, bool>,
-    stack: &mut HashSet<String>,
-) -> bool {
-    match type_ {
-        Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } => true,
-        Type::Int
-        | Type::UnsignedInt
-        | Type::Hyper
-        | Type::UnsignedHyper
-        | Type::Float
-        | Type::Double
-        | Type::Bool
-        | Type::OpaqueFixed(_) => false,
-        Type::Ident(name) => requires_ref_name(&type_name(name), defs_by_name, memo, stack),
-        Type::Optional(inner) => type_requires_ref(inner, defs_by_name, memo, stack),
-        Type::Array { element_type, .. } => {
-            type_requires_ref(element_type, defs_by_name, memo, stack)
+impl BorrowCfg {
+    fn or(self, other: BorrowCfg) -> BorrowCfg {
+        match (self, other) {
+            (BorrowCfg::Always, _) | (_, BorrowCfg::Always) => BorrowCfg::Always,
+            (BorrowCfg::Never, o) | (o, BorrowCfg::Never) => o,
+            (BorrowCfg::When(mut a), BorrowCfg::When(b)) => {
+                a.extend(b);
+                BorrowCfg::When(a)
+            }
         }
     }
+
+    /// Restrict to also require `cfg`, as for a cfg-gated union arm.
+    fn and_cfg(self, cfg: Option<&str>) -> BorrowCfg {
+        let Some(cfg) = cfg else { return self };
+        match self {
+            BorrowCfg::Never => BorrowCfg::Never,
+            BorrowCfg::Always => BorrowCfg::When(core::iter::once(cfg.to_string()).collect()),
+            BorrowCfg::When(set) => {
+                BorrowCfg::When(set.iter().map(|e| format!("all({cfg}, {e})")).collect())
+            }
+        }
+    }
+
+    /// The cfg predicate to gate the borrowing `Ref` form on, or `None` when it
+    /// is unconditional.
+    fn render(&self) -> Option<String> {
+        match self {
+            BorrowCfg::Never | BorrowCfg::Always => None,
+            BorrowCfg::When(set) if set.len() == 1 => set.iter().next().cloned(),
+            BorrowCfg::When(set) => Some(format!(
+                "any({})",
+                set.iter().cloned().collect::<Vec<_>>().join(", ")
+            )),
+        }
+    }
+}
+
+/// Borrow analysis over a whole spec, resolving type references by name.
+struct BorrowAnalysis<'a> {
+    defs_by_name: HashMap<String, Vec<&'a Definition>>,
+    /// Memoized per-name results, keyed by Rust type name.
+    by_name: HashMap<String, BorrowCfg>,
+    /// Names currently being resolved, for cycle detection.
+    stack: HashSet<String>,
+}
+
+impl<'a> BorrowAnalysis<'a> {
+    fn build(spec: &'a XdrSpec) -> Self {
+        let mut defs_by_name: HashMap<String, Vec<&'a Definition>> = HashMap::new();
+        for def in spec.all_definitions() {
+            defs_by_name
+                .entry(type_name(def.name()))
+                .or_default()
+                .push(def);
+        }
+        let mut analysis = Self {
+            defs_by_name,
+            by_name: HashMap::new(),
+            stack: HashSet::new(),
+        };
+        let names: Vec<String> = analysis.defs_by_name.keys().cloned().collect();
+        for name in names {
+            analysis.of_name(&name);
+        }
+        analysis
+    }
+
+    /// The names that have a `Ref` form at all, i.e. that borrow under some cfg.
+    fn ref_required(&self) -> HashSet<String> {
+        self.by_name
+            .iter()
+            .filter(|(_, b)| **b != BorrowCfg::Never)
+            .map(|(n, _)| n.clone())
+            .collect()
+    }
+
+    /// The borrow condition for a name, across all of its cfg branches.
+    ///
+    /// A name already on the stack indicates a reference cycle. Valid XDR
+    /// breaks cycles with optional or variable-length types, both of which the
+    /// generator maps to heap allocations (`Box` or `VecM`), so a type on a
+    /// cycle always borrows.
+    fn of_name(&mut self, name: &str) -> BorrowCfg {
+        if let Some(b) = self.by_name.get(name) {
+            return b.clone();
+        }
+        if self.stack.contains(name) {
+            return BorrowCfg::Always;
+        }
+        let Some(defs) = self.defs_by_name.get(name).cloned() else {
+            return BorrowCfg::Never;
+        };
+        self.stack.insert(name.to_string());
+        let mut borrow = BorrowCfg::Never;
+        for def in defs {
+            let def_cfg = def.cfg().map(CfgExpr::render);
+            borrow = borrow.or(self.of_def(def).and_cfg(def_cfg.as_deref()));
+        }
+        self.stack.remove(name);
+        self.by_name.insert(name.to_string(), borrow.clone());
+        borrow
+    }
+
+    /// The borrow condition contributed by a single definition, excluding the
+    /// definition's own cfg, which callers apply where the type is emitted.
+    fn of_def(&mut self, def: &Definition) -> BorrowCfg {
+        let def_cfg = def.cfg().map(CfgExpr::render);
+        match def {
+            Definition::Struct(s) => s
+                .members
+                .iter()
+                .fold(BorrowCfg::Never, |acc, m| acc.or(self.of_type(&m.type_))),
+            Definition::Union(u) => u.arms.iter().fold(BorrowCfg::Never, |acc, arm| {
+                let Some(t) = arm.type_.as_ref() else {
+                    return acc;
+                };
+                // An arm cfg equal to the definition's own cfg adds no further
+                // condition, since the definition is already gated on it.
+                let arm_cfg = arm
+                    .cfg
+                    .as_ref()
+                    .map(CfgExpr::render)
+                    .filter(|c| Some(c) != def_cfg.as_ref());
+                acc.or(self.of_type(t).and_cfg(arm_cfg.as_deref()))
+            }),
+            Definition::Typedef(t) => self.of_type(&t.type_),
+            Definition::Enum(_) | Definition::Const(_) => BorrowCfg::Never,
+        }
+    }
+
+    fn of_type(&mut self, type_: &Type) -> BorrowCfg {
+        match type_ {
+            Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } => BorrowCfg::Always,
+            Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+            | Type::OpaqueFixed(_) => BorrowCfg::Never,
+            Type::Ident(name) => self.of_name(&type_name(name)),
+            Type::Optional(inner) => self.of_type(inner),
+            Type::Array { element_type, .. } => self.of_type(element_type),
+        }
+    }
+}
+
+/// How a definition's borrowing `Ref` form is emitted.
+///
+/// Where the definition borrows, a real `{name}Ref<'a>` is emitted, so its `'a`
+/// is always used. Where it does not, `{name}Ref<'a>` is emitted as a
+/// transparent alias of the owned type, so types containing it can name it
+/// uniformly across cfgs instead of being cfg-split themselves.
+struct RefEmit {
+    emit_ref: bool,
+    ref_cfg: Option<String>,
+    emit_ref_alias: bool,
+    ref_alias_cfg: Option<String>,
+}
+
+/// Decide how to emit the `Ref` form of one definition.
+///
+/// `has_ref` is whether the type's name has a `Ref` form at all, and `borrow`
+/// is this definition's borrow condition excluding its own `def_cfg`.
+fn ref_emit(has_ref: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> RefEmit {
+    let mut emit = RefEmit {
+        emit_ref: false,
+        ref_cfg: None,
+        emit_ref_alias: false,
+        ref_alias_cfg: None,
+    };
+    if !has_ref {
+        return emit;
+    }
+    match borrow {
+        // The name has a Ref form only because another cfg branch of it
+        // borrows, so this definition contributes just the alias.
+        BorrowCfg::Never => {
+            emit.emit_ref_alias = true;
+            emit.ref_alias_cfg = def_cfg.map(ToString::to_string);
+        }
+        BorrowCfg::Always => {
+            emit.emit_ref = true;
+            emit.ref_cfg = def_cfg.map(ToString::to_string);
+        }
+        BorrowCfg::When(_) => {
+            let when = borrow
+                .render()
+                .expect("BorrowCfg::When always renders a predicate");
+            emit.emit_ref = true;
+            emit.ref_cfg = Some(combine_cfg(def_cfg, &when));
+            emit.emit_ref_alias = true;
+            emit.ref_alias_cfg = Some(combine_cfg(def_cfg, &format!("not({when})")));
+        }
+    }
+    emit
 }

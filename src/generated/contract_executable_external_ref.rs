@@ -51,14 +51,12 @@ impl WriteXdr for ContractExecutableExternalRef {
 
 /// ContractExecutableExternalRefRef is a borrowing equivalent of [`ContractExecutableExternalRef`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-#[cfg(feature = "cap_0085_executable_ref")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractExecutableExternalRefRef<'a> {
     pub executable_owner: ScAddress,
     pub tag: ScStringRef<'a>,
 }
 
-#[cfg(feature = "cap_0085_executable_ref")]
 #[cfg(feature = "alloc")]
 impl From<&ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
     #[must_use]
@@ -70,7 +68,6 @@ impl From<&ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalR
     }
 }
 
-#[cfg(feature = "cap_0085_executable_ref")]
 #[cfg(feature = "alloc")]
 impl From<ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
     #[must_use]
@@ -79,7 +76,6 @@ impl From<ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRe
     }
 }
 
-#[cfg(feature = "cap_0085_executable_ref")]
 impl WriteXdr for ContractExecutableExternalRefRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

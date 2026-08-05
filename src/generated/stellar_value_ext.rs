@@ -162,7 +162,6 @@ impl WriteXdr for StellarValueExt {
 pub enum StellarValueExtRef<'a> {
     Basic,
     Signed(LedgerCloseValueSignatureRef<'a>),
-    #[cfg(feature = "cap_0083")]
     EmptyTxSet(StellarValueProposedValueRef<'a>),
 }
 
@@ -174,7 +173,6 @@ impl From<&StellarValueExtRef<'_>> for StellarValueExt {
         match v {
             StellarValueExtRef::Basic => Self::Basic,
             StellarValueExtRef::Signed(value) => Self::Signed(value.into()),
-            #[cfg(feature = "cap_0083")]
             StellarValueExtRef::EmptyTxSet(value) => Self::EmptyTxSet(value.into()),
         }
     }
@@ -195,7 +193,6 @@ impl StellarValueExtRef<'_> {
         match self {
             Self::Basic => StellarValueType::Basic,
             Self::Signed(_) => StellarValueType::Signed,
-            #[cfg(feature = "cap_0083")]
             Self::EmptyTxSet(_) => StellarValueType::EmptyTxSet,
         }
     }
@@ -210,7 +207,6 @@ impl WriteXdr for StellarValueExtRef<'_> {
             match self {
                 Self::Basic => ().write_xdr(w)?,
                 Self::Signed(v) => v.write_xdr(w)?,
-                #[cfg(feature = "cap_0083")]
                 Self::EmptyTxSet(v) => v.write_xdr(w)?,
             };
             Ok(())

@@ -296,21 +296,38 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     }
 }
 {%- endif %}
-{%- if t.requires_ref %}
+{%- if t.emit_ref_alias %}
+
+/// {{ t.name }} holds no heap-allocated data, so its borrowing form is the
+/// owned type itself. The alias lets types that contain it name
+/// `{{ t.name }}Ref` uniformly across cfgs.
+{%- if let Some(cfg) = t.ref_alias_cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+pub type {{ t.name }}Ref<'a> = {{ t.name }};
+
+{% if let Some(cfg) = t.ref_alias_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<&{{ t.name }}> for {{ t.name }} {
+    #[must_use]
+    fn from(v: &{{ t.name }}) -> Self {
+        v.clone()
+    }
+}
+{%- endif %}
+{%- if t.emit_ref %}
 
 /// {{ t.name }}Ref is a borrowing equivalent of [`{{ t.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = t.cfg %}
+{%- if let Some(cfg) = t.ref_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-{%- if t.ref_needs_phantom %}
-pub struct {{ t.name }}Ref<'a>(pub {{ t.ref_type_ref }}, pub core::marker::PhantomData<&'a ()>);
-{%- else %}
 pub struct {{ t.name }}Ref<'a>(pub {{ t.ref_type_ref }});
-{%- endif %}
 
-{% if let Some(cfg) = t.cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -321,7 +338,7 @@ impl From<&{{ t.name }}Ref<'_>> for {{ t.name }} {
     }
 }
 
-{% if let Some(cfg) = t.cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -332,7 +349,7 @@ impl From<{{ t.name }}Ref<'_>> for {{ t.name }} {
     }
 }
 
-{% if let Some(cfg) = t.cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 impl WriteXdr for {{ t.name }}Ref<'_> {

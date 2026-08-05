@@ -104,11 +104,32 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     }
 }
 {%- endif %}
-{%- if s.requires_ref %}
+{%- if s.emit_ref_alias %}
+
+/// {{ s.name }} holds no heap-allocated data, so its borrowing form is the
+/// owned type itself. The alias lets types that contain it name
+/// `{{ s.name }}Ref` uniformly across cfgs.
+{%- if let Some(cfg) = s.ref_alias_cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+pub type {{ s.name }}Ref<'a> = {{ s.name }};
+
+{% if let Some(cfg) = s.ref_alias_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<&{{ s.name }}> for {{ s.name }} {
+    #[must_use]
+    fn from(v: &{{ s.name }}) -> Self {
+        v.clone()
+    }
+}
+{%- endif %}
+{%- if s.emit_ref %}
 
 /// {{ s.name }}Ref is a borrowing equivalent of [`{{ s.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = s.cfg %}
+{%- if let Some(cfg) = s.ref_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -116,14 +137,9 @@ pub struct {{ s.name }}Ref<'a> {
 {%- for m in s.members %}
     pub {{ m.name }}: {{ m.ref_type_ref }},
 {%- endfor %}
-{%- if s.ref_needs_phantom %}
-    /// Binds the `'a` lifetime when no member borrows.
-    #[doc(hidden)]
-    pub _phantom: core::marker::PhantomData<&'a ()>,
-{%- endif %}
 }
 
-{% if let Some(cfg) = s.cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -138,7 +154,7 @@ impl From<&{{ s.name }}Ref<'_>> for {{ s.name }} {
     }
 }
 
-{% if let Some(cfg) = s.cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -149,7 +165,7 @@ impl From<{{ s.name }}Ref<'_>> for {{ s.name }} {
     }
 }
 
-{% if let Some(cfg) = s.cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 impl WriteXdr for {{ s.name }}Ref<'_> {

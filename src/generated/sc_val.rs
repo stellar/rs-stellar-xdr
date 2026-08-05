@@ -386,7 +386,6 @@ pub enum ScValRef<'a> {
     ContractInstance(ScContractInstanceRef<'a>),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    #[cfg(feature = "cap_0085_executable_ref")]
     ExecutableTag(ScStringRef<'a>),
 }
 
@@ -418,7 +417,6 @@ impl From<&ScValRef<'_>> for ScVal {
             ScValRef::ContractInstance(value) => Self::ContractInstance(value.into()),
             ScValRef::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
             ScValRef::LedgerKeyNonce(value) => Self::LedgerKeyNonce(value.clone()),
-            #[cfg(feature = "cap_0085_executable_ref")]
             ScValRef::ExecutableTag(value) => Self::ExecutableTag(value.into()),
         }
     }
@@ -459,7 +457,6 @@ impl ScValRef<'_> {
             Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExecutableTag(_) => ScValType::ExecutableTag,
         }
     }
@@ -494,7 +491,6 @@ impl WriteXdr for ScValRef<'_> {
                 Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                #[cfg(feature = "cap_0085_executable_ref")]
                 Self::ExecutableTag(v) => v.write_xdr(w)?,
             };
             Ok(())

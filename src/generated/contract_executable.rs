@@ -156,13 +156,7 @@ impl WriteXdr for ContractExecutable {
 pub enum ContractExecutableRef<'a> {
     Wasm(Hash),
     StellarAsset,
-    #[cfg(feature = "cap_0085_executable_ref")]
     ExternalRef(ContractExecutableExternalRefRef<'a>),
-    /// Uninhabited variant binding the `'a` lifetime when every
-    /// lifetime-using variant is compiled out.
-    #[cfg(not(feature = "cap_0085_executable_ref"))]
-    #[doc(hidden)]
-    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
 }
 
 #[cfg(feature = "alloc")]
@@ -173,10 +167,7 @@ impl From<&ContractExecutableRef<'_>> for ContractExecutable {
         match v {
             ContractExecutableRef::Wasm(value) => Self::Wasm(value.clone()),
             ContractExecutableRef::StellarAsset => Self::StellarAsset,
-            #[cfg(feature = "cap_0085_executable_ref")]
             ContractExecutableRef::ExternalRef(value) => Self::ExternalRef(value.into()),
-            #[cfg(not(feature = "cap_0085_executable_ref"))]
-            ContractExecutableRef::_Phantom(never, _) => match *never {},
         }
     }
 }
@@ -196,10 +187,7 @@ impl ContractExecutableRef<'_> {
         match self {
             Self::Wasm(_) => ContractExecutableType::Wasm,
             Self::StellarAsset => ContractExecutableType::StellarAsset,
-            #[cfg(feature = "cap_0085_executable_ref")]
             Self::ExternalRef(_) => ContractExecutableType::ExternalRef,
-            #[cfg(not(feature = "cap_0085_executable_ref"))]
-            Self::_Phantom(never, _) => match *never {},
         }
     }
 }
@@ -213,10 +201,7 @@ impl WriteXdr for ContractExecutableRef<'_> {
             match self {
                 Self::Wasm(v) => v.write_xdr(w)?,
                 Self::StellarAsset => ().write_xdr(w)?,
-                #[cfg(feature = "cap_0085_executable_ref")]
                 Self::ExternalRef(v) => v.write_xdr(w)?,
-                #[cfg(not(feature = "cap_0085_executable_ref"))]
-                Self::_Phantom(never, _) => match *never {},
             };
             Ok(())
         })

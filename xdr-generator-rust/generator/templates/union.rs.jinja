@@ -226,11 +226,32 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
-{%- if u.requires_ref %}
+{%- if u.emit_ref_alias %}
+
+/// {{ u.name }} holds no heap-allocated data, so its borrowing form is the
+/// owned type itself. The alias lets types that contain it name
+/// `{{ u.name }}Ref` uniformly across cfgs.
+{%- if let Some(cfg) = u.ref_alias_cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+pub type {{ u.name }}Ref<'a> = {{ u.name }};
+
+{% if let Some(cfg) = u.ref_alias_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl From<&{{ u.name }}> for {{ u.name }} {
+    #[must_use]
+    fn from(v: &{{ u.name }}) -> Self {
+        v.clone()
+    }
+}
+{%- endif %}
+{%- if u.emit_ref %}
 
 /// {{ u.name }}Ref is a borrowing equivalent of [`{{ u.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = u.cfg %}
+{%- if let Some(cfg) = u.ref_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -246,18 +267,9 @@ pub enum {{ u.name }}Ref<'a> {
     {{ arm.case_name }}({{ arm.ref_type_ref.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
-{%- if u.ref_needs_phantom %}
-    /// Uninhabited variant binding the `'a` lifetime when every
-    /// lifetime-using variant is compiled out.
-{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
-    #[cfg({{ phantom_cfg }})]
-{%- endif %}
-    #[doc(hidden)]
-    _Phantom(core::convert::Infallible, core::marker::PhantomData<&'a ()>),
-{%- endif %}
 }
 
-{% if let Some(cfg) = u.cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -276,17 +288,11 @@ impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
             {{ u.name }}Ref::{{ arm.case_name }}(value) => Self::{{ arm.case_name }}({{ arm.from_ref_expr.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
-{%- if u.ref_needs_phantom %}
-{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
-            #[cfg({{ phantom_cfg }})]
-{%- endif %}
-            {{ u.name }}Ref::_Phantom(never, _) => match *never {},
-{%- endif %}
         }
     }
 }
 
-{% if let Some(cfg) = u.cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -297,7 +303,7 @@ impl From<{{ u.name }}Ref<'_>> for {{ u.name }} {
     }
 }
 
-{% if let Some(cfg) = u.cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 impl {{ u.name }}Ref<'_> {
@@ -315,17 +321,11 @@ impl {{ u.name }}Ref<'_> {
             Self::{{ arm.case_name }}(_) => {{ arm.case_value }},
 {%- endif %}
 {%- endfor %}
-{%- if u.ref_needs_phantom %}
-{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
-            #[cfg({{ phantom_cfg }})]
-{%- endif %}
-            Self::_Phantom(never, _) => match *never {},
-{%- endif %}
         }
     }
 }
 
-{% if let Some(cfg) = u.cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 impl WriteXdr for {{ u.name }}Ref<'_> {
@@ -345,12 +345,6 @@ impl WriteXdr for {{ u.name }}Ref<'_> {
                 Self::{{ arm.case_name }}(v) => v.write_xdr(w)?,
 {%- endif %}
 {%- endfor %}
-{%- if u.ref_needs_phantom %}
-{%- if let Some(phantom_cfg) = u.ref_phantom_cfg %}
-                #[cfg({{ phantom_cfg }})]
-{%- endif %}
-                Self::_Phantom(never, _) => match *never {},
-{%- endif %}
             };
             Ok(())
         })

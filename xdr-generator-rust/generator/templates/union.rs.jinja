@@ -226,17 +226,17 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
-{%- if u.emit_ref_alias %}
+{%- if u.emit_view_alias %}
 
 /// {{ u.name }} holds no heap-allocated data, so its borrowing form is the
 /// owned type itself. The alias lets types that contain it name
-/// `{{ u.name }}Ref` uniformly across cfgs.
-{%- if let Some(cfg) = u.ref_alias_cfg %}
+/// `{{ u.name }}View` uniformly across cfgs.
+{%- if let Some(cfg) = u.view_alias_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
-pub type {{ u.name }}Ref<'a> = {{ u.name }};
+pub type {{ u.name }}View<'a> = {{ u.name }};
 
-{% if let Some(cfg) = u.ref_alias_cfg -%}
+{% if let Some(cfg) = u.view_alias_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
@@ -247,16 +247,16 @@ impl From<&{{ u.name }}> for {{ u.name }} {
     }
 }
 {%- endif %}
-{%- if u.emit_ref %}
+{%- if u.emit_view %}
 
-/// {{ u.name }}Ref is a borrowing equivalent of [`{{ u.name }}`], usable in
+/// {{ u.name }}View is a borrowing equivalent of [`{{ u.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = u.ref_cfg %}
+{%- if let Some(cfg) = u.view_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum {{ u.name }}Ref<'a> {
+pub enum {{ u.name }}View<'a> {
 {%- for arm in u.arms %}
 {%- if let Some(cfg) = arm.cfg %}
     #[cfg({{ cfg }})]
@@ -264,18 +264,18 @@ pub enum {{ u.name }}Ref<'a> {
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
-    {{ arm.case_name }}({{ arm.ref_type_ref.as_ref().unwrap() }}),
+    {{ arm.case_name }}({{ arm.view_type_ref.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
 }
 
-{% if let Some(cfg) = u.ref_cfg -%}
+{% if let Some(cfg) = u.view_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
+impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
-    fn from(v: &{{ u.name }}Ref<'_>) -> Self {
+    fn from(v: &{{ u.name }}View<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
 {%- for arm in u.arms %}
@@ -283,30 +283,30 @@ impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
             #[cfg({{ cfg }})]
 {%- endif %}
 {%- if arm.is_void %}
-            {{ u.name }}Ref::{{ arm.case_name }} => Self::{{ arm.case_name }},
+            {{ u.name }}View::{{ arm.case_name }} => Self::{{ arm.case_name }},
 {%- else %}
-            {{ u.name }}Ref::{{ arm.case_name }}(value) => Self::{{ arm.case_name }}({{ arm.from_ref_expr.as_ref().unwrap() }}),
+            {{ u.name }}View::{{ arm.case_name }}(value) => Self::{{ arm.case_name }}({{ arm.from_view_expr.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
         }
     }
 }
 
-{% if let Some(cfg) = u.ref_cfg -%}
+{% if let Some(cfg) = u.view_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<{{ u.name }}Ref<'_>> for {{ u.name }} {
+impl From<{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
-    fn from(v: {{ u.name }}Ref<'_>) -> Self {
+    fn from(v: {{ u.name }}View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-{% if let Some(cfg) = u.ref_cfg -%}
+{% if let Some(cfg) = u.view_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-impl {{ u.name }}Ref<'_> {
+impl {{ u.name }}View<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
         #[allow(clippy::match_same_arms)]
@@ -325,10 +325,10 @@ impl {{ u.name }}Ref<'_> {
     }
 }
 
-{% if let Some(cfg) = u.ref_cfg -%}
+{% if let Some(cfg) = u.view_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-impl WriteXdr for {{ u.name }}Ref<'_> {
+impl WriteXdr for {{ u.name }}View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -58,20 +58,20 @@ impl WriteXdr for StellarValueProposedValue {
     }
 }
 
-/// StellarValueProposedValueRef is a borrowing equivalent of [`StellarValueProposedValue`], usable in
+/// StellarValueProposedValueView is a borrowing equivalent of [`StellarValueProposedValue`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StellarValueProposedValueRef<'a> {
+pub struct StellarValueProposedValueView<'a> {
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,
     pub previous_ledger_version: u32,
-    pub lc_value_signature: LedgerCloseValueSignatureRef<'a>,
+    pub lc_value_signature: LedgerCloseValueSignatureView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
+impl From<&StellarValueProposedValueView<'_>> for StellarValueProposedValue {
     #[must_use]
-    fn from(v: &StellarValueProposedValueRef<'_>) -> Self {
+    fn from(v: &StellarValueProposedValueView<'_>) -> Self {
         Self {
             tx_set_hash: v.tx_set_hash.clone(),
             previous_ledger_hash: v.previous_ledger_hash.clone(),
@@ -82,14 +82,14 @@ impl From<&StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
 }
 
 #[cfg(feature = "alloc")]
-impl From<StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
+impl From<StellarValueProposedValueView<'_>> for StellarValueProposedValue {
     #[must_use]
-    fn from(v: StellarValueProposedValueRef<'_>) -> Self {
+    fn from(v: StellarValueProposedValueView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for StellarValueProposedValueRef<'_> {
+impl WriteXdr for StellarValueProposedValueView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

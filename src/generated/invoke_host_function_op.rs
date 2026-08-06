@@ -52,18 +52,18 @@ impl WriteXdr for InvokeHostFunctionOp {
     }
 }
 
-/// InvokeHostFunctionOpRef is a borrowing equivalent of [`InvokeHostFunctionOp`], usable in
+/// InvokeHostFunctionOpView is a borrowing equivalent of [`InvokeHostFunctionOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeHostFunctionOpRef<'a> {
-    pub host_function: HostFunctionRef<'a>,
-    pub auth: VecMRef<'a, SorobanAuthorizationEntryRef<'a>>,
+pub struct InvokeHostFunctionOpView<'a> {
+    pub host_function: HostFunctionView<'a>,
+    pub auth: VecMView<'a, SorobanAuthorizationEntryView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
+impl From<&InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     #[must_use]
-    fn from(v: &InvokeHostFunctionOpRef<'_>) -> Self {
+    fn from(v: &InvokeHostFunctionOpView<'_>) -> Self {
         Self {
             host_function: (&v.host_function).into(),
             auth: v.auth.to_vecm_from(),
@@ -72,14 +72,14 @@ impl From<&InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
 }
 
 #[cfg(feature = "alloc")]
-impl From<InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
+impl From<InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     #[must_use]
-    fn from(v: InvokeHostFunctionOpRef<'_>) -> Self {
+    fn from(v: InvokeHostFunctionOpView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for InvokeHostFunctionOpRef<'_> {
+impl WriteXdr for InvokeHostFunctionOpView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

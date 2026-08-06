@@ -46,17 +46,17 @@ impl WriteXdr for ScSpecTypeOption {
     }
 }
 
-/// ScSpecTypeOptionRef is a borrowing equivalent of [`ScSpecTypeOption`], usable in
+/// ScSpecTypeOptionView is a borrowing equivalent of [`ScSpecTypeOption`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeOptionRef<'a> {
-    pub value_type: &'a ScSpecTypeDefRef<'a>,
+pub struct ScSpecTypeOptionView<'a> {
+    pub value_type: &'a ScSpecTypeDefView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
+impl From<&ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
     #[must_use]
-    fn from(v: &ScSpecTypeOptionRef<'_>) -> Self {
+    fn from(v: &ScSpecTypeOptionView<'_>) -> Self {
         Self {
             value_type: Box::new(v.value_type.into()),
         }
@@ -64,14 +64,14 @@ impl From<&ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
+impl From<ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
     #[must_use]
-    fn from(v: ScSpecTypeOptionRef<'_>) -> Self {
+    fn from(v: ScSpecTypeOptionView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecTypeOptionRef<'_> {
+impl WriteXdr for ScSpecTypeOptionView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

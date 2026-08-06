@@ -147,38 +147,38 @@ impl WriteXdr for Preconditions {
     }
 }
 
-/// PreconditionsRef is a borrowing equivalent of [`Preconditions`], usable in
+/// PreconditionsView is a borrowing equivalent of [`Preconditions`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PreconditionsRef<'a> {
+pub enum PreconditionsView<'a> {
     None,
     Time(TimeBounds),
-    V2(PreconditionsV2Ref<'a>),
+    V2(PreconditionsV2View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PreconditionsRef<'_>> for Preconditions {
+impl From<&PreconditionsView<'_>> for Preconditions {
     #[must_use]
-    fn from(v: &PreconditionsRef<'_>) -> Self {
+    fn from(v: &PreconditionsView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            PreconditionsRef::None => Self::None,
-            PreconditionsRef::Time(value) => Self::Time(value.clone()),
-            PreconditionsRef::V2(value) => Self::V2(value.into()),
+            PreconditionsView::None => Self::None,
+            PreconditionsView::Time(value) => Self::Time(value.clone()),
+            PreconditionsView::V2(value) => Self::V2(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PreconditionsRef<'_>> for Preconditions {
+impl From<PreconditionsView<'_>> for Preconditions {
     #[must_use]
-    fn from(v: PreconditionsRef<'_>) -> Self {
+    fn from(v: PreconditionsView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl PreconditionsRef<'_> {
+impl PreconditionsView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> PreconditionType {
         #[allow(clippy::match_same_arms)]
@@ -190,7 +190,7 @@ impl PreconditionsRef<'_> {
     }
 }
 
-impl WriteXdr for PreconditionsRef<'_> {
+impl WriteXdr for PreconditionsView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

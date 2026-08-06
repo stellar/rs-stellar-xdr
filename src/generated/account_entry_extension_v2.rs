@@ -66,20 +66,20 @@ impl WriteXdr for AccountEntryExtensionV2 {
     }
 }
 
-/// AccountEntryExtensionV2Ref is a borrowing equivalent of [`AccountEntryExtensionV2`], usable in
+/// AccountEntryExtensionV2View is a borrowing equivalent of [`AccountEntryExtensionV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryExtensionV2Ref<'a> {
+pub struct AccountEntryExtensionV2View<'a> {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
-    pub signer_sponsoring_i_ds: VecMRef<'a, SponsorshipDescriptor, 20>,
+    pub signer_sponsoring_i_ds: VecMView<'a, SponsorshipDescriptor, 20>,
     pub ext: AccountEntryExtensionV2Ext,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
+impl From<&AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
     #[must_use]
-    fn from(v: &AccountEntryExtensionV2Ref<'_>) -> Self {
+    fn from(v: &AccountEntryExtensionV2View<'_>) -> Self {
         Self {
             num_sponsored: v.num_sponsored,
             num_sponsoring: v.num_sponsoring,
@@ -90,14 +90,14 @@ impl From<&AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
+impl From<AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
     #[must_use]
-    fn from(v: AccountEntryExtensionV2Ref<'_>) -> Self {
+    fn from(v: AccountEntryExtensionV2View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for AccountEntryExtensionV2Ref<'_> {
+impl WriteXdr for AccountEntryExtensionV2View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

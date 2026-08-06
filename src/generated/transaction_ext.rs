@@ -136,36 +136,36 @@ impl WriteXdr for TransactionExt {
     }
 }
 
-/// TransactionExtRef is a borrowing equivalent of [`TransactionExt`], usable in
+/// TransactionExtView is a borrowing equivalent of [`TransactionExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionExtRef<'a> {
+pub enum TransactionExtView<'a> {
     V0,
-    V1(SorobanTransactionDataRef<'a>),
+    V1(SorobanTransactionDataView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionExtRef<'_>> for TransactionExt {
+impl From<&TransactionExtView<'_>> for TransactionExt {
     #[must_use]
-    fn from(v: &TransactionExtRef<'_>) -> Self {
+    fn from(v: &TransactionExtView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionExtRef::V0 => Self::V0,
-            TransactionExtRef::V1(value) => Self::V1(value.into()),
+            TransactionExtView::V0 => Self::V0,
+            TransactionExtView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionExtRef<'_>> for TransactionExt {
+impl From<TransactionExtView<'_>> for TransactionExt {
     #[must_use]
-    fn from(v: TransactionExtRef<'_>) -> Self {
+    fn from(v: TransactionExtView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl TransactionExtRef<'_> {
+impl TransactionExtView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl TransactionExtRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionExtRef<'_> {
+impl WriteXdr for TransactionExtView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

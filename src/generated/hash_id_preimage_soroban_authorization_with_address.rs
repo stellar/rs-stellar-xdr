@@ -66,23 +66,23 @@ impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     }
 }
 
-/// HashIdPreimageSorobanAuthorizationWithAddressRef is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`], usable in
+/// HashIdPreimageSorobanAuthorizationWithAddressView is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HashIdPreimageSorobanAuthorizationWithAddressRef<'a> {
+pub struct HashIdPreimageSorobanAuthorizationWithAddressView<'a> {
     pub network_id: Hash,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
     pub address: ScAddress,
-    pub invocation: SorobanAuthorizedInvocationRef<'a>,
+    pub invocation: SorobanAuthorizedInvocationView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
+impl From<&HashIdPreimageSorobanAuthorizationWithAddressView<'_>>
     for HashIdPreimageSorobanAuthorizationWithAddress
 {
     #[must_use]
-    fn from(v: &HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
+    fn from(v: &HashIdPreimageSorobanAuthorizationWithAddressView<'_>) -> Self {
         Self {
             network_id: v.network_id.clone(),
             nonce: v.nonce,
@@ -94,16 +94,16 @@ impl From<&HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
 }
 
 #[cfg(feature = "alloc")]
-impl From<HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
+impl From<HashIdPreimageSorobanAuthorizationWithAddressView<'_>>
     for HashIdPreimageSorobanAuthorizationWithAddress
 {
     #[must_use]
-    fn from(v: HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
+    fn from(v: HashIdPreimageSorobanAuthorizationWithAddressView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
+impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddressView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

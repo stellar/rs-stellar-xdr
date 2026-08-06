@@ -177,40 +177,40 @@ impl WriteXdr for ScpStatementPledges {
     }
 }
 
-/// ScpStatementPledgesRef is a borrowing equivalent of [`ScpStatementPledges`], usable in
+/// ScpStatementPledgesView is a borrowing equivalent of [`ScpStatementPledges`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScpStatementPledgesRef<'a> {
-    Prepare(ScpStatementPrepareRef<'a>),
-    Confirm(ScpStatementConfirmRef<'a>),
-    Externalize(ScpStatementExternalizeRef<'a>),
-    Nominate(ScpNominationRef<'a>),
+pub enum ScpStatementPledgesView<'a> {
+    Prepare(ScpStatementPrepareView<'a>),
+    Confirm(ScpStatementConfirmView<'a>),
+    Externalize(ScpStatementExternalizeView<'a>),
+    Nominate(ScpNominationView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementPledgesRef<'_>> for ScpStatementPledges {
+impl From<&ScpStatementPledgesView<'_>> for ScpStatementPledges {
     #[must_use]
-    fn from(v: &ScpStatementPledgesRef<'_>) -> Self {
+    fn from(v: &ScpStatementPledgesView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScpStatementPledgesRef::Prepare(value) => Self::Prepare(value.into()),
-            ScpStatementPledgesRef::Confirm(value) => Self::Confirm(value.into()),
-            ScpStatementPledgesRef::Externalize(value) => Self::Externalize(value.into()),
-            ScpStatementPledgesRef::Nominate(value) => Self::Nominate(value.into()),
+            ScpStatementPledgesView::Prepare(value) => Self::Prepare(value.into()),
+            ScpStatementPledgesView::Confirm(value) => Self::Confirm(value.into()),
+            ScpStatementPledgesView::Externalize(value) => Self::Externalize(value.into()),
+            ScpStatementPledgesView::Nominate(value) => Self::Nominate(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementPledgesRef<'_>> for ScpStatementPledges {
+impl From<ScpStatementPledgesView<'_>> for ScpStatementPledges {
     #[must_use]
-    fn from(v: ScpStatementPledgesRef<'_>) -> Self {
+    fn from(v: ScpStatementPledgesView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScpStatementPledgesRef<'_> {
+impl ScpStatementPledgesView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScpStatementType {
         #[allow(clippy::match_same_arms)]
@@ -223,7 +223,7 @@ impl ScpStatementPledgesRef<'_> {
     }
 }
 
-impl WriteXdr for ScpStatementPledgesRef<'_> {
+impl WriteXdr for ScpStatementPledgesView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

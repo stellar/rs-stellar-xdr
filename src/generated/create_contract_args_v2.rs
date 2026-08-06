@@ -55,19 +55,19 @@ impl WriteXdr for CreateContractArgsV2 {
     }
 }
 
-/// CreateContractArgsV2Ref is a borrowing equivalent of [`CreateContractArgsV2`], usable in
+/// CreateContractArgsV2View is a borrowing equivalent of [`CreateContractArgsV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct CreateContractArgsV2Ref<'a> {
+pub struct CreateContractArgsV2View<'a> {
     pub contract_id_preimage: ContractIdPreimage,
-    pub executable: ContractExecutableRef<'a>,
-    pub constructor_args: VecMRef<'a, ScValRef<'a>>,
+    pub executable: ContractExecutableView<'a>,
+    pub constructor_args: VecMView<'a, ScValView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
+impl From<&CreateContractArgsV2View<'_>> for CreateContractArgsV2 {
     #[must_use]
-    fn from(v: &CreateContractArgsV2Ref<'_>) -> Self {
+    fn from(v: &CreateContractArgsV2View<'_>) -> Self {
         Self {
             contract_id_preimage: v.contract_id_preimage.clone(),
             executable: (&v.executable).into(),
@@ -77,14 +77,14 @@ impl From<&CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
+impl From<CreateContractArgsV2View<'_>> for CreateContractArgsV2 {
     #[must_use]
-    fn from(v: CreateContractArgsV2Ref<'_>) -> Self {
+    fn from(v: CreateContractArgsV2View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for CreateContractArgsV2Ref<'_> {
+impl WriteXdr for CreateContractArgsV2View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

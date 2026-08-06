@@ -139,36 +139,36 @@ impl WriteXdr for InflationResult {
     }
 }
 
-/// InflationResultRef is a borrowing equivalent of [`InflationResult`], usable in
+/// InflationResultView is a borrowing equivalent of [`InflationResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum InflationResultRef<'a> {
-    Success(VecMRef<'a, InflationPayout>),
+pub enum InflationResultView<'a> {
+    Success(VecMView<'a, InflationPayout>),
     NotTime,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InflationResultRef<'_>> for InflationResult {
+impl From<&InflationResultView<'_>> for InflationResult {
     #[must_use]
-    fn from(v: &InflationResultRef<'_>) -> Self {
+    fn from(v: &InflationResultView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            InflationResultRef::Success(value) => Self::Success(value.to_vecm()),
-            InflationResultRef::NotTime => Self::NotTime,
+            InflationResultView::Success(value) => Self::Success(value.to_vecm()),
+            InflationResultView::NotTime => Self::NotTime,
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<InflationResultRef<'_>> for InflationResult {
+impl From<InflationResultView<'_>> for InflationResult {
     #[must_use]
-    fn from(v: InflationResultRef<'_>) -> Self {
+    fn from(v: InflationResultView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl InflationResultRef<'_> {
+impl InflationResultView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> InflationResultCode {
         #[allow(clippy::match_same_arms)]
@@ -179,7 +179,7 @@ impl InflationResultRef<'_> {
     }
 }
 
-impl WriteXdr for InflationResultRef<'_> {
+impl WriteXdr for InflationResultView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

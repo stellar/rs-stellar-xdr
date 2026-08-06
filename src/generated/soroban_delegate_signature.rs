@@ -54,19 +54,19 @@ impl WriteXdr for SorobanDelegateSignature {
     }
 }
 
-/// SorobanDelegateSignatureRef is a borrowing equivalent of [`SorobanDelegateSignature`], usable in
+/// SorobanDelegateSignatureView is a borrowing equivalent of [`SorobanDelegateSignature`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanDelegateSignatureRef<'a> {
+pub struct SorobanDelegateSignatureView<'a> {
     pub address: ScAddress,
-    pub signature: ScValRef<'a>,
-    pub nested_delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
+    pub signature: ScValView<'a>,
+    pub nested_delegates: VecMView<'a, SorobanDelegateSignatureView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
+impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
     #[must_use]
-    fn from(v: &SorobanDelegateSignatureRef<'_>) -> Self {
+    fn from(v: &SorobanDelegateSignatureView<'_>) -> Self {
         Self {
             address: v.address.clone(),
             signature: (&v.signature).into(),
@@ -76,14 +76,14 @@ impl From<&SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
+impl From<SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
     #[must_use]
-    fn from(v: SorobanDelegateSignatureRef<'_>) -> Self {
+    fn from(v: SorobanDelegateSignatureView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanDelegateSignatureRef<'_> {
+impl WriteXdr for SorobanDelegateSignatureView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

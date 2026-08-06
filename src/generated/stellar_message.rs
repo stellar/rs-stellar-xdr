@@ -342,82 +342,82 @@ impl WriteXdr for StellarMessage {
     }
 }
 
-/// StellarMessageRef is a borrowing equivalent of [`StellarMessage`], usable in
+/// StellarMessageView is a borrowing equivalent of [`StellarMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StellarMessageRef<'a> {
-    ErrorMsg(SErrorRef<'a>),
-    Hello(HelloRef<'a>),
+pub enum StellarMessageView<'a> {
+    ErrorMsg(SErrorView<'a>),
+    Hello(HelloView<'a>),
     Auth(Auth),
     DontHave(DontHave),
-    Peers(VecMRef<'a, PeerAddress, 100>),
+    Peers(VecMView<'a, PeerAddress, 100>),
     GetTxSet(Uint256),
-    TxSet(TransactionSetRef<'a>),
-    GeneralizedTxSet(GeneralizedTransactionSetRef<'a>),
-    Transaction(TransactionEnvelopeRef<'a>),
-    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessageRef<'a>),
-    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessageRef<'a>),
-    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessageRef<'a>),
-    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessageRef<'a>),
+    TxSet(TransactionSetView<'a>),
+    GeneralizedTxSet(GeneralizedTransactionSetView<'a>),
+    Transaction(TransactionEnvelopeView<'a>),
+    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessageView<'a>),
+    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessageView<'a>),
+    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessageView<'a>),
+    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessageView<'a>),
     GetScpQuorumset(Uint256),
-    ScpQuorumset(ScpQuorumSetRef<'a>),
-    ScpMessage(ScpEnvelopeRef<'a>),
+    ScpQuorumset(ScpQuorumSetView<'a>),
+    ScpMessage(ScpEnvelopeView<'a>),
     GetScpState(u32),
     SendMore(SendMore),
     SendMoreExtended(SendMoreExtended),
-    FloodAdvert(FloodAdvertRef<'a>),
-    FloodDemand(FloodDemandRef<'a>),
+    FloodAdvert(FloodAdvertView<'a>),
+    FloodDemand(FloodDemandView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StellarMessageRef<'_>> for StellarMessage {
+impl From<&StellarMessageView<'_>> for StellarMessage {
     #[must_use]
-    fn from(v: &StellarMessageRef<'_>) -> Self {
+    fn from(v: &StellarMessageView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            StellarMessageRef::ErrorMsg(value) => Self::ErrorMsg(value.into()),
-            StellarMessageRef::Hello(value) => Self::Hello(value.into()),
-            StellarMessageRef::Auth(value) => Self::Auth(value.clone()),
-            StellarMessageRef::DontHave(value) => Self::DontHave(value.clone()),
-            StellarMessageRef::Peers(value) => Self::Peers(value.to_vecm()),
-            StellarMessageRef::GetTxSet(value) => Self::GetTxSet(value.clone()),
-            StellarMessageRef::TxSet(value) => Self::TxSet(value.into()),
-            StellarMessageRef::GeneralizedTxSet(value) => Self::GeneralizedTxSet(value.into()),
-            StellarMessageRef::Transaction(value) => Self::Transaction(value.into()),
-            StellarMessageRef::TimeSlicedSurveyRequest(value) => {
+            StellarMessageView::ErrorMsg(value) => Self::ErrorMsg(value.into()),
+            StellarMessageView::Hello(value) => Self::Hello(value.into()),
+            StellarMessageView::Auth(value) => Self::Auth(value.clone()),
+            StellarMessageView::DontHave(value) => Self::DontHave(value.clone()),
+            StellarMessageView::Peers(value) => Self::Peers(value.to_vecm()),
+            StellarMessageView::GetTxSet(value) => Self::GetTxSet(value.clone()),
+            StellarMessageView::TxSet(value) => Self::TxSet(value.into()),
+            StellarMessageView::GeneralizedTxSet(value) => Self::GeneralizedTxSet(value.into()),
+            StellarMessageView::Transaction(value) => Self::Transaction(value.into()),
+            StellarMessageView::TimeSlicedSurveyRequest(value) => {
                 Self::TimeSlicedSurveyRequest(value.into())
             }
-            StellarMessageRef::TimeSlicedSurveyResponse(value) => {
+            StellarMessageView::TimeSlicedSurveyResponse(value) => {
                 Self::TimeSlicedSurveyResponse(value.into())
             }
-            StellarMessageRef::TimeSlicedSurveyStartCollecting(value) => {
+            StellarMessageView::TimeSlicedSurveyStartCollecting(value) => {
                 Self::TimeSlicedSurveyStartCollecting(value.into())
             }
-            StellarMessageRef::TimeSlicedSurveyStopCollecting(value) => {
+            StellarMessageView::TimeSlicedSurveyStopCollecting(value) => {
                 Self::TimeSlicedSurveyStopCollecting(value.into())
             }
-            StellarMessageRef::GetScpQuorumset(value) => Self::GetScpQuorumset(value.clone()),
-            StellarMessageRef::ScpQuorumset(value) => Self::ScpQuorumset(value.into()),
-            StellarMessageRef::ScpMessage(value) => Self::ScpMessage(value.into()),
-            StellarMessageRef::GetScpState(value) => Self::GetScpState(*value),
-            StellarMessageRef::SendMore(value) => Self::SendMore(value.clone()),
-            StellarMessageRef::SendMoreExtended(value) => Self::SendMoreExtended(value.clone()),
-            StellarMessageRef::FloodAdvert(value) => Self::FloodAdvert(value.into()),
-            StellarMessageRef::FloodDemand(value) => Self::FloodDemand(value.into()),
+            StellarMessageView::GetScpQuorumset(value) => Self::GetScpQuorumset(value.clone()),
+            StellarMessageView::ScpQuorumset(value) => Self::ScpQuorumset(value.into()),
+            StellarMessageView::ScpMessage(value) => Self::ScpMessage(value.into()),
+            StellarMessageView::GetScpState(value) => Self::GetScpState(*value),
+            StellarMessageView::SendMore(value) => Self::SendMore(value.clone()),
+            StellarMessageView::SendMoreExtended(value) => Self::SendMoreExtended(value.clone()),
+            StellarMessageView::FloodAdvert(value) => Self::FloodAdvert(value.into()),
+            StellarMessageView::FloodDemand(value) => Self::FloodDemand(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StellarMessageRef<'_>> for StellarMessage {
+impl From<StellarMessageView<'_>> for StellarMessage {
     #[must_use]
-    fn from(v: StellarMessageRef<'_>) -> Self {
+    fn from(v: StellarMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl StellarMessageRef<'_> {
+impl StellarMessageView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> MessageType {
         #[allow(clippy::match_same_arms)]
@@ -449,7 +449,7 @@ impl StellarMessageRef<'_> {
     }
 }
 
-impl WriteXdr for StellarMessageRef<'_> {
+impl WriteXdr for StellarMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -49,17 +49,17 @@ impl WriteXdr for SorobanResourcesExtV0 {
     }
 }
 
-/// SorobanResourcesExtV0Ref is a borrowing equivalent of [`SorobanResourcesExtV0`], usable in
+/// SorobanResourcesExtV0View is a borrowing equivalent of [`SorobanResourcesExtV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanResourcesExtV0Ref<'a> {
-    pub archived_soroban_entries: VecMRef<'a, u32>,
+pub struct SorobanResourcesExtV0View<'a> {
+    pub archived_soroban_entries: VecMView<'a, u32>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanResourcesExtV0Ref<'_>> for SorobanResourcesExtV0 {
+impl From<&SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
     #[must_use]
-    fn from(v: &SorobanResourcesExtV0Ref<'_>) -> Self {
+    fn from(v: &SorobanResourcesExtV0View<'_>) -> Self {
         Self {
             archived_soroban_entries: v.archived_soroban_entries.to_vecm(),
         }
@@ -67,14 +67,14 @@ impl From<&SorobanResourcesExtV0Ref<'_>> for SorobanResourcesExtV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanResourcesExtV0Ref<'_>> for SorobanResourcesExtV0 {
+impl From<SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
     #[must_use]
-    fn from(v: SorobanResourcesExtV0Ref<'_>) -> Self {
+    fn from(v: SorobanResourcesExtV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanResourcesExtV0Ref<'_> {
+impl WriteXdr for SorobanResourcesExtV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -87,23 +87,23 @@ impl WriteXdr for Transaction {
     }
 }
 
-/// TransactionRef is a borrowing equivalent of [`Transaction`], usable in
+/// TransactionView is a borrowing equivalent of [`Transaction`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionRef<'a> {
+pub struct TransactionView<'a> {
     pub source_account: MuxedAccount,
     pub fee: u32,
     pub seq_num: SequenceNumber,
-    pub cond: PreconditionsRef<'a>,
-    pub memo: MemoRef<'a>,
-    pub operations: VecMRef<'a, OperationRef<'a>, 100>,
-    pub ext: TransactionExtRef<'a>,
+    pub cond: PreconditionsView<'a>,
+    pub memo: MemoView<'a>,
+    pub operations: VecMView<'a, OperationView<'a>, 100>,
+    pub ext: TransactionExtView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionRef<'_>> for Transaction {
+impl From<&TransactionView<'_>> for Transaction {
     #[must_use]
-    fn from(v: &TransactionRef<'_>) -> Self {
+    fn from(v: &TransactionView<'_>) -> Self {
         Self {
             source_account: v.source_account.clone(),
             fee: v.fee,
@@ -117,14 +117,14 @@ impl From<&TransactionRef<'_>> for Transaction {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionRef<'_>> for Transaction {
+impl From<TransactionView<'_>> for Transaction {
     #[must_use]
-    fn from(v: TransactionRef<'_>) -> Self {
+    fn from(v: TransactionView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionRef<'_> {
+impl WriteXdr for TransactionView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

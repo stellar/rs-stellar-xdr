@@ -50,18 +50,18 @@ impl WriteXdr for LedgerCloseValueSignature {
     }
 }
 
-/// LedgerCloseValueSignatureRef is a borrowing equivalent of [`LedgerCloseValueSignature`], usable in
+/// LedgerCloseValueSignatureView is a borrowing equivalent of [`LedgerCloseValueSignature`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseValueSignatureRef<'a> {
+pub struct LedgerCloseValueSignatureView<'a> {
     pub node_id: NodeId,
-    pub signature: SignatureRef<'a>,
+    pub signature: SignatureView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
+impl From<&LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
     #[must_use]
-    fn from(v: &LedgerCloseValueSignatureRef<'_>) -> Self {
+    fn from(v: &LedgerCloseValueSignatureView<'_>) -> Self {
         Self {
             node_id: v.node_id.clone(),
             signature: (&v.signature).into(),
@@ -70,14 +70,14 @@ impl From<&LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
+impl From<LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
     #[must_use]
-    fn from(v: LedgerCloseValueSignatureRef<'_>) -> Self {
+    fn from(v: LedgerCloseValueSignatureView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for LedgerCloseValueSignatureRef<'_> {
+impl WriteXdr for LedgerCloseValueSignatureView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

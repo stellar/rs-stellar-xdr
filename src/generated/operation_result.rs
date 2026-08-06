@@ -239,12 +239,12 @@ impl WriteXdr for OperationResult {
     }
 }
 
-/// OperationResultRef is a borrowing equivalent of [`OperationResult`], usable in
+/// OperationResultView is a borrowing equivalent of [`OperationResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum OperationResultRef<'a> {
-    OpInner(OperationResultTrRef<'a>),
+pub enum OperationResultView<'a> {
+    OpInner(OperationResultTrView<'a>),
     OpBadAuth,
     OpNoAccount,
     OpNotSupported,
@@ -254,31 +254,31 @@ pub enum OperationResultRef<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationResultRef<'_>> for OperationResult {
+impl From<&OperationResultView<'_>> for OperationResult {
     #[must_use]
-    fn from(v: &OperationResultRef<'_>) -> Self {
+    fn from(v: &OperationResultView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationResultRef::OpInner(value) => Self::OpInner(value.into()),
-            OperationResultRef::OpBadAuth => Self::OpBadAuth,
-            OperationResultRef::OpNoAccount => Self::OpNoAccount,
-            OperationResultRef::OpNotSupported => Self::OpNotSupported,
-            OperationResultRef::OpTooManySubentries => Self::OpTooManySubentries,
-            OperationResultRef::OpExceededWorkLimit => Self::OpExceededWorkLimit,
-            OperationResultRef::OpTooManySponsoring => Self::OpTooManySponsoring,
+            OperationResultView::OpInner(value) => Self::OpInner(value.into()),
+            OperationResultView::OpBadAuth => Self::OpBadAuth,
+            OperationResultView::OpNoAccount => Self::OpNoAccount,
+            OperationResultView::OpNotSupported => Self::OpNotSupported,
+            OperationResultView::OpTooManySubentries => Self::OpTooManySubentries,
+            OperationResultView::OpExceededWorkLimit => Self::OpExceededWorkLimit,
+            OperationResultView::OpTooManySponsoring => Self::OpTooManySponsoring,
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationResultRef<'_>> for OperationResult {
+impl From<OperationResultView<'_>> for OperationResult {
     #[must_use]
-    fn from(v: OperationResultRef<'_>) -> Self {
+    fn from(v: OperationResultView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl OperationResultRef<'_> {
+impl OperationResultView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> OperationResultCode {
         #[allow(clippy::match_same_arms)]
@@ -294,7 +294,7 @@ impl OperationResultRef<'_> {
     }
 }
 
-impl WriteXdr for OperationResultRef<'_> {
+impl WriteXdr for OperationResultView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

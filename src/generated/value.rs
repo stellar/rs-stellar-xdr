@@ -108,28 +108,28 @@ impl AsRef<[u8]> for Value {
     }
 }
 
-/// ValueRef is a borrowing equivalent of [`Value`], usable in
+/// ValueView is a borrowing equivalent of [`Value`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ValueRef<'a>(pub BytesMRef<'a>);
+pub struct ValueView<'a>(pub BytesMView<'a>);
 
 #[cfg(feature = "alloc")]
-impl From<&ValueRef<'_>> for Value {
+impl From<&ValueView<'_>> for Value {
     #[must_use]
-    fn from(v: &ValueRef<'_>) -> Self {
+    fn from(v: &ValueView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ValueRef<'_>> for Value {
+impl From<ValueView<'_>> for Value {
     #[must_use]
-    fn from(v: ValueRef<'_>) -> Self {
+    fn from(v: ValueView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ValueRef<'_> {
+impl WriteXdr for ValueView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

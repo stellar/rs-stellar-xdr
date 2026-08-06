@@ -108,28 +108,28 @@ impl AsRef<[u8]> for EncryptedBody {
     }
 }
 
-/// EncryptedBodyRef is a borrowing equivalent of [`EncryptedBody`], usable in
+/// EncryptedBodyView is a borrowing equivalent of [`EncryptedBody`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EncryptedBodyRef<'a>(pub BytesMRef<'a, 64000>);
+pub struct EncryptedBodyView<'a>(pub BytesMView<'a, 64000>);
 
 #[cfg(feature = "alloc")]
-impl From<&EncryptedBodyRef<'_>> for EncryptedBody {
+impl From<&EncryptedBodyView<'_>> for EncryptedBody {
     #[must_use]
-    fn from(v: &EncryptedBodyRef<'_>) -> Self {
+    fn from(v: &EncryptedBodyView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<EncryptedBodyRef<'_>> for EncryptedBody {
+impl From<EncryptedBodyView<'_>> for EncryptedBody {
     #[must_use]
-    fn from(v: EncryptedBodyRef<'_>) -> Self {
+    fn from(v: EncryptedBodyView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for EncryptedBodyRef<'_> {
+impl WriteXdr for EncryptedBodyView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

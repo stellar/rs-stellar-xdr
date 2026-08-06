@@ -401,104 +401,104 @@ impl WriteXdr for OperationBody {
     }
 }
 
-/// OperationBodyRef is a borrowing equivalent of [`OperationBody`], usable in
+/// OperationBodyView is a borrowing equivalent of [`OperationBody`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum OperationBodyRef<'a> {
+pub enum OperationBodyView<'a> {
     CreateAccount(CreateAccountOp),
     Payment(PaymentOp),
-    PathPaymentStrictReceive(PathPaymentStrictReceiveOpRef<'a>),
+    PathPaymentStrictReceive(PathPaymentStrictReceiveOpView<'a>),
     ManageSellOffer(ManageSellOfferOp),
     CreatePassiveSellOffer(CreatePassiveSellOfferOp),
-    SetOptions(SetOptionsOpRef<'a>),
+    SetOptions(SetOptionsOpView<'a>),
     ChangeTrust(ChangeTrustOp),
     AllowTrust(AllowTrustOp),
     AccountMerge(MuxedAccount),
     Inflation,
-    ManageData(ManageDataOpRef<'a>),
+    ManageData(ManageDataOpView<'a>),
     BumpSequence(BumpSequenceOp),
     ManageBuyOffer(ManageBuyOfferOp),
-    PathPaymentStrictSend(PathPaymentStrictSendOpRef<'a>),
-    CreateClaimableBalance(CreateClaimableBalanceOpRef<'a>),
+    PathPaymentStrictSend(PathPaymentStrictSendOpView<'a>),
+    CreateClaimableBalance(CreateClaimableBalanceOpView<'a>),
     ClaimClaimableBalance(ClaimClaimableBalanceOp),
     BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOp),
     EndSponsoringFutureReserves,
-    RevokeSponsorship(RevokeSponsorshipOpRef<'a>),
+    RevokeSponsorship(RevokeSponsorshipOpView<'a>),
     Clawback(ClawbackOp),
     ClawbackClaimableBalance(ClawbackClaimableBalanceOp),
     SetTrustLineFlags(SetTrustLineFlagsOp),
     LiquidityPoolDeposit(LiquidityPoolDepositOp),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
-    InvokeHostFunction(InvokeHostFunctionOpRef<'a>),
+    InvokeHostFunction(InvokeHostFunctionOpView<'a>),
     ExtendFootprintTtl(ExtendFootprintTtlOp),
     RestoreFootprint(RestoreFootprintOp),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationBodyRef<'_>> for OperationBody {
+impl From<&OperationBodyView<'_>> for OperationBody {
     #[must_use]
-    fn from(v: &OperationBodyRef<'_>) -> Self {
+    fn from(v: &OperationBodyView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationBodyRef::CreateAccount(value) => Self::CreateAccount(value.clone()),
-            OperationBodyRef::Payment(value) => Self::Payment(value.clone()),
-            OperationBodyRef::PathPaymentStrictReceive(value) => {
+            OperationBodyView::CreateAccount(value) => Self::CreateAccount(value.clone()),
+            OperationBodyView::Payment(value) => Self::Payment(value.clone()),
+            OperationBodyView::PathPaymentStrictReceive(value) => {
                 Self::PathPaymentStrictReceive(value.into())
             }
-            OperationBodyRef::ManageSellOffer(value) => Self::ManageSellOffer(value.clone()),
-            OperationBodyRef::CreatePassiveSellOffer(value) => {
+            OperationBodyView::ManageSellOffer(value) => Self::ManageSellOffer(value.clone()),
+            OperationBodyView::CreatePassiveSellOffer(value) => {
                 Self::CreatePassiveSellOffer(value.clone())
             }
-            OperationBodyRef::SetOptions(value) => Self::SetOptions(value.into()),
-            OperationBodyRef::ChangeTrust(value) => Self::ChangeTrust(value.clone()),
-            OperationBodyRef::AllowTrust(value) => Self::AllowTrust(value.clone()),
-            OperationBodyRef::AccountMerge(value) => Self::AccountMerge(value.clone()),
-            OperationBodyRef::Inflation => Self::Inflation,
-            OperationBodyRef::ManageData(value) => Self::ManageData(value.into()),
-            OperationBodyRef::BumpSequence(value) => Self::BumpSequence(value.clone()),
-            OperationBodyRef::ManageBuyOffer(value) => Self::ManageBuyOffer(value.clone()),
-            OperationBodyRef::PathPaymentStrictSend(value) => {
+            OperationBodyView::SetOptions(value) => Self::SetOptions(value.into()),
+            OperationBodyView::ChangeTrust(value) => Self::ChangeTrust(value.clone()),
+            OperationBodyView::AllowTrust(value) => Self::AllowTrust(value.clone()),
+            OperationBodyView::AccountMerge(value) => Self::AccountMerge(value.clone()),
+            OperationBodyView::Inflation => Self::Inflation,
+            OperationBodyView::ManageData(value) => Self::ManageData(value.into()),
+            OperationBodyView::BumpSequence(value) => Self::BumpSequence(value.clone()),
+            OperationBodyView::ManageBuyOffer(value) => Self::ManageBuyOffer(value.clone()),
+            OperationBodyView::PathPaymentStrictSend(value) => {
                 Self::PathPaymentStrictSend(value.into())
             }
-            OperationBodyRef::CreateClaimableBalance(value) => {
+            OperationBodyView::CreateClaimableBalance(value) => {
                 Self::CreateClaimableBalance(value.into())
             }
-            OperationBodyRef::ClaimClaimableBalance(value) => {
+            OperationBodyView::ClaimClaimableBalance(value) => {
                 Self::ClaimClaimableBalance(value.clone())
             }
-            OperationBodyRef::BeginSponsoringFutureReserves(value) => {
+            OperationBodyView::BeginSponsoringFutureReserves(value) => {
                 Self::BeginSponsoringFutureReserves(value.clone())
             }
-            OperationBodyRef::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves,
-            OperationBodyRef::RevokeSponsorship(value) => Self::RevokeSponsorship(value.into()),
-            OperationBodyRef::Clawback(value) => Self::Clawback(value.clone()),
-            OperationBodyRef::ClawbackClaimableBalance(value) => {
+            OperationBodyView::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves,
+            OperationBodyView::RevokeSponsorship(value) => Self::RevokeSponsorship(value.into()),
+            OperationBodyView::Clawback(value) => Self::Clawback(value.clone()),
+            OperationBodyView::ClawbackClaimableBalance(value) => {
                 Self::ClawbackClaimableBalance(value.clone())
             }
-            OperationBodyRef::SetTrustLineFlags(value) => Self::SetTrustLineFlags(value.clone()),
-            OperationBodyRef::LiquidityPoolDeposit(value) => {
+            OperationBodyView::SetTrustLineFlags(value) => Self::SetTrustLineFlags(value.clone()),
+            OperationBodyView::LiquidityPoolDeposit(value) => {
                 Self::LiquidityPoolDeposit(value.clone())
             }
-            OperationBodyRef::LiquidityPoolWithdraw(value) => {
+            OperationBodyView::LiquidityPoolWithdraw(value) => {
                 Self::LiquidityPoolWithdraw(value.clone())
             }
-            OperationBodyRef::InvokeHostFunction(value) => Self::InvokeHostFunction(value.into()),
-            OperationBodyRef::ExtendFootprintTtl(value) => Self::ExtendFootprintTtl(value.clone()),
-            OperationBodyRef::RestoreFootprint(value) => Self::RestoreFootprint(value.clone()),
+            OperationBodyView::InvokeHostFunction(value) => Self::InvokeHostFunction(value.into()),
+            OperationBodyView::ExtendFootprintTtl(value) => Self::ExtendFootprintTtl(value.clone()),
+            OperationBodyView::RestoreFootprint(value) => Self::RestoreFootprint(value.clone()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationBodyRef<'_>> for OperationBody {
+impl From<OperationBodyView<'_>> for OperationBody {
     #[must_use]
-    fn from(v: OperationBodyRef<'_>) -> Self {
+    fn from(v: OperationBodyView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl OperationBodyRef<'_> {
+impl OperationBodyView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
@@ -534,7 +534,7 @@ impl OperationBodyRef<'_> {
     }
 }
 
-impl WriteXdr for OperationBodyRef<'_> {
+impl WriteXdr for OperationBodyView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -133,34 +133,34 @@ impl WriteXdr for ContractEventBody {
     }
 }
 
-/// ContractEventBodyRef is a borrowing equivalent of [`ContractEventBody`], usable in
+/// ContractEventBodyView is a borrowing equivalent of [`ContractEventBody`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ContractEventBodyRef<'a> {
-    V0(ContractEventV0Ref<'a>),
+pub enum ContractEventBodyView<'a> {
+    V0(ContractEventV0View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractEventBodyRef<'_>> for ContractEventBody {
+impl From<&ContractEventBodyView<'_>> for ContractEventBody {
     #[must_use]
-    fn from(v: &ContractEventBodyRef<'_>) -> Self {
+    fn from(v: &ContractEventBodyView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ContractEventBodyRef::V0(value) => Self::V0(value.into()),
+            ContractEventBodyView::V0(value) => Self::V0(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractEventBodyRef<'_>> for ContractEventBody {
+impl From<ContractEventBodyView<'_>> for ContractEventBody {
     #[must_use]
-    fn from(v: ContractEventBodyRef<'_>) -> Self {
+    fn from(v: ContractEventBodyView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ContractEventBodyRef<'_> {
+impl ContractEventBodyView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -170,7 +170,7 @@ impl ContractEventBodyRef<'_> {
     }
 }
 
-impl WriteXdr for ContractEventBodyRef<'_> {
+impl WriteXdr for ContractEventBodyView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

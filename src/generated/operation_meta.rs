@@ -46,17 +46,17 @@ impl WriteXdr for OperationMeta {
     }
 }
 
-/// OperationMetaRef is a borrowing equivalent of [`OperationMeta`], usable in
+/// OperationMetaView is a borrowing equivalent of [`OperationMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationMetaRef<'a> {
-    pub changes: LedgerEntryChangesRef<'a>,
+pub struct OperationMetaView<'a> {
+    pub changes: LedgerEntryChangesView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationMetaRef<'_>> for OperationMeta {
+impl From<&OperationMetaView<'_>> for OperationMeta {
     #[must_use]
-    fn from(v: &OperationMetaRef<'_>) -> Self {
+    fn from(v: &OperationMetaView<'_>) -> Self {
         Self {
             changes: (&v.changes).into(),
         }
@@ -64,14 +64,14 @@ impl From<&OperationMetaRef<'_>> for OperationMeta {
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationMetaRef<'_>> for OperationMeta {
+impl From<OperationMetaView<'_>> for OperationMeta {
     #[must_use]
-    fn from(v: OperationMetaRef<'_>) -> Self {
+    fn from(v: OperationMetaView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for OperationMetaRef<'_> {
+impl WriteXdr for OperationMetaView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

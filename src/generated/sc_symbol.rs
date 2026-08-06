@@ -108,28 +108,28 @@ impl AsRef<[u8]> for ScSymbol {
     }
 }
 
-/// ScSymbolRef is a borrowing equivalent of [`ScSymbol`], usable in
+/// ScSymbolView is a borrowing equivalent of [`ScSymbol`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSymbolRef<'a>(pub StringMRef<'a, 32>);
+pub struct ScSymbolView<'a>(pub StringMView<'a, 32>);
 
 #[cfg(feature = "alloc")]
-impl From<&ScSymbolRef<'_>> for ScSymbol {
+impl From<&ScSymbolView<'_>> for ScSymbol {
     #[must_use]
-    fn from(v: &ScSymbolRef<'_>) -> Self {
+    fn from(v: &ScSymbolView<'_>) -> Self {
         Self(v.0.to_stringm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSymbolRef<'_>> for ScSymbol {
+impl From<ScSymbolView<'_>> for ScSymbol {
     #[must_use]
-    fn from(v: ScSymbolRef<'_>) -> Self {
+    fn from(v: ScSymbolView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSymbolRef<'_> {
+impl WriteXdr for ScSymbolView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

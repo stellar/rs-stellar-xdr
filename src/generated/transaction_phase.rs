@@ -136,36 +136,36 @@ impl WriteXdr for TransactionPhase {
     }
 }
 
-/// TransactionPhaseRef is a borrowing equivalent of [`TransactionPhase`], usable in
+/// TransactionPhaseView is a borrowing equivalent of [`TransactionPhase`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionPhaseRef<'a> {
-    V0(VecMRef<'a, TxSetComponentRef<'a>>),
-    V1(ParallelTxsComponentRef<'a>),
+pub enum TransactionPhaseView<'a> {
+    V0(VecMView<'a, TxSetComponentView<'a>>),
+    V1(ParallelTxsComponentView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionPhaseRef<'_>> for TransactionPhase {
+impl From<&TransactionPhaseView<'_>> for TransactionPhase {
     #[must_use]
-    fn from(v: &TransactionPhaseRef<'_>) -> Self {
+    fn from(v: &TransactionPhaseView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionPhaseRef::V0(value) => Self::V0(value.to_vecm_from()),
-            TransactionPhaseRef::V1(value) => Self::V1(value.into()),
+            TransactionPhaseView::V0(value) => Self::V0(value.to_vecm_from()),
+            TransactionPhaseView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionPhaseRef<'_>> for TransactionPhase {
+impl From<TransactionPhaseView<'_>> for TransactionPhase {
     #[must_use]
-    fn from(v: TransactionPhaseRef<'_>) -> Self {
+    fn from(v: TransactionPhaseView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl TransactionPhaseRef<'_> {
+impl TransactionPhaseView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl TransactionPhaseRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionPhaseRef<'_> {
+impl WriteXdr for TransactionPhaseView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

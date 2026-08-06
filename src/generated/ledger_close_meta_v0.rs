@@ -71,21 +71,21 @@ impl WriteXdr for LedgerCloseMetaV0 {
     }
 }
 
-/// LedgerCloseMetaV0Ref is a borrowing equivalent of [`LedgerCloseMetaV0`], usable in
+/// LedgerCloseMetaV0View is a borrowing equivalent of [`LedgerCloseMetaV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseMetaV0Ref<'a> {
-    pub ledger_header: LedgerHeaderHistoryEntryRef<'a>,
-    pub tx_set: TransactionSetRef<'a>,
-    pub tx_processing: VecMRef<'a, TransactionResultMetaRef<'a>>,
-    pub upgrades_processing: VecMRef<'a, UpgradeEntryMetaRef<'a>>,
-    pub scp_info: VecMRef<'a, ScpHistoryEntryRef<'a>>,
+pub struct LedgerCloseMetaV0View<'a> {
+    pub ledger_header: LedgerHeaderHistoryEntryView<'a>,
+    pub tx_set: TransactionSetView<'a>,
+    pub tx_processing: VecMView<'a, TransactionResultMetaView<'a>>,
+    pub upgrades_processing: VecMView<'a, UpgradeEntryMetaView<'a>>,
+    pub scp_info: VecMView<'a, ScpHistoryEntryView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
+impl From<&LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
     #[must_use]
-    fn from(v: &LedgerCloseMetaV0Ref<'_>) -> Self {
+    fn from(v: &LedgerCloseMetaV0View<'_>) -> Self {
         Self {
             ledger_header: (&v.ledger_header).into(),
             tx_set: (&v.tx_set).into(),
@@ -97,14 +97,14 @@ impl From<&LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
+impl From<LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
     #[must_use]
-    fn from(v: LedgerCloseMetaV0Ref<'_>) -> Self {
+    fn from(v: LedgerCloseMetaV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for LedgerCloseMetaV0Ref<'_> {
+impl WriteXdr for LedgerCloseMetaV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

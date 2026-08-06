@@ -50,18 +50,18 @@ impl WriteXdr for ScpBallot {
     }
 }
 
-/// ScpBallotRef is a borrowing equivalent of [`ScpBallot`], usable in
+/// ScpBallotView is a borrowing equivalent of [`ScpBallot`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpBallotRef<'a> {
+pub struct ScpBallotView<'a> {
     pub counter: u32,
-    pub value: ValueRef<'a>,
+    pub value: ValueView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpBallotRef<'_>> for ScpBallot {
+impl From<&ScpBallotView<'_>> for ScpBallot {
     #[must_use]
-    fn from(v: &ScpBallotRef<'_>) -> Self {
+    fn from(v: &ScpBallotView<'_>) -> Self {
         Self {
             counter: v.counter,
             value: (&v.value).into(),
@@ -70,14 +70,14 @@ impl From<&ScpBallotRef<'_>> for ScpBallot {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpBallotRef<'_>> for ScpBallot {
+impl From<ScpBallotView<'_>> for ScpBallot {
     #[must_use]
-    fn from(v: ScpBallotRef<'_>) -> Self {
+    fn from(v: ScpBallotView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScpBallotRef<'_> {
+impl WriteXdr for ScpBallotView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

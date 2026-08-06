@@ -50,18 +50,18 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     }
 }
 
-/// InvokeHostFunctionSuccessPreImageRef is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`], usable in
+/// InvokeHostFunctionSuccessPreImageView is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeHostFunctionSuccessPreImageRef<'a> {
-    pub return_value: ScValRef<'a>,
-    pub events: VecMRef<'a, ContractEventRef<'a>>,
+pub struct InvokeHostFunctionSuccessPreImageView<'a> {
+    pub return_value: ScValView<'a>,
+    pub events: VecMView<'a, ContractEventView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
+impl From<&InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSuccessPreImage {
     #[must_use]
-    fn from(v: &InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
+    fn from(v: &InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
         Self {
             return_value: (&v.return_value).into(),
             events: v.events.to_vecm_from(),
@@ -70,14 +70,14 @@ impl From<&InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSucce
 }
 
 #[cfg(feature = "alloc")]
-impl From<InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
+impl From<InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSuccessPreImage {
     #[must_use]
-    fn from(v: InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
+    fn from(v: InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for InvokeHostFunctionSuccessPreImageRef<'_> {
+impl WriteXdr for InvokeHostFunctionSuccessPreImageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -108,28 +108,28 @@ impl AsRef<[u8]> for EncodedLedgerKey {
     }
 }
 
-/// EncodedLedgerKeyRef is a borrowing equivalent of [`EncodedLedgerKey`], usable in
+/// EncodedLedgerKeyView is a borrowing equivalent of [`EncodedLedgerKey`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EncodedLedgerKeyRef<'a>(pub BytesMRef<'a>);
+pub struct EncodedLedgerKeyView<'a>(pub BytesMView<'a>);
 
 #[cfg(feature = "alloc")]
-impl From<&EncodedLedgerKeyRef<'_>> for EncodedLedgerKey {
+impl From<&EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
     #[must_use]
-    fn from(v: &EncodedLedgerKeyRef<'_>) -> Self {
+    fn from(v: &EncodedLedgerKeyView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<EncodedLedgerKeyRef<'_>> for EncodedLedgerKey {
+impl From<EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
     #[must_use]
-    fn from(v: EncodedLedgerKeyRef<'_>) -> Self {
+    fn from(v: EncodedLedgerKeyView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for EncodedLedgerKeyRef<'_> {
+impl WriteXdr for EncodedLedgerKeyView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

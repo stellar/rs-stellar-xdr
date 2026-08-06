@@ -50,18 +50,18 @@ impl WriteXdr for ScpHistoryEntryV0 {
     }
 }
 
-/// ScpHistoryEntryV0Ref is a borrowing equivalent of [`ScpHistoryEntryV0`], usable in
+/// ScpHistoryEntryV0View is a borrowing equivalent of [`ScpHistoryEntryV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpHistoryEntryV0Ref<'a> {
-    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
-    pub ledger_messages: LedgerScpMessagesRef<'a>,
+pub struct ScpHistoryEntryV0View<'a> {
+    pub quorum_sets: VecMView<'a, ScpQuorumSetView<'a>>,
+    pub ledger_messages: LedgerScpMessagesView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
+impl From<&ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
     #[must_use]
-    fn from(v: &ScpHistoryEntryV0Ref<'_>) -> Self {
+    fn from(v: &ScpHistoryEntryV0View<'_>) -> Self {
         Self {
             quorum_sets: v.quorum_sets.to_vecm_from(),
             ledger_messages: (&v.ledger_messages).into(),
@@ -70,14 +70,14 @@ impl From<&ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
+impl From<ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
     #[must_use]
-    fn from(v: ScpHistoryEntryV0Ref<'_>) -> Self {
+    fn from(v: ScpHistoryEntryV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScpHistoryEntryV0Ref<'_> {
+impl WriteXdr for ScpHistoryEntryV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

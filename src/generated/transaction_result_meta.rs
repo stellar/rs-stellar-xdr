@@ -54,19 +54,19 @@ impl WriteXdr for TransactionResultMeta {
     }
 }
 
-/// TransactionResultMetaRef is a borrowing equivalent of [`TransactionResultMeta`], usable in
+/// TransactionResultMetaView is a borrowing equivalent of [`TransactionResultMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultMetaRef<'a> {
-    pub result: TransactionResultPairRef<'a>,
-    pub fee_processing: LedgerEntryChangesRef<'a>,
-    pub tx_apply_processing: TransactionMetaRef<'a>,
+pub struct TransactionResultMetaView<'a> {
+    pub result: TransactionResultPairView<'a>,
+    pub fee_processing: LedgerEntryChangesView<'a>,
+    pub tx_apply_processing: TransactionMetaView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultMetaRef<'_>> for TransactionResultMeta {
+impl From<&TransactionResultMetaView<'_>> for TransactionResultMeta {
     #[must_use]
-    fn from(v: &TransactionResultMetaRef<'_>) -> Self {
+    fn from(v: &TransactionResultMetaView<'_>) -> Self {
         Self {
             result: (&v.result).into(),
             fee_processing: (&v.fee_processing).into(),
@@ -76,14 +76,14 @@ impl From<&TransactionResultMetaRef<'_>> for TransactionResultMeta {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultMetaRef<'_>> for TransactionResultMeta {
+impl From<TransactionResultMetaView<'_>> for TransactionResultMeta {
     #[must_use]
-    fn from(v: TransactionResultMetaRef<'_>) -> Self {
+    fn from(v: TransactionResultMetaView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionResultMetaRef<'_> {
+impl WriteXdr for TransactionResultMetaView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

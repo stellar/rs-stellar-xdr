@@ -136,36 +136,36 @@ impl WriteXdr for PersistedScpState {
     }
 }
 
-/// PersistedScpStateRef is a borrowing equivalent of [`PersistedScpState`], usable in
+/// PersistedScpStateView is a borrowing equivalent of [`PersistedScpState`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PersistedScpStateRef<'a> {
-    V0(PersistedScpStateV0Ref<'a>),
-    V1(PersistedScpStateV1Ref<'a>),
+pub enum PersistedScpStateView<'a> {
+    V0(PersistedScpStateV0View<'a>),
+    V1(PersistedScpStateV1View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PersistedScpStateRef<'_>> for PersistedScpState {
+impl From<&PersistedScpStateView<'_>> for PersistedScpState {
     #[must_use]
-    fn from(v: &PersistedScpStateRef<'_>) -> Self {
+    fn from(v: &PersistedScpStateView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            PersistedScpStateRef::V0(value) => Self::V0(value.into()),
-            PersistedScpStateRef::V1(value) => Self::V1(value.into()),
+            PersistedScpStateView::V0(value) => Self::V0(value.into()),
+            PersistedScpStateView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PersistedScpStateRef<'_>> for PersistedScpState {
+impl From<PersistedScpStateView<'_>> for PersistedScpState {
     #[must_use]
-    fn from(v: PersistedScpStateRef<'_>) -> Self {
+    fn from(v: PersistedScpStateView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl PersistedScpStateRef<'_> {
+impl PersistedScpStateView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl PersistedScpStateRef<'_> {
     }
 }
 
-impl WriteXdr for PersistedScpStateRef<'_> {
+impl WriteXdr for PersistedScpStateView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

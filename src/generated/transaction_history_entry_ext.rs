@@ -136,36 +136,36 @@ impl WriteXdr for TransactionHistoryEntryExt {
     }
 }
 
-/// TransactionHistoryEntryExtRef is a borrowing equivalent of [`TransactionHistoryEntryExt`], usable in
+/// TransactionHistoryEntryExtView is a borrowing equivalent of [`TransactionHistoryEntryExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionHistoryEntryExtRef<'a> {
+pub enum TransactionHistoryEntryExtView<'a> {
     V0,
-    V1(GeneralizedTransactionSetRef<'a>),
+    V1(GeneralizedTransactionSetView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
+impl From<&TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
     #[must_use]
-    fn from(v: &TransactionHistoryEntryExtRef<'_>) -> Self {
+    fn from(v: &TransactionHistoryEntryExtView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionHistoryEntryExtRef::V0 => Self::V0,
-            TransactionHistoryEntryExtRef::V1(value) => Self::V1(value.into()),
+            TransactionHistoryEntryExtView::V0 => Self::V0,
+            TransactionHistoryEntryExtView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
+impl From<TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
     #[must_use]
-    fn from(v: TransactionHistoryEntryExtRef<'_>) -> Self {
+    fn from(v: TransactionHistoryEntryExtView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl TransactionHistoryEntryExtRef<'_> {
+impl TransactionHistoryEntryExtView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl TransactionHistoryEntryExtRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionHistoryEntryExtRef<'_> {
+impl WriteXdr for TransactionHistoryEntryExtView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

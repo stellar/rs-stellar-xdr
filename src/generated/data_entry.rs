@@ -65,20 +65,20 @@ impl WriteXdr for DataEntry {
     }
 }
 
-/// DataEntryRef is a borrowing equivalent of [`DataEntry`], usable in
+/// DataEntryView is a borrowing equivalent of [`DataEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DataEntryRef<'a> {
+pub struct DataEntryView<'a> {
     pub account_id: AccountId,
-    pub data_name: String64Ref<'a>,
-    pub data_value: DataValueRef<'a>,
+    pub data_name: String64View<'a>,
+    pub data_value: DataValueView<'a>,
     pub ext: DataEntryExt,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&DataEntryRef<'_>> for DataEntry {
+impl From<&DataEntryView<'_>> for DataEntry {
     #[must_use]
-    fn from(v: &DataEntryRef<'_>) -> Self {
+    fn from(v: &DataEntryView<'_>) -> Self {
         Self {
             account_id: v.account_id.clone(),
             data_name: (&v.data_name).into(),
@@ -89,14 +89,14 @@ impl From<&DataEntryRef<'_>> for DataEntry {
 }
 
 #[cfg(feature = "alloc")]
-impl From<DataEntryRef<'_>> for DataEntry {
+impl From<DataEntryView<'_>> for DataEntry {
     #[must_use]
-    fn from(v: DataEntryRef<'_>) -> Self {
+    fn from(v: DataEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for DataEntryRef<'_> {
+impl WriteXdr for DataEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

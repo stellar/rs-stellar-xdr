@@ -129,34 +129,34 @@ impl WriteXdr for ScMetaEntry {
     }
 }
 
-/// ScMetaEntryRef is a borrowing equivalent of [`ScMetaEntry`], usable in
+/// ScMetaEntryView is a borrowing equivalent of [`ScMetaEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScMetaEntryRef<'a> {
-    ScMetaV0(ScMetaV0Ref<'a>),
+pub enum ScMetaEntryView<'a> {
+    ScMetaV0(ScMetaV0View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScMetaEntryRef<'_>> for ScMetaEntry {
+impl From<&ScMetaEntryView<'_>> for ScMetaEntry {
     #[must_use]
-    fn from(v: &ScMetaEntryRef<'_>) -> Self {
+    fn from(v: &ScMetaEntryView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScMetaEntryRef::ScMetaV0(value) => Self::ScMetaV0(value.into()),
+            ScMetaEntryView::ScMetaV0(value) => Self::ScMetaV0(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScMetaEntryRef<'_>> for ScMetaEntry {
+impl From<ScMetaEntryView<'_>> for ScMetaEntry {
     #[must_use]
-    fn from(v: ScMetaEntryRef<'_>) -> Self {
+    fn from(v: ScMetaEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScMetaEntryRef<'_> {
+impl ScMetaEntryView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScMetaKind {
         #[allow(clippy::match_same_arms)]
@@ -166,7 +166,7 @@ impl ScMetaEntryRef<'_> {
     }
 }
 
-impl WriteXdr for ScMetaEntryRef<'_> {
+impl WriteXdr for ScMetaEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

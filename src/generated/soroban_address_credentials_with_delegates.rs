@@ -50,20 +50,20 @@ impl WriteXdr for SorobanAddressCredentialsWithDelegates {
     }
 }
 
-/// SorobanAddressCredentialsWithDelegatesRef is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`], usable in
+/// SorobanAddressCredentialsWithDelegatesView is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAddressCredentialsWithDelegatesRef<'a> {
-    pub address_credentials: SorobanAddressCredentialsRef<'a>,
-    pub delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
+pub struct SorobanAddressCredentialsWithDelegatesView<'a> {
+    pub address_credentials: SorobanAddressCredentialsView<'a>,
+    pub delegates: VecMView<'a, SorobanDelegateSignatureView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAddressCredentialsWithDelegatesRef<'_>>
+impl From<&SorobanAddressCredentialsWithDelegatesView<'_>>
     for SorobanAddressCredentialsWithDelegates
 {
     #[must_use]
-    fn from(v: &SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
+    fn from(v: &SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
         Self {
             address_credentials: (&v.address_credentials).into(),
             delegates: v.delegates.to_vecm_from(),
@@ -72,16 +72,16 @@ impl From<&SorobanAddressCredentialsWithDelegatesRef<'_>>
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAddressCredentialsWithDelegatesRef<'_>>
+impl From<SorobanAddressCredentialsWithDelegatesView<'_>>
     for SorobanAddressCredentialsWithDelegates
 {
     #[must_use]
-    fn from(v: SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
+    fn from(v: SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanAddressCredentialsWithDelegatesRef<'_> {
+impl WriteXdr for SorobanAddressCredentialsWithDelegatesView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

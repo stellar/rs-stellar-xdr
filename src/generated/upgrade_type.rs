@@ -108,28 +108,28 @@ impl AsRef<[u8]> for UpgradeType {
     }
 }
 
-/// UpgradeTypeRef is a borrowing equivalent of [`UpgradeType`], usable in
+/// UpgradeTypeView is a borrowing equivalent of [`UpgradeType`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct UpgradeTypeRef<'a>(pub BytesMRef<'a, 128>);
+pub struct UpgradeTypeView<'a>(pub BytesMView<'a, 128>);
 
 #[cfg(feature = "alloc")]
-impl From<&UpgradeTypeRef<'_>> for UpgradeType {
+impl From<&UpgradeTypeView<'_>> for UpgradeType {
     #[must_use]
-    fn from(v: &UpgradeTypeRef<'_>) -> Self {
+    fn from(v: &UpgradeTypeView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<UpgradeTypeRef<'_>> for UpgradeType {
+impl From<UpgradeTypeView<'_>> for UpgradeType {
     #[must_use]
-    fn from(v: UpgradeTypeRef<'_>) -> Self {
+    fn from(v: UpgradeTypeView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for UpgradeTypeRef<'_> {
+impl WriteXdr for UpgradeTypeView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

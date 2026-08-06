@@ -134,34 +134,34 @@ impl WriteXdr for AuthenticatedMessage {
     }
 }
 
-/// AuthenticatedMessageRef is a borrowing equivalent of [`AuthenticatedMessage`], usable in
+/// AuthenticatedMessageView is a borrowing equivalent of [`AuthenticatedMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AuthenticatedMessageRef<'a> {
-    V0(AuthenticatedMessageV0Ref<'a>),
+pub enum AuthenticatedMessageView<'a> {
+    V0(AuthenticatedMessageV0View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
+impl From<&AuthenticatedMessageView<'_>> for AuthenticatedMessage {
     #[must_use]
-    fn from(v: &AuthenticatedMessageRef<'_>) -> Self {
+    fn from(v: &AuthenticatedMessageView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            AuthenticatedMessageRef::V0(value) => Self::V0(value.into()),
+            AuthenticatedMessageView::V0(value) => Self::V0(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
+impl From<AuthenticatedMessageView<'_>> for AuthenticatedMessage {
     #[must_use]
-    fn from(v: AuthenticatedMessageRef<'_>) -> Self {
+    fn from(v: AuthenticatedMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl AuthenticatedMessageRef<'_> {
+impl AuthenticatedMessageView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> u32 {
         #[allow(clippy::match_same_arms)]
@@ -171,7 +171,7 @@ impl AuthenticatedMessageRef<'_> {
     }
 }
 
-impl WriteXdr for AuthenticatedMessageRef<'_> {
+impl WriteXdr for AuthenticatedMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

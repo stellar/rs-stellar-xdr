@@ -157,42 +157,42 @@ impl WriteXdr for TransactionMeta {
     }
 }
 
-/// TransactionMetaRef is a borrowing equivalent of [`TransactionMeta`], usable in
+/// TransactionMetaView is a borrowing equivalent of [`TransactionMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionMetaRef<'a> {
-    V0(VecMRef<'a, OperationMetaRef<'a>>),
-    V1(TransactionMetaV1Ref<'a>),
-    V2(TransactionMetaV2Ref<'a>),
-    V3(TransactionMetaV3Ref<'a>),
-    V4(TransactionMetaV4Ref<'a>),
+pub enum TransactionMetaView<'a> {
+    V0(VecMView<'a, OperationMetaView<'a>>),
+    V1(TransactionMetaV1View<'a>),
+    V2(TransactionMetaV2View<'a>),
+    V3(TransactionMetaV3View<'a>),
+    V4(TransactionMetaV4View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionMetaRef<'_>> for TransactionMeta {
+impl From<&TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
-    fn from(v: &TransactionMetaRef<'_>) -> Self {
+    fn from(v: &TransactionMetaView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionMetaRef::V0(value) => Self::V0(value.to_vecm_from()),
-            TransactionMetaRef::V1(value) => Self::V1(value.into()),
-            TransactionMetaRef::V2(value) => Self::V2(value.into()),
-            TransactionMetaRef::V3(value) => Self::V3(value.into()),
-            TransactionMetaRef::V4(value) => Self::V4(value.into()),
+            TransactionMetaView::V0(value) => Self::V0(value.to_vecm_from()),
+            TransactionMetaView::V1(value) => Self::V1(value.into()),
+            TransactionMetaView::V2(value) => Self::V2(value.into()),
+            TransactionMetaView::V3(value) => Self::V3(value.into()),
+            TransactionMetaView::V4(value) => Self::V4(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionMetaRef<'_>> for TransactionMeta {
+impl From<TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
-    fn from(v: TransactionMetaRef<'_>) -> Self {
+    fn from(v: TransactionMetaView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl TransactionMetaRef<'_> {
+impl TransactionMetaView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -206,7 +206,7 @@ impl TransactionMetaRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionMetaRef<'_> {
+impl WriteXdr for TransactionMetaView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

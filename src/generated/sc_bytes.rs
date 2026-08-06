@@ -108,28 +108,28 @@ impl AsRef<[u8]> for ScBytes {
     }
 }
 
-/// ScBytesRef is a borrowing equivalent of [`ScBytes`], usable in
+/// ScBytesView is a borrowing equivalent of [`ScBytes`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScBytesRef<'a>(pub BytesMRef<'a>);
+pub struct ScBytesView<'a>(pub BytesMView<'a>);
 
 #[cfg(feature = "alloc")]
-impl From<&ScBytesRef<'_>> for ScBytes {
+impl From<&ScBytesView<'_>> for ScBytes {
     #[must_use]
-    fn from(v: &ScBytesRef<'_>) -> Self {
+    fn from(v: &ScBytesView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScBytesRef<'_>> for ScBytes {
+impl From<ScBytesView<'_>> for ScBytes {
     #[must_use]
-    fn from(v: ScBytesRef<'_>) -> Self {
+    fn from(v: ScBytesView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScBytesRef<'_> {
+impl WriteXdr for ScBytesView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

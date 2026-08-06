@@ -163,42 +163,42 @@ impl WriteXdr for LedgerEntryChange {
     }
 }
 
-/// LedgerEntryChangeRef is a borrowing equivalent of [`LedgerEntryChange`], usable in
+/// LedgerEntryChangeView is a borrowing equivalent of [`LedgerEntryChange`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerEntryChangeRef<'a> {
-    Created(LedgerEntryRef<'a>),
-    Updated(LedgerEntryRef<'a>),
-    Removed(LedgerKeyRef<'a>),
-    State(LedgerEntryRef<'a>),
-    Restored(LedgerEntryRef<'a>),
+pub enum LedgerEntryChangeView<'a> {
+    Created(LedgerEntryView<'a>),
+    Updated(LedgerEntryView<'a>),
+    Removed(LedgerKeyView<'a>),
+    State(LedgerEntryView<'a>),
+    Restored(LedgerEntryView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerEntryChangeRef<'_>> for LedgerEntryChange {
+impl From<&LedgerEntryChangeView<'_>> for LedgerEntryChange {
     #[must_use]
-    fn from(v: &LedgerEntryChangeRef<'_>) -> Self {
+    fn from(v: &LedgerEntryChangeView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerEntryChangeRef::Created(value) => Self::Created(value.into()),
-            LedgerEntryChangeRef::Updated(value) => Self::Updated(value.into()),
-            LedgerEntryChangeRef::Removed(value) => Self::Removed(value.into()),
-            LedgerEntryChangeRef::State(value) => Self::State(value.into()),
-            LedgerEntryChangeRef::Restored(value) => Self::Restored(value.into()),
+            LedgerEntryChangeView::Created(value) => Self::Created(value.into()),
+            LedgerEntryChangeView::Updated(value) => Self::Updated(value.into()),
+            LedgerEntryChangeView::Removed(value) => Self::Removed(value.into()),
+            LedgerEntryChangeView::State(value) => Self::State(value.into()),
+            LedgerEntryChangeView::Restored(value) => Self::Restored(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerEntryChangeRef<'_>> for LedgerEntryChange {
+impl From<LedgerEntryChangeView<'_>> for LedgerEntryChange {
     #[must_use]
-    fn from(v: LedgerEntryChangeRef<'_>) -> Self {
+    fn from(v: LedgerEntryChangeView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl LedgerEntryChangeRef<'_> {
+impl LedgerEntryChangeView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryChangeType {
         #[allow(clippy::match_same_arms)]
@@ -212,7 +212,7 @@ impl LedgerEntryChangeRef<'_> {
     }
 }
 
-impl WriteXdr for LedgerEntryChangeRef<'_> {
+impl WriteXdr for LedgerEntryChangeView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

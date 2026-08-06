@@ -359,11 +359,11 @@ impl WriteXdr for ScVal {
     }
 }
 
-/// ScValRef is a borrowing equivalent of [`ScVal`], usable in
+/// ScValView is a borrowing equivalent of [`ScVal`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScValRef<'a> {
+pub enum ScValView<'a> {
     Bool(bool),
     Void,
     Error(ScError),
@@ -377,60 +377,60 @@ pub enum ScValRef<'a> {
     I128(Int128Parts),
     U256(UInt256Parts),
     I256(Int256Parts),
-    Bytes(ScBytesRef<'a>),
-    String(ScStringRef<'a>),
-    Symbol(ScSymbolRef<'a>),
-    Vec(Option<ScVecRef<'a>>),
-    Map(Option<ScMapRef<'a>>),
+    Bytes(ScBytesView<'a>),
+    String(ScStringView<'a>),
+    Symbol(ScSymbolView<'a>),
+    Vec(Option<ScVecView<'a>>),
+    Map(Option<ScMapView<'a>>),
     Address(ScAddress),
-    ContractInstance(ScContractInstanceRef<'a>),
+    ContractInstance(ScContractInstanceView<'a>),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    ExecutableTag(ScStringRef<'a>),
+    ExecutableTag(ScStringView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScValRef<'_>> for ScVal {
+impl From<&ScValView<'_>> for ScVal {
     #[must_use]
-    fn from(v: &ScValRef<'_>) -> Self {
+    fn from(v: &ScValView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScValRef::Bool(value) => Self::Bool(*value),
-            ScValRef::Void => Self::Void,
-            ScValRef::Error(value) => Self::Error(value.clone()),
-            ScValRef::U32(value) => Self::U32(*value),
-            ScValRef::I32(value) => Self::I32(*value),
-            ScValRef::U64(value) => Self::U64(*value),
-            ScValRef::I64(value) => Self::I64(*value),
-            ScValRef::Timepoint(value) => Self::Timepoint(value.clone()),
-            ScValRef::Duration(value) => Self::Duration(value.clone()),
-            ScValRef::U128(value) => Self::U128(value.clone()),
-            ScValRef::I128(value) => Self::I128(value.clone()),
-            ScValRef::U256(value) => Self::U256(value.clone()),
-            ScValRef::I256(value) => Self::I256(value.clone()),
-            ScValRef::Bytes(value) => Self::Bytes(value.into()),
-            ScValRef::String(value) => Self::String(value.into()),
-            ScValRef::Symbol(value) => Self::Symbol(value.into()),
-            ScValRef::Vec(value) => Self::Vec(value.as_ref().map(Into::into)),
-            ScValRef::Map(value) => Self::Map(value.as_ref().map(Into::into)),
-            ScValRef::Address(value) => Self::Address(value.clone()),
-            ScValRef::ContractInstance(value) => Self::ContractInstance(value.into()),
-            ScValRef::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
-            ScValRef::LedgerKeyNonce(value) => Self::LedgerKeyNonce(value.clone()),
-            ScValRef::ExecutableTag(value) => Self::ExecutableTag(value.into()),
+            ScValView::Bool(value) => Self::Bool(*value),
+            ScValView::Void => Self::Void,
+            ScValView::Error(value) => Self::Error(value.clone()),
+            ScValView::U32(value) => Self::U32(*value),
+            ScValView::I32(value) => Self::I32(*value),
+            ScValView::U64(value) => Self::U64(*value),
+            ScValView::I64(value) => Self::I64(*value),
+            ScValView::Timepoint(value) => Self::Timepoint(value.clone()),
+            ScValView::Duration(value) => Self::Duration(value.clone()),
+            ScValView::U128(value) => Self::U128(value.clone()),
+            ScValView::I128(value) => Self::I128(value.clone()),
+            ScValView::U256(value) => Self::U256(value.clone()),
+            ScValView::I256(value) => Self::I256(value.clone()),
+            ScValView::Bytes(value) => Self::Bytes(value.into()),
+            ScValView::String(value) => Self::String(value.into()),
+            ScValView::Symbol(value) => Self::Symbol(value.into()),
+            ScValView::Vec(value) => Self::Vec(value.as_ref().map(Into::into)),
+            ScValView::Map(value) => Self::Map(value.as_ref().map(Into::into)),
+            ScValView::Address(value) => Self::Address(value.clone()),
+            ScValView::ContractInstance(value) => Self::ContractInstance(value.into()),
+            ScValView::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
+            ScValView::LedgerKeyNonce(value) => Self::LedgerKeyNonce(value.clone()),
+            ScValView::ExecutableTag(value) => Self::ExecutableTag(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScValRef<'_>> for ScVal {
+impl From<ScValView<'_>> for ScVal {
     #[must_use]
-    fn from(v: ScValRef<'_>) -> Self {
+    fn from(v: ScValView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScValRef<'_> {
+impl ScValView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
@@ -462,7 +462,7 @@ impl ScValRef<'_> {
     }
 }
 
-impl WriteXdr for ScValRef<'_> {
+impl WriteXdr for ScValView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

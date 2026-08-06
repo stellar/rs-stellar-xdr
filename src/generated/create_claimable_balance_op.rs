@@ -58,19 +58,19 @@ impl WriteXdr for CreateClaimableBalanceOp {
     }
 }
 
-/// CreateClaimableBalanceOpRef is a borrowing equivalent of [`CreateClaimableBalanceOp`], usable in
+/// CreateClaimableBalanceOpView is a borrowing equivalent of [`CreateClaimableBalanceOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct CreateClaimableBalanceOpRef<'a> {
+pub struct CreateClaimableBalanceOpView<'a> {
     pub asset: Asset,
     pub amount: i64,
-    pub claimants: VecMRef<'a, ClaimantRef<'a>, 10>,
+    pub claimants: VecMView<'a, ClaimantView<'a>, 10>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
+impl From<&CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
     #[must_use]
-    fn from(v: &CreateClaimableBalanceOpRef<'_>) -> Self {
+    fn from(v: &CreateClaimableBalanceOpView<'_>) -> Self {
         Self {
             asset: v.asset.clone(),
             amount: v.amount,
@@ -80,14 +80,14 @@ impl From<&CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
 }
 
 #[cfg(feature = "alloc")]
-impl From<CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
+impl From<CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
     #[must_use]
-    fn from(v: CreateClaimableBalanceOpRef<'_>) -> Self {
+    fn from(v: CreateClaimableBalanceOpView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for CreateClaimableBalanceOpRef<'_> {
+impl WriteXdr for CreateClaimableBalanceOpView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

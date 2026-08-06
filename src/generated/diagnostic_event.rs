@@ -50,18 +50,18 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
-/// DiagnosticEventRef is a borrowing equivalent of [`DiagnosticEvent`], usable in
+/// DiagnosticEventView is a borrowing equivalent of [`DiagnosticEvent`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DiagnosticEventRef<'a> {
+pub struct DiagnosticEventView<'a> {
     pub in_successful_contract_call: bool,
-    pub event: ContractEventRef<'a>,
+    pub event: ContractEventView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&DiagnosticEventRef<'_>> for DiagnosticEvent {
+impl From<&DiagnosticEventView<'_>> for DiagnosticEvent {
     #[must_use]
-    fn from(v: &DiagnosticEventRef<'_>) -> Self {
+    fn from(v: &DiagnosticEventView<'_>) -> Self {
         Self {
             in_successful_contract_call: v.in_successful_contract_call,
             event: (&v.event).into(),
@@ -70,14 +70,14 @@ impl From<&DiagnosticEventRef<'_>> for DiagnosticEvent {
 }
 
 #[cfg(feature = "alloc")]
-impl From<DiagnosticEventRef<'_>> for DiagnosticEvent {
+impl From<DiagnosticEventView<'_>> for DiagnosticEvent {
     #[must_use]
-    fn from(v: DiagnosticEventRef<'_>) -> Self {
+    fn from(v: DiagnosticEventView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for DiagnosticEventRef<'_> {
+impl WriteXdr for DiagnosticEventView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

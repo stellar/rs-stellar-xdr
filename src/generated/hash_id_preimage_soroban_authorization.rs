@@ -62,20 +62,20 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
     }
 }
 
-/// HashIdPreimageSorobanAuthorizationRef is a borrowing equivalent of [`HashIdPreimageSorobanAuthorization`], usable in
+/// HashIdPreimageSorobanAuthorizationView is a borrowing equivalent of [`HashIdPreimageSorobanAuthorization`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HashIdPreimageSorobanAuthorizationRef<'a> {
+pub struct HashIdPreimageSorobanAuthorizationView<'a> {
     pub network_id: Hash,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
-    pub invocation: SorobanAuthorizedInvocationRef<'a>,
+    pub invocation: SorobanAuthorizedInvocationView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HashIdPreimageSorobanAuthorizationRef<'_>> for HashIdPreimageSorobanAuthorization {
+impl From<&HashIdPreimageSorobanAuthorizationView<'_>> for HashIdPreimageSorobanAuthorization {
     #[must_use]
-    fn from(v: &HashIdPreimageSorobanAuthorizationRef<'_>) -> Self {
+    fn from(v: &HashIdPreimageSorobanAuthorizationView<'_>) -> Self {
         Self {
             network_id: v.network_id.clone(),
             nonce: v.nonce,
@@ -86,14 +86,14 @@ impl From<&HashIdPreimageSorobanAuthorizationRef<'_>> for HashIdPreimageSorobanA
 }
 
 #[cfg(feature = "alloc")]
-impl From<HashIdPreimageSorobanAuthorizationRef<'_>> for HashIdPreimageSorobanAuthorization {
+impl From<HashIdPreimageSorobanAuthorizationView<'_>> for HashIdPreimageSorobanAuthorization {
     #[must_use]
-    fn from(v: HashIdPreimageSorobanAuthorizationRef<'_>) -> Self {
+    fn from(v: HashIdPreimageSorobanAuthorizationView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for HashIdPreimageSorobanAuthorizationRef<'_> {
+impl WriteXdr for HashIdPreimageSorobanAuthorizationView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

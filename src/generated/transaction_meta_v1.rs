@@ -50,18 +50,18 @@ impl WriteXdr for TransactionMetaV1 {
     }
 }
 
-/// TransactionMetaV1Ref is a borrowing equivalent of [`TransactionMetaV1`], usable in
+/// TransactionMetaV1View is a borrowing equivalent of [`TransactionMetaV1`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionMetaV1Ref<'a> {
-    pub tx_changes: LedgerEntryChangesRef<'a>,
-    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
+pub struct TransactionMetaV1View<'a> {
+    pub tx_changes: LedgerEntryChangesView<'a>,
+    pub operations: VecMView<'a, OperationMetaView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionMetaV1Ref<'_>> for TransactionMetaV1 {
+impl From<&TransactionMetaV1View<'_>> for TransactionMetaV1 {
     #[must_use]
-    fn from(v: &TransactionMetaV1Ref<'_>) -> Self {
+    fn from(v: &TransactionMetaV1View<'_>) -> Self {
         Self {
             tx_changes: (&v.tx_changes).into(),
             operations: v.operations.to_vecm_from(),
@@ -70,14 +70,14 @@ impl From<&TransactionMetaV1Ref<'_>> for TransactionMetaV1 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionMetaV1Ref<'_>> for TransactionMetaV1 {
+impl From<TransactionMetaV1View<'_>> for TransactionMetaV1 {
     #[must_use]
-    fn from(v: TransactionMetaV1Ref<'_>) -> Self {
+    fn from(v: TransactionMetaV1View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionMetaV1Ref<'_> {
+impl WriteXdr for TransactionMetaV1View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -228,7 +228,10 @@ impl<'a> TypeMapping<'a> {
                 }
             }
             Type::Optional(inner) => {
-                format!("Option<{}>", self.child(inner).view_base_type_ref(view_required))
+                format!(
+                    "Option<{}>",
+                    self.child(inner).view_base_type_ref(view_required)
+                )
             }
             Type::Array { element_type, size } => {
                 format!(
@@ -358,9 +361,11 @@ impl<'a> TypeMapping<'a> {
             Type::Ident(_) => {
                 if let Some(ti) = self.type_info {
                     if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
-                        return self
-                            .child(builtin)
-                            .from_view_expr(view_required, access, access_is_ref);
+                        return self.child(builtin).from_view_expr(
+                            view_required,
+                            access,
+                            access_is_ref,
+                        );
                     }
                 }
                 if let Type::Ident(name) = self.type_ {

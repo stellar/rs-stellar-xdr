@@ -104,27 +104,6 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     }
 }
 {%- endif %}
-{%- if s.emit_view_alias %}
-
-/// {{ s.name }} holds no heap-allocated data, so its borrowing form is the
-/// owned type itself. The alias lets types that contain it name
-/// `{{ s.name }}View` uniformly across cfgs.
-{%- if let Some(cfg) = s.view_alias_cfg %}
-#[cfg({{ cfg }})]
-{%- endif %}
-pub type {{ s.name }}View<'a> = {{ s.name }};
-
-{% if let Some(cfg) = s.view_alias_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl From<&{{ s.name }}> for {{ s.name }} {
-    #[must_use]
-    fn from(v: &{{ s.name }}) -> Self {
-        v.clone()
-    }
-}
-{%- endif %}
 {%- if s.emit_view %}
 
 /// {{ s.name }}View is a borrowing equivalent of [`{{ s.name }}`], usable in

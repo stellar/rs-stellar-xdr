@@ -1,10 +1,9 @@
 use std::collections::hash_map::Entry;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use askama::Template;
 use xdr_parser::ast::{
-    CfgExpr, Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm,
-    XdrSpec,
+    CfgExpr, Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm, XdrSpec,
 };
 use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
@@ -60,7 +59,7 @@ impl RustGenerator {
         let borrow = self
             .def_borrow
             .get(&(name.to_string(), cfg.map(ToString::to_string)))
-            .cloned()
+            .copied()
             .unwrap_or(BorrowCfg::Never);
         view_emit(self.view_required.contains(name), &borrow, cfg)
     }
@@ -308,8 +307,6 @@ impl RustGenerator {
             member_names,
             emit_view: r.emit_view,
             view_cfg: r.view_cfg,
-            emit_view_alias: r.emit_view_alias,
-            view_alias_cfg: r.view_alias_cfg,
             cfg,
         }
     }
@@ -396,8 +393,6 @@ impl RustGenerator {
             arms,
             emit_view: r.emit_view,
             view_cfg: r.view_cfg,
-            emit_view_alias: r.emit_view_alias,
-            view_alias_cfg: r.view_alias_cfg,
             cfg,
             default_arm_cfg,
         }
@@ -458,8 +453,6 @@ impl RustGenerator {
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             emit_view: r.emit_view,
             view_cfg: r.view_cfg,
-            emit_view_alias: r.emit_view_alias,
-            view_alias_cfg: r.view_alias_cfg,
             view_type_ref: resolved.view_type_ref,
             from_view_expr: resolved.from_view_expr,
             cfg,
@@ -556,33 +549,26 @@ impl RustGenerator {
     }
 }
 
-/// Combine a definition's cfg with an additional condition, rendered as the
-/// inside of a `#[cfg(...)]`.
-fn combine_cfg(def_cfg: Option<&str>, extra: &str) -> String {
-    match def_cfg {
-        Some(def) => format!("all({def}, {extra})"),
-        None => extra.to_string(),
-    }
-}
-
 // =============================================================================
 // Borrow analysis
 // =============================================================================
 
-/// The cfg condition under which a type's `View` form actually borrows, i.e.
-/// under which its `'a` lifetime is used.
+/// Whether a type holds heap-allocated data, and so whether its `View` form
+/// would use its `'a` lifetime.
 ///
-/// A `View` type may borrow unconditionally, never, or only under some cfgs —
-/// when the heap-allocated data it holds sits behind a cfg-gated union arm, or
-/// is reached through a type that itself only holds heap data under a cfg.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// The distinction that matters is unconditional: only a type that borrows
+/// under every cfg gets a `View` form. One that borrows under some cfgs would
+/// need a cfg-gated `View`, which any unconditional container of it would name
+/// unconditionally and so reference where it does not exist.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum BorrowCfg {
-    /// Holds no heap-allocated data under any cfg, so it needs no `View` form.
+    /// Holds no heap-allocated data under any cfg.
     Never,
-    /// Always borrows, so its `View` form is unconditional.
+    /// Holds heap-allocated data under every cfg.
     Always,
-    /// Borrows under the disjunction of these cfg predicates.
-    When(BTreeSet<String>),
+    /// Holds heap-allocated data only under some cfgs, because it sits behind a
+    /// cfg-gated union arm or is reached through a type that does.
+    Sometimes,
 }
 
 impl BorrowCfg {
@@ -590,35 +576,18 @@ impl BorrowCfg {
         match (self, other) {
             (BorrowCfg::Always, _) | (_, BorrowCfg::Always) => BorrowCfg::Always,
             (BorrowCfg::Never, o) | (o, BorrowCfg::Never) => o,
-            (BorrowCfg::When(mut a), BorrowCfg::When(b)) => {
-                a.extend(b);
-                BorrowCfg::When(a)
-            }
+            (BorrowCfg::Sometimes, BorrowCfg::Sometimes) => BorrowCfg::Sometimes,
         }
     }
 
     /// Restrict to also require `cfg`, as for a cfg-gated union arm.
     fn and_cfg(self, cfg: Option<&str>) -> BorrowCfg {
-        let Some(cfg) = cfg else { return self };
+        if cfg.is_none() {
+            return self;
+        }
         match self {
             BorrowCfg::Never => BorrowCfg::Never,
-            BorrowCfg::Always => BorrowCfg::When(core::iter::once(cfg.to_string()).collect()),
-            BorrowCfg::When(set) => {
-                BorrowCfg::When(set.iter().map(|e| format!("all({cfg}, {e})")).collect())
-            }
-        }
-    }
-
-    /// The cfg predicate to gate the borrowing `View` form on, or `None` when it
-    /// is unconditional.
-    fn render(&self) -> Option<String> {
-        match self {
-            BorrowCfg::Never | BorrowCfg::Always => None,
-            BorrowCfg::When(set) if set.len() == 1 => set.iter().next().cloned(),
-            BorrowCfg::When(set) => Some(format!(
-                "any({})",
-                set.iter().cloned().collect::<Vec<_>>().join(", ")
-            )),
+            BorrowCfg::Always | BorrowCfg::Sometimes => BorrowCfg::Sometimes,
         }
     }
 }
@@ -653,11 +622,17 @@ impl<'a> BorrowAnalysis<'a> {
         analysis
     }
 
-    /// The names that have a `View` form at all, i.e. that borrow under some cfg.
+    /// The names that get a `View` form, i.e. that borrow under every cfg.
+    ///
+    /// A name that only borrows under some cfgs is excluded. Its `View` form
+    /// would have to be cfg-gated, and an always-borrowing type containing it
+    /// names that form unconditionally, so the reference would dangle wherever
+    /// the cfg is off. Excluding it leaves containers holding the owned type in
+    /// that position, which is correct under every cfg.
     fn view_required(&self) -> HashSet<String> {
         self.by_name
             .iter()
-            .filter(|(_, b)| **b != BorrowCfg::Never)
+            .filter(|(_, b)| **b == BorrowCfg::Always)
             .map(|(n, _)| n.clone())
             .collect()
     }
@@ -670,7 +645,7 @@ impl<'a> BorrowAnalysis<'a> {
     /// cycle always borrows.
     fn of_name(&mut self, name: &str) -> BorrowCfg {
         if let Some(b) = self.by_name.get(name) {
-            return b.clone();
+            return *b;
         }
         if self.stack.contains(name) {
             return BorrowCfg::Always;
@@ -685,7 +660,7 @@ impl<'a> BorrowAnalysis<'a> {
             borrow = borrow.or(self.of_def(def).and_cfg(def_cfg.as_deref()));
         }
         self.stack.remove(name);
-        self.by_name.insert(name.to_string(), borrow.clone());
+        self.by_name.insert(name.to_string(), borrow);
         borrow
     }
 
@@ -736,15 +711,12 @@ impl<'a> BorrowAnalysis<'a> {
 
 /// How a definition's borrowing `View` form is emitted.
 ///
-/// Where the definition borrows, a real `{name}View<'a>` is emitted, so its `'a`
-/// is always used. Where it does not, `{name}View<'a>` is emitted as a
-/// transparent alias of the owned type, so types containing it can name it
-/// uniformly across cfgs instead of being cfg-split themselves.
+/// A `{name}View<'a>` is emitted only where the definition borrows, so its `'a`
+/// is always used. Where it does not borrow, nothing is emitted: the owned type
+/// is already the whole value, and a heap-free type has nothing to borrow.
 struct ViewEmit {
     emit_view: bool,
     view_cfg: Option<String>,
-    emit_view_alias: bool,
-    view_alias_cfg: Option<String>,
 }
 
 /// Decide how to emit the `View` form of one definition.
@@ -755,31 +727,17 @@ fn view_emit(has_view: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> ViewE
     let mut emit = ViewEmit {
         emit_view: false,
         view_cfg: None,
-        emit_view_alias: false,
-        view_alias_cfg: None,
     };
     if !has_view {
         return emit;
     }
     match borrow {
-        // The name has a View form only because another cfg branch of it
-        // borrows, so this definition contributes just the alias.
-        BorrowCfg::Never => {
-            emit.emit_view_alias = true;
-            emit.view_alias_cfg = def_cfg.map(ToString::to_string);
-        }
+        // Nothing to borrow in this branch, or nothing to borrow under some
+        // cfg. Either way this definition emits no View form.
+        BorrowCfg::Never | BorrowCfg::Sometimes => {}
         BorrowCfg::Always => {
             emit.emit_view = true;
             emit.view_cfg = def_cfg.map(ToString::to_string);
-        }
-        BorrowCfg::When(_) => {
-            let when = borrow
-                .render()
-                .expect("BorrowCfg::When always renders a predicate");
-            emit.emit_view = true;
-            emit.view_cfg = Some(combine_cfg(def_cfg, &when));
-            emit.emit_view_alias = true;
-            emit.view_alias_cfg = Some(combine_cfg(def_cfg, &format!("not({when})")));
         }
     }
     emit

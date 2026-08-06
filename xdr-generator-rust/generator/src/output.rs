@@ -54,11 +54,6 @@ pub struct StructOutput {
     pub emit_view: bool,
     /// The full cfg for the real `View` struct, gating it to where it borrows.
     pub view_cfg: Option<String>,
-    /// True when `{name}View<'a>` is emitted as a transparent alias of `{name}`,
-    /// for the cfgs under which this definition does not borrow.
-    pub emit_view_alias: bool,
-    /// The full cfg for the alias.
-    pub view_alias_cfg: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -105,12 +100,6 @@ pub struct UnionOutput {
     /// a cfg, this is the union's cfg combined with the disjunction of those
     /// arm cfgs, so the enum only exists where its lifetime is actually used.
     pub view_cfg: Option<String>,
-    /// True when `{name}View<'a>` is emitted as a transparent alias of `{name}`,
-    /// for the cfgs under which no arm borrows.
-    pub emit_view_alias: bool,
-    /// The full cfg for the alias: the union's cfg combined with the negation
-    /// of the borrowing arms' cfgs.
-    pub view_alias_cfg: Option<String>,
     pub cfg: Option<String>,
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
@@ -159,11 +148,6 @@ pub struct TypedefNewtypeOutput {
     pub emit_view: bool,
     /// The full cfg for the real `View` newtype, gating it to where it borrows.
     pub view_cfg: Option<String>,
-    /// True when `{name}View<'a>` is emitted as a transparent alias of `{name}`,
-    /// for the cfgs under which this definition does not borrow.
-    pub emit_view_alias: bool,
-    /// The full cfg for the alias.
-    pub view_alias_cfg: Option<String>,
     /// The inner type in the borrowing `View` form of the newtype.
     pub view_type_ref: String,
     /// Expression converting the inner value from `View` form to owned form.

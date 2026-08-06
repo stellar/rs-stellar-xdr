@@ -426,3 +426,107 @@ impl WriteXdr for TransactionResultResultView<'_> {
         })
     }
 }
+#[cfg(feature = "const")]
+impl TransactionResultResultView<'_> {
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const counterpart to the owned type's
+    /// [`WriteXdr::write_xdr`].
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        d.const_write_xdr(w);
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxFeeBumpInnerSuccess(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TxFeeBumpInnerFailed(v) => {
+                v.const_write_xdr(w);
+            }
+            Self::TxSuccess(v) => {
+                w.enter_depth();
+                let __s0 = v.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    __s0[__i0].const_write_xdr(w);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::TxFailed(v) => {
+                w.enter_depth();
+                let __s0 = v.as_slice();
+                let __len0 = __s0.len();
+                w.write_length_prefix(__len0);
+                let mut __i0 = 0usize;
+                while __i0 < __len0 {
+                    __s0[__i0].const_write_xdr(w);
+                    __i0 += 1;
+                }
+                w.leave_depth();
+            }
+            Self::TxTooEarly => {}
+            Self::TxTooLate => {}
+            Self::TxMissingOperation => {}
+            Self::TxBadSeq => {}
+            Self::TxBadAuth => {}
+            Self::TxInsufficientBalance => {}
+            Self::TxNoAccount => {}
+            Self::TxInsufficientFee => {}
+            Self::TxBadAuthExtra => {}
+            Self::TxInternalError => {}
+            Self::TxNotSupported => {}
+            Self::TxBadSponsorship => {}
+            Self::TxBadMinSeqAgeOrGap => {}
+            Self::TxMalformed => {}
+            Self::TxSorobanInvalid => {}
+            Self::TxFrozenKeyAccessed => {}
+        }
+        w.leave_depth();
+    }
+    /// The exact XDR-encoded length of this value, in bytes.
+    ///
+    /// Evaluable in a const context, so a caller (such as a proc-macro) can
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[cfg(feature = "const")]
+    #[must_use]
+    pub const fn const_xdr_len(&self) -> usize {
+        let limits = Limits {
+            depth: u32::MAX,
+            len: usize::MAX,
+        };
+        let mut empty: [u8; 0] = [];
+        let mut w = ConstWriter::new(&mut empty, &limits);
+        self.const_write_xdr(&mut w);
+        w.position()
+    }
+
+    /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
+    ///
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[cfg(feature = "const")]
+    #[must_use]
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
+        let limits = Limits {
+            depth: u32::MAX,
+            len: usize::MAX,
+        };
+        let mut buf = [0u8; N];
+        let mut w = ConstWriter::new(&mut buf, &limits);
+        self.const_write_xdr(&mut w);
+        assert!(
+            w.position() == N,
+            "const_to_xdr: N does not equal the XDR-encoded length"
+        );
+        buf
+    }
+}

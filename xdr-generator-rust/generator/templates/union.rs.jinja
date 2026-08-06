@@ -331,3 +331,46 @@ impl WriteXdr for {{ u.name }}View<'_> {
 }
 {%- endif %}
 
+
+{#- Const XDR serializers: on the borrowing View enum when the union owns heap
+    data, otherwise on the owned enum. Both forms expose a const `discriminant`,
+    so the body mirrors the owned type's write_xdr: write the discriminant, then
+    the selected arm's payload. #}
+{% if u.emit_view -%}
+{% if let Some(cfg) = u.view_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "const")]
+impl {{ u.name }}View<'_> {
+{%- else %}
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "const")]
+impl {{ u.name }} {
+{%- endif %}
+    /// Serialize this value as XDR into a [`ConstWriter`] using only const
+    /// operations. This is the const counterpart to the owned type's
+    /// [`WriteXdr::write_xdr`].
+    pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
+        w.enter_depth();
+        let d = self.discriminant();
+        {{ u.discriminant_const_write }}
+        #[allow(clippy::match_same_arms)]
+        match self {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+{%- match arm.const_write %}
+{%- when Some with (cw) %}
+            Self::{{ arm.case_name }}(v) => { {{ cw }} }
+{%- when None %}
+            Self::{{ arm.case_name }} => {}
+{%- endmatch %}
+{%- endfor %}
+        }
+        w.leave_depth();
+    }
+{% include "const_xdr_array.rs.jinja" %}
+}

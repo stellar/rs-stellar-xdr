@@ -226,27 +226,6 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
-{%- if u.emit_view_alias %}
-
-/// {{ u.name }} holds no heap-allocated data, so its borrowing form is the
-/// owned type itself. The alias lets types that contain it name
-/// `{{ u.name }}View` uniformly across cfgs.
-{%- if let Some(cfg) = u.view_alias_cfg %}
-#[cfg({{ cfg }})]
-{%- endif %}
-pub type {{ u.name }}View<'a> = {{ u.name }};
-
-{% if let Some(cfg) = u.view_alias_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl From<&{{ u.name }}> for {{ u.name }} {
-    #[must_use]
-    fn from(v: &{{ u.name }}) -> Self {
-        v.clone()
-    }
-}
-{%- endif %}
 {%- if u.emit_view %}
 
 /// {{ u.name }}View is a borrowing equivalent of [`{{ u.name }}`], usable in

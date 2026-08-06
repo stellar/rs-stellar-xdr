@@ -54,18 +54,18 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     }
 }
 
-/// TxSetComponentTxsMaybeDiscountedFeeRef is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`], usable in
+/// TxSetComponentTxsMaybeDiscountedFeeView is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxSetComponentTxsMaybeDiscountedFeeRef<'a> {
+pub struct TxSetComponentTxsMaybeDiscountedFeeView<'a> {
     pub base_fee: Option<i64>,
-    pub txs: VecMRef<'a, TransactionEnvelopeRef<'a>>,
+    pub txs: VecMView<'a, TransactionEnvelopeView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
+impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
-    fn from(v: &TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
+    fn from(v: &TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
         Self {
             base_fee: v.base_fee,
             txs: v.txs.to_vecm_from(),
@@ -74,14 +74,14 @@ impl From<&TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMayb
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
+impl From<TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
-    fn from(v: TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
+    fn from(v: TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
+impl WriteXdr for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

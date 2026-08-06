@@ -210,31 +210,31 @@ impl WriteXdr for HashIdPreimage {
     }
 }
 
-/// HashIdPreimageRef is a borrowing equivalent of [`HashIdPreimage`], usable in
+/// HashIdPreimageView is a borrowing equivalent of [`HashIdPreimage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HashIdPreimageRef<'a> {
+pub enum HashIdPreimageView<'a> {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractId(HashIdPreimageContractId),
-    SorobanAuthorization(HashIdPreimageSorobanAuthorizationRef<'a>),
-    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressRef<'a>),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorizationView<'a>),
+    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HashIdPreimageRef<'_>> for HashIdPreimage {
+impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
-    fn from(v: &HashIdPreimageRef<'_>) -> Self {
+    fn from(v: &HashIdPreimageView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            HashIdPreimageRef::OpId(value) => Self::OpId(value.clone()),
-            HashIdPreimageRef::PoolRevokeOpId(value) => Self::PoolRevokeOpId(value.clone()),
-            HashIdPreimageRef::ContractId(value) => Self::ContractId(value.clone()),
-            HashIdPreimageRef::SorobanAuthorization(value) => {
+            HashIdPreimageView::OpId(value) => Self::OpId(value.clone()),
+            HashIdPreimageView::PoolRevokeOpId(value) => Self::PoolRevokeOpId(value.clone()),
+            HashIdPreimageView::ContractId(value) => Self::ContractId(value.clone()),
+            HashIdPreimageView::SorobanAuthorization(value) => {
                 Self::SorobanAuthorization(value.into())
             }
-            HashIdPreimageRef::SorobanAuthorizationWithAddress(value) => {
+            HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
                 Self::SorobanAuthorizationWithAddress(value.into())
             }
         }
@@ -242,14 +242,14 @@ impl From<&HashIdPreimageRef<'_>> for HashIdPreimage {
 }
 
 #[cfg(feature = "alloc")]
-impl From<HashIdPreimageRef<'_>> for HashIdPreimage {
+impl From<HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
-    fn from(v: HashIdPreimageRef<'_>) -> Self {
+    fn from(v: HashIdPreimageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl HashIdPreimageRef<'_> {
+impl HashIdPreimageView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -265,7 +265,7 @@ impl HashIdPreimageRef<'_> {
     }
 }
 
-impl WriteXdr for HashIdPreimageRef<'_> {
+impl WriteXdr for HashIdPreimageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

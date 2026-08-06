@@ -51,18 +51,18 @@ impl WriteXdr for SorobanTransactionMetaV2 {
     }
 }
 
-/// SorobanTransactionMetaV2Ref is a borrowing equivalent of [`SorobanTransactionMetaV2`], usable in
+/// SorobanTransactionMetaV2View is a borrowing equivalent of [`SorobanTransactionMetaV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionMetaV2Ref<'a> {
+pub struct SorobanTransactionMetaV2View<'a> {
     pub ext: SorobanTransactionMetaExt,
-    pub return_value: Option<ScValRef<'a>>,
+    pub return_value: Option<ScValView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanTransactionMetaV2Ref<'_>> for SorobanTransactionMetaV2 {
+impl From<&SorobanTransactionMetaV2View<'_>> for SorobanTransactionMetaV2 {
     #[must_use]
-    fn from(v: &SorobanTransactionMetaV2Ref<'_>) -> Self {
+    fn from(v: &SorobanTransactionMetaV2View<'_>) -> Self {
         Self {
             ext: v.ext.clone(),
             return_value: v.return_value.as_ref().map(Into::into),
@@ -71,14 +71,14 @@ impl From<&SorobanTransactionMetaV2Ref<'_>> for SorobanTransactionMetaV2 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanTransactionMetaV2Ref<'_>> for SorobanTransactionMetaV2 {
+impl From<SorobanTransactionMetaV2View<'_>> for SorobanTransactionMetaV2 {
     #[must_use]
-    fn from(v: SorobanTransactionMetaV2Ref<'_>) -> Self {
+    fn from(v: SorobanTransactionMetaV2View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanTransactionMetaV2Ref<'_> {
+impl WriteXdr for SorobanTransactionMetaV2View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

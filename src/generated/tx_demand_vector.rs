@@ -108,28 +108,28 @@ impl AsRef<[Hash]> for TxDemandVector {
     }
 }
 
-/// TxDemandVectorRef is a borrowing equivalent of [`TxDemandVector`], usable in
+/// TxDemandVectorView is a borrowing equivalent of [`TxDemandVector`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxDemandVectorRef<'a>(pub VecMRef<'a, Hash, 1000>);
+pub struct TxDemandVectorView<'a>(pub VecMView<'a, Hash, 1000>);
 
 #[cfg(feature = "alloc")]
-impl From<&TxDemandVectorRef<'_>> for TxDemandVector {
+impl From<&TxDemandVectorView<'_>> for TxDemandVector {
     #[must_use]
-    fn from(v: &TxDemandVectorRef<'_>) -> Self {
+    fn from(v: &TxDemandVectorView<'_>) -> Self {
         Self(v.0.to_vecm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxDemandVectorRef<'_>> for TxDemandVector {
+impl From<TxDemandVectorView<'_>> for TxDemandVector {
     #[must_use]
-    fn from(v: TxDemandVectorRef<'_>) -> Self {
+    fn from(v: TxDemandVectorView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TxDemandVectorRef<'_> {
+impl WriteXdr for TxDemandVectorView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

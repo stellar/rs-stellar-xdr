@@ -139,21 +139,21 @@ impl WriteXdr for TxSetComponent {
     }
 }
 
-/// TxSetComponentRef is a borrowing equivalent of [`TxSetComponent`], usable in
+/// TxSetComponentView is a borrowing equivalent of [`TxSetComponent`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TxSetComponentRef<'a> {
-    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeRef<'a>),
+pub enum TxSetComponentView<'a> {
+    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TxSetComponentRef<'_>> for TxSetComponent {
+impl From<&TxSetComponentView<'_>> for TxSetComponent {
     #[must_use]
-    fn from(v: &TxSetComponentRef<'_>) -> Self {
+    fn from(v: &TxSetComponentView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TxSetComponentRef::TxsetCompTxsMaybeDiscountedFee(value) => {
+            TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {
                 Self::TxsetCompTxsMaybeDiscountedFee(value.into())
             }
         }
@@ -161,14 +161,14 @@ impl From<&TxSetComponentRef<'_>> for TxSetComponent {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxSetComponentRef<'_>> for TxSetComponent {
+impl From<TxSetComponentView<'_>> for TxSetComponent {
     #[must_use]
-    fn from(v: TxSetComponentRef<'_>) -> Self {
+    fn from(v: TxSetComponentView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl TxSetComponentRef<'_> {
+impl TxSetComponentView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> TxSetComponentType {
         #[allow(clippy::match_same_arms)]
@@ -180,7 +180,7 @@ impl TxSetComponentRef<'_> {
     }
 }
 
-impl WriteXdr for TxSetComponentRef<'_> {
+impl WriteXdr for TxSetComponentView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

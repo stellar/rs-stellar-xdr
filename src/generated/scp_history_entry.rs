@@ -129,34 +129,34 @@ impl WriteXdr for ScpHistoryEntry {
     }
 }
 
-/// ScpHistoryEntryRef is a borrowing equivalent of [`ScpHistoryEntry`], usable in
+/// ScpHistoryEntryView is a borrowing equivalent of [`ScpHistoryEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScpHistoryEntryRef<'a> {
-    V0(ScpHistoryEntryV0Ref<'a>),
+pub enum ScpHistoryEntryView<'a> {
+    V0(ScpHistoryEntryV0View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
+impl From<&ScpHistoryEntryView<'_>> for ScpHistoryEntry {
     #[must_use]
-    fn from(v: &ScpHistoryEntryRef<'_>) -> Self {
+    fn from(v: &ScpHistoryEntryView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScpHistoryEntryRef::V0(value) => Self::V0(value.into()),
+            ScpHistoryEntryView::V0(value) => Self::V0(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
+impl From<ScpHistoryEntryView<'_>> for ScpHistoryEntry {
     #[must_use]
-    fn from(v: ScpHistoryEntryRef<'_>) -> Self {
+    fn from(v: ScpHistoryEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScpHistoryEntryRef<'_> {
+impl ScpHistoryEntryView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -166,7 +166,7 @@ impl ScpHistoryEntryRef<'_> {
     }
 }
 
-impl WriteXdr for ScpHistoryEntryRef<'_> {
+impl WriteXdr for ScpHistoryEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

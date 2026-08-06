@@ -52,18 +52,18 @@ impl WriteXdr for TransactionV0Envelope {
     }
 }
 
-/// TransactionV0EnvelopeRef is a borrowing equivalent of [`TransactionV0Envelope`], usable in
+/// TransactionV0EnvelopeView is a borrowing equivalent of [`TransactionV0Envelope`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionV0EnvelopeRef<'a> {
-    pub tx: TransactionV0Ref<'a>,
-    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
+pub struct TransactionV0EnvelopeView<'a> {
+    pub tx: TransactionV0View<'a>,
+    pub signatures: VecMView<'a, DecoratedSignatureView<'a>, 20>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionV0EnvelopeRef<'_>> for TransactionV0Envelope {
+impl From<&TransactionV0EnvelopeView<'_>> for TransactionV0Envelope {
     #[must_use]
-    fn from(v: &TransactionV0EnvelopeRef<'_>) -> Self {
+    fn from(v: &TransactionV0EnvelopeView<'_>) -> Self {
         Self {
             tx: (&v.tx).into(),
             signatures: v.signatures.to_vecm_from(),
@@ -72,14 +72,14 @@ impl From<&TransactionV0EnvelopeRef<'_>> for TransactionV0Envelope {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionV0EnvelopeRef<'_>> for TransactionV0Envelope {
+impl From<TransactionV0EnvelopeView<'_>> for TransactionV0Envelope {
     #[must_use]
-    fn from(v: TransactionV0EnvelopeRef<'_>) -> Self {
+    fn from(v: TransactionV0EnvelopeView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionV0EnvelopeRef<'_> {
+impl WriteXdr for TransactionV0EnvelopeView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

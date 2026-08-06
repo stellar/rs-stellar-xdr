@@ -49,18 +49,18 @@ impl WriteXdr for ContractExecutableExternalRef {
     }
 }
 
-/// ContractExecutableExternalRefRef is a borrowing equivalent of [`ContractExecutableExternalRef`], usable in
+/// ContractExecutableExternalRefView is a borrowing equivalent of [`ContractExecutableExternalRef`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractExecutableExternalRefRef<'a> {
+pub struct ContractExecutableExternalRefView<'a> {
     pub executable_owner: ScAddress,
-    pub tag: ScStringRef<'a>,
+    pub tag: ScStringView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
+impl From<&ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
     #[must_use]
-    fn from(v: &ContractExecutableExternalRefRef<'_>) -> Self {
+    fn from(v: &ContractExecutableExternalRefView<'_>) -> Self {
         Self {
             executable_owner: v.executable_owner.clone(),
             tag: (&v.tag).into(),
@@ -69,14 +69,14 @@ impl From<&ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalR
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
+impl From<ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
     #[must_use]
-    fn from(v: ContractExecutableExternalRefRef<'_>) -> Self {
+    fn from(v: ContractExecutableExternalRefView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ContractExecutableExternalRefRef<'_> {
+impl WriteXdr for ContractExecutableExternalRefView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

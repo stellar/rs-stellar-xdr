@@ -50,20 +50,20 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyStopCollectingMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`], usable in
+/// SignedTimeSlicedSurveyStopCollectingMessageView is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyStopCollectingMessageRef<'a> {
-    pub signature: SignatureRef<'a>,
+pub struct SignedTimeSlicedSurveyStopCollectingMessageView<'a> {
+    pub signature: SignatureView<'a>,
     pub stop_collecting: TimeSlicedSurveyStopCollectingMessage,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
+impl From<&SignedTimeSlicedSurveyStopCollectingMessageView<'_>>
     for SignedTimeSlicedSurveyStopCollectingMessage
 {
     #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyStopCollectingMessageRef<'_>) -> Self {
+    fn from(v: &SignedTimeSlicedSurveyStopCollectingMessageView<'_>) -> Self {
         Self {
             signature: (&v.signature).into(),
             stop_collecting: v.stop_collecting.clone(),
@@ -72,16 +72,16 @@ impl From<&SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
+impl From<SignedTimeSlicedSurveyStopCollectingMessageView<'_>>
     for SignedTimeSlicedSurveyStopCollectingMessage
 {
     #[must_use]
-    fn from(v: SignedTimeSlicedSurveyStopCollectingMessageRef<'_>) -> Self {
+    fn from(v: SignedTimeSlicedSurveyStopCollectingMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessageRef<'_> {
+impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

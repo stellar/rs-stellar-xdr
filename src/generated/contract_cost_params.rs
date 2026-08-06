@@ -108,28 +108,28 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     }
 }
 
-/// ContractCostParamsRef is a borrowing equivalent of [`ContractCostParams`], usable in
+/// ContractCostParamsView is a borrowing equivalent of [`ContractCostParams`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractCostParamsRef<'a>(pub VecMRef<'a, ContractCostParamEntry, 1024>);
+pub struct ContractCostParamsView<'a>(pub VecMView<'a, ContractCostParamEntry, 1024>);
 
 #[cfg(feature = "alloc")]
-impl From<&ContractCostParamsRef<'_>> for ContractCostParams {
+impl From<&ContractCostParamsView<'_>> for ContractCostParams {
     #[must_use]
-    fn from(v: &ContractCostParamsRef<'_>) -> Self {
+    fn from(v: &ContractCostParamsView<'_>) -> Self {
         Self(v.0.to_vecm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractCostParamsRef<'_>> for ContractCostParams {
+impl From<ContractCostParamsView<'_>> for ContractCostParams {
     #[must_use]
-    fn from(v: ContractCostParamsRef<'_>) -> Self {
+    fn from(v: ContractCostParamsView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ContractCostParamsRef<'_> {
+impl WriteXdr for ContractCostParamsView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

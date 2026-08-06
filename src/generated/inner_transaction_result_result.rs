@@ -276,13 +276,13 @@ impl WriteXdr for InnerTransactionResultResult {
     }
 }
 
-/// InnerTransactionResultResultRef is a borrowing equivalent of [`InnerTransactionResultResult`], usable in
+/// InnerTransactionResultResultView is a borrowing equivalent of [`InnerTransactionResultResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum InnerTransactionResultResultRef<'a> {
-    TxSuccess(VecMRef<'a, OperationResultRef<'a>>),
-    TxFailed(VecMRef<'a, OperationResultRef<'a>>),
+pub enum InnerTransactionResultResultView<'a> {
+    TxSuccess(VecMView<'a, OperationResultView<'a>>),
+    TxFailed(VecMView<'a, OperationResultView<'a>>),
     TxTooEarly,
     TxTooLate,
     TxMissingOperation,
@@ -302,46 +302,46 @@ pub enum InnerTransactionResultResultRef<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InnerTransactionResultResultRef<'_>> for InnerTransactionResultResult {
+impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
-    fn from(v: &InnerTransactionResultResultRef<'_>) -> Self {
+    fn from(v: &InnerTransactionResultResultView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            InnerTransactionResultResultRef::TxSuccess(value) => {
+            InnerTransactionResultResultView::TxSuccess(value) => {
                 Self::TxSuccess(value.to_vecm_from())
             }
-            InnerTransactionResultResultRef::TxFailed(value) => {
+            InnerTransactionResultResultView::TxFailed(value) => {
                 Self::TxFailed(value.to_vecm_from())
             }
-            InnerTransactionResultResultRef::TxTooEarly => Self::TxTooEarly,
-            InnerTransactionResultResultRef::TxTooLate => Self::TxTooLate,
-            InnerTransactionResultResultRef::TxMissingOperation => Self::TxMissingOperation,
-            InnerTransactionResultResultRef::TxBadSeq => Self::TxBadSeq,
-            InnerTransactionResultResultRef::TxBadAuth => Self::TxBadAuth,
-            InnerTransactionResultResultRef::TxInsufficientBalance => Self::TxInsufficientBalance,
-            InnerTransactionResultResultRef::TxNoAccount => Self::TxNoAccount,
-            InnerTransactionResultResultRef::TxInsufficientFee => Self::TxInsufficientFee,
-            InnerTransactionResultResultRef::TxBadAuthExtra => Self::TxBadAuthExtra,
-            InnerTransactionResultResultRef::TxInternalError => Self::TxInternalError,
-            InnerTransactionResultResultRef::TxNotSupported => Self::TxNotSupported,
-            InnerTransactionResultResultRef::TxBadSponsorship => Self::TxBadSponsorship,
-            InnerTransactionResultResultRef::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
-            InnerTransactionResultResultRef::TxMalformed => Self::TxMalformed,
-            InnerTransactionResultResultRef::TxSorobanInvalid => Self::TxSorobanInvalid,
-            InnerTransactionResultResultRef::TxFrozenKeyAccessed => Self::TxFrozenKeyAccessed,
+            InnerTransactionResultResultView::TxTooEarly => Self::TxTooEarly,
+            InnerTransactionResultResultView::TxTooLate => Self::TxTooLate,
+            InnerTransactionResultResultView::TxMissingOperation => Self::TxMissingOperation,
+            InnerTransactionResultResultView::TxBadSeq => Self::TxBadSeq,
+            InnerTransactionResultResultView::TxBadAuth => Self::TxBadAuth,
+            InnerTransactionResultResultView::TxInsufficientBalance => Self::TxInsufficientBalance,
+            InnerTransactionResultResultView::TxNoAccount => Self::TxNoAccount,
+            InnerTransactionResultResultView::TxInsufficientFee => Self::TxInsufficientFee,
+            InnerTransactionResultResultView::TxBadAuthExtra => Self::TxBadAuthExtra,
+            InnerTransactionResultResultView::TxInternalError => Self::TxInternalError,
+            InnerTransactionResultResultView::TxNotSupported => Self::TxNotSupported,
+            InnerTransactionResultResultView::TxBadSponsorship => Self::TxBadSponsorship,
+            InnerTransactionResultResultView::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
+            InnerTransactionResultResultView::TxMalformed => Self::TxMalformed,
+            InnerTransactionResultResultView::TxSorobanInvalid => Self::TxSorobanInvalid,
+            InnerTransactionResultResultView::TxFrozenKeyAccessed => Self::TxFrozenKeyAccessed,
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<InnerTransactionResultResultRef<'_>> for InnerTransactionResultResult {
+impl From<InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
-    fn from(v: InnerTransactionResultResultRef<'_>) -> Self {
+    fn from(v: InnerTransactionResultResultView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl InnerTransactionResultResultRef<'_> {
+impl InnerTransactionResultResultView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
@@ -368,7 +368,7 @@ impl InnerTransactionResultResultRef<'_> {
     }
 }
 
-impl WriteXdr for InnerTransactionResultResultRef<'_> {
+impl WriteXdr for InnerTransactionResultResultView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

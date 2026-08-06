@@ -26,9 +26,9 @@ pub struct RustGenerator {
     type_info: TypeInfo,
     /// Rust type names of generated types that directly or transitively
     /// contain heap-allocated data (`VecM`, `BytesM`, `StringM`, or `Box` for
-    /// cyclic references) under some cfg, and therefore have a borrowing `Ref`
+    /// cyclic references) under some cfg, and therefore have a borrowing `View`
     /// form generated for them.
-    ref_required: HashSet<String>,
+    view_required: HashSet<String>,
     /// Per-definition borrow conditions, keyed by Rust type name and the
     /// definition's cfg, which distinguishes same-named `#ifdef`/`#else`
     /// branches from one another.
@@ -39,7 +39,7 @@ impl RustGenerator {
     pub fn new(spec: &XdrSpec, options: RustOptions) -> Self {
         let type_info = TypeInfo::build(spec, &type_name);
         let mut analysis = BorrowAnalysis::build(spec);
-        let ref_required = analysis.ref_required();
+        let view_required = analysis.view_required();
         let def_borrow = spec
             .all_definitions()
             .map(|def| {
@@ -50,19 +50,19 @@ impl RustGenerator {
         Self {
             options,
             type_info,
-            ref_required,
+            view_required,
             def_borrow,
         }
     }
 
-    /// How to emit the borrowing `Ref` form of a definition.
-    fn ref_emit_for(&self, name: &str, cfg: Option<&str>) -> RefEmit {
+    /// How to emit the borrowing `View` form of a definition.
+    fn view_emit_for(&self, name: &str, cfg: Option<&str>) -> ViewEmit {
         let borrow = self
             .def_borrow
             .get(&(name.to_string(), cfg.map(ToString::to_string)))
             .cloned()
             .unwrap_or(BorrowCfg::Never);
-        ref_emit(self.ref_required.contains(name), &borrow, cfg)
+        view_emit(self.view_required.contains(name), &borrow, cfg)
     }
 
     /// Generate Rust code from the spec and write it to the output file.
@@ -298,7 +298,7 @@ impl RustGenerator {
         } else {
             "Struct"
         };
-        let r = self.ref_emit_for(&name, cfg.as_deref());
+        let r = self.view_emit_for(&name, cfg.as_deref());
         StructOutput {
             name,
             source_comment: source_comment(&s.source, type_kind),
@@ -306,10 +306,10 @@ impl RustGenerator {
             is_custom_str: custom_str,
             members,
             member_names,
-            emit_ref: r.emit_ref,
-            ref_cfg: r.ref_cfg,
-            emit_ref_alias: r.emit_ref_alias,
-            ref_alias_cfg: r.ref_alias_cfg,
+            emit_view: r.emit_view,
+            view_cfg: r.view_cfg,
+            emit_view_alias: r.emit_view_alias,
+            view_alias_cfg: r.view_alias_cfg,
             cfg,
         }
     }
@@ -385,7 +385,7 @@ impl RustGenerator {
             .first()
             .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
-        let r = self.ref_emit_for(&name, cfg.as_deref());
+        let r = self.view_emit_for(&name, cfg.as_deref());
 
         UnionOutput {
             name,
@@ -394,10 +394,10 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
-            emit_ref: r.emit_ref,
-            ref_cfg: r.ref_cfg,
-            emit_ref_alias: r.emit_ref_alias,
-            ref_alias_cfg: r.ref_alias_cfg,
+            emit_view: r.emit_view,
+            view_cfg: r.view_cfg,
+            emit_view_alias: r.emit_view_alias,
+            view_alias_cfg: r.view_alias_cfg,
             cfg,
             default_arm_cfg,
         }
@@ -427,7 +427,7 @@ impl RustGenerator {
             None,
             &self.type_info,
             custom_str,
-            &self.ref_required,
+            &self.view_required,
             "v.0",
             false,
         );
@@ -438,7 +438,7 @@ impl RustGenerator {
             _ => None,
         };
 
-        let r = self.ref_emit_for(&name, cfg.as_deref());
+        let r = self.view_emit_for(&name, cfg.as_deref());
 
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
             name: name.clone(),
@@ -456,12 +456,12 @@ impl RustGenerator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-            emit_ref: r.emit_ref,
-            ref_cfg: r.ref_cfg,
-            emit_ref_alias: r.emit_ref_alias,
-            ref_alias_cfg: r.ref_alias_cfg,
-            ref_type_ref: resolved.ref_type_ref,
-            from_ref_expr: resolved.from_ref_expr,
+            emit_view: r.emit_view,
+            view_cfg: r.view_cfg,
+            emit_view_alias: r.emit_view_alias,
+            view_alias_cfg: r.view_alias_cfg,
+            view_type_ref: resolved.view_type_ref,
+            from_view_expr: resolved.from_view_expr,
             cfg,
         })
     }
@@ -493,7 +493,7 @@ impl RustGenerator {
             Some(parent),
             &self.type_info,
             custom_str,
-            &self.ref_required,
+            &self.view_required,
             &format!("v.{name}"),
             false,
         );
@@ -504,8 +504,8 @@ impl RustGenerator {
             turbofish_type: resolved.turbofish_type,
             serde_as_type: resolved.serde_as_type,
             serde_rename,
-            ref_type_ref: resolved.ref_type_ref,
-            from_ref_expr: resolved.from_ref_expr,
+            view_type_ref: resolved.view_type_ref,
+            from_view_expr: resolved.from_view_expr,
         }
     }
 
@@ -534,7 +534,7 @@ impl RustGenerator {
                         Some(parent),
                         &self.type_info,
                         custom_str,
-                        &self.ref_required,
+                        &self.view_required,
                         "value",
                         true,
                     )
@@ -546,8 +546,8 @@ impl RustGenerator {
                     is_void: arm.type_.is_none(),
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
-                    ref_type_ref: resolved.as_ref().map(|r| r.ref_type_ref.clone()),
-                    from_ref_expr: resolved.as_ref().map(|r| r.from_ref_expr.clone()),
+                    view_type_ref: resolved.as_ref().map(|r| r.view_type_ref.clone()),
+                    from_view_expr: resolved.as_ref().map(|r| r.from_view_expr.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }
@@ -569,17 +569,17 @@ fn combine_cfg(def_cfg: Option<&str>, extra: &str) -> String {
 // Borrow analysis
 // =============================================================================
 
-/// The cfg condition under which a type's `Ref` form actually borrows, i.e.
+/// The cfg condition under which a type's `View` form actually borrows, i.e.
 /// under which its `'a` lifetime is used.
 ///
-/// A `Ref` type may borrow unconditionally, never, or only under some cfgs —
+/// A `View` type may borrow unconditionally, never, or only under some cfgs —
 /// when the heap-allocated data it holds sits behind a cfg-gated union arm, or
 /// is reached through a type that itself only holds heap data under a cfg.
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum BorrowCfg {
-    /// Holds no heap-allocated data under any cfg, so it needs no `Ref` form.
+    /// Holds no heap-allocated data under any cfg, so it needs no `View` form.
     Never,
-    /// Always borrows, so its `Ref` form is unconditional.
+    /// Always borrows, so its `View` form is unconditional.
     Always,
     /// Borrows under the disjunction of these cfg predicates.
     When(BTreeSet<String>),
@@ -609,7 +609,7 @@ impl BorrowCfg {
         }
     }
 
-    /// The cfg predicate to gate the borrowing `Ref` form on, or `None` when it
+    /// The cfg predicate to gate the borrowing `View` form on, or `None` when it
     /// is unconditional.
     fn render(&self) -> Option<String> {
         match self {
@@ -653,8 +653,8 @@ impl<'a> BorrowAnalysis<'a> {
         analysis
     }
 
-    /// The names that have a `Ref` form at all, i.e. that borrow under some cfg.
-    fn ref_required(&self) -> HashSet<String> {
+    /// The names that have a `View` form at all, i.e. that borrow under some cfg.
+    fn view_required(&self) -> HashSet<String> {
         self.by_name
             .iter()
             .filter(|(_, b)| **b != BorrowCfg::Never)
@@ -734,52 +734,52 @@ impl<'a> BorrowAnalysis<'a> {
     }
 }
 
-/// How a definition's borrowing `Ref` form is emitted.
+/// How a definition's borrowing `View` form is emitted.
 ///
-/// Where the definition borrows, a real `{name}Ref<'a>` is emitted, so its `'a`
-/// is always used. Where it does not, `{name}Ref<'a>` is emitted as a
+/// Where the definition borrows, a real `{name}View<'a>` is emitted, so its `'a`
+/// is always used. Where it does not, `{name}View<'a>` is emitted as a
 /// transparent alias of the owned type, so types containing it can name it
 /// uniformly across cfgs instead of being cfg-split themselves.
-struct RefEmit {
-    emit_ref: bool,
-    ref_cfg: Option<String>,
-    emit_ref_alias: bool,
-    ref_alias_cfg: Option<String>,
+struct ViewEmit {
+    emit_view: bool,
+    view_cfg: Option<String>,
+    emit_view_alias: bool,
+    view_alias_cfg: Option<String>,
 }
 
-/// Decide how to emit the `Ref` form of one definition.
+/// Decide how to emit the `View` form of one definition.
 ///
-/// `has_ref` is whether the type's name has a `Ref` form at all, and `borrow`
+/// `has_view` is whether the type's name has a `View` form at all, and `borrow`
 /// is this definition's borrow condition excluding its own `def_cfg`.
-fn ref_emit(has_ref: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> RefEmit {
-    let mut emit = RefEmit {
-        emit_ref: false,
-        ref_cfg: None,
-        emit_ref_alias: false,
-        ref_alias_cfg: None,
+fn view_emit(has_view: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> ViewEmit {
+    let mut emit = ViewEmit {
+        emit_view: false,
+        view_cfg: None,
+        emit_view_alias: false,
+        view_alias_cfg: None,
     };
-    if !has_ref {
+    if !has_view {
         return emit;
     }
     match borrow {
-        // The name has a Ref form only because another cfg branch of it
+        // The name has a View form only because another cfg branch of it
         // borrows, so this definition contributes just the alias.
         BorrowCfg::Never => {
-            emit.emit_ref_alias = true;
-            emit.ref_alias_cfg = def_cfg.map(ToString::to_string);
+            emit.emit_view_alias = true;
+            emit.view_alias_cfg = def_cfg.map(ToString::to_string);
         }
         BorrowCfg::Always => {
-            emit.emit_ref = true;
-            emit.ref_cfg = def_cfg.map(ToString::to_string);
+            emit.emit_view = true;
+            emit.view_cfg = def_cfg.map(ToString::to_string);
         }
         BorrowCfg::When(_) => {
             let when = borrow
                 .render()
                 .expect("BorrowCfg::When always renders a predicate");
-            emit.emit_ref = true;
-            emit.ref_cfg = Some(combine_cfg(def_cfg, &when));
-            emit.emit_ref_alias = true;
-            emit.ref_alias_cfg = Some(combine_cfg(def_cfg, &format!("not({when})")));
+            emit.emit_view = true;
+            emit.view_cfg = Some(combine_cfg(def_cfg, &when));
+            emit.emit_view_alias = true;
+            emit.view_alias_cfg = Some(combine_cfg(def_cfg, &format!("not({when})")));
         }
     }
     emit

@@ -50,18 +50,18 @@ impl WriteXdr for ManageDataOp {
     }
 }
 
-/// ManageDataOpRef is a borrowing equivalent of [`ManageDataOp`], usable in
+/// ManageDataOpView is a borrowing equivalent of [`ManageDataOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ManageDataOpRef<'a> {
-    pub data_name: String64Ref<'a>,
-    pub data_value: Option<DataValueRef<'a>>,
+pub struct ManageDataOpView<'a> {
+    pub data_name: String64View<'a>,
+    pub data_value: Option<DataValueView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ManageDataOpRef<'_>> for ManageDataOp {
+impl From<&ManageDataOpView<'_>> for ManageDataOp {
     #[must_use]
-    fn from(v: &ManageDataOpRef<'_>) -> Self {
+    fn from(v: &ManageDataOpView<'_>) -> Self {
         Self {
             data_name: (&v.data_name).into(),
             data_value: v.data_value.as_ref().map(Into::into),
@@ -70,14 +70,14 @@ impl From<&ManageDataOpRef<'_>> for ManageDataOp {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ManageDataOpRef<'_>> for ManageDataOp {
+impl From<ManageDataOpView<'_>> for ManageDataOp {
     #[must_use]
-    fn from(v: ManageDataOpRef<'_>) -> Self {
+    fn from(v: ManageDataOpView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ManageDataOpRef<'_> {
+impl WriteXdr for ManageDataOpView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

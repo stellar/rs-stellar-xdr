@@ -66,22 +66,22 @@ impl WriteXdr for ScpStatementPrepare {
     }
 }
 
-/// ScpStatementPrepareRef is a borrowing equivalent of [`ScpStatementPrepare`], usable in
+/// ScpStatementPrepareView is a borrowing equivalent of [`ScpStatementPrepare`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementPrepareRef<'a> {
+pub struct ScpStatementPrepareView<'a> {
     pub quorum_set_hash: Hash,
-    pub ballot: ScpBallotRef<'a>,
-    pub prepared: Option<ScpBallotRef<'a>>,
-    pub prepared_prime: Option<ScpBallotRef<'a>>,
+    pub ballot: ScpBallotView<'a>,
+    pub prepared: Option<ScpBallotView<'a>>,
+    pub prepared_prime: Option<ScpBallotView<'a>>,
     pub n_c: u32,
     pub n_h: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
+impl From<&ScpStatementPrepareView<'_>> for ScpStatementPrepare {
     #[must_use]
-    fn from(v: &ScpStatementPrepareRef<'_>) -> Self {
+    fn from(v: &ScpStatementPrepareView<'_>) -> Self {
         Self {
             quorum_set_hash: v.quorum_set_hash.clone(),
             ballot: (&v.ballot).into(),
@@ -94,14 +94,14 @@ impl From<&ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
+impl From<ScpStatementPrepareView<'_>> for ScpStatementPrepare {
     #[must_use]
-    fn from(v: ScpStatementPrepareRef<'_>) -> Self {
+    fn from(v: ScpStatementPrepareView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScpStatementPrepareRef<'_> {
+impl WriteXdr for ScpStatementPrepareView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

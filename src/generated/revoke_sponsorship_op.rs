@@ -145,36 +145,36 @@ impl WriteXdr for RevokeSponsorshipOp {
     }
 }
 
-/// RevokeSponsorshipOpRef is a borrowing equivalent of [`RevokeSponsorshipOp`], usable in
+/// RevokeSponsorshipOpView is a borrowing equivalent of [`RevokeSponsorshipOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum RevokeSponsorshipOpRef<'a> {
-    LedgerEntry(LedgerKeyRef<'a>),
-    Signer(RevokeSponsorshipOpSignerRef<'a>),
+pub enum RevokeSponsorshipOpView<'a> {
+    LedgerEntry(LedgerKeyView<'a>),
+    Signer(RevokeSponsorshipOpSignerView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
+impl From<&RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
     #[must_use]
-    fn from(v: &RevokeSponsorshipOpRef<'_>) -> Self {
+    fn from(v: &RevokeSponsorshipOpView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            RevokeSponsorshipOpRef::LedgerEntry(value) => Self::LedgerEntry(value.into()),
-            RevokeSponsorshipOpRef::Signer(value) => Self::Signer(value.into()),
+            RevokeSponsorshipOpView::LedgerEntry(value) => Self::LedgerEntry(value.into()),
+            RevokeSponsorshipOpView::Signer(value) => Self::Signer(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
+impl From<RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
     #[must_use]
-    fn from(v: RevokeSponsorshipOpRef<'_>) -> Self {
+    fn from(v: RevokeSponsorshipOpView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl RevokeSponsorshipOpRef<'_> {
+impl RevokeSponsorshipOpView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> RevokeSponsorshipType {
         #[allow(clippy::match_same_arms)]
@@ -185,7 +185,7 @@ impl RevokeSponsorshipOpRef<'_> {
     }
 }
 
-impl WriteXdr for RevokeSponsorshipOpRef<'_> {
+impl WriteXdr for RevokeSponsorshipOpView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

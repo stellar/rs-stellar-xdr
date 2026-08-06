@@ -195,44 +195,44 @@ impl WriteXdr for ClaimPredicate {
     }
 }
 
-/// ClaimPredicateRef is a borrowing equivalent of [`ClaimPredicate`], usable in
+/// ClaimPredicateView is a borrowing equivalent of [`ClaimPredicate`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ClaimPredicateRef<'a> {
+pub enum ClaimPredicateView<'a> {
     Unconditional,
-    And(VecMRef<'a, ClaimPredicateRef<'a>, 2>),
-    Or(VecMRef<'a, ClaimPredicateRef<'a>, 2>),
-    Not(Option<&'a ClaimPredicateRef<'a>>),
+    And(VecMView<'a, ClaimPredicateView<'a>, 2>),
+    Or(VecMView<'a, ClaimPredicateView<'a>, 2>),
+    Not(Option<&'a ClaimPredicateView<'a>>),
     BeforeAbsoluteTime(i64),
     BeforeRelativeTime(i64),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ClaimPredicateRef<'_>> for ClaimPredicate {
+impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
-    fn from(v: &ClaimPredicateRef<'_>) -> Self {
+    fn from(v: &ClaimPredicateView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ClaimPredicateRef::Unconditional => Self::Unconditional,
-            ClaimPredicateRef::And(value) => Self::And(value.to_vecm_from()),
-            ClaimPredicateRef::Or(value) => Self::Or(value.to_vecm_from()),
-            ClaimPredicateRef::Not(value) => Self::Not(value.map(|v| Box::new(v.into()))),
-            ClaimPredicateRef::BeforeAbsoluteTime(value) => Self::BeforeAbsoluteTime(*value),
-            ClaimPredicateRef::BeforeRelativeTime(value) => Self::BeforeRelativeTime(*value),
+            ClaimPredicateView::Unconditional => Self::Unconditional,
+            ClaimPredicateView::And(value) => Self::And(value.to_vecm_from()),
+            ClaimPredicateView::Or(value) => Self::Or(value.to_vecm_from()),
+            ClaimPredicateView::Not(value) => Self::Not(value.map(|v| Box::new(v.into()))),
+            ClaimPredicateView::BeforeAbsoluteTime(value) => Self::BeforeAbsoluteTime(*value),
+            ClaimPredicateView::BeforeRelativeTime(value) => Self::BeforeRelativeTime(*value),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ClaimPredicateRef<'_>> for ClaimPredicate {
+impl From<ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
-    fn from(v: ClaimPredicateRef<'_>) -> Self {
+    fn from(v: ClaimPredicateView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ClaimPredicateRef<'_> {
+impl ClaimPredicateView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimPredicateType {
         #[allow(clippy::match_same_arms)]
@@ -247,7 +247,7 @@ impl ClaimPredicateRef<'_> {
     }
 }
 
-impl WriteXdr for ClaimPredicateRef<'_> {
+impl WriteXdr for ClaimPredicateView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

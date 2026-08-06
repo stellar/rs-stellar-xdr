@@ -108,28 +108,28 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
     }
 }
 
-/// SorobanAuthorizationEntriesRef is a borrowing equivalent of [`SorobanAuthorizationEntries`], usable in
+/// SorobanAuthorizationEntriesView is a borrowing equivalent of [`SorobanAuthorizationEntries`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizationEntriesRef<'a>(pub VecMRef<'a, SorobanAuthorizationEntryRef<'a>>);
+pub struct SorobanAuthorizationEntriesView<'a>(pub VecMView<'a, SorobanAuthorizationEntryView<'a>>);
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
+impl From<&SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
     #[must_use]
-    fn from(v: &SorobanAuthorizationEntriesRef<'_>) -> Self {
+    fn from(v: &SorobanAuthorizationEntriesView<'_>) -> Self {
         Self(v.0.to_vecm_from())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
+impl From<SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
     #[must_use]
-    fn from(v: SorobanAuthorizationEntriesRef<'_>) -> Self {
+    fn from(v: SorobanAuthorizationEntriesView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanAuthorizationEntriesRef<'_> {
+impl WriteXdr for SorobanAuthorizationEntriesView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

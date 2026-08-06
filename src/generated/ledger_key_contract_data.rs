@@ -54,19 +54,19 @@ impl WriteXdr for LedgerKeyContractData {
     }
 }
 
-/// LedgerKeyContractDataRef is a borrowing equivalent of [`LedgerKeyContractData`], usable in
+/// LedgerKeyContractDataView is a borrowing equivalent of [`LedgerKeyContractData`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerKeyContractDataRef<'a> {
+pub struct LedgerKeyContractDataView<'a> {
     pub contract: ScAddress,
-    pub key: ScValRef<'a>,
+    pub key: ScValView<'a>,
     pub durability: ContractDataDurability,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
+impl From<&LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
     #[must_use]
-    fn from(v: &LedgerKeyContractDataRef<'_>) -> Self {
+    fn from(v: &LedgerKeyContractDataView<'_>) -> Self {
         Self {
             contract: v.contract.clone(),
             key: (&v.key).into(),
@@ -76,14 +76,14 @@ impl From<&LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
+impl From<LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
     #[must_use]
-    fn from(v: LedgerKeyContractDataRef<'_>) -> Self {
+    fn from(v: LedgerKeyContractDataView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for LedgerKeyContractDataRef<'_> {
+impl WriteXdr for LedgerKeyContractDataView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

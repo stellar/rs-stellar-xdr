@@ -1466,29 +1466,29 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     }
 }
 
-// VecMRef ------------------------------------------------------------------------
+// VecMView ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`VecM`] that wraps a slice instead of owning a
 /// `Vec`, enforcing the same maximum length `MAX` at construction.
 ///
-/// Usable in const contexts to build values of the generated `Ref` types from
+/// Usable in const contexts to build values of the generated `View` types from
 /// slices of fixed-size arrays, without heap allocation.
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct VecMRef<'a, T, const MAX: u32 = { u32::MAX }>(&'a [T]);
+pub struct VecMView<'a, T, const MAX: u32 = { u32::MAX }>(&'a [T]);
 
 // Copy and Clone are implemented manually because the derived impls would
 // require `T: Copy`/`T: Clone`, and the wrapped `&[T]` is copyable for any
 // `T`.
-impl<T, const MAX: u32> Copy for VecMRef<'_, T, MAX> {}
+impl<T, const MAX: u32> Copy for VecMView<'_, T, MAX> {}
 
 #[allow(clippy::expl_impl_clone_on_copy)]
-impl<T, const MAX: u32> Clone for VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> Clone for VecMView<'_, T, MAX> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<T, const MAX: u32> Deref for VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> Deref for VecMView<'_, T, MAX> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -1496,16 +1496,16 @@ impl<T, const MAX: u32> Deref for VecMRef<'_, T, MAX> {
     }
 }
 
-impl<T, const MAX: u32> Default for VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> Default for VecMView<'_, T, MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
+impl<'a, T, const MAX: u32> VecMView<'a, T, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `VecMRef` from the given slice.
+    /// Constructs a `VecMView` from the given slice.
     ///
     /// ### Panics
     ///
@@ -1517,7 +1517,7 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
         Self(v)
     }
 
-    /// Constructs a `VecMRef` from the given slice, erroring if the length of
+    /// Constructs a `VecMView` from the given slice, erroring if the length of
     /// the slice exceeds `MAX`.
     ///
     /// ### Errors
@@ -1557,7 +1557,7 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
     }
 }
 
-impl<'a, T, const MAX: u32> core::iter::IntoIterator for &VecMRef<'a, T, MAX> {
+impl<'a, T, const MAX: u32> core::iter::IntoIterator for &VecMView<'a, T, MAX> {
     type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
     fn into_iter(self) -> Self::IntoIter {
@@ -1566,7 +1566,7 @@ impl<'a, T, const MAX: u32> core::iter::IntoIterator for &VecMRef<'a, T, MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Clone, const MAX: u32> VecMRef<'_, T, MAX> {
+impl<T: Clone, const MAX: u32> VecMView<'_, T, MAX> {
     /// Converts to an owned [`VecM`], cloning the elements.
     #[must_use]
     pub fn to_vecm(&self) -> VecM<T, MAX> {
@@ -1575,7 +1575,7 @@ impl<T: Clone, const MAX: u32> VecMRef<'_, T, MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<T, const MAX: u32> VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> VecMView<'_, T, MAX> {
     /// Converts to an owned [`VecM`], converting each element from its
     /// borrowing form to its owned form.
     #[must_use]
@@ -1587,7 +1587,7 @@ impl<T, const MAX: u32> VecMRef<'_, T, MAX> {
     }
 }
 
-impl<'a, T, const MAX: u32> TryFrom<&'a [T]> for VecMRef<'a, T, MAX> {
+impl<'a, T, const MAX: u32> TryFrom<&'a [T]> for VecMView<'a, T, MAX> {
     type Error = Error;
 
     fn try_from(v: &'a [T]) -> Result<Self, Error> {
@@ -1595,14 +1595,14 @@ impl<'a, T, const MAX: u32> TryFrom<&'a [T]> for VecMRef<'a, T, MAX> {
     }
 }
 
-impl<'a, T, const MAX: u32> From<&'a VecM<T, MAX>> for VecMRef<'a, T, MAX> {
+impl<'a, T, const MAX: u32> From<&'a VecM<T, MAX>> for VecMView<'a, T, MAX> {
     #[must_use]
     fn from(v: &'a VecM<T, MAX>) -> Self {
         Self(<VecM<T, MAX> as AsRef<[T]>>::as_ref(v))
     }
 }
 
-impl<const MAX: u32> WriteXdr for VecMRef<'_, u8, MAX> {
+impl<const MAX: u32> WriteXdr for VecMView<'_, u8, MAX> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -1622,7 +1622,7 @@ impl<const MAX: u32> WriteXdr for VecMRef<'_, u8, MAX> {
     }
 }
 
-impl<T: WriteXdr, const MAX: u32> WriteXdr for VecMRef<'_, T, MAX> {
+impl<T: WriteXdr, const MAX: u32> WriteXdr for VecMView<'_, T, MAX> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -2042,17 +2042,17 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     }
 }
 
-// BytesMRef ------------------------------------------------------------------------
+// BytesMView ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`BytesM`] that wraps a byte slice instead of
 /// owning a `Vec`, enforcing the same maximum length `MAX` at construction.
 ///
-/// Usable in const contexts to build values of the generated `Ref` types from
+/// Usable in const contexts to build values of the generated `View` types from
 /// slices of fixed-size arrays, without heap allocation.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BytesMRef<'a, const MAX: u32 = { u32::MAX }>(&'a [u8]);
+pub struct BytesMView<'a, const MAX: u32 = { u32::MAX }>(&'a [u8]);
 
-impl<const MAX: u32> core::fmt::Display for BytesMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Display for BytesMView<'_, MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for b in self.0 {
             write!(f, "{b:02x}")?;
@@ -2061,9 +2061,9 @@ impl<const MAX: u32> core::fmt::Display for BytesMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Debug for BytesMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Debug for BytesMView<'_, MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "BytesMRef(")?;
+        write!(f, "BytesMView(")?;
         for b in self.0 {
             write!(f, "{b:02x}")?;
         }
@@ -2072,7 +2072,7 @@ impl<const MAX: u32> core::fmt::Debug for BytesMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Deref for BytesMRef<'_, MAX> {
+impl<const MAX: u32> Deref for BytesMView<'_, MAX> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -2080,16 +2080,16 @@ impl<const MAX: u32> Deref for BytesMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Default for BytesMRef<'_, MAX> {
+impl<const MAX: u32> Default for BytesMView<'_, MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
+impl<'a, const MAX: u32> BytesMView<'a, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `BytesMRef` from the given slice.
+    /// Constructs a `BytesMView` from the given slice.
     ///
     /// ### Panics
     ///
@@ -2101,7 +2101,7 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
         Self(v)
     }
 
-    /// Constructs a `BytesMRef` from the given slice, erroring if the length
+    /// Constructs a `BytesMView` from the given slice, erroring if the length
     /// of the slice exceeds `MAX`.
     ///
     /// ### Errors
@@ -2138,7 +2138,7 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> BytesMRef<'_, MAX> {
+impl<const MAX: u32> BytesMView<'_, MAX> {
     /// Converts to an owned [`BytesM`], cloning the bytes.
     #[must_use]
     pub fn to_bytesm(&self) -> BytesM<MAX> {
@@ -2146,7 +2146,7 @@ impl<const MAX: u32> BytesMRef<'_, MAX> {
     }
 }
 
-impl<'a, const MAX: u32> TryFrom<&'a [u8]> for BytesMRef<'a, MAX> {
+impl<'a, const MAX: u32> TryFrom<&'a [u8]> for BytesMView<'a, MAX> {
     type Error = Error;
 
     fn try_from(v: &'a [u8]) -> Result<Self, Error> {
@@ -2154,14 +2154,14 @@ impl<'a, const MAX: u32> TryFrom<&'a [u8]> for BytesMRef<'a, MAX> {
     }
 }
 
-impl<'a, const MAX: u32> From<&'a BytesM<MAX>> for BytesMRef<'a, MAX> {
+impl<'a, const MAX: u32> From<&'a BytesM<MAX>> for BytesMView<'a, MAX> {
     #[must_use]
     fn from(v: &'a BytesM<MAX>) -> Self {
         Self(<BytesM<MAX> as AsRef<[u8]>>::as_ref(v))
     }
 }
 
-impl<const MAX: u32> WriteXdr for BytesMRef<'_, MAX> {
+impl<const MAX: u32> WriteXdr for BytesMView<'_, MAX> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -2584,17 +2584,17 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
     }
 }
 
-// StringMRef ------------------------------------------------------------------------
+// StringMView ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`StringM`] that wraps a byte slice instead of
 /// owning a `Vec`, enforcing the same maximum length `MAX` at construction.
 ///
-/// Usable in const contexts to build values of the generated `Ref` types from
+/// Usable in const contexts to build values of the generated `View` types from
 /// slices of fixed-size arrays or string literals, without heap allocation.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StringMRef<'a, const MAX: u32 = { u32::MAX }>(&'a [u8]);
+pub struct StringMView<'a, const MAX: u32 = { u32::MAX }>(&'a [u8]);
 
-impl<const MAX: u32> core::fmt::Display for StringMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Display for StringMView<'_, MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for b in escape_bytes::Escape::new(self.0) {
             write!(f, "{}", b as char)?;
@@ -2603,9 +2603,9 @@ impl<const MAX: u32> core::fmt::Display for StringMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Debug for StringMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Debug for StringMView<'_, MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "StringMRef(")?;
+        write!(f, "StringMView(")?;
         for b in escape_bytes::Escape::new(self.0) {
             write!(f, "{}", b as char)?;
         }
@@ -2614,7 +2614,7 @@ impl<const MAX: u32> core::fmt::Debug for StringMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Deref for StringMRef<'_, MAX> {
+impl<const MAX: u32> Deref for StringMView<'_, MAX> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -2622,16 +2622,16 @@ impl<const MAX: u32> Deref for StringMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Default for StringMRef<'_, MAX> {
+impl<const MAX: u32> Default for StringMView<'_, MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<'a, const MAX: u32> StringMRef<'a, MAX> {
+impl<'a, const MAX: u32> StringMView<'a, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `StringMRef` from the given slice.
+    /// Constructs a `StringMView` from the given slice.
     ///
     /// ### Panics
     ///
@@ -2643,7 +2643,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
         Self(v)
     }
 
-    /// Constructs a `StringMRef` from the UTF-8 bytes of the given str.
+    /// Constructs a `StringMView` from the UTF-8 bytes of the given str.
     ///
     /// ### Panics
     ///
@@ -2654,7 +2654,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
         Self::new(s.as_bytes())
     }
 
-    /// Constructs a `StringMRef` from the given slice, erroring if the length
+    /// Constructs a `StringMView` from the given slice, erroring if the length
     /// of the slice exceeds `MAX`.
     ///
     /// ### Errors
@@ -2668,7 +2668,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
         }
     }
 
-    /// Constructs a `StringMRef` from the UTF-8 bytes of the given str,
+    /// Constructs a `StringMView` from the UTF-8 bytes of the given str,
     /// erroring if the length of the str exceeds `MAX`.
     ///
     /// ### Errors
@@ -2701,7 +2701,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> StringMRef<'_, MAX> {
+impl<const MAX: u32> StringMView<'_, MAX> {
     /// Converts to an owned [`StringM`], cloning the bytes.
     #[must_use]
     pub fn to_stringm(&self) -> StringM<MAX> {
@@ -2709,7 +2709,7 @@ impl<const MAX: u32> StringMRef<'_, MAX> {
     }
 }
 
-impl<'a, const MAX: u32> TryFrom<&'a [u8]> for StringMRef<'a, MAX> {
+impl<'a, const MAX: u32> TryFrom<&'a [u8]> for StringMView<'a, MAX> {
     type Error = Error;
 
     fn try_from(v: &'a [u8]) -> Result<Self, Error> {
@@ -2717,7 +2717,7 @@ impl<'a, const MAX: u32> TryFrom<&'a [u8]> for StringMRef<'a, MAX> {
     }
 }
 
-impl<'a, const MAX: u32> TryFrom<&'a str> for StringMRef<'a, MAX> {
+impl<'a, const MAX: u32> TryFrom<&'a str> for StringMView<'a, MAX> {
     type Error = Error;
 
     fn try_from(s: &'a str) -> Result<Self, Error> {
@@ -2725,14 +2725,14 @@ impl<'a, const MAX: u32> TryFrom<&'a str> for StringMRef<'a, MAX> {
     }
 }
 
-impl<'a, const MAX: u32> From<&'a StringM<MAX>> for StringMRef<'a, MAX> {
+impl<'a, const MAX: u32> From<&'a StringM<MAX>> for StringMView<'a, MAX> {
     #[must_use]
     fn from(v: &'a StringM<MAX>) -> Self {
         Self(<StringM<MAX> as AsRef<[u8]>>::as_ref(v))
     }
 }
 
-impl<const MAX: u32> WriteXdr for StringMRef<'_, MAX> {
+impl<const MAX: u32> WriteXdr for StringMView<'_, MAX> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

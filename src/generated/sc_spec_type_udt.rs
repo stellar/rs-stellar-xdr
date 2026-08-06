@@ -46,17 +46,17 @@ impl WriteXdr for ScSpecTypeUdt {
     }
 }
 
-/// ScSpecTypeUdtRef is a borrowing equivalent of [`ScSpecTypeUdt`], usable in
+/// ScSpecTypeUdtView is a borrowing equivalent of [`ScSpecTypeUdt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeUdtRef<'a> {
-    pub name: StringMRef<'a, 60>,
+pub struct ScSpecTypeUdtView<'a> {
+    pub name: StringMView<'a, 60>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
+impl From<&ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
     #[must_use]
-    fn from(v: &ScSpecTypeUdtRef<'_>) -> Self {
+    fn from(v: &ScSpecTypeUdtView<'_>) -> Self {
         Self {
             name: v.name.to_stringm(),
         }
@@ -64,14 +64,14 @@ impl From<&ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
+impl From<ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
     #[must_use]
-    fn from(v: ScSpecTypeUdtRef<'_>) -> Self {
+    fn from(v: ScSpecTypeUdtView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecTypeUdtRef<'_> {
+impl WriteXdr for ScSpecTypeUdtView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

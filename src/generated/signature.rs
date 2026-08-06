@@ -108,28 +108,28 @@ impl AsRef<[u8]> for Signature {
     }
 }
 
-/// SignatureRef is a borrowing equivalent of [`Signature`], usable in
+/// SignatureView is a borrowing equivalent of [`Signature`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignatureRef<'a>(pub BytesMRef<'a, 64>);
+pub struct SignatureView<'a>(pub BytesMView<'a, 64>);
 
 #[cfg(feature = "alloc")]
-impl From<&SignatureRef<'_>> for Signature {
+impl From<&SignatureView<'_>> for Signature {
     #[must_use]
-    fn from(v: &SignatureRef<'_>) -> Self {
+    fn from(v: &SignatureView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignatureRef<'_>> for Signature {
+impl From<SignatureView<'_>> for Signature {
     #[must_use]
-    fn from(v: SignatureRef<'_>) -> Self {
+    fn from(v: SignatureView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SignatureRef<'_> {
+impl WriteXdr for SignatureView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

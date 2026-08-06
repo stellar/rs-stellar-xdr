@@ -217,9 +217,9 @@ pub const MAX_SIZE: u32 = 100;"#,
 }
 
 #[test]
-fn test_ifdef_same_name_ref_alias_struct() {
-    // Foo has a Ref form because the FEATURE_X branch contains heap data. The
-    // heap-free branch borrows nothing, so its Ref form is a transparent alias
+fn test_ifdef_same_name_view_alias_struct() {
+    // Foo has a View form because the FEATURE_X branch contains heap data. The
+    // heap-free branch borrows nothing, so its View form is a transparent alias
     // of the owned type rather than a struct with an unused lifetime.
     let output = generate_from_xdr(
         r#"
@@ -234,27 +234,27 @@ fn test_ifdef_same_name_ref_alias_struct() {
         &output,
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FooRef<'a> {
-    pub s: StringMRef<'a, 10>,
+pub struct FooView<'a> {
+    pub s: StringMView<'a, 10>,
 }"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
-pub type FooRef<'a> = Foo;"#,
+pub type FooView<'a> = Foo;"#,
     );
-    // The alias branch emits no Ref struct of its own, and no phantom.
+    // The alias branch emits no View struct of its own, and no phantom.
     assert_not_contains(&output, "_Phantom");
     assert_not_contains(&output, "PhantomData");
     assert_not_contains(
         &output,
-        r#"pub struct FooRef<'a> {
+        r#"pub struct FooView<'a> {
     pub y: i32,"#,
     );
 }
 
 #[test]
-fn test_ifdef_same_name_ref_alias_typedef() {
+fn test_ifdef_same_name_view_alias_typedef() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -264,17 +264,17 @@ fn test_ifdef_same_name_ref_alias_typedef() {
         #endif
     "#,
     );
-    assert_contains(&output, r#"pub struct FooRef<'a>(pub StringMRef<'a, 10>);"#);
+    assert_contains(&output, r#"pub struct FooView<'a>(pub StringMView<'a, 10>);"#);
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
-pub type FooRef<'a> = Foo;"#,
+pub type FooView<'a> = Foo;"#,
     );
     assert_not_contains(&output, "PhantomData");
 }
 
 #[test]
-fn test_ifdef_same_name_ref_alias_union() {
+fn test_ifdef_same_name_view_alias_union() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -292,9 +292,9 @@ fn test_ifdef_same_name_ref_alias_union() {
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum FooRef<'a> {
+pub enum FooView<'a> {
     #[cfg(feature = "feature_x")]
-    V0(StringMRef<'a, 10>),
+    V0(StringMView<'a, 10>),
 }"#,
     );
     assert_not_contains(&output, "not(feature = \"feature_x\")))");
@@ -302,14 +302,14 @@ pub enum FooRef<'a> {
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
-pub type FooRef<'a> = Foo;"#,
+pub type FooView<'a> = Foo;"#,
     );
     assert_not_contains(&output, "_Phantom");
 }
 
 #[test]
-fn test_cfg_arm_only_heap_union_ref_alias_cfg() {
-    // The union borrows only via its cfg-gated arm, so the real Ref enum is
+fn test_cfg_arm_only_heap_union_view_alias_cfg() {
+    // The union borrows only via its cfg-gated arm, so the real View enum is
     // gated on that cfg and the alias covers its negation. Neither form
     // carries a phantom variant, so matching stays exhaustive over the real
     // XDR cases only.
@@ -328,16 +328,16 @@ fn test_cfg_arm_only_heap_union_ref_alias_cfg() {
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum FooRef<'a> {
+pub enum FooView<'a> {
     V0(i32),
     #[cfg(feature = "feature_x")]
-    V1(StringMRef<'a, 10>),
+    V1(StringMView<'a, 10>),
 }"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
-pub type FooRef<'a> = Foo;"#,
+pub type FooView<'a> = Foo;"#,
     );
     assert_not_contains(&output, "_Phantom");
 }
@@ -345,9 +345,9 @@ pub type FooRef<'a> = Foo;"#,
 #[test]
 fn test_cfg_conditional_heap_cascades_to_containing_types() {
     // Exec borrows only via its cfg-gated arm. OnlyExec's sole heap comes from
-    // Exec, so its Ref form must degenerate to an alias under the same cfg —
+    // Exec, so its View form must degenerate to an alias under the same cfg —
     // otherwise its `'a` would be unused and fail to compile. Parent has heap
-    // of its own, so its Ref form stays unconditional and names ExecRef<'a>
+    // of its own, so its View form stays unconditional and names ExecView<'a>
     // uniformly across cfgs rather than being cfg-split.
     let output = generate_from_xdr(
         r#"
@@ -370,50 +370,50 @@ fn test_cfg_conditional_heap_cascades_to_containing_types() {
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ExecRef<'a> {"#,
+pub enum ExecView<'a> {"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
-pub type ExecRef<'a> = Exec;"#,
+pub type ExecView<'a> = Exec;"#,
     );
     // OnlyExec inherits the condition from Exec.
     assert_contains(
         &output,
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OnlyExecRef<'a> {
-    pub exec: ExecRef<'a>,
+pub struct OnlyExecView<'a> {
+    pub exec: ExecView<'a>,
     pub n: i32,
 }"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
-pub type OnlyExecRef<'a> = OnlyExec;"#,
+pub type OnlyExecView<'a> = OnlyExec;"#,
     );
-    // Parent always borrows, so it gets no alias and no cfg on its Ref struct.
+    // Parent always borrows, so it gets no alias and no cfg on its View struct.
     assert_contains(
         &output,
         r#"#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParentRef<'a> {
-    pub exec: ExecRef<'a>,
-    pub label: StringMRef<'a, 32>,
+pub struct ParentView<'a> {
+    pub exec: ExecView<'a>,
+    pub label: StringMView<'a, 32>,
 }"#,
     );
-    assert_not_contains(&output, "pub type ParentRef");
+    assert_not_contains(&output, "pub type ParentView");
     assert_not_contains(&output, "_Phantom");
     assert_not_contains(&output, "PhantomData");
 }
 
 #[test]
-fn test_no_ref_form_for_heap_free_types() {
-    // A type with no heap under any cfg gets no Ref form at all, not even an
-    // alias, since nothing can reference a Ref form of it.
+fn test_no_view_form_for_heap_free_types() {
+    // A type with no heap under any cfg gets no View form at all, not even an
+    // alias, since nothing can reference a View form of it.
     let output = generate_from_xdr(
         r#"
         struct Flat { int a; opaque b[4]; };
     "#,
     );
-    assert_not_contains(&output, "FlatRef");
+    assert_not_contains(&output, "FlatView");
 }

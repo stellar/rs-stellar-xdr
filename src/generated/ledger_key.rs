@@ -265,52 +265,52 @@ impl WriteXdr for LedgerKey {
     }
 }
 
-/// LedgerKeyRef is a borrowing equivalent of [`LedgerKey`], usable in
+/// LedgerKeyView is a borrowing equivalent of [`LedgerKey`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerKeyRef<'a> {
+pub enum LedgerKeyView<'a> {
     Account(LedgerKeyAccount),
     Trustline(LedgerKeyTrustLine),
     Offer(LedgerKeyOffer),
-    Data(LedgerKeyDataRef<'a>),
+    Data(LedgerKeyDataView<'a>),
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
-    ContractData(LedgerKeyContractDataRef<'a>),
+    ContractData(LedgerKeyContractDataView<'a>),
     ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
     Ttl(LedgerKeyTtl),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerKeyRef<'_>> for LedgerKey {
+impl From<&LedgerKeyView<'_>> for LedgerKey {
     #[must_use]
-    fn from(v: &LedgerKeyRef<'_>) -> Self {
+    fn from(v: &LedgerKeyView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerKeyRef::Account(value) => Self::Account(value.clone()),
-            LedgerKeyRef::Trustline(value) => Self::Trustline(value.clone()),
-            LedgerKeyRef::Offer(value) => Self::Offer(value.clone()),
-            LedgerKeyRef::Data(value) => Self::Data(value.into()),
-            LedgerKeyRef::ClaimableBalance(value) => Self::ClaimableBalance(value.clone()),
-            LedgerKeyRef::LiquidityPool(value) => Self::LiquidityPool(value.clone()),
-            LedgerKeyRef::ContractData(value) => Self::ContractData(value.into()),
-            LedgerKeyRef::ContractCode(value) => Self::ContractCode(value.clone()),
-            LedgerKeyRef::ConfigSetting(value) => Self::ConfigSetting(value.clone()),
-            LedgerKeyRef::Ttl(value) => Self::Ttl(value.clone()),
+            LedgerKeyView::Account(value) => Self::Account(value.clone()),
+            LedgerKeyView::Trustline(value) => Self::Trustline(value.clone()),
+            LedgerKeyView::Offer(value) => Self::Offer(value.clone()),
+            LedgerKeyView::Data(value) => Self::Data(value.into()),
+            LedgerKeyView::ClaimableBalance(value) => Self::ClaimableBalance(value.clone()),
+            LedgerKeyView::LiquidityPool(value) => Self::LiquidityPool(value.clone()),
+            LedgerKeyView::ContractData(value) => Self::ContractData(value.into()),
+            LedgerKeyView::ContractCode(value) => Self::ContractCode(value.clone()),
+            LedgerKeyView::ConfigSetting(value) => Self::ConfigSetting(value.clone()),
+            LedgerKeyView::Ttl(value) => Self::Ttl(value.clone()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerKeyRef<'_>> for LedgerKey {
+impl From<LedgerKeyView<'_>> for LedgerKey {
     #[must_use]
-    fn from(v: LedgerKeyRef<'_>) -> Self {
+    fn from(v: LedgerKeyView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl LedgerKeyRef<'_> {
+impl LedgerKeyView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
@@ -329,7 +329,7 @@ impl LedgerKeyRef<'_> {
     }
 }
 
-impl WriteXdr for LedgerKeyRef<'_> {
+impl WriteXdr for LedgerKeyView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

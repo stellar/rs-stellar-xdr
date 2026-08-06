@@ -78,22 +78,22 @@ impl WriteXdr for PathPaymentStrictSendOp {
     }
 }
 
-/// PathPaymentStrictSendOpRef is a borrowing equivalent of [`PathPaymentStrictSendOp`], usable in
+/// PathPaymentStrictSendOpView is a borrowing equivalent of [`PathPaymentStrictSendOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictSendOpRef<'a> {
+pub struct PathPaymentStrictSendOpView<'a> {
     pub send_asset: Asset,
     pub send_amount: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
     pub dest_min: i64,
-    pub path: VecMRef<'a, Asset, 5>,
+    pub path: VecMView<'a, Asset, 5>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
+impl From<&PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
     #[must_use]
-    fn from(v: &PathPaymentStrictSendOpRef<'_>) -> Self {
+    fn from(v: &PathPaymentStrictSendOpView<'_>) -> Self {
         Self {
             send_asset: v.send_asset.clone(),
             send_amount: v.send_amount,
@@ -106,14 +106,14 @@ impl From<&PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
+impl From<PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
     #[must_use]
-    fn from(v: PathPaymentStrictSendOpRef<'_>) -> Self {
+    fn from(v: PathPaymentStrictSendOpView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for PathPaymentStrictSendOpRef<'_> {
+impl WriteXdr for PathPaymentStrictSendOpView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

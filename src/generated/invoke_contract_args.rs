@@ -53,19 +53,19 @@ impl WriteXdr for InvokeContractArgs {
     }
 }
 
-/// InvokeContractArgsRef is a borrowing equivalent of [`InvokeContractArgs`], usable in
+/// InvokeContractArgsView is a borrowing equivalent of [`InvokeContractArgs`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeContractArgsRef<'a> {
+pub struct InvokeContractArgsView<'a> {
     pub contract_address: ScAddress,
-    pub function_name: ScSymbolRef<'a>,
-    pub args: VecMRef<'a, ScValRef<'a>>,
+    pub function_name: ScSymbolView<'a>,
+    pub args: VecMView<'a, ScValView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InvokeContractArgsRef<'_>> for InvokeContractArgs {
+impl From<&InvokeContractArgsView<'_>> for InvokeContractArgs {
     #[must_use]
-    fn from(v: &InvokeContractArgsRef<'_>) -> Self {
+    fn from(v: &InvokeContractArgsView<'_>) -> Self {
         Self {
             contract_address: v.contract_address.clone(),
             function_name: (&v.function_name).into(),
@@ -75,14 +75,14 @@ impl From<&InvokeContractArgsRef<'_>> for InvokeContractArgs {
 }
 
 #[cfg(feature = "alloc")]
-impl From<InvokeContractArgsRef<'_>> for InvokeContractArgs {
+impl From<InvokeContractArgsView<'_>> for InvokeContractArgs {
     #[must_use]
-    fn from(v: InvokeContractArgsRef<'_>) -> Self {
+    fn from(v: InvokeContractArgsView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for InvokeContractArgsRef<'_> {
+impl WriteXdr for InvokeContractArgsView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

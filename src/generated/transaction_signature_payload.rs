@@ -58,18 +58,18 @@ impl WriteXdr for TransactionSignaturePayload {
     }
 }
 
-/// TransactionSignaturePayloadRef is a borrowing equivalent of [`TransactionSignaturePayload`], usable in
+/// TransactionSignaturePayloadView is a borrowing equivalent of [`TransactionSignaturePayload`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionSignaturePayloadRef<'a> {
+pub struct TransactionSignaturePayloadView<'a> {
     pub network_id: Hash,
-    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionRef<'a>,
+    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
+impl From<&TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
     #[must_use]
-    fn from(v: &TransactionSignaturePayloadRef<'_>) -> Self {
+    fn from(v: &TransactionSignaturePayloadView<'_>) -> Self {
         Self {
             network_id: v.network_id.clone(),
             tagged_transaction: (&v.tagged_transaction).into(),
@@ -78,14 +78,14 @@ impl From<&TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
+impl From<TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
     #[must_use]
-    fn from(v: TransactionSignaturePayloadRef<'_>) -> Self {
+    fn from(v: TransactionSignaturePayloadView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionSignaturePayloadRef<'_> {
+impl WriteXdr for TransactionSignaturePayloadView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

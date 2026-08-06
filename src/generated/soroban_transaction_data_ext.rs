@@ -136,36 +136,36 @@ impl WriteXdr for SorobanTransactionDataExt {
     }
 }
 
-/// SorobanTransactionDataExtRef is a borrowing equivalent of [`SorobanTransactionDataExt`], usable in
+/// SorobanTransactionDataExtView is a borrowing equivalent of [`SorobanTransactionDataExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanTransactionDataExtRef<'a> {
+pub enum SorobanTransactionDataExtView<'a> {
     V0,
-    V1(SorobanResourcesExtV0Ref<'a>),
+    V1(SorobanResourcesExtV0View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
+impl From<&SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
     #[must_use]
-    fn from(v: &SorobanTransactionDataExtRef<'_>) -> Self {
+    fn from(v: &SorobanTransactionDataExtView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanTransactionDataExtRef::V0 => Self::V0,
-            SorobanTransactionDataExtRef::V1(value) => Self::V1(value.into()),
+            SorobanTransactionDataExtView::V0 => Self::V0,
+            SorobanTransactionDataExtView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
+impl From<SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
     #[must_use]
-    fn from(v: SorobanTransactionDataExtRef<'_>) -> Self {
+    fn from(v: SorobanTransactionDataExtView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl SorobanTransactionDataExtRef<'_> {
+impl SorobanTransactionDataExtView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl SorobanTransactionDataExtRef<'_> {
     }
 }
 
-impl WriteXdr for SorobanTransactionDataExtRef<'_> {
+impl WriteXdr for SorobanTransactionDataExtView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

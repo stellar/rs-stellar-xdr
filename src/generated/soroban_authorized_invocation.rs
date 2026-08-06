@@ -50,18 +50,18 @@ impl WriteXdr for SorobanAuthorizedInvocation {
     }
 }
 
-/// SorobanAuthorizedInvocationRef is a borrowing equivalent of [`SorobanAuthorizedInvocation`], usable in
+/// SorobanAuthorizedInvocationView is a borrowing equivalent of [`SorobanAuthorizedInvocation`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizedInvocationRef<'a> {
-    pub function: SorobanAuthorizedFunctionRef<'a>,
-    pub sub_invocations: VecMRef<'a, SorobanAuthorizedInvocationRef<'a>>,
+pub struct SorobanAuthorizedInvocationView<'a> {
+    pub function: SorobanAuthorizedFunctionView<'a>,
+    pub sub_invocations: VecMView<'a, SorobanAuthorizedInvocationView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
+impl From<&SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation {
     #[must_use]
-    fn from(v: &SorobanAuthorizedInvocationRef<'_>) -> Self {
+    fn from(v: &SorobanAuthorizedInvocationView<'_>) -> Self {
         Self {
             function: (&v.function).into(),
             sub_invocations: v.sub_invocations.to_vecm_from(),
@@ -70,14 +70,14 @@ impl From<&SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
+impl From<SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation {
     #[must_use]
-    fn from(v: SorobanAuthorizedInvocationRef<'_>) -> Self {
+    fn from(v: SorobanAuthorizedInvocationView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanAuthorizedInvocationRef<'_> {
+impl WriteXdr for SorobanAuthorizedInvocationView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

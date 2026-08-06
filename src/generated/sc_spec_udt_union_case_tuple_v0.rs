@@ -59,19 +59,19 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseTupleV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`], usable in
+/// ScSpecUdtUnionCaseTupleV0View is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtUnionCaseTupleV0Ref<'a> {
-    pub doc: StringMRef<'a, 1024>,
-    pub name: StringMRef<'a, 60>,
-    pub type_: VecMRef<'a, ScSpecTypeDefRef<'a>>,
+pub struct ScSpecUdtUnionCaseTupleV0View<'a> {
+    pub doc: StringMView<'a, 1024>,
+    pub name: StringMView<'a, 60>,
+    pub type_: VecMView<'a, ScSpecTypeDefView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
+impl From<&ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
+    fn from(v: &ScSpecUdtUnionCaseTupleV0View<'_>) -> Self {
         Self {
             doc: v.doc.to_stringm(),
             name: v.name.to_stringm(),
@@ -81,14 +81,14 @@ impl From<&ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
+impl From<ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
     #[must_use]
-    fn from(v: ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
+    fn from(v: ScSpecUdtUnionCaseTupleV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionCaseTupleV0Ref<'_> {
+impl WriteXdr for ScSpecUdtUnionCaseTupleV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

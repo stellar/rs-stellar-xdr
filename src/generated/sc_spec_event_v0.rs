@@ -66,22 +66,22 @@ impl WriteXdr for ScSpecEventV0 {
     }
 }
 
-/// ScSpecEventV0Ref is a borrowing equivalent of [`ScSpecEventV0`], usable in
+/// ScSpecEventV0View is a borrowing equivalent of [`ScSpecEventV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecEventV0Ref<'a> {
-    pub doc: StringMRef<'a, 1024>,
-    pub lib: StringMRef<'a, 80>,
-    pub name: ScSymbolRef<'a>,
-    pub prefix_topics: VecMRef<'a, ScSymbolRef<'a>, 2>,
-    pub params: VecMRef<'a, ScSpecEventParamV0Ref<'a>>,
+pub struct ScSpecEventV0View<'a> {
+    pub doc: StringMView<'a, 1024>,
+    pub lib: StringMView<'a, 80>,
+    pub name: ScSymbolView<'a>,
+    pub prefix_topics: VecMView<'a, ScSymbolView<'a>, 2>,
+    pub params: VecMView<'a, ScSpecEventParamV0View<'a>>,
     pub data_format: ScSpecEventDataFormat,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
+impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
     #[must_use]
-    fn from(v: &ScSpecEventV0Ref<'_>) -> Self {
+    fn from(v: &ScSpecEventV0View<'_>) -> Self {
         Self {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
@@ -94,14 +94,14 @@ impl From<&ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
+impl From<ScSpecEventV0View<'_>> for ScSpecEventV0 {
     #[must_use]
-    fn from(v: ScSpecEventV0Ref<'_>) -> Self {
+    fn from(v: ScSpecEventV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecEventV0Ref<'_> {
+impl WriteXdr for ScSpecEventV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

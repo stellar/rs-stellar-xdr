@@ -64,20 +64,20 @@ impl WriteXdr for SorobanTransactionMeta {
     }
 }
 
-/// SorobanTransactionMetaRef is a borrowing equivalent of [`SorobanTransactionMeta`], usable in
+/// SorobanTransactionMetaView is a borrowing equivalent of [`SorobanTransactionMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionMetaRef<'a> {
+pub struct SorobanTransactionMetaView<'a> {
     pub ext: SorobanTransactionMetaExt,
-    pub events: VecMRef<'a, ContractEventRef<'a>>,
-    pub return_value: ScValRef<'a>,
-    pub diagnostic_events: VecMRef<'a, DiagnosticEventRef<'a>>,
+    pub events: VecMView<'a, ContractEventView<'a>>,
+    pub return_value: ScValView<'a>,
+    pub diagnostic_events: VecMView<'a, DiagnosticEventView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
+impl From<&SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
     #[must_use]
-    fn from(v: &SorobanTransactionMetaRef<'_>) -> Self {
+    fn from(v: &SorobanTransactionMetaView<'_>) -> Self {
         Self {
             ext: v.ext.clone(),
             events: v.events.to_vecm_from(),
@@ -88,14 +88,14 @@ impl From<&SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
+impl From<SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
     #[must_use]
-    fn from(v: SorobanTransactionMetaRef<'_>) -> Self {
+    fn from(v: SorobanTransactionMetaView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanTransactionMetaRef<'_> {
+impl WriteXdr for SorobanTransactionMetaView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

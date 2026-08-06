@@ -108,28 +108,28 @@ impl AsRef<[u8]> for ScString {
     }
 }
 
-/// ScStringRef is a borrowing equivalent of [`ScString`], usable in
+/// ScStringView is a borrowing equivalent of [`ScString`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScStringRef<'a>(pub StringMRef<'a>);
+pub struct ScStringView<'a>(pub StringMView<'a>);
 
 #[cfg(feature = "alloc")]
-impl From<&ScStringRef<'_>> for ScString {
+impl From<&ScStringView<'_>> for ScString {
     #[must_use]
-    fn from(v: &ScStringRef<'_>) -> Self {
+    fn from(v: &ScStringView<'_>) -> Self {
         Self(v.0.to_stringm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScStringRef<'_>> for ScString {
+impl From<ScStringView<'_>> for ScString {
     #[must_use]
-    fn from(v: ScStringRef<'_>) -> Self {
+    fn from(v: ScStringView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScStringRef<'_> {
+impl WriteXdr for ScStringView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

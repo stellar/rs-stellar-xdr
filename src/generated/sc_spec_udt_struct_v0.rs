@@ -58,20 +58,20 @@ impl WriteXdr for ScSpecUdtStructV0 {
     }
 }
 
-/// ScSpecUdtStructV0Ref is a borrowing equivalent of [`ScSpecUdtStructV0`], usable in
+/// ScSpecUdtStructV0View is a borrowing equivalent of [`ScSpecUdtStructV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtStructV0Ref<'a> {
-    pub doc: StringMRef<'a, 1024>,
-    pub lib: StringMRef<'a, 80>,
-    pub name: StringMRef<'a, 60>,
-    pub fields: VecMRef<'a, ScSpecUdtStructFieldV0Ref<'a>>,
+pub struct ScSpecUdtStructV0View<'a> {
+    pub doc: StringMView<'a, 1024>,
+    pub lib: StringMView<'a, 80>,
+    pub name: StringMView<'a, 60>,
+    pub fields: VecMView<'a, ScSpecUdtStructFieldV0View<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtStructV0Ref<'_>> for ScSpecUdtStructV0 {
+impl From<&ScSpecUdtStructV0View<'_>> for ScSpecUdtStructV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtStructV0Ref<'_>) -> Self {
+    fn from(v: &ScSpecUdtStructV0View<'_>) -> Self {
         Self {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
@@ -82,14 +82,14 @@ impl From<&ScSpecUdtStructV0Ref<'_>> for ScSpecUdtStructV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtStructV0Ref<'_>> for ScSpecUdtStructV0 {
+impl From<ScSpecUdtStructV0View<'_>> for ScSpecUdtStructV0 {
     #[must_use]
-    fn from(v: ScSpecUdtStructV0Ref<'_>) -> Self {
+    fn from(v: ScSpecUdtStructV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecUdtStructV0Ref<'_> {
+impl WriteXdr for ScSpecUdtStructV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

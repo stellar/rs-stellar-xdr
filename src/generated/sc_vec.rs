@@ -108,28 +108,28 @@ impl AsRef<[ScVal]> for ScVec {
     }
 }
 
-/// ScVecRef is a borrowing equivalent of [`ScVec`], usable in
+/// ScVecView is a borrowing equivalent of [`ScVec`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScVecRef<'a>(pub VecMRef<'a, ScValRef<'a>>);
+pub struct ScVecView<'a>(pub VecMView<'a, ScValView<'a>>);
 
 #[cfg(feature = "alloc")]
-impl From<&ScVecRef<'_>> for ScVec {
+impl From<&ScVecView<'_>> for ScVec {
     #[must_use]
-    fn from(v: &ScVecRef<'_>) -> Self {
+    fn from(v: &ScVecView<'_>) -> Self {
         Self(v.0.to_vecm_from())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScVecRef<'_>> for ScVec {
+impl From<ScVecView<'_>> for ScVec {
     #[must_use]
-    fn from(v: ScVecRef<'_>) -> Self {
+    fn from(v: ScVecView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScVecRef<'_> {
+impl WriteXdr for ScVecView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

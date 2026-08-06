@@ -130,34 +130,34 @@ impl WriteXdr for GeneralizedTransactionSet {
     }
 }
 
-/// GeneralizedTransactionSetRef is a borrowing equivalent of [`GeneralizedTransactionSet`], usable in
+/// GeneralizedTransactionSetView is a borrowing equivalent of [`GeneralizedTransactionSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum GeneralizedTransactionSetRef<'a> {
-    V1(TransactionSetV1Ref<'a>),
+pub enum GeneralizedTransactionSetView<'a> {
+    V1(TransactionSetV1View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
+impl From<&GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
     #[must_use]
-    fn from(v: &GeneralizedTransactionSetRef<'_>) -> Self {
+    fn from(v: &GeneralizedTransactionSetView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            GeneralizedTransactionSetRef::V1(value) => Self::V1(value.into()),
+            GeneralizedTransactionSetView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
+impl From<GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
     #[must_use]
-    fn from(v: GeneralizedTransactionSetRef<'_>) -> Self {
+    fn from(v: GeneralizedTransactionSetView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl GeneralizedTransactionSetRef<'_> {
+impl GeneralizedTransactionSetView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -167,7 +167,7 @@ impl GeneralizedTransactionSetRef<'_> {
     }
 }
 
-impl WriteXdr for GeneralizedTransactionSetRef<'_> {
+impl WriteXdr for GeneralizedTransactionSetView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

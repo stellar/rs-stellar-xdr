@@ -50,15 +50,15 @@ pub struct StructOutput {
     pub is_custom_str: bool,
     pub members: Vec<StructMemberOutput>,
     pub member_names: String,
-    /// True when this definition borrows and gets a real `{name}Ref<'a>`.
-    pub emit_ref: bool,
-    /// The full cfg for the real `Ref` struct, gating it to where it borrows.
-    pub ref_cfg: Option<String>,
-    /// True when `{name}Ref<'a>` is emitted as a transparent alias of `{name}`,
+    /// True when this definition borrows and gets a real `{name}View<'a>`.
+    pub emit_view: bool,
+    /// The full cfg for the real `View` struct, gating it to where it borrows.
+    pub view_cfg: Option<String>,
+    /// True when `{name}View<'a>` is emitted as a transparent alias of `{name}`,
     /// for the cfgs under which this definition does not borrow.
-    pub emit_ref_alias: bool,
+    pub emit_view_alias: bool,
     /// The full cfg for the alias.
-    pub ref_alias_cfg: Option<String>,
+    pub view_alias_cfg: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -70,10 +70,10 @@ pub struct StructMemberOutput {
     /// The correct SEP-51 JSON key when the Rust field name was keyword-escaped
     /// (e.g. `type_` -> JSON `type`). `None` when the name was not escaped.
     pub serde_rename: Option<String>,
-    /// The member's type in the borrowing `Ref` form of the parent type.
-    pub ref_type_ref: String,
-    /// Expression converting the member from `Ref` form to owned form.
-    pub from_ref_expr: String,
+    /// The member's type in the borrowing `View` form of the parent type.
+    pub view_type_ref: String,
+    /// Expression converting the member from `View` form to owned form.
+    pub from_view_expr: String,
 }
 
 pub struct EnumOutput {
@@ -99,18 +99,18 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
-    /// True when a real `{name}Ref<'a>` enum is emitted, i.e. some arm borrows.
-    pub emit_ref: bool,
-    /// The full cfg for the real `Ref` enum. When every borrowing arm is behind
+    /// True when a real `{name}View<'a>` enum is emitted, i.e. some arm borrows.
+    pub emit_view: bool,
+    /// The full cfg for the real `View` enum. When every borrowing arm is behind
     /// a cfg, this is the union's cfg combined with the disjunction of those
     /// arm cfgs, so the enum only exists where its lifetime is actually used.
-    pub ref_cfg: Option<String>,
-    /// True when `{name}Ref<'a>` is emitted as a transparent alias of `{name}`,
+    pub view_cfg: Option<String>,
+    /// True when `{name}View<'a>` is emitted as a transparent alias of `{name}`,
     /// for the cfgs under which no arm borrows.
-    pub emit_ref_alias: bool,
+    pub emit_view_alias: bool,
     /// The full cfg for the alias: the union's cfg combined with the negation
     /// of the borrowing arms' cfgs.
-    pub ref_alias_cfg: Option<String>,
+    pub view_alias_cfg: Option<String>,
     pub cfg: Option<String>,
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
@@ -124,11 +124,11 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
-    /// The arm's payload type in the borrowing `Ref` form of the parent type.
-    pub ref_type_ref: Option<String>,
-    /// Expression converting the payload from `Ref` form to owned form, with
+    /// The arm's payload type in the borrowing `View` form of the parent type.
+    pub view_type_ref: Option<String>,
+    /// Expression converting the payload from `View` form to owned form, with
     /// the payload bound by reference to `value`.
-    pub from_ref_expr: Option<String>,
+    pub from_view_expr: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -155,19 +155,19 @@ pub struct TypedefNewtypeOutput {
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
-    /// True when this definition borrows and gets a real `{name}Ref<'a>`.
-    pub emit_ref: bool,
-    /// The full cfg for the real `Ref` newtype, gating it to where it borrows.
-    pub ref_cfg: Option<String>,
-    /// True when `{name}Ref<'a>` is emitted as a transparent alias of `{name}`,
+    /// True when this definition borrows and gets a real `{name}View<'a>`.
+    pub emit_view: bool,
+    /// The full cfg for the real `View` newtype, gating it to where it borrows.
+    pub view_cfg: Option<String>,
+    /// True when `{name}View<'a>` is emitted as a transparent alias of `{name}`,
     /// for the cfgs under which this definition does not borrow.
-    pub emit_ref_alias: bool,
+    pub emit_view_alias: bool,
     /// The full cfg for the alias.
-    pub ref_alias_cfg: Option<String>,
-    /// The inner type in the borrowing `Ref` form of the newtype.
-    pub ref_type_ref: String,
-    /// Expression converting the inner value from `Ref` form to owned form.
-    pub from_ref_expr: String,
+    pub view_alias_cfg: Option<String>,
+    /// The inner type in the borrowing `View` form of the newtype.
+    pub view_type_ref: String,
+    /// Expression converting the inner value from `View` form to owned form.
+    pub from_view_expr: String,
     pub cfg: Option<String>,
 }
 

@@ -136,36 +136,36 @@ impl WriteXdr for AccountEntryExt {
     }
 }
 
-/// AccountEntryExtRef is a borrowing equivalent of [`AccountEntryExt`], usable in
+/// AccountEntryExtView is a borrowing equivalent of [`AccountEntryExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AccountEntryExtRef<'a> {
+pub enum AccountEntryExtView<'a> {
     V0,
-    V1(AccountEntryExtensionV1Ref<'a>),
+    V1(AccountEntryExtensionV1View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryExtRef<'_>> for AccountEntryExt {
+impl From<&AccountEntryExtView<'_>> for AccountEntryExt {
     #[must_use]
-    fn from(v: &AccountEntryExtRef<'_>) -> Self {
+    fn from(v: &AccountEntryExtView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            AccountEntryExtRef::V0 => Self::V0,
-            AccountEntryExtRef::V1(value) => Self::V1(value.into()),
+            AccountEntryExtView::V0 => Self::V0,
+            AccountEntryExtView::V1(value) => Self::V1(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryExtRef<'_>> for AccountEntryExt {
+impl From<AccountEntryExtView<'_>> for AccountEntryExt {
     #[must_use]
-    fn from(v: AccountEntryExtRef<'_>) -> Self {
+    fn from(v: AccountEntryExtView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl AccountEntryExtRef<'_> {
+impl AccountEntryExtView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl AccountEntryExtRef<'_> {
     }
 }
 
-impl WriteXdr for AccountEntryExtRef<'_> {
+impl WriteXdr for AccountEntryExtView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

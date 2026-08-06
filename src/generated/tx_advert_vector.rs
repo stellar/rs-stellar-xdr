@@ -108,28 +108,28 @@ impl AsRef<[Hash]> for TxAdvertVector {
     }
 }
 
-/// TxAdvertVectorRef is a borrowing equivalent of [`TxAdvertVector`], usable in
+/// TxAdvertVectorView is a borrowing equivalent of [`TxAdvertVector`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxAdvertVectorRef<'a>(pub VecMRef<'a, Hash, 1000>);
+pub struct TxAdvertVectorView<'a>(pub VecMView<'a, Hash, 1000>);
 
 #[cfg(feature = "alloc")]
-impl From<&TxAdvertVectorRef<'_>> for TxAdvertVector {
+impl From<&TxAdvertVectorView<'_>> for TxAdvertVector {
     #[must_use]
-    fn from(v: &TxAdvertVectorRef<'_>) -> Self {
+    fn from(v: &TxAdvertVectorView<'_>) -> Self {
         Self(v.0.to_vecm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxAdvertVectorRef<'_>> for TxAdvertVector {
+impl From<TxAdvertVectorView<'_>> for TxAdvertVector {
     #[must_use]
-    fn from(v: TxAdvertVectorRef<'_>) -> Self {
+    fn from(v: TxAdvertVectorView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TxAdvertVectorRef<'_> {
+impl WriteXdr for TxAdvertVectorView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

@@ -50,18 +50,18 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyRequestMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`], usable in
+/// SignedTimeSlicedSurveyRequestMessageView is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyRequestMessageRef<'a> {
-    pub request_signature: SignatureRef<'a>,
+pub struct SignedTimeSlicedSurveyRequestMessageView<'a> {
+    pub request_signature: SignatureView<'a>,
     pub request: TimeSlicedSurveyRequestMessage,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
+impl From<&SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSurveyRequestMessage {
     #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
+    fn from(v: &SignedTimeSlicedSurveyRequestMessageView<'_>) -> Self {
         Self {
             request_signature: (&v.request_signature).into(),
             request: v.request.clone(),
@@ -70,14 +70,14 @@ impl From<&SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurv
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
+impl From<SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSurveyRequestMessage {
     #[must_use]
-    fn from(v: SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
+    fn from(v: SignedTimeSlicedSurveyRequestMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SignedTimeSlicedSurveyRequestMessageRef<'_> {
+impl WriteXdr for SignedTimeSlicedSurveyRequestMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

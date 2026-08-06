@@ -45,17 +45,17 @@ impl WriteXdr for FreezeBypassTxs {
     }
 }
 
-/// FreezeBypassTxsRef is a borrowing equivalent of [`FreezeBypassTxs`], usable in
+/// FreezeBypassTxsView is a borrowing equivalent of [`FreezeBypassTxs`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FreezeBypassTxsRef<'a> {
-    pub tx_hashes: VecMRef<'a, Hash>,
+pub struct FreezeBypassTxsView<'a> {
+    pub tx_hashes: VecMView<'a, Hash>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
+impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
-    fn from(v: &FreezeBypassTxsRef<'_>) -> Self {
+    fn from(v: &FreezeBypassTxsView<'_>) -> Self {
         Self {
             tx_hashes: v.tx_hashes.to_vecm(),
         }
@@ -63,14 +63,14 @@ impl From<&FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
 }
 
 #[cfg(feature = "alloc")]
-impl From<FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
+impl From<FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
-    fn from(v: FreezeBypassTxsRef<'_>) -> Self {
+    fn from(v: FreezeBypassTxsView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for FreezeBypassTxsRef<'_> {
+impl WriteXdr for FreezeBypassTxsView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

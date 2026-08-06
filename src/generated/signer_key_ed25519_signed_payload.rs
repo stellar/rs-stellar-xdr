@@ -81,18 +81,18 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
     }
 }
 
-/// SignerKeyEd25519SignedPayloadRef is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`], usable in
+/// SignerKeyEd25519SignedPayloadView is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignerKeyEd25519SignedPayloadRef<'a> {
+pub struct SignerKeyEd25519SignedPayloadView<'a> {
     pub ed25519: Uint256,
-    pub payload: BytesMRef<'a, 64>,
+    pub payload: BytesMView<'a, 64>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
+impl From<&SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayload {
     #[must_use]
-    fn from(v: &SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
+    fn from(v: &SignerKeyEd25519SignedPayloadView<'_>) -> Self {
         Self {
             ed25519: v.ed25519.clone(),
             payload: v.payload.to_bytesm(),
@@ -101,14 +101,14 @@ impl From<&SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPaylo
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
+impl From<SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayload {
     #[must_use]
-    fn from(v: SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
+    fn from(v: SignerKeyEd25519SignedPayloadView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SignerKeyEd25519SignedPayloadRef<'_> {
+impl WriteXdr for SignerKeyEd25519SignedPayloadView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

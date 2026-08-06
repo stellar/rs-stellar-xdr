@@ -50,18 +50,18 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
     }
 }
 
-/// RevokeSponsorshipOpSignerRef is a borrowing equivalent of [`RevokeSponsorshipOpSigner`], usable in
+/// RevokeSponsorshipOpSignerView is a borrowing equivalent of [`RevokeSponsorshipOpSigner`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct RevokeSponsorshipOpSignerRef<'a> {
+pub struct RevokeSponsorshipOpSignerView<'a> {
     pub account_id: AccountId,
-    pub signer_key: SignerKeyRef<'a>,
+    pub signer_key: SignerKeyView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
+impl From<&RevokeSponsorshipOpSignerView<'_>> for RevokeSponsorshipOpSigner {
     #[must_use]
-    fn from(v: &RevokeSponsorshipOpSignerRef<'_>) -> Self {
+    fn from(v: &RevokeSponsorshipOpSignerView<'_>) -> Self {
         Self {
             account_id: v.account_id.clone(),
             signer_key: (&v.signer_key).into(),
@@ -70,14 +70,14 @@ impl From<&RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
 }
 
 #[cfg(feature = "alloc")]
-impl From<RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
+impl From<RevokeSponsorshipOpSignerView<'_>> for RevokeSponsorshipOpSigner {
     #[must_use]
-    fn from(v: RevokeSponsorshipOpSignerRef<'_>) -> Self {
+    fn from(v: RevokeSponsorshipOpSignerView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for RevokeSponsorshipOpSignerRef<'_> {
+impl WriteXdr for RevokeSponsorshipOpSignerView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

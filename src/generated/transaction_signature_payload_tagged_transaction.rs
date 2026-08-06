@@ -137,25 +137,25 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     }
 }
 
-/// TransactionSignaturePayloadTaggedTransactionRef is a borrowing equivalent of [`TransactionSignaturePayloadTaggedTransaction`], usable in
+/// TransactionSignaturePayloadTaggedTransactionView is a borrowing equivalent of [`TransactionSignaturePayloadTaggedTransaction`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionSignaturePayloadTaggedTransactionRef<'a> {
-    Tx(TransactionRef<'a>),
-    TxFeeBump(FeeBumpTransactionRef<'a>),
+pub enum TransactionSignaturePayloadTaggedTransactionView<'a> {
+    Tx(TransactionView<'a>),
+    TxFeeBump(FeeBumpTransactionView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionSignaturePayloadTaggedTransactionRef<'_>>
+impl From<&TransactionSignaturePayloadTaggedTransactionView<'_>>
     for TransactionSignaturePayloadTaggedTransaction
 {
     #[must_use]
-    fn from(v: &TransactionSignaturePayloadTaggedTransactionRef<'_>) -> Self {
+    fn from(v: &TransactionSignaturePayloadTaggedTransactionView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionSignaturePayloadTaggedTransactionRef::Tx(value) => Self::Tx(value.into()),
-            TransactionSignaturePayloadTaggedTransactionRef::TxFeeBump(value) => {
+            TransactionSignaturePayloadTaggedTransactionView::Tx(value) => Self::Tx(value.into()),
+            TransactionSignaturePayloadTaggedTransactionView::TxFeeBump(value) => {
                 Self::TxFeeBump(value.into())
             }
         }
@@ -163,16 +163,16 @@ impl From<&TransactionSignaturePayloadTaggedTransactionRef<'_>>
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionSignaturePayloadTaggedTransactionRef<'_>>
+impl From<TransactionSignaturePayloadTaggedTransactionView<'_>>
     for TransactionSignaturePayloadTaggedTransaction
 {
     #[must_use]
-    fn from(v: TransactionSignaturePayloadTaggedTransactionRef<'_>) -> Self {
+    fn from(v: TransactionSignaturePayloadTaggedTransactionView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
+impl TransactionSignaturePayloadTaggedTransactionView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -183,7 +183,7 @@ impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionSignaturePayloadTaggedTransactionRef<'_> {
+impl WriteXdr for TransactionSignaturePayloadTaggedTransactionView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

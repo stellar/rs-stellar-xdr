@@ -58,19 +58,19 @@ impl WriteXdr for AuthCert {
     }
 }
 
-/// AuthCertRef is a borrowing equivalent of [`AuthCert`], usable in
+/// AuthCertView is a borrowing equivalent of [`AuthCert`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AuthCertRef<'a> {
+pub struct AuthCertView<'a> {
     pub pubkey: Curve25519Public,
     pub expiration: u64,
-    pub sig: SignatureRef<'a>,
+    pub sig: SignatureView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AuthCertRef<'_>> for AuthCert {
+impl From<&AuthCertView<'_>> for AuthCert {
     #[must_use]
-    fn from(v: &AuthCertRef<'_>) -> Self {
+    fn from(v: &AuthCertView<'_>) -> Self {
         Self {
             pubkey: v.pubkey.clone(),
             expiration: v.expiration,
@@ -80,14 +80,14 @@ impl From<&AuthCertRef<'_>> for AuthCert {
 }
 
 #[cfg(feature = "alloc")]
-impl From<AuthCertRef<'_>> for AuthCert {
+impl From<AuthCertView<'_>> for AuthCert {
     #[must_use]
-    fn from(v: AuthCertRef<'_>) -> Self {
+    fn from(v: AuthCertView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for AuthCertRef<'_> {
+impl WriteXdr for AuthCertView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

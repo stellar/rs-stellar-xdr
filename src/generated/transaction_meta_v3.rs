@@ -66,21 +66,21 @@ impl WriteXdr for TransactionMetaV3 {
     }
 }
 
-/// TransactionMetaV3Ref is a borrowing equivalent of [`TransactionMetaV3`], usable in
+/// TransactionMetaV3View is a borrowing equivalent of [`TransactionMetaV3`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionMetaV3Ref<'a> {
+pub struct TransactionMetaV3View<'a> {
     pub ext: ExtensionPoint,
-    pub tx_changes_before: LedgerEntryChangesRef<'a>,
-    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
-    pub tx_changes_after: LedgerEntryChangesRef<'a>,
-    pub soroban_meta: Option<SorobanTransactionMetaRef<'a>>,
+    pub tx_changes_before: LedgerEntryChangesView<'a>,
+    pub operations: VecMView<'a, OperationMetaView<'a>>,
+    pub tx_changes_after: LedgerEntryChangesView<'a>,
+    pub soroban_meta: Option<SorobanTransactionMetaView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
+impl From<&TransactionMetaV3View<'_>> for TransactionMetaV3 {
     #[must_use]
-    fn from(v: &TransactionMetaV3Ref<'_>) -> Self {
+    fn from(v: &TransactionMetaV3View<'_>) -> Self {
         Self {
             ext: v.ext.clone(),
             tx_changes_before: (&v.tx_changes_before).into(),
@@ -92,14 +92,14 @@ impl From<&TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
+impl From<TransactionMetaV3View<'_>> for TransactionMetaV3 {
     #[must_use]
-    fn from(v: TransactionMetaV3Ref<'_>) -> Self {
+    fn from(v: TransactionMetaV3View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionMetaV3Ref<'_> {
+impl WriteXdr for TransactionMetaV3View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -155,38 +155,38 @@ impl WriteXdr for StellarValueExt {
     }
 }
 
-/// StellarValueExtRef is a borrowing equivalent of [`StellarValueExt`], usable in
+/// StellarValueExtView is a borrowing equivalent of [`StellarValueExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StellarValueExtRef<'a> {
+pub enum StellarValueExtView<'a> {
     Basic,
-    Signed(LedgerCloseValueSignatureRef<'a>),
-    EmptyTxSet(StellarValueProposedValueRef<'a>),
+    Signed(LedgerCloseValueSignatureView<'a>),
+    EmptyTxSet(StellarValueProposedValueView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StellarValueExtRef<'_>> for StellarValueExt {
+impl From<&StellarValueExtView<'_>> for StellarValueExt {
     #[must_use]
-    fn from(v: &StellarValueExtRef<'_>) -> Self {
+    fn from(v: &StellarValueExtView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            StellarValueExtRef::Basic => Self::Basic,
-            StellarValueExtRef::Signed(value) => Self::Signed(value.into()),
-            StellarValueExtRef::EmptyTxSet(value) => Self::EmptyTxSet(value.into()),
+            StellarValueExtView::Basic => Self::Basic,
+            StellarValueExtView::Signed(value) => Self::Signed(value.into()),
+            StellarValueExtView::EmptyTxSet(value) => Self::EmptyTxSet(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StellarValueExtRef<'_>> for StellarValueExt {
+impl From<StellarValueExtView<'_>> for StellarValueExt {
     #[must_use]
-    fn from(v: StellarValueExtRef<'_>) -> Self {
+    fn from(v: StellarValueExtView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl StellarValueExtRef<'_> {
+impl StellarValueExtView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> StellarValueType {
         #[allow(clippy::match_same_arms)]
@@ -198,7 +198,7 @@ impl StellarValueExtRef<'_> {
     }
 }
 
-impl WriteXdr for StellarValueExtRef<'_> {
+impl WriteXdr for StellarValueExtView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -111,18 +111,18 @@ impl WriteXdr for Operation {
     }
 }
 
-/// OperationRef is a borrowing equivalent of [`Operation`], usable in
+/// OperationView is a borrowing equivalent of [`Operation`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationRef<'a> {
+pub struct OperationView<'a> {
     pub source_account: Option<MuxedAccount>,
-    pub body: OperationBodyRef<'a>,
+    pub body: OperationBodyView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationRef<'_>> for Operation {
+impl From<&OperationView<'_>> for Operation {
     #[must_use]
-    fn from(v: &OperationRef<'_>) -> Self {
+    fn from(v: &OperationView<'_>) -> Self {
         Self {
             source_account: v.source_account.clone(),
             body: (&v.body).into(),
@@ -131,14 +131,14 @@ impl From<&OperationRef<'_>> for Operation {
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationRef<'_>> for Operation {
+impl From<OperationView<'_>> for Operation {
     #[must_use]
-    fn from(v: OperationRef<'_>) -> Self {
+    fn from(v: OperationView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for OperationRef<'_> {
+impl WriteXdr for OperationView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

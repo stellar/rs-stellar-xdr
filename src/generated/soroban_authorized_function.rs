@@ -168,27 +168,27 @@ impl WriteXdr for SorobanAuthorizedFunction {
     }
 }
 
-/// SorobanAuthorizedFunctionRef is a borrowing equivalent of [`SorobanAuthorizedFunction`], usable in
+/// SorobanAuthorizedFunctionView is a borrowing equivalent of [`SorobanAuthorizedFunction`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanAuthorizedFunctionRef<'a> {
-    ContractFn(InvokeContractArgsRef<'a>),
-    CreateContractHostFn(CreateContractArgsRef<'a>),
-    CreateContractV2HostFn(CreateContractArgsV2Ref<'a>),
+pub enum SorobanAuthorizedFunctionView<'a> {
+    ContractFn(InvokeContractArgsView<'a>),
+    CreateContractHostFn(CreateContractArgsView<'a>),
+    CreateContractV2HostFn(CreateContractArgsV2View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
+impl From<&SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
     #[must_use]
-    fn from(v: &SorobanAuthorizedFunctionRef<'_>) -> Self {
+    fn from(v: &SorobanAuthorizedFunctionView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanAuthorizedFunctionRef::ContractFn(value) => Self::ContractFn(value.into()),
-            SorobanAuthorizedFunctionRef::CreateContractHostFn(value) => {
+            SorobanAuthorizedFunctionView::ContractFn(value) => Self::ContractFn(value.into()),
+            SorobanAuthorizedFunctionView::CreateContractHostFn(value) => {
                 Self::CreateContractHostFn(value.into())
             }
-            SorobanAuthorizedFunctionRef::CreateContractV2HostFn(value) => {
+            SorobanAuthorizedFunctionView::CreateContractV2HostFn(value) => {
                 Self::CreateContractV2HostFn(value.into())
             }
         }
@@ -196,14 +196,14 @@ impl From<&SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
+impl From<SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
     #[must_use]
-    fn from(v: SorobanAuthorizedFunctionRef<'_>) -> Self {
+    fn from(v: SorobanAuthorizedFunctionView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl SorobanAuthorizedFunctionRef<'_> {
+impl SorobanAuthorizedFunctionView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> SorobanAuthorizedFunctionType {
         #[allow(clippy::match_same_arms)]
@@ -217,7 +217,7 @@ impl SorobanAuthorizedFunctionRef<'_> {
     }
 }
 
-impl WriteXdr for SorobanAuthorizedFunctionRef<'_> {
+impl WriteXdr for SorobanAuthorizedFunctionView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

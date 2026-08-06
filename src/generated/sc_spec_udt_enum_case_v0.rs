@@ -54,19 +54,19 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
     }
 }
 
-/// ScSpecUdtEnumCaseV0Ref is a borrowing equivalent of [`ScSpecUdtEnumCaseV0`], usable in
+/// ScSpecUdtEnumCaseV0View is a borrowing equivalent of [`ScSpecUdtEnumCaseV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtEnumCaseV0Ref<'a> {
-    pub doc: StringMRef<'a, 1024>,
-    pub name: StringMRef<'a, 60>,
+pub struct ScSpecUdtEnumCaseV0View<'a> {
+    pub doc: StringMView<'a, 1024>,
+    pub name: StringMView<'a, 60>,
     pub value: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtEnumCaseV0Ref<'_>> for ScSpecUdtEnumCaseV0 {
+impl From<&ScSpecUdtEnumCaseV0View<'_>> for ScSpecUdtEnumCaseV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtEnumCaseV0Ref<'_>) -> Self {
+    fn from(v: &ScSpecUdtEnumCaseV0View<'_>) -> Self {
         Self {
             doc: v.doc.to_stringm(),
             name: v.name.to_stringm(),
@@ -76,14 +76,14 @@ impl From<&ScSpecUdtEnumCaseV0Ref<'_>> for ScSpecUdtEnumCaseV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtEnumCaseV0Ref<'_>> for ScSpecUdtEnumCaseV0 {
+impl From<ScSpecUdtEnumCaseV0View<'_>> for ScSpecUdtEnumCaseV0 {
     #[must_use]
-    fn from(v: ScSpecUdtEnumCaseV0Ref<'_>) -> Self {
+    fn from(v: ScSpecUdtEnumCaseV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecUdtEnumCaseV0Ref<'_> {
+impl WriteXdr for ScSpecUdtEnumCaseV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -62,21 +62,21 @@ impl WriteXdr for ContractDataEntry {
     }
 }
 
-/// ContractDataEntryRef is a borrowing equivalent of [`ContractDataEntry`], usable in
+/// ContractDataEntryView is a borrowing equivalent of [`ContractDataEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractDataEntryRef<'a> {
+pub struct ContractDataEntryView<'a> {
     pub ext: ExtensionPoint,
     pub contract: ScAddress,
-    pub key: ScValRef<'a>,
+    pub key: ScValView<'a>,
     pub durability: ContractDataDurability,
-    pub val: ScValRef<'a>,
+    pub val: ScValView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractDataEntryRef<'_>> for ContractDataEntry {
+impl From<&ContractDataEntryView<'_>> for ContractDataEntry {
     #[must_use]
-    fn from(v: &ContractDataEntryRef<'_>) -> Self {
+    fn from(v: &ContractDataEntryView<'_>) -> Self {
         Self {
             ext: v.ext.clone(),
             contract: v.contract.clone(),
@@ -88,14 +88,14 @@ impl From<&ContractDataEntryRef<'_>> for ContractDataEntry {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractDataEntryRef<'_>> for ContractDataEntry {
+impl From<ContractDataEntryView<'_>> for ContractDataEntry {
     #[must_use]
-    fn from(v: ContractDataEntryRef<'_>) -> Self {
+    fn from(v: ContractDataEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ContractDataEntryRef<'_> {
+impl WriteXdr for ContractDataEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

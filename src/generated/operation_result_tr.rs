@@ -405,25 +405,25 @@ impl WriteXdr for OperationResultTr {
     }
 }
 
-/// OperationResultTrRef is a borrowing equivalent of [`OperationResultTr`], usable in
+/// OperationResultTrView is a borrowing equivalent of [`OperationResultTr`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum OperationResultTrRef<'a> {
+pub enum OperationResultTrView<'a> {
     CreateAccount(CreateAccountResult),
     Payment(PaymentResult),
-    PathPaymentStrictReceive(PathPaymentStrictReceiveResultRef<'a>),
-    ManageSellOffer(ManageSellOfferResultRef<'a>),
-    CreatePassiveSellOffer(ManageSellOfferResultRef<'a>),
+    PathPaymentStrictReceive(PathPaymentStrictReceiveResultView<'a>),
+    ManageSellOffer(ManageSellOfferResultView<'a>),
+    CreatePassiveSellOffer(ManageSellOfferResultView<'a>),
     SetOptions(SetOptionsResult),
     ChangeTrust(ChangeTrustResult),
     AllowTrust(AllowTrustResult),
     AccountMerge(AccountMergeResult),
-    Inflation(InflationResultRef<'a>),
+    Inflation(InflationResultView<'a>),
     ManageData(ManageDataResult),
     BumpSequence(BumpSequenceResult),
-    ManageBuyOffer(ManageBuyOfferResultRef<'a>),
-    PathPaymentStrictSend(PathPaymentStrictSendResultRef<'a>),
+    ManageBuyOffer(ManageBuyOfferResultView<'a>),
+    PathPaymentStrictSend(PathPaymentStrictSendResultView<'a>),
     CreateClaimableBalance(CreateClaimableBalanceResult),
     ClaimClaimableBalance(ClaimClaimableBalanceResult),
     BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult),
@@ -440,79 +440,79 @@ pub enum OperationResultTrRef<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationResultTrRef<'_>> for OperationResultTr {
+impl From<&OperationResultTrView<'_>> for OperationResultTr {
     #[must_use]
-    fn from(v: &OperationResultTrRef<'_>) -> Self {
+    fn from(v: &OperationResultTrView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationResultTrRef::CreateAccount(value) => Self::CreateAccount(value.clone()),
-            OperationResultTrRef::Payment(value) => Self::Payment(value.clone()),
-            OperationResultTrRef::PathPaymentStrictReceive(value) => {
+            OperationResultTrView::CreateAccount(value) => Self::CreateAccount(value.clone()),
+            OperationResultTrView::Payment(value) => Self::Payment(value.clone()),
+            OperationResultTrView::PathPaymentStrictReceive(value) => {
                 Self::PathPaymentStrictReceive(value.into())
             }
-            OperationResultTrRef::ManageSellOffer(value) => Self::ManageSellOffer(value.into()),
-            OperationResultTrRef::CreatePassiveSellOffer(value) => {
+            OperationResultTrView::ManageSellOffer(value) => Self::ManageSellOffer(value.into()),
+            OperationResultTrView::CreatePassiveSellOffer(value) => {
                 Self::CreatePassiveSellOffer(value.into())
             }
-            OperationResultTrRef::SetOptions(value) => Self::SetOptions(value.clone()),
-            OperationResultTrRef::ChangeTrust(value) => Self::ChangeTrust(value.clone()),
-            OperationResultTrRef::AllowTrust(value) => Self::AllowTrust(value.clone()),
-            OperationResultTrRef::AccountMerge(value) => Self::AccountMerge(value.clone()),
-            OperationResultTrRef::Inflation(value) => Self::Inflation(value.into()),
-            OperationResultTrRef::ManageData(value) => Self::ManageData(value.clone()),
-            OperationResultTrRef::BumpSequence(value) => Self::BumpSequence(value.clone()),
-            OperationResultTrRef::ManageBuyOffer(value) => Self::ManageBuyOffer(value.into()),
-            OperationResultTrRef::PathPaymentStrictSend(value) => {
+            OperationResultTrView::SetOptions(value) => Self::SetOptions(value.clone()),
+            OperationResultTrView::ChangeTrust(value) => Self::ChangeTrust(value.clone()),
+            OperationResultTrView::AllowTrust(value) => Self::AllowTrust(value.clone()),
+            OperationResultTrView::AccountMerge(value) => Self::AccountMerge(value.clone()),
+            OperationResultTrView::Inflation(value) => Self::Inflation(value.into()),
+            OperationResultTrView::ManageData(value) => Self::ManageData(value.clone()),
+            OperationResultTrView::BumpSequence(value) => Self::BumpSequence(value.clone()),
+            OperationResultTrView::ManageBuyOffer(value) => Self::ManageBuyOffer(value.into()),
+            OperationResultTrView::PathPaymentStrictSend(value) => {
                 Self::PathPaymentStrictSend(value.into())
             }
-            OperationResultTrRef::CreateClaimableBalance(value) => {
+            OperationResultTrView::CreateClaimableBalance(value) => {
                 Self::CreateClaimableBalance(value.clone())
             }
-            OperationResultTrRef::ClaimClaimableBalance(value) => {
+            OperationResultTrView::ClaimClaimableBalance(value) => {
                 Self::ClaimClaimableBalance(value.clone())
             }
-            OperationResultTrRef::BeginSponsoringFutureReserves(value) => {
+            OperationResultTrView::BeginSponsoringFutureReserves(value) => {
                 Self::BeginSponsoringFutureReserves(value.clone())
             }
-            OperationResultTrRef::EndSponsoringFutureReserves(value) => {
+            OperationResultTrView::EndSponsoringFutureReserves(value) => {
                 Self::EndSponsoringFutureReserves(value.clone())
             }
-            OperationResultTrRef::RevokeSponsorship(value) => {
+            OperationResultTrView::RevokeSponsorship(value) => {
                 Self::RevokeSponsorship(value.clone())
             }
-            OperationResultTrRef::Clawback(value) => Self::Clawback(value.clone()),
-            OperationResultTrRef::ClawbackClaimableBalance(value) => {
+            OperationResultTrView::Clawback(value) => Self::Clawback(value.clone()),
+            OperationResultTrView::ClawbackClaimableBalance(value) => {
                 Self::ClawbackClaimableBalance(value.clone())
             }
-            OperationResultTrRef::SetTrustLineFlags(value) => {
+            OperationResultTrView::SetTrustLineFlags(value) => {
                 Self::SetTrustLineFlags(value.clone())
             }
-            OperationResultTrRef::LiquidityPoolDeposit(value) => {
+            OperationResultTrView::LiquidityPoolDeposit(value) => {
                 Self::LiquidityPoolDeposit(value.clone())
             }
-            OperationResultTrRef::LiquidityPoolWithdraw(value) => {
+            OperationResultTrView::LiquidityPoolWithdraw(value) => {
                 Self::LiquidityPoolWithdraw(value.clone())
             }
-            OperationResultTrRef::InvokeHostFunction(value) => {
+            OperationResultTrView::InvokeHostFunction(value) => {
                 Self::InvokeHostFunction(value.clone())
             }
-            OperationResultTrRef::ExtendFootprintTtl(value) => {
+            OperationResultTrView::ExtendFootprintTtl(value) => {
                 Self::ExtendFootprintTtl(value.clone())
             }
-            OperationResultTrRef::RestoreFootprint(value) => Self::RestoreFootprint(value.clone()),
+            OperationResultTrView::RestoreFootprint(value) => Self::RestoreFootprint(value.clone()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationResultTrRef<'_>> for OperationResultTr {
+impl From<OperationResultTrView<'_>> for OperationResultTr {
     #[must_use]
-    fn from(v: OperationResultTrRef<'_>) -> Self {
+    fn from(v: OperationResultTrView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl OperationResultTrRef<'_> {
+impl OperationResultTrView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
@@ -548,7 +548,7 @@ impl OperationResultTrRef<'_> {
     }
 }
 
-impl WriteXdr for OperationResultTrRef<'_> {
+impl WriteXdr for OperationResultTrView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

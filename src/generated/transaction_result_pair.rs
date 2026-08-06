@@ -50,18 +50,18 @@ impl WriteXdr for TransactionResultPair {
     }
 }
 
-/// TransactionResultPairRef is a borrowing equivalent of [`TransactionResultPair`], usable in
+/// TransactionResultPairView is a borrowing equivalent of [`TransactionResultPair`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultPairRef<'a> {
+pub struct TransactionResultPairView<'a> {
     pub transaction_hash: Hash,
-    pub result: TransactionResultRef<'a>,
+    pub result: TransactionResultView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultPairRef<'_>> for TransactionResultPair {
+impl From<&TransactionResultPairView<'_>> for TransactionResultPair {
     #[must_use]
-    fn from(v: &TransactionResultPairRef<'_>) -> Self {
+    fn from(v: &TransactionResultPairView<'_>) -> Self {
         Self {
             transaction_hash: v.transaction_hash.clone(),
             result: (&v.result).into(),
@@ -70,14 +70,14 @@ impl From<&TransactionResultPairRef<'_>> for TransactionResultPair {
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultPairRef<'_>> for TransactionResultPair {
+impl From<TransactionResultPairView<'_>> for TransactionResultPair {
     #[must_use]
-    fn from(v: TransactionResultPairRef<'_>) -> Self {
+    fn from(v: TransactionResultPairView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TransactionResultPairRef<'_> {
+impl WriteXdr for TransactionResultPairView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

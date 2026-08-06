@@ -155,40 +155,40 @@ impl WriteXdr for BucketEntry {
     }
 }
 
-/// BucketEntryRef is a borrowing equivalent of [`BucketEntry`], usable in
+/// BucketEntryView is a borrowing equivalent of [`BucketEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum BucketEntryRef<'a> {
-    Liveentry(LedgerEntryRef<'a>),
-    Initentry(LedgerEntryRef<'a>),
-    Deadentry(LedgerKeyRef<'a>),
+pub enum BucketEntryView<'a> {
+    Liveentry(LedgerEntryView<'a>),
+    Initentry(LedgerEntryView<'a>),
+    Deadentry(LedgerKeyView<'a>),
     Metaentry(BucketMetadata),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&BucketEntryRef<'_>> for BucketEntry {
+impl From<&BucketEntryView<'_>> for BucketEntry {
     #[must_use]
-    fn from(v: &BucketEntryRef<'_>) -> Self {
+    fn from(v: &BucketEntryView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            BucketEntryRef::Liveentry(value) => Self::Liveentry(value.into()),
-            BucketEntryRef::Initentry(value) => Self::Initentry(value.into()),
-            BucketEntryRef::Deadentry(value) => Self::Deadentry(value.into()),
-            BucketEntryRef::Metaentry(value) => Self::Metaentry(value.clone()),
+            BucketEntryView::Liveentry(value) => Self::Liveentry(value.into()),
+            BucketEntryView::Initentry(value) => Self::Initentry(value.into()),
+            BucketEntryView::Deadentry(value) => Self::Deadentry(value.into()),
+            BucketEntryView::Metaentry(value) => Self::Metaentry(value.clone()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<BucketEntryRef<'_>> for BucketEntry {
+impl From<BucketEntryView<'_>> for BucketEntry {
     #[must_use]
-    fn from(v: BucketEntryRef<'_>) -> Self {
+    fn from(v: BucketEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl BucketEntryRef<'_> {
+impl BucketEntryView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> BucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -201,7 +201,7 @@ impl BucketEntryRef<'_> {
     }
 }
 
-impl WriteXdr for BucketEntryRef<'_> {
+impl WriteXdr for BucketEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

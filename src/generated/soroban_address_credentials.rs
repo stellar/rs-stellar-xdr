@@ -62,20 +62,20 @@ impl WriteXdr for SorobanAddressCredentials {
     }
 }
 
-/// SorobanAddressCredentialsRef is a borrowing equivalent of [`SorobanAddressCredentials`], usable in
+/// SorobanAddressCredentialsView is a borrowing equivalent of [`SorobanAddressCredentials`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAddressCredentialsRef<'a> {
+pub struct SorobanAddressCredentialsView<'a> {
     pub address: ScAddress,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
-    pub signature: ScValRef<'a>,
+    pub signature: ScValView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
+impl From<&SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
     #[must_use]
-    fn from(v: &SorobanAddressCredentialsRef<'_>) -> Self {
+    fn from(v: &SorobanAddressCredentialsView<'_>) -> Self {
         Self {
             address: v.address.clone(),
             nonce: v.nonce,
@@ -86,14 +86,14 @@ impl From<&SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
+impl From<SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
     #[must_use]
-    fn from(v: SorobanAddressCredentialsRef<'_>) -> Self {
+    fn from(v: SorobanAddressCredentialsView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanAddressCredentialsRef<'_> {
+impl WriteXdr for SorobanAddressCredentialsView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

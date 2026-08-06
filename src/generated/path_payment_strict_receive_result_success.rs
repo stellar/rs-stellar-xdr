@@ -50,18 +50,20 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     }
 }
 
-/// PathPaymentStrictReceiveResultSuccessRef is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`], usable in
+/// PathPaymentStrictReceiveResultSuccessView is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictReceiveResultSuccessRef<'a> {
-    pub offers: VecMRef<'a, ClaimAtom>,
+pub struct PathPaymentStrictReceiveResultSuccessView<'a> {
+    pub offers: VecMView<'a, ClaimAtom>,
     pub last: SimplePaymentResult,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictReceiveResultSuccess {
+impl From<&PathPaymentStrictReceiveResultSuccessView<'_>>
+    for PathPaymentStrictReceiveResultSuccess
+{
     #[must_use]
-    fn from(v: &PathPaymentStrictReceiveResultSuccessRef<'_>) -> Self {
+    fn from(v: &PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
         Self {
             offers: v.offers.to_vecm(),
             last: v.last.clone(),
@@ -70,14 +72,14 @@ impl From<&PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictRe
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictReceiveResultSuccess {
+impl From<PathPaymentStrictReceiveResultSuccessView<'_>> for PathPaymentStrictReceiveResultSuccess {
     #[must_use]
-    fn from(v: PathPaymentStrictReceiveResultSuccessRef<'_>) -> Self {
+    fn from(v: PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for PathPaymentStrictReceiveResultSuccessRef<'_> {
+impl WriteXdr for PathPaymentStrictReceiveResultSuccessView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -340,11 +340,11 @@ impl WriteXdr for ScSpecTypeDef {
     }
 }
 
-/// ScSpecTypeDefRef is a borrowing equivalent of [`ScSpecTypeDef`], usable in
+/// ScSpecTypeDefView is a borrowing equivalent of [`ScSpecTypeDef`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecTypeDefRef<'a> {
+pub enum ScSpecTypeDefView<'a> {
     Val,
     Bool,
     Void,
@@ -364,60 +364,60 @@ pub enum ScSpecTypeDefRef<'a> {
     Symbol,
     Address,
     MuxedAddress,
-    Option(&'a ScSpecTypeOptionRef<'a>),
-    Result(&'a ScSpecTypeResultRef<'a>),
-    Vec(&'a ScSpecTypeVecRef<'a>),
-    Map(&'a ScSpecTypeMapRef<'a>),
-    Tuple(&'a ScSpecTypeTupleRef<'a>),
+    Option(&'a ScSpecTypeOptionView<'a>),
+    Result(&'a ScSpecTypeResultView<'a>),
+    Vec(&'a ScSpecTypeVecView<'a>),
+    Map(&'a ScSpecTypeMapView<'a>),
+    Tuple(&'a ScSpecTypeTupleView<'a>),
     BytesN(ScSpecTypeBytesN),
-    Udt(ScSpecTypeUdtRef<'a>),
+    Udt(ScSpecTypeUdtView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
+impl From<&ScSpecTypeDefView<'_>> for ScSpecTypeDef {
     #[must_use]
-    fn from(v: &ScSpecTypeDefRef<'_>) -> Self {
+    fn from(v: &ScSpecTypeDefView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecTypeDefRef::Val => Self::Val,
-            ScSpecTypeDefRef::Bool => Self::Bool,
-            ScSpecTypeDefRef::Void => Self::Void,
-            ScSpecTypeDefRef::Error => Self::Error,
-            ScSpecTypeDefRef::U32 => Self::U32,
-            ScSpecTypeDefRef::I32 => Self::I32,
-            ScSpecTypeDefRef::U64 => Self::U64,
-            ScSpecTypeDefRef::I64 => Self::I64,
-            ScSpecTypeDefRef::Timepoint => Self::Timepoint,
-            ScSpecTypeDefRef::Duration => Self::Duration,
-            ScSpecTypeDefRef::U128 => Self::U128,
-            ScSpecTypeDefRef::I128 => Self::I128,
-            ScSpecTypeDefRef::U256 => Self::U256,
-            ScSpecTypeDefRef::I256 => Self::I256,
-            ScSpecTypeDefRef::Bytes => Self::Bytes,
-            ScSpecTypeDefRef::String => Self::String,
-            ScSpecTypeDefRef::Symbol => Self::Symbol,
-            ScSpecTypeDefRef::Address => Self::Address,
-            ScSpecTypeDefRef::MuxedAddress => Self::MuxedAddress,
-            ScSpecTypeDefRef::Option(value) => Self::Option(Box::new((*value).into())),
-            ScSpecTypeDefRef::Result(value) => Self::Result(Box::new((*value).into())),
-            ScSpecTypeDefRef::Vec(value) => Self::Vec(Box::new((*value).into())),
-            ScSpecTypeDefRef::Map(value) => Self::Map(Box::new((*value).into())),
-            ScSpecTypeDefRef::Tuple(value) => Self::Tuple(Box::new((*value).into())),
-            ScSpecTypeDefRef::BytesN(value) => Self::BytesN(value.clone()),
-            ScSpecTypeDefRef::Udt(value) => Self::Udt(value.into()),
+            ScSpecTypeDefView::Val => Self::Val,
+            ScSpecTypeDefView::Bool => Self::Bool,
+            ScSpecTypeDefView::Void => Self::Void,
+            ScSpecTypeDefView::Error => Self::Error,
+            ScSpecTypeDefView::U32 => Self::U32,
+            ScSpecTypeDefView::I32 => Self::I32,
+            ScSpecTypeDefView::U64 => Self::U64,
+            ScSpecTypeDefView::I64 => Self::I64,
+            ScSpecTypeDefView::Timepoint => Self::Timepoint,
+            ScSpecTypeDefView::Duration => Self::Duration,
+            ScSpecTypeDefView::U128 => Self::U128,
+            ScSpecTypeDefView::I128 => Self::I128,
+            ScSpecTypeDefView::U256 => Self::U256,
+            ScSpecTypeDefView::I256 => Self::I256,
+            ScSpecTypeDefView::Bytes => Self::Bytes,
+            ScSpecTypeDefView::String => Self::String,
+            ScSpecTypeDefView::Symbol => Self::Symbol,
+            ScSpecTypeDefView::Address => Self::Address,
+            ScSpecTypeDefView::MuxedAddress => Self::MuxedAddress,
+            ScSpecTypeDefView::Option(value) => Self::Option(Box::new((*value).into())),
+            ScSpecTypeDefView::Result(value) => Self::Result(Box::new((*value).into())),
+            ScSpecTypeDefView::Vec(value) => Self::Vec(Box::new((*value).into())),
+            ScSpecTypeDefView::Map(value) => Self::Map(Box::new((*value).into())),
+            ScSpecTypeDefView::Tuple(value) => Self::Tuple(Box::new((*value).into())),
+            ScSpecTypeDefView::BytesN(value) => Self::BytesN(value.clone()),
+            ScSpecTypeDefView::Udt(value) => Self::Udt(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
+impl From<ScSpecTypeDefView<'_>> for ScSpecTypeDef {
     #[must_use]
-    fn from(v: ScSpecTypeDefRef<'_>) -> Self {
+    fn from(v: ScSpecTypeDefView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScSpecTypeDefRef<'_> {
+impl ScSpecTypeDefView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecType {
         #[allow(clippy::match_same_arms)]
@@ -452,7 +452,7 @@ impl ScSpecTypeDefRef<'_> {
     }
 }
 
-impl WriteXdr for ScSpecTypeDefRef<'_> {
+impl WriteXdr for ScSpecTypeDefView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

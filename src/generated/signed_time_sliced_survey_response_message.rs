@@ -50,18 +50,20 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyResponseMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyResponseMessage`], usable in
+/// SignedTimeSlicedSurveyResponseMessageView is a borrowing equivalent of [`SignedTimeSlicedSurveyResponseMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyResponseMessageRef<'a> {
-    pub response_signature: SignatureRef<'a>,
-    pub response: TimeSlicedSurveyResponseMessageRef<'a>,
+pub struct SignedTimeSlicedSurveyResponseMessageView<'a> {
+    pub response_signature: SignatureView<'a>,
+    pub response: TimeSlicedSurveyResponseMessageView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyResponseMessageRef<'_>> for SignedTimeSlicedSurveyResponseMessage {
+impl From<&SignedTimeSlicedSurveyResponseMessageView<'_>>
+    for SignedTimeSlicedSurveyResponseMessage
+{
     #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyResponseMessageRef<'_>) -> Self {
+    fn from(v: &SignedTimeSlicedSurveyResponseMessageView<'_>) -> Self {
         Self {
             response_signature: (&v.response_signature).into(),
             response: (&v.response).into(),
@@ -70,14 +72,14 @@ impl From<&SignedTimeSlicedSurveyResponseMessageRef<'_>> for SignedTimeSlicedSur
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyResponseMessageRef<'_>> for SignedTimeSlicedSurveyResponseMessage {
+impl From<SignedTimeSlicedSurveyResponseMessageView<'_>> for SignedTimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: SignedTimeSlicedSurveyResponseMessageRef<'_>) -> Self {
+    fn from(v: SignedTimeSlicedSurveyResponseMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SignedTimeSlicedSurveyResponseMessageRef<'_> {
+impl WriteXdr for SignedTimeSlicedSurveyResponseMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

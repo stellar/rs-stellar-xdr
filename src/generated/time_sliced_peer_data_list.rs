@@ -108,28 +108,28 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     }
 }
 
-/// TimeSlicedPeerDataListRef is a borrowing equivalent of [`TimeSlicedPeerDataList`], usable in
+/// TimeSlicedPeerDataListView is a borrowing equivalent of [`TimeSlicedPeerDataList`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedPeerDataListRef<'a>(pub VecMRef<'a, TimeSlicedPeerDataRef<'a>, 25>);
+pub struct TimeSlicedPeerDataListView<'a>(pub VecMView<'a, TimeSlicedPeerDataView<'a>, 25>);
 
 #[cfg(feature = "alloc")]
-impl From<&TimeSlicedPeerDataListRef<'_>> for TimeSlicedPeerDataList {
+impl From<&TimeSlicedPeerDataListView<'_>> for TimeSlicedPeerDataList {
     #[must_use]
-    fn from(v: &TimeSlicedPeerDataListRef<'_>) -> Self {
+    fn from(v: &TimeSlicedPeerDataListView<'_>) -> Self {
         Self(v.0.to_vecm_from())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TimeSlicedPeerDataListRef<'_>> for TimeSlicedPeerDataList {
+impl From<TimeSlicedPeerDataListView<'_>> for TimeSlicedPeerDataList {
     #[must_use]
-    fn from(v: TimeSlicedPeerDataListRef<'_>) -> Self {
+    fn from(v: TimeSlicedPeerDataListView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TimeSlicedPeerDataListRef<'_> {
+impl WriteXdr for TimeSlicedPeerDataListView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

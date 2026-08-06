@@ -143,36 +143,36 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`], usable in
+/// ScSpecUdtUnionCaseV0View is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecUdtUnionCaseV0Ref<'a> {
-    VoidV0(ScSpecUdtUnionCaseVoidV0Ref<'a>),
-    TupleV0(ScSpecUdtUnionCaseTupleV0Ref<'a>),
+pub enum ScSpecUdtUnionCaseV0View<'a> {
+    VoidV0(ScSpecUdtUnionCaseVoidV0View<'a>),
+    TupleV0(ScSpecUdtUnionCaseTupleV0View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
+impl From<&ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
+    fn from(v: &ScSpecUdtUnionCaseV0View<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecUdtUnionCaseV0Ref::VoidV0(value) => Self::VoidV0(value.into()),
-            ScSpecUdtUnionCaseV0Ref::TupleV0(value) => Self::TupleV0(value.into()),
+            ScSpecUdtUnionCaseV0View::VoidV0(value) => Self::VoidV0(value.into()),
+            ScSpecUdtUnionCaseV0View::TupleV0(value) => Self::TupleV0(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
+impl From<ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
-    fn from(v: ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
+    fn from(v: ScSpecUdtUnionCaseV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScSpecUdtUnionCaseV0Ref<'_> {
+impl ScSpecUdtUnionCaseV0View<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
         #[allow(clippy::match_same_arms)]
@@ -183,7 +183,7 @@ impl ScSpecUdtUnionCaseV0Ref<'_> {
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionCaseV0Ref<'_> {
+impl WriteXdr for ScSpecUdtUnionCaseV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

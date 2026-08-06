@@ -50,18 +50,18 @@ impl WriteXdr for SorobanAuthorizationEntry {
     }
 }
 
-/// SorobanAuthorizationEntryRef is a borrowing equivalent of [`SorobanAuthorizationEntry`], usable in
+/// SorobanAuthorizationEntryView is a borrowing equivalent of [`SorobanAuthorizationEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizationEntryRef<'a> {
-    pub credentials: SorobanCredentialsRef<'a>,
-    pub root_invocation: SorobanAuthorizedInvocationRef<'a>,
+pub struct SorobanAuthorizationEntryView<'a> {
+    pub credentials: SorobanCredentialsView<'a>,
+    pub root_invocation: SorobanAuthorizedInvocationView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
+impl From<&SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
     #[must_use]
-    fn from(v: &SorobanAuthorizationEntryRef<'_>) -> Self {
+    fn from(v: &SorobanAuthorizationEntryView<'_>) -> Self {
         Self {
             credentials: (&v.credentials).into(),
             root_invocation: (&v.root_invocation).into(),
@@ -70,14 +70,14 @@ impl From<&SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
+impl From<SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
     #[must_use]
-    fn from(v: SorobanAuthorizationEntryRef<'_>) -> Self {
+    fn from(v: SorobanAuthorizationEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SorobanAuthorizationEntryRef<'_> {
+impl WriteXdr for SorobanAuthorizationEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

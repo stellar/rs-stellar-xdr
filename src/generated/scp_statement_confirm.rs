@@ -62,11 +62,11 @@ impl WriteXdr for ScpStatementConfirm {
     }
 }
 
-/// ScpStatementConfirmRef is a borrowing equivalent of [`ScpStatementConfirm`], usable in
+/// ScpStatementConfirmView is a borrowing equivalent of [`ScpStatementConfirm`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementConfirmRef<'a> {
-    pub ballot: ScpBallotRef<'a>,
+pub struct ScpStatementConfirmView<'a> {
+    pub ballot: ScpBallotView<'a>,
     pub n_prepared: u32,
     pub n_commit: u32,
     pub n_h: u32,
@@ -74,9 +74,9 @@ pub struct ScpStatementConfirmRef<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
+impl From<&ScpStatementConfirmView<'_>> for ScpStatementConfirm {
     #[must_use]
-    fn from(v: &ScpStatementConfirmRef<'_>) -> Self {
+    fn from(v: &ScpStatementConfirmView<'_>) -> Self {
         Self {
             ballot: (&v.ballot).into(),
             n_prepared: v.n_prepared,
@@ -88,14 +88,14 @@ impl From<&ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
+impl From<ScpStatementConfirmView<'_>> for ScpStatementConfirm {
     #[must_use]
-    fn from(v: ScpStatementConfirmRef<'_>) -> Self {
+    fn from(v: ScpStatementConfirmView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScpStatementConfirmRef<'_> {
+impl WriteXdr for ScpStatementConfirmView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -90,19 +90,19 @@ impl WriteXdr for ScpStatement {
     }
 }
 
-/// ScpStatementRef is a borrowing equivalent of [`ScpStatement`], usable in
+/// ScpStatementView is a borrowing equivalent of [`ScpStatement`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementRef<'a> {
+pub struct ScpStatementView<'a> {
     pub node_id: NodeId,
     pub slot_index: u64,
-    pub pledges: ScpStatementPledgesRef<'a>,
+    pub pledges: ScpStatementPledgesView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementRef<'_>> for ScpStatement {
+impl From<&ScpStatementView<'_>> for ScpStatement {
     #[must_use]
-    fn from(v: &ScpStatementRef<'_>) -> Self {
+    fn from(v: &ScpStatementView<'_>) -> Self {
         Self {
             node_id: v.node_id.clone(),
             slot_index: v.slot_index,
@@ -112,14 +112,14 @@ impl From<&ScpStatementRef<'_>> for ScpStatement {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementRef<'_>> for ScpStatement {
+impl From<ScpStatementView<'_>> for ScpStatement {
     #[must_use]
-    fn from(v: ScpStatementRef<'_>) -> Self {
+    fn from(v: ScpStatementView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScpStatementRef<'_> {
+impl WriteXdr for ScpStatementView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

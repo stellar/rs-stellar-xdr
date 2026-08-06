@@ -151,38 +151,38 @@ impl WriteXdr for HotArchiveBucketEntry {
     }
 }
 
-/// HotArchiveBucketEntryRef is a borrowing equivalent of [`HotArchiveBucketEntry`], usable in
+/// HotArchiveBucketEntryView is a borrowing equivalent of [`HotArchiveBucketEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HotArchiveBucketEntryRef<'a> {
-    Archived(LedgerEntryRef<'a>),
-    Live(LedgerKeyRef<'a>),
+pub enum HotArchiveBucketEntryView<'a> {
+    Archived(LedgerEntryView<'a>),
+    Live(LedgerKeyView<'a>),
     Metaentry(BucketMetadata),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
+impl From<&HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
     #[must_use]
-    fn from(v: &HotArchiveBucketEntryRef<'_>) -> Self {
+    fn from(v: &HotArchiveBucketEntryView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            HotArchiveBucketEntryRef::Archived(value) => Self::Archived(value.into()),
-            HotArchiveBucketEntryRef::Live(value) => Self::Live(value.into()),
-            HotArchiveBucketEntryRef::Metaentry(value) => Self::Metaentry(value.clone()),
+            HotArchiveBucketEntryView::Archived(value) => Self::Archived(value.into()),
+            HotArchiveBucketEntryView::Live(value) => Self::Live(value.into()),
+            HotArchiveBucketEntryView::Metaentry(value) => Self::Metaentry(value.clone()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
+impl From<HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
     #[must_use]
-    fn from(v: HotArchiveBucketEntryRef<'_>) -> Self {
+    fn from(v: HotArchiveBucketEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl HotArchiveBucketEntryRef<'_> {
+impl HotArchiveBucketEntryView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> HotArchiveBucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -194,7 +194,7 @@ impl HotArchiveBucketEntryRef<'_> {
     }
 }
 
-impl WriteXdr for HotArchiveBucketEntryRef<'_> {
+impl WriteXdr for HotArchiveBucketEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -54,19 +54,19 @@ impl WriteXdr for StoredDebugTransactionSet {
     }
 }
 
-/// StoredDebugTransactionSetRef is a borrowing equivalent of [`StoredDebugTransactionSet`], usable in
+/// StoredDebugTransactionSetView is a borrowing equivalent of [`StoredDebugTransactionSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StoredDebugTransactionSetRef<'a> {
-    pub tx_set: StoredTransactionSetRef<'a>,
+pub struct StoredDebugTransactionSetView<'a> {
+    pub tx_set: StoredTransactionSetView<'a>,
     pub ledger_seq: u32,
-    pub scp_value: StellarValueRef<'a>,
+    pub scp_value: StellarValueView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
+impl From<&StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
     #[must_use]
-    fn from(v: &StoredDebugTransactionSetRef<'_>) -> Self {
+    fn from(v: &StoredDebugTransactionSetView<'_>) -> Self {
         Self {
             tx_set: (&v.tx_set).into(),
             ledger_seq: v.ledger_seq,
@@ -76,14 +76,14 @@ impl From<&StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
 }
 
 #[cfg(feature = "alloc")]
-impl From<StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
+impl From<StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
     #[must_use]
-    fn from(v: StoredDebugTransactionSetRef<'_>) -> Self {
+    fn from(v: StoredDebugTransactionSetView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for StoredDebugTransactionSetRef<'_> {
+impl WriteXdr for StoredDebugTransactionSetView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -61,19 +61,19 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
     }
 }
 
-/// LedgerHeaderHistoryEntryRef is a borrowing equivalent of [`LedgerHeaderHistoryEntry`], usable in
+/// LedgerHeaderHistoryEntryView is a borrowing equivalent of [`LedgerHeaderHistoryEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerHeaderHistoryEntryRef<'a> {
+pub struct LedgerHeaderHistoryEntryView<'a> {
     pub hash: Hash,
-    pub header: LedgerHeaderRef<'a>,
+    pub header: LedgerHeaderView<'a>,
     pub ext: LedgerHeaderHistoryEntryExt,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerHeaderHistoryEntryRef<'_>> for LedgerHeaderHistoryEntry {
+impl From<&LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
     #[must_use]
-    fn from(v: &LedgerHeaderHistoryEntryRef<'_>) -> Self {
+    fn from(v: &LedgerHeaderHistoryEntryView<'_>) -> Self {
         Self {
             hash: v.hash.clone(),
             header: (&v.header).into(),
@@ -83,14 +83,14 @@ impl From<&LedgerHeaderHistoryEntryRef<'_>> for LedgerHeaderHistoryEntry {
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerHeaderHistoryEntryRef<'_>> for LedgerHeaderHistoryEntry {
+impl From<LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
     #[must_use]
-    fn from(v: LedgerHeaderHistoryEntryRef<'_>) -> Self {
+    fn from(v: LedgerHeaderHistoryEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for LedgerHeaderHistoryEntryRef<'_> {
+impl WriteXdr for LedgerHeaderHistoryEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

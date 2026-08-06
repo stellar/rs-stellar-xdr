@@ -60,18 +60,18 @@ impl WriteXdr for ManageOfferSuccessResult {
     }
 }
 
-/// ManageOfferSuccessResultRef is a borrowing equivalent of [`ManageOfferSuccessResult`], usable in
+/// ManageOfferSuccessResultView is a borrowing equivalent of [`ManageOfferSuccessResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ManageOfferSuccessResultRef<'a> {
-    pub offers_claimed: VecMRef<'a, ClaimAtom>,
+pub struct ManageOfferSuccessResultView<'a> {
+    pub offers_claimed: VecMView<'a, ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
+impl From<&ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
     #[must_use]
-    fn from(v: &ManageOfferSuccessResultRef<'_>) -> Self {
+    fn from(v: &ManageOfferSuccessResultView<'_>) -> Self {
         Self {
             offers_claimed: v.offers_claimed.to_vecm(),
             offer: v.offer.clone(),
@@ -80,14 +80,14 @@ impl From<&ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
+impl From<ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
     #[must_use]
-    fn from(v: ManageOfferSuccessResultRef<'_>) -> Self {
+    fn from(v: ManageOfferSuccessResultView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ManageOfferSuccessResultRef<'_> {
+impl WriteXdr for ManageOfferSuccessResultView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -89,10 +89,10 @@ impl WriteXdr for SerializedBinaryFuseFilter {
     }
 }
 
-/// SerializedBinaryFuseFilterRef is a borrowing equivalent of [`SerializedBinaryFuseFilter`], usable in
+/// SerializedBinaryFuseFilterView is a borrowing equivalent of [`SerializedBinaryFuseFilter`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SerializedBinaryFuseFilterRef<'a> {
+pub struct SerializedBinaryFuseFilterView<'a> {
     pub type_: BinaryFuseFilterType,
     pub input_hash_seed: ShortHashSeed,
     pub filter_seed: ShortHashSeed,
@@ -101,13 +101,13 @@ pub struct SerializedBinaryFuseFilterRef<'a> {
     pub segment_count: u32,
     pub segment_count_length: u32,
     pub fingerprint_length: u32,
-    pub fingerprints: BytesMRef<'a>,
+    pub fingerprints: BytesMView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
+impl From<&SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
-    fn from(v: &SerializedBinaryFuseFilterRef<'_>) -> Self {
+    fn from(v: &SerializedBinaryFuseFilterView<'_>) -> Self {
         Self {
             type_: v.type_,
             input_hash_seed: v.input_hash_seed.clone(),
@@ -123,14 +123,14 @@ impl From<&SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
+impl From<SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
-    fn from(v: SerializedBinaryFuseFilterRef<'_>) -> Self {
+    fn from(v: SerializedBinaryFuseFilterView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SerializedBinaryFuseFilterRef<'_> {
+impl WriteXdr for SerializedBinaryFuseFilterView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

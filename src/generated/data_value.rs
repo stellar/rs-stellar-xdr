@@ -108,28 +108,28 @@ impl AsRef<[u8]> for DataValue {
     }
 }
 
-/// DataValueRef is a borrowing equivalent of [`DataValue`], usable in
+/// DataValueView is a borrowing equivalent of [`DataValue`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DataValueRef<'a>(pub BytesMRef<'a, 64>);
+pub struct DataValueView<'a>(pub BytesMView<'a, 64>);
 
 #[cfg(feature = "alloc")]
-impl From<&DataValueRef<'_>> for DataValue {
+impl From<&DataValueView<'_>> for DataValue {
     #[must_use]
-    fn from(v: &DataValueRef<'_>) -> Self {
+    fn from(v: &DataValueView<'_>) -> Self {
         Self(v.0.to_bytesm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<DataValueRef<'_>> for DataValue {
+impl From<DataValueView<'_>> for DataValue {
     #[must_use]
-    fn from(v: DataValueRef<'_>) -> Self {
+    fn from(v: DataValueView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for DataValueRef<'_> {
+impl WriteXdr for DataValueView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

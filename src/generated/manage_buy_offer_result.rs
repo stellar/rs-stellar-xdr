@@ -232,12 +232,12 @@ impl WriteXdr for ManageBuyOfferResult {
     }
 }
 
-/// ManageBuyOfferResultRef is a borrowing equivalent of [`ManageBuyOfferResult`], usable in
+/// ManageBuyOfferResultView is a borrowing equivalent of [`ManageBuyOfferResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ManageBuyOfferResultRef<'a> {
-    Success(ManageOfferSuccessResultRef<'a>),
+pub enum ManageBuyOfferResultView<'a> {
+    Success(ManageOfferSuccessResultView<'a>),
     Malformed,
     SellNoTrust,
     BuyNoTrust,
@@ -253,37 +253,37 @@ pub enum ManageBuyOfferResultRef<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ManageBuyOfferResultRef<'_>> for ManageBuyOfferResult {
+impl From<&ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
     #[must_use]
-    fn from(v: &ManageBuyOfferResultRef<'_>) -> Self {
+    fn from(v: &ManageBuyOfferResultView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ManageBuyOfferResultRef::Success(value) => Self::Success(value.into()),
-            ManageBuyOfferResultRef::Malformed => Self::Malformed,
-            ManageBuyOfferResultRef::SellNoTrust => Self::SellNoTrust,
-            ManageBuyOfferResultRef::BuyNoTrust => Self::BuyNoTrust,
-            ManageBuyOfferResultRef::SellNotAuthorized => Self::SellNotAuthorized,
-            ManageBuyOfferResultRef::BuyNotAuthorized => Self::BuyNotAuthorized,
-            ManageBuyOfferResultRef::LineFull => Self::LineFull,
-            ManageBuyOfferResultRef::Underfunded => Self::Underfunded,
-            ManageBuyOfferResultRef::CrossSelf => Self::CrossSelf,
-            ManageBuyOfferResultRef::SellNoIssuer => Self::SellNoIssuer,
-            ManageBuyOfferResultRef::BuyNoIssuer => Self::BuyNoIssuer,
-            ManageBuyOfferResultRef::NotFound => Self::NotFound,
-            ManageBuyOfferResultRef::LowReserve => Self::LowReserve,
+            ManageBuyOfferResultView::Success(value) => Self::Success(value.into()),
+            ManageBuyOfferResultView::Malformed => Self::Malformed,
+            ManageBuyOfferResultView::SellNoTrust => Self::SellNoTrust,
+            ManageBuyOfferResultView::BuyNoTrust => Self::BuyNoTrust,
+            ManageBuyOfferResultView::SellNotAuthorized => Self::SellNotAuthorized,
+            ManageBuyOfferResultView::BuyNotAuthorized => Self::BuyNotAuthorized,
+            ManageBuyOfferResultView::LineFull => Self::LineFull,
+            ManageBuyOfferResultView::Underfunded => Self::Underfunded,
+            ManageBuyOfferResultView::CrossSelf => Self::CrossSelf,
+            ManageBuyOfferResultView::SellNoIssuer => Self::SellNoIssuer,
+            ManageBuyOfferResultView::BuyNoIssuer => Self::BuyNoIssuer,
+            ManageBuyOfferResultView::NotFound => Self::NotFound,
+            ManageBuyOfferResultView::LowReserve => Self::LowReserve,
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ManageBuyOfferResultRef<'_>> for ManageBuyOfferResult {
+impl From<ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
     #[must_use]
-    fn from(v: ManageBuyOfferResultRef<'_>) -> Self {
+    fn from(v: ManageBuyOfferResultView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ManageBuyOfferResultRef<'_> {
+impl ManageBuyOfferResultView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ManageBuyOfferResultCode {
         #[allow(clippy::match_same_arms)]
@@ -305,7 +305,7 @@ impl ManageBuyOfferResultRef<'_> {
     }
 }
 
-impl WriteXdr for ManageBuyOfferResultRef<'_> {
+impl WriteXdr for ManageBuyOfferResultView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

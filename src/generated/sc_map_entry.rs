@@ -50,18 +50,18 @@ impl WriteXdr for ScMapEntry {
     }
 }
 
-/// ScMapEntryRef is a borrowing equivalent of [`ScMapEntry`], usable in
+/// ScMapEntryView is a borrowing equivalent of [`ScMapEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMapEntryRef<'a> {
-    pub key: ScValRef<'a>,
-    pub val: ScValRef<'a>,
+pub struct ScMapEntryView<'a> {
+    pub key: ScValView<'a>,
+    pub val: ScValView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScMapEntryRef<'_>> for ScMapEntry {
+impl From<&ScMapEntryView<'_>> for ScMapEntry {
     #[must_use]
-    fn from(v: &ScMapEntryRef<'_>) -> Self {
+    fn from(v: &ScMapEntryView<'_>) -> Self {
         Self {
             key: (&v.key).into(),
             val: (&v.val).into(),
@@ -70,14 +70,14 @@ impl From<&ScMapEntryRef<'_>> for ScMapEntry {
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScMapEntryRef<'_>> for ScMapEntry {
+impl From<ScMapEntryView<'_>> for ScMapEntry {
     #[must_use]
-    fn from(v: ScMapEntryRef<'_>) -> Self {
+    fn from(v: ScMapEntryView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScMapEntryRef<'_> {
+impl WriteXdr for ScMapEntryView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -129,34 +129,34 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     }
 }
 
-/// FeeBumpTransactionInnerTxRef is a borrowing equivalent of [`FeeBumpTransactionInnerTx`], usable in
+/// FeeBumpTransactionInnerTxView is a borrowing equivalent of [`FeeBumpTransactionInnerTx`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum FeeBumpTransactionInnerTxRef<'a> {
-    Tx(TransactionV1EnvelopeRef<'a>),
+pub enum FeeBumpTransactionInnerTxView<'a> {
+    Tx(TransactionV1EnvelopeView<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
+impl From<&FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
-    fn from(v: &FeeBumpTransactionInnerTxRef<'_>) -> Self {
+    fn from(v: &FeeBumpTransactionInnerTxView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            FeeBumpTransactionInnerTxRef::Tx(value) => Self::Tx(value.into()),
+            FeeBumpTransactionInnerTxView::Tx(value) => Self::Tx(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
+impl From<FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
-    fn from(v: FeeBumpTransactionInnerTxRef<'_>) -> Self {
+    fn from(v: FeeBumpTransactionInnerTxView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl FeeBumpTransactionInnerTxRef<'_> {
+impl FeeBumpTransactionInnerTxView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -166,7 +166,7 @@ impl FeeBumpTransactionInnerTxRef<'_> {
     }
 }
 
-impl WriteXdr for FeeBumpTransactionInnerTxRef<'_> {
+impl WriteXdr for FeeBumpTransactionInnerTxView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

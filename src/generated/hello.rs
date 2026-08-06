@@ -78,25 +78,25 @@ impl WriteXdr for Hello {
     }
 }
 
-/// HelloRef is a borrowing equivalent of [`Hello`], usable in
+/// HelloView is a borrowing equivalent of [`Hello`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HelloRef<'a> {
+pub struct HelloView<'a> {
     pub ledger_version: u32,
     pub overlay_version: u32,
     pub overlay_min_version: u32,
     pub network_id: Hash,
-    pub version_str: StringMRef<'a, 100>,
+    pub version_str: StringMView<'a, 100>,
     pub listening_port: i32,
     pub peer_id: NodeId,
-    pub cert: AuthCertRef<'a>,
+    pub cert: AuthCertView<'a>,
     pub nonce: Uint256,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HelloRef<'_>> for Hello {
+impl From<&HelloView<'_>> for Hello {
     #[must_use]
-    fn from(v: &HelloRef<'_>) -> Self {
+    fn from(v: &HelloView<'_>) -> Self {
         Self {
             ledger_version: v.ledger_version,
             overlay_version: v.overlay_version,
@@ -112,14 +112,14 @@ impl From<&HelloRef<'_>> for Hello {
 }
 
 #[cfg(feature = "alloc")]
-impl From<HelloRef<'_>> for Hello {
+impl From<HelloView<'_>> for Hello {
     #[must_use]
-    fn from(v: HelloRef<'_>) -> Self {
+    fn from(v: HelloView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for HelloRef<'_> {
+impl WriteXdr for HelloView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

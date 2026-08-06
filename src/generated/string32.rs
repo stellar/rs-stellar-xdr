@@ -108,28 +108,28 @@ impl AsRef<[u8]> for String32 {
     }
 }
 
-/// String32Ref is a borrowing equivalent of [`String32`], usable in
+/// String32View is a borrowing equivalent of [`String32`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct String32Ref<'a>(pub StringMRef<'a, 32>);
+pub struct String32View<'a>(pub StringMView<'a, 32>);
 
 #[cfg(feature = "alloc")]
-impl From<&String32Ref<'_>> for String32 {
+impl From<&String32View<'_>> for String32 {
     #[must_use]
-    fn from(v: &String32Ref<'_>) -> Self {
+    fn from(v: &String32View<'_>) -> Self {
         Self(v.0.to_stringm())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<String32Ref<'_>> for String32 {
+impl From<String32View<'_>> for String32 {
     #[must_use]
-    fn from(v: String32Ref<'_>) -> Self {
+    fn from(v: String32View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for String32Ref<'_> {
+impl WriteXdr for String32View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

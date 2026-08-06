@@ -50,18 +50,18 @@ impl WriteXdr for Signer {
     }
 }
 
-/// SignerRef is a borrowing equivalent of [`Signer`], usable in
+/// SignerView is a borrowing equivalent of [`Signer`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignerRef<'a> {
-    pub key: SignerKeyRef<'a>,
+pub struct SignerView<'a> {
+    pub key: SignerKeyView<'a>,
     pub weight: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignerRef<'_>> for Signer {
+impl From<&SignerView<'_>> for Signer {
     #[must_use]
-    fn from(v: &SignerRef<'_>) -> Self {
+    fn from(v: &SignerView<'_>) -> Self {
         Self {
             key: (&v.key).into(),
             weight: v.weight,
@@ -70,14 +70,14 @@ impl From<&SignerRef<'_>> for Signer {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignerRef<'_>> for Signer {
+impl From<SignerView<'_>> for Signer {
     #[must_use]
-    fn from(v: SignerRef<'_>) -> Self {
+    fn from(v: SignerView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SignerRef<'_> {
+impl WriteXdr for SignerView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

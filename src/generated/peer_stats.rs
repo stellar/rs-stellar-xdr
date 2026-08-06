@@ -156,12 +156,12 @@ impl WriteXdr for PeerStats {
     }
 }
 
-/// PeerStatsRef is a borrowing equivalent of [`PeerStats`], usable in
+/// PeerStatsView is a borrowing equivalent of [`PeerStats`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PeerStatsRef<'a> {
+pub struct PeerStatsView<'a> {
     pub id: NodeId,
-    pub version_str: StringMRef<'a, 100>,
+    pub version_str: StringMView<'a, 100>,
     pub messages_read: u64,
     pub messages_written: u64,
     pub bytes_read: u64,
@@ -178,9 +178,9 @@ pub struct PeerStatsRef<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PeerStatsRef<'_>> for PeerStats {
+impl From<&PeerStatsView<'_>> for PeerStats {
     #[must_use]
-    fn from(v: &PeerStatsRef<'_>) -> Self {
+    fn from(v: &PeerStatsView<'_>) -> Self {
         Self {
             id: v.id.clone(),
             version_str: v.version_str.to_stringm(),
@@ -202,14 +202,14 @@ impl From<&PeerStatsRef<'_>> for PeerStats {
 }
 
 #[cfg(feature = "alloc")]
-impl From<PeerStatsRef<'_>> for PeerStats {
+impl From<PeerStatsView<'_>> for PeerStats {
     #[must_use]
-    fn from(v: PeerStatsRef<'_>) -> Self {
+    fn from(v: PeerStatsView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for PeerStatsRef<'_> {
+impl WriteXdr for PeerStatsView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

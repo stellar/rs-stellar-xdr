@@ -54,19 +54,19 @@ impl WriteXdr for PersistedScpStateV0 {
     }
 }
 
-/// PersistedScpStateV0Ref is a borrowing equivalent of [`PersistedScpStateV0`], usable in
+/// PersistedScpStateV0View is a borrowing equivalent of [`PersistedScpStateV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PersistedScpStateV0Ref<'a> {
-    pub scp_envelopes: VecMRef<'a, ScpEnvelopeRef<'a>>,
-    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
-    pub tx_sets: VecMRef<'a, StoredTransactionSetRef<'a>>,
+pub struct PersistedScpStateV0View<'a> {
+    pub scp_envelopes: VecMView<'a, ScpEnvelopeView<'a>>,
+    pub quorum_sets: VecMView<'a, ScpQuorumSetView<'a>>,
+    pub tx_sets: VecMView<'a, StoredTransactionSetView<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PersistedScpStateV0Ref<'_>> for PersistedScpStateV0 {
+impl From<&PersistedScpStateV0View<'_>> for PersistedScpStateV0 {
     #[must_use]
-    fn from(v: &PersistedScpStateV0Ref<'_>) -> Self {
+    fn from(v: &PersistedScpStateV0View<'_>) -> Self {
         Self {
             scp_envelopes: v.scp_envelopes.to_vecm_from(),
             quorum_sets: v.quorum_sets.to_vecm_from(),
@@ -76,14 +76,14 @@ impl From<&PersistedScpStateV0Ref<'_>> for PersistedScpStateV0 {
 }
 
 #[cfg(feature = "alloc")]
-impl From<PersistedScpStateV0Ref<'_>> for PersistedScpStateV0 {
+impl From<PersistedScpStateV0View<'_>> for PersistedScpStateV0 {
     #[must_use]
-    fn from(v: PersistedScpStateV0Ref<'_>) -> Self {
+    fn from(v: PersistedScpStateV0View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for PersistedScpStateV0Ref<'_> {
+impl WriteXdr for PersistedScpStateV0View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

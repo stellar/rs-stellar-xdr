@@ -169,42 +169,42 @@ impl WriteXdr for Memo {
     }
 }
 
-/// MemoRef is a borrowing equivalent of [`Memo`], usable in
+/// MemoView is a borrowing equivalent of [`Memo`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum MemoRef<'a> {
+pub enum MemoView<'a> {
     None,
-    Text(StringMRef<'a, 28>),
+    Text(StringMView<'a, 28>),
     Id(u64),
     Hash(Hash),
     Return(Hash),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&MemoRef<'_>> for Memo {
+impl From<&MemoView<'_>> for Memo {
     #[must_use]
-    fn from(v: &MemoRef<'_>) -> Self {
+    fn from(v: &MemoView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            MemoRef::None => Self::None,
-            MemoRef::Text(value) => Self::Text(value.to_stringm()),
-            MemoRef::Id(value) => Self::Id(*value),
-            MemoRef::Hash(value) => Self::Hash(value.clone()),
-            MemoRef::Return(value) => Self::Return(value.clone()),
+            MemoView::None => Self::None,
+            MemoView::Text(value) => Self::Text(value.to_stringm()),
+            MemoView::Id(value) => Self::Id(*value),
+            MemoView::Hash(value) => Self::Hash(value.clone()),
+            MemoView::Return(value) => Self::Return(value.clone()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<MemoRef<'_>> for Memo {
+impl From<MemoView<'_>> for Memo {
     #[must_use]
-    fn from(v: MemoRef<'_>) -> Self {
+    fn from(v: MemoView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl MemoRef<'_> {
+impl MemoView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> MemoType {
         #[allow(clippy::match_same_arms)]
@@ -218,7 +218,7 @@ impl MemoRef<'_> {
     }
 }
 
-impl WriteXdr for MemoRef<'_> {
+impl WriteXdr for MemoView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

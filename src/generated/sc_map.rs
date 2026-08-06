@@ -108,28 +108,28 @@ impl AsRef<[ScMapEntry]> for ScMap {
     }
 }
 
-/// ScMapRef is a borrowing equivalent of [`ScMap`], usable in
+/// ScMapView is a borrowing equivalent of [`ScMap`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMapRef<'a>(pub VecMRef<'a, ScMapEntryRef<'a>>);
+pub struct ScMapView<'a>(pub VecMView<'a, ScMapEntryView<'a>>);
 
 #[cfg(feature = "alloc")]
-impl From<&ScMapRef<'_>> for ScMap {
+impl From<&ScMapView<'_>> for ScMap {
     #[must_use]
-    fn from(v: &ScMapRef<'_>) -> Self {
+    fn from(v: &ScMapView<'_>) -> Self {
         Self(v.0.to_vecm_from())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScMapRef<'_>> for ScMap {
+impl From<ScMapView<'_>> for ScMap {
     #[must_use]
-    fn from(v: ScMapRef<'_>) -> Self {
+    fn from(v: ScMapView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScMapRef<'_> {
+impl WriteXdr for ScMapView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

@@ -50,18 +50,18 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
     }
 }
 
-/// TimeSlicedSurveyResponseMessageRef is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`], usable in
+/// TimeSlicedSurveyResponseMessageView is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedSurveyResponseMessageRef<'a> {
-    pub response: SurveyResponseMessageRef<'a>,
+pub struct TimeSlicedSurveyResponseMessageView<'a> {
+    pub response: SurveyResponseMessageView<'a>,
     pub nonce: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
+impl From<&TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: &TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
+    fn from(v: &TimeSlicedSurveyResponseMessageView<'_>) -> Self {
         Self {
             response: (&v.response).into(),
             nonce: v.nonce,
@@ -70,14 +70,14 @@ impl From<&TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseM
 }
 
 #[cfg(feature = "alloc")]
-impl From<TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
+impl From<TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
+    fn from(v: TimeSlicedSurveyResponseMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for TimeSlicedSurveyResponseMessageRef<'_> {
+impl WriteXdr for TimeSlicedSurveyResponseMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

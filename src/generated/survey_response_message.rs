@@ -62,21 +62,21 @@ impl WriteXdr for SurveyResponseMessage {
     }
 }
 
-/// SurveyResponseMessageRef is a borrowing equivalent of [`SurveyResponseMessage`], usable in
+/// SurveyResponseMessageView is a borrowing equivalent of [`SurveyResponseMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SurveyResponseMessageRef<'a> {
+pub struct SurveyResponseMessageView<'a> {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
     pub ledger_num: u32,
     pub command_type: SurveyMessageCommandType,
-    pub encrypted_body: EncryptedBodyRef<'a>,
+    pub encrypted_body: EncryptedBodyView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
+impl From<&SurveyResponseMessageView<'_>> for SurveyResponseMessage {
     #[must_use]
-    fn from(v: &SurveyResponseMessageRef<'_>) -> Self {
+    fn from(v: &SurveyResponseMessageView<'_>) -> Self {
         Self {
             surveyor_peer_id: v.surveyor_peer_id.clone(),
             surveyed_peer_id: v.surveyed_peer_id.clone(),
@@ -88,14 +88,14 @@ impl From<&SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
 }
 
 #[cfg(feature = "alloc")]
-impl From<SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
+impl From<SurveyResponseMessageView<'_>> for SurveyResponseMessage {
     #[must_use]
-    fn from(v: SurveyResponseMessageRef<'_>) -> Self {
+    fn from(v: SurveyResponseMessageView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for SurveyResponseMessageRef<'_> {
+impl WriteXdr for SurveyResponseMessageView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

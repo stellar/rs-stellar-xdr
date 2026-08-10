@@ -327,7 +327,7 @@
       }
     },
     "ScSpecTypeUdtv2": {
-      "description": "ScSpecTypeUdtv2 is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDTV2 { string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; }; ```",
+      "description": "ScSpecTypeUdtv2 is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDTV2 { string name<60>; opaque id[SC_SPEC_ID_LEN]; }; ```",
       "type": "object",
       "required": [
         "id",

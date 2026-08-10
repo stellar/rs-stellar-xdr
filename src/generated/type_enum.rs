@@ -76,6 +76,8 @@ pub enum TypeVariant {
     ScSpecEventDataFormat,
     ScSpecEventV0,
     ScSpecEntryKind,
+    ScSpecEntryV2,
+    ScSpecEntryV2Body,
     ScSpecEntry,
     ScBytes,
     ScString,
@@ -559,6 +561,8 @@ impl TypeVariant {
         TypeVariant::ScSpecEventDataFormat,
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
+        TypeVariant::ScSpecEntryV2,
+        TypeVariant::ScSpecEntryV2Body,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScBytes,
         TypeVariant::ScString,
@@ -1048,6 +1052,8 @@ impl TypeVariant {
         "ScSpecEventDataFormat",
         "ScSpecEventV0",
         "ScSpecEntryKind",
+        "ScSpecEntryV2",
+        "ScSpecEntryV2Body",
         "ScSpecEntry",
         "ScBytes",
         "ScString",
@@ -1543,6 +1549,8 @@ impl TypeVariant {
             Self::ScSpecEventDataFormat => "ScSpecEventDataFormat",
             Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
+            Self::ScSpecEntryV2 => "ScSpecEntryV2",
+            Self::ScSpecEntryV2Body => "ScSpecEntryV2Body",
             Self::ScSpecEntry => "ScSpecEntry",
             Self::ScBytes => "ScBytes",
             Self::ScString => "ScString",
@@ -2079,6 +2087,8 @@ impl TypeVariant {
             Self::ScSpecEventDataFormat => gen.into_root_schema_for::<ScSpecEventDataFormat>(),
             Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
+            Self::ScSpecEntryV2 => gen.into_root_schema_for::<ScSpecEntryV2>(),
+            Self::ScSpecEntryV2Body => gen.into_root_schema_for::<ScSpecEntryV2Body>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
             Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
             Self::ScString => gen.into_root_schema_for::<ScString>(),
@@ -2788,6 +2798,8 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecEventDataFormat" => Ok(Self::ScSpecEventDataFormat),
             "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
+            "ScSpecEntryV2" => Ok(Self::ScSpecEntryV2),
+            "ScSpecEntryV2Body" => Ok(Self::ScSpecEntryV2Body),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
             "ScBytes" => Ok(Self::ScBytes),
             "ScString" => Ok(Self::ScString),
@@ -3307,6 +3319,8 @@ pub enum Type {
     ScSpecEventDataFormat(Box<ScSpecEventDataFormat>),
     ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
+    ScSpecEntryV2(Box<ScSpecEntryV2>),
+    ScSpecEntryV2Body(Box<ScSpecEntryV2Body>),
     ScSpecEntry(Box<ScSpecEntry>),
     ScBytes(Box<ScBytes>),
     ScString(Box<ScString>),
@@ -3792,6 +3806,8 @@ impl Type {
         TypeVariant::ScSpecEventDataFormat,
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
+        TypeVariant::ScSpecEntryV2,
+        TypeVariant::ScSpecEntryV2Body,
         TypeVariant::ScSpecEntry,
         TypeVariant::ScBytes,
         TypeVariant::ScString,
@@ -4281,6 +4297,8 @@ impl Type {
         "ScSpecEventDataFormat",
         "ScSpecEventV0",
         "ScSpecEntryKind",
+        "ScSpecEntryV2",
+        "ScSpecEntryV2Body",
         "ScSpecEntry",
         "ScBytes",
         "ScString",
@@ -5003,6 +5021,14 @@ impl Type {
                 Ok(Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::read_xdr(
                     r,
                 )?)))
+            }),
+            TypeVariant::ScSpecEntryV2 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEntryV2(Box::new(ScSpecEntryV2::read_xdr(r)?)))
+            }),
+            TypeVariant::ScSpecEntryV2Body => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEntryV2Body(Box::new(
+                    ScSpecEntryV2Body::read_xdr(r)?,
+                )))
             }),
             TypeVariant::ScSpecEntry => {
                 r.with_limited_depth(|r| Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::read_xdr(r)?))))
@@ -7134,6 +7160,14 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
             ),
+            TypeVariant::ScSpecEntryV2 => Box::new(
+                ReadXdrIter::<_, ScSpecEntryV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEntryV2(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntryV2Body => Box::new(
+                ReadXdrIter::<_, ScSpecEntryV2Body>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEntryV2Body(Box::new(t)))),
+            ),
             TypeVariant::ScSpecEntry => Box::new(
                 ReadXdrIter::<_, ScSpecEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
@@ -9232,6 +9266,14 @@ impl Type {
             TypeVariant::ScSpecEntryKind => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEntryV2 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEntryV2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEntryV2(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEntryV2Body => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEntryV2Body>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEntryV2Body(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecEntry => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecEntry>>::new(&mut r.inner, r.limits.clone())
@@ -11566,6 +11608,14 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
             ),
+            TypeVariant::ScSpecEntryV2 => Box::new(
+                ReadXdrIter::<_, ScSpecEntryV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEntryV2(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntryV2Body => Box::new(
+                ReadXdrIter::<_, ScSpecEntryV2Body>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecEntryV2Body(Box::new(t)))),
+            ),
             TypeVariant::ScSpecEntry => Box::new(
                 ReadXdrIter::<_, ScSpecEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
@@ -13467,6 +13517,12 @@ impl Type {
             TypeVariant::ScSpecEntryKind => {
                 Ok(Self::ScSpecEntryKind(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ScSpecEntryV2 => {
+                Ok(Self::ScSpecEntryV2(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecEntryV2Body => Ok(Self::ScSpecEntryV2Body(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ScSpecEntry => {
                 Ok(Self::ScSpecEntry(Box::new(serde_json::from_reader(r)?)))
             }
@@ -14811,6 +14867,12 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEntryV2 => Ok(Self::ScSpecEntryV2(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSpecEntryV2Body => Ok(Self::ScSpecEntryV2Body(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(
@@ -16478,6 +16540,16 @@ impl Type {
                 ignored.borrow_mut().push(path.to_string());
             })
             .map(|t| Self::ScSpecEntryKind(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEntryV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEntryV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEntryV2Body => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEntryV2Body(Box::new(t)))
             .map_err(Error::Json),
             TypeVariant::ScSpecEntry => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
@@ -18791,6 +18863,12 @@ impl Type {
             TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
                 ScSpecEntryKind::arbitrary(u)?,
             ))),
+            TypeVariant::ScSpecEntryV2 => {
+                Ok(Self::ScSpecEntryV2(Box::new(ScSpecEntryV2::arbitrary(u)?)))
+            }
+            TypeVariant::ScSpecEntryV2Body => Ok(Self::ScSpecEntryV2Body(Box::new(
+                ScSpecEntryV2Body::arbitrary(u)?,
+            ))),
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::arbitrary(u)?))),
             TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::arbitrary(u)?))),
             TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::arbitrary(u)?))),
@@ -20039,6 +20117,8 @@ impl Type {
             TypeVariant::ScSpecEventDataFormat => Self::ScSpecEventDataFormat(Box::default()),
             TypeVariant::ScSpecEventV0 => Self::ScSpecEventV0(Box::default()),
             TypeVariant::ScSpecEntryKind => Self::ScSpecEntryKind(Box::default()),
+            TypeVariant::ScSpecEntryV2 => Self::ScSpecEntryV2(Box::default()),
+            TypeVariant::ScSpecEntryV2Body => Self::ScSpecEntryV2Body(Box::default()),
             TypeVariant::ScSpecEntry => Self::ScSpecEntry(Box::default()),
             TypeVariant::ScBytes => Self::ScBytes(Box::default()),
             TypeVariant::ScString => Self::ScString(Box::default()),
@@ -20698,6 +20778,8 @@ impl Type {
             Self::ScSpecEventDataFormat(ref v) => v.as_ref(),
             Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
+            Self::ScSpecEntryV2(ref v) => v.as_ref(),
+            Self::ScSpecEntryV2Body(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
             Self::ScBytes(ref v) => v.as_ref(),
             Self::ScString(ref v) => v.as_ref(),
@@ -21189,6 +21271,8 @@ impl Type {
             Self::ScSpecEventDataFormat(_) => "ScSpecEventDataFormat",
             Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
+            Self::ScSpecEntryV2(_) => "ScSpecEntryV2",
+            Self::ScSpecEntryV2Body(_) => "ScSpecEntryV2Body",
             Self::ScSpecEntry(_) => "ScSpecEntry",
             Self::ScBytes(_) => "ScBytes",
             Self::ScString(_) => "ScString",
@@ -21716,6 +21800,8 @@ impl Type {
             Self::ScSpecEventDataFormat(_) => TypeVariant::ScSpecEventDataFormat,
             Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
+            Self::ScSpecEntryV2(_) => TypeVariant::ScSpecEntryV2,
+            Self::ScSpecEntryV2Body(_) => TypeVariant::ScSpecEntryV2Body,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
             Self::ScBytes(_) => TypeVariant::ScBytes,
             Self::ScString(_) => TypeVariant::ScString,
@@ -22281,6 +22367,8 @@ impl WriteXdr for Type {
             Self::ScSpecEventDataFormat(v) => v.write_xdr(w),
             Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
+            Self::ScSpecEntryV2(v) => v.write_xdr(w),
+            Self::ScSpecEntryV2Body(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),
             Self::ScBytes(v) => v.write_xdr(w),
             Self::ScString(v) => v.write_xdr(w),

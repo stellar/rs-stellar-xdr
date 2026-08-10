@@ -1,26 +1,24 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecEntry is an XDR Union defined as:
+/// ScSpecEntryV2Body is an XDR NestedUnion defined as:
 ///
 /// ```text
-/// union SCSpecEntry switch (SCSpecEntryKind kind)
-/// {
-/// case SC_SPEC_ENTRY_FUNCTION_V0:
-///     SCSpecFunctionV0 functionV0;
-/// case SC_SPEC_ENTRY_UDT_STRUCT_V0:
-///     SCSpecUDTStructV0 udtStructV0;
-/// case SC_SPEC_ENTRY_UDT_UNION_V0:
-///     SCSpecUDTUnionV0 udtUnionV0;
-/// case SC_SPEC_ENTRY_UDT_ENUM_V0:
-///     SCSpecUDTEnumV0 udtEnumV0;
-/// case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
-///     SCSpecUDTErrorEnumV0 udtErrorEnumV0;
-/// case SC_SPEC_ENTRY_EVENT_V0:
-///     SCSpecEventV0 eventV0;
-/// case SC_SPEC_ENTRY_V2:
-///     SCSpecEntryV2 v2;
-/// };
+/// union switch (SCSpecEntryKind kind)
+///     {
+///     case SC_SPEC_ENTRY_FUNCTION_V0:
+///         SCSpecFunctionV0 functionV0;
+///     case SC_SPEC_ENTRY_UDT_STRUCT_V0:
+///         SCSpecUDTStructV0 udtStructV0;
+///     case SC_SPEC_ENTRY_UDT_UNION_V0:
+///         SCSpecUDTUnionV0 udtUnionV0;
+///     case SC_SPEC_ENTRY_UDT_ENUM_V0:
+///         SCSpecUDTEnumV0 udtEnumV0;
+///     case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
+///         SCSpecUDTErrorEnumV0 udtErrorEnumV0;
+///     case SC_SPEC_ENTRY_EVENT_V0:
+///         SCSpecEventV0 eventV0;
+///     }
 /// ```
 ///
 // union with discriminant ScSpecEntryKind
@@ -35,24 +33,23 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecEntry {
+pub enum ScSpecEntryV2Body {
     FunctionV0(ScSpecFunctionV0),
     UdtStructV0(ScSpecUdtStructV0),
     UdtUnionV0(ScSpecUdtUnionV0),
     UdtEnumV0(ScSpecUdtEnumV0),
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
     EventV0(ScSpecEventV0),
-    V2(ScSpecEntryV2),
 }
 
 #[cfg(feature = "alloc")]
-impl Default for ScSpecEntry {
+impl Default for ScSpecEntryV2Body {
     fn default() -> Self {
         Self::FunctionV0(ScSpecFunctionV0::default())
     }
 }
 
-impl ScSpecEntry {
+impl ScSpecEntryV2Body {
     const _VARIANTS: &[ScSpecEntryKind] = &[
         ScSpecEntryKind::FunctionV0,
         ScSpecEntryKind::UdtStructV0,
@@ -60,7 +57,6 @@ impl ScSpecEntry {
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
         ScSpecEntryKind::EventV0,
-        ScSpecEntryKind::V2,
     ];
     pub const VARIANTS: [ScSpecEntryKind; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -78,7 +74,6 @@ impl ScSpecEntry {
         "UdtEnumV0",
         "UdtErrorEnumV0",
         "EventV0",
-        "V2",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -99,7 +94,6 @@ impl ScSpecEntry {
             Self::UdtEnumV0(_) => "UdtEnumV0",
             Self::UdtErrorEnumV0(_) => "UdtErrorEnumV0",
             Self::EventV0(_) => "EventV0",
-            Self::V2(_) => "V2",
         }
     }
 
@@ -113,7 +107,6 @@ impl ScSpecEntry {
             Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
             Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
             Self::EventV0(_) => ScSpecEntryKind::EventV0,
-            Self::V2(_) => ScSpecEntryKind::V2,
         }
     }
 
@@ -123,29 +116,29 @@ impl ScSpecEntry {
     }
 }
 
-impl Name for ScSpecEntry {
+impl Name for ScSpecEntryV2Body {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
+impl Discriminant<ScSpecEntryKind> for ScSpecEntryV2Body {
     #[must_use]
     fn discriminant(&self) -> ScSpecEntryKind {
         Self::discriminant(self)
     }
 }
 
-impl Variants<ScSpecEntryKind> for ScSpecEntry {
+impl Variants<ScSpecEntryKind> for ScSpecEntryV2Body {
     fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<ScSpecEntryKind> for ScSpecEntry {}
+impl Union<ScSpecEntryKind> for ScSpecEntryV2Body {}
 
-impl ReadXdr for ScSpecEntry {
+impl ReadXdr for ScSpecEntryV2Body {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
@@ -160,7 +153,6 @@ impl ReadXdr for ScSpecEntry {
                     Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
                 }
                 ScSpecEntryKind::EventV0 => Self::EventV0(ScSpecEventV0::read_xdr(r)?),
-                ScSpecEntryKind::V2 => Self::V2(ScSpecEntryV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -169,7 +161,7 @@ impl ReadXdr for ScSpecEntry {
     }
 }
 
-impl WriteXdr for ScSpecEntry {
+impl WriteXdr for ScSpecEntryV2Body {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -182,53 +174,50 @@ impl WriteXdr for ScSpecEntry {
                 Self::UdtEnumV0(v) => v.write_xdr(w)?,
                 Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
                 Self::EventV0(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
     }
 }
 
-/// ScSpecEntryView is a borrowing equivalent of [`ScSpecEntry`], usable in
+/// ScSpecEntryV2BodyView is a borrowing equivalent of [`ScSpecEntryV2Body`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecEntryView<'a> {
+pub enum ScSpecEntryV2BodyView<'a> {
     FunctionV0(ScSpecFunctionV0View<'a>),
     UdtStructV0(ScSpecUdtStructV0View<'a>),
     UdtUnionV0(ScSpecUdtUnionV0View<'a>),
     UdtEnumV0(ScSpecUdtEnumV0View<'a>),
     UdtErrorEnumV0(ScSpecUdtErrorEnumV0View<'a>),
     EventV0(ScSpecEventV0View<'a>),
-    V2(ScSpecEntryV2View<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecEntryView<'_>> for ScSpecEntry {
+impl From<&ScSpecEntryV2BodyView<'_>> for ScSpecEntryV2Body {
     #[must_use]
-    fn from(v: &ScSpecEntryView<'_>) -> Self {
+    fn from(v: &ScSpecEntryV2BodyView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecEntryView::FunctionV0(value) => Self::FunctionV0(value.into()),
-            ScSpecEntryView::UdtStructV0(value) => Self::UdtStructV0(value.into()),
-            ScSpecEntryView::UdtUnionV0(value) => Self::UdtUnionV0(value.into()),
-            ScSpecEntryView::UdtEnumV0(value) => Self::UdtEnumV0(value.into()),
-            ScSpecEntryView::UdtErrorEnumV0(value) => Self::UdtErrorEnumV0(value.into()),
-            ScSpecEntryView::EventV0(value) => Self::EventV0(value.into()),
-            ScSpecEntryView::V2(value) => Self::V2(value.into()),
+            ScSpecEntryV2BodyView::FunctionV0(value) => Self::FunctionV0(value.into()),
+            ScSpecEntryV2BodyView::UdtStructV0(value) => Self::UdtStructV0(value.into()),
+            ScSpecEntryV2BodyView::UdtUnionV0(value) => Self::UdtUnionV0(value.into()),
+            ScSpecEntryV2BodyView::UdtEnumV0(value) => Self::UdtEnumV0(value.into()),
+            ScSpecEntryV2BodyView::UdtErrorEnumV0(value) => Self::UdtErrorEnumV0(value.into()),
+            ScSpecEntryV2BodyView::EventV0(value) => Self::EventV0(value.into()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecEntryView<'_>> for ScSpecEntry {
+impl From<ScSpecEntryV2BodyView<'_>> for ScSpecEntryV2Body {
     #[must_use]
-    fn from(v: ScSpecEntryView<'_>) -> Self {
+    fn from(v: ScSpecEntryV2BodyView<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl ScSpecEntryView<'_> {
+impl ScSpecEntryV2BodyView<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecEntryKind {
         #[allow(clippy::match_same_arms)]
@@ -239,12 +228,11 @@ impl ScSpecEntryView<'_> {
             Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
             Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
             Self::EventV0(_) => ScSpecEntryKind::EventV0,
-            Self::V2(_) => ScSpecEntryKind::V2,
         }
     }
 }
 
-impl WriteXdr for ScSpecEntryView<'_> {
+impl WriteXdr for ScSpecEntryV2BodyView<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -257,14 +245,13 @@ impl WriteXdr for ScSpecEntryView<'_> {
                 Self::UdtEnumV0(v) => v.write_xdr(w)?,
                 Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
                 Self::EventV0(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
     }
 }
 #[cfg(feature = "const")]
-impl ScSpecEntryView<'_> {
+impl ScSpecEntryV2BodyView<'_> {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const counterpart to the owned type's
     /// [`WriteXdr::write_xdr`].
@@ -290,9 +277,6 @@ impl ScSpecEntryView<'_> {
                 v.const_write_xdr(w);
             }
             Self::EventV0(v) => {
-                v.const_write_xdr(w);
-            }
-            Self::V2(v) => {
                 v.const_write_xdr(w);
             }
         }

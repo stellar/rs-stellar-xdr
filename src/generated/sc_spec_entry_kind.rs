@@ -11,7 +11,8 @@ use super::*;
 ///     SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
 ///     SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,
 ///     SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,
-///     SC_SPEC_ENTRY_EVENT_V0 = 5
+///     SC_SPEC_ENTRY_EVENT_V0 = 5,
+///     SC_SPEC_ENTRY_V2 = 6
 /// };
 /// ```
 ///
@@ -34,6 +35,7 @@ pub enum ScSpecEntryKind {
     UdtEnumV0 = 3,
     UdtErrorEnumV0 = 4,
     EventV0 = 5,
+    V2 = 6,
 }
 
 impl ScSpecEntryKind {
@@ -44,6 +46,7 @@ impl ScSpecEntryKind {
         ScSpecEntryKind::UdtEnumV0,
         ScSpecEntryKind::UdtErrorEnumV0,
         ScSpecEntryKind::EventV0,
+        ScSpecEntryKind::V2,
     ];
     pub const VARIANTS: [ScSpecEntryKind; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -61,6 +64,7 @@ impl ScSpecEntryKind {
         "UdtEnumV0",
         "UdtErrorEnumV0",
         "EventV0",
+        "V2",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -81,6 +85,7 @@ impl ScSpecEntryKind {
             Self::UdtEnumV0 => "UdtEnumV0",
             Self::UdtErrorEnumV0 => "UdtErrorEnumV0",
             Self::EventV0 => "EventV0",
+            Self::V2 => "V2",
         }
     }
 
@@ -122,6 +127,7 @@ impl TryFrom<i32> for ScSpecEntryKind {
             3 => ScSpecEntryKind::UdtEnumV0,
             4 => ScSpecEntryKind::UdtErrorEnumV0,
             5 => ScSpecEntryKind::EventV0,
+            6 => ScSpecEntryKind::V2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

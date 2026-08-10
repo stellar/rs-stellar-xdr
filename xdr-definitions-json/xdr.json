@@ -19,7 +19,7 @@
     },
     {
       "name": "xdr/Stellar-contract-spec.x",
-      "sha256": "0ecf729380a315ef7ace1a4bf58a9352ed26c1d2c6618872e1fe8b3c7e70116c"
+      "sha256": "ee0ffdb86c74fc9596e0e171d6490b2c80d523adeaf4c45fe43143bd5bc11a73"
     },
     {
       "name": "xdr/Stellar-contract.x",
@@ -1895,9 +1895,9 @@
     },
     {
       "kind": "const",
-      "name": "SC_SPEC_TYPE_ID_LEN",
+      "name": "SC_SPEC_ID_LEN",
       "value": 8,
-      "source": "const SC_SPEC_TYPE_ID_LEN = 8;",
+      "source": "const SC_SPEC_ID_LEN = 8;",
       "file_index": 4
     },
     {
@@ -2151,7 +2151,7 @@
       "kind": "struct",
       "name": "SCSpecTypeUDTV2",
       "fixed_size": null,
-      "source": "struct SCSpecTypeUDTV2\n{\n    string name<60>;\n    opaque id[SC_SPEC_TYPE_ID_LEN];\n};",
+      "source": "struct SCSpecTypeUDTV2\n{\n    string name<60>;\n    opaque id[SC_SPEC_ID_LEN];\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2946,7 +2946,7 @@
     {
       "kind": "enum",
       "name": "SCSpecEntryKind",
-      "source": "enum SCSpecEntryKind\n{\n    SC_SPEC_ENTRY_FUNCTION_V0 = 0,\n    SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,\n    SC_SPEC_ENTRY_UDT_UNION_V0 = 2,\n    SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,\n    SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,\n    SC_SPEC_ENTRY_EVENT_V0 = 5\n};",
+      "source": "enum SCSpecEntryKind\n{\n    SC_SPEC_ENTRY_FUNCTION_V0 = 0,\n    SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,\n    SC_SPEC_ENTRY_UDT_UNION_V0 = 2,\n    SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,\n    SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4,\n    SC_SPEC_ENTRY_EVENT_V0 = 5,\n    SC_SPEC_ENTRY_V2 = 6\n};",
       "file_index": 4,
       "member_prefix": "SC_SPEC_ENTRY_",
       "members": [
@@ -2973,14 +2973,18 @@
         {
           "name": "SC_SPEC_ENTRY_EVENT_V0",
           "value": 5
+        },
+        {
+          "name": "SC_SPEC_ENTRY_V2",
+          "value": 6
         }
       ]
     },
     {
       "kind": "union",
-      "name": "SCSpecEntry",
+      "name": "SCSpecEntryV2Body",
       "fixed_size": null,
-      "source": "union SCSpecEntry switch (SCSpecEntryKind kind)\n{\ncase SC_SPEC_ENTRY_FUNCTION_V0:\n    SCSpecFunctionV0 functionV0;\ncase SC_SPEC_ENTRY_UDT_STRUCT_V0:\n    SCSpecUDTStructV0 udtStructV0;\ncase SC_SPEC_ENTRY_UDT_UNION_V0:\n    SCSpecUDTUnionV0 udtUnionV0;\ncase SC_SPEC_ENTRY_UDT_ENUM_V0:\n    SCSpecUDTEnumV0 udtEnumV0;\ncase SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:\n    SCSpecUDTErrorEnumV0 udtErrorEnumV0;\ncase SC_SPEC_ENTRY_EVENT_V0:\n    SCSpecEventV0 eventV0;\n};",
+      "source": "union switch (SCSpecEntryKind kind)\n    {\n    case SC_SPEC_ENTRY_FUNCTION_V0:\n        SCSpecFunctionV0 functionV0;\n    case SC_SPEC_ENTRY_UDT_STRUCT_V0:\n        SCSpecUDTStructV0 udtStructV0;\n    case SC_SPEC_ENTRY_UDT_UNION_V0:\n        SCSpecUDTUnionV0 udtUnionV0;\n    case SC_SPEC_ENTRY_UDT_ENUM_V0:\n        SCSpecUDTEnumV0 udtEnumV0;\n    case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:\n        SCSpecUDTErrorEnumV0 udtErrorEnumV0;\n    case SC_SPEC_ENTRY_EVENT_V0:\n        SCSpecEventV0 eventV0;\n    }",
       "file_index": 4,
       "discriminant": {
         "name": "kind",
@@ -3066,6 +3070,136 @@
           "type": {
             "kind": "ref",
             "name": "SCSpecEventV0"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "struct",
+      "name": "SCSpecEntryV2",
+      "fixed_size": null,
+      "source": "struct SCSpecEntryV2\n{\n    opaque id[SC_SPEC_ID_LEN];\n    union switch (SCSpecEntryKind kind)\n    {\n    case SC_SPEC_ENTRY_FUNCTION_V0:\n        SCSpecFunctionV0 functionV0;\n    case SC_SPEC_ENTRY_UDT_STRUCT_V0:\n        SCSpecUDTStructV0 udtStructV0;\n    case SC_SPEC_ENTRY_UDT_UNION_V0:\n        SCSpecUDTUnionV0 udtUnionV0;\n    case SC_SPEC_ENTRY_UDT_ENUM_V0:\n        SCSpecUDTEnumV0 udtEnumV0;\n    case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:\n        SCSpecUDTErrorEnumV0 udtErrorEnumV0;\n    case SC_SPEC_ENTRY_EVENT_V0:\n        SCSpecEventV0 eventV0;\n    } body;\n};",
+      "file_index": 4,
+      "fields": [
+        {
+          "name": "id",
+          "type": {
+            "kind": "opaque_fixed",
+            "size": 8
+          }
+        },
+        {
+          "name": "body",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecEntryV2Body"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "union",
+      "name": "SCSpecEntry",
+      "fixed_size": null,
+      "source": "union SCSpecEntry switch (SCSpecEntryKind kind)\n{\ncase SC_SPEC_ENTRY_FUNCTION_V0:\n    SCSpecFunctionV0 functionV0;\ncase SC_SPEC_ENTRY_UDT_STRUCT_V0:\n    SCSpecUDTStructV0 udtStructV0;\ncase SC_SPEC_ENTRY_UDT_UNION_V0:\n    SCSpecUDTUnionV0 udtUnionV0;\ncase SC_SPEC_ENTRY_UDT_ENUM_V0:\n    SCSpecUDTEnumV0 udtEnumV0;\ncase SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:\n    SCSpecUDTErrorEnumV0 udtErrorEnumV0;\ncase SC_SPEC_ENTRY_EVENT_V0:\n    SCSpecEventV0 eventV0;\ncase SC_SPEC_ENTRY_V2:\n    SCSpecEntryV2 v2;\n};",
+      "file_index": 4,
+      "discriminant": {
+        "name": "kind",
+        "type": {
+          "kind": "ref",
+          "name": "SCSpecEntryKind"
+        }
+      },
+      "arms": [
+        {
+          "cases": [
+            {
+              "value": 0,
+              "name": "SC_SPEC_ENTRY_FUNCTION_V0"
+            }
+          ],
+          "name": "functionV0",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecFunctionV0"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 1,
+              "name": "SC_SPEC_ENTRY_UDT_STRUCT_V0"
+            }
+          ],
+          "name": "udtStructV0",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecUDTStructV0"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 2,
+              "name": "SC_SPEC_ENTRY_UDT_UNION_V0"
+            }
+          ],
+          "name": "udtUnionV0",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecUDTUnionV0"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 3,
+              "name": "SC_SPEC_ENTRY_UDT_ENUM_V0"
+            }
+          ],
+          "name": "udtEnumV0",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecUDTEnumV0"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 4,
+              "name": "SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0"
+            }
+          ],
+          "name": "udtErrorEnumV0",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecUDTErrorEnumV0"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 5,
+              "name": "SC_SPEC_ENTRY_EVENT_V0"
+            }
+          ],
+          "name": "eventV0",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecEventV0"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 6,
+              "name": "SC_SPEC_ENTRY_V2"
+            }
+          ],
+          "name": "v2",
+          "type": {
+            "kind": "ref",
+            "name": "SCSpecEntryV2"
           }
         }
       ]

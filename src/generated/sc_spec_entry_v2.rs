@@ -1,13 +1,27 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecTypeUdtv2 is an XDR Struct defined as:
+/// ScSpecEntryV2 is an XDR Struct defined as:
 ///
 /// ```text
-/// struct SCSpecTypeUDTV2
+/// struct SCSpecEntryV2
 /// {
-///     string name<60>;
 ///     opaque id[SC_SPEC_ID_LEN];
+///     union switch (SCSpecEntryKind kind)
+///     {
+///     case SC_SPEC_ENTRY_FUNCTION_V0:
+///         SCSpecFunctionV0 functionV0;
+///     case SC_SPEC_ENTRY_UDT_STRUCT_V0:
+///         SCSpecUDTStructV0 udtStructV0;
+///     case SC_SPEC_ENTRY_UDT_UNION_V0:
+///         SCSpecUDTUnionV0 udtUnionV0;
+///     case SC_SPEC_ENTRY_UDT_ENUM_V0:
+///         SCSpecUDTEnumV0 udtEnumV0;
+///     case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
+///         SCSpecUDTErrorEnumV0 udtErrorEnumV0;
+///     case SC_SPEC_ENTRY_EVENT_V0:
+///         SCSpecEventV0 eventV0;
+///     } body;
 /// };
 /// ```
 ///
@@ -22,80 +36,80 @@ use super::*;
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecTypeUdtv2 {
-    pub name: StringM<60>,
+pub struct ScSpecEntryV2 {
     pub id: [u8; 8],
+    pub body: ScSpecEntryV2Body,
 }
 
-impl ReadXdr for ScSpecTypeUdtv2 {
+impl ReadXdr for ScSpecEntryV2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                name: StringM::<60>::read_xdr(r)?,
                 id: <[u8; 8]>::read_xdr(r)?,
+                body: ScSpecEntryV2Body::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for ScSpecTypeUdtv2 {
+impl WriteXdr for ScSpecEntryV2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.name.write_xdr(w)?;
             self.id.write_xdr(w)?;
+            self.body.write_xdr(w)?;
             Ok(())
         })
     }
 }
 
-/// ScSpecTypeUdtv2View is a borrowing equivalent of [`ScSpecTypeUdtv2`], usable in
+/// ScSpecEntryV2View is a borrowing equivalent of [`ScSpecEntryV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeUdtv2View<'a> {
-    pub name: StringMView<'a, 60>,
+pub struct ScSpecEntryV2View<'a> {
     pub id: [u8; 8],
+    pub body: ScSpecEntryV2BodyView<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeUdtv2View<'_>> for ScSpecTypeUdtv2 {
+impl From<&ScSpecEntryV2View<'_>> for ScSpecEntryV2 {
     #[must_use]
-    fn from(v: &ScSpecTypeUdtv2View<'_>) -> Self {
+    fn from(v: &ScSpecEntryV2View<'_>) -> Self {
         Self {
-            name: v.name.to_stringm(),
             id: v.id,
+            body: (&v.body).into(),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeUdtv2View<'_>> for ScSpecTypeUdtv2 {
+impl From<ScSpecEntryV2View<'_>> for ScSpecEntryV2 {
     #[must_use]
-    fn from(v: ScSpecTypeUdtv2View<'_>) -> Self {
+    fn from(v: ScSpecEntryV2View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecTypeUdtv2View<'_> {
+impl WriteXdr for ScSpecEntryV2View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.name.write_xdr(w)?;
             self.id.write_xdr(w)?;
+            self.body.write_xdr(w)?;
             Ok(())
         })
     }
 }
 #[cfg(feature = "const")]
-impl ScSpecTypeUdtv2View<'_> {
+impl ScSpecEntryV2View<'_> {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const counterpart to the owned type's
     /// [`WriteXdr::write_xdr`].
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        w.write_len_prefixed(self.name.as_slice());
         w.write_fixed_opaque(&self.id);
+        self.body.const_write_xdr(w);
         w.leave_depth();
     }
     /// The exact XDR-encoded length of this value, in bytes.

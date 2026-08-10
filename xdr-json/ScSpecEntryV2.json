@@ -1,116 +1,32 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "ScSpecEntry",
-  "description": "ScSpecEntry is an XDR Union defined as:\n\n```text union SCSpecEntry switch (SCSpecEntryKind kind) { case SC_SPEC_ENTRY_FUNCTION_V0: SCSpecFunctionV0 functionV0; case SC_SPEC_ENTRY_UDT_STRUCT_V0: SCSpecUDTStructV0 udtStructV0; case SC_SPEC_ENTRY_UDT_UNION_V0: SCSpecUDTUnionV0 udtUnionV0; case SC_SPEC_ENTRY_UDT_ENUM_V0: SCSpecUDTEnumV0 udtEnumV0; case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0: SCSpecUDTErrorEnumV0 udtErrorEnumV0; case SC_SPEC_ENTRY_EVENT_V0: SCSpecEventV0 eventV0; case SC_SPEC_ENTRY_V2: SCSpecEntryV2 v2; }; ```",
-  "oneOf": [
-    {
-      "type": "object",
-      "required": [
-        "function_v0"
-      ],
-      "properties": {
-        "function_v0": {
-          "$ref": "#/definitions/ScSpecFunctionV0"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "udt_struct_v0"
-      ],
-      "properties": {
-        "udt_struct_v0": {
-          "$ref": "#/definitions/ScSpecUdtStructV0"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "udt_union_v0"
-      ],
-      "properties": {
-        "udt_union_v0": {
-          "$ref": "#/definitions/ScSpecUdtUnionV0"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "udt_enum_v0"
-      ],
-      "properties": {
-        "udt_enum_v0": {
-          "$ref": "#/definitions/ScSpecUdtEnumV0"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "udt_error_enum_v0"
-      ],
-      "properties": {
-        "udt_error_enum_v0": {
-          "$ref": "#/definitions/ScSpecUdtErrorEnumV0"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "event_v0"
-      ],
-      "properties": {
-        "event_v0": {
-          "$ref": "#/definitions/ScSpecEventV0"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "v2"
-      ],
-      "properties": {
-        "v2": {
-          "$ref": "#/definitions/ScSpecEntryV2"
-        }
-      }
-    }
+  "title": "ScSpecEntryV2",
+  "description": "ScSpecEntryV2 is an XDR Struct defined as:\n\n```text struct SCSpecEntryV2 { opaque id[SC_SPEC_ID_LEN]; union switch (SCSpecEntryKind kind) { case SC_SPEC_ENTRY_FUNCTION_V0: SCSpecFunctionV0 functionV0; case SC_SPEC_ENTRY_UDT_STRUCT_V0: SCSpecUDTStructV0 udtStructV0; case SC_SPEC_ENTRY_UDT_UNION_V0: SCSpecUDTUnionV0 udtUnionV0; case SC_SPEC_ENTRY_UDT_ENUM_V0: SCSpecUDTEnumV0 udtEnumV0; case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0: SCSpecUDTErrorEnumV0 udtErrorEnumV0; case SC_SPEC_ENTRY_EVENT_V0: SCSpecEventV0 eventV0; } body; }; ```",
+  "type": "object",
+  "required": [
+    "body",
+    "id"
   ],
   "properties": {
     "$schema": {
       "type": "string"
+    },
+    "body": {
+      "$ref": "#/definitions/ScSpecEntryV2Body"
+    },
+    "id": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      },
+      "maxItems": 8,
+      "minItems": 8
     }
   },
   "unevaluatedProperties": false,
   "definitions": {
-    "ScSpecEntryV2": {
-      "description": "ScSpecEntryV2 is an XDR Struct defined as:\n\n```text struct SCSpecEntryV2 { opaque id[SC_SPEC_ID_LEN]; union switch (SCSpecEntryKind kind) { case SC_SPEC_ENTRY_FUNCTION_V0: SCSpecFunctionV0 functionV0; case SC_SPEC_ENTRY_UDT_STRUCT_V0: SCSpecUDTStructV0 udtStructV0; case SC_SPEC_ENTRY_UDT_UNION_V0: SCSpecUDTUnionV0 udtUnionV0; case SC_SPEC_ENTRY_UDT_ENUM_V0: SCSpecUDTEnumV0 udtEnumV0; case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0: SCSpecUDTErrorEnumV0 udtErrorEnumV0; case SC_SPEC_ENTRY_EVENT_V0: SCSpecEventV0 eventV0; } body; }; ```",
-      "type": "object",
-      "required": [
-        "body",
-        "id"
-      ],
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/ScSpecEntryV2Body"
-        },
-        "id": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 8,
-          "minItems": 8
-        }
-      }
-    },
     "ScSpecEntryV2Body": {
       "description": "ScSpecEntryV2Body is an XDR NestedUnion defined as:\n\n```text union switch (SCSpecEntryKind kind) { case SC_SPEC_ENTRY_FUNCTION_V0: SCSpecFunctionV0 functionV0; case SC_SPEC_ENTRY_UDT_STRUCT_V0: SCSpecUDTStructV0 udtStructV0; case SC_SPEC_ENTRY_UDT_UNION_V0: SCSpecUDTUnionV0 udtUnionV0; case SC_SPEC_ENTRY_UDT_ENUM_V0: SCSpecUDTEnumV0 udtEnumV0; case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0: SCSpecUDTErrorEnumV0 udtErrorEnumV0; case SC_SPEC_ENTRY_EVENT_V0: SCSpecEventV0 eventV0; } ```",
       "oneOf": [

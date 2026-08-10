@@ -9,6 +9,7 @@ use super::*;
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     string name<60>;
+///     opaque id[SC_SPEC_TYPE_ID_LEN];
 ///     SCSpecUDTErrorEnumCaseV0 cases<>;
 /// };
 /// ```
@@ -28,6 +29,7 @@ pub struct ScSpecUdtErrorEnumV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
+    pub id: [u8; 8],
     pub cases: VecM<ScSpecUdtErrorEnumCaseV0>,
 }
 
@@ -39,6 +41,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
+                id: <[u8; 8]>::read_xdr(r)?,
                 cases: VecM::<ScSpecUdtErrorEnumCaseV0>::read_xdr(r)?,
             })
         })
@@ -52,6 +55,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
+            self.id.write_xdr(w)?;
             self.cases.write_xdr(w)?;
             Ok(())
         })
@@ -65,6 +69,7 @@ pub struct ScSpecUdtErrorEnumV0View<'a> {
     pub doc: StringMView<'a, 1024>,
     pub lib: StringMView<'a, 80>,
     pub name: StringMView<'a, 60>,
+    pub id: [u8; 8],
     pub cases: VecMView<'a, ScSpecUdtErrorEnumCaseV0View<'a>>,
 }
 
@@ -76,6 +81,7 @@ impl From<&ScSpecUdtErrorEnumV0View<'_>> for ScSpecUdtErrorEnumV0 {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
             name: v.name.to_stringm(),
+            id: v.id,
             cases: v.cases.to_vecm_from(),
         }
     }
@@ -96,6 +102,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0View<'_> {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
+            self.id.write_xdr(w)?;
             self.cases.write_xdr(w)?;
             Ok(())
         })
@@ -111,6 +118,7 @@ impl ScSpecUdtErrorEnumV0View<'_> {
         w.write_len_prefixed(self.doc.as_slice());
         w.write_len_prefixed(self.lib.as_slice());
         w.write_len_prefixed(self.name.as_slice());
+        w.write_fixed_opaque(&self.id);
         {
             w.enter_depth();
             let __s0 = self.cases.as_slice();

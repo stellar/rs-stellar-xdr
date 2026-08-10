@@ -1,16 +1,13 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecUdtUnionV0 is an XDR Struct defined as:
+/// ScSpecTypeUdtv2 is an XDR Struct defined as:
 ///
 /// ```text
-/// struct SCSpecUDTUnionV0
+/// struct SCSpecTypeUDTV2
 /// {
-///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string lib<80>;
 ///     string name<60>;
 ///     opaque id[SC_SPEC_TYPE_ID_LEN];
-///     SCSpecUDTUnionCaseV0 cases<>;
 /// };
 /// ```
 ///
@@ -25,112 +22,80 @@ use super::*;
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecUdtUnionV0 {
-    pub doc: StringM<1024>,
-    pub lib: StringM<80>,
+pub struct ScSpecTypeUdtv2 {
     pub name: StringM<60>,
     pub id: [u8; 8],
-    pub cases: VecM<ScSpecUdtUnionCaseV0>,
 }
 
-impl ReadXdr for ScSpecUdtUnionV0 {
+impl ReadXdr for ScSpecTypeUdtv2 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
-                lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
                 id: <[u8; 8]>::read_xdr(r)?,
-                cases: VecM::<ScSpecUdtUnionCaseV0>::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionV0 {
+impl WriteXdr for ScSpecTypeUdtv2 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.id.write_xdr(w)?;
-            self.cases.write_xdr(w)?;
             Ok(())
         })
     }
 }
 
-/// ScSpecUdtUnionV0View is a borrowing equivalent of [`ScSpecUdtUnionV0`], usable in
+/// ScSpecTypeUdtv2View is a borrowing equivalent of [`ScSpecTypeUdtv2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtUnionV0View<'a> {
-    pub doc: StringMView<'a, 1024>,
-    pub lib: StringMView<'a, 80>,
+pub struct ScSpecTypeUdtv2View<'a> {
     pub name: StringMView<'a, 60>,
     pub id: [u8; 8],
-    pub cases: VecMView<'a, ScSpecUdtUnionCaseV0View<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionV0View<'_>> for ScSpecUdtUnionV0 {
+impl From<&ScSpecTypeUdtv2View<'_>> for ScSpecTypeUdtv2 {
     #[must_use]
-    fn from(v: &ScSpecUdtUnionV0View<'_>) -> Self {
+    fn from(v: &ScSpecTypeUdtv2View<'_>) -> Self {
         Self {
-            doc: v.doc.to_stringm(),
-            lib: v.lib.to_stringm(),
             name: v.name.to_stringm(),
             id: v.id,
-            cases: v.cases.to_vecm_from(),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionV0View<'_>> for ScSpecUdtUnionV0 {
+impl From<ScSpecTypeUdtv2View<'_>> for ScSpecTypeUdtv2 {
     #[must_use]
-    fn from(v: ScSpecUdtUnionV0View<'_>) -> Self {
+    fn from(v: ScSpecTypeUdtv2View<'_>) -> Self {
         Self::from(&v)
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionV0View<'_> {
+impl WriteXdr for ScSpecTypeUdtv2View<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
             self.id.write_xdr(w)?;
-            self.cases.write_xdr(w)?;
             Ok(())
         })
     }
 }
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionV0View<'_> {
+impl ScSpecTypeUdtv2View<'_> {
     /// Serialize this value as XDR into a [`ConstWriter`] using only const
     /// operations. This is the const counterpart to the owned type's
     /// [`WriteXdr::write_xdr`].
     pub const fn const_write_xdr(&self, w: &mut ConstWriter) {
         w.enter_depth();
-        w.write_len_prefixed(self.doc.as_slice());
-        w.write_len_prefixed(self.lib.as_slice());
         w.write_len_prefixed(self.name.as_slice());
         w.write_fixed_opaque(&self.id);
-        {
-            w.enter_depth();
-            let __s0 = self.cases.as_slice();
-            let __len0 = __s0.len();
-            w.write_length_prefix(__len0);
-            let mut __i0 = 0usize;
-            while __i0 < __len0 {
-                __s0[__i0].const_write_xdr(w);
-                __i0 += 1;
-            }
-            w.leave_depth();
-        }
         w.leave_depth();
     }
     /// The exact XDR-encoded length of this value, in bytes.

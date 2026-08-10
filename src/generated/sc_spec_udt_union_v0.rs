@@ -9,7 +9,6 @@ use super::*;
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
 ///     string name<60>;
-///     opaque id[SC_SPEC_TYPE_ID_LEN];
 ///     SCSpecUDTUnionCaseV0 cases<>;
 /// };
 /// ```
@@ -29,7 +28,6 @@ pub struct ScSpecUdtUnionV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
-    pub id: [u8; 8],
     pub cases: VecM<ScSpecUdtUnionCaseV0>,
 }
 
@@ -41,7 +39,6 @@ impl ReadXdr for ScSpecUdtUnionV0 {
                 doc: StringM::<1024>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
-                id: <[u8; 8]>::read_xdr(r)?,
                 cases: VecM::<ScSpecUdtUnionCaseV0>::read_xdr(r)?,
             })
         })
@@ -55,7 +52,6 @@ impl WriteXdr for ScSpecUdtUnionV0 {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
-            self.id.write_xdr(w)?;
             self.cases.write_xdr(w)?;
             Ok(())
         })
@@ -69,7 +65,6 @@ pub struct ScSpecUdtUnionV0View<'a> {
     pub doc: StringMView<'a, 1024>,
     pub lib: StringMView<'a, 80>,
     pub name: StringMView<'a, 60>,
-    pub id: [u8; 8],
     pub cases: VecMView<'a, ScSpecUdtUnionCaseV0View<'a>>,
 }
 
@@ -81,7 +76,6 @@ impl From<&ScSpecUdtUnionV0View<'_>> for ScSpecUdtUnionV0 {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
             name: v.name.to_stringm(),
-            id: v.id,
             cases: v.cases.to_vecm_from(),
         }
     }
@@ -102,7 +96,6 @@ impl WriteXdr for ScSpecUdtUnionV0View<'_> {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
             self.name.write_xdr(w)?;
-            self.id.write_xdr(w)?;
             self.cases.write_xdr(w)?;
             Ok(())
         })
@@ -118,7 +111,6 @@ impl ScSpecUdtUnionV0View<'_> {
         w.write_len_prefixed(self.doc.as_slice());
         w.write_len_prefixed(self.lib.as_slice());
         w.write_len_prefixed(self.name.as_slice());
-        w.write_fixed_opaque(&self.id);
         {
             w.enter_depth();
             let __s0 = self.cases.as_slice();

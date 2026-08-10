@@ -40,7 +40,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract-spec.x",
-        "5b86b3b54c392b47dcfa1f3202bfc1ff5ffd1ea43ffba2e35dd7399999f0fb55",
+        "0ecf729380a315ef7ace1a4bf58a9352ed26c1d2c6618872e1fe8b3c7e70116c",
     ),
     (
         "xdr/Stellar-contract.x",

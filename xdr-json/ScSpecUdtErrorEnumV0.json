@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecUdtErrorEnumV0",
-  "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; SCSpecUDTErrorEnumCaseV0 cases<>; }; ```",
+  "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTErrorEnumCaseV0 cases<>; }; ```",
   "type": "object",
   "required": [
     "cases",
     "doc",
-    "id",
     "lib",
     "name"
   ],
@@ -23,16 +22,6 @@
     },
     "doc": {
       "$ref": "#/definitions/StringM<1024>"
-    },
-    "id": {
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      },
-      "maxItems": 8,
-      "minItems": 8
     },
     "lib": {
       "$ref": "#/definitions/StringM<80>"

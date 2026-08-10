@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecUdtStructV0",
-  "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; SCSpecUDTStructFieldV0 fields<>; }; ```",
+  "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTStructFieldV0 fields<>; }; ```",
   "type": "object",
   "required": [
     "doc",
     "fields",
-    "id",
     "lib",
     "name"
   ],
@@ -23,16 +22,6 @@
         "$ref": "#/definitions/ScSpecUdtStructFieldV0"
       },
       "maxItems": 4294967295
-    },
-    "id": {
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      },
-      "maxItems": 8,
-      "minItems": 8
     },
     "lib": {
       "$ref": "#/definitions/StringM<80>"

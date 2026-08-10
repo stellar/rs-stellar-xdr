@@ -19,7 +19,7 @@
     },
     {
       "name": "xdr/Stellar-contract-spec.x",
-      "sha256": "5b86b3b54c392b47dcfa1f3202bfc1ff5ffd1ea43ffba2e35dd7399999f0fb55"
+      "sha256": "0ecf729380a315ef7ace1a4bf58a9352ed26c1d2c6618872e1fe8b3c7e70116c"
     },
     {
       "name": "xdr/Stellar-contract.x",
@@ -2405,7 +2405,7 @@
       "kind": "struct",
       "name": "SCSpecUDTStructV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTStructV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    opaque id[SC_SPEC_TYPE_ID_LEN];\n    SCSpecUDTStructFieldV0 fields<>;\n};",
+      "source": "struct SCSpecUDTStructV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTStructFieldV0 fields<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2427,13 +2427,6 @@
           "type": {
             "kind": "string",
             "max_size": 60
-          }
-        },
-        {
-          "name": "id",
-          "type": {
-            "kind": "opaque_fixed",
-            "size": 8
           }
         },
         {
@@ -2567,7 +2560,7 @@
       "kind": "struct",
       "name": "SCSpecUDTUnionV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTUnionV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    opaque id[SC_SPEC_TYPE_ID_LEN];\n    SCSpecUDTUnionCaseV0 cases<>;\n};",
+      "source": "struct SCSpecUDTUnionV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTUnionCaseV0 cases<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2589,13 +2582,6 @@
           "type": {
             "kind": "string",
             "max_size": 60
-          }
-        },
-        {
-          "name": "id",
-          "type": {
-            "kind": "opaque_fixed",
-            "size": 8
           }
         },
         {
@@ -2644,7 +2630,7 @@
       "kind": "struct",
       "name": "SCSpecUDTEnumV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    opaque id[SC_SPEC_TYPE_ID_LEN];\n    SCSpecUDTEnumCaseV0 cases<>;\n};",
+      "source": "struct SCSpecUDTEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTEnumCaseV0 cases<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2666,13 +2652,6 @@
           "type": {
             "kind": "string",
             "max_size": 60
-          }
-        },
-        {
-          "name": "id",
-          "type": {
-            "kind": "opaque_fixed",
-            "size": 8
           }
         },
         {
@@ -2721,7 +2700,7 @@
       "kind": "struct",
       "name": "SCSpecUDTErrorEnumV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTErrorEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    opaque id[SC_SPEC_TYPE_ID_LEN];\n    SCSpecUDTErrorEnumCaseV0 cases<>;\n};",
+      "source": "struct SCSpecUDTErrorEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTErrorEnumCaseV0 cases<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2743,13 +2722,6 @@
           "type": {
             "kind": "string",
             "max_size": 60
-          }
-        },
-        {
-          "name": "id",
-          "type": {
-            "kind": "opaque_fixed",
-            "size": 8
           }
         },
         {

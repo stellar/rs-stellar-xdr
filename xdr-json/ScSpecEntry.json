@@ -471,12 +471,11 @@
       }
     },
     "ScSpecUdtEnumV0": {
-      "description": "ScSpecUdtEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; SCSpecUDTEnumCaseV0 cases<>; }; ```",
+      "description": "ScSpecUdtEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTEnumCaseV0 cases<>; }; ```",
       "type": "object",
       "required": [
         "cases",
         "doc",
-        "id",
         "lib",
         "name"
       ],
@@ -490,16 +489,6 @@
         },
         "doc": {
           "$ref": "#/definitions/StringM<1024>"
-        },
-        "id": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 8,
-          "minItems": 8
         },
         "lib": {
           "$ref": "#/definitions/StringM<80>"
@@ -532,12 +521,11 @@
       }
     },
     "ScSpecUdtErrorEnumV0": {
-      "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; SCSpecUDTErrorEnumCaseV0 cases<>; }; ```",
+      "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTErrorEnumCaseV0 cases<>; }; ```",
       "type": "object",
       "required": [
         "cases",
         "doc",
-        "id",
         "lib",
         "name"
       ],
@@ -551,16 +539,6 @@
         },
         "doc": {
           "$ref": "#/definitions/StringM<1024>"
-        },
-        "id": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 8,
-          "minItems": 8
         },
         "lib": {
           "$ref": "#/definitions/StringM<80>"
@@ -591,12 +569,11 @@
       }
     },
     "ScSpecUdtStructV0": {
-      "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; SCSpecUDTStructFieldV0 fields<>; }; ```",
+      "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTStructFieldV0 fields<>; }; ```",
       "type": "object",
       "required": [
         "doc",
         "fields",
-        "id",
         "lib",
         "name"
       ],
@@ -610,16 +587,6 @@
             "$ref": "#/definitions/ScSpecUdtStructFieldV0"
           },
           "maxItems": 4294967295
-        },
-        "id": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 8,
-          "minItems": 8
         },
         "lib": {
           "$ref": "#/definitions/StringM<80>"
@@ -697,12 +664,11 @@
       }
     },
     "ScSpecUdtUnionV0": {
-      "description": "ScSpecUdtUnionV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTUnionV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; opaque id[SC_SPEC_TYPE_ID_LEN]; SCSpecUDTUnionCaseV0 cases<>; }; ```",
+      "description": "ScSpecUdtUnionV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTUnionV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTUnionCaseV0 cases<>; }; ```",
       "type": "object",
       "required": [
         "cases",
         "doc",
-        "id",
         "lib",
         "name"
       ],
@@ -716,16 +682,6 @@
         },
         "doc": {
           "$ref": "#/definitions/StringM<1024>"
-        },
-        "id": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 8,
-          "minItems": 8
         },
         "lib": {
           "$ref": "#/definitions/StringM<80>"

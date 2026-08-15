@@ -8,10 +8,11 @@ use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};
 
 #[test]
 fn test_skip_whitespace_long_run() -> Result<(), Error> {
-    // A whitespace run at least as long as the base64 decoder's internal read
-    // buffer (1024 bytes) must not be treated as end-of-input. Before the fix,
-    // SkipWhitespace::read returned Ok(0) when a whole delegate read was
-    // whitespace, which the decoder interprets as EOF -> silent truncation.
+    // A long contiguous whitespace run (2048 bytes here, large enough to fill
+    // at least one of the base64 decoder's internal read buffers) must not be
+    // treated as end-of-input. Before the fix, SkipWhitespace::read returned
+    // Ok(0) when a whole delegate read was whitespace, which the decoder
+    // interprets as EOF -> silent truncation.
     let v_bytes = [1u32.to_xdr(Limits::none())?, 2u32.to_xdr(Limits::none())?].concat();
     let core = base64::engine::general_purpose::STANDARD.encode(&v_bytes);
     assert_eq!(core, "AAAAAQAAAAI=");

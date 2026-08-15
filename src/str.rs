@@ -399,7 +399,7 @@ impl core::str::FromStr for AssetCode12 {
     /// `Display` impl always renders at least 5 characters). For length-agnostic
     /// parsing that selects the right variant, use `AssetCode`'s `FromStr`.
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        // AssetCode12's are always at least 5 characters, because any asset
+        // An AssetCode12 is always at least 5 characters, because any asset
         // code shorter than 5 characters is an AssetCode4. This mirrors the
         // Display impl, which always renders at least 5 characters, and keeps
         // the XDR<>JSON conversion round-trippable.

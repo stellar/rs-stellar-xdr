@@ -2419,17 +2419,28 @@ impl<R: Read> SkipWhitespace<R> {
 #[cfg(feature = "std")]
 impl<R: Read> Read for SkipWhitespace<R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let n = self.inner.read(buf)?;
+        loop {
+            let n = self.inner.read(buf)?;
+            if n == 0 {
+                return Ok(0);
+            }
 
-        let mut written = 0;
-        for read in 0..n {
-            if !buf[read].is_ascii_whitespace() {
-                buf[written] = buf[read];
-                written += 1;
+            let mut written = 0;
+            for read in 0..n {
+                if !buf[read].is_ascii_whitespace() {
+                    buf[written] = buf[read];
+                    written += 1;
+                }
+            }
+
+            // Only report EOF (Ok(0)) when the inner reader is genuinely at end
+            // (n == 0 above). If an entire read was whitespace, keep reading
+            // instead of returning Ok(0), which the caller treats as EOF and
+            // would use to silently truncate the decoded stream.
+            if written > 0 {
+                return Ok(written);
             }
         }
-
-        Ok(written)
     }
 }
 

@@ -7,6 +7,35 @@ use stellar_xdr::Error;
 use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};
 
 #[test]
+fn test_skip_whitespace_long_run() -> Result<(), Error> {
+    // A whitespace run at least as long as the base64 decoder's internal read
+    // buffer (1024 bytes) must not be treated as end-of-input. Before the fix,
+    // SkipWhitespace::read returned Ok(0) when a whole delegate read was
+    // whitespace, which the decoder interprets as EOF -> silent truncation.
+    let v_bytes = [1u32.to_xdr(Limits::none())?, 2u32.to_xdr(Limits::none())?].concat();
+    let core = base64::engine::general_purpose::STANDARD.encode(&v_bytes);
+    assert_eq!(core, "AAAAAQAAAAI=");
+    let ws = " ".repeat(2048);
+
+    // Leading long whitespace run.
+    let leading = format!("{ws}{core}");
+    assert_eq!(
+        u64::from_xdr_base64(&leading, Limits::none()),
+        Ok((1u64 << 32) | 2u64)
+    );
+
+    // Interior long whitespace run (split the base64 mid-string).
+    let (a, b) = core.split_at(4);
+    let interior = format!("{a}{ws}{b}");
+    assert_eq!(
+        u64::from_xdr_base64(&interior, Limits::none()),
+        Ok((1u64 << 32) | 2u64)
+    );
+
+    Ok(())
+}
+
+#[test]
 fn test_skip_whitespace() -> Result<(), Error> {
     let v_bytes = [1u32.to_xdr(Limits::none())?, 2u32.to_xdr(Limits::none())?].concat();
 

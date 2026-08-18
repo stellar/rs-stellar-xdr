@@ -589,10 +589,7 @@ fn asset_code_12_from_str() {
     assert_eq!(AssetCode12::from_str("abcd"), Err(Error::Invalid));
     // The canonical 5-byte escaped short form is accepted and round-trips with
     // Display (see asset_code_12_to_string).
-    assert_eq!(
-        AssetCode12::from_str(r"abc\0\0"),
-        Ok(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0"))
-    );
+    assert_eq!(AssetCode12::from_str(r"abc\0\0"), Ok(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")));
     assert_eq!(AssetCode12::from_str("abcde"), Ok(AssetCode12(*b"abcde\0\0\0\0\0\0\0")));
     assert_eq!(AssetCode12::from_str("abcdef"), Ok(AssetCode12(*b"abcdef\0\0\0\0\0\0")));
     assert_eq!(AssetCode12::from_str("abcdefg"), Ok(AssetCode12(*b"abcdefg\0\0\0\0\0")));

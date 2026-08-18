@@ -405,8 +405,8 @@ impl core::str::FromStr for AssetCode12 {
         // the XDR<>JSON conversion round-trippable.
         const MIN_LENGTH: usize = 5;
         let mut code = AssetCode12([0u8; 12]);
-        let n = escape_bytes::unescape_into(&mut code.0, s.as_bytes())
-            .map_err(|_| Error::Invalid)?;
+        let n =
+            escape_bytes::unescape_into(&mut code.0, s.as_bytes()).map_err(|_| Error::Invalid)?;
         if n < MIN_LENGTH {
             return Err(Error::Invalid);
         }

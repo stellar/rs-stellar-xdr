@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_protected == 'true' && github.sha || github.ref }}-${{ github.event_name }}
+  group: ${{ github.workflow }}-${{ github.ref_protected && github.sha || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 env:
@@ -56,7 +56,7 @@ jobs:
     - name: Use the minimum supported Rust version
       if: matrix.rust == 'msrv'
       run: |
-        msrv="$(cargo metadata --manifest-path $MANIFEST_PATH --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
+        msrv="$(cargo metadata --manifest-path $MANIFEST_PATH --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | max')"
         rustup override set $msrv
         rustup component add clippy --toolchain $msrv
     - name: Error on warnings and clippy checks
@@ -82,7 +82,7 @@ jobs:
     - name: Use the minimum supported Rust version
       if: matrix.rust == 'msrv'
       run: |
-        msrv="$(cargo metadata --manifest-path $MANIFEST_PATH --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
+        msrv="$(cargo metadata --manifest-path $MANIFEST_PATH --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | max')"
         rustup override set $msrv
     - name: Error on warnings and clippy checks
       if: matrix.rust == 'msrv'

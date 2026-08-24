@@ -116,6 +116,9 @@ fn parse_directive_ident(lex: &logos::Lexer<Token>) -> Option<std::string::Strin
     }
 }
 
+// The u64 -> i64 cast below deliberately wraps: it reinterprets the bit pattern
+// rather than converting the value, which is what the comment in the body relies on.
+#[allow(clippy::cast_possible_wrap)]
 fn parse_hex(lex: &logos::Lexer<Token>) -> Option<(i64, IntBase)> {
     let slice = lex.slice();
     // Parse as u64 first to handle the full range of hex values (e.g., 0xFFFFFFFFFFFFFFFF),
@@ -152,6 +155,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
+    #[must_use]
     pub fn new(input: &'a str) -> Self {
         Self {
             source: input,
@@ -160,20 +164,22 @@ impl<'a> Lexer<'a> {
     }
 
     /// Tokenize with span information for each token.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LexError`] if the source contains a character the lexer cannot
+    /// tokenize.
     pub fn tokenize_with_spans(self) -> Result<(Vec<SpannedToken>, std::string::String), LexError> {
         let source = self.source.to_string();
         let source_len = self.source.len();
         let mut tokens = Vec::new();
 
         for (result, span) in self.inner {
-            let token = match result {
-                Ok(t) => t,
-                Err(()) => {
-                    if let Some(c) = self.source[span.start..].chars().next() {
-                        return Err(LexError::UnexpectedChar(c));
-                    }
-                    return Err(LexError::LexerError(span.start));
+            let Ok(token) = result else {
+                if let Some(c) = self.source[span.start..].chars().next() {
+                    return Err(LexError::UnexpectedChar(c));
                 }
+                return Err(LexError::LexerError(span.start));
             };
 
             tokens.push(SpannedToken {

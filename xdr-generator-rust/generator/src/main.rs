@@ -17,6 +17,9 @@ use std::fs;
 use std::path::PathBuf;
 
 /// XDR code generator.
+// These doc comments are the CLI's --help text, not rustdoc, so type names are
+// left unquoted rather than wrapped in backticks the way doc_markdown wants.
+#[allow(clippy::doc_markdown)]
 #[derive(Parser, Debug)]
 #[command(name = "xdr-generator")]
 #[command(about = "Generate code from XDR definitions")]

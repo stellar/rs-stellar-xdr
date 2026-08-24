@@ -94,14 +94,14 @@ fn test_parse_namespace() {
 
 #[test]
 fn test_deeply_nested_parents_assigned_during_parse() {
-    let input = r#"
+    let input = r"
         union Outer switch (int v) {
             case 0:
                 struct {
                     union switch (int w) { case 0: void; } innerField;
                 } outerField;
         };
-    "#;
+    ";
     let spec = parse(input).unwrap();
 
     let inner_union = spec
@@ -133,11 +133,11 @@ fn test_deeply_nested_parents_assigned_during_parse() {
 
 #[test]
 fn test_ifdef_simple() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         struct Foo { int x; };
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "Foo");
@@ -149,13 +149,13 @@ fn test_ifdef_simple() {
 
 #[test]
 fn test_ifdef_else() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         struct Foo { int x; };
         #else
         struct Bar { int y; };
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 2);
 
@@ -176,13 +176,13 @@ fn test_ifdef_else() {
 
 #[test]
 fn test_ifdef_multiple_definitions() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         struct Foo { int x; };
         struct Bar { int y; };
         const MAX_SIZE = 100;
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 3);
 
@@ -193,13 +193,13 @@ fn test_ifdef_multiple_definitions() {
 
 #[test]
 fn test_ifdef_mixed_with_unconditional() {
-    let input = r#"
+    let input = r"
         struct Always { int x; };
         #ifdef FEATURE_X
         struct Sometimes { int y; };
         #endif
         struct AlsoAlways { int z; };
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 3);
 
@@ -218,13 +218,13 @@ fn test_ifdef_mixed_with_unconditional() {
 
 #[test]
 fn test_ifdef_nested() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_A
         #ifdef FEATURE_B
         struct Both { int x; };
         #endif
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "Both");
@@ -239,11 +239,11 @@ fn test_ifdef_nested() {
 
 #[test]
 fn test_ifdef_const() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         const MAX_SIZE = 100;
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "MAX_SIZE");
@@ -255,11 +255,11 @@ fn test_ifdef_const() {
 
 #[test]
 fn test_ifdef_enum() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         enum Color { RED = 0, GREEN = 1 };
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "Color");
@@ -271,11 +271,11 @@ fn test_ifdef_enum() {
 
 #[test]
 fn test_ifdef_typedef() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         typedef opaque Hash[32];
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "Hash");
@@ -287,13 +287,13 @@ fn test_ifdef_typedef() {
 
 #[test]
 fn test_ifdef_union() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         union Foo switch (int v) {
             case 0: void;
         };
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "Foo");
@@ -305,11 +305,11 @@ fn test_ifdef_union() {
 
 #[test]
 fn test_ifdef_empty_block() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         #endif
         struct Foo { int x; };
-    "#;
+    ";
     let spec = parse(input).unwrap();
     assert_eq!(spec.definitions.len(), 1);
     assert_eq!(spec.definitions[0].name(), "Foo");
@@ -318,14 +318,14 @@ fn test_ifdef_empty_block() {
 
 #[test]
 fn test_ifdef_nested_types_inherit_cfg() {
-    let input = r#"
+    let input = r"
         #ifdef FEATURE_X
         union Outer switch (int v) {
             case 0:
                 struct { int x; } innerField;
         };
         #endif
-    "#;
+    ";
     let spec = parse(input).unwrap();
 
     // Both the outer union and the extracted inner struct should have the cfg
@@ -364,7 +364,7 @@ fn test_stray_endif_error() {
 
 #[test]
 fn test_ifdef_inline_enum_members() {
-    let input = r#"
+    let input = r"
         enum Color {
             RED = 0,
             #ifdef FEATURE_X
@@ -374,7 +374,7 @@ fn test_ifdef_inline_enum_members() {
             #endif
             YELLOW = 3
         };
-    "#;
+    ";
     let spec = parse(input).unwrap();
     let Definition::Enum(e) = &spec.definitions[0] else {
         panic!("expected enum");
@@ -404,14 +404,14 @@ fn test_ifdef_inline_enum_members() {
 
 #[test]
 fn test_ifdef_inline_enum_no_else() {
-    let input = r#"
+    let input = r"
         enum Foo {
             A = 0,
             #ifdef FEATURE_X
             B = 1
             #endif
         };
-    "#;
+    ";
     let spec = parse(input).unwrap();
     let Definition::Enum(e) = &spec.definitions[0] else {
         panic!("expected enum");
@@ -426,7 +426,7 @@ fn test_ifdef_inline_enum_no_else() {
 
 #[test]
 fn test_ifdef_inline_enum_nested() {
-    let input = r#"
+    let input = r"
         enum Foo {
             #ifdef A
             #ifdef B
@@ -434,7 +434,7 @@ fn test_ifdef_inline_enum_nested() {
             #endif
             #endif
         };
-    "#;
+    ";
     let spec = parse(input).unwrap();
     let Definition::Enum(e) = &spec.definitions[0] else {
         panic!("expected enum");
@@ -451,7 +451,7 @@ fn test_ifdef_inline_enum_nested() {
 
 #[test]
 fn test_ifdef_inline_union_arms() {
-    let input = r#"
+    let input = r"
         enum MsgType { A = 0, B = 1, C = 2 };
         union Msg switch (MsgType t) {
             case A:
@@ -464,7 +464,7 @@ fn test_ifdef_inline_union_arms() {
                 void;
             #endif
         };
-    "#;
+    ";
     let spec = parse(input).unwrap();
     let Definition::Union(u) = &spec.definitions[1] else {
         panic!("expected union");
@@ -485,25 +485,25 @@ fn test_ifdef_inline_union_arms() {
 
 #[test]
 fn test_ifdef_inline_enum_unclosed_error() {
-    let input = r#"
+    let input = r"
         enum Foo {
             A = 0,
             #ifdef FEATURE_X
             B = 1
         };
-    "#;
+    ";
     let result = parse(input);
     assert!(result.is_err(), "unclosed #ifdef in enum should error");
 }
 
 #[test]
 fn test_ifdef_inline_union_unclosed_error() {
-    let input = r#"
+    let input = r"
         union Foo switch (int v) {
             #ifdef FEATURE_X
             case 0: void;
         };
-    "#;
+    ";
     let result = parse(input);
     assert!(result.is_err(), "unclosed #ifdef in union should error");
 }

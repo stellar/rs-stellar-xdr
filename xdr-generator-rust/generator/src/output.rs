@@ -109,6 +109,9 @@ pub struct TypedefAliasOutput {
     pub cfg: Option<String>,
 }
 
+// A flat carrier for the newtype template's fields; each bool switches on one
+// independent piece of the rendered output, so they do not collapse into an enum.
+#[allow(clippy::struct_excessive_bools)]
 pub struct TypedefNewtypeOutput {
     pub name: String,
     pub source_comment: String,

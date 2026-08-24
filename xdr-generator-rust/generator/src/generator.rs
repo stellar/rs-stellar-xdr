@@ -63,7 +63,7 @@ impl RustGenerator {
         std::fs::create_dir_all(output_dir)?;
 
         // Write each definition (or group of definitions) to its own file.
-        for (module, defs) in modules.iter().zip(definitions.into_iter()) {
+        for (module, defs) in modules.iter().zip(definitions) {
             let template = DefinitionTemplate { definitions: defs };
             let rendered = template.render()?;
             let file_path = output_dir.join(format!("{}.rs", module.mod_name));
@@ -133,7 +133,7 @@ impl RustGenerator {
         (modules, definitions)
     }
 
-    /// Generate the TypeEnumOutput for the type variant enum.
+    /// Generate the `TypeEnumOutput` for the type variant enum.
     fn generate_type_enum(&self, spec: &XdrSpec) -> TypeEnumOutput {
         let mut cfg_by_name: HashMap<String, Option<String>> = HashMap::new();
 
@@ -227,8 +227,11 @@ impl RustGenerator {
     /// This is where additional cfg conditions (e.g. file-based cfg derived
     /// from `def.file_index()`) should be combined with the `#ifdef`-derived
     /// cfg before rendering. Use `CfgExpr::and()` to combine them.
+    // Takes &self as the extension point described above, even though the
+    // current implementation needs no generator state.
+    #[allow(clippy::unused_self)]
     fn resolve_cfg(&self, def: &Definition) -> Option<String> {
-        def.cfg().map(|c| c.render())
+        def.cfg().map(xdr_parser::ast::CfgExpr::render)
     }
 
     fn generate_definition(&self, def: &Definition) -> DefinitionOutput {
@@ -289,7 +292,7 @@ impl RustGenerator {
                 name: type_name(&m.stripped_name),
                 value: m.value,
                 is_default: i == first_uncfg_index,
-                cfg: m.cfg.as_ref().map(|c| c.render()),
+                cfg: m.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render),
             })
             .collect();
 
@@ -312,17 +315,16 @@ impl RustGenerator {
         let discriminant_is_builtin = is_builtin_type(&u.discriminant.type_)
             || matches!(&u.discriminant.type_, xdr_parser::ast::Type::Ident(n) if {
                 self.type_info.definitions.get(&type_name(n))
-                    .map(|d| matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_)))
-                    .unwrap_or(false)
+                    .is_some_and(|d| matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_)))
             });
 
-        let discriminant_prefix = if !discriminant_is_builtin {
+        let discriminant_prefix = if discriminant_is_builtin {
+            String::new()
+        } else {
             self.type_info
                 .discriminant_enum(&u.discriminant.type_)
                 .map(|e| e.member_prefix.clone())
                 .unwrap_or_default()
-        } else {
-            String::new()
         };
 
         let arms: Vec<UnionArmOutput> = u
@@ -344,7 +346,7 @@ impl RustGenerator {
         let default_arm_cfg = u
             .arms
             .first()
-            .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
+            .and_then(|a| a.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render));
 
         UnionOutput {
             name,
@@ -405,6 +407,9 @@ impl RustGenerator {
         })
     }
 
+    // Takes &self for consistency with the other generate_* methods, which do
+    // read generator state.
+    #[allow(clippy::unused_self)]
     fn generate_const(&self, c: &Const, cfg: Option<String>) -> ConstOutput {
         let value_str = match c.base {
             IntBase::Hexadecimal => format!("0x{:X}", c.value),
@@ -469,7 +474,7 @@ impl RustGenerator {
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
-                    cfg: arm.cfg.as_ref().map(|c| c.render()),
+                    cfg: arm.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render),
                 }
             })
             .collect()

@@ -1,25 +1,25 @@
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use xdr_parser::ast::UnionCaseValue;
 
-/// Convert an XDR name to a Rust type name (UpperCamelCase).
+/// Convert an XDR name to a Rust type name (`UpperCamelCase`).
 pub(crate) fn type_name(name: &str) -> String {
     escape_type_name(name).to_upper_camel_case()
 }
 
-/// Convert an XDR name to a Rust module name (snake_case).
+/// Convert an XDR name to a Rust module name (`snake_case`).
 pub(crate) fn mod_name(name: &str) -> String {
     escape_type_name(name).to_snake_case()
 }
 
-/// Convert an XDR name to a Rust field name (snake_case).
+/// Convert an XDR name to a Rust field name (`snake_case`).
 pub(crate) fn field_name(name: &str) -> String {
     let snake = name.to_snake_case();
     escape_field_name(&snake)
 }
 
 /// If the Rust field name for an XDR field was keyword-escaped away from its
-/// plain snake_case name (e.g. `type` -> `type_`), return the correct JSON key
-/// (the unescaped snake_case name). Returns `None` when no escaping occurred.
+/// plain `snake_case` name (e.g. `type` -> `type_`), return the correct JSON key
+/// (the unescaped `snake_case` name). Returns `None` when no escaping occurred.
 pub(crate) fn field_json_rename(name: &str) -> Option<String> {
     let snake = name.to_snake_case();
     if escape_field_name(&snake) == snake {
@@ -58,7 +58,7 @@ pub(crate) fn source_comment(source: &str, kind: &str) -> String {
     )
 }
 
-/// Format a union case value: returns (case_name, case_value_expr).
+/// Format a union case value: returns (`case_name`, `case_value_expr`).
 pub(crate) fn case_value(
     discriminant_type: &str,
     is_builtin: bool,

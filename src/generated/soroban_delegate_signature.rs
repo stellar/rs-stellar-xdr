@@ -70,7 +70,7 @@ impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
         Self {
             address: v.address.clone(),
             signature: (&v.signature).into(),
-            nested_delegates: v.nested_delegates.to_vecm_from(),
+            nested_delegates: v.nested_delegates.to_vecm(),
         }
     }
 }

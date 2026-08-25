@@ -130,7 +130,7 @@ impl From<&AccountEntryView<'_>> for AccountEntry {
             flags: v.flags,
             home_domain: (&v.home_domain).into(),
             thresholds: v.thresholds.clone(),
-            signers: v.signers.to_vecm_from(),
+            signers: v.signers.to_vecm(),
             ext: (&v.ext).into(),
         }
     }

@@ -89,9 +89,9 @@ impl From<&LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
         Self {
             ledger_header: (&v.ledger_header).into(),
             tx_set: (&v.tx_set).into(),
-            tx_processing: v.tx_processing.to_vecm_from(),
-            upgrades_processing: v.upgrades_processing.to_vecm_from(),
-            scp_info: v.scp_info.to_vecm_from(),
+            tx_processing: v.tx_processing.to_vecm(),
+            upgrades_processing: v.upgrades_processing.to_vecm(),
+            scp_info: v.scp_info.to_vecm(),
         }
     }
 }

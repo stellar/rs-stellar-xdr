@@ -175,7 +175,7 @@ impl From<&TransactionMetaView<'_>> for TransactionMeta {
     fn from(v: &TransactionMetaView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionMetaView::V0(value) => Self::V0(value.to_vecm_from()),
+            TransactionMetaView::V0(value) => Self::V0(value.to_vecm()),
             TransactionMetaView::V1(value) => Self::V1(value.into()),
             TransactionMetaView::V2(value) => Self::V2(value.into()),
             TransactionMetaView::V3(value) => Self::V3(value.into()),

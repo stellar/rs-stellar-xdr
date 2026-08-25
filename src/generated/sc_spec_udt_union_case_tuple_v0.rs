@@ -75,7 +75,7 @@ impl From<&ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
         Self {
             doc: v.doc.to_stringm(),
             name: v.name.to_stringm(),
-            type_: v.type_.to_vecm_from(),
+            type_: v.type_.to_vecm(),
         }
     }
 }

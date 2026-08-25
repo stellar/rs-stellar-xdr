@@ -63,7 +63,7 @@ impl From<&ContractEventV0View<'_>> for ContractEventV0 {
     #[must_use]
     fn from(v: &ContractEventV0View<'_>) -> Self {
         Self {
-            topics: v.topics.to_vecm_from(),
+            topics: v.topics.to_vecm(),
             data: (&v.data).into(),
         }
     }

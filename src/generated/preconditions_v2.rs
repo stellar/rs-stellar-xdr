@@ -111,7 +111,7 @@ impl From<&PreconditionsV2View<'_>> for PreconditionsV2 {
             min_seq_num: v.min_seq_num.clone(),
             min_seq_age: v.min_seq_age.clone(),
             min_seq_ledger_gap: v.min_seq_ledger_gap,
-            extra_signers: v.extra_signers.to_vecm_from(),
+            extra_signers: v.extra_signers.to_vecm(),
         }
     }
 }

@@ -57,7 +57,7 @@ impl From<&ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
     #[must_use]
     fn from(v: &ConfigUpgradeSetView<'_>) -> Self {
         Self {
-            updated_entry: v.updated_entry.to_vecm_from(),
+            updated_entry: v.updated_entry.to_vecm(),
         }
     }
 }

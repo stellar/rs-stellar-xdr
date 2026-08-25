@@ -76,7 +76,7 @@ impl From<&ScSpecUdtErrorEnumV0View<'_>> for ScSpecUdtErrorEnumV0 {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
             name: v.name.to_stringm(),
-            cases: v.cases.to_vecm_from(),
+            cases: v.cases.to_vecm(),
         }
     }
 }

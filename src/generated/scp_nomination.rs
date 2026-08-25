@@ -69,8 +69,8 @@ impl From<&ScpNominationView<'_>> for ScpNomination {
     fn from(v: &ScpNominationView<'_>) -> Self {
         Self {
             quorum_set_hash: v.quorum_set_hash.clone(),
-            votes: v.votes.to_vecm_from(),
-            accepted: v.accepted.to_vecm_from(),
+            votes: v.votes.to_vecm(),
+            accepted: v.accepted.to_vecm(),
         }
     }
 }

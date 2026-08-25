@@ -110,7 +110,7 @@ impl From<&TransactionView<'_>> for Transaction {
             seq_num: v.seq_num.clone(),
             cond: (&v.cond).into(),
             memo: (&v.memo).into(),
-            operations: v.operations.to_vecm_from(),
+            operations: v.operations.to_vecm(),
             ext: (&v.ext).into(),
         }
     }

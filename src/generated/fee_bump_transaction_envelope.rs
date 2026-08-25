@@ -66,7 +66,7 @@ impl From<&FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
     fn from(v: &FeeBumpTransactionEnvelopeView<'_>) -> Self {
         Self {
             tx: (&v.tx).into(),
-            signatures: v.signatures.to_vecm_from(),
+            signatures: v.signatures.to_vecm(),
         }
     }
 }

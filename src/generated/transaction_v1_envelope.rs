@@ -66,7 +66,7 @@ impl From<&TransactionV1EnvelopeView<'_>> for TransactionV1Envelope {
     fn from(v: &TransactionV1EnvelopeView<'_>) -> Self {
         Self {
             tx: (&v.tx).into(),
-            signatures: v.signatures.to_vecm_from(),
+            signatures: v.signatures.to_vecm(),
         }
     }
 }

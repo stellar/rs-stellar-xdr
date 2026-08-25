@@ -66,7 +66,7 @@ impl From<&SorobanAddressCredentialsWithDelegatesView<'_>>
     fn from(v: &SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
         Self {
             address_credentials: (&v.address_credentials).into(),
-            delegates: v.delegates.to_vecm_from(),
+            delegates: v.delegates.to_vecm(),
         }
     }
 }

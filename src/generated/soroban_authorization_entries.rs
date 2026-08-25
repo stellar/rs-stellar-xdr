@@ -117,7 +117,7 @@ pub struct SorobanAuthorizationEntriesView<'a>(pub VecMView<'a, SorobanAuthoriza
 impl From<&SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
     #[must_use]
     fn from(v: &SorobanAuthorizationEntriesView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

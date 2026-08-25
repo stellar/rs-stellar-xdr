@@ -117,7 +117,7 @@ pub struct ScMapView<'a>(pub VecMView<'a, ScMapEntryView<'a>>);
 impl From<&ScMapView<'_>> for ScMap {
     #[must_use]
     fn from(v: &ScMapView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

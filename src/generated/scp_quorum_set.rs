@@ -70,7 +70,7 @@ impl From<&ScpQuorumSetView<'_>> for ScpQuorumSet {
         Self {
             threshold: v.threshold,
             validators: v.validators.to_vecm(),
-            inner_sets: v.inner_sets.to_vecm_from(),
+            inner_sets: v.inner_sets.to_vecm(),
         }
     }
 }

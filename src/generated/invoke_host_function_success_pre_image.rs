@@ -64,7 +64,7 @@ impl From<&InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSucc
     fn from(v: &InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
         Self {
             return_value: (&v.return_value).into(),
-            events: v.events.to_vecm_from(),
+            events: v.events.to_vecm(),
         }
     }
 }

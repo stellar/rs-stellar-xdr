@@ -117,7 +117,7 @@ pub struct ScVecView<'a>(pub VecMView<'a, ScValView<'a>>);
 impl From<&ScVecView<'_>> for ScVec {
     #[must_use]
     fn from(v: &ScVecView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

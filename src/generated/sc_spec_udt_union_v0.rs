@@ -76,7 +76,7 @@ impl From<&ScSpecUdtUnionV0View<'_>> for ScSpecUdtUnionV0 {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
             name: v.name.to_stringm(),
-            cases: v.cases.to_vecm_from(),
+            cases: v.cases.to_vecm(),
         }
     }
 }

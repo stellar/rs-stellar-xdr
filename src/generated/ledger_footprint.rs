@@ -63,8 +63,8 @@ impl From<&LedgerFootprintView<'_>> for LedgerFootprint {
     #[must_use]
     fn from(v: &LedgerFootprintView<'_>) -> Self {
         Self {
-            read_only: v.read_only.to_vecm_from(),
-            read_write: v.read_write.to_vecm_from(),
+            read_only: v.read_only.to_vecm(),
+            read_write: v.read_write.to_vecm(),
         }
     }
 }

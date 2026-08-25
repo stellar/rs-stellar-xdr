@@ -243,6 +243,33 @@ impl fmt::Display for Error {
     }
 }
 
+/// The error returned by the borrowing `View` types' `try_from_slice` and
+/// `try_from_str` constructors when the input length exceeds the type's `MAX`.
+///
+/// Unlike [`Error`] it is `Copy` and free of any destructor, so a
+/// `Result<_, ErrorLengthExceedsMax>` can be matched in a const context (a
+/// `Result<_, Error>` cannot, because `Error` owns fields that have
+/// destructors). It converts into [`Error::LengthExceedsMax`] via [`From`], so
+/// runtime callers can still propagate it with `?`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ErrorLengthExceedsMax;
+
+impl From<ErrorLengthExceedsMax> for Error {
+    #[must_use]
+    fn from(_: ErrorLengthExceedsMax) -> Self {
+        Error::LengthExceedsMax
+    }
+}
+
+impl fmt::Display for ErrorLengthExceedsMax {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "xdr value max length exceeded")
+    }
+}
+
+#[cfg(feature = "std")]
+impl error::Error for ErrorLengthExceedsMax {}
+
 impl From<TryFromSliceError> for Error {
     fn from(_: TryFromSliceError) -> Error {
         Error::LengthMismatch
@@ -1582,29 +1609,37 @@ impl<T, const MAX: u32> Default for VecMView<'_, T, MAX> {
 impl<'a, T, const MAX: u32> VecMView<'a, T, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `VecMView` from the given slice.
-    ///
-    /// ### Panics
-    ///
-    /// Panics if the length of the slice exceeds `MAX`. In a const context
-    /// the panic occurs at compile time.
-    #[must_use]
-    pub const fn new(v: &'a [T]) -> Self {
-        assert!(v.len() <= Self::MAX_LEN, "length exceeds max");
-        Self(v)
-    }
-
     /// Constructs a `VecMView` from the given slice, erroring if the length of
     /// the slice exceeds `MAX`.
+    ///
+    /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
+    /// can be matched in a const context; use `?` to convert it to [`Error`].
     ///
     /// ### Errors
     ///
     /// If the length of the slice exceeds `MAX`.
-    pub const fn try_new(v: &'a [T]) -> Result<Self, Error> {
+    pub const fn try_from_slice(v: &'a [T]) -> Result<Self, ErrorLengthExceedsMax> {
         if v.len() <= Self::MAX_LEN {
             Ok(Self(v))
         } else {
-            Err(Error::LengthExceedsMax)
+            Err(ErrorLengthExceedsMax)
+        }
+    }
+
+    /// Constructs a `VecMView` from the given slice, panicking if the length of
+    /// the slice exceeds `MAX`.
+    ///
+    /// Usable in const contexts, where an over-length slice is a compile-time
+    /// error. Prefer [`Self::try_from_slice`] where a [`Result`] is wanted.
+    ///
+    /// ### Panics
+    ///
+    /// If the length of the slice exceeds `MAX`.
+    #[must_use]
+    pub const fn expect_from_slice(v: &'a [T]) -> Self {
+        match Self::try_from_slice(v) {
+            Ok(view) => view,
+            Err(_) => panic!("xdr value max length exceeded"),
         }
     }
 
@@ -1644,23 +1679,13 @@ impl<'a, T, const MAX: u32> core::iter::IntoIterator for &VecMView<'a, T, MAX> {
 
 #[cfg(feature = "alloc")]
 impl<T: Clone, const MAX: u32> VecMView<'_, T, MAX> {
-    /// Converts to an owned [`VecM`], cloning the elements.
-    #[must_use]
-    pub fn to_vecm(&self) -> VecM<T, MAX> {
-        VecM(self.0.to_vec())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<T, const MAX: u32> VecMView<'_, T, MAX> {
     /// Converts to an owned [`VecM`], converting each element from its
-    /// borrowing form to its owned form.
+    /// borrowing form `T` to its owned form `U` via [`From`]. When the element
+    /// does not borrow, `T` and `U` are the same type and the reflexive
+    /// [`From`] simply clones.
     #[must_use]
-    pub fn to_vecm_from<U>(&self) -> VecM<U, MAX>
-    where
-        U: for<'r> From<&'r T>,
-    {
-        VecM(self.0.iter().map(U::from).collect())
+    pub fn to_vecm<U: From<T>>(&self) -> VecM<U, MAX> {
+        VecM(self.0.iter().cloned().map(U::from).collect())
     }
 }
 
@@ -1668,7 +1693,7 @@ impl<'a, T, const MAX: u32> TryFrom<&'a [T]> for VecMView<'a, T, MAX> {
     type Error = Error;
 
     fn try_from(v: &'a [T]) -> Result<Self, Error> {
-        Self::try_new(v)
+        Ok(Self::try_from_slice(v)?)
     }
 }
 
@@ -2166,29 +2191,37 @@ impl<const MAX: u32> Default for BytesMView<'_, MAX> {
 impl<'a, const MAX: u32> BytesMView<'a, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `BytesMView` from the given slice.
-    ///
-    /// ### Panics
-    ///
-    /// Panics if the length of the slice exceeds `MAX`. In a const context
-    /// the panic occurs at compile time.
-    #[must_use]
-    pub const fn new(v: &'a [u8]) -> Self {
-        assert!(v.len() <= Self::MAX_LEN, "length exceeds max");
-        Self(v)
-    }
-
     /// Constructs a `BytesMView` from the given slice, erroring if the length
     /// of the slice exceeds `MAX`.
+    ///
+    /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
+    /// can be matched in a const context; use `?` to convert it to [`Error`].
     ///
     /// ### Errors
     ///
     /// If the length of the slice exceeds `MAX`.
-    pub const fn try_new(v: &'a [u8]) -> Result<Self, Error> {
+    pub const fn try_from_slice(v: &'a [u8]) -> Result<Self, ErrorLengthExceedsMax> {
         if v.len() <= Self::MAX_LEN {
             Ok(Self(v))
         } else {
-            Err(Error::LengthExceedsMax)
+            Err(ErrorLengthExceedsMax)
+        }
+    }
+
+    /// Constructs a `BytesMView` from the given slice, panicking if the length
+    /// of the slice exceeds `MAX`.
+    ///
+    /// Usable in const contexts, where an over-length slice is a compile-time
+    /// error. Prefer [`Self::try_from_slice`] where a [`Result`] is wanted.
+    ///
+    /// ### Panics
+    ///
+    /// If the length of the slice exceeds `MAX`.
+    #[must_use]
+    pub const fn expect_from_slice(v: &'a [u8]) -> Self {
+        match Self::try_from_slice(v) {
+            Ok(view) => view,
+            Err(_) => panic!("xdr value max length exceeded"),
         }
     }
 
@@ -2227,7 +2260,7 @@ impl<'a, const MAX: u32> TryFrom<&'a [u8]> for BytesMView<'a, MAX> {
     type Error = Error;
 
     fn try_from(v: &'a [u8]) -> Result<Self, Error> {
-        Self::try_new(v)
+        Ok(Self::try_from_slice(v)?)
     }
 }
 
@@ -2251,7 +2284,7 @@ impl<const MAX: u32> WriteXdr for BytesMView<'_, MAX> {
 
             w.write_all(self.0)?;
 
-            w.write_all(&[0u8; 3][..padding])?;
+            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
 
             Ok(())
         })
@@ -2708,51 +2741,65 @@ impl<const MAX: u32> Default for StringMView<'_, MAX> {
 impl<'a, const MAX: u32> StringMView<'a, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `StringMView` from the given slice.
-    ///
-    /// ### Panics
-    ///
-    /// Panics if the length of the slice exceeds `MAX`. In a const context
-    /// the panic occurs at compile time.
-    #[must_use]
-    pub const fn new(v: &'a [u8]) -> Self {
-        assert!(v.len() <= Self::MAX_LEN, "length exceeds max");
-        Self(v)
-    }
-
-    /// Constructs a `StringMView` from the UTF-8 bytes of the given str.
-    ///
-    /// ### Panics
-    ///
-    /// Panics if the length of the str exceeds `MAX`. In a const context the
-    /// panic occurs at compile time.
-    #[must_use]
-    pub const fn new_str(s: &'a str) -> Self {
-        Self::new(s.as_bytes())
-    }
-
     /// Constructs a `StringMView` from the given slice, erroring if the length
     /// of the slice exceeds `MAX`.
+    ///
+    /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
+    /// can be matched in a const context; use `?` to convert it to [`Error`].
     ///
     /// ### Errors
     ///
     /// If the length of the slice exceeds `MAX`.
-    pub const fn try_new(v: &'a [u8]) -> Result<Self, Error> {
+    pub const fn try_from_slice(v: &'a [u8]) -> Result<Self, ErrorLengthExceedsMax> {
         if v.len() <= Self::MAX_LEN {
             Ok(Self(v))
         } else {
-            Err(Error::LengthExceedsMax)
+            Err(ErrorLengthExceedsMax)
+        }
+    }
+
+    /// Constructs a `StringMView` from the given slice, panicking if the length
+    /// of the slice exceeds `MAX`.
+    ///
+    /// Usable in const contexts, where an over-length slice is a compile-time
+    /// error. Prefer [`Self::try_from_slice`] where a [`Result`] is wanted.
+    ///
+    /// ### Panics
+    ///
+    /// If the length of the slice exceeds `MAX`.
+    #[must_use]
+    pub const fn expect_from_slice(v: &'a [u8]) -> Self {
+        match Self::try_from_slice(v) {
+            Ok(view) => view,
+            Err(_) => panic!("xdr value max length exceeded"),
         }
     }
 
     /// Constructs a `StringMView` from the UTF-8 bytes of the given str,
     /// erroring if the length of the str exceeds `MAX`.
     ///
+    /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
+    /// can be matched in a const context; use `?` to convert it to [`Error`].
+    ///
     /// ### Errors
     ///
     /// If the length of the str exceeds `MAX`.
-    pub const fn try_new_str(s: &'a str) -> Result<Self, Error> {
-        Self::try_new(s.as_bytes())
+    pub const fn try_from_str(s: &'a str) -> Result<Self, ErrorLengthExceedsMax> {
+        Self::try_from_slice(s.as_bytes())
+    }
+
+    /// Constructs a `StringMView` from the UTF-8 bytes of the given str,
+    /// panicking if the length of the str exceeds `MAX`.
+    ///
+    /// Usable in const contexts, where an over-length str is a compile-time
+    /// error. Prefer [`Self::try_from_str`] where a [`Result`] is wanted.
+    ///
+    /// ### Panics
+    ///
+    /// If the length of the str exceeds `MAX`.
+    #[must_use]
+    pub const fn expect_from_str(s: &'a str) -> Self {
+        Self::expect_from_slice(s.as_bytes())
     }
 
     #[must_use]
@@ -2790,7 +2837,7 @@ impl<'a, const MAX: u32> TryFrom<&'a [u8]> for StringMView<'a, MAX> {
     type Error = Error;
 
     fn try_from(v: &'a [u8]) -> Result<Self, Error> {
-        Self::try_new(v)
+        Ok(Self::try_from_slice(v)?)
     }
 }
 
@@ -2798,7 +2845,7 @@ impl<'a, const MAX: u32> TryFrom<&'a str> for StringMView<'a, MAX> {
     type Error = Error;
 
     fn try_from(s: &'a str) -> Result<Self, Error> {
-        Self::try_new_str(s)
+        Ok(Self::try_from_str(s)?)
     }
 }
 

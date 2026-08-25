@@ -58,7 +58,7 @@ impl From<&TransactionResultSetView<'_>> for TransactionResultSet {
     #[must_use]
     fn from(v: &TransactionResultSetView<'_>) -> Self {
         Self {
-            results: v.results.to_vecm_from(),
+            results: v.results.to_vecm(),
         }
     }
 }

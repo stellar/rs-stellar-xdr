@@ -63,7 +63,7 @@ impl From<&ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
     #[must_use]
     fn from(v: &ScpHistoryEntryV0View<'_>) -> Self {
         Self {
-            quorum_sets: v.quorum_sets.to_vecm_from(),
+            quorum_sets: v.quorum_sets.to_vecm(),
             ledger_messages: (&v.ledger_messages).into(),
         }
     }

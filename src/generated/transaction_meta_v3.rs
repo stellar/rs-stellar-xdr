@@ -84,7 +84,7 @@ impl From<&TransactionMetaV3View<'_>> for TransactionMetaV3 {
         Self {
             ext: v.ext.clone(),
             tx_changes_before: (&v.tx_changes_before).into(),
-            operations: v.operations.to_vecm_from(),
+            operations: v.operations.to_vecm(),
             tx_changes_after: (&v.tx_changes_after).into(),
             soroban_meta: v.soroban_meta.as_ref().map(Into::into),
         }

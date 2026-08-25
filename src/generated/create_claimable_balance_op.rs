@@ -74,7 +74,7 @@ impl From<&CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
         Self {
             asset: v.asset.clone(),
             amount: v.amount,
-            claimants: v.claimants.to_vecm_from(),
+            claimants: v.claimants.to_vecm(),
         }
     }
 }

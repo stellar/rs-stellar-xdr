@@ -75,8 +75,8 @@ impl From<&ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
         Self {
             doc: v.doc.to_stringm(),
             name: (&v.name).into(),
-            inputs: v.inputs.to_vecm_from(),
-            outputs: v.outputs.to_vecm_from(),
+            inputs: v.inputs.to_vecm(),
+            outputs: v.outputs.to_vecm(),
         }
     }
 }

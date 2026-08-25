@@ -122,12 +122,12 @@ impl From<&LedgerCloseMetaV1View<'_>> for LedgerCloseMetaV1 {
             ext: v.ext.clone(),
             ledger_header: (&v.ledger_header).into(),
             tx_set: (&v.tx_set).into(),
-            tx_processing: v.tx_processing.to_vecm_from(),
-            upgrades_processing: v.upgrades_processing.to_vecm_from(),
-            scp_info: v.scp_info.to_vecm_from(),
+            tx_processing: v.tx_processing.to_vecm(),
+            upgrades_processing: v.upgrades_processing.to_vecm(),
+            scp_info: v.scp_info.to_vecm(),
             total_byte_size_of_live_soroban_state: v.total_byte_size_of_live_soroban_state,
-            evicted_keys: v.evicted_keys.to_vecm_from(),
-            unused: v.unused.to_vecm_from(),
+            evicted_keys: v.evicted_keys.to_vecm(),
+            unused: v.unused.to_vecm(),
         }
     }
 }

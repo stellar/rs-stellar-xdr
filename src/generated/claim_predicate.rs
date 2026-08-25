@@ -215,8 +215,8 @@ impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
         #[allow(clippy::match_same_arms)]
         match v {
             ClaimPredicateView::Unconditional => Self::Unconditional,
-            ClaimPredicateView::And(value) => Self::And(value.to_vecm_from()),
-            ClaimPredicateView::Or(value) => Self::Or(value.to_vecm_from()),
+            ClaimPredicateView::And(value) => Self::And(value.to_vecm()),
+            ClaimPredicateView::Or(value) => Self::Or(value.to_vecm()),
             ClaimPredicateView::Not(value) => Self::Not(value.map(|v| Box::new(v.into()))),
             ClaimPredicateView::BeforeAbsoluteTime(value) => Self::BeforeAbsoluteTime(*value),
             ClaimPredicateView::BeforeRelativeTime(value) => Self::BeforeRelativeTime(*value),

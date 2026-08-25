@@ -71,7 +71,7 @@ impl From<&CreateContractArgsV2View<'_>> for CreateContractArgsV2 {
         Self {
             contract_id_preimage: v.contract_id_preimage.clone(),
             executable: (&v.executable).into(),
-            constructor_args: v.constructor_args.to_vecm_from(),
+            constructor_args: v.constructor_args.to_vecm(),
         }
     }
 }

@@ -98,7 +98,7 @@ impl From<&StellarValueView<'_>> for StellarValue {
         Self {
             tx_set_hash: v.tx_set_hash.clone(),
             close_time: v.close_time.clone(),
-            upgrades: v.upgrades.to_vecm_from(),
+            upgrades: v.upgrades.to_vecm(),
             ext: (&v.ext).into(),
         }
     }

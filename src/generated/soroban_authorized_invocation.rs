@@ -64,7 +64,7 @@ impl From<&SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation 
     fn from(v: &SorobanAuthorizedInvocationView<'_>) -> Self {
         Self {
             function: (&v.function).into(),
-            sub_invocations: v.sub_invocations.to_vecm_from(),
+            sub_invocations: v.sub_invocations.to_vecm(),
         }
     }
 }

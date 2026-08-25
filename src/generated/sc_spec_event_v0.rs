@@ -86,8 +86,8 @@ impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
             name: (&v.name).into(),
-            prefix_topics: v.prefix_topics.to_vecm_from(),
-            params: v.params.to_vecm_from(),
+            prefix_topics: v.prefix_topics.to_vecm(),
+            params: v.params.to_vecm(),
             data_format: v.data_format,
         }
     }

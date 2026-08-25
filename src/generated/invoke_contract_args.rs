@@ -69,7 +69,7 @@ impl From<&InvokeContractArgsView<'_>> for InvokeContractArgs {
         Self {
             contract_address: v.contract_address.clone(),
             function_name: (&v.function_name).into(),
-            args: v.args.to_vecm_from(),
+            args: v.args.to_vecm(),
         }
     }
 }

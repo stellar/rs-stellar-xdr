@@ -117,7 +117,7 @@ pub struct ParallelTxExecutionStageView<'a>(pub VecMView<'a, DependentTxClusterV
 impl From<&ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
     #[must_use]
     fn from(v: &ParallelTxExecutionStageView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

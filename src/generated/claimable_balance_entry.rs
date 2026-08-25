@@ -99,7 +99,7 @@ impl From<&ClaimableBalanceEntryView<'_>> for ClaimableBalanceEntry {
     fn from(v: &ClaimableBalanceEntryView<'_>) -> Self {
         Self {
             balance_id: v.balance_id.clone(),
-            claimants: v.claimants.to_vecm_from(),
+            claimants: v.claimants.to_vecm(),
             asset: v.asset.clone(),
             amount: v.amount,
             ext: v.ext.clone(),

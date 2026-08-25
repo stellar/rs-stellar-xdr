@@ -307,12 +307,8 @@ impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResul
     fn from(v: &InnerTransactionResultResultView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            InnerTransactionResultResultView::TxSuccess(value) => {
-                Self::TxSuccess(value.to_vecm_from())
-            }
-            InnerTransactionResultResultView::TxFailed(value) => {
-                Self::TxFailed(value.to_vecm_from())
-            }
+            InnerTransactionResultResultView::TxSuccess(value) => Self::TxSuccess(value.to_vecm()),
+            InnerTransactionResultResultView::TxFailed(value) => Self::TxFailed(value.to_vecm()),
             InnerTransactionResultResultView::TxTooEarly => Self::TxTooEarly,
             InnerTransactionResultResultView::TxTooLate => Self::TxTooLate,
             InnerTransactionResultResultView::TxMissingOperation => Self::TxMissingOperation,

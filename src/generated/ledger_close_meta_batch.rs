@@ -75,7 +75,7 @@ impl From<&LedgerCloseMetaBatchView<'_>> for LedgerCloseMetaBatch {
         Self {
             start_sequence: v.start_sequence,
             end_sequence: v.end_sequence,
-            ledger_close_metas: v.ledger_close_metas.to_vecm_from(),
+            ledger_close_metas: v.ledger_close_metas.to_vecm(),
         }
     }
 }

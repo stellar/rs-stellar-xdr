@@ -98,7 +98,7 @@ impl From<&TransactionV0View<'_>> for TransactionV0 {
             seq_num: v.seq_num.clone(),
             time_bounds: v.time_bounds.clone(),
             memo: (&v.memo).into(),
-            operations: v.operations.to_vecm_from(),
+            operations: v.operations.to_vecm(),
             ext: v.ext.clone(),
         }
     }

@@ -117,7 +117,7 @@ pub struct DependentTxClusterView<'a>(pub VecMView<'a, TransactionEnvelopeView<'
 impl From<&DependentTxClusterView<'_>> for DependentTxCluster {
     #[must_use]
     fn from(v: &DependentTxClusterView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

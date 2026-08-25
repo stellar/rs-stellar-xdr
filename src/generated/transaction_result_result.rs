@@ -335,8 +335,8 @@ impl From<&TransactionResultResultView<'_>> for TransactionResultResult {
             TransactionResultResultView::TxFeeBumpInnerFailed(value) => {
                 Self::TxFeeBumpInnerFailed(value.into())
             }
-            TransactionResultResultView::TxSuccess(value) => Self::TxSuccess(value.to_vecm_from()),
-            TransactionResultResultView::TxFailed(value) => Self::TxFailed(value.to_vecm_from()),
+            TransactionResultResultView::TxSuccess(value) => Self::TxSuccess(value.to_vecm()),
+            TransactionResultResultView::TxFailed(value) => Self::TxFailed(value.to_vecm()),
             TransactionResultResultView::TxTooEarly => Self::TxTooEarly,
             TransactionResultResultView::TxTooLate => Self::TxTooLate,
             TransactionResultResultView::TxMissingOperation => Self::TxMissingOperation,

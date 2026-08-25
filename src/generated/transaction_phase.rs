@@ -151,7 +151,7 @@ impl From<&TransactionPhaseView<'_>> for TransactionPhase {
     fn from(v: &TransactionPhaseView<'_>) -> Self {
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionPhaseView::V0(value) => Self::V0(value.to_vecm_from()),
+            TransactionPhaseView::V0(value) => Self::V0(value.to_vecm()),
             TransactionPhaseView::V1(value) => Self::V1(value.into()),
         }
     }

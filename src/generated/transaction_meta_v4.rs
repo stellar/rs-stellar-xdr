@@ -95,11 +95,11 @@ impl From<&TransactionMetaV4View<'_>> for TransactionMetaV4 {
         Self {
             ext: v.ext.clone(),
             tx_changes_before: (&v.tx_changes_before).into(),
-            operations: v.operations.to_vecm_from(),
+            operations: v.operations.to_vecm(),
             tx_changes_after: (&v.tx_changes_after).into(),
             soroban_meta: v.soroban_meta.as_ref().map(Into::into),
-            events: v.events.to_vecm_from(),
-            diagnostic_events: v.diagnostic_events.to_vecm_from(),
+            events: v.events.to_vecm(),
+            diagnostic_events: v.diagnostic_events.to_vecm(),
         }
     }
 }

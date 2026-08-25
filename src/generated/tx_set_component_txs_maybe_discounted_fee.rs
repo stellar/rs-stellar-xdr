@@ -68,7 +68,7 @@ impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMay
     fn from(v: &TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
         Self {
             base_fee: v.base_fee,
-            txs: v.txs.to_vecm_from(),
+            txs: v.txs.to_vecm(),
         }
     }
 }

@@ -117,7 +117,7 @@ pub struct TimeSlicedPeerDataListView<'a>(pub VecMView<'a, TimeSlicedPeerDataVie
 impl From<&TimeSlicedPeerDataListView<'_>> for TimeSlicedPeerDataList {
     #[must_use]
     fn from(v: &TimeSlicedPeerDataListView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

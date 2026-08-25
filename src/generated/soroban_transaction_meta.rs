@@ -80,9 +80,9 @@ impl From<&SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
     fn from(v: &SorobanTransactionMetaView<'_>) -> Self {
         Self {
             ext: v.ext.clone(),
-            events: v.events.to_vecm_from(),
+            events: v.events.to_vecm(),
             return_value: (&v.return_value).into(),
-            diagnostic_events: v.diagnostic_events.to_vecm_from(),
+            diagnostic_events: v.diagnostic_events.to_vecm(),
         }
     }
 }

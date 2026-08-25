@@ -71,7 +71,7 @@ impl From<&TransactionMetaV2View<'_>> for TransactionMetaV2 {
     fn from(v: &TransactionMetaV2View<'_>) -> Self {
         Self {
             tx_changes_before: (&v.tx_changes_before).into(),
-            operations: v.operations.to_vecm_from(),
+            operations: v.operations.to_vecm(),
             tx_changes_after: (&v.tx_changes_after).into(),
         }
     }

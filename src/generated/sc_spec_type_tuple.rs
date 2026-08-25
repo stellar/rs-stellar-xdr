@@ -58,7 +58,7 @@ impl From<&ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
     #[must_use]
     fn from(v: &ScSpecTypeTupleView<'_>) -> Self {
         Self {
-            value_types: v.value_types.to_vecm_from(),
+            value_types: v.value_types.to_vecm(),
         }
     }
 }

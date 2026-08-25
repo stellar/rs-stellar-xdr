@@ -64,7 +64,7 @@ impl From<&LedgerScpMessagesView<'_>> for LedgerScpMessages {
     fn from(v: &LedgerScpMessagesView<'_>) -> Self {
         Self {
             ledger_seq: v.ledger_seq,
-            messages: v.messages.to_vecm_from(),
+            messages: v.messages.to_vecm(),
         }
     }
 }

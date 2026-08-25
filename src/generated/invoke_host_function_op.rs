@@ -66,7 +66,7 @@ impl From<&InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     fn from(v: &InvokeHostFunctionOpView<'_>) -> Self {
         Self {
             host_function: (&v.host_function).into(),
-            auth: v.auth.to_vecm_from(),
+            auth: v.auth.to_vecm(),
         }
     }
 }

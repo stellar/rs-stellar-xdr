@@ -72,7 +72,7 @@ impl From<&OperationMetaV2View<'_>> for OperationMetaV2 {
         Self {
             ext: v.ext.clone(),
             changes: (&v.changes).into(),
-            events: v.events.to_vecm_from(),
+            events: v.events.to_vecm(),
         }
     }
 }

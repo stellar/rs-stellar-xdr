@@ -64,7 +64,7 @@ impl From<&TransactionSetView<'_>> for TransactionSet {
     fn from(v: &TransactionSetView<'_>) -> Self {
         Self {
             previous_ledger_hash: v.previous_ledger_hash.clone(),
-            txs: v.txs.to_vecm_from(),
+            txs: v.txs.to_vecm(),
         }
     }
 }

@@ -71,7 +71,7 @@ impl From<&ParallelTxsComponentView<'_>> for ParallelTxsComponent {
     fn from(v: &ParallelTxsComponentView<'_>) -> Self {
         Self {
             base_fee: v.base_fee,
-            execution_stages: v.execution_stages.to_vecm_from(),
+            execution_stages: v.execution_stages.to_vecm(),
         }
     }
 }

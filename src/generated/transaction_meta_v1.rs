@@ -64,7 +64,7 @@ impl From<&TransactionMetaV1View<'_>> for TransactionMetaV1 {
     fn from(v: &TransactionMetaV1View<'_>) -> Self {
         Self {
             tx_changes: (&v.tx_changes).into(),
-            operations: v.operations.to_vecm_from(),
+            operations: v.operations.to_vecm(),
         }
     }
 }

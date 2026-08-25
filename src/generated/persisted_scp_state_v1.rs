@@ -64,8 +64,8 @@ impl From<&PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
     #[must_use]
     fn from(v: &PersistedScpStateV1View<'_>) -> Self {
         Self {
-            scp_envelopes: v.scp_envelopes.to_vecm_from(),
-            quorum_sets: v.quorum_sets.to_vecm_from(),
+            scp_envelopes: v.scp_envelopes.to_vecm(),
+            quorum_sets: v.quorum_sets.to_vecm(),
         }
     }
 }

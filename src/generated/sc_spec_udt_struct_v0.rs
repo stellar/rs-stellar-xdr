@@ -76,7 +76,7 @@ impl From<&ScSpecUdtStructV0View<'_>> for ScSpecUdtStructV0 {
             doc: v.doc.to_stringm(),
             lib: v.lib.to_stringm(),
             name: v.name.to_stringm(),
-            fields: v.fields.to_vecm_from(),
+            fields: v.fields.to_vecm(),
         }
     }
 }

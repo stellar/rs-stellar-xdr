@@ -57,7 +57,7 @@ impl From<&FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
     #[must_use]
     fn from(v: &FrozenLedgerKeysView<'_>) -> Self {
         Self {
-            keys: v.keys.to_vecm_from(),
+            keys: v.keys.to_vecm(),
         }
     }
 }

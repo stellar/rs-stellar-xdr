@@ -355,13 +355,7 @@ impl<'a> TypeMapping<'a> {
             | Type::OpaqueFixed(_) => Self::copy_expr(access, access_is_ref),
             Type::OpaqueVar(_) => format!("{access}.to_bytesm()"),
             Type::String(_) => format!("{access}.to_stringm()"),
-            Type::VarArray { element_type, .. } => {
-                if self.child(element_type).view_borrows(view_required) {
-                    format!("{access}.to_vecm_from()")
-                } else {
-                    format!("{access}.to_vecm()")
-                }
-            }
+            Type::VarArray { .. } => format!("{access}.to_vecm()"),
             Type::Ident(_) => {
                 if let Some(ti) = self.type_info {
                     if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {

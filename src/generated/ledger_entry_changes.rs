@@ -117,7 +117,7 @@ pub struct LedgerEntryChangesView<'a>(pub VecMView<'a, LedgerEntryChangeView<'a>
 impl From<&LedgerEntryChangesView<'_>> for LedgerEntryChanges {
     #[must_use]
     fn from(v: &LedgerEntryChangesView<'_>) -> Self {
-        Self(v.0.to_vecm_from())
+        Self(v.0.to_vecm())
     }
 }
 

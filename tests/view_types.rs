@@ -1,12 +1,38 @@
 #![allow(clippy::items_after_test_module)]
 
 use stellar_xdr::{
-    Asset, BytesMView, ClaimPredicateView, DecoratedSignatureView, Error, MemoView, MuxedAccount,
-    OperationBodyView, OperationView, PaymentOp, PreconditionsView, ScBytesView, ScSymbolView,
-    ScValView, ScVecView, SequenceNumber, SignatureHint, SignatureView, StringMView,
+    Asset, BytesMView, ClaimPredicateView, DecoratedSignatureView, ErrorLengthExceedsMax, MemoView,
+    MuxedAccount, OperationBodyView, OperationView, PaymentOp, PreconditionsView, ScBytesView,
+    ScSymbolView, ScValView, ScVecView, SequenceNumber, SignatureHint, SignatureView, StringMView,
     TransactionEnvelopeView, TransactionExtView, TransactionV1EnvelopeView, TransactionView,
     Uint256, VecMView,
 };
+
+// The View types expose only fallible `try_from_*` constructors. Their error is
+// the drop-free [`ErrorLengthExceedsMax`], so the result can be matched in a const
+// context (a `Result<_, Error>` could not be). These helpers wrap the
+// match-and-panic that const construction needs; over-length data then fails at
+// compile time.
+const fn vec_view<T, const MAX: u32>(v: &[T]) -> VecMView<'_, T, MAX> {
+    match VecMView::try_from_slice(v) {
+        Ok(v) => v,
+        Err(_) => panic!("length exceeds max"),
+    }
+}
+
+const fn bytes_view<const MAX: u32>(v: &[u8]) -> BytesMView<'_, MAX> {
+    match BytesMView::try_from_slice(v) {
+        Ok(v) => v,
+        Err(_) => panic!("length exceeds max"),
+    }
+}
+
+const fn str_view<const MAX: u32>(s: &str) -> StringMView<'_, MAX> {
+    match StringMView::try_from_str(s) {
+        Ok(v) => v,
+        Err(_) => panic!("length exceeds max"),
+    }
+}
 
 // A complete transaction envelope built entirely in a const context from
 // borrowed data: slices of fixed-size arrays, string literals, and references.
@@ -32,7 +58,7 @@ const OPERATIONS: [OperationView; 2] = [
 
 const SIGNATURES: [DecoratedSignatureView; 1] = [DecoratedSignatureView {
     hint: SignatureHint([1, 2, 3, 4]),
-    signature: SignatureView(BytesMView::new(&[9; 64])),
+    signature: SignatureView(bytes_view(&[9; 64])),
 }];
 
 const TX: TransactionView = TransactionView {
@@ -40,14 +66,14 @@ const TX: TransactionView = TransactionView {
     fee: 100,
     seq_num: SequenceNumber(7),
     cond: PreconditionsView::None,
-    memo: MemoView::Text(StringMView::new_str("hello")),
-    operations: VecMView::new(&OPERATIONS),
+    memo: MemoView::Text(str_view("hello")),
+    operations: vec_view(&OPERATIONS),
     ext: TransactionExtView::V0,
 };
 
 const ENVELOPE: TransactionEnvelopeView = TransactionEnvelopeView::Tx(TransactionV1EnvelopeView {
     tx: TX,
-    signatures: VecMView::new(&SIGNATURES),
+    signatures: vec_view(&SIGNATURES),
 });
 
 // A recursive ScVal built in a const context: a vec of vals, one of which is
@@ -55,12 +81,12 @@ const ENVELOPE: TransactionEnvelopeView = TransactionEnvelopeView::Tx(Transactio
 
 const SCVAL_LEAVES: [ScValView; 3] = [
     ScValView::I32(1),
-    ScValView::Symbol(ScSymbolView(StringMView::new_str("sym"))),
-    ScValView::Bytes(ScBytesView(BytesMView::new(b"bytes"))),
+    ScValView::Symbol(ScSymbolView(str_view("sym"))),
+    ScValView::Bytes(ScBytesView(bytes_view(b"bytes"))),
 ];
 
-const SCVAL: ScValView = ScValView::Vec(Some(ScVecView(VecMView::new(&[
-    ScValView::Vec(Some(ScVecView(VecMView::new(&SCVAL_LEAVES)))),
+const SCVAL: ScValView = ScValView::Vec(Some(ScVecView(vec_view(&[
+    ScValView::Vec(Some(ScVecView(vec_view(&SCVAL_LEAVES)))),
     ScValView::Bool(true),
 ]))));
 
@@ -68,7 +94,7 @@ const SCVAL: ScValView = ScValView::Vec(Some(ScVecView(VecMView::new(&[
 // cycle (`Option<Box<ClaimPredicate>>`), the View type borrows instead.
 
 const PREDICATE: ClaimPredicateView =
-    ClaimPredicateView::Not(Some(&ClaimPredicateView::And(VecMView::new(&[
+    ClaimPredicateView::Not(Some(&ClaimPredicateView::And(vec_view(&[
         ClaimPredicateView::Unconditional,
         ClaimPredicateView::BeforeAbsoluteTime(123),
     ]))));
@@ -93,46 +119,70 @@ fn const_constructed_values() {
 #[test]
 fn vecm_view_construction_limits() {
     let elems = [1u32, 2, 3];
-    let v = VecMView::<u32, 3>::try_new(&elems).unwrap();
+    let v = VecMView::<u32, 3>::try_from_slice(&elems).unwrap();
     assert_eq!(v.len(), 3);
     assert!(!v.is_empty());
     assert_eq!(v.as_slice(), &[1, 2, 3]);
     assert_eq!(v.iter().copied().sum::<u32>(), 6);
     assert_eq!(v.max_len(), 3);
     assert_eq!(
-        VecMView::<u32, 2>::try_new(&elems),
-        Err(Error::LengthExceedsMax)
+        VecMView::<u32, 3>::expect_from_slice(&elems).as_slice(),
+        &[1, 2, 3]
+    );
+    assert_eq!(
+        VecMView::<u32, 2>::try_from_slice(&elems),
+        Err(ErrorLengthExceedsMax)
     );
 }
 
 #[test]
-#[should_panic(expected = "length exceeds max")]
-fn vecm_view_new_panics_over_max() {
-    let elems = [1u32, 2, 3];
-    let _ = VecMView::<u32, 2>::new(&elems);
+#[should_panic(expected = "xdr value max length exceeded")]
+fn vecm_view_expect_from_slice_panics() {
+    let _ = VecMView::<u32, 2>::expect_from_slice(&[1u32, 2, 3]);
 }
 
 #[test]
 fn bytesm_view_construction_limits() {
-    let v = BytesMView::<3>::try_new(b"abc").unwrap();
+    let v = BytesMView::<3>::try_from_slice(b"abc").unwrap();
     assert_eq!(v.len(), 3);
     assert_eq!(v.as_slice(), b"abc");
     assert_eq!(
-        BytesMView::<2>::try_new(b"abc"),
-        Err(Error::LengthExceedsMax)
+        BytesMView::<3>::expect_from_slice(b"abc").as_slice(),
+        b"abc"
+    );
+    assert_eq!(
+        BytesMView::<2>::try_from_slice(b"abc"),
+        Err(ErrorLengthExceedsMax)
     );
 }
 
 #[test]
+#[should_panic(expected = "xdr value max length exceeded")]
+fn bytesm_view_expect_from_slice_panics() {
+    let _ = BytesMView::<2>::expect_from_slice(b"abc");
+}
+
+#[test]
 fn stringm_view_construction_limits() {
-    let v = StringMView::<5>::try_new_str("abc").unwrap();
+    let v = StringMView::<5>::try_from_str("abc").unwrap();
     assert_eq!(v.as_slice(), b"abc");
-    let v = StringMView::<5>::try_new(b"abc").unwrap();
+    let v = StringMView::<5>::try_from_slice(b"abc").unwrap();
     assert_eq!(v.len(), 3);
+    assert_eq!(StringMView::<5>::expect_from_str("abc").as_slice(), b"abc");
     assert_eq!(
-        StringMView::<2>::try_new_str("abc"),
-        Err(Error::LengthExceedsMax)
+        StringMView::<5>::expect_from_slice(b"abc").as_slice(),
+        b"abc"
     );
+    assert_eq!(
+        StringMView::<2>::try_from_str("abc"),
+        Err(ErrorLengthExceedsMax)
+    );
+}
+
+#[test]
+#[should_panic(expected = "xdr value max length exceeded")]
+fn stringm_view_expect_from_str_panics() {
+    let _ = StringMView::<2>::expect_from_str("abc");
 }
 
 #[cfg(feature = "alloc")]

@@ -62,8 +62,8 @@ impl From<&FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
     #[must_use]
     fn from(v: &FrozenLedgerKeysDeltaView<'_>) -> Self {
         Self {
-            keys_to_freeze: v.keys_to_freeze.to_vecm_from(),
-            keys_to_unfreeze: v.keys_to_unfreeze.to_vecm_from(),
+            keys_to_freeze: v.keys_to_freeze.to_vecm(),
+            keys_to_unfreeze: v.keys_to_unfreeze.to_vecm(),
         }
     }
 }

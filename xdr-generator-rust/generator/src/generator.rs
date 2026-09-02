@@ -1,3 +1,4 @@
+use heck::ToSnakeCase;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
@@ -13,6 +14,7 @@ use crate::naming::{
 };
 use crate::options::RustOptions;
 use crate::output::{
+    ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput, ConstWriterTemplate,
     ConstOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
     GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
@@ -95,12 +97,57 @@ impl RustGenerator {
         // Ensure the output directory exists.
         std::fs::create_dir_all(output_dir)?;
 
+        // All const XDR encoding is emitted as methods on `ConstWriter`, each
+        // into the file of the type it serializes, so no generated type carries
+        // const-only surface of its own.
+        let mut const_methods_by_module: HashMap<String, Vec<ConstWriterMethodOutput>> =
+            HashMap::new();
+        let mut const_methods_residual: Vec<ConstWriterMethodOutput> = Vec::new();
+        for m in crate::const_writer::build(
+            spec,
+            &self.type_info,
+            &self.view_required,
+            &self.cfg_by_name(spec),
+        )
+        .methods
+        {
+            match m.module.clone() {
+                Some(module) => const_methods_by_module.entry(module).or_default().push(m),
+                // A wrapper over a builtin scalar has no type of its own, so no
+                // file to live beside.
+                None => const_methods_residual.push(m),
+            }
+        }
+
         // Write each definition (or group of definitions) to its own file.
         for (module, defs) in modules.iter().zip(definitions.into_iter()) {
-            let template = DefinitionTemplate { definitions: defs };
+            let methods = const_methods_by_module
+                .remove(&module.mod_name)
+                .unwrap_or_default();
+            let template = DefinitionTemplate {
+                definitions: defs,
+                const_writer: ConstWriterOutput { methods },
+            };
             let rendered = template.render()?;
             let file_path = output_dir.join(format!("{}.rs", module.mod_name));
             std::fs::write(&file_path, &rendered)?;
+        }
+
+        // Anything with no type file of its own, plus any method whose module
+        // was not among the definition files, lands in one residual module.
+        const_methods_residual.extend(const_methods_by_module.into_values().flatten());
+        const_methods_residual.sort_by(|a, b| a.name.cmp(&b.name));
+        if !const_methods_residual.is_empty() {
+            let template = ConstWriterTemplate {
+                const_writer: ConstWriterOutput {
+                    methods: const_methods_residual,
+                },
+            };
+            let rendered = template.render()?;
+            std::fs::write(output_dir.join("const_writer.rs"), &rendered)?;
+            modules.push(ModuleEntry {
+                mod_name: "const_writer".to_string(),
+            });
         }
 
         let type_variant_enum = self.generate_type_enum(spec);
@@ -127,6 +174,30 @@ impl RustGenerator {
         std::fs::write(module_file, &rendered)?;
 
         Ok(())
+    }
+
+    /// Map each Rust type name to the cfg gating it.
+    ///
+    /// A name appearing in several `#ifdef` branches is always present, so its
+    /// cfg is cleared.
+    fn cfg_by_name(&self, spec: &XdrSpec) -> HashMap<String, Option<String>> {
+        let mut cfg_by_name: HashMap<String, Option<String>> = HashMap::new();
+        for def in spec.all_definitions() {
+            if matches!(def, Definition::Const(_)) {
+                continue;
+            }
+            let name = type_name(def.name());
+            let cfg = self.resolve_cfg(def);
+            match cfg_by_name.entry(name) {
+                Entry::Vacant(e) => {
+                    e.insert(cfg);
+                }
+                Entry::Occupied(mut e) => {
+                    e.insert(None);
+                }
+            }
+        }
+        cfg_by_name
     }
 
     /// Generate module entries and grouped definitions for per-file output.
@@ -255,6 +326,24 @@ impl RustGenerator {
         }
     }
 
+    /// Render the `const_xdr_len`/`const_to_xdr` wrapper for a definition.
+    ///
+    /// The wrapper is implemented on the borrowing `View` form where the type
+    /// owns heap data and on the type itself otherwise, matching the receiver
+    /// the type's `ConstWriter::write_type_*` method takes.
+    fn const_to_xdr(&self, name: &str, emit_view: bool, cfg: Option<&str>) -> String {
+        let template = ConstToXdrTemplate {
+            recv: if emit_view {
+                format!("{name}View<'_>")
+            } else {
+                name.to_string()
+            },
+            cfg: cfg.map(ToString::to_string),
+            write_fn: format!("write_type_{}", name.to_snake_case()),
+        };
+        template.render().unwrap_or_default()
+    }
+
     /// Resolve the cfg expression for a definition, rendered as a string.
     ///
     /// This is where additional cfg conditions (e.g. file-based cfg derived
@@ -299,6 +388,15 @@ impl RustGenerator {
         };
         let r = self.view_emit_for(&name, cfg.as_deref());
         StructOutput {
+            const_to_xdr: self.const_to_xdr(
+                &name,
+                r.emit_view,
+                if r.emit_view {
+                    r.view_cfg.as_deref()
+                } else {
+                    cfg.as_deref()
+                },
+            ),
             name,
             source_comment: source_comment(&s.source, type_kind),
             has_default: !custom_default,
@@ -330,6 +428,8 @@ impl RustGenerator {
             .collect();
 
         EnumOutput {
+            // An enum owns no heap data, so it never has a `View` form.
+            const_to_xdr: self.const_to_xdr(&name, false, cfg.as_deref()),
             name,
             source_comment: source_comment(&e.source, "Enum"),
             has_default: !custom_default,
@@ -385,6 +485,15 @@ impl RustGenerator {
         let r = self.view_emit_for(&name, cfg.as_deref());
 
         UnionOutput {
+            const_to_xdr: self.const_to_xdr(
+                &name,
+                r.emit_view,
+                if r.emit_view {
+                    r.view_cfg.as_deref()
+                } else {
+                    cfg.as_deref()
+                },
+            ),
             name,
             source_comment: source_comment(&u.source, type_kind),
             has_default: !custom_default,
@@ -436,6 +545,15 @@ impl RustGenerator {
         let r = self.view_emit_for(&name, cfg.as_deref());
 
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
+            const_to_xdr: self.const_to_xdr(
+                &name,
+                r.emit_view,
+                if r.emit_view {
+                    r.view_cfg.as_deref()
+                } else {
+                    cfg.as_deref()
+                },
+            ),
             name: name.clone(),
             source_comment: source_comment(&t.source, "Typedef"),
             has_default: !custom_default,

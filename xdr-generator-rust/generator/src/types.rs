@@ -58,6 +58,37 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
     TypeMapping::new(type_, type_info, None).base_type_ref()
 }
 
+/// The Rust type that holds this XDR type in a const context: the borrowing
+/// `View` form where the type owns heap data, the owned type otherwise.
+///
+/// The `'a` of the `View` types is rendered as `'_`, so the result is usable in
+/// a function signature. Mirrors [`type_ref`], including the reference wrapping
+/// applied where `parent_type` makes the type cyclic.
+pub(crate) fn const_view_type(
+    type_: &Type,
+    parent_type: Option<&str>,
+    type_info: &TypeInfo,
+    view_required: &HashSet<String>,
+) -> String {
+    TypeMapping::new(type_, Some(type_info), parent_type)
+        .view_type_ref(view_required)
+        .replace("'a", "'_")
+}
+
+/// As [`const_view_type`], but without the reference wrapping for cyclic types.
+///
+/// This is the form an element takes inside a container such as `VecMView`,
+/// which borrows its elements as a slice rather than individually.
+pub(crate) fn const_view_base_type(
+    type_: &Type,
+    type_info: &TypeInfo,
+    view_required: &HashSet<String>,
+) -> String {
+    TypeMapping::new(type_, Some(type_info), None)
+        .view_base_type_ref(view_required)
+        .replace("'a", "'_")
+}
+
 /// Convert a Size to a Rust string representation.
 pub(crate) fn size_to_string(size: &Size) -> String {
     match size {

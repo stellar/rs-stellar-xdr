@@ -697,9 +697,149 @@ pub trait WriteXdr {
 
 /// `Pad_len` returns the number of bytes to pad an XDR value of the given
 /// length to make the final serialized size a multiple of 4.
-#[cfg(feature = "std")]
-fn pad_len(len: usize) -> usize {
+#[cfg(any(feature = "std", feature = "const"))]
+const fn pad_len(len: usize) -> usize {
     (4 - (len % 4)) % 4
+}
+
+/// `padding` returns the zero bytes that pad an XDR value of the given length
+/// out to a multiple of 4. The padding is never more than 3 bytes, so it is a
+/// prefix of a single static.
+#[cfg(feature = "const")]
+const fn padding(len: usize) -> &'static [u8] {
+    const PADDING: [u8; 3] = [0; 3];
+    PADDING.split_at(pad_len(len)).0
+}
+
+/// `ConstWriter` serializes XDR into a fixed byte buffer using only const
+/// operations.
+///
+/// It is the const-evaluable counterpart to [`WriteXdr::write_xdr`], producing
+/// the same bytes. Unlike the streaming path it enforces no depth or length
+/// limits: a const value is fixed at compile time, so there is no untrusted
+/// input to bound.
+///
+/// The writers below are the primitives. Every type defined in the XDR files
+/// additionally has a generated `write_type_{type}` method on `ConstWriter`
+/// that serializes one value of that type, taking the type's borrowing `View`
+/// form where it owns heap data and the type itself otherwise; a type that
+/// appears wrapped gets `write_type_option_{type}` and `write_type_vec_{type}`
+/// alongside. The `type_` distinguishes them from these primitives, so a
+/// wrapper over a primitive is named `write_option_u32` rather than
+/// `write_type_option_u32`.
+///
+/// Keeping the encoders on the writer, rather than as inherent methods on each
+/// generated type, leaves each type with only a thin `const_xdr_len` and
+/// `const_to_xdr` pair that wraps its writer method. Each generated method is
+/// emitted into the file of the type it serializes, so the two stay together.
+///
+/// Serialization is infallible. The only way it can fail is a value whose
+/// length does not fit the `u32` XDR length prefix, which panics; in a const
+/// context that is a compile-time error.
+///
+/// Bytes are only stored while the running length is within the buffer; bytes
+/// past the end of the buffer are counted but not written. This allows the
+/// exact encoded length to be measured by serializing into an empty buffer and
+/// reading [`ConstWriter::len`], then serializing again into a buffer of that
+/// size.
+#[cfg(feature = "const")]
+pub struct ConstWriter<'a> {
+    buf: &'a mut [u8],
+    len: usize,
+}
+
+#[cfg(feature = "const")]
+impl<'a> ConstWriter<'a> {
+    /// Constructs a new `ConstWriter` that serializes into `buf`.
+    #[must_use]
+    pub const fn new(buf: &'a mut [u8]) -> Self {
+        ConstWriter { buf, len: 0 }
+    }
+
+    /// Returns the number of bytes serialized so far, which equals the total
+    /// encoded length once serialization completes (even if it exceeded the
+    /// buffer).
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Returns true while nothing has been serialized yet.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    /// Writes `data` into the buffer, advancing the length. Bytes beyond the
+    /// end of the buffer are counted but not stored.
+    const fn write_bytes(&mut self, data: &[u8]) {
+        let mut i = 0;
+        while i < data.len() {
+            if self.len < self.buf.len() {
+                self.buf[self.len] = data[i];
+            }
+            self.len += 1;
+            i += 1;
+        }
+    }
+
+    /// Serializes an `i32`, mirroring `<i32 as WriteXdr>::write_xdr`.
+    pub const fn write_i32(&mut self, v: i32) {
+        self.write_bytes(&v.to_be_bytes());
+    }
+
+    /// Serializes a `u32`, mirroring `<u32 as WriteXdr>::write_xdr`.
+    pub const fn write_u32(&mut self, v: u32) {
+        self.write_bytes(&v.to_be_bytes());
+    }
+
+    /// Serializes an `i64`, mirroring `<i64 as WriteXdr>::write_xdr`.
+    pub const fn write_i64(&mut self, v: i64) {
+        self.write_bytes(&v.to_be_bytes());
+    }
+
+    /// Serializes a `u64`, mirroring `<u64 as WriteXdr>::write_xdr`.
+    pub const fn write_u64(&mut self, v: u64) {
+        self.write_bytes(&v.to_be_bytes());
+    }
+
+    /// Serializes a `bool`, mirroring `<bool as WriteXdr>::write_xdr`.
+    pub const fn write_bool(&mut self, v: bool) {
+        let i = if v { 1u32 } else { 0u32 };
+        self.write_u32(i);
+    }
+
+    /// Serializes a fixed-length opaque array with trailing padding, mirroring
+    /// `<[u8; N] as WriteXdr>::write_xdr`.
+    pub const fn write_fixed_opaque(&mut self, data: &[u8]) {
+        self.write_bytes(data);
+        self.write_bytes(padding(data.len()));
+    }
+
+    /// Serializes a `u32` length prefix from a `usize`, mirroring the
+    /// `len.try_into()` and `len.write_xdr(w)` of the variable-length
+    /// `WriteXdr` implementations.
+    ///
+    /// ### Panics
+    ///
+    /// If `len` does not fit in a `u32`. In a const context that is a
+    /// compile-time error.
+    #[allow(clippy::cast_possible_truncation)]
+    pub const fn write_len(&mut self, len: usize) {
+        assert!(len <= u32::MAX as usize, "xdr value max length exceeded");
+        self.write_u32(len as u32);
+    }
+
+    /// Serializes a variable-length opaque byte sequence: a `u32` length
+    /// prefix, the bytes, then trailing padding. Mirrors `<VecM<u8> as
+    /// WriteXdr>::write_xdr`, `<BytesM as WriteXdr>::write_xdr`, and `<StringM
+    /// as WriteXdr>::write_xdr`, which XDR encodes identically.
+    pub const fn write_var_opaque(&mut self, data: &[u8]) {
+        let n = data.len();
+        self.write_len(n);
+        self.write_bytes(data);
+        self.write_bytes(padding(n));
+    }
 }
 
 impl ReadXdr for i32 {

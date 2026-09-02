@@ -497,3 +497,145 @@ impl WriteXdr for ScValView<'_> {
         })
     }
 }
+
+#[cfg(feature = "const")]
+impl ScValView<'_> {
+    /// The exact XDR-encoded length of this value, in bytes.
+    ///
+    /// Evaluable in a const context, so a caller (such as a proc-macro) can
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[must_use]
+    pub const fn const_xdr_len(&self) -> usize {
+        let mut empty: [u8; 0] = [];
+        let mut w = ConstWriter::new(&mut empty);
+        w.write_type_sc_val(self);
+        w.len()
+    }
+
+    /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
+    ///
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[must_use]
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
+        let mut buf = [0u8; N];
+        let mut w = ConstWriter::new(&mut buf);
+        w.write_type_sc_val(self);
+        assert!(
+            w.len() == N,
+            "const_to_xdr: N does not equal the XDR-encoded length"
+        );
+        buf
+    }
+}
+
+#[cfg(feature = "const")]
+impl ConstWriter<'_> {
+    /// Serializes a [`ScVal`], mirroring `<ScVal as WriteXdr>::write_xdr`.
+    pub const fn write_type_sc_val(&mut self, v: &ScValView<'_>) {
+        let d = v.discriminant();
+        self.write_type_sc_val_type(&d);
+        #[allow(clippy::match_same_arms)]
+        match v {
+            ScValView::Bool(value) => {
+                self.write_bool(*value);
+            }
+            ScValView::Void => {}
+            ScValView::Error(value) => {
+                self.write_type_sc_error(value);
+            }
+            ScValView::U32(value) => {
+                self.write_u32(*value);
+            }
+            ScValView::I32(value) => {
+                self.write_i32(*value);
+            }
+            ScValView::U64(value) => {
+                self.write_u64(*value);
+            }
+            ScValView::I64(value) => {
+                self.write_i64(*value);
+            }
+            ScValView::Timepoint(value) => {
+                self.write_type_time_point(value);
+            }
+            ScValView::Duration(value) => {
+                self.write_type_duration(value);
+            }
+            ScValView::U128(value) => {
+                self.write_type_u_int128_parts(value);
+            }
+            ScValView::I128(value) => {
+                self.write_type_int128_parts(value);
+            }
+            ScValView::U256(value) => {
+                self.write_type_u_int256_parts(value);
+            }
+            ScValView::I256(value) => {
+                self.write_type_int256_parts(value);
+            }
+            ScValView::Bytes(value) => {
+                self.write_type_sc_bytes(value);
+            }
+            ScValView::String(value) => {
+                self.write_type_sc_string(value);
+            }
+            ScValView::Symbol(value) => {
+                self.write_type_sc_symbol(value);
+            }
+            ScValView::Vec(value) => {
+                self.write_type_option_sc_vec(value);
+            }
+            ScValView::Map(value) => {
+                self.write_type_option_sc_map(value);
+            }
+            ScValView::Address(value) => {
+                self.write_type_sc_address(value);
+            }
+            ScValView::ContractInstance(value) => {
+                self.write_type_sc_contract_instance(value);
+            }
+            ScValView::LedgerKeyContractInstance => {}
+            ScValView::LedgerKeyNonce(value) => {
+                self.write_type_sc_nonce_key(value);
+            }
+            ScValView::ExecutableTag(value) => {
+                self.write_type_sc_string(value);
+            }
+        }
+    }
+
+    /// Serializes an optional [`ScVal`], mirroring `<Option<ScVal> as WriteXdr>::write_xdr`.
+    pub const fn write_type_option_sc_val(&mut self, v: &Option<ScValView<'_>>) {
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+                self.write_type_sc_val(v);
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+    }
+
+    /// Serializes a variable-length array of [`ScVal`], mirroring `<VecM<ScVal, MAX> as WriteXdr>::write_xdr`.
+    pub const fn write_type_vec_sc_val<const MAX: u32>(
+        &mut self,
+        v: &VecMView<'_, ScValView<'_>, MAX>,
+    ) {
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+            self.write_type_sc_val(&s[i]);
+            i += 1;
+        }
+    }
+}

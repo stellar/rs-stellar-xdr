@@ -1,0 +1,17 @@
+{%- if !const_writer.methods.is_empty() %}
+
+{#- Const XDR encoding lives on `ConstWriter` rather than on the generated
+    types, but is emitted beside the type it serializes. #}
+#[cfg(feature = "const")]
+impl ConstWriter<'_> {
+{%- for m in const_writer.methods %}
+{% if let Some(cfg) = m.cfg %}
+    #[cfg({{ cfg }})]
+{%- endif %}
+    /// {{ m.doc }}
+    pub const fn {{ m.name }}{{ m.generics }}(&mut self, v: {{ m.param_type }}) {
+        {{ m.body }}
+    }
+{%- endfor %}
+}
+{%- endif %}

@@ -1559,10 +1559,10 @@ impl<'a, T, const MAX: u32> VecMView<'a, T, MAX> {
     ///
     /// If the length of the slice exceeds `MAX`.
     #[must_use]
-    pub const fn expect_from_slice(v: &'a [T]) -> Self {
+    pub const fn try_from_slice_or_panic(v: &'a [T]) -> Self {
         match Self::try_from_slice(v) {
             Ok(view) => view,
-            Err(_) => panic!("xdr value max length exceeded"),
+            Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
         }
     }
 
@@ -2141,10 +2141,10 @@ impl<'a, const MAX: u32> BytesMView<'a, MAX> {
     ///
     /// If the length of the slice exceeds `MAX`.
     #[must_use]
-    pub const fn expect_from_slice(v: &'a [u8]) -> Self {
+    pub const fn try_from_slice_or_panic(v: &'a [u8]) -> Self {
         match Self::try_from_slice(v) {
             Ok(view) => view,
-            Err(_) => panic!("xdr value max length exceeded"),
+            Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
         }
     }
 
@@ -2691,10 +2691,10 @@ impl<'a, const MAX: u32> StringMView<'a, MAX> {
     ///
     /// If the length of the slice exceeds `MAX`.
     #[must_use]
-    pub const fn expect_from_slice(v: &'a [u8]) -> Self {
+    pub const fn try_from_slice_or_panic(v: &'a [u8]) -> Self {
         match Self::try_from_slice(v) {
             Ok(view) => view,
-            Err(_) => panic!("xdr value max length exceeded"),
+            Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
         }
     }
 
@@ -2721,8 +2721,8 @@ impl<'a, const MAX: u32> StringMView<'a, MAX> {
     ///
     /// If the length of the str exceeds `MAX`.
     #[must_use]
-    pub const fn expect_from_str(s: &'a str) -> Self {
-        Self::expect_from_slice(s.as_bytes())
+    pub const fn try_from_str_or_panic(s: &'a str) -> Self {
+        Self::try_from_slice_or_panic(s.as_bytes())
     }
 
     #[must_use]

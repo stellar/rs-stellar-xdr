@@ -328,3 +328,82 @@ impl WriteXdr for LedgerEntryDataRef<'_> {
         })
     }
 }
+
+#[cfg(feature = "const")]
+impl LedgerEntryDataView<'_> {
+    /// The exact XDR-encoded length of this value, in bytes.
+    ///
+    /// Evaluable in a const context, so a caller (such as a proc-macro) can
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[must_use]
+    pub const fn const_xdr_len(&self) -> usize {
+        let mut empty: [u8; 0] = [];
+        let mut w = ConstWriter::new(&mut empty);
+        w.write_type_ledger_entry_data(self);
+        w.len()
+    }
+
+    /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
+    ///
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[must_use]
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
+        let mut buf = [0u8; N];
+        let mut w = ConstWriter::new(&mut buf);
+        w.write_type_ledger_entry_data(self);
+        assert!(
+            w.len() == N,
+            "const_to_xdr: N does not equal the XDR-encoded length"
+        );
+        buf
+    }
+}
+
+#[cfg(feature = "const")]
+impl ConstWriter<'_> {
+    /// Serializes a [`LedgerEntryData`], mirroring `<LedgerEntryData as WriteXdr>::write_xdr`.
+    pub const fn write_type_ledger_entry_data(&mut self, v: &LedgerEntryDataView<'_>) {
+        let d = v.discriminant();
+        self.write_type_ledger_entry_type(&d);
+        #[allow(clippy::match_same_arms)]
+        match v {
+            LedgerEntryDataView::Account(value) => {
+                self.write_type_account_entry(value);
+            }
+            LedgerEntryDataView::Trustline(value) => {
+                self.write_type_trust_line_entry(value);
+            }
+            LedgerEntryDataView::Offer(value) => {
+                self.write_type_offer_entry(value);
+            }
+            LedgerEntryDataView::Data(value) => {
+                self.write_type_data_entry(value);
+            }
+            LedgerEntryDataView::ClaimableBalance(value) => {
+                self.write_type_claimable_balance_entry(value);
+            }
+            LedgerEntryDataView::LiquidityPool(value) => {
+                self.write_type_liquidity_pool_entry(value);
+            }
+            LedgerEntryDataView::ContractData(value) => {
+                self.write_type_contract_data_entry(value);
+            }
+            LedgerEntryDataView::ContractCode(value) => {
+                self.write_type_contract_code_entry(value);
+            }
+            LedgerEntryDataView::ConfigSetting(value) => {
+                self.write_type_config_setting_entry(value);
+            }
+            LedgerEntryDataView::Ttl(value) => {
+                self.write_type_ttl_entry(value);
+            }
+        }
+    }
+}

@@ -51,6 +51,7 @@ cap_0084_muxed_contract = []
 
 # Features available without any new dependencies.
 type_enum = []
+const = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]

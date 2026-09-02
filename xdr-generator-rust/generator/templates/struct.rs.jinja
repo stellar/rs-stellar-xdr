@@ -181,3 +181,5 @@ impl WriteXdr for {{ s.name }}Ref<'_> {
 {%- if !s.emit_ref %}
 {% call into_owned::identity(s.name, s.cfg) %}
 {%- endif %}
+
+{{ s.const_to_xdr }}

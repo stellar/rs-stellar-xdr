@@ -184,3 +184,5 @@ impl WriteXdr for {{ e.name }} {
 }
 
 {% call into_owned::identity(e.name, e.cfg) %}
+
+{{ e.const_to_xdr }}

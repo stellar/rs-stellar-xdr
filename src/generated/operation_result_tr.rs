@@ -619,3 +619,133 @@ impl WriteXdr for OperationResultTrRef<'_> {
         })
     }
 }
+
+#[cfg(feature = "const")]
+impl OperationResultTrView<'_> {
+    /// The exact XDR-encoded length of this value, in bytes.
+    ///
+    /// Evaluable in a const context, so a caller (such as a proc-macro) can
+    /// size a buffer for [`Self::const_to_xdr`] at compile time.
+    #[must_use]
+    pub const fn const_xdr_len(&self) -> usize {
+        let mut empty: [u8; 0] = [];
+        let mut w = ConstWriter::new(&mut empty);
+        w.write_type_operation_result_tr(self);
+        w.len()
+    }
+
+    /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
+    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
+    ///
+    /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
+    /// as a proc-macro, that compute the length with `const_xdr_len` and pass
+    /// it as `N`; `const_to_xdr` itself does not need to call `const_xdr_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `N` does not equal the value's [`Self::const_xdr_len`].
+    #[must_use]
+    pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
+        let mut buf = [0u8; N];
+        let mut w = ConstWriter::new(&mut buf);
+        w.write_type_operation_result_tr(self);
+        assert!(
+            w.len() == N,
+            "const_to_xdr: N does not equal the XDR-encoded length"
+        );
+        buf
+    }
+}
+
+#[cfg(feature = "const")]
+impl ConstWriter<'_> {
+    /// Serializes a [`OperationResultTr`], mirroring `<OperationResultTr as WriteXdr>::write_xdr`.
+    pub const fn write_type_operation_result_tr(&mut self, v: &OperationResultTrView<'_>) {
+        let d = v.discriminant();
+        self.write_type_operation_type(&d);
+        #[allow(clippy::match_same_arms)]
+        match v {
+            OperationResultTrView::CreateAccount(value) => {
+                self.write_type_create_account_result(value);
+            }
+            OperationResultTrView::Payment(value) => {
+                self.write_type_payment_result(value);
+            }
+            OperationResultTrView::PathPaymentStrictReceive(value) => {
+                self.write_type_path_payment_strict_receive_result(value);
+            }
+            OperationResultTrView::ManageSellOffer(value) => {
+                self.write_type_manage_sell_offer_result(value);
+            }
+            OperationResultTrView::CreatePassiveSellOffer(value) => {
+                self.write_type_manage_sell_offer_result(value);
+            }
+            OperationResultTrView::SetOptions(value) => {
+                self.write_type_set_options_result(value);
+            }
+            OperationResultTrView::ChangeTrust(value) => {
+                self.write_type_change_trust_result(value);
+            }
+            OperationResultTrView::AllowTrust(value) => {
+                self.write_type_allow_trust_result(value);
+            }
+            OperationResultTrView::AccountMerge(value) => {
+                self.write_type_account_merge_result(value);
+            }
+            OperationResultTrView::Inflation(value) => {
+                self.write_type_inflation_result(value);
+            }
+            OperationResultTrView::ManageData(value) => {
+                self.write_type_manage_data_result(value);
+            }
+            OperationResultTrView::BumpSequence(value) => {
+                self.write_type_bump_sequence_result(value);
+            }
+            OperationResultTrView::ManageBuyOffer(value) => {
+                self.write_type_manage_buy_offer_result(value);
+            }
+            OperationResultTrView::PathPaymentStrictSend(value) => {
+                self.write_type_path_payment_strict_send_result(value);
+            }
+            OperationResultTrView::CreateClaimableBalance(value) => {
+                self.write_type_create_claimable_balance_result(value);
+            }
+            OperationResultTrView::ClaimClaimableBalance(value) => {
+                self.write_type_claim_claimable_balance_result(value);
+            }
+            OperationResultTrView::BeginSponsoringFutureReserves(value) => {
+                self.write_type_begin_sponsoring_future_reserves_result(value);
+            }
+            OperationResultTrView::EndSponsoringFutureReserves(value) => {
+                self.write_type_end_sponsoring_future_reserves_result(value);
+            }
+            OperationResultTrView::RevokeSponsorship(value) => {
+                self.write_type_revoke_sponsorship_result(value);
+            }
+            OperationResultTrView::Clawback(value) => {
+                self.write_type_clawback_result(value);
+            }
+            OperationResultTrView::ClawbackClaimableBalance(value) => {
+                self.write_type_clawback_claimable_balance_result(value);
+            }
+            OperationResultTrView::SetTrustLineFlags(value) => {
+                self.write_type_set_trust_line_flags_result(value);
+            }
+            OperationResultTrView::LiquidityPoolDeposit(value) => {
+                self.write_type_liquidity_pool_deposit_result(value);
+            }
+            OperationResultTrView::LiquidityPoolWithdraw(value) => {
+                self.write_type_liquidity_pool_withdraw_result(value);
+            }
+            OperationResultTrView::InvokeHostFunction(value) => {
+                self.write_type_invoke_host_function_result(value);
+            }
+            OperationResultTrView::ExtendFootprintTtl(value) => {
+                self.write_type_extend_footprint_ttl_result(value);
+            }
+            OperationResultTrView::RestoreFootprint(value) => {
+                self.write_type_restore_footprint_result(value);
+            }
+        }
+    }
+}

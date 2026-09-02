@@ -32,6 +32,46 @@ pub struct ModuleEntry {
 #[template(path = "definition.rs.jinja", escape = "none")]
 pub struct DefinitionTemplate {
     pub definitions: Vec<DefinitionOutput>,
+    /// The `ConstWriter` methods serializing the types defined in this file.
+    pub const_writer: ConstWriterOutput,
+}
+
+/// The `const_xdr_len` / `const_to_xdr` wrapper emitted on a type, which sets
+/// up a `ConstWriter` and calls that type's `write_type_*` method.
+#[derive(Template)]
+#[template(path = "const_to_xdr.rs.jinja", escape = "none")]
+pub struct ConstToXdrTemplate {
+    /// The receiver the wrapper is implemented on, e.g. `MemoView<'_>`.
+    pub recv: String,
+    pub cfg: Option<String>,
+    /// The `ConstWriter` method the wrapper calls.
+    pub write_fn: String,
+}
+
+#[derive(Template)]
+#[template(path = "const_writer.rs.jinja", escape = "none")]
+pub struct ConstWriterTemplate {
+    pub const_writer: ConstWriterOutput,
+}
+
+/// The `ConstWriter` methods that serialize each generated type.
+pub struct ConstWriterOutput {
+    pub methods: Vec<ConstWriterMethodOutput>,
+}
+
+/// One `ConstWriter::write_xdr_*` method.
+pub struct ConstWriterMethodOutput {
+    pub name: String,
+    /// Generic parameters, e.g. `<const MAX: u32>` for the `VecM` methods.
+    pub generics: String,
+    /// The type of the value parameter, e.g. `&TransactionView<'_>`.
+    pub param_type: String,
+    pub body: String,
+    pub cfg: Option<String>,
+    pub doc: String,
+    /// The module the method is emitted into: the one holding the type it
+    /// serializes. `None` for a wrapper over a builtin, which has no type file.
+    pub module: Option<String>,
 }
 
 pub enum DefinitionOutput {
@@ -55,6 +95,8 @@ pub struct StructOutput {
     /// The full cfg for the real `Ref` struct, gating it to where it borrows.
     pub ref_cfg: Option<String>,
     pub cfg: Option<String>,
+    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
+    pub const_to_xdr: String,
 }
 
 /// How a `Ref` field borrows to break a type cycle, and so how its conversion
@@ -95,6 +137,8 @@ pub struct EnumOutput {
     pub is_custom_str: bool,
     pub members: Vec<EnumStructMemberOutput>,
     pub cfg: Option<String>,
+    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
+    pub const_to_xdr: String,
 }
 
 pub struct EnumStructMemberOutput {
@@ -121,6 +165,8 @@ pub struct UnionOutput {
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
     pub default_arm_cfg: Option<String>,
+    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
+    pub const_to_xdr: String,
 }
 
 pub struct UnionArmOutput {
@@ -169,6 +215,8 @@ pub struct TypedefNewtypeOutput {
     /// Whether the inner value borrows to break a cycle, and so needs boxing.
     pub cyclic: CyclicBorrow,
     pub cfg: Option<String>,
+    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
+    pub const_to_xdr: String,
 }
 
 pub struct ConstOutput {

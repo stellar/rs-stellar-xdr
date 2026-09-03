@@ -25,7 +25,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtEnumV0 {
-    pub doc: StringM<1024>,
+    pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtEnumCaseV0>,
@@ -36,7 +36,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
+                doc: StringM::<SC_SPEC_DOC_LIMIT>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
                 cases: VecM::<ScSpecUdtEnumCaseV0>::read_xdr(r)?,

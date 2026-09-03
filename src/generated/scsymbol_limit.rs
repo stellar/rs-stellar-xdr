@@ -7,4 +7,4 @@ use super::*;
 /// const SCSYMBOL_LIMIT = 32;
 /// ```
 ///
-pub const SCSYMBOL_LIMIT: u64 = 32;
+pub const SCSYMBOL_LIMIT: u32 = 32;

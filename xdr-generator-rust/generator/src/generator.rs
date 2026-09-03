@@ -18,7 +18,7 @@ use crate::output::{
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
     TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
-use crate::types::{base_type_ref, resolve_type, type_ref};
+use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
 
 pub struct RustGenerator {
     options: RustOptions,
@@ -381,9 +381,7 @@ impl RustGenerator {
 
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
-            | xdr_parser::ast::Type::Array { size: s, .. } => {
-                Some(self.type_info.size_to_literal(s))
-            }
+            | xdr_parser::ast::Type::Array { size: s, .. } => Some(size_to_u32_string(s)),
             _ => None,
         };
 

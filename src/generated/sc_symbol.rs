@@ -18,25 +18,25 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct ScSymbol(pub StringM<{ SCSYMBOL_LIMIT as u32 }>);
+pub struct ScSymbol(pub StringM<SCSYMBOL_LIMIT>);
 
-impl From<ScSymbol> for StringM<{ SCSYMBOL_LIMIT as u32 }> {
+impl From<ScSymbol> for StringM<SCSYMBOL_LIMIT> {
     #[must_use]
     fn from(x: ScSymbol) -> Self {
         x.0
     }
 }
 
-impl From<StringM<{ SCSYMBOL_LIMIT as u32 }>> for ScSymbol {
+impl From<StringM<SCSYMBOL_LIMIT>> for ScSymbol {
     #[must_use]
-    fn from(x: StringM<{ SCSYMBOL_LIMIT as u32 }>) -> Self {
+    fn from(x: StringM<SCSYMBOL_LIMIT>) -> Self {
         ScSymbol(x)
     }
 }
 
-impl AsRef<StringM<{ SCSYMBOL_LIMIT as u32 }>> for ScSymbol {
+impl AsRef<StringM<SCSYMBOL_LIMIT>> for ScSymbol {
     #[must_use]
-    fn as_ref(&self) -> &StringM<{ SCSYMBOL_LIMIT as u32 }> {
+    fn as_ref(&self) -> &StringM<SCSYMBOL_LIMIT> {
         &self.0
     }
 }
@@ -45,7 +45,7 @@ impl ReadXdr for ScSymbol {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = StringM::<{ SCSYMBOL_LIMIT as u32 }>::read_xdr(r)?;
+            let i = StringM::<SCSYMBOL_LIMIT>::read_xdr(r)?;
             let v = ScSymbol(i);
             Ok(v)
         })
@@ -60,7 +60,7 @@ impl WriteXdr for ScSymbol {
 }
 
 impl Deref for ScSymbol {
-    type Target = StringM<{ SCSYMBOL_LIMIT as u32 }>;
+    type Target = StringM<SCSYMBOL_LIMIT>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }

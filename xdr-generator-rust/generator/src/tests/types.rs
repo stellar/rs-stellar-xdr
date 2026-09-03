@@ -162,7 +162,7 @@ fn test_size_to_u32_literal() {
 fn test_size_to_u32_named() {
     assert_eq!(
         size_to_u32(&Size::Named("MAX_SIZE".to_string())),
-        "{ MAX_SIZE as u32 }"
+        "MAX_SIZE"
     );
 }
 

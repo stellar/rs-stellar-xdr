@@ -25,7 +25,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecEventParamV0 {
-    pub doc: StringM<{ SC_SPEC_DOC_LIMIT as u32 }>,
+    pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub name: StringM<30>,
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
@@ -41,7 +41,7 @@ impl ReadXdr for ScSpecEventParamV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<{ SC_SPEC_DOC_LIMIT as u32 }>::read_xdr(r)?,
+                doc: StringM::<SC_SPEC_DOC_LIMIT>::read_xdr(r)?,
                 name: StringM::<30>::read_xdr(r)?,
                 type_: ScSpecTypeDef::read_xdr(r)?,
                 location: ScSpecEventParamLocationV0::read_xdr(r)?,

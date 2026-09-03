@@ -18,25 +18,25 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct TxDemandVector(pub VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }>);
+pub struct TxDemandVector(pub VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE>);
 
-impl From<TxDemandVector> for VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }> {
+impl From<TxDemandVector> for VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE> {
     #[must_use]
     fn from(x: TxDemandVector) -> Self {
         x.0
     }
 }
 
-impl From<VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }>> for TxDemandVector {
+impl From<VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE>> for TxDemandVector {
     #[must_use]
-    fn from(x: VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }>) -> Self {
+    fn from(x: VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE>) -> Self {
         TxDemandVector(x)
     }
 }
 
-impl AsRef<VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }>> for TxDemandVector {
+impl AsRef<VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE>> for TxDemandVector {
     #[must_use]
-    fn as_ref(&self) -> &VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }> {
+    fn as_ref(&self) -> &VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE> {
         &self.0
     }
 }
@@ -45,7 +45,7 @@ impl ReadXdr for TxDemandVector {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = VecM::<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }>::read_xdr(r)?;
+            let i = VecM::<Hash, TX_DEMAND_VECTOR_MAX_SIZE>::read_xdr(r)?;
             let v = TxDemandVector(i);
             Ok(v)
         })
@@ -60,7 +60,7 @@ impl WriteXdr for TxDemandVector {
 }
 
 impl Deref for TxDemandVector {
-    type Target = VecM<Hash, { TX_DEMAND_VECTOR_MAX_SIZE as u32 }>;
+    type Target = VecM<Hash, TX_DEMAND_VECTOR_MAX_SIZE>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }

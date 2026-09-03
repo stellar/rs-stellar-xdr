@@ -58,7 +58,7 @@ pub struct AccountEntry {
     pub flags: u32,
     pub home_domain: String32,
     pub thresholds: Thresholds,
-    pub signers: VecM<Signer, { MAX_SIGNERS as u32 }>,
+    pub signers: VecM<Signer, MAX_SIGNERS>,
     pub ext: AccountEntryExt,
 }
 
@@ -75,7 +75,7 @@ impl ReadXdr for AccountEntry {
                 flags: u32::read_xdr(r)?,
                 home_domain: String32::read_xdr(r)?,
                 thresholds: Thresholds::read_xdr(r)?,
-                signers: VecM::<Signer, { MAX_SIGNERS as u32 }>::read_xdr(r)?,
+                signers: VecM::<Signer, MAX_SIGNERS>::read_xdr(r)?,
                 ext: AccountEntryExt::read_xdr(r)?,
             })
         })

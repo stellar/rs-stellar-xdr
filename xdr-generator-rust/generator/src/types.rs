@@ -42,16 +42,16 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
 
 /// Convert a Size to a Rust `u32` const generic argument, as used by
 /// `BytesM`, `StringM`, and `VecM`. Named sizes refer to the generated const,
-/// which is emitted as a `u64` and so needs casting.
+/// which is emitted as a `u32`.
 pub(crate) fn size_to_u32(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),
-        Size::Named(name) => format!("{{ {} as u32 }}", const_name(name)),
+        Size::Named(name) => const_name(name),
     }
 }
 
 /// Convert a Size to a Rust `usize` array length. Named sizes refer to the
-/// generated const, which is emitted as a `u64` and so needs casting.
+/// generated const, which is emitted as a `u32` and so needs casting.
 pub(crate) fn size_to_usize(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),

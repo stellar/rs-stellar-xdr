@@ -23,7 +23,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtUnionCaseVoidV0 {
-    pub doc: StringM<1024>,
+    pub doc: StringM<{ SC_SPEC_DOC_LIMIT as u32 }>,
     pub name: StringM<60>,
 }
 
@@ -32,7 +32,7 @@ impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
+                doc: StringM::<{ SC_SPEC_DOC_LIMIT as u32 }>::read_xdr(r)?,
                 name: StringM::<60>::read_xdr(r)?,
             })
         })

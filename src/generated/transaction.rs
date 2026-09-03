@@ -50,7 +50,7 @@ pub struct Transaction {
     pub seq_num: SequenceNumber,
     pub cond: Preconditions,
     pub memo: Memo,
-    pub operations: VecM<Operation, 100>,
+    pub operations: VecM<Operation, { MAX_OPS_PER_TX as u32 }>,
     pub ext: TransactionExt,
 }
 
@@ -64,7 +64,7 @@ impl ReadXdr for Transaction {
                 seq_num: SequenceNumber::read_xdr(r)?,
                 cond: Preconditions::read_xdr(r)?,
                 memo: Memo::read_xdr(r)?,
-                operations: VecM::<Operation, 100>::read_xdr(r)?,
+                operations: VecM::<Operation, { MAX_OPS_PER_TX as u32 }>::read_xdr(r)?,
                 ext: TransactionExt::read_xdr(r)?,
             })
         })

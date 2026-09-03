@@ -9,7 +9,7 @@ use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
 
 use crate::naming::{
-    case_value, field_json_rename, field_name, mod_name, source_comment, type_name,
+    case_value, const_name, field_json_rename, field_name, mod_name, source_comment, type_name,
 };
 use crate::options::RustOptions;
 use crate::output::{
@@ -18,7 +18,7 @@ use crate::output::{
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
     TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
-use crate::types::{base_type_ref, resolve_type, size_to_string, type_ref};
+use crate::types::{base_type_ref, resolve_type, type_ref};
 
 pub struct RustGenerator {
     options: RustOptions,
@@ -381,7 +381,9 @@ impl RustGenerator {
 
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
-            | xdr_parser::ast::Type::Array { size: s, .. } => Some(size_to_string(s)),
+            | xdr_parser::ast::Type::Array { size: s, .. } => {
+                Some(self.type_info.size_to_literal(s))
+            }
             _ => None,
         };
 
@@ -411,7 +413,7 @@ impl RustGenerator {
             IntBase::Decimal => c.value.to_string(),
         };
         ConstOutput {
-            name: field_name(&c.name).to_uppercase(),
+            name: const_name(&c.name),
             doc_name: type_name(&c.name),
             source_comment: source_comment(&c.source, "Const"),
             value_str,

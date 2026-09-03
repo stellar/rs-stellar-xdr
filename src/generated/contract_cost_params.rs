@@ -18,25 +18,33 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct ContractCostParams(pub VecM<ContractCostParamEntry, 1024>);
+pub struct ContractCostParams(
+    pub VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>,
+);
 
-impl From<ContractCostParams> for VecM<ContractCostParamEntry, 1024> {
+impl From<ContractCostParams>
+    for VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>
+{
     #[must_use]
     fn from(x: ContractCostParams) -> Self {
         x.0
     }
 }
 
-impl From<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
+impl From<VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>>
+    for ContractCostParams
+{
     #[must_use]
-    fn from(x: VecM<ContractCostParamEntry, 1024>) -> Self {
+    fn from(x: VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>) -> Self {
         ContractCostParams(x)
     }
 }
 
-impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
+impl AsRef<VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>>
+    for ContractCostParams
+{
     #[must_use]
-    fn as_ref(&self) -> &VecM<ContractCostParamEntry, 1024> {
+    fn as_ref(&self) -> &VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }> {
         &self.0
     }
 }
@@ -45,7 +53,8 @@ impl ReadXdr for ContractCostParams {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            let i = VecM::<ContractCostParamEntry, 1024>::read_xdr(r)?;
+            let i =
+                VecM::<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>::read_xdr(r)?;
             let v = ContractCostParams(i);
             Ok(v)
         })
@@ -60,7 +69,7 @@ impl WriteXdr for ContractCostParams {
 }
 
 impl Deref for ContractCostParams {
-    type Target = VecM<ContractCostParamEntry, 1024>;
+    type Target = VecM<ContractCostParamEntry, { CONTRACT_COST_COUNT_LIMIT as u32 }>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }

@@ -35,7 +35,7 @@ use super::*;
 pub struct AccountEntryExtensionV2 {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
-    pub signer_sponsoring_i_ds: VecM<SponsorshipDescriptor, 20>,
+    pub signer_sponsoring_i_ds: VecM<SponsorshipDescriptor, { MAX_SIGNERS as u32 }>,
     pub ext: AccountEntryExtensionV2Ext,
 }
 
@@ -46,7 +46,8 @@ impl ReadXdr for AccountEntryExtensionV2 {
             Ok(Self {
                 num_sponsored: u32::read_xdr(r)?,
                 num_sponsoring: u32::read_xdr(r)?,
-                signer_sponsoring_i_ds: VecM::<SponsorshipDescriptor, 20>::read_xdr(r)?,
+                signer_sponsoring_i_ds:
+                    VecM::<SponsorshipDescriptor, { MAX_SIGNERS as u32 }>::read_xdr(r)?,
                 ext: AccountEntryExtensionV2Ext::read_xdr(r)?,
             })
         })

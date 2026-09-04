@@ -1506,8 +1506,19 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
+            // `len` is untrusted and for most types `MAX` is `u32::MAX`, so it
+            // is only ever used as a ceiling on a reservation, never as the
+            // size of one. Capacity grows geometrically as elements are
+            // actually read, so the memory reserved is bounded by twice the
+            // number of elements decoded so far, and never exceeds `len`.
             let mut vec = Vec::new();
             for _ in 0..len {
+                if vec.len() == vec.capacity() {
+                    let cap = vec.capacity();
+                    let next = if cap == 0 { 4 } else { cap.saturating_mul(2) };
+                    let next = next.min(len as usize);
+                    vec.reserve_exact(next - vec.len());
+                }
                 let t = T::read_xdr(r)?;
                 vec.push(t);
             }

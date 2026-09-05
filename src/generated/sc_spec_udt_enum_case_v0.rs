@@ -58,7 +58,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtEnumCaseV0View<'a> {
-    pub doc: StringMView<'a, 1024>,
+    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
     pub name: StringMView<'a, 60>,
     pub value: u32,
 }

@@ -111,7 +111,7 @@ impl AsRef<[Hash]> for TxDemandVector {
 /// TxDemandVectorView is a borrowing equivalent of [`TxDemandVector`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxDemandVectorView<'a>(pub VecMView<'a, Hash, 1000>);
+pub struct TxDemandVectorView<'a>(pub VecMView<'a, Hash, TX_DEMAND_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "alloc")]
 impl From<&TxDemandVectorView<'_>> for TxDemandVector {

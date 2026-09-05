@@ -62,7 +62,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtStructV0View<'a> {
-    pub doc: StringMView<'a, 1024>,
+    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
     pub lib: StringMView<'a, 80>,
     pub name: StringMView<'a, 60>,
     pub fields: VecMView<'a, ScSpecUdtStructFieldV0View<'a>>,

@@ -111,7 +111,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
 /// TxAdvertVectorView is a borrowing equivalent of [`TxAdvertVector`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxAdvertVectorView<'a>(pub VecMView<'a, Hash, 1000>);
+pub struct TxAdvertVectorView<'a>(pub VecMView<'a, Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "alloc")]
 impl From<&TxAdvertVectorView<'_>> for TxAdvertVector {

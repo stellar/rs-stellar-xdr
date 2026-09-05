@@ -62,7 +62,7 @@ impl WriteXdr for ScSpecFunctionV0 {
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecFunctionV0View<'a> {
-    pub doc: StringMView<'a, 1024>,
+    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
     pub name: ScSymbolView<'a>,
     pub inputs: VecMView<'a, ScSpecFunctionInputV0View<'a>>,
     pub outputs: VecMView<'a, ScSpecTypeDefView<'a>, 1>,

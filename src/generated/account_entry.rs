@@ -113,7 +113,7 @@ pub struct AccountEntryView<'a> {
     pub flags: u32,
     pub home_domain: String32View<'a>,
     pub thresholds: Thresholds,
-    pub signers: VecMView<'a, SignerView<'a>, 20>,
+    pub signers: VecMView<'a, SignerView<'a>, MAX_SIGNERS>,
     pub ext: AccountEntryExtView<'a>,
 }
 

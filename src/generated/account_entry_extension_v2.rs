@@ -72,7 +72,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
 pub struct AccountEntryExtensionV2View<'a> {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
-    pub signer_sponsoring_i_ds: VecMView<'a, SponsorshipDescriptor, 20>,
+    pub signer_sponsoring_i_ds: VecMView<'a, SponsorshipDescriptor, MAX_SIGNERS>,
     pub ext: AccountEntryExtensionV2Ext,
 }
 

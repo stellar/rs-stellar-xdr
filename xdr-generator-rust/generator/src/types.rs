@@ -207,11 +207,11 @@ impl<'a> TypeMapping<'a> {
             | Type::Bool
             | Type::OpaqueFixed(_) => self.base_type_ref(),
             Type::OpaqueVar(max) => match max {
-                Some(size) => format!("BytesMView<'a, {}>", self.resolve_size(size)),
+                Some(size) => format!("BytesMView<'a, {}>", size_to_u32_string(size)),
                 None => "BytesMView<'a>".to_string(),
             },
             Type::String(max) => match max {
-                Some(size) => format!("StringMView<'a, {}>", self.resolve_size(size)),
+                Some(size) => format!("StringMView<'a, {}>", size_to_u32_string(size)),
                 None => "StringMView<'a>".to_string(),
             },
             Type::Ident(_) => {
@@ -241,7 +241,7 @@ impl<'a> TypeMapping<'a> {
                 format!(
                     "[{}; {}]",
                     self.child(element_type).view_base_type_ref(view_required),
-                    self.resolve_size(size)
+                    size_to_usize_string(size)
                 )
             }
             Type::VarArray {
@@ -250,7 +250,7 @@ impl<'a> TypeMapping<'a> {
             } => {
                 let elem = self.child(element_type).view_base_type_ref(view_required);
                 match max_size {
-                    Some(size) => format!("VecMView<'a, {elem}, {}>", self.resolve_size(size)),
+                    Some(size) => format!("VecMView<'a, {elem}, {}>", size_to_u32_string(size)),
                     None => format!("VecMView<'a, {elem}>"),
                 }
             }

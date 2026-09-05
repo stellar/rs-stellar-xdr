@@ -96,7 +96,7 @@ pub struct TransactionView<'a> {
     pub seq_num: SequenceNumber,
     pub cond: PreconditionsView<'a>,
     pub memo: MemoView<'a>,
-    pub operations: VecMView<'a, OperationView<'a>, 100>,
+    pub operations: VecMView<'a, OperationView<'a>, MAX_OPS_PER_TX>,
     pub ext: TransactionExtView<'a>,
 }
 

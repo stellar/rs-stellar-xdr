@@ -70,7 +70,7 @@ impl WriteXdr for ScSpecEventV0 {
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecEventV0View<'a> {
-    pub doc: StringMView<'a, 1024>,
+    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
     pub lib: StringMView<'a, 80>,
     pub name: ScSymbolView<'a>,
     pub prefix_topics: VecMView<'a, ScSymbolView<'a>, 2>,

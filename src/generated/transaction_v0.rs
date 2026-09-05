@@ -84,7 +84,7 @@ pub struct TransactionV0View<'a> {
     pub seq_num: SequenceNumber,
     pub time_bounds: Option<TimeBounds>,
     pub memo: MemoView<'a>,
-    pub operations: VecMView<'a, OperationView<'a>, 100>,
+    pub operations: VecMView<'a, OperationView<'a>, MAX_OPS_PER_TX>,
     pub ext: TransactionV0Ext,
 }
 

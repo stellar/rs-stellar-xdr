@@ -111,7 +111,9 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 /// ContractCostParamsView is a borrowing equivalent of [`ContractCostParams`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractCostParamsView<'a>(pub VecMView<'a, ContractCostParamEntry, 1024>);
+pub struct ContractCostParamsView<'a>(
+    pub VecMView<'a, ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>,
+);
 
 #[cfg(feature = "alloc")]
 impl From<&ContractCostParamsView<'_>> for ContractCostParams {

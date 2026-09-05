@@ -67,7 +67,7 @@ impl WriteXdr for ScSpecEventParamV0 {
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecEventParamV0View<'a> {
-    pub doc: StringMView<'a, 1024>,
+    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
     pub name: StringMView<'a, 30>,
     pub type_: ScSpecTypeDefView<'a>,
     pub location: ScSpecEventParamLocationV0,

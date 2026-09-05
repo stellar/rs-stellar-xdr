@@ -111,7 +111,7 @@ impl AsRef<[u8]> for ScSymbol {
 /// ScSymbolView is a borrowing equivalent of [`ScSymbol`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSymbolView<'a>(pub StringMView<'a, 32>);
+pub struct ScSymbolView<'a>(pub StringMView<'a, SCSYMBOL_LIMIT>);
 
 #[cfg(feature = "alloc")]
 impl From<&ScSymbolView<'_>> for ScSymbol {

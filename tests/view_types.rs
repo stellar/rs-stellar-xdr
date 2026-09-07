@@ -1,37 +1,4 @@
 //! Tests for the borrowing `View` types.
-//!
-//! A `View` is a borrowed mirror of an owned generated type: where the owned
-//! type holds a `VecM`, `BytesM`, `StringM`, or a `Box` for a cyclic reference,
-//! the `View` holds a `VecMView`, `BytesMView`, `StringMView`, or a plain
-//! reference. Types that own no heap data get no `View` and appear directly
-//! inside the `View`s that contain them.
-//!
-//! Rather than assert the contents of hand-built values, these tests check the
-//! properties that make a `View` a faithful mirror:
-//!
-//! 1. The runtime `View` types borrow their input (no copy) and enforce `MAX`
-//!    exactly as the owned types do, with an error that is usable in const.
-//! 2. `View`s are constructible in const contexts, including nested and cyclic
-//!    ones; the fixtures below are `const` items, evaluated under every feature
-//!    set, and are that proof.
-//! 3. A `View` converts to its owned type by value and by reference alike, and
-//!    the runtime types round-trip through their owned counterparts.
-//! 4. A `View` encodes to exactly the bytes its owned counterpart does, and
-//!    those bytes decode back to that owned value. The owned `WriteXdr` and
-//!    `ReadXdr` (untouched by the `View` work) are the oracle.
-//!
-//! `View`s cannot implement `ReadXdr`: decoding must produce owned data, so it
-//! always targets the owned type. That is the one asymmetry, and 4 relies on
-//! it.
-//!
-//! The fixtures cover one example of each shape the generator emits for
-//! `View`s: a struct mixing heap-free fields with nested and optional `View`s;
-//! a union with void, scalar, fixed-opaque and heap arms; an `int`-switched
-//! union with a heap arm; a newtype over `VecM`; a type that is cyclic through
-//! an option (borrowed instead of boxed); a type that is cyclic through a
-//! direct reference; and a type that recurses through `VecM` with an optional
-//! `View` in a union arm. No generated `View` holds a fixed array of `View`s,
-//! so that shape has no fixture.
 
 use stellar_xdr::{
     BytesMView, ClaimPredicateView, Error, ErrorLengthExceedsMax, Hash, LedgerFootprintView,

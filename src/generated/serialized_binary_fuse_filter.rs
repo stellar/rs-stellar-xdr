@@ -107,7 +107,7 @@ pub struct SerializedBinaryFuseFilterView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SerializedBinaryFuseFilterView<'_> {
     type Owned = SerializedBinaryFuseFilter;
-    fn into_owned(&self) -> SerializedBinaryFuseFilter {
+    fn into_owned(self) -> SerializedBinaryFuseFilter {
         SerializedBinaryFuseFilter {
             type_: self.type_.into_owned(),
             input_hash_seed: self.input_hash_seed.into_owned(),

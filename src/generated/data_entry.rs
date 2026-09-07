@@ -78,7 +78,7 @@ pub struct DataEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for DataEntryView<'_> {
     type Owned = DataEntry;
-    fn into_owned(&self) -> DataEntry {
+    fn into_owned(self) -> DataEntry {
         DataEntry {
             account_id: self.account_id.into_owned(),
             data_name: self.data_name.into_owned(),

@@ -132,8 +132,7 @@ impl WriteXdr for FeeBumpTransactionExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FeeBumpTransactionExt {
     type Owned = FeeBumpTransactionExt;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> FeeBumpTransactionExt {
-        self.clone()
+    fn into_owned(self) -> FeeBumpTransactionExt {
+        self
     }
 }

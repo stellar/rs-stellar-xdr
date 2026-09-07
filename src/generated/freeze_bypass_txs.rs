@@ -55,7 +55,7 @@ pub struct FreezeBypassTxsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FreezeBypassTxsView<'_> {
     type Owned = FreezeBypassTxs;
-    fn into_owned(&self) -> FreezeBypassTxs {
+    fn into_owned(self) -> FreezeBypassTxs {
         FreezeBypassTxs {
             tx_hashes: self.tx_hashes.into_owned(),
         }

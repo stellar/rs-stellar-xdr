@@ -60,7 +60,7 @@ pub struct FreezeBypassTxsDeltaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FreezeBypassTxsDeltaView<'_> {
     type Owned = FreezeBypassTxsDelta;
-    fn into_owned(&self) -> FreezeBypassTxsDelta {
+    fn into_owned(self) -> FreezeBypassTxsDelta {
         FreezeBypassTxsDelta {
             add_txs: self.add_txs.into_owned(),
             remove_txs: self.remove_txs.into_owned(),

@@ -285,7 +285,7 @@ pub enum LedgerKeyView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyView<'_> {
     type Owned = LedgerKey;
-    fn into_owned(&self) -> LedgerKey {
+    fn into_owned(self) -> LedgerKey {
         #[allow(clippy::match_same_arms)]
         match self {
             LedgerKeyView::Account(value) => LedgerKey::Account(value.into_owned()),

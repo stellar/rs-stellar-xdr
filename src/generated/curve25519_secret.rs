@@ -49,8 +49,7 @@ impl WriteXdr for Curve25519Secret {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Curve25519Secret {
     type Owned = Curve25519Secret;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> Curve25519Secret {
-        self.clone()
+    fn into_owned(self) -> Curve25519Secret {
+        self
     }
 }

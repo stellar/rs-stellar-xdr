@@ -110,7 +110,7 @@ pub struct LedgerCloseMetaV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerCloseMetaV2View<'_> {
     type Owned = LedgerCloseMetaV2;
-    fn into_owned(&self) -> LedgerCloseMetaV2 {
+    fn into_owned(self) -> LedgerCloseMetaV2 {
         LedgerCloseMetaV2 {
             ext: self.ext.into_owned(),
             ledger_header: self.ledger_header.into_owned(),

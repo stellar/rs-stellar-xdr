@@ -49,8 +49,7 @@ impl WriteXdr for ShortHashSeed {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ShortHashSeed {
     type Owned = ShortHashSeed;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ShortHashSeed {
-        self.clone()
+    fn into_owned(self) -> ShortHashSeed {
+        self
     }
 }

@@ -148,7 +148,7 @@ pub enum StoredTransactionSetView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StoredTransactionSetView<'_> {
     type Owned = StoredTransactionSet;
-    fn into_owned(&self) -> StoredTransactionSet {
+    fn into_owned(self) -> StoredTransactionSet {
         #[allow(clippy::match_same_arms)]
         match self {
             StoredTransactionSetView::V0(value) => StoredTransactionSet::V0(value.into_owned()),

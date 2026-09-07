@@ -103,7 +103,7 @@ pub struct SetOptionsOpView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SetOptionsOpView<'_> {
     type Owned = SetOptionsOp;
-    fn into_owned(&self) -> SetOptionsOp {
+    fn into_owned(self) -> SetOptionsOp {
         SetOptionsOp {
             inflation_dest: self.inflation_dest.into_owned(),
             clear_flags: self.clear_flags.into_owned(),

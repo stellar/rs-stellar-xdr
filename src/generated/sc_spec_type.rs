@@ -286,8 +286,7 @@ impl WriteXdr for ScSpecType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecType {
     type Owned = ScSpecType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScSpecType {
-        self.clone()
+    fn into_owned(self) -> ScSpecType {
+        self
     }
 }

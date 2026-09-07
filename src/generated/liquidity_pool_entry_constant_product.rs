@@ -83,8 +83,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LiquidityPoolEntryConstantProduct {
     type Owned = LiquidityPoolEntryConstantProduct;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LiquidityPoolEntryConstantProduct {
-        self.clone()
+    fn into_owned(self) -> LiquidityPoolEntryConstantProduct {
+        self
     }
 }

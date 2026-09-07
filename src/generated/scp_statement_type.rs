@@ -143,8 +143,7 @@ impl WriteXdr for ScpStatementType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementType {
     type Owned = ScpStatementType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScpStatementType {
-        self.clone()
+    fn into_owned(self) -> ScpStatementType {
+        self
     }
 }

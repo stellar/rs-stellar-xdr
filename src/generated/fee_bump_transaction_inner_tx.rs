@@ -140,7 +140,7 @@ pub enum FeeBumpTransactionInnerTxView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FeeBumpTransactionInnerTxView<'_> {
     type Owned = FeeBumpTransactionInnerTx;
-    fn into_owned(&self) -> FeeBumpTransactionInnerTx {
+    fn into_owned(self) -> FeeBumpTransactionInnerTx {
         #[allow(clippy::match_same_arms)]
         match self {
             FeeBumpTransactionInnerTxView::Tx(value) => {

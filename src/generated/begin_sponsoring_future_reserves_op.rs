@@ -49,8 +49,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BeginSponsoringFutureReservesOp {
     type Owned = BeginSponsoringFutureReservesOp;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> BeginSponsoringFutureReservesOp {
-        self.clone()
+    fn into_owned(self) -> BeginSponsoringFutureReservesOp {
+        self
     }
 }

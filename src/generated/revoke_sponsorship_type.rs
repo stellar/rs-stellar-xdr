@@ -133,8 +133,7 @@ impl WriteXdr for RevokeSponsorshipType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for RevokeSponsorshipType {
     type Owned = RevokeSponsorshipType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> RevokeSponsorshipType {
-        self.clone()
+    fn into_owned(self) -> RevokeSponsorshipType {
+        self
     }
 }

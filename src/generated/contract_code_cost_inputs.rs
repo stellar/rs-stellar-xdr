@@ -88,8 +88,7 @@ impl WriteXdr for ContractCodeCostInputs {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractCodeCostInputs {
     type Owned = ContractCodeCostInputs;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ContractCodeCostInputs {
-        self.clone()
+    fn into_owned(self) -> ContractCodeCostInputs {
+        self
     }
 }

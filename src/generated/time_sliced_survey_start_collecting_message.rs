@@ -57,8 +57,7 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeSlicedSurveyStartCollectingMessage {
     type Owned = TimeSlicedSurveyStartCollectingMessage;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> TimeSlicedSurveyStartCollectingMessage {
-        self.clone()
+    fn into_owned(self) -> TimeSlicedSurveyStartCollectingMessage {
+        self
     }
 }

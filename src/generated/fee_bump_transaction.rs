@@ -85,7 +85,7 @@ pub struct FeeBumpTransactionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FeeBumpTransactionView<'_> {
     type Owned = FeeBumpTransaction;
-    fn into_owned(&self) -> FeeBumpTransaction {
+    fn into_owned(self) -> FeeBumpTransaction {
         FeeBumpTransaction {
             fee_source: self.fee_source.into_owned(),
             fee: self.fee.into_owned(),

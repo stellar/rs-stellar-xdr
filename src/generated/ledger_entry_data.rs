@@ -244,7 +244,7 @@ pub enum LedgerEntryDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerEntryDataView<'_> {
     type Owned = LedgerEntryData;
-    fn into_owned(&self) -> LedgerEntryData {
+    fn into_owned(self) -> LedgerEntryData {
         #[allow(clippy::match_same_arms)]
         match self {
             LedgerEntryDataView::Account(value) => LedgerEntryData::Account(value.into_owned()),

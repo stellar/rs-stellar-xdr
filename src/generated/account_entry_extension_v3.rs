@@ -63,8 +63,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountEntryExtensionV3 {
     type Owned = AccountEntryExtensionV3;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> AccountEntryExtensionV3 {
-        self.clone()
+    fn into_owned(self) -> AccountEntryExtensionV3 {
+        self
     }
 }

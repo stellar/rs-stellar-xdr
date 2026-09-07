@@ -180,7 +180,7 @@ pub enum SorobanCredentialsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanCredentialsView<'_> {
     type Owned = SorobanCredentials;
-    fn into_owned(&self) -> SorobanCredentials {
+    fn into_owned(self) -> SorobanCredentials {
         #[allow(clippy::match_same_arms)]
         match self {
             SorobanCredentialsView::SourceAccount => SorobanCredentials::SourceAccount,

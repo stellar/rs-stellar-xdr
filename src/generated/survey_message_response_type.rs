@@ -127,8 +127,7 @@ impl WriteXdr for SurveyMessageResponseType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SurveyMessageResponseType {
     type Owned = SurveyMessageResponseType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SurveyMessageResponseType {
-        self.clone()
+    fn into_owned(self) -> SurveyMessageResponseType {
+        self
     }
 }

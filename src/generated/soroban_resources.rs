@@ -76,7 +76,7 @@ pub struct SorobanResourcesView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanResourcesView<'_> {
     type Owned = SorobanResources;
-    fn into_owned(&self) -> SorobanResources {
+    fn into_owned(self) -> SorobanResources {
         SorobanResources {
             footprint: self.footprint.into_owned(),
             instructions: self.instructions.into_owned(),

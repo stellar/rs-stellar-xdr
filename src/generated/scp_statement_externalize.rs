@@ -66,7 +66,7 @@ pub struct ScpStatementExternalizeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementExternalizeView<'_> {
     type Owned = ScpStatementExternalize;
-    fn into_owned(&self) -> ScpStatementExternalize {
+    fn into_owned(self) -> ScpStatementExternalize {
         ScpStatementExternalize {
             commit: self.commit.into_owned(),
             n_h: self.n_h.into_owned(),

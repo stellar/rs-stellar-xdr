@@ -56,7 +56,7 @@ pub struct FloodDemandView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FloodDemandView<'_> {
     type Owned = FloodDemand;
-    fn into_owned(&self) -> FloodDemand {
+    fn into_owned(self) -> FloodDemand {
         FloodDemand {
             tx_hashes: self.tx_hashes.into_owned(),
         }

@@ -91,7 +91,7 @@ pub struct TransactionV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionV0View<'_> {
     type Owned = TransactionV0;
-    fn into_owned(&self) -> TransactionV0 {
+    fn into_owned(self) -> TransactionV0 {
         TransactionV0 {
             source_account_ed25519: self.source_account_ed25519.into_owned(),
             fee: self.fee.into_owned(),

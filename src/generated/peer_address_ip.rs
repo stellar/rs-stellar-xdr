@@ -139,8 +139,7 @@ impl WriteXdr for PeerAddressIp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PeerAddressIp {
     type Owned = PeerAddressIp;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> PeerAddressIp {
-        self.clone()
+    fn into_owned(self) -> PeerAddressIp {
+        self
     }
 }

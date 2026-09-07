@@ -61,7 +61,7 @@ pub struct ScMetaV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScMetaV0View<'_> {
     type Owned = ScMetaV0;
-    fn into_owned(&self) -> ScMetaV0 {
+    fn into_owned(self) -> ScMetaV0 {
         ScMetaV0 {
             key: self.key.into_owned(),
             val: self.val.into_owned(),

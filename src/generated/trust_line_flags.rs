@@ -147,8 +147,7 @@ impl WriteXdr for TrustLineFlags {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TrustLineFlags {
     type Owned = TrustLineFlags;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> TrustLineFlags {
-        self.clone()
+    fn into_owned(self) -> TrustLineFlags {
+        self
     }
 }

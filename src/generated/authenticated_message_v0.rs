@@ -70,7 +70,7 @@ pub struct AuthenticatedMessageV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AuthenticatedMessageV0View<'_> {
     type Owned = AuthenticatedMessageV0;
-    fn into_owned(&self) -> AuthenticatedMessageV0 {
+    fn into_owned(self) -> AuthenticatedMessageV0 {
         AuthenticatedMessageV0 {
             sequence: self.sequence.into_owned(),
             message: self.message.into_owned(),

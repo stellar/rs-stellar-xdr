@@ -126,8 +126,7 @@ impl WriteXdr for ClaimantType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimantType {
     type Owned = ClaimantType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ClaimantType {
-        self.clone()
+    fn into_owned(self) -> ClaimantType {
+        self
     }
 }

@@ -394,7 +394,7 @@ pub enum ConfigSettingEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingEntryView<'_> {
     type Owned = ConfigSettingEntry;
-    fn into_owned(&self) -> ConfigSettingEntry {
+    fn into_owned(self) -> ConfigSettingEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             ConfigSettingEntryView::ContractMaxSizeBytes(value) => {

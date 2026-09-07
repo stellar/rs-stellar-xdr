@@ -172,7 +172,7 @@ pub enum TransactionMetaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionMetaView<'_> {
     type Owned = TransactionMeta;
-    fn into_owned(&self) -> TransactionMeta {
+    fn into_owned(self) -> TransactionMeta {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionMetaView::V0(value) => TransactionMeta::V0(value.into_owned()),

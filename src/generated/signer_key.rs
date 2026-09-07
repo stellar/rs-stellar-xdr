@@ -176,7 +176,7 @@ pub enum SignerKeyView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignerKeyView<'_> {
     type Owned = SignerKey;
-    fn into_owned(&self) -> SignerKey {
+    fn into_owned(self) -> SignerKey {
         #[allow(clippy::match_same_arms)]
         match self {
             SignerKeyView::Ed25519(value) => SignerKey::Ed25519(value.into_owned()),

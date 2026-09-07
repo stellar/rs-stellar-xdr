@@ -148,7 +148,7 @@ pub enum TransactionPhaseView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionPhaseView<'_> {
     type Owned = TransactionPhase;
-    fn into_owned(&self) -> TransactionPhase {
+    fn into_owned(self) -> TransactionPhase {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionPhaseView::V0(value) => TransactionPhase::V0(value.into_owned()),

@@ -53,8 +53,7 @@ impl WriteXdr for LedgerKeyTrustLine {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyTrustLine {
     type Owned = LedgerKeyTrustLine;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LedgerKeyTrustLine {
-        self.clone()
+    fn into_owned(self) -> LedgerKeyTrustLine {
+        self
     }
 }

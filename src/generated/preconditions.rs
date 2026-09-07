@@ -160,7 +160,7 @@ pub enum PreconditionsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PreconditionsView<'_> {
     type Owned = Preconditions;
-    fn into_owned(&self) -> Preconditions {
+    fn into_owned(self) -> Preconditions {
         #[allow(clippy::match_same_arms)]
         match self {
             PreconditionsView::None => Preconditions::None,

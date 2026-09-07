@@ -53,8 +53,7 @@ impl WriteXdr for ExtendFootprintTtlOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ExtendFootprintTtlOp {
     type Owned = ExtendFootprintTtlOp;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ExtendFootprintTtlOp {
-        self.clone()
+    fn into_owned(self) -> ExtendFootprintTtlOp {
+        self
     }
 }

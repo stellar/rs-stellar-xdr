@@ -116,7 +116,7 @@ pub struct String64View<'a>(pub StringMView<'a, 64>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for String64View<'_> {
     type Owned = String64;
-    fn into_owned(&self) -> String64 {
+    fn into_owned(self) -> String64 {
         String64(self.0.into_owned())
     }
 }

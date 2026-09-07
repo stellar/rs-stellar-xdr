@@ -61,7 +61,7 @@ pub struct TimeSlicedSurveyResponseMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
     type Owned = TimeSlicedSurveyResponseMessage;
-    fn into_owned(&self) -> TimeSlicedSurveyResponseMessage {
+    fn into_owned(self) -> TimeSlicedSurveyResponseMessage {
         TimeSlicedSurveyResponseMessage {
             response: self.response.into_owned(),
             nonce: self.nonce.into_owned(),

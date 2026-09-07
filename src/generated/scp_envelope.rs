@@ -61,7 +61,7 @@ pub struct ScpEnvelopeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpEnvelopeView<'_> {
     type Owned = ScpEnvelope;
-    fn into_owned(&self) -> ScpEnvelope {
+    fn into_owned(self) -> ScpEnvelope {
         ScpEnvelope {
             statement: self.statement.into_owned(),
             signature: self.signature.into_owned(),

@@ -71,7 +71,7 @@ pub struct ScSpecUdtUnionV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtUnionV0View<'_> {
     type Owned = ScSpecUdtUnionV0;
-    fn into_owned(&self) -> ScSpecUdtUnionV0 {
+    fn into_owned(self) -> ScSpecUdtUnionV0 {
         ScSpecUdtUnionV0 {
             doc: self.doc.into_owned(),
             lib: self.lib.into_owned(),

@@ -56,7 +56,7 @@ pub struct OperationMetaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationMetaView<'_> {
     type Owned = OperationMeta;
-    fn into_owned(&self) -> OperationMeta {
+    fn into_owned(self) -> OperationMeta {
         OperationMeta {
             changes: self.changes.into_owned(),
         }

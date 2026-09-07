@@ -184,7 +184,7 @@ pub enum MemoView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for MemoView<'_> {
     type Owned = Memo;
-    fn into_owned(&self) -> Memo {
+    fn into_owned(self) -> Memo {
         #[allow(clippy::match_same_arms)]
         match self {
             MemoView::None => Memo::None,

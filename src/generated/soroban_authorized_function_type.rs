@@ -142,8 +142,7 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAuthorizedFunctionType {
     type Owned = SorobanAuthorizedFunctionType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SorobanAuthorizedFunctionType {
-        self.clone()
+    fn into_owned(self) -> SorobanAuthorizedFunctionType {
+        self
     }
 }

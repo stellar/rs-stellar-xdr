@@ -139,8 +139,7 @@ impl WriteXdr for SorobanTransactionMetaExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanTransactionMetaExt {
     type Owned = SorobanTransactionMetaExt;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SorobanTransactionMetaExt {
-        self.clone()
+    fn into_owned(self) -> SorobanTransactionMetaExt {
+        self
     }
 }

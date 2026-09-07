@@ -61,7 +61,7 @@ pub struct DiagnosticEventView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for DiagnosticEventView<'_> {
     type Owned = DiagnosticEvent;
-    fn into_owned(&self) -> DiagnosticEvent {
+    fn into_owned(self) -> DiagnosticEvent {
         DiagnosticEvent {
             in_successful_contract_call: self.in_successful_contract_call.into_owned(),
             event: self.event.into_owned(),

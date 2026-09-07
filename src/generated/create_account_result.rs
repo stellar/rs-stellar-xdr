@@ -169,8 +169,7 @@ impl WriteXdr for CreateAccountResult {
 #[cfg(feature = "alloc")]
 impl IntoOwned for CreateAccountResult {
     type Owned = CreateAccountResult;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> CreateAccountResult {
-        self.clone()
+    fn into_owned(self) -> CreateAccountResult {
+        self
     }
 }

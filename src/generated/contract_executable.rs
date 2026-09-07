@@ -162,7 +162,7 @@ pub enum ContractExecutableView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractExecutableView<'_> {
     type Owned = ContractExecutable;
-    fn into_owned(&self) -> ContractExecutable {
+    fn into_owned(self) -> ContractExecutable {
         #[allow(clippy::match_same_arms)]
         match self {
             ContractExecutableView::Wasm(value) => ContractExecutable::Wasm(value.into_owned()),

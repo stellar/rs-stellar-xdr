@@ -158,8 +158,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClawbackClaimableBalanceResult {
     type Owned = ClawbackClaimableBalanceResult;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ClawbackClaimableBalanceResult {
-        self.clone()
+    fn into_owned(self) -> ClawbackClaimableBalanceResult {
+        self
     }
 }

@@ -187,8 +187,7 @@ impl WriteXdr for PaymentResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PaymentResultCode {
     type Owned = PaymentResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> PaymentResultCode {
-        self.clone()
+    fn into_owned(self) -> PaymentResultCode {
+        self
     }
 }

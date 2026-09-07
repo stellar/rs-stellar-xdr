@@ -71,7 +71,7 @@ pub struct ScSpecUdtErrorEnumV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtErrorEnumV0View<'_> {
     type Owned = ScSpecUdtErrorEnumV0;
-    fn into_owned(&self) -> ScSpecUdtErrorEnumV0 {
+    fn into_owned(self) -> ScSpecUdtErrorEnumV0 {
         ScSpecUdtErrorEnumV0 {
             doc: self.doc.into_owned(),
             lib: self.lib.into_owned(),

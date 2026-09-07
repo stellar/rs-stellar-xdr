@@ -66,7 +66,7 @@ pub struct ScSpecUdtErrorEnumCaseV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtErrorEnumCaseV0View<'_> {
     type Owned = ScSpecUdtErrorEnumCaseV0;
-    fn into_owned(&self) -> ScSpecUdtErrorEnumCaseV0 {
+    fn into_owned(self) -> ScSpecUdtErrorEnumCaseV0 {
         ScSpecUdtErrorEnumCaseV0 {
             doc: self.doc.into_owned(),
             name: self.name.into_owned(),

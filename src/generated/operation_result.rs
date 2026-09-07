@@ -256,7 +256,7 @@ pub enum OperationResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationResultView<'_> {
     type Owned = OperationResult;
-    fn into_owned(&self) -> OperationResult {
+    fn into_owned(self) -> OperationResult {
         #[allow(clippy::match_same_arms)]
         match self {
             OperationResultView::OpInner(value) => OperationResult::OpInner(value.into_owned()),

@@ -94,7 +94,7 @@ pub struct StellarValueView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueView<'_> {
     type Owned = StellarValue;
-    fn into_owned(&self) -> StellarValue {
+    fn into_owned(self) -> StellarValue {
         StellarValue {
             tx_set_hash: self.tx_set_hash.into_owned(),
             close_time: self.close_time.into_owned(),

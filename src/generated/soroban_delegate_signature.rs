@@ -66,7 +66,7 @@ pub struct SorobanDelegateSignatureView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanDelegateSignatureView<'_> {
     type Owned = SorobanDelegateSignature;
-    fn into_owned(&self) -> SorobanDelegateSignature {
+    fn into_owned(self) -> SorobanDelegateSignature {
         SorobanDelegateSignature {
             address: self.address.into_owned(),
             signature: self.signature.into_owned(),

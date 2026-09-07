@@ -154,8 +154,7 @@ impl WriteXdr for Asset {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Asset {
     type Owned = Asset;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> Asset {
-        self.clone()
+    fn into_owned(self) -> Asset {
+        self
     }
 }

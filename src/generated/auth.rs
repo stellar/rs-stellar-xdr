@@ -49,8 +49,7 @@ impl WriteXdr for Auth {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Auth {
     type Owned = Auth;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> Auth {
-        self.clone()
+    fn into_owned(self) -> Auth {
+        self
     }
 }

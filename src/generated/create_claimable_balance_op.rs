@@ -70,7 +70,7 @@ pub struct CreateClaimableBalanceOpView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for CreateClaimableBalanceOpView<'_> {
     type Owned = CreateClaimableBalanceOp;
-    fn into_owned(&self) -> CreateClaimableBalanceOp {
+    fn into_owned(self) -> CreateClaimableBalanceOp {
         CreateClaimableBalanceOp {
             asset: self.asset.into_owned(),
             amount: self.amount.into_owned(),

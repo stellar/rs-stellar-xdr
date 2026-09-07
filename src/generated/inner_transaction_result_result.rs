@@ -304,7 +304,7 @@ pub enum InnerTransactionResultResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InnerTransactionResultResultView<'_> {
     type Owned = InnerTransactionResultResult;
-    fn into_owned(&self) -> InnerTransactionResultResult {
+    fn into_owned(self) -> InnerTransactionResultResult {
         #[allow(clippy::match_same_arms)]
         match self {
             InnerTransactionResultResultView::TxSuccess(value) => {

@@ -146,8 +146,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingContractLedgerCostV0 {
     type Owned = ConfigSettingContractLedgerCostV0;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ConfigSettingContractLedgerCostV0 {
-        self.clone()
+    fn into_owned(self) -> ConfigSettingContractLedgerCostV0 {
+        self
     }
 }

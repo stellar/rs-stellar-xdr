@@ -104,7 +104,7 @@ pub struct PreconditionsV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PreconditionsV2View<'_> {
     type Owned = PreconditionsV2;
-    fn into_owned(&self) -> PreconditionsV2 {
+    fn into_owned(self) -> PreconditionsV2 {
         PreconditionsV2 {
             time_bounds: self.time_bounds.into_owned(),
             ledger_bounds: self.ledger_bounds.into_owned(),

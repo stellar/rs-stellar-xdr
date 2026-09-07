@@ -80,7 +80,7 @@ pub struct HashIdPreimageSorobanAuthorizationWithAddressView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HashIdPreimageSorobanAuthorizationWithAddressView<'_> {
     type Owned = HashIdPreimageSorobanAuthorizationWithAddress;
-    fn into_owned(&self) -> HashIdPreimageSorobanAuthorizationWithAddress {
+    fn into_owned(self) -> HashIdPreimageSorobanAuthorizationWithAddress {
         HashIdPreimageSorobanAuthorizationWithAddress {
             network_id: self.network_id.into_owned(),
             nonce: self.nonce.into_owned(),

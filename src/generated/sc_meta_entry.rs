@@ -140,7 +140,7 @@ pub enum ScMetaEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScMetaEntryView<'_> {
     type Owned = ScMetaEntry;
-    fn into_owned(&self) -> ScMetaEntry {
+    fn into_owned(self) -> ScMetaEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             ScMetaEntryView::ScMetaV0(value) => ScMetaEntry::ScMetaV0(value.into_owned()),

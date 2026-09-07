@@ -148,7 +148,7 @@ pub enum AccountEntryExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountEntryExtView<'_> {
     type Owned = AccountEntryExt;
-    fn into_owned(&self) -> AccountEntryExt {
+    fn into_owned(self) -> AccountEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
             AccountEntryExtView::V0 => AccountEntryExt::V0,

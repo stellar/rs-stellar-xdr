@@ -70,7 +70,7 @@ pub struct AuthCertView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AuthCertView<'_> {
     type Owned = AuthCert;
-    fn into_owned(&self) -> AuthCert {
+    fn into_owned(self) -> AuthCert {
         AuthCert {
             pubkey: self.pubkey.into_owned(),
             expiration: self.expiration.into_owned(),

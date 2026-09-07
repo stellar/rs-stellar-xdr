@@ -67,7 +67,7 @@ pub struct CreateContractArgsV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for CreateContractArgsV2View<'_> {
     type Owned = CreateContractArgsV2;
-    fn into_owned(&self) -> CreateContractArgsV2 {
+    fn into_owned(self) -> CreateContractArgsV2 {
         CreateContractArgsV2 {
             contract_id_preimage: self.contract_id_preimage.into_owned(),
             executable: self.executable.into_owned(),

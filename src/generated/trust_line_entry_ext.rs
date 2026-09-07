@@ -151,8 +151,7 @@ impl WriteXdr for TrustLineEntryExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TrustLineEntryExt {
     type Owned = TrustLineEntryExt;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> TrustLineEntryExt {
-        self.clone()
+    fn into_owned(self) -> TrustLineEntryExt {
+        self
     }
 }

@@ -66,7 +66,7 @@ pub struct StoredDebugTransactionSetView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StoredDebugTransactionSetView<'_> {
     type Owned = StoredDebugTransactionSet;
-    fn into_owned(&self) -> StoredDebugTransactionSet {
+    fn into_owned(self) -> StoredDebugTransactionSet {
         StoredDebugTransactionSet {
             tx_set: self.tx_set.into_owned(),
             ledger_seq: self.ledger_seq.into_owned(),

@@ -71,7 +71,7 @@ pub struct StellarValueProposedValueView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueProposedValueView<'_> {
     type Owned = StellarValueProposedValue;
-    fn into_owned(&self) -> StellarValueProposedValue {
+    fn into_owned(self) -> StellarValueProposedValue {
         StellarValueProposedValue {
             tx_set_hash: self.tx_set_hash.into_owned(),
             previous_ledger_hash: self.previous_ledger_hash.into_owned(),

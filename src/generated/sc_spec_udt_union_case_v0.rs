@@ -155,7 +155,7 @@ pub enum ScSpecUdtUnionCaseV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
     type Owned = ScSpecUdtUnionCaseV0;
-    fn into_owned(&self) -> ScSpecUdtUnionCaseV0 {
+    fn into_owned(self) -> ScSpecUdtUnionCaseV0 {
         #[allow(clippy::match_same_arms)]
         match self {
             ScSpecUdtUnionCaseV0View::VoidV0(value) => {

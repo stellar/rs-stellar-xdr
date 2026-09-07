@@ -313,14 +313,14 @@ pub struct {{ t.name }}View<'a>(pub {{ t.view_type_ref }});
 #[cfg(feature = "alloc")]
 impl IntoOwned for {{ t.name }}View<'_> {
     type Owned = {{ t.name }};
-    fn into_owned(&self) -> {{ t.name }} {
+    fn into_owned(self) -> {{ t.name }} {
 {%- match t.cyclic %}
 {%- when CyclicBorrow::NotCyclic %}
         {{ t.name }}(self.0.into_owned())
 {%- when CyclicBorrow::Reference %}
         {{ t.name }}(Box::new(self.0.into_owned()))
 {%- when CyclicBorrow::OptionalReference %}
-        {{ t.name }}(self.0.as_ref().map(|v| Box::new(v.into_owned())))
+        {{ t.name }}(self.0.map(|v| Box::new(v.into_owned())))
 {%- endmatch %}
     }
 }

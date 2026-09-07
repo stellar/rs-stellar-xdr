@@ -122,7 +122,7 @@ pub struct OperationView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationView<'_> {
     type Owned = Operation;
-    fn into_owned(&self) -> Operation {
+    fn into_owned(self) -> Operation {
         Operation {
             source_account: self.source_account.into_owned(),
             body: self.body.into_owned(),

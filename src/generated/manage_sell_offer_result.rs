@@ -256,7 +256,7 @@ pub enum ManageSellOfferResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageSellOfferResultView<'_> {
     type Owned = ManageSellOfferResult;
-    fn into_owned(&self) -> ManageSellOfferResult {
+    fn into_owned(self) -> ManageSellOfferResult {
         #[allow(clippy::match_same_arms)]
         match self {
             ManageSellOfferResultView::Success(value) => {

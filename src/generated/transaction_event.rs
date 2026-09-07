@@ -60,7 +60,7 @@ pub struct TransactionEventView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionEventView<'_> {
     type Owned = TransactionEvent;
-    fn into_owned(&self) -> TransactionEvent {
+    fn into_owned(self) -> TransactionEvent {
         TransactionEvent {
             stage: self.stage.into_owned(),
             event: self.event.into_owned(),

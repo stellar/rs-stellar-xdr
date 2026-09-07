@@ -116,7 +116,7 @@ pub struct TxDemandVectorView<'a>(pub VecMView<'a, Hash, TX_DEMAND_VECTOR_MAX_SI
 #[cfg(feature = "alloc")]
 impl IntoOwned for TxDemandVectorView<'_> {
     type Owned = TxDemandVector;
-    fn into_owned(&self) -> TxDemandVector {
+    fn into_owned(self) -> TxDemandVector {
         TxDemandVector(self.0.into_owned())
     }
 }

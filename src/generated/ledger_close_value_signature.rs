@@ -61,7 +61,7 @@ pub struct LedgerCloseValueSignatureView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerCloseValueSignatureView<'_> {
     type Owned = LedgerCloseValueSignature;
-    fn into_owned(&self) -> LedgerCloseValueSignature {
+    fn into_owned(self) -> LedgerCloseValueSignature {
         LedgerCloseValueSignature {
             node_id: self.node_id.into_owned(),
             signature: self.signature.into_owned(),

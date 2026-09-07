@@ -116,7 +116,7 @@ pub struct ScMapView<'a>(pub VecMView<'a, ScMapEntryView<'a>>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScMapView<'_> {
     type Owned = ScMap;
-    fn into_owned(&self) -> ScMap {
+    fn into_owned(self) -> ScMap {
         ScMap(self.0.into_owned())
     }
 }

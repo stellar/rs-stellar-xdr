@@ -139,8 +139,7 @@ impl WriteXdr for BucketMetadataExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BucketMetadataExt {
     type Owned = BucketMetadataExt;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> BucketMetadataExt {
-        self.clone()
+    fn into_owned(self) -> BucketMetadataExt {
+        self
     }
 }

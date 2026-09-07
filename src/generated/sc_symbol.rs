@@ -116,7 +116,7 @@ pub struct ScSymbolView<'a>(pub StringMView<'a, SCSYMBOL_LIMIT>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSymbolView<'_> {
     type Owned = ScSymbol;
-    fn into_owned(&self) -> ScSymbol {
+    fn into_owned(self) -> ScSymbol {
         ScSymbol(self.0.into_owned())
     }
 }

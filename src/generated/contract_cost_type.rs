@@ -736,8 +736,7 @@ impl WriteXdr for ContractCostType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractCostType {
     type Owned = ContractCostType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ContractCostType {
-        self.clone()
+    fn into_owned(self) -> ContractCostType {
+        self
     }
 }

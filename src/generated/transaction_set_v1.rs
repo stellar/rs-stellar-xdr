@@ -61,7 +61,7 @@ pub struct TransactionSetV1View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionSetV1View<'_> {
     type Owned = TransactionSetV1;
-    fn into_owned(&self) -> TransactionSetV1 {
+    fn into_owned(self) -> TransactionSetV1 {
         TransactionSetV1 {
             previous_ledger_hash: self.previous_ledger_hash.into_owned(),
             phases: self.phases.into_owned(),

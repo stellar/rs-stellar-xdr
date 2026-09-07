@@ -132,8 +132,7 @@ impl WriteXdr for ContractDataDurability {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractDataDurability {
     type Owned = ContractDataDurability;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ContractDataDurability {
-        self.clone()
+    fn into_owned(self) -> ContractDataDurability {
+        self
     }
 }

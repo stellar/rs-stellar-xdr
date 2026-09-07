@@ -225,7 +225,7 @@ pub enum HashIdPreimageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HashIdPreimageView<'_> {
     type Owned = HashIdPreimage;
-    fn into_owned(&self) -> HashIdPreimage {
+    fn into_owned(self) -> HashIdPreimage {
         #[allow(clippy::match_same_arms)]
         match self {
             HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(value.into_owned()),

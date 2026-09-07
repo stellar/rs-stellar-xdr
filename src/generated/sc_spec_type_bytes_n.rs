@@ -49,8 +49,7 @@ impl WriteXdr for ScSpecTypeBytesN {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeBytesN {
     type Owned = ScSpecTypeBytesN;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScSpecTypeBytesN {
-        self.clone()
+    fn into_owned(self) -> ScSpecTypeBytesN {
+        self
     }
 }

@@ -217,8 +217,7 @@ impl WriteXdr for SetOptionsResult {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SetOptionsResult {
     type Owned = SetOptionsResult;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SetOptionsResult {
-        self.clone()
+    fn into_owned(self) -> SetOptionsResult {
+        self
     }
 }

@@ -262,7 +262,7 @@ pub enum PathPaymentStrictSendResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PathPaymentStrictSendResultView<'_> {
     type Owned = PathPaymentStrictSendResult;
-    fn into_owned(&self) -> PathPaymentStrictSendResult {
+    fn into_owned(self) -> PathPaymentStrictSendResult {
         #[allow(clippy::match_same_arms)]
         match self {
             PathPaymentStrictSendResultView::Success(value) => {

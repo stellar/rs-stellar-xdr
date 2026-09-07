@@ -53,8 +53,7 @@ impl WriteXdr for ContractIdPreimageFromAddress {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractIdPreimageFromAddress {
     type Owned = ContractIdPreimageFromAddress;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ContractIdPreimageFromAddress {
-        self.clone()
+    fn into_owned(self) -> ContractIdPreimageFromAddress {
+        self
     }
 }

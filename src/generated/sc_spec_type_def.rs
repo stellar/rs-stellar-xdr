@@ -376,7 +376,7 @@ pub enum ScSpecTypeDefView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeDefView<'_> {
     type Owned = ScSpecTypeDef;
-    fn into_owned(&self) -> ScSpecTypeDef {
+    fn into_owned(self) -> ScSpecTypeDef {
         #[allow(clippy::match_same_arms)]
         match self {
             ScSpecTypeDefView::Val => ScSpecTypeDef::Val,

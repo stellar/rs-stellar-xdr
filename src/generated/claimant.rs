@@ -144,7 +144,7 @@ pub enum ClaimantView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimantView<'_> {
     type Owned = Claimant;
-    fn into_owned(&self) -> Claimant {
+    fn into_owned(self) -> Claimant {
         #[allow(clippy::match_same_arms)]
         match self {
             ClaimantView::ClaimantTypeV0(value) => Claimant::ClaimantTypeV0(value.into_owned()),

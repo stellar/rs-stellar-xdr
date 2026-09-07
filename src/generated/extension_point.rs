@@ -132,8 +132,7 @@ impl WriteXdr for ExtensionPoint {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ExtensionPoint {
     type Owned = ExtensionPoint;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ExtensionPoint {
-        self.clone()
+    fn into_owned(self) -> ExtensionPoint {
+        self
     }
 }

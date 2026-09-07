@@ -146,7 +146,7 @@ pub enum SurveyResponseBodyView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SurveyResponseBodyView<'_> {
     type Owned = SurveyResponseBody;
-    fn into_owned(&self) -> SurveyResponseBody {
+    fn into_owned(self) -> SurveyResponseBody {
         #[allow(clippy::match_same_arms)]
         match self {
             SurveyResponseBodyView::SurveyTopologyResponseV2(value) => {

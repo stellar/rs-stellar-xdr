@@ -65,8 +65,7 @@ impl WriteXdr for ConfigSettingScpTiming {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingScpTiming {
     type Owned = ConfigSettingScpTiming;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ConfigSettingScpTiming {
-        self.clone()
+    fn into_owned(self) -> ConfigSettingScpTiming {
+        self
     }
 }

@@ -73,8 +73,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LiquidityPoolWithdrawOp {
     type Owned = LiquidityPoolWithdrawOp;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LiquidityPoolWithdrawOp {
-        self.clone()
+    fn into_owned(self) -> LiquidityPoolWithdrawOp {
+        self
     }
 }

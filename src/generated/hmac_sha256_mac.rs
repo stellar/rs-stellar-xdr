@@ -49,8 +49,7 @@ impl WriteXdr for HmacSha256Mac {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HmacSha256Mac {
     type Owned = HmacSha256Mac;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> HmacSha256Mac {
-        self.clone()
+    fn into_owned(self) -> HmacSha256Mac {
+        self
     }
 }

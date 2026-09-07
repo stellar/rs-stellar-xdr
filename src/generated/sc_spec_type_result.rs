@@ -61,7 +61,7 @@ pub struct ScSpecTypeResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeResultView<'_> {
     type Owned = ScSpecTypeResult;
-    fn into_owned(&self) -> ScSpecTypeResult {
+    fn into_owned(self) -> ScSpecTypeResult {
         ScSpecTypeResult {
             ok_type: Box::new(self.ok_type.into_owned()),
             error_type: Box::new(self.error_type.into_owned()),

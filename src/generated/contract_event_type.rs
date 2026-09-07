@@ -138,8 +138,7 @@ impl WriteXdr for ContractEventType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractEventType {
     type Owned = ContractEventType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ContractEventType {
-        self.clone()
+    fn into_owned(self) -> ContractEventType {
+        self
     }
 }

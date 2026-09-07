@@ -61,7 +61,7 @@ pub struct PathPaymentStrictReceiveResultSuccessView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PathPaymentStrictReceiveResultSuccessView<'_> {
     type Owned = PathPaymentStrictReceiveResultSuccess;
-    fn into_owned(&self) -> PathPaymentStrictReceiveResultSuccess {
+    fn into_owned(self) -> PathPaymentStrictReceiveResultSuccess {
         PathPaymentStrictReceiveResultSuccess {
             offers: self.offers.into_owned(),
             last: self.last.into_owned(),

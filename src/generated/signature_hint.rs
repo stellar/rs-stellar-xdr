@@ -157,8 +157,7 @@ impl AsRef<[u8]> for SignatureHint {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignatureHint {
     type Owned = SignatureHint;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SignatureHint {
-        self.clone()
+    fn into_owned(self) -> SignatureHint {
+        self
     }
 }

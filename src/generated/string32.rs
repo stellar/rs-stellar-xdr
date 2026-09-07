@@ -116,7 +116,7 @@ pub struct String32View<'a>(pub StringMView<'a, 32>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for String32View<'_> {
     type Owned = String32;
-    fn into_owned(&self) -> String32 {
+    fn into_owned(self) -> String32 {
         String32(self.0.into_owned())
     }
 }

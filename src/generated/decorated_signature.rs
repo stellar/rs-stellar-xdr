@@ -61,7 +61,7 @@ pub struct DecoratedSignatureView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for DecoratedSignatureView<'_> {
     type Owned = DecoratedSignature;
-    fn into_owned(&self) -> DecoratedSignature {
+    fn into_owned(self) -> DecoratedSignature {
         DecoratedSignature {
             hint: self.hint.into_owned(),
             signature: self.signature.into_owned(),

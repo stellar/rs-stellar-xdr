@@ -66,7 +66,7 @@ pub struct LedgerKeyContractDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyContractDataView<'_> {
     type Owned = LedgerKeyContractData;
-    fn into_owned(&self) -> LedgerKeyContractData {
+    fn into_owned(self) -> LedgerKeyContractData {
         LedgerKeyContractData {
             contract: self.contract.into_owned(),
             key: self.key.into_owned(),

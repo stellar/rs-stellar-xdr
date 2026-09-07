@@ -53,8 +53,7 @@ impl WriteXdr for LedgerBounds {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerBounds {
     type Owned = LedgerBounds;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LedgerBounds {
-        self.clone()
+    fn into_owned(self) -> LedgerBounds {
+        self
     }
 }

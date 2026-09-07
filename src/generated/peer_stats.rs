@@ -180,7 +180,7 @@ pub struct PeerStatsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PeerStatsView<'_> {
     type Owned = PeerStats;
-    fn into_owned(&self) -> PeerStats {
+    fn into_owned(self) -> PeerStats {
         PeerStats {
             id: self.id.into_owned(),
             version_str: self.version_str.into_owned(),

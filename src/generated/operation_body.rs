@@ -438,7 +438,7 @@ pub enum OperationBodyView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationBodyView<'_> {
     type Owned = OperationBody;
-    fn into_owned(&self) -> OperationBody {
+    fn into_owned(self) -> OperationBody {
         #[allow(clippy::match_same_arms)]
         match self {
             OperationBodyView::CreateAccount(value) => {

@@ -142,8 +142,7 @@ impl WriteXdr for MuxedAccount {
 #[cfg(feature = "alloc")]
 impl IntoOwned for MuxedAccount {
     type Owned = MuxedAccount;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> MuxedAccount {
-        self.clone()
+    fn into_owned(self) -> MuxedAccount {
+        self
     }
 }

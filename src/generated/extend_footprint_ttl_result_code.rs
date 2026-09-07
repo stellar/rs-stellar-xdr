@@ -151,8 +151,7 @@ impl WriteXdr for ExtendFootprintTtlResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ExtendFootprintTtlResultCode {
     type Owned = ExtendFootprintTtlResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ExtendFootprintTtlResultCode {
-        self.clone()
+    fn into_owned(self) -> ExtendFootprintTtlResultCode {
+        self
     }
 }

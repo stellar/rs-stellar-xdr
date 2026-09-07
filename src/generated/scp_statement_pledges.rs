@@ -191,7 +191,7 @@ pub enum ScpStatementPledgesView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementPledgesView<'_> {
     type Owned = ScpStatementPledges;
-    fn into_owned(&self) -> ScpStatementPledges {
+    fn into_owned(self) -> ScpStatementPledges {
         #[allow(clippy::match_same_arms)]
         match self {
             ScpStatementPledgesView::Prepare(value) => {

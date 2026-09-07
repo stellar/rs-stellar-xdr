@@ -65,7 +65,7 @@ pub struct TxSetComponentTxsMaybeDiscountedFeeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
     type Owned = TxSetComponentTxsMaybeDiscountedFee;
-    fn into_owned(&self) -> TxSetComponentTxsMaybeDiscountedFee {
+    fn into_owned(self) -> TxSetComponentTxsMaybeDiscountedFee {
         TxSetComponentTxsMaybeDiscountedFee {
             base_fee: self.base_fee.into_owned(),
             txs: self.txs.into_owned(),

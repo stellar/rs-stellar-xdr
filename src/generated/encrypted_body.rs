@@ -116,7 +116,7 @@ pub struct EncryptedBodyView<'a>(pub BytesMView<'a, 64000>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for EncryptedBodyView<'_> {
     type Owned = EncryptedBody;
-    fn into_owned(&self) -> EncryptedBody {
+    fn into_owned(self) -> EncryptedBody {
         EncryptedBody(self.0.into_owned())
     }
 }

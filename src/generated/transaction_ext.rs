@@ -148,7 +148,7 @@ pub enum TransactionExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionExtView<'_> {
     type Owned = TransactionExt;
-    fn into_owned(&self) -> TransactionExt {
+    fn into_owned(self) -> TransactionExt {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionExtView::V0 => TransactionExt::V0,

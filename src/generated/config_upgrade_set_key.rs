@@ -52,8 +52,7 @@ impl WriteXdr for ConfigUpgradeSetKey {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigUpgradeSetKey {
     type Owned = ConfigUpgradeSetKey;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ConfigUpgradeSetKey {
-        self.clone()
+    fn into_owned(self) -> ConfigUpgradeSetKey {
+        self
     }
 }

@@ -116,7 +116,7 @@ pub struct ValueView<'a>(pub BytesMView<'a>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ValueView<'_> {
     type Owned = Value;
-    fn into_owned(&self) -> Value {
+    fn into_owned(self) -> Value {
         Value(self.0.into_owned())
     }
 }

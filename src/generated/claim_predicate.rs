@@ -211,14 +211,14 @@ pub enum ClaimPredicateView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimPredicateView<'_> {
     type Owned = ClaimPredicate;
-    fn into_owned(&self) -> ClaimPredicate {
+    fn into_owned(self) -> ClaimPredicate {
         #[allow(clippy::match_same_arms)]
         match self {
             ClaimPredicateView::Unconditional => ClaimPredicate::Unconditional,
             ClaimPredicateView::And(value) => ClaimPredicate::And(value.into_owned()),
             ClaimPredicateView::Or(value) => ClaimPredicate::Or(value.into_owned()),
             ClaimPredicateView::Not(value) => {
-                ClaimPredicate::Not(value.as_ref().map(|v| Box::new(v.into_owned())))
+                ClaimPredicate::Not(value.map(|v| Box::new(v.into_owned())))
             }
             ClaimPredicateView::BeforeAbsoluteTime(value) => {
                 ClaimPredicate::BeforeAbsoluteTime(value.into_owned())

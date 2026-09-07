@@ -53,8 +53,7 @@ impl WriteXdr for TtlEntry {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TtlEntry {
     type Owned = TtlEntry;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> TtlEntry {
-        self.clone()
+    fn into_owned(self) -> TtlEntry {
+        self
     }
 }

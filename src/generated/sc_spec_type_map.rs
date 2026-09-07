@@ -61,7 +61,7 @@ pub struct ScSpecTypeMapView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeMapView<'_> {
     type Owned = ScSpecTypeMap;
-    fn into_owned(&self) -> ScSpecTypeMap {
+    fn into_owned(self) -> ScSpecTypeMap {
         ScSpecTypeMap {
             key_type: Box::new(self.key_type.into_owned()),
             value_type: Box::new(self.value_type.into_owned()),

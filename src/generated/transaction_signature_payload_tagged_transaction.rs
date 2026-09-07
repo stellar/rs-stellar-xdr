@@ -149,7 +149,7 @@ pub enum TransactionSignaturePayloadTaggedTransactionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionSignaturePayloadTaggedTransactionView<'_> {
     type Owned = TransactionSignaturePayloadTaggedTransaction;
-    fn into_owned(&self) -> TransactionSignaturePayloadTaggedTransaction {
+    fn into_owned(self) -> TransactionSignaturePayloadTaggedTransaction {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionSignaturePayloadTaggedTransactionView::Tx(value) => {

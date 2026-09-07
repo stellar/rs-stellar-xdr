@@ -99,7 +99,7 @@ pub struct LedgerEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerEntryView<'_> {
     type Owned = LedgerEntry;
-    fn into_owned(&self) -> LedgerEntry {
+    fn into_owned(self) -> LedgerEntry {
         LedgerEntry {
             last_modified_ledger_seq: self.last_modified_ledger_seq.into_owned(),
             data: self.data.into_owned(),

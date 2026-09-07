@@ -66,7 +66,7 @@ pub struct TransactionResultMetaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionResultMetaView<'_> {
     type Owned = TransactionResultMeta;
-    fn into_owned(&self) -> TransactionResultMeta {
+    fn into_owned(self) -> TransactionResultMeta {
         TransactionResultMeta {
             result: self.result.into_owned(),
             fee_processing: self.fee_processing.into_owned(),

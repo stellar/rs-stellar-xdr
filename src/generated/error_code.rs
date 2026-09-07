@@ -148,8 +148,7 @@ impl WriteXdr for ErrorCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ErrorCode {
     type Owned = ErrorCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ErrorCode {
-        self.clone()
+    fn into_owned(self) -> ErrorCode {
+        self
     }
 }

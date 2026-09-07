@@ -168,7 +168,7 @@ pub enum StellarValueExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueExtView<'_> {
     type Owned = StellarValueExt;
-    fn into_owned(&self) -> StellarValueExt {
+    fn into_owned(self) -> StellarValueExt {
         #[allow(clippy::match_same_arms)]
         match self {
             StellarValueExtView::Basic => StellarValueExt::Basic,

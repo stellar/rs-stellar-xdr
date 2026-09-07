@@ -91,8 +91,7 @@ impl WriteXdr for TimeSlicedNodeData {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeSlicedNodeData {
     type Owned = TimeSlicedNodeData;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> TimeSlicedNodeData {
-        self.clone()
+    fn into_owned(self) -> TimeSlicedNodeData {
+        self
     }
 }

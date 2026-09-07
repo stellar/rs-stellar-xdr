@@ -64,8 +64,7 @@ impl WriteXdr for PeerAddress {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PeerAddress {
     type Owned = PeerAddress;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> PeerAddress {
-        self.clone()
+    fn into_owned(self) -> PeerAddress {
+        self
     }
 }

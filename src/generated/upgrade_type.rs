@@ -116,7 +116,7 @@ pub struct UpgradeTypeView<'a>(pub BytesMView<'a, 128>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for UpgradeTypeView<'_> {
     type Owned = UpgradeType;
-    fn into_owned(&self) -> UpgradeType {
+    fn into_owned(self) -> UpgradeType {
         UpgradeType(self.0.into_owned())
     }
 }

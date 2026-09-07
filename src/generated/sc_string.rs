@@ -116,7 +116,7 @@ pub struct ScStringView<'a>(pub StringMView<'a>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScStringView<'_> {
     type Owned = ScString;
-    fn into_owned(&self) -> ScString {
+    fn into_owned(self) -> ScString {
         ScString(self.0.into_owned())
     }
 }

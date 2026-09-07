@@ -61,7 +61,7 @@ pub struct ContractEventV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractEventV0View<'_> {
     type Owned = ContractEventV0;
-    fn into_owned(&self) -> ContractEventV0 {
+    fn into_owned(self) -> ContractEventV0 {
         ContractEventV0 {
             topics: self.topics.into_owned(),
             data: self.data.into_owned(),

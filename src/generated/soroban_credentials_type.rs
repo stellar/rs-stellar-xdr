@@ -148,8 +148,7 @@ impl WriteXdr for SorobanCredentialsType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanCredentialsType {
     type Owned = SorobanCredentialsType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SorobanCredentialsType {
-        self.clone()
+    fn into_owned(self) -> SorobanCredentialsType {
+        self
     }
 }

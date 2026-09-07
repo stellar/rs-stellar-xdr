@@ -60,7 +60,7 @@ pub struct FrozenLedgerKeysDeltaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FrozenLedgerKeysDeltaView<'_> {
     type Owned = FrozenLedgerKeysDelta;
-    fn into_owned(&self) -> FrozenLedgerKeysDelta {
+    fn into_owned(self) -> FrozenLedgerKeysDelta {
         FrozenLedgerKeysDelta {
             keys_to_freeze: self.keys_to_freeze.into_owned(),
             keys_to_unfreeze: self.keys_to_unfreeze.into_owned(),

@@ -160,8 +160,7 @@ impl WriteXdr for ClaimPredicateType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimPredicateType {
     type Owned = ClaimPredicateType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ClaimPredicateType {
-        self.clone()
+    fn into_owned(self) -> ClaimPredicateType {
+        self
     }
 }

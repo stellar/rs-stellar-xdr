@@ -89,7 +89,7 @@ pub struct ContractEventView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractEventView<'_> {
     type Owned = ContractEvent;
-    fn into_owned(&self) -> ContractEvent {
+    fn into_owned(self) -> ContractEvent {
         ContractEvent {
             ext: self.ext.into_owned(),
             contract_id: self.contract_id.into_owned(),

@@ -60,7 +60,7 @@ pub struct ContractExecutableExternalRefView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractExecutableExternalRefView<'_> {
     type Owned = ContractExecutableExternalRef;
-    fn into_owned(&self) -> ContractExecutableExternalRef {
+    fn into_owned(self) -> ContractExecutableExternalRef {
         ContractExecutableExternalRef {
             executable_owner: self.executable_owner.into_owned(),
             tag: self.tag.into_owned(),

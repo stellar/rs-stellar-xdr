@@ -56,7 +56,7 @@ pub struct ScSpecTypeUdtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeUdtView<'_> {
     type Owned = ScSpecTypeUdt;
-    fn into_owned(&self) -> ScSpecTypeUdt {
+    fn into_owned(self) -> ScSpecTypeUdt {
         ScSpecTypeUdt {
             name: self.name.into_owned(),
         }

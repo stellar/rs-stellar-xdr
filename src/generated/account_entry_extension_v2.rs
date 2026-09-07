@@ -79,7 +79,7 @@ pub struct AccountEntryExtensionV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountEntryExtensionV2View<'_> {
     type Owned = AccountEntryExtensionV2;
-    fn into_owned(&self) -> AccountEntryExtensionV2 {
+    fn into_owned(self) -> AccountEntryExtensionV2 {
         AccountEntryExtensionV2 {
             num_sponsored: self.num_sponsored.into_owned(),
             num_sponsoring: self.num_sponsoring.into_owned(),

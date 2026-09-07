@@ -126,8 +126,7 @@ impl WriteXdr for PublicKeyType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PublicKeyType {
     type Owned = PublicKeyType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> PublicKeyType {
-        self.clone()
+    fn into_owned(self) -> PublicKeyType {
+        self
     }
 }

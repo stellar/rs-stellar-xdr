@@ -133,8 +133,7 @@ impl WriteXdr for ScSpecEventParamLocationV0 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecEventParamLocationV0 {
     type Owned = ScSpecEventParamLocationV0;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScSpecEventParamLocationV0 {
-        self.clone()
+    fn into_owned(self) -> ScSpecEventParamLocationV0 {
+        self
     }
 }

@@ -163,8 +163,7 @@ impl WriteXdr for ChangeTrustAsset {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ChangeTrustAsset {
     type Owned = ChangeTrustAsset;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ChangeTrustAsset {
-        self.clone()
+    fn into_owned(self) -> ChangeTrustAsset {
+        self
     }
 }

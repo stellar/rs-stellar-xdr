@@ -125,7 +125,7 @@ pub struct {{ s.name }}View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for {{ s.name }}View<'_> {
     type Owned = {{ s.name }};
-    fn into_owned(&self) -> {{ s.name }} {
+    fn into_owned(self) -> {{ s.name }} {
         {{ s.name }} {
 {%- for m in s.members %}
 {%- match m.cyclic %}
@@ -134,7 +134,7 @@ impl IntoOwned for {{ s.name }}View<'_> {
 {%- when CyclicBorrow::Reference %}
             {{ m.name }}: Box::new(self.{{ m.name }}.into_owned()),
 {%- when CyclicBorrow::OptionalReference %}
-            {{ m.name }}: self.{{ m.name }}.as_ref().map(|v| Box::new(v.into_owned())),
+            {{ m.name }}: self.{{ m.name }}.map(|v| Box::new(v.into_owned())),
 {%- endmatch %}
 {%- endfor %}
         }

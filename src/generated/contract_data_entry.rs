@@ -76,7 +76,7 @@ pub struct ContractDataEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractDataEntryView<'_> {
     type Owned = ContractDataEntry;
-    fn into_owned(&self) -> ContractDataEntry {
+    fn into_owned(self) -> ContractDataEntry {
         ContractDataEntry {
             ext: self.ext.into_owned(),
             contract: self.contract.into_owned(),

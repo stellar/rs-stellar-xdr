@@ -61,7 +61,7 @@ pub struct SErrorView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SErrorView<'_> {
     type Owned = SError;
-    fn into_owned(&self) -> SError {
+    fn into_owned(self) -> SError {
         SError {
             code: self.code.into_owned(),
             msg: self.msg.into_owned(),

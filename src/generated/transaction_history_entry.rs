@@ -75,7 +75,7 @@ pub struct TransactionHistoryEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionHistoryEntryView<'_> {
     type Owned = TransactionHistoryEntry;
-    fn into_owned(&self) -> TransactionHistoryEntry {
+    fn into_owned(self) -> TransactionHistoryEntry {
         TransactionHistoryEntry {
             ledger_seq: self.ledger_seq.into_owned(),
             tx_set: self.tx_set.into_owned(),

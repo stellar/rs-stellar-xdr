@@ -169,7 +169,7 @@ pub enum BucketEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BucketEntryView<'_> {
     type Owned = BucketEntry;
-    fn into_owned(&self) -> BucketEntry {
+    fn into_owned(self) -> BucketEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             BucketEntryView::Liveentry(value) => BucketEntry::Liveentry(value.into_owned()),

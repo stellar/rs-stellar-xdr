@@ -76,7 +76,7 @@ pub struct ContractCodeEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractCodeEntryView<'_> {
     type Owned = ContractCodeEntry;
-    fn into_owned(&self) -> ContractCodeEntry {
+    fn into_owned(self) -> ContractCodeEntry {
         ContractCodeEntry {
             ext: self.ext.into_owned(),
             hash: self.hash.into_owned(),

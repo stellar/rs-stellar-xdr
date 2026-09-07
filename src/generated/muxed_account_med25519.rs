@@ -79,8 +79,7 @@ impl<'de> serde::Deserialize<'de> for MuxedAccountMed25519 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for MuxedAccountMed25519 {
     type Owned = MuxedAccountMed25519;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> MuxedAccountMed25519 {
-        self.clone()
+    fn into_owned(self) -> MuxedAccountMed25519 {
+        self
     }
 }

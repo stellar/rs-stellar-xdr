@@ -102,7 +102,7 @@ pub struct ScpStatementView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementView<'_> {
     type Owned = ScpStatement;
-    fn into_owned(&self) -> ScpStatement {
+    fn into_owned(self) -> ScpStatement {
         ScpStatement {
             node_id: self.node_id.into_owned(),
             slot_index: self.slot_index.into_owned(),

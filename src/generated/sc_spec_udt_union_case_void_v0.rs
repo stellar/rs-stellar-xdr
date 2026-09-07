@@ -61,7 +61,7 @@ pub struct ScSpecUdtUnionCaseVoidV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtUnionCaseVoidV0View<'_> {
     type Owned = ScSpecUdtUnionCaseVoidV0;
-    fn into_owned(&self) -> ScSpecUdtUnionCaseVoidV0 {
+    fn into_owned(self) -> ScSpecUdtUnionCaseVoidV0 {
         ScSpecUdtUnionCaseVoidV0 {
             doc: self.doc.into_owned(),
             name: self.name.into_owned(),

@@ -66,7 +66,7 @@ pub struct ScpNominationView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpNominationView<'_> {
     type Owned = ScpNomination;
-    fn into_owned(&self) -> ScpNomination {
+    fn into_owned(self) -> ScpNomination {
         ScpNomination {
             quorum_set_hash: self.quorum_set_hash.into_owned(),
             votes: self.votes.into_owned(),

@@ -49,8 +49,7 @@ impl WriteXdr for HmacSha256Key {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HmacSha256Key {
     type Owned = HmacSha256Key;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> HmacSha256Key {
-        self.clone()
+    fn into_owned(self) -> HmacSha256Key {
+        self
     }
 }

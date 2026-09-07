@@ -164,7 +164,7 @@ pub enum HotArchiveBucketEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HotArchiveBucketEntryView<'_> {
     type Owned = HotArchiveBucketEntry;
-    fn into_owned(&self) -> HotArchiveBucketEntry {
+    fn into_owned(self) -> HotArchiveBucketEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             HotArchiveBucketEntryView::Archived(value) => {

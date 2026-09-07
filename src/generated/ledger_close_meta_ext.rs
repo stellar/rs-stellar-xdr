@@ -139,8 +139,7 @@ impl WriteXdr for LedgerCloseMetaExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerCloseMetaExt {
     type Owned = LedgerCloseMetaExt;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LedgerCloseMetaExt {
-        self.clone()
+    fn into_owned(self) -> LedgerCloseMetaExt {
+        self
     }
 }

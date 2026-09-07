@@ -373,7 +373,7 @@ pub enum StellarMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarMessageView<'_> {
     type Owned = StellarMessage;
-    fn into_owned(&self) -> StellarMessage {
+    fn into_owned(self) -> StellarMessage {
         #[allow(clippy::match_same_arms)]
         match self {
             StellarMessageView::ErrorMsg(value) => StellarMessage::ErrorMsg(value.into_owned()),

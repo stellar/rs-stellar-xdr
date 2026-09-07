@@ -116,7 +116,7 @@ pub struct DataValueView<'a>(pub BytesMView<'a, 64>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for DataValueView<'_> {
     type Owned = DataValue;
-    fn into_owned(&self) -> DataValue {
+    fn into_owned(self) -> DataValue {
         DataValue(self.0.into_owned())
     }
 }

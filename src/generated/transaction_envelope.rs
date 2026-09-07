@@ -155,7 +155,7 @@ pub enum TransactionEnvelopeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionEnvelopeView<'_> {
     type Owned = TransactionEnvelope;
-    fn into_owned(&self) -> TransactionEnvelope {
+    fn into_owned(self) -> TransactionEnvelope {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionEnvelopeView::TxV0(value) => TransactionEnvelope::TxV0(value.into_owned()),

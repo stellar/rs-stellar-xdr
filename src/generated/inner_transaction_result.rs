@@ -104,7 +104,7 @@ pub struct InnerTransactionResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InnerTransactionResultView<'_> {
     type Owned = InnerTransactionResult;
-    fn into_owned(&self) -> InnerTransactionResult {
+    fn into_owned(self) -> InnerTransactionResult {
         InnerTransactionResult {
             fee_charged: self.fee_charged.into_owned(),
             result: self.result.into_owned(),

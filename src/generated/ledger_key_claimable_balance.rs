@@ -49,8 +49,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyClaimableBalance {
     type Owned = LedgerKeyClaimableBalance;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LedgerKeyClaimableBalance {
-        self.clone()
+    fn into_owned(self) -> LedgerKeyClaimableBalance {
+        self
     }
 }

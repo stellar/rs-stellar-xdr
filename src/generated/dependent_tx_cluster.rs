@@ -116,7 +116,7 @@ pub struct DependentTxClusterView<'a>(pub VecMView<'a, TransactionEnvelopeView<'
 #[cfg(feature = "alloc")]
 impl IntoOwned for DependentTxClusterView<'_> {
     type Owned = DependentTxCluster;
-    fn into_owned(&self) -> DependentTxCluster {
+    fn into_owned(self) -> DependentTxCluster {
         DependentTxCluster(self.0.into_owned())
     }
 }

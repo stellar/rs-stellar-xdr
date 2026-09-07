@@ -116,7 +116,7 @@ pub struct SignatureView<'a>(pub BytesMView<'a, 64>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignatureView<'_> {
     type Owned = Signature;
-    fn into_owned(&self) -> Signature {
+    fn into_owned(self) -> Signature {
         Signature(self.0.into_owned())
     }
 }

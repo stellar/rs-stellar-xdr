@@ -73,7 +73,7 @@ pub struct LedgerHeaderHistoryEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerHeaderHistoryEntryView<'_> {
     type Owned = LedgerHeaderHistoryEntry;
-    fn into_owned(&self) -> LedgerHeaderHistoryEntry {
+    fn into_owned(self) -> LedgerHeaderHistoryEntry {
         LedgerHeaderHistoryEntry {
             hash: self.hash.into_owned(),
             header: self.header.into_owned(),

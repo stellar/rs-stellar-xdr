@@ -61,7 +61,7 @@ pub struct ManageDataOpView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageDataOpView<'_> {
     type Owned = ManageDataOp;
-    fn into_owned(&self) -> ManageDataOp {
+    fn into_owned(self) -> ManageDataOp {
         ManageDataOp {
             data_name: self.data_name.into_owned(),
             data_value: self.data_value.into_owned(),

@@ -49,8 +49,7 @@ impl WriteXdr for RestoreFootprintOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for RestoreFootprintOp {
     type Owned = RestoreFootprintOp;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> RestoreFootprintOp {
-        self.clone()
+    fn into_owned(self) -> RestoreFootprintOp {
+        self
     }
 }

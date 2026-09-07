@@ -71,7 +71,7 @@ pub struct LedgerCloseMetaBatchView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerCloseMetaBatchView<'_> {
     type Owned = LedgerCloseMetaBatch;
-    fn into_owned(&self) -> LedgerCloseMetaBatch {
+    fn into_owned(self) -> LedgerCloseMetaBatch {
         LedgerCloseMetaBatch {
             start_sequence: self.start_sequence.into_owned(),
             end_sequence: self.end_sequence.into_owned(),

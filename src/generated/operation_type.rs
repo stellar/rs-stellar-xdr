@@ -286,8 +286,7 @@ impl WriteXdr for OperationType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationType {
     type Owned = OperationType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> OperationType {
-        self.clone()
+    fn into_owned(self) -> OperationType {
+        self
     }
 }

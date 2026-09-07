@@ -148,7 +148,7 @@ pub enum TransactionHistoryEntryExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionHistoryEntryExtView<'_> {
     type Owned = TransactionHistoryEntryExt;
-    fn into_owned(&self) -> TransactionHistoryEntryExt {
+    fn into_owned(self) -> TransactionHistoryEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionHistoryEntryExtView::V0 => TransactionHistoryEntryExt::V0,

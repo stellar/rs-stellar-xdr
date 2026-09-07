@@ -255,7 +255,7 @@ pub enum {{ u.name }}View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for {{ u.name }}View<'_> {
     type Owned = {{ u.name }};
-    fn into_owned(&self) -> {{ u.name }} {
+    fn into_owned(self) -> {{ u.name }} {
         #[allow(clippy::match_same_arms)]
         match self {
 {%- for arm in u.arms %}
@@ -271,7 +271,7 @@ impl IntoOwned for {{ u.name }}View<'_> {
 {%- when CyclicBorrow::Reference %}
             {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(Box::new(value.into_owned())),
 {%- when CyclicBorrow::OptionalReference %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.as_ref().map(|v| Box::new(v.into_owned()))),
+            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.map(|v| Box::new(v.into_owned()))),
 {%- endmatch %}
 {%- endif %}
 {%- endfor %}

@@ -76,7 +76,7 @@ pub struct ScpStatementConfirmView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementConfirmView<'_> {
     type Owned = ScpStatementConfirm;
-    fn into_owned(&self) -> ScpStatementConfirm {
+    fn into_owned(self) -> ScpStatementConfirm {
         ScpStatementConfirm {
             ballot: self.ballot.into_owned(),
             n_prepared: self.n_prepared.into_owned(),

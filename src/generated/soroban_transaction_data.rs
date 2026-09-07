@@ -85,7 +85,7 @@ pub struct SorobanTransactionDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanTransactionDataView<'_> {
     type Owned = SorobanTransactionData;
-    fn into_owned(&self) -> SorobanTransactionData {
+    fn into_owned(self) -> SorobanTransactionData {
         SorobanTransactionData {
             ext: self.ext.into_owned(),
             resources: self.resources.into_owned(),

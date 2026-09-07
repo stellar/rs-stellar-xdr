@@ -53,8 +53,7 @@ impl WriteXdr for SendMoreExtended {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SendMoreExtended {
     type Owned = SendMoreExtended;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SendMoreExtended {
-        self.clone()
+    fn into_owned(self) -> SendMoreExtended {
+        self
     }
 }

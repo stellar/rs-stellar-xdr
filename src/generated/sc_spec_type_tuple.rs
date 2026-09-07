@@ -56,7 +56,7 @@ pub struct ScSpecTypeTupleView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeTupleView<'_> {
     type Owned = ScSpecTypeTuple;
-    fn into_owned(&self) -> ScSpecTypeTuple {
+    fn into_owned(self) -> ScSpecTypeTuple {
         ScSpecTypeTuple {
             value_types: self.value_types.into_owned(),
         }

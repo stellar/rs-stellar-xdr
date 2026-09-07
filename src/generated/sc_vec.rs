@@ -116,7 +116,7 @@ pub struct ScVecView<'a>(pub VecMView<'a, ScValView<'a>>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScVecView<'_> {
     type Owned = ScVec;
-    fn into_owned(&self) -> ScVec {
+    fn into_owned(self) -> ScVec {
         ScVec(self.0.into_owned())
     }
 }

@@ -81,7 +81,7 @@ pub struct ScpStatementPrepareView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementPrepareView<'_> {
     type Owned = ScpStatementPrepare;
-    fn into_owned(&self) -> ScpStatementPrepare {
+    fn into_owned(self) -> ScpStatementPrepare {
         ScpStatementPrepare {
             quorum_set_hash: self.quorum_set_hash.into_owned(),
             ballot: self.ballot.into_owned(),

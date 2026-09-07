@@ -52,8 +52,7 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScEnvMetaEntryInterfaceVersion {
     type Owned = ScEnvMetaEntryInterfaceVersion;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScEnvMetaEntryInterfaceVersion {
-        self.clone()
+    fn into_owned(self) -> ScEnvMetaEntryInterfaceVersion {
+        self
     }
 }

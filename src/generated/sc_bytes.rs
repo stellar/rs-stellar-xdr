@@ -116,7 +116,7 @@ pub struct ScBytesView<'a>(pub BytesMView<'a>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScBytesView<'_> {
     type Owned = ScBytes;
-    fn into_owned(&self) -> ScBytes {
+    fn into_owned(self) -> ScBytes {
         ScBytes(self.0.into_owned())
     }
 }

@@ -61,7 +61,7 @@ pub struct SignerView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignerView<'_> {
     type Owned = Signer;
-    fn into_owned(&self) -> Signer {
+    fn into_owned(self) -> Signer {
         Signer {
             key: self.key.into_owned(),
             weight: self.weight.into_owned(),

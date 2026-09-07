@@ -164,8 +164,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SetTrustLineFlagsResultCode {
     type Owned = SetTrustLineFlagsResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SetTrustLineFlagsResultCode {
-        self.clone()
+    fn into_owned(self) -> SetTrustLineFlagsResultCode {
+        self
     }
 }

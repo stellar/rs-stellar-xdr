@@ -133,8 +133,7 @@ impl WriteXdr for InflationResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InflationResultCode {
     type Owned = InflationResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> InflationResultCode {
-        self.clone()
+    fn into_owned(self) -> InflationResultCode {
+        self
     }
 }

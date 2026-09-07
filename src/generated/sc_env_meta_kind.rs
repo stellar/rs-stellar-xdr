@@ -126,8 +126,7 @@ impl WriteXdr for ScEnvMetaKind {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScEnvMetaKind {
     type Owned = ScEnvMetaKind;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScEnvMetaKind {
-        self.clone()
+    fn into_owned(self) -> ScEnvMetaKind {
+        self
     }
 }

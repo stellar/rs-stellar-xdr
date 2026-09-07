@@ -75,7 +75,7 @@ pub struct SorobanAddressCredentialsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAddressCredentialsView<'_> {
     type Owned = SorobanAddressCredentials;
-    fn into_owned(&self) -> SorobanAddressCredentials {
+    fn into_owned(self) -> SorobanAddressCredentials {
         SorobanAddressCredentials {
             address: self.address.into_owned(),
             nonce: self.nonce.into_owned(),

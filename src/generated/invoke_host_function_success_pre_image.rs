@@ -61,7 +61,7 @@ pub struct InvokeHostFunctionSuccessPreImageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InvokeHostFunctionSuccessPreImageView<'_> {
     type Owned = InvokeHostFunctionSuccessPreImage;
-    fn into_owned(&self) -> InvokeHostFunctionSuccessPreImage {
+    fn into_owned(self) -> InvokeHostFunctionSuccessPreImage {
         InvokeHostFunctionSuccessPreImage {
             return_value: self.return_value.into_owned(),
             events: self.events.into_owned(),

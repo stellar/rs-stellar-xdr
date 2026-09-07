@@ -80,7 +80,7 @@ pub struct TransactionMetaV3View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionMetaV3View<'_> {
     type Owned = TransactionMetaV3;
-    fn into_owned(&self) -> TransactionMetaV3 {
+    fn into_owned(self) -> TransactionMetaV3 {
         TransactionMetaV3 {
             ext: self.ext.into_owned(),
             tx_changes_before: self.tx_changes_before.into_owned(),

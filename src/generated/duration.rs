@@ -69,8 +69,7 @@ impl WriteXdr for Duration {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Duration {
     type Owned = Duration;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> Duration {
-        self.clone()
+    fn into_owned(self) -> Duration {
+        self
     }
 }

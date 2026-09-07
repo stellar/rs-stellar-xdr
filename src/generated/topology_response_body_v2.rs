@@ -66,7 +66,7 @@ pub struct TopologyResponseBodyV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TopologyResponseBodyV2View<'_> {
     type Owned = TopologyResponseBodyV2;
-    fn into_owned(&self) -> TopologyResponseBodyV2 {
+    fn into_owned(self) -> TopologyResponseBodyV2 {
         TopologyResponseBodyV2 {
             inbound_peers: self.inbound_peers.into_owned(),
             outbound_peers: self.outbound_peers.into_owned(),

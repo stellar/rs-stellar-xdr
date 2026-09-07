@@ -120,7 +120,7 @@ pub struct AccountEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountEntryView<'_> {
     type Owned = AccountEntry;
-    fn into_owned(&self) -> AccountEntry {
+    fn into_owned(self) -> AccountEntry {
         AccountEntry {
             account_id: self.account_id.into_owned(),
             balance: self.balance.into_owned(),

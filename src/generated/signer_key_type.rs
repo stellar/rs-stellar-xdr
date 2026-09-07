@@ -143,8 +143,7 @@ impl WriteXdr for SignerKeyType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignerKeyType {
     type Owned = SignerKeyType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SignerKeyType {
-        self.clone()
+    fn into_owned(self) -> SignerKeyType {
+        self
     }
 }

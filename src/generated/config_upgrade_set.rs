@@ -55,7 +55,7 @@ pub struct ConfigUpgradeSetView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigUpgradeSetView<'_> {
     type Owned = ConfigUpgradeSet;
-    fn into_owned(&self) -> ConfigUpgradeSet {
+    fn into_owned(self) -> ConfigUpgradeSet {
         ConfigUpgradeSet {
             updated_entry: self.updated_entry.into_owned(),
         }

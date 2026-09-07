@@ -61,7 +61,7 @@ pub struct LedgerScpMessagesView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerScpMessagesView<'_> {
     type Owned = LedgerScpMessages;
-    fn into_owned(&self) -> LedgerScpMessages {
+    fn into_owned(self) -> LedgerScpMessages {
         LedgerScpMessages {
             ledger_seq: self.ledger_seq.into_owned(),
             messages: self.messages.into_owned(),

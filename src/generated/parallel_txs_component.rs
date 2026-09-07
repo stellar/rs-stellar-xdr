@@ -68,7 +68,7 @@ pub struct ParallelTxsComponentView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ParallelTxsComponentView<'_> {
     type Owned = ParallelTxsComponent;
-    fn into_owned(&self) -> ParallelTxsComponent {
+    fn into_owned(self) -> ParallelTxsComponent {
         ParallelTxsComponent {
             base_fee: self.base_fee.into_owned(),
             execution_stages: self.execution_stages.into_owned(),

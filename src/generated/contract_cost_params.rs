@@ -118,7 +118,7 @@ pub struct ContractCostParamsView<'a>(
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractCostParamsView<'_> {
     type Owned = ContractCostParams;
-    fn into_owned(&self) -> ContractCostParams {
+    fn into_owned(self) -> ContractCostParams {
         ContractCostParams(self.0.into_owned())
     }
 }

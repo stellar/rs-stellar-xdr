@@ -159,7 +159,7 @@ pub struct LedgerHeaderView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerHeaderView<'_> {
     type Owned = LedgerHeader;
-    fn into_owned(&self) -> LedgerHeader {
+    fn into_owned(self) -> LedgerHeader {
         LedgerHeader {
             ledger_version: self.ledger_version.into_owned(),
             previous_ledger_hash: self.previous_ledger_hash.into_owned(),

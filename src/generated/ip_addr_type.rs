@@ -130,8 +130,7 @@ impl WriteXdr for IpAddrType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for IpAddrType {
     type Owned = IpAddrType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> IpAddrType {
-        self.clone()
+    fn into_owned(self) -> IpAddrType {
+        self
     }
 }

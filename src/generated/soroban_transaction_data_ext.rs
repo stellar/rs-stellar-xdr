@@ -148,7 +148,7 @@ pub enum SorobanTransactionDataExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanTransactionDataExtView<'_> {
     type Owned = SorobanTransactionDataExt;
-    fn into_owned(&self) -> SorobanTransactionDataExt {
+    fn into_owned(self) -> SorobanTransactionDataExt {
         #[allow(clippy::match_same_arms)]
         match self {
             SorobanTransactionDataExtView::V0 => SorobanTransactionDataExt::V0,

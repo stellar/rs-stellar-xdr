@@ -61,7 +61,7 @@ pub struct SignedTimeSlicedSurveyRequestMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignedTimeSlicedSurveyRequestMessageView<'_> {
     type Owned = SignedTimeSlicedSurveyRequestMessage;
-    fn into_owned(&self) -> SignedTimeSlicedSurveyRequestMessage {
+    fn into_owned(self) -> SignedTimeSlicedSurveyRequestMessage {
         SignedTimeSlicedSurveyRequestMessage {
             request_signature: self.request_signature.into_owned(),
             request: self.request.into_owned(),

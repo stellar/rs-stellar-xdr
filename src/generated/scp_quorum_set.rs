@@ -66,7 +66,7 @@ pub struct ScpQuorumSetView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpQuorumSetView<'_> {
     type Owned = ScpQuorumSet;
-    fn into_owned(&self) -> ScpQuorumSet {
+    fn into_owned(self) -> ScpQuorumSet {
         ScpQuorumSet {
             threshold: self.threshold.into_owned(),
             validators: self.validators.into_owned(),

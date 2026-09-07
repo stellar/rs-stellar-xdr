@@ -61,7 +61,7 @@ pub struct LedgerFootprintView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerFootprintView<'_> {
     type Owned = LedgerFootprint;
-    fn into_owned(&self) -> LedgerFootprint {
+    fn into_owned(self) -> LedgerFootprint {
         LedgerFootprint {
             read_only: self.read_only.into_owned(),
             read_write: self.read_write.into_owned(),

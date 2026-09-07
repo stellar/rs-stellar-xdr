@@ -53,8 +53,7 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingContractHistoricalDataV0 {
     type Owned = ConfigSettingContractHistoricalDataV0;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ConfigSettingContractHistoricalDataV0 {
-        self.clone()
+    fn into_owned(self) -> ConfigSettingContractHistoricalDataV0 {
+        self
     }
 }

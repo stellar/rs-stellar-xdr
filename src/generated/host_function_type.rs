@@ -148,8 +148,7 @@ impl WriteXdr for HostFunctionType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HostFunctionType {
     type Owned = HostFunctionType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> HostFunctionType {
-        self.clone()
+    fn into_owned(self) -> HostFunctionType {
+        self
     }
 }

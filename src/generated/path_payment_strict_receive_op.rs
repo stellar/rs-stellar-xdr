@@ -93,7 +93,7 @@ pub struct PathPaymentStrictReceiveOpView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PathPaymentStrictReceiveOpView<'_> {
     type Owned = PathPaymentStrictReceiveOp;
-    fn into_owned(&self) -> PathPaymentStrictReceiveOp {
+    fn into_owned(self) -> PathPaymentStrictReceiveOp {
         PathPaymentStrictReceiveOp {
             send_asset: self.send_asset.into_owned(),
             send_max: self.send_max.into_owned(),

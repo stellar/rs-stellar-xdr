@@ -76,7 +76,7 @@ pub struct SurveyResponseMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SurveyResponseMessageView<'_> {
     type Owned = SurveyResponseMessage;
-    fn into_owned(&self) -> SurveyResponseMessage {
+    fn into_owned(self) -> SurveyResponseMessage {
         SurveyResponseMessage {
             surveyor_peer_id: self.surveyor_peer_id.into_owned(),
             surveyed_peer_id: self.surveyed_peer_id.into_owned(),

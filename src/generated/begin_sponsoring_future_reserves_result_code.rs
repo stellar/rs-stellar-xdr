@@ -146,8 +146,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BeginSponsoringFutureReservesResultCode {
     type Owned = BeginSponsoringFutureReservesResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> BeginSponsoringFutureReservesResultCode {
-        self.clone()
+    fn into_owned(self) -> BeginSponsoringFutureReservesResultCode {
+        self
     }
 }

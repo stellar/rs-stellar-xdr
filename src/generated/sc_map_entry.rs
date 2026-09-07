@@ -61,7 +61,7 @@ pub struct ScMapEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScMapEntryView<'_> {
     type Owned = ScMapEntry;
-    fn into_owned(&self) -> ScMapEntry {
+    fn into_owned(self) -> ScMapEntry {
         ScMapEntry {
             key: self.key.into_owned(),
             val: self.val.into_owned(),

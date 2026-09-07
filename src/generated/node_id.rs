@@ -60,8 +60,7 @@ impl WriteXdr for NodeId {
 #[cfg(feature = "alloc")]
 impl IntoOwned for NodeId {
     type Owned = NodeId;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> NodeId {
-        self.clone()
+    fn into_owned(self) -> NodeId {
+        self
     }
 }

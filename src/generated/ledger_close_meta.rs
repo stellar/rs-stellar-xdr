@@ -156,7 +156,7 @@ pub enum LedgerCloseMetaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerCloseMetaView<'_> {
     type Owned = LedgerCloseMeta;
-    fn into_owned(&self) -> LedgerCloseMeta {
+    fn into_owned(self) -> LedgerCloseMeta {
         #[allow(clippy::match_same_arms)]
         match self {
             LedgerCloseMetaView::V0(value) => LedgerCloseMeta::V0(value.into_owned()),

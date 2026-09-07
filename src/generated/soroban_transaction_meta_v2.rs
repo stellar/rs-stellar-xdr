@@ -62,7 +62,7 @@ pub struct SorobanTransactionMetaV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanTransactionMetaV2View<'_> {
     type Owned = SorobanTransactionMetaV2;
-    fn into_owned(&self) -> SorobanTransactionMetaV2 {
+    fn into_owned(self) -> SorobanTransactionMetaV2 {
         SorobanTransactionMetaV2 {
             ext: self.ext.into_owned(),
             return_value: self.return_value.into_owned(),

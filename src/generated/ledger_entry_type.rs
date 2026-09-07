@@ -184,8 +184,7 @@ impl WriteXdr for LedgerEntryType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerEntryType {
     type Owned = LedgerEntryType;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LedgerEntryType {
-        self.clone()
+    fn into_owned(self) -> LedgerEntryType {
+        self
     }
 }

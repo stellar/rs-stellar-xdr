@@ -61,7 +61,7 @@ pub struct SorobanAuthorizationEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAuthorizationEntryView<'_> {
     type Owned = SorobanAuthorizationEntry;
-    fn into_owned(&self) -> SorobanAuthorizationEntry {
+    fn into_owned(self) -> SorobanAuthorizationEntry {
         SorobanAuthorizationEntry {
             credentials: self.credentials.into_owned(),
             root_invocation: self.root_invocation.into_owned(),

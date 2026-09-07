@@ -66,7 +66,7 @@ pub struct PersistedScpStateV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PersistedScpStateV0View<'_> {
     type Owned = PersistedScpStateV0;
-    fn into_owned(&self) -> PersistedScpStateV0 {
+    fn into_owned(self) -> PersistedScpStateV0 {
         PersistedScpStateV0 {
             scp_envelopes: self.scp_envelopes.into_owned(),
             quorum_sets: self.quorum_sets.into_owned(),

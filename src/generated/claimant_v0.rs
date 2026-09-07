@@ -61,7 +61,7 @@ pub struct ClaimantV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimantV0View<'_> {
     type Owned = ClaimantV0;
-    fn into_owned(&self) -> ClaimantV0 {
+    fn into_owned(self) -> ClaimantV0 {
         ClaimantV0 {
             destination: self.destination.into_owned(),
             predicate: self.predicate.into_owned(),

@@ -61,7 +61,7 @@ pub struct TimeSlicedPeerDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeSlicedPeerDataView<'_> {
     type Owned = TimeSlicedPeerData;
-    fn into_owned(&self) -> TimeSlicedPeerData {
+    fn into_owned(self) -> TimeSlicedPeerData {
         TimeSlicedPeerData {
             peer_stats: self.peer_stats.into_owned(),
             average_latency_ms: self.average_latency_ms.into_owned(),

@@ -60,7 +60,7 @@ pub struct ScContractInstanceView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScContractInstanceView<'_> {
     type Owned = ScContractInstance;
-    fn into_owned(&self) -> ScContractInstance {
+    fn into_owned(self) -> ScContractInstance {
         ScContractInstance {
             executable: self.executable.into_owned(),
             storage: self.storage.into_owned(),

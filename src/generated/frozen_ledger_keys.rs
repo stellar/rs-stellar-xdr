@@ -55,7 +55,7 @@ pub struct FrozenLedgerKeysView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FrozenLedgerKeysView<'_> {
     type Owned = FrozenLedgerKeys;
-    fn into_owned(&self) -> FrozenLedgerKeys {
+    fn into_owned(self) -> FrozenLedgerKeys {
         FrozenLedgerKeys {
             keys: self.keys.into_owned(),
         }

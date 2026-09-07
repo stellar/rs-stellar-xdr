@@ -178,7 +178,7 @@ pub enum LedgerEntryChangeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerEntryChangeView<'_> {
     type Owned = LedgerEntryChange;
-    fn into_owned(&self) -> LedgerEntryChange {
+    fn into_owned(self) -> LedgerEntryChange {
         #[allow(clippy::match_same_arms)]
         match self {
             LedgerEntryChangeView::Created(value) => LedgerEntryChange::Created(value.into_owned()),

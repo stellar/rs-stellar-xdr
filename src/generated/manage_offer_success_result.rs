@@ -71,7 +71,7 @@ pub struct ManageOfferSuccessResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageOfferSuccessResultView<'_> {
     type Owned = ManageOfferSuccessResult;
-    fn into_owned(&self) -> ManageOfferSuccessResult {
+    fn into_owned(self) -> ManageOfferSuccessResult {
         ManageOfferSuccessResult {
             offers_claimed: self.offers_claimed.into_owned(),
             offer: self.offer.into_owned(),

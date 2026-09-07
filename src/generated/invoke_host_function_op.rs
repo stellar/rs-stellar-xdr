@@ -63,7 +63,7 @@ pub struct InvokeHostFunctionOpView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InvokeHostFunctionOpView<'_> {
     type Owned = InvokeHostFunctionOp;
-    fn into_owned(&self) -> InvokeHostFunctionOp {
+    fn into_owned(self) -> InvokeHostFunctionOp {
         InvokeHostFunctionOp {
             host_function: self.host_function.into_owned(),
             auth: self.auth.into_owned(),

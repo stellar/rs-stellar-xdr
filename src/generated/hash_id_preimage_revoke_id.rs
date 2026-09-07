@@ -65,8 +65,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HashIdPreimageRevokeId {
     type Owned = HashIdPreimageRevokeId;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> HashIdPreimageRevokeId {
-        self.clone()
+    fn into_owned(self) -> HashIdPreimageRevokeId {
+        self
     }
 }

@@ -81,7 +81,7 @@ pub struct ScSpecEventV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecEventV0View<'_> {
     type Owned = ScSpecEventV0;
-    fn into_owned(&self) -> ScSpecEventV0 {
+    fn into_owned(self) -> ScSpecEventV0 {
         ScSpecEventV0 {
             doc: self.doc.into_owned(),
             lib: self.lib.into_owned(),

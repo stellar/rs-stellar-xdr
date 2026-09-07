@@ -61,7 +61,7 @@ pub struct ScpHistoryEntryV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpHistoryEntryV0View<'_> {
     type Owned = ScpHistoryEntryV0;
-    fn into_owned(&self) -> ScpHistoryEntryV0 {
+    fn into_owned(self) -> ScpHistoryEntryV0 {
         ScpHistoryEntryV0 {
             quorum_sets: self.quorum_sets.into_owned(),
             ledger_messages: self.ledger_messages.into_owned(),

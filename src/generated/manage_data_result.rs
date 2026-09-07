@@ -169,8 +169,7 @@ impl WriteXdr for ManageDataResult {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageDataResult {
     type Owned = ManageDataResult;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ManageDataResult {
-        self.clone()
+    fn into_owned(self) -> ManageDataResult {
+        self
     }
 }

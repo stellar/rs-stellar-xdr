@@ -57,8 +57,7 @@ impl WriteXdr for InflationPayout {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InflationPayout {
     type Owned = InflationPayout;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> InflationPayout {
-        self.clone()
+    fn into_owned(self) -> InflationPayout {
+        self
     }
 }

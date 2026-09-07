@@ -140,7 +140,7 @@ pub enum ScpHistoryEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpHistoryEntryView<'_> {
     type Owned = ScpHistoryEntry;
-    fn into_owned(&self) -> ScpHistoryEntry {
+    fn into_owned(self) -> ScpHistoryEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             ScpHistoryEntryView::V0(value) => ScpHistoryEntry::V0(value.into_owned()),

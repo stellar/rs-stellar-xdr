@@ -181,7 +181,7 @@ pub enum SorobanAuthorizedFunctionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAuthorizedFunctionView<'_> {
     type Owned = SorobanAuthorizedFunction;
-    fn into_owned(&self) -> SorobanAuthorizedFunction {
+    fn into_owned(self) -> SorobanAuthorizedFunction {
         #[allow(clippy::match_same_arms)]
         match self {
             SorobanAuthorizedFunctionView::ContractFn(value) => {

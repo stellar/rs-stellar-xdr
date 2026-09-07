@@ -63,7 +63,7 @@ pub struct TransactionV0EnvelopeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionV0EnvelopeView<'_> {
     type Owned = TransactionV0Envelope;
-    fn into_owned(&self) -> TransactionV0Envelope {
+    fn into_owned(self) -> TransactionV0Envelope {
         TransactionV0Envelope {
             tx: self.tx.into_owned(),
             signatures: self.signatures.into_owned(),

@@ -150,7 +150,7 @@ pub enum TxSetComponentView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TxSetComponentView<'_> {
     type Owned = TxSetComponent;
-    fn into_owned(&self) -> TxSetComponent {
+    fn into_owned(self) -> TxSetComponent {
         #[allow(clippy::match_same_arms)]
         match self {
             TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {

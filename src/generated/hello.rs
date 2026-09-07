@@ -96,7 +96,7 @@ pub struct HelloView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HelloView<'_> {
     type Owned = Hello;
-    fn into_owned(&self) -> Hello {
+    fn into_owned(self) -> Hello {
         Hello {
             ledger_version: self.ledger_version.into_owned(),
             overlay_version: self.overlay_version.into_owned(),

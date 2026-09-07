@@ -182,7 +182,7 @@ pub enum HostFunctionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HostFunctionView<'_> {
     type Owned = HostFunction;
-    fn into_owned(&self) -> HostFunction {
+    fn into_owned(self) -> HostFunction {
         #[allow(clippy::match_same_arms)]
         match self {
             HostFunctionView::InvokeContract(value) => {

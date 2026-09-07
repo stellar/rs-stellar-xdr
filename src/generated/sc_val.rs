@@ -392,7 +392,7 @@ pub enum ScValView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScValView<'_> {
     type Owned = ScVal;
-    fn into_owned(&self) -> ScVal {
+    fn into_owned(self) -> ScVal {
         #[allow(clippy::match_same_arms)]
         match self {
             ScValView::Bool(value) => ScVal::Bool(value.into_owned()),

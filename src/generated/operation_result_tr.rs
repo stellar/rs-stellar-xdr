@@ -442,7 +442,7 @@ pub enum OperationResultTrView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationResultTrView<'_> {
     type Owned = OperationResultTr;
-    fn into_owned(&self) -> OperationResultTr {
+    fn into_owned(self) -> OperationResultTr {
         #[allow(clippy::match_same_arms)]
         match self {
             OperationResultTrView::CreateAccount(value) => {

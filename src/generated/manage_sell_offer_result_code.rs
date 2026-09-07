@@ -212,8 +212,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageSellOfferResultCode {
     type Owned = ManageSellOfferResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ManageSellOfferResultCode {
-        self.clone()
+    fn into_owned(self) -> ManageSellOfferResultCode {
+        self
     }
 }

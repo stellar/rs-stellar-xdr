@@ -186,8 +186,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LiquidityPoolDepositResultCode {
     type Owned = LiquidityPoolDepositResultCode;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> LiquidityPoolDepositResultCode {
-        self.clone()
+    fn into_owned(self) -> LiquidityPoolDepositResultCode {
+        self
     }
 }

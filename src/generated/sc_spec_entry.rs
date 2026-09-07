@@ -196,7 +196,7 @@ pub enum ScSpecEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecEntryView<'_> {
     type Owned = ScSpecEntry;
-    fn into_owned(&self) -> ScSpecEntry {
+    fn into_owned(self) -> ScSpecEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             ScSpecEntryView::FunctionV0(value) => ScSpecEntry::FunctionV0(value.into_owned()),

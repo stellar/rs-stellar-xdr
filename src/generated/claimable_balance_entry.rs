@@ -96,7 +96,7 @@ pub struct ClaimableBalanceEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimableBalanceEntryView<'_> {
     type Owned = ClaimableBalanceEntry;
-    fn into_owned(&self) -> ClaimableBalanceEntry {
+    fn into_owned(self) -> ClaimableBalanceEntry {
         ClaimableBalanceEntry {
             balance_id: self.balance_id.into_owned(),
             claimants: self.claimants.into_owned(),

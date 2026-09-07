@@ -52,8 +52,7 @@ impl WriteXdr for ScNonceKey {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScNonceKey {
     type Owned = ScNonceKey;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> ScNonceKey {
-        self.clone()
+    fn into_owned(self) -> ScNonceKey {
+        self
     }
 }

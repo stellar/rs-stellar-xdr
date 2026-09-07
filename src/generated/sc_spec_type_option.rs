@@ -56,7 +56,7 @@ pub struct ScSpecTypeOptionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeOptionView<'_> {
     type Owned = ScSpecTypeOption;
-    fn into_owned(&self) -> ScSpecTypeOption {
+    fn into_owned(self) -> ScSpecTypeOption {
         ScSpecTypeOption {
             value_type: Box::new(self.value_type.into_owned()),
         }

@@ -132,8 +132,7 @@ impl WriteXdr for InnerTransactionResultExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InnerTransactionResultExt {
     type Owned = InnerTransactionResultExt;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> InnerTransactionResultExt {
-        self.clone()
+    fn into_owned(self) -> InnerTransactionResultExt {
+        self
     }
 }

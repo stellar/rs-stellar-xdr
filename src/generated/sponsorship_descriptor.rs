@@ -63,8 +63,7 @@ impl WriteXdr for SponsorshipDescriptor {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SponsorshipDescriptor {
     type Owned = SponsorshipDescriptor;
-    #[allow(clippy::clone_on_copy)]
-    fn into_owned(&self) -> SponsorshipDescriptor {
-        self.clone()
+    fn into_owned(self) -> SponsorshipDescriptor {
+        self
     }
 }

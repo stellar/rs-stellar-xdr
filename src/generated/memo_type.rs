@@ -148,7 +148,8 @@ impl WriteXdr for MemoType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for MemoType {
     type Owned = MemoType;
-    fn into_owned(self) -> MemoType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> MemoType {
+        self.clone()
     }
 }

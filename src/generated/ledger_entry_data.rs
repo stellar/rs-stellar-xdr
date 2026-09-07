@@ -244,29 +244,35 @@ pub enum LedgerEntryDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerEntryDataView<'_> {
     type Owned = LedgerEntryData;
-    fn into_owned(self) -> LedgerEntryData {
+    fn into_owned(&self) -> LedgerEntryData {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerEntryDataView::Account(value) => LedgerEntryData::Account(value.into_owned()),
-            LedgerEntryDataView::Trustline(value) => LedgerEntryData::Trustline(value.into_owned()),
-            LedgerEntryDataView::Offer(value) => LedgerEntryData::Offer(value.into_owned()),
-            LedgerEntryDataView::Data(value) => LedgerEntryData::Data(value.into_owned()),
+            LedgerEntryDataView::Account(value) => {
+                LedgerEntryData::Account(IntoOwned::into_owned(value))
+            }
+            LedgerEntryDataView::Trustline(value) => {
+                LedgerEntryData::Trustline(IntoOwned::into_owned(value))
+            }
+            LedgerEntryDataView::Offer(value) => {
+                LedgerEntryData::Offer(IntoOwned::into_owned(value))
+            }
+            LedgerEntryDataView::Data(value) => LedgerEntryData::Data(IntoOwned::into_owned(value)),
             LedgerEntryDataView::ClaimableBalance(value) => {
-                LedgerEntryData::ClaimableBalance(value.into_owned())
+                LedgerEntryData::ClaimableBalance(IntoOwned::into_owned(value))
             }
             LedgerEntryDataView::LiquidityPool(value) => {
-                LedgerEntryData::LiquidityPool(value.into_owned())
+                LedgerEntryData::LiquidityPool(IntoOwned::into_owned(value))
             }
             LedgerEntryDataView::ContractData(value) => {
-                LedgerEntryData::ContractData(value.into_owned())
+                LedgerEntryData::ContractData(IntoOwned::into_owned(value))
             }
             LedgerEntryDataView::ContractCode(value) => {
-                LedgerEntryData::ContractCode(value.into_owned())
+                LedgerEntryData::ContractCode(IntoOwned::into_owned(value))
             }
             LedgerEntryDataView::ConfigSetting(value) => {
-                LedgerEntryData::ConfigSetting(value.into_owned())
+                LedgerEntryData::ConfigSetting(IntoOwned::into_owned(value))
             }
-            LedgerEntryDataView::Ttl(value) => LedgerEntryData::Ttl(value.into_owned()),
+            LedgerEntryDataView::Ttl(value) => LedgerEntryData::Ttl(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -275,7 +281,7 @@ impl IntoOwned for LedgerEntryDataView<'_> {
 impl From<&LedgerEntryDataView<'_>> for LedgerEntryData {
     #[must_use]
     fn from(v: &LedgerEntryDataView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -283,7 +289,7 @@ impl From<&LedgerEntryDataView<'_>> for LedgerEntryData {
 impl From<LedgerEntryDataView<'_>> for LedgerEntryData {
     #[must_use]
     fn from(v: LedgerEntryDataView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

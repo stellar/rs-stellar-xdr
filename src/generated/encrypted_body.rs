@@ -116,8 +116,8 @@ pub struct EncryptedBodyView<'a>(pub BytesMView<'a, 64000>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for EncryptedBodyView<'_> {
     type Owned = EncryptedBody;
-    fn into_owned(self) -> EncryptedBody {
-        EncryptedBody(self.0.into_owned())
+    fn into_owned(&self) -> EncryptedBody {
+        EncryptedBody(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for EncryptedBodyView<'_> {
 impl From<&EncryptedBodyView<'_>> for EncryptedBody {
     #[must_use]
     fn from(v: &EncryptedBodyView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&EncryptedBodyView<'_>> for EncryptedBody {
 impl From<EncryptedBodyView<'_>> for EncryptedBody {
     #[must_use]
     fn from(v: EncryptedBodyView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

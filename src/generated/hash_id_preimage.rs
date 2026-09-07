@@ -225,19 +225,21 @@ pub enum HashIdPreimageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HashIdPreimageView<'_> {
     type Owned = HashIdPreimage;
-    fn into_owned(self) -> HashIdPreimage {
+    fn into_owned(&self) -> HashIdPreimage {
         #[allow(clippy::match_same_arms)]
         match self {
-            HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(value.into_owned()),
+            HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(IntoOwned::into_owned(value)),
             HashIdPreimageView::PoolRevokeOpId(value) => {
-                HashIdPreimage::PoolRevokeOpId(value.into_owned())
+                HashIdPreimage::PoolRevokeOpId(IntoOwned::into_owned(value))
             }
-            HashIdPreimageView::ContractId(value) => HashIdPreimage::ContractId(value.into_owned()),
+            HashIdPreimageView::ContractId(value) => {
+                HashIdPreimage::ContractId(IntoOwned::into_owned(value))
+            }
             HashIdPreimageView::SorobanAuthorization(value) => {
-                HashIdPreimage::SorobanAuthorization(value.into_owned())
+                HashIdPreimage::SorobanAuthorization(IntoOwned::into_owned(value))
             }
             HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
-                HashIdPreimage::SorobanAuthorizationWithAddress(value.into_owned())
+                HashIdPreimage::SorobanAuthorizationWithAddress(IntoOwned::into_owned(value))
             }
         }
     }
@@ -247,7 +249,7 @@ impl IntoOwned for HashIdPreimageView<'_> {
 impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
     fn from(v: &HashIdPreimageView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -255,7 +257,7 @@ impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
 impl From<HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
     fn from(v: HashIdPreimageView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

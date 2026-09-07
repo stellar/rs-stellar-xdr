@@ -255,11 +255,11 @@ pub enum ManageBuyOfferResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageBuyOfferResultView<'_> {
     type Owned = ManageBuyOfferResult;
-    fn into_owned(self) -> ManageBuyOfferResult {
+    fn into_owned(&self) -> ManageBuyOfferResult {
         #[allow(clippy::match_same_arms)]
         match self {
             ManageBuyOfferResultView::Success(value) => {
-                ManageBuyOfferResult::Success(value.into_owned())
+                ManageBuyOfferResult::Success(IntoOwned::into_owned(value))
             }
             ManageBuyOfferResultView::Malformed => ManageBuyOfferResult::Malformed,
             ManageBuyOfferResultView::SellNoTrust => ManageBuyOfferResult::SellNoTrust,
@@ -281,7 +281,7 @@ impl IntoOwned for ManageBuyOfferResultView<'_> {
 impl From<&ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
     #[must_use]
     fn from(v: &ManageBuyOfferResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -289,7 +289,7 @@ impl From<&ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
 impl From<ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
     #[must_use]
     fn from(v: ManageBuyOfferResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

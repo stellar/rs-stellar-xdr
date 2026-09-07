@@ -61,10 +61,10 @@ pub struct TimeSlicedSurveyResponseMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
     type Owned = TimeSlicedSurveyResponseMessage;
-    fn into_owned(self) -> TimeSlicedSurveyResponseMessage {
+    fn into_owned(&self) -> TimeSlicedSurveyResponseMessage {
         TimeSlicedSurveyResponseMessage {
-            response: self.response.into_owned(),
-            nonce: self.nonce.into_owned(),
+            response: IntoOwned::into_owned(&self.response),
+            nonce: IntoOwned::into_owned(&self.nonce),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
 impl From<&TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
     fn from(v: &TimeSlicedSurveyResponseMessageView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponse
 impl From<TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
     fn from(v: TimeSlicedSurveyResponseMessageView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

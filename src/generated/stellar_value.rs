@@ -94,12 +94,12 @@ pub struct StellarValueView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueView<'_> {
     type Owned = StellarValue;
-    fn into_owned(self) -> StellarValue {
+    fn into_owned(&self) -> StellarValue {
         StellarValue {
-            tx_set_hash: self.tx_set_hash.into_owned(),
-            close_time: self.close_time.into_owned(),
-            upgrades: self.upgrades.into_owned(),
-            ext: self.ext.into_owned(),
+            tx_set_hash: IntoOwned::into_owned(&self.tx_set_hash),
+            close_time: IntoOwned::into_owned(&self.close_time),
+            upgrades: IntoOwned::into_owned(&self.upgrades),
+            ext: IntoOwned::into_owned(&self.ext),
         }
     }
 }
@@ -108,7 +108,7 @@ impl IntoOwned for StellarValueView<'_> {
 impl From<&StellarValueView<'_>> for StellarValue {
     #[must_use]
     fn from(v: &StellarValueView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -116,7 +116,7 @@ impl From<&StellarValueView<'_>> for StellarValue {
 impl From<StellarValueView<'_>> for StellarValue {
     #[must_use]
     fn from(v: StellarValueView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

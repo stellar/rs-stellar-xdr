@@ -66,11 +66,11 @@ pub struct ScpStatementExternalizeView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementExternalizeView<'_> {
     type Owned = ScpStatementExternalize;
-    fn into_owned(self) -> ScpStatementExternalize {
+    fn into_owned(&self) -> ScpStatementExternalize {
         ScpStatementExternalize {
-            commit: self.commit.into_owned(),
-            n_h: self.n_h.into_owned(),
-            commit_quorum_set_hash: self.commit_quorum_set_hash.into_owned(),
+            commit: IntoOwned::into_owned(&self.commit),
+            n_h: IntoOwned::into_owned(&self.n_h),
+            commit_quorum_set_hash: IntoOwned::into_owned(&self.commit_quorum_set_hash),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for ScpStatementExternalizeView<'_> {
 impl From<&ScpStatementExternalizeView<'_>> for ScpStatementExternalize {
     #[must_use]
     fn from(v: &ScpStatementExternalizeView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&ScpStatementExternalizeView<'_>> for ScpStatementExternalize {
 impl From<ScpStatementExternalizeView<'_>> for ScpStatementExternalize {
     #[must_use]
     fn from(v: ScpStatementExternalizeView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

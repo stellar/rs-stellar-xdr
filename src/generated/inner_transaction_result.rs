@@ -104,11 +104,11 @@ pub struct InnerTransactionResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InnerTransactionResultView<'_> {
     type Owned = InnerTransactionResult;
-    fn into_owned(self) -> InnerTransactionResult {
+    fn into_owned(&self) -> InnerTransactionResult {
         InnerTransactionResult {
-            fee_charged: self.fee_charged.into_owned(),
-            result: self.result.into_owned(),
-            ext: self.ext.into_owned(),
+            fee_charged: IntoOwned::into_owned(&self.fee_charged),
+            result: IntoOwned::into_owned(&self.result),
+            ext: IntoOwned::into_owned(&self.ext),
         }
     }
 }
@@ -117,7 +117,7 @@ impl IntoOwned for InnerTransactionResultView<'_> {
 impl From<&InnerTransactionResultView<'_>> for InnerTransactionResult {
     #[must_use]
     fn from(v: &InnerTransactionResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -125,7 +125,7 @@ impl From<&InnerTransactionResultView<'_>> for InnerTransactionResult {
 impl From<InnerTransactionResultView<'_>> for InnerTransactionResult {
     #[must_use]
     fn from(v: InnerTransactionResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

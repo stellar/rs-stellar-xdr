@@ -61,10 +61,10 @@ pub struct TransactionSetV1View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionSetV1View<'_> {
     type Owned = TransactionSetV1;
-    fn into_owned(self) -> TransactionSetV1 {
+    fn into_owned(&self) -> TransactionSetV1 {
         TransactionSetV1 {
-            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
-            phases: self.phases.into_owned(),
+            previous_ledger_hash: IntoOwned::into_owned(&self.previous_ledger_hash),
+            phases: IntoOwned::into_owned(&self.phases),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TransactionSetV1View<'_> {
 impl From<&TransactionSetV1View<'_>> for TransactionSetV1 {
     #[must_use]
     fn from(v: &TransactionSetV1View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TransactionSetV1View<'_>> for TransactionSetV1 {
 impl From<TransactionSetV1View<'_>> for TransactionSetV1 {
     #[must_use]
     fn from(v: TransactionSetV1View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

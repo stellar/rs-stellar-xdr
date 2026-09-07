@@ -166,7 +166,8 @@ impl WriteXdr for LedgerUpgradeType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerUpgradeType {
     type Owned = LedgerUpgradeType;
-    fn into_owned(self) -> LedgerUpgradeType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> LedgerUpgradeType {
+        self.clone()
     }
 }

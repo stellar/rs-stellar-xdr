@@ -138,7 +138,8 @@ impl WriteXdr for ManageOfferEffect {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageOfferEffect {
     type Owned = ManageOfferEffect;
-    fn into_owned(self) -> ManageOfferEffect {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ManageOfferEffect {
+        self.clone()
     }
 }

@@ -49,7 +49,8 @@ impl WriteXdr for LedgerKeyConfigSetting {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyConfigSetting {
     type Owned = LedgerKeyConfigSetting;
-    fn into_owned(self) -> LedgerKeyConfigSetting {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> LedgerKeyConfigSetting {
+        self.clone()
     }
 }

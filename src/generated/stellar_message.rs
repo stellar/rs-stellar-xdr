@@ -373,53 +373,63 @@ pub enum StellarMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarMessageView<'_> {
     type Owned = StellarMessage;
-    fn into_owned(self) -> StellarMessage {
+    fn into_owned(&self) -> StellarMessage {
         #[allow(clippy::match_same_arms)]
         match self {
-            StellarMessageView::ErrorMsg(value) => StellarMessage::ErrorMsg(value.into_owned()),
-            StellarMessageView::Hello(value) => StellarMessage::Hello(value.into_owned()),
-            StellarMessageView::Auth(value) => StellarMessage::Auth(value.into_owned()),
-            StellarMessageView::DontHave(value) => StellarMessage::DontHave(value.into_owned()),
-            StellarMessageView::Peers(value) => StellarMessage::Peers(value.into_owned()),
-            StellarMessageView::GetTxSet(value) => StellarMessage::GetTxSet(value.into_owned()),
-            StellarMessageView::TxSet(value) => StellarMessage::TxSet(value.into_owned()),
+            StellarMessageView::ErrorMsg(value) => {
+                StellarMessage::ErrorMsg(IntoOwned::into_owned(value))
+            }
+            StellarMessageView::Hello(value) => StellarMessage::Hello(IntoOwned::into_owned(value)),
+            StellarMessageView::Auth(value) => StellarMessage::Auth(IntoOwned::into_owned(value)),
+            StellarMessageView::DontHave(value) => {
+                StellarMessage::DontHave(IntoOwned::into_owned(value))
+            }
+            StellarMessageView::Peers(value) => StellarMessage::Peers(IntoOwned::into_owned(value)),
+            StellarMessageView::GetTxSet(value) => {
+                StellarMessage::GetTxSet(IntoOwned::into_owned(value))
+            }
+            StellarMessageView::TxSet(value) => StellarMessage::TxSet(IntoOwned::into_owned(value)),
             StellarMessageView::GeneralizedTxSet(value) => {
-                StellarMessage::GeneralizedTxSet(value.into_owned())
+                StellarMessage::GeneralizedTxSet(IntoOwned::into_owned(value))
             }
             StellarMessageView::Transaction(value) => {
-                StellarMessage::Transaction(value.into_owned())
+                StellarMessage::Transaction(IntoOwned::into_owned(value))
             }
             StellarMessageView::TimeSlicedSurveyRequest(value) => {
-                StellarMessage::TimeSlicedSurveyRequest(value.into_owned())
+                StellarMessage::TimeSlicedSurveyRequest(IntoOwned::into_owned(value))
             }
             StellarMessageView::TimeSlicedSurveyResponse(value) => {
-                StellarMessage::TimeSlicedSurveyResponse(value.into_owned())
+                StellarMessage::TimeSlicedSurveyResponse(IntoOwned::into_owned(value))
             }
             StellarMessageView::TimeSlicedSurveyStartCollecting(value) => {
-                StellarMessage::TimeSlicedSurveyStartCollecting(value.into_owned())
+                StellarMessage::TimeSlicedSurveyStartCollecting(IntoOwned::into_owned(value))
             }
             StellarMessageView::TimeSlicedSurveyStopCollecting(value) => {
-                StellarMessage::TimeSlicedSurveyStopCollecting(value.into_owned())
+                StellarMessage::TimeSlicedSurveyStopCollecting(IntoOwned::into_owned(value))
             }
             StellarMessageView::GetScpQuorumset(value) => {
-                StellarMessage::GetScpQuorumset(value.into_owned())
+                StellarMessage::GetScpQuorumset(IntoOwned::into_owned(value))
             }
             StellarMessageView::ScpQuorumset(value) => {
-                StellarMessage::ScpQuorumset(value.into_owned())
+                StellarMessage::ScpQuorumset(IntoOwned::into_owned(value))
             }
-            StellarMessageView::ScpMessage(value) => StellarMessage::ScpMessage(value.into_owned()),
+            StellarMessageView::ScpMessage(value) => {
+                StellarMessage::ScpMessage(IntoOwned::into_owned(value))
+            }
             StellarMessageView::GetScpState(value) => {
-                StellarMessage::GetScpState(value.into_owned())
+                StellarMessage::GetScpState(IntoOwned::into_owned(value))
             }
-            StellarMessageView::SendMore(value) => StellarMessage::SendMore(value.into_owned()),
+            StellarMessageView::SendMore(value) => {
+                StellarMessage::SendMore(IntoOwned::into_owned(value))
+            }
             StellarMessageView::SendMoreExtended(value) => {
-                StellarMessage::SendMoreExtended(value.into_owned())
+                StellarMessage::SendMoreExtended(IntoOwned::into_owned(value))
             }
             StellarMessageView::FloodAdvert(value) => {
-                StellarMessage::FloodAdvert(value.into_owned())
+                StellarMessage::FloodAdvert(IntoOwned::into_owned(value))
             }
             StellarMessageView::FloodDemand(value) => {
-                StellarMessage::FloodDemand(value.into_owned())
+                StellarMessage::FloodDemand(IntoOwned::into_owned(value))
             }
         }
     }
@@ -429,7 +439,7 @@ impl IntoOwned for StellarMessageView<'_> {
 impl From<&StellarMessageView<'_>> for StellarMessage {
     #[must_use]
     fn from(v: &StellarMessageView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -437,7 +447,7 @@ impl From<&StellarMessageView<'_>> for StellarMessage {
 impl From<StellarMessageView<'_>> for StellarMessage {
     #[must_use]
     fn from(v: StellarMessageView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

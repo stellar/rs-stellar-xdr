@@ -61,7 +61,8 @@ impl WriteXdr for Liabilities {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Liabilities {
     type Owned = Liabilities;
-    fn into_owned(self) -> Liabilities {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> Liabilities {
+        self.clone()
     }
 }

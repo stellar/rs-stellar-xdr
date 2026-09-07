@@ -103,15 +103,15 @@ pub struct TransactionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionView<'_> {
     type Owned = Transaction;
-    fn into_owned(self) -> Transaction {
+    fn into_owned(&self) -> Transaction {
         Transaction {
-            source_account: self.source_account.into_owned(),
-            fee: self.fee.into_owned(),
-            seq_num: self.seq_num.into_owned(),
-            cond: self.cond.into_owned(),
-            memo: self.memo.into_owned(),
-            operations: self.operations.into_owned(),
-            ext: self.ext.into_owned(),
+            source_account: IntoOwned::into_owned(&self.source_account),
+            fee: IntoOwned::into_owned(&self.fee),
+            seq_num: IntoOwned::into_owned(&self.seq_num),
+            cond: IntoOwned::into_owned(&self.cond),
+            memo: IntoOwned::into_owned(&self.memo),
+            operations: IntoOwned::into_owned(&self.operations),
+            ext: IntoOwned::into_owned(&self.ext),
         }
     }
 }
@@ -120,7 +120,7 @@ impl IntoOwned for TransactionView<'_> {
 impl From<&TransactionView<'_>> for Transaction {
     #[must_use]
     fn from(v: &TransactionView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -128,7 +128,7 @@ impl From<&TransactionView<'_>> for Transaction {
 impl From<TransactionView<'_>> for Transaction {
     #[must_use]
     fn from(v: TransactionView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

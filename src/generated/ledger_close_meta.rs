@@ -156,12 +156,12 @@ pub enum LedgerCloseMetaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerCloseMetaView<'_> {
     type Owned = LedgerCloseMeta;
-    fn into_owned(self) -> LedgerCloseMeta {
+    fn into_owned(&self) -> LedgerCloseMeta {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerCloseMetaView::V0(value) => LedgerCloseMeta::V0(value.into_owned()),
-            LedgerCloseMetaView::V1(value) => LedgerCloseMeta::V1(value.into_owned()),
-            LedgerCloseMetaView::V2(value) => LedgerCloseMeta::V2(value.into_owned()),
+            LedgerCloseMetaView::V0(value) => LedgerCloseMeta::V0(IntoOwned::into_owned(value)),
+            LedgerCloseMetaView::V1(value) => LedgerCloseMeta::V1(IntoOwned::into_owned(value)),
+            LedgerCloseMetaView::V2(value) => LedgerCloseMeta::V2(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -170,7 +170,7 @@ impl IntoOwned for LedgerCloseMetaView<'_> {
 impl From<&LedgerCloseMetaView<'_>> for LedgerCloseMeta {
     #[must_use]
     fn from(v: &LedgerCloseMetaView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -178,7 +178,7 @@ impl From<&LedgerCloseMetaView<'_>> for LedgerCloseMeta {
 impl From<LedgerCloseMetaView<'_>> for LedgerCloseMeta {
     #[must_use]
     fn from(v: LedgerCloseMetaView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

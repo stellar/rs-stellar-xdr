@@ -138,7 +138,8 @@ impl WriteXdr for StellarValueType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueType {
     type Owned = StellarValueType;
-    fn into_owned(self) -> StellarValueType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> StellarValueType {
+        self.clone()
     }
 }

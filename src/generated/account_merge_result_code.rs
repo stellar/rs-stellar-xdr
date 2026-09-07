@@ -175,7 +175,8 @@ impl WriteXdr for AccountMergeResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountMergeResultCode {
     type Owned = AccountMergeResultCode;
-    fn into_owned(self) -> AccountMergeResultCode {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> AccountMergeResultCode {
+        self.clone()
     }
 }

@@ -1,6 +1,7 @@
 {#- The `IntoOwned` impl of a generated type that has no `View`: it holds no
     heap data, so it appears as itself inside `View`s and its owned form is
-    itself. -#}
+    itself. Cloned rather than copied because a generated type is always
+    `Clone` but not always `Copy`; the allow covers the ones that are. -#}
 {%- macro identity(name, cfg) %}
 {% if let Some(cfg) = cfg -%}
 #[cfg({{ cfg }})]
@@ -8,8 +9,9 @@
 #[cfg(feature = "alloc")]
 impl IntoOwned for {{ name }} {
     type Owned = {{ name }};
-    fn into_owned(self) -> {{ name }} {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> {{ name }} {
+        self.clone()
     }
 }
 {%- endmacro %}

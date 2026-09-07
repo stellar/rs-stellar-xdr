@@ -148,12 +148,12 @@ pub enum SorobanTransactionDataExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanTransactionDataExtView<'_> {
     type Owned = SorobanTransactionDataExt;
-    fn into_owned(self) -> SorobanTransactionDataExt {
+    fn into_owned(&self) -> SorobanTransactionDataExt {
         #[allow(clippy::match_same_arms)]
         match self {
             SorobanTransactionDataExtView::V0 => SorobanTransactionDataExt::V0,
             SorobanTransactionDataExtView::V1(value) => {
-                SorobanTransactionDataExt::V1(value.into_owned())
+                SorobanTransactionDataExt::V1(IntoOwned::into_owned(value))
             }
         }
     }
@@ -163,7 +163,7 @@ impl IntoOwned for SorobanTransactionDataExtView<'_> {
 impl From<&SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
     #[must_use]
     fn from(v: &SorobanTransactionDataExtView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -171,7 +171,7 @@ impl From<&SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
 impl From<SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
     #[must_use]
     fn from(v: SorobanTransactionDataExtView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

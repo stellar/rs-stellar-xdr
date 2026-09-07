@@ -61,10 +61,10 @@ pub struct ScpBallotView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpBallotView<'_> {
     type Owned = ScpBallot;
-    fn into_owned(self) -> ScpBallot {
+    fn into_owned(&self) -> ScpBallot {
         ScpBallot {
-            counter: self.counter.into_owned(),
-            value: self.value.into_owned(),
+            counter: IntoOwned::into_owned(&self.counter),
+            value: IntoOwned::into_owned(&self.value),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScpBallotView<'_> {
 impl From<&ScpBallotView<'_>> for ScpBallot {
     #[must_use]
     fn from(v: &ScpBallotView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScpBallotView<'_>> for ScpBallot {
 impl From<ScpBallotView<'_>> for ScpBallot {
     #[must_use]
     fn from(v: ScpBallotView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

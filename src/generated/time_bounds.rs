@@ -53,7 +53,8 @@ impl WriteXdr for TimeBounds {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeBounds {
     type Owned = TimeBounds;
-    fn into_owned(self) -> TimeBounds {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> TimeBounds {
+        self.clone()
     }
 }

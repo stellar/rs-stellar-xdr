@@ -211,18 +211,18 @@ pub enum ClaimPredicateView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimPredicateView<'_> {
     type Owned = ClaimPredicate;
-    fn into_owned(self) -> ClaimPredicate {
+    fn into_owned(&self) -> ClaimPredicate {
         #[allow(clippy::match_same_arms)]
         match self {
             ClaimPredicateView::Unconditional => ClaimPredicate::Unconditional,
-            ClaimPredicateView::And(value) => ClaimPredicate::And(value.into_owned()),
-            ClaimPredicateView::Or(value) => ClaimPredicate::Or(value.into_owned()),
-            ClaimPredicateView::Not(value) => ClaimPredicate::Not(value.into_owned()),
+            ClaimPredicateView::And(value) => ClaimPredicate::And(IntoOwned::into_owned(value)),
+            ClaimPredicateView::Or(value) => ClaimPredicate::Or(IntoOwned::into_owned(value)),
+            ClaimPredicateView::Not(value) => ClaimPredicate::Not(IntoOwned::into_owned(value)),
             ClaimPredicateView::BeforeAbsoluteTime(value) => {
-                ClaimPredicate::BeforeAbsoluteTime(value.into_owned())
+                ClaimPredicate::BeforeAbsoluteTime(IntoOwned::into_owned(value))
             }
             ClaimPredicateView::BeforeRelativeTime(value) => {
-                ClaimPredicate::BeforeRelativeTime(value.into_owned())
+                ClaimPredicate::BeforeRelativeTime(IntoOwned::into_owned(value))
             }
         }
     }
@@ -232,7 +232,7 @@ impl IntoOwned for ClaimPredicateView<'_> {
 impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
     fn from(v: &ClaimPredicateView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -240,7 +240,7 @@ impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
 impl From<ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
     fn from(v: ClaimPredicateView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

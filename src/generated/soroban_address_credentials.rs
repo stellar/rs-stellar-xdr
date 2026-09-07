@@ -75,12 +75,12 @@ pub struct SorobanAddressCredentialsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAddressCredentialsView<'_> {
     type Owned = SorobanAddressCredentials;
-    fn into_owned(self) -> SorobanAddressCredentials {
+    fn into_owned(&self) -> SorobanAddressCredentials {
         SorobanAddressCredentials {
-            address: self.address.into_owned(),
-            nonce: self.nonce.into_owned(),
-            signature_expiration_ledger: self.signature_expiration_ledger.into_owned(),
-            signature: self.signature.into_owned(),
+            address: IntoOwned::into_owned(&self.address),
+            nonce: IntoOwned::into_owned(&self.nonce),
+            signature_expiration_ledger: IntoOwned::into_owned(&self.signature_expiration_ledger),
+            signature: IntoOwned::into_owned(&self.signature),
         }
     }
 }
@@ -89,7 +89,7 @@ impl IntoOwned for SorobanAddressCredentialsView<'_> {
 impl From<&SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
     #[must_use]
     fn from(v: &SorobanAddressCredentialsView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -97,7 +97,7 @@ impl From<&SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
 impl From<SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
     #[must_use]
     fn from(v: SorobanAddressCredentialsView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

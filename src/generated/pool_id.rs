@@ -60,7 +60,8 @@ impl WriteXdr for PoolId {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PoolId {
     type Owned = PoolId;
-    fn into_owned(self) -> PoolId {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> PoolId {
+        self.clone()
     }
 }

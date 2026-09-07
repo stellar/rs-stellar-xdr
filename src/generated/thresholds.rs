@@ -157,7 +157,8 @@ impl AsRef<[u8]> for Thresholds {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Thresholds {
     type Owned = Thresholds;
-    fn into_owned(self) -> Thresholds {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> Thresholds {
+        self.clone()
     }
 }

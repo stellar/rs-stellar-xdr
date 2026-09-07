@@ -132,7 +132,8 @@ impl WriteXdr for ClaimableBalanceId {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimableBalanceId {
     type Owned = ClaimableBalanceId;
-    fn into_owned(self) -> ClaimableBalanceId {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ClaimableBalanceId {
+        self.clone()
     }
 }

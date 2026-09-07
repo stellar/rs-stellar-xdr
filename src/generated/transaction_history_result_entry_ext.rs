@@ -132,7 +132,8 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionHistoryResultEntryExt {
     type Owned = TransactionHistoryResultEntryExt;
-    fn into_owned(self) -> TransactionHistoryResultEntryExt {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> TransactionHistoryResultEntryExt {
+        self.clone()
     }
 }

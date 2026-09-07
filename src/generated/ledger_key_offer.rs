@@ -57,7 +57,8 @@ impl WriteXdr for LedgerKeyOffer {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyOffer {
     type Owned = LedgerKeyOffer;
-    fn into_owned(self) -> LedgerKeyOffer {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> LedgerKeyOffer {
+        self.clone()
     }
 }

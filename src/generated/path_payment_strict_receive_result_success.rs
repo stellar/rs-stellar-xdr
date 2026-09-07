@@ -61,10 +61,10 @@ pub struct PathPaymentStrictReceiveResultSuccessView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PathPaymentStrictReceiveResultSuccessView<'_> {
     type Owned = PathPaymentStrictReceiveResultSuccess;
-    fn into_owned(self) -> PathPaymentStrictReceiveResultSuccess {
+    fn into_owned(&self) -> PathPaymentStrictReceiveResultSuccess {
         PathPaymentStrictReceiveResultSuccess {
-            offers: self.offers.into_owned(),
-            last: self.last.into_owned(),
+            offers: IntoOwned::into_owned(&self.offers),
+            last: IntoOwned::into_owned(&self.last),
         }
     }
 }
@@ -75,7 +75,7 @@ impl From<&PathPaymentStrictReceiveResultSuccessView<'_>>
 {
     #[must_use]
     fn from(v: &PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -83,7 +83,7 @@ impl From<&PathPaymentStrictReceiveResultSuccessView<'_>>
 impl From<PathPaymentStrictReceiveResultSuccessView<'_>> for PathPaymentStrictReceiveResultSuccess {
     #[must_use]
     fn from(v: PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

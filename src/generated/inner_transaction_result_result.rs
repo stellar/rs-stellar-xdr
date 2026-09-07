@@ -304,14 +304,14 @@ pub enum InnerTransactionResultResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InnerTransactionResultResultView<'_> {
     type Owned = InnerTransactionResultResult;
-    fn into_owned(self) -> InnerTransactionResultResult {
+    fn into_owned(&self) -> InnerTransactionResultResult {
         #[allow(clippy::match_same_arms)]
         match self {
             InnerTransactionResultResultView::TxSuccess(value) => {
-                InnerTransactionResultResult::TxSuccess(value.into_owned())
+                InnerTransactionResultResult::TxSuccess(IntoOwned::into_owned(value))
             }
             InnerTransactionResultResultView::TxFailed(value) => {
-                InnerTransactionResultResult::TxFailed(value.into_owned())
+                InnerTransactionResultResult::TxFailed(IntoOwned::into_owned(value))
             }
             InnerTransactionResultResultView::TxTooEarly => {
                 InnerTransactionResultResult::TxTooEarly
@@ -363,7 +363,7 @@ impl IntoOwned for InnerTransactionResultResultView<'_> {
 impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
     fn from(v: &InnerTransactionResultResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -371,7 +371,7 @@ impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResul
 impl From<InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
     fn from(v: InnerTransactionResultResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

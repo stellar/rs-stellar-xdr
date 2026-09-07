@@ -149,7 +149,8 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageOfferSuccessResultOffer {
     type Owned = ManageOfferSuccessResultOffer;
-    fn into_owned(self) -> ManageOfferSuccessResultOffer {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ManageOfferSuccessResultOffer {
+        self.clone()
     }
 }

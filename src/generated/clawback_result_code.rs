@@ -157,7 +157,8 @@ impl WriteXdr for ClawbackResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClawbackResultCode {
     type Owned = ClawbackResultCode;
-    fn into_owned(self) -> ClawbackResultCode {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ClawbackResultCode {
+        self.clone()
     }
 }

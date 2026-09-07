@@ -66,11 +66,11 @@ pub struct LedgerKeyContractDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerKeyContractDataView<'_> {
     type Owned = LedgerKeyContractData;
-    fn into_owned(self) -> LedgerKeyContractData {
+    fn into_owned(&self) -> LedgerKeyContractData {
         LedgerKeyContractData {
-            contract: self.contract.into_owned(),
-            key: self.key.into_owned(),
-            durability: self.durability.into_owned(),
+            contract: IntoOwned::into_owned(&self.contract),
+            key: IntoOwned::into_owned(&self.key),
+            durability: IntoOwned::into_owned(&self.durability),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for LedgerKeyContractDataView<'_> {
 impl From<&LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
     #[must_use]
     fn from(v: &LedgerKeyContractDataView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
 impl From<LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
     #[must_use]
     fn from(v: LedgerKeyContractDataView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

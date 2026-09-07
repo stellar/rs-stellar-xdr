@@ -147,7 +147,8 @@ impl WriteXdr for LiquidityPoolEntryBody {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LiquidityPoolEntryBody {
     type Owned = LiquidityPoolEntryBody;
-    fn into_owned(self) -> LiquidityPoolEntryBody {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> LiquidityPoolEntryBody {
+        self.clone()
     }
 }

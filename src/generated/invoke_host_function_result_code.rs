@@ -163,7 +163,8 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InvokeHostFunctionResultCode {
     type Owned = InvokeHostFunctionResultCode;
-    fn into_owned(self) -> InvokeHostFunctionResultCode {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> InvokeHostFunctionResultCode {
+        self.clone()
     }
 }

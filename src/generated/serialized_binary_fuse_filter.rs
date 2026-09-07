@@ -107,17 +107,17 @@ pub struct SerializedBinaryFuseFilterView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SerializedBinaryFuseFilterView<'_> {
     type Owned = SerializedBinaryFuseFilter;
-    fn into_owned(self) -> SerializedBinaryFuseFilter {
+    fn into_owned(&self) -> SerializedBinaryFuseFilter {
         SerializedBinaryFuseFilter {
-            type_: self.type_.into_owned(),
-            input_hash_seed: self.input_hash_seed.into_owned(),
-            filter_seed: self.filter_seed.into_owned(),
-            segment_length: self.segment_length.into_owned(),
-            segement_length_mask: self.segement_length_mask.into_owned(),
-            segment_count: self.segment_count.into_owned(),
-            segment_count_length: self.segment_count_length.into_owned(),
-            fingerprint_length: self.fingerprint_length.into_owned(),
-            fingerprints: self.fingerprints.into_owned(),
+            type_: IntoOwned::into_owned(&self.type_),
+            input_hash_seed: IntoOwned::into_owned(&self.input_hash_seed),
+            filter_seed: IntoOwned::into_owned(&self.filter_seed),
+            segment_length: IntoOwned::into_owned(&self.segment_length),
+            segement_length_mask: IntoOwned::into_owned(&self.segement_length_mask),
+            segment_count: IntoOwned::into_owned(&self.segment_count),
+            segment_count_length: IntoOwned::into_owned(&self.segment_count_length),
+            fingerprint_length: IntoOwned::into_owned(&self.fingerprint_length),
+            fingerprints: IntoOwned::into_owned(&self.fingerprints),
         }
     }
 }
@@ -126,7 +126,7 @@ impl IntoOwned for SerializedBinaryFuseFilterView<'_> {
 impl From<&SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
     fn from(v: &SerializedBinaryFuseFilterView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -134,7 +134,7 @@ impl From<&SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
 impl From<SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
     fn from(v: SerializedBinaryFuseFilterView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

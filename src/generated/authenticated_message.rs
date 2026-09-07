@@ -145,10 +145,12 @@ pub enum AuthenticatedMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AuthenticatedMessageView<'_> {
     type Owned = AuthenticatedMessage;
-    fn into_owned(self) -> AuthenticatedMessage {
+    fn into_owned(&self) -> AuthenticatedMessage {
         #[allow(clippy::match_same_arms)]
         match self {
-            AuthenticatedMessageView::V0(value) => AuthenticatedMessage::V0(value.into_owned()),
+            AuthenticatedMessageView::V0(value) => {
+                AuthenticatedMessage::V0(IntoOwned::into_owned(value))
+            }
         }
     }
 }
@@ -157,7 +159,7 @@ impl IntoOwned for AuthenticatedMessageView<'_> {
 impl From<&AuthenticatedMessageView<'_>> for AuthenticatedMessage {
     #[must_use]
     fn from(v: &AuthenticatedMessageView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -165,7 +167,7 @@ impl From<&AuthenticatedMessageView<'_>> for AuthenticatedMessage {
 impl From<AuthenticatedMessageView<'_>> for AuthenticatedMessage {
     #[must_use]
     fn from(v: AuthenticatedMessageView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

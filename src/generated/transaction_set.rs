@@ -61,10 +61,10 @@ pub struct TransactionSetView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionSetView<'_> {
     type Owned = TransactionSet;
-    fn into_owned(self) -> TransactionSet {
+    fn into_owned(&self) -> TransactionSet {
         TransactionSet {
-            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
-            txs: self.txs.into_owned(),
+            previous_ledger_hash: IntoOwned::into_owned(&self.previous_ledger_hash),
+            txs: IntoOwned::into_owned(&self.txs),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TransactionSetView<'_> {
 impl From<&TransactionSetView<'_>> for TransactionSet {
     #[must_use]
     fn from(v: &TransactionSetView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TransactionSetView<'_>> for TransactionSet {
 impl From<TransactionSetView<'_>> for TransactionSet {
     #[must_use]
     fn from(v: TransactionSetView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -116,8 +116,8 @@ pub struct ScStringView<'a>(pub StringMView<'a>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScStringView<'_> {
     type Owned = ScString;
-    fn into_owned(self) -> ScString {
-        ScString(self.0.into_owned())
+    fn into_owned(&self) -> ScString {
+        ScString(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for ScStringView<'_> {
 impl From<&ScStringView<'_>> for ScString {
     #[must_use]
     fn from(v: &ScStringView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&ScStringView<'_>> for ScString {
 impl From<ScStringView<'_>> for ScString {
     #[must_use]
     fn from(v: ScStringView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

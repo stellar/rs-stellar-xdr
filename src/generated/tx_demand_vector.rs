@@ -116,8 +116,8 @@ pub struct TxDemandVectorView<'a>(pub VecMView<'a, Hash, TX_DEMAND_VECTOR_MAX_SI
 #[cfg(feature = "alloc")]
 impl IntoOwned for TxDemandVectorView<'_> {
     type Owned = TxDemandVector;
-    fn into_owned(self) -> TxDemandVector {
-        TxDemandVector(self.0.into_owned())
+    fn into_owned(&self) -> TxDemandVector {
+        TxDemandVector(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for TxDemandVectorView<'_> {
 impl From<&TxDemandVectorView<'_>> for TxDemandVector {
     #[must_use]
     fn from(v: &TxDemandVectorView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&TxDemandVectorView<'_>> for TxDemandVector {
 impl From<TxDemandVectorView<'_>> for TxDemandVector {
     #[must_use]
     fn from(v: TxDemandVectorView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -56,9 +56,9 @@ pub struct ScSpecTypeVecView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeVecView<'_> {
     type Owned = ScSpecTypeVec;
-    fn into_owned(self) -> ScSpecTypeVec {
+    fn into_owned(&self) -> ScSpecTypeVec {
         ScSpecTypeVec {
-            element_type: self.element_type.into_owned(),
+            element_type: IntoOwned::into_owned(&self.element_type),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for ScSpecTypeVecView<'_> {
 impl From<&ScSpecTypeVecView<'_>> for ScSpecTypeVec {
     #[must_use]
     fn from(v: &ScSpecTypeVecView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&ScSpecTypeVecView<'_>> for ScSpecTypeVec {
 impl From<ScSpecTypeVecView<'_>> for ScSpecTypeVec {
     #[must_use]
     fn from(v: ScSpecTypeVecView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

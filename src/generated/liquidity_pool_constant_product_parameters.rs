@@ -57,7 +57,8 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LiquidityPoolConstantProductParameters {
     type Owned = LiquidityPoolConstantProductParameters;
-    fn into_owned(self) -> LiquidityPoolConstantProductParameters {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> LiquidityPoolConstantProductParameters {
+        self.clone()
     }
 }

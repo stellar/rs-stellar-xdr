@@ -128,7 +128,8 @@ impl WriteXdr for OfferEntryFlags {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OfferEntryFlags {
     type Owned = OfferEntryFlags;
-    fn into_owned(self) -> OfferEntryFlags {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> OfferEntryFlags {
+        self.clone()
     }
 }

@@ -157,7 +157,8 @@ impl AsRef<[u8]> for Uint256 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Uint256 {
     type Owned = Uint256;
-    fn into_owned(self) -> Uint256 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> Uint256 {
+        self.clone()
     }
 }

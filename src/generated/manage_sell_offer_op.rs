@@ -75,7 +75,8 @@ impl WriteXdr for ManageSellOfferOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageSellOfferOp {
     type Owned = ManageSellOfferOp;
-    fn into_owned(self) -> ManageSellOfferOp {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ManageSellOfferOp {
+        self.clone()
     }
 }

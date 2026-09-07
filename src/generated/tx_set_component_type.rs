@@ -128,7 +128,8 @@ impl WriteXdr for TxSetComponentType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TxSetComponentType {
     type Owned = TxSetComponentType;
-    fn into_owned(self) -> TxSetComponentType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> TxSetComponentType {
+        self.clone()
     }
 }

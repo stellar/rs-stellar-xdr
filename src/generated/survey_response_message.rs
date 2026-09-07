@@ -76,13 +76,13 @@ pub struct SurveyResponseMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SurveyResponseMessageView<'_> {
     type Owned = SurveyResponseMessage;
-    fn into_owned(self) -> SurveyResponseMessage {
+    fn into_owned(&self) -> SurveyResponseMessage {
         SurveyResponseMessage {
-            surveyor_peer_id: self.surveyor_peer_id.into_owned(),
-            surveyed_peer_id: self.surveyed_peer_id.into_owned(),
-            ledger_num: self.ledger_num.into_owned(),
-            command_type: self.command_type.into_owned(),
-            encrypted_body: self.encrypted_body.into_owned(),
+            surveyor_peer_id: IntoOwned::into_owned(&self.surveyor_peer_id),
+            surveyed_peer_id: IntoOwned::into_owned(&self.surveyed_peer_id),
+            ledger_num: IntoOwned::into_owned(&self.ledger_num),
+            command_type: IntoOwned::into_owned(&self.command_type),
+            encrypted_body: IntoOwned::into_owned(&self.encrypted_body),
         }
     }
 }
@@ -91,7 +91,7 @@ impl IntoOwned for SurveyResponseMessageView<'_> {
 impl From<&SurveyResponseMessageView<'_>> for SurveyResponseMessage {
     #[must_use]
     fn from(v: &SurveyResponseMessageView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -99,7 +99,7 @@ impl From<&SurveyResponseMessageView<'_>> for SurveyResponseMessage {
 impl From<SurveyResponseMessageView<'_>> for SurveyResponseMessage {
     #[must_use]
     fn from(v: SurveyResponseMessageView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

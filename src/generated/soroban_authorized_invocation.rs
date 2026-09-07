@@ -61,10 +61,10 @@ pub struct SorobanAuthorizedInvocationView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAuthorizedInvocationView<'_> {
     type Owned = SorobanAuthorizedInvocation;
-    fn into_owned(self) -> SorobanAuthorizedInvocation {
+    fn into_owned(&self) -> SorobanAuthorizedInvocation {
         SorobanAuthorizedInvocation {
-            function: self.function.into_owned(),
-            sub_invocations: self.sub_invocations.into_owned(),
+            function: IntoOwned::into_owned(&self.function),
+            sub_invocations: IntoOwned::into_owned(&self.sub_invocations),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for SorobanAuthorizedInvocationView<'_> {
 impl From<&SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation {
     #[must_use]
     fn from(v: &SorobanAuthorizedInvocationView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation 
 impl From<SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation {
     #[must_use]
     fn from(v: SorobanAuthorizedInvocationView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -56,9 +56,9 @@ pub struct FloodAdvertView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FloodAdvertView<'_> {
     type Owned = FloodAdvert;
-    fn into_owned(self) -> FloodAdvert {
+    fn into_owned(&self) -> FloodAdvert {
         FloodAdvert {
-            tx_hashes: self.tx_hashes.into_owned(),
+            tx_hashes: IntoOwned::into_owned(&self.tx_hashes),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for FloodAdvertView<'_> {
 impl From<&FloodAdvertView<'_>> for FloodAdvert {
     #[must_use]
     fn from(v: &FloodAdvertView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&FloodAdvertView<'_>> for FloodAdvert {
 impl From<FloodAdvertView<'_>> for FloodAdvert {
     #[must_use]
     fn from(v: FloodAdvertView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

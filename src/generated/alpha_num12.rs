@@ -53,7 +53,8 @@ impl WriteXdr for AlphaNum12 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AlphaNum12 {
     type Owned = AlphaNum12;
-    fn into_owned(self) -> AlphaNum12 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> AlphaNum12 {
+        self.clone()
     }
 }

@@ -158,7 +158,8 @@ impl WriteXdr for AccountFlags {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountFlags {
     type Owned = AccountFlags;
-    fn into_owned(self) -> AccountFlags {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> AccountFlags {
+        self.clone()
     }
 }

@@ -71,11 +71,11 @@ pub struct ScSpecFunctionInputV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecFunctionInputV0View<'_> {
     type Owned = ScSpecFunctionInputV0;
-    fn into_owned(self) -> ScSpecFunctionInputV0 {
+    fn into_owned(&self) -> ScSpecFunctionInputV0 {
         ScSpecFunctionInputV0 {
-            doc: self.doc.into_owned(),
-            name: self.name.into_owned(),
-            type_: self.type_.into_owned(),
+            doc: IntoOwned::into_owned(&self.doc),
+            name: IntoOwned::into_owned(&self.name),
+            type_: IntoOwned::into_owned(&self.type_),
         }
     }
 }
@@ -84,7 +84,7 @@ impl IntoOwned for ScSpecFunctionInputV0View<'_> {
 impl From<&ScSpecFunctionInputV0View<'_>> for ScSpecFunctionInputV0 {
     #[must_use]
     fn from(v: &ScSpecFunctionInputV0View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -92,7 +92,7 @@ impl From<&ScSpecFunctionInputV0View<'_>> for ScSpecFunctionInputV0 {
 impl From<ScSpecFunctionInputV0View<'_>> for ScSpecFunctionInputV0 {
     #[must_use]
     fn from(v: ScSpecFunctionInputV0View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

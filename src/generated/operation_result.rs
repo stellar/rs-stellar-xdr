@@ -256,10 +256,12 @@ pub enum OperationResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationResultView<'_> {
     type Owned = OperationResult;
-    fn into_owned(self) -> OperationResult {
+    fn into_owned(&self) -> OperationResult {
         #[allow(clippy::match_same_arms)]
         match self {
-            OperationResultView::OpInner(value) => OperationResult::OpInner(value.into_owned()),
+            OperationResultView::OpInner(value) => {
+                OperationResult::OpInner(IntoOwned::into_owned(value))
+            }
             OperationResultView::OpBadAuth => OperationResult::OpBadAuth,
             OperationResultView::OpNoAccount => OperationResult::OpNoAccount,
             OperationResultView::OpNotSupported => OperationResult::OpNotSupported,
@@ -274,7 +276,7 @@ impl IntoOwned for OperationResultView<'_> {
 impl From<&OperationResultView<'_>> for OperationResult {
     #[must_use]
     fn from(v: &OperationResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -282,7 +284,7 @@ impl From<&OperationResultView<'_>> for OperationResult {
 impl From<OperationResultView<'_>> for OperationResult {
     #[must_use]
     fn from(v: OperationResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

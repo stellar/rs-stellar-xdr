@@ -160,7 +160,8 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for CreateClaimableBalanceResultCode {
     type Owned = CreateClaimableBalanceResultCode;
-    fn into_owned(self) -> CreateClaimableBalanceResultCode {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> CreateClaimableBalanceResultCode {
+        self.clone()
     }
 }

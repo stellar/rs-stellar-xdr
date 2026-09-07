@@ -116,8 +116,8 @@ pub struct DependentTxClusterView<'a>(pub VecMView<'a, TransactionEnvelopeView<'
 #[cfg(feature = "alloc")]
 impl IntoOwned for DependentTxClusterView<'_> {
     type Owned = DependentTxCluster;
-    fn into_owned(self) -> DependentTxCluster {
-        DependentTxCluster(self.0.into_owned())
+    fn into_owned(&self) -> DependentTxCluster {
+        DependentTxCluster(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for DependentTxClusterView<'_> {
 impl From<&DependentTxClusterView<'_>> for DependentTxCluster {
     #[must_use]
     fn from(v: &DependentTxClusterView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&DependentTxClusterView<'_>> for DependentTxCluster {
 impl From<DependentTxClusterView<'_>> for DependentTxCluster {
     #[must_use]
     fn from(v: DependentTxClusterView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -49,7 +49,8 @@ impl WriteXdr for BumpSequenceOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BumpSequenceOp {
     type Owned = BumpSequenceOp;
-    fn into_owned(self) -> BumpSequenceOp {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> BumpSequenceOp {
+        self.clone()
     }
 }

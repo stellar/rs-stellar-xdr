@@ -132,7 +132,8 @@ impl WriteXdr for DataEntryExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for DataEntryExt {
     type Owned = DataEntryExt;
-    fn into_owned(self) -> DataEntryExt {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> DataEntryExt {
+        self.clone()
     }
 }

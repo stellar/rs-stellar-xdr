@@ -190,7 +190,8 @@ impl WriteXdr for EnvelopeType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for EnvelopeType {
     type Owned = EnvelopeType;
-    fn into_owned(self) -> EnvelopeType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> EnvelopeType {
+        self.clone()
     }
 }

@@ -182,20 +182,20 @@ pub enum HostFunctionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HostFunctionView<'_> {
     type Owned = HostFunction;
-    fn into_owned(self) -> HostFunction {
+    fn into_owned(&self) -> HostFunction {
         #[allow(clippy::match_same_arms)]
         match self {
             HostFunctionView::InvokeContract(value) => {
-                HostFunction::InvokeContract(value.into_owned())
+                HostFunction::InvokeContract(IntoOwned::into_owned(value))
             }
             HostFunctionView::CreateContract(value) => {
-                HostFunction::CreateContract(value.into_owned())
+                HostFunction::CreateContract(IntoOwned::into_owned(value))
             }
             HostFunctionView::UploadContractWasm(value) => {
-                HostFunction::UploadContractWasm(value.into_owned())
+                HostFunction::UploadContractWasm(IntoOwned::into_owned(value))
             }
             HostFunctionView::CreateContractV2(value) => {
-                HostFunction::CreateContractV2(value.into_owned())
+                HostFunction::CreateContractV2(IntoOwned::into_owned(value))
             }
         }
     }
@@ -205,7 +205,7 @@ impl IntoOwned for HostFunctionView<'_> {
 impl From<&HostFunctionView<'_>> for HostFunction {
     #[must_use]
     fn from(v: &HostFunctionView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -213,7 +213,7 @@ impl From<&HostFunctionView<'_>> for HostFunction {
 impl From<HostFunctionView<'_>> for HostFunction {
     #[must_use]
     fn from(v: HostFunctionView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

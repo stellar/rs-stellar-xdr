@@ -196,17 +196,25 @@ pub enum ScSpecEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecEntryView<'_> {
     type Owned = ScSpecEntry;
-    fn into_owned(self) -> ScSpecEntry {
+    fn into_owned(&self) -> ScSpecEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScSpecEntryView::FunctionV0(value) => ScSpecEntry::FunctionV0(value.into_owned()),
-            ScSpecEntryView::UdtStructV0(value) => ScSpecEntry::UdtStructV0(value.into_owned()),
-            ScSpecEntryView::UdtUnionV0(value) => ScSpecEntry::UdtUnionV0(value.into_owned()),
-            ScSpecEntryView::UdtEnumV0(value) => ScSpecEntry::UdtEnumV0(value.into_owned()),
-            ScSpecEntryView::UdtErrorEnumV0(value) => {
-                ScSpecEntry::UdtErrorEnumV0(value.into_owned())
+            ScSpecEntryView::FunctionV0(value) => {
+                ScSpecEntry::FunctionV0(IntoOwned::into_owned(value))
             }
-            ScSpecEntryView::EventV0(value) => ScSpecEntry::EventV0(value.into_owned()),
+            ScSpecEntryView::UdtStructV0(value) => {
+                ScSpecEntry::UdtStructV0(IntoOwned::into_owned(value))
+            }
+            ScSpecEntryView::UdtUnionV0(value) => {
+                ScSpecEntry::UdtUnionV0(IntoOwned::into_owned(value))
+            }
+            ScSpecEntryView::UdtEnumV0(value) => {
+                ScSpecEntry::UdtEnumV0(IntoOwned::into_owned(value))
+            }
+            ScSpecEntryView::UdtErrorEnumV0(value) => {
+                ScSpecEntry::UdtErrorEnumV0(IntoOwned::into_owned(value))
+            }
+            ScSpecEntryView::EventV0(value) => ScSpecEntry::EventV0(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -215,7 +223,7 @@ impl IntoOwned for ScSpecEntryView<'_> {
 impl From<&ScSpecEntryView<'_>> for ScSpecEntry {
     #[must_use]
     fn from(v: &ScSpecEntryView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -223,7 +231,7 @@ impl From<&ScSpecEntryView<'_>> for ScSpecEntry {
 impl From<ScSpecEntryView<'_>> for ScSpecEntry {
     #[must_use]
     fn from(v: ScSpecEntryView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

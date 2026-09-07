@@ -138,7 +138,8 @@ impl WriteXdr for ScSpecEventDataFormat {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecEventDataFormat {
     type Owned = ScSpecEventDataFormat;
-    fn into_owned(self) -> ScSpecEventDataFormat {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ScSpecEventDataFormat {
+        self.clone()
     }
 }

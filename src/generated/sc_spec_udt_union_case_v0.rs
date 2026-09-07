@@ -155,14 +155,14 @@ pub enum ScSpecUdtUnionCaseV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
     type Owned = ScSpecUdtUnionCaseV0;
-    fn into_owned(self) -> ScSpecUdtUnionCaseV0 {
+    fn into_owned(&self) -> ScSpecUdtUnionCaseV0 {
         #[allow(clippy::match_same_arms)]
         match self {
             ScSpecUdtUnionCaseV0View::VoidV0(value) => {
-                ScSpecUdtUnionCaseV0::VoidV0(value.into_owned())
+                ScSpecUdtUnionCaseV0::VoidV0(IntoOwned::into_owned(value))
             }
             ScSpecUdtUnionCaseV0View::TupleV0(value) => {
-                ScSpecUdtUnionCaseV0::TupleV0(value.into_owned())
+                ScSpecUdtUnionCaseV0::TupleV0(IntoOwned::into_owned(value))
             }
         }
     }
@@ -172,7 +172,7 @@ impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
 impl From<&ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
     fn from(v: &ScSpecUdtUnionCaseV0View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -180,7 +180,7 @@ impl From<&ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
 impl From<ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
     fn from(v: ScSpecUdtUnionCaseV0View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

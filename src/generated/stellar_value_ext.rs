@@ -168,13 +168,15 @@ pub enum StellarValueExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueExtView<'_> {
     type Owned = StellarValueExt;
-    fn into_owned(self) -> StellarValueExt {
+    fn into_owned(&self) -> StellarValueExt {
         #[allow(clippy::match_same_arms)]
         match self {
             StellarValueExtView::Basic => StellarValueExt::Basic,
-            StellarValueExtView::Signed(value) => StellarValueExt::Signed(value.into_owned()),
+            StellarValueExtView::Signed(value) => {
+                StellarValueExt::Signed(IntoOwned::into_owned(value))
+            }
             StellarValueExtView::EmptyTxSet(value) => {
-                StellarValueExt::EmptyTxSet(value.into_owned())
+                StellarValueExt::EmptyTxSet(IntoOwned::into_owned(value))
             }
         }
     }
@@ -184,7 +186,7 @@ impl IntoOwned for StellarValueExtView<'_> {
 impl From<&StellarValueExtView<'_>> for StellarValueExt {
     #[must_use]
     fn from(v: &StellarValueExtView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -192,7 +194,7 @@ impl From<&StellarValueExtView<'_>> for StellarValueExt {
 impl From<StellarValueExtView<'_>> for StellarValueExt {
     #[must_use]
     fn from(v: StellarValueExtView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

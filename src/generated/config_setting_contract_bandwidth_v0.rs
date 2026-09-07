@@ -65,7 +65,8 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingContractBandwidthV0 {
     type Owned = ConfigSettingContractBandwidthV0;
-    fn into_owned(self) -> ConfigSettingContractBandwidthV0 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ConfigSettingContractBandwidthV0 {
+        self.clone()
     }
 }

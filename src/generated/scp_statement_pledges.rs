@@ -191,20 +191,20 @@ pub enum ScpStatementPledgesView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpStatementPledgesView<'_> {
     type Owned = ScpStatementPledges;
-    fn into_owned(self) -> ScpStatementPledges {
+    fn into_owned(&self) -> ScpStatementPledges {
         #[allow(clippy::match_same_arms)]
         match self {
             ScpStatementPledgesView::Prepare(value) => {
-                ScpStatementPledges::Prepare(value.into_owned())
+                ScpStatementPledges::Prepare(IntoOwned::into_owned(value))
             }
             ScpStatementPledgesView::Confirm(value) => {
-                ScpStatementPledges::Confirm(value.into_owned())
+                ScpStatementPledges::Confirm(IntoOwned::into_owned(value))
             }
             ScpStatementPledgesView::Externalize(value) => {
-                ScpStatementPledges::Externalize(value.into_owned())
+                ScpStatementPledges::Externalize(IntoOwned::into_owned(value))
             }
             ScpStatementPledgesView::Nominate(value) => {
-                ScpStatementPledges::Nominate(value.into_owned())
+                ScpStatementPledges::Nominate(IntoOwned::into_owned(value))
             }
         }
     }
@@ -214,7 +214,7 @@ impl IntoOwned for ScpStatementPledgesView<'_> {
 impl From<&ScpStatementPledgesView<'_>> for ScpStatementPledges {
     #[must_use]
     fn from(v: &ScpStatementPledgesView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -222,7 +222,7 @@ impl From<&ScpStatementPledgesView<'_>> for ScpStatementPledges {
 impl From<ScpStatementPledgesView<'_>> for ScpStatementPledges {
     #[must_use]
     fn from(v: ScpStatementPledgesView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

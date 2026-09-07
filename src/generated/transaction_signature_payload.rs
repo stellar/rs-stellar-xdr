@@ -69,10 +69,10 @@ pub struct TransactionSignaturePayloadView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionSignaturePayloadView<'_> {
     type Owned = TransactionSignaturePayload;
-    fn into_owned(self) -> TransactionSignaturePayload {
+    fn into_owned(&self) -> TransactionSignaturePayload {
         TransactionSignaturePayload {
-            network_id: self.network_id.into_owned(),
-            tagged_transaction: self.tagged_transaction.into_owned(),
+            network_id: IntoOwned::into_owned(&self.network_id),
+            tagged_transaction: IntoOwned::into_owned(&self.tagged_transaction),
         }
     }
 }
@@ -81,7 +81,7 @@ impl IntoOwned for TransactionSignaturePayloadView<'_> {
 impl From<&TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
     #[must_use]
     fn from(v: &TransactionSignaturePayloadView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -89,7 +89,7 @@ impl From<&TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload 
 impl From<TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
     #[must_use]
     fn from(v: TransactionSignaturePayloadView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -118,8 +118,8 @@ pub struct ContractCostParamsView<'a>(
 #[cfg(feature = "alloc")]
 impl IntoOwned for ContractCostParamsView<'_> {
     type Owned = ContractCostParams;
-    fn into_owned(self) -> ContractCostParams {
-        ContractCostParams(self.0.into_owned())
+    fn into_owned(&self) -> ContractCostParams {
+        ContractCostParams(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -127,7 +127,7 @@ impl IntoOwned for ContractCostParamsView<'_> {
 impl From<&ContractCostParamsView<'_>> for ContractCostParams {
     #[must_use]
     fn from(v: &ContractCostParamsView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -135,7 +135,7 @@ impl From<&ContractCostParamsView<'_>> for ContractCostParams {
 impl From<ContractCostParamsView<'_>> for ContractCostParams {
     #[must_use]
     fn from(v: ContractCostParamsView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

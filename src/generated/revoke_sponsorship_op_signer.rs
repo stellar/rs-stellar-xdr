@@ -61,10 +61,10 @@ pub struct RevokeSponsorshipOpSignerView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for RevokeSponsorshipOpSignerView<'_> {
     type Owned = RevokeSponsorshipOpSigner;
-    fn into_owned(self) -> RevokeSponsorshipOpSigner {
+    fn into_owned(&self) -> RevokeSponsorshipOpSigner {
         RevokeSponsorshipOpSigner {
-            account_id: self.account_id.into_owned(),
-            signer_key: self.signer_key.into_owned(),
+            account_id: IntoOwned::into_owned(&self.account_id),
+            signer_key: IntoOwned::into_owned(&self.signer_key),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for RevokeSponsorshipOpSignerView<'_> {
 impl From<&RevokeSponsorshipOpSignerView<'_>> for RevokeSponsorshipOpSigner {
     #[must_use]
     fn from(v: &RevokeSponsorshipOpSignerView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&RevokeSponsorshipOpSignerView<'_>> for RevokeSponsorshipOpSigner {
 impl From<RevokeSponsorshipOpSignerView<'_>> for RevokeSponsorshipOpSigner {
     #[must_use]
     fn from(v: RevokeSponsorshipOpSignerView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

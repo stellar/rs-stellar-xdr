@@ -132,7 +132,8 @@ impl WriteXdr for OfferEntryExt {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OfferEntryExt {
     type Owned = OfferEntryExt;
-    fn into_owned(self) -> OfferEntryExt {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> OfferEntryExt {
+        self.clone()
     }
 }

@@ -157,14 +157,14 @@ pub enum RevokeSponsorshipOpView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for RevokeSponsorshipOpView<'_> {
     type Owned = RevokeSponsorshipOp;
-    fn into_owned(self) -> RevokeSponsorshipOp {
+    fn into_owned(&self) -> RevokeSponsorshipOp {
         #[allow(clippy::match_same_arms)]
         match self {
             RevokeSponsorshipOpView::LedgerEntry(value) => {
-                RevokeSponsorshipOp::LedgerEntry(value.into_owned())
+                RevokeSponsorshipOp::LedgerEntry(IntoOwned::into_owned(value))
             }
             RevokeSponsorshipOpView::Signer(value) => {
-                RevokeSponsorshipOp::Signer(value.into_owned())
+                RevokeSponsorshipOp::Signer(IntoOwned::into_owned(value))
             }
         }
     }
@@ -174,7 +174,7 @@ impl IntoOwned for RevokeSponsorshipOpView<'_> {
 impl From<&RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
     #[must_use]
     fn from(v: &RevokeSponsorshipOpView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -182,7 +182,7 @@ impl From<&RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
 impl From<RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
     #[must_use]
     fn from(v: RevokeSponsorshipOpView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

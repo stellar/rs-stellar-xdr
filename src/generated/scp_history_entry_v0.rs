@@ -61,10 +61,10 @@ pub struct ScpHistoryEntryV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScpHistoryEntryV0View<'_> {
     type Owned = ScpHistoryEntryV0;
-    fn into_owned(self) -> ScpHistoryEntryV0 {
+    fn into_owned(&self) -> ScpHistoryEntryV0 {
         ScpHistoryEntryV0 {
-            quorum_sets: self.quorum_sets.into_owned(),
-            ledger_messages: self.ledger_messages.into_owned(),
+            quorum_sets: IntoOwned::into_owned(&self.quorum_sets),
+            ledger_messages: IntoOwned::into_owned(&self.ledger_messages),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScpHistoryEntryV0View<'_> {
 impl From<&ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
     #[must_use]
     fn from(v: &ScpHistoryEntryV0View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
 impl From<ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
     #[must_use]
     fn from(v: ScpHistoryEntryV0View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -92,10 +92,10 @@ pub struct SignerKeyEd25519SignedPayloadView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignerKeyEd25519SignedPayloadView<'_> {
     type Owned = SignerKeyEd25519SignedPayload;
-    fn into_owned(self) -> SignerKeyEd25519SignedPayload {
+    fn into_owned(&self) -> SignerKeyEd25519SignedPayload {
         SignerKeyEd25519SignedPayload {
-            ed25519: self.ed25519.into_owned(),
-            payload: self.payload.into_owned(),
+            ed25519: IntoOwned::into_owned(&self.ed25519),
+            payload: IntoOwned::into_owned(&self.payload),
         }
     }
 }
@@ -104,7 +104,7 @@ impl IntoOwned for SignerKeyEd25519SignedPayloadView<'_> {
 impl From<&SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayload {
     #[must_use]
     fn from(v: &SignerKeyEd25519SignedPayloadView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -112,7 +112,7 @@ impl From<&SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayl
 impl From<SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayload {
     #[must_use]
     fn from(v: SignerKeyEd25519SignedPayloadView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

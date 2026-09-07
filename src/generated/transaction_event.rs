@@ -60,10 +60,10 @@ pub struct TransactionEventView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionEventView<'_> {
     type Owned = TransactionEvent;
-    fn into_owned(self) -> TransactionEvent {
+    fn into_owned(&self) -> TransactionEvent {
         TransactionEvent {
-            stage: self.stage.into_owned(),
-            event: self.event.into_owned(),
+            stage: IntoOwned::into_owned(&self.stage),
+            event: IntoOwned::into_owned(&self.event),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for TransactionEventView<'_> {
 impl From<&TransactionEventView<'_>> for TransactionEvent {
     #[must_use]
     fn from(v: &TransactionEventView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&TransactionEventView<'_>> for TransactionEvent {
 impl From<TransactionEventView<'_>> for TransactionEvent {
     #[must_use]
     fn from(v: TransactionEventView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

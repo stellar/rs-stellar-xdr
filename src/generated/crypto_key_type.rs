@@ -156,7 +156,8 @@ impl WriteXdr for CryptoKeyType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for CryptoKeyType {
     type Owned = CryptoKeyType;
-    fn into_owned(self) -> CryptoKeyType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> CryptoKeyType {
+        self.clone()
     }
 }

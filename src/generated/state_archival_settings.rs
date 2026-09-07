@@ -106,7 +106,8 @@ impl WriteXdr for StateArchivalSettings {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StateArchivalSettings {
     type Owned = StateArchivalSettings;
-    fn into_owned(self) -> StateArchivalSettings {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> StateArchivalSettings {
+        self.clone()
     }
 }

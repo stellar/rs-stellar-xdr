@@ -53,7 +53,8 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingContractParallelComputeV0 {
     type Owned = ConfigSettingContractParallelComputeV0;
-    fn into_owned(self) -> ConfigSettingContractParallelComputeV0 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ConfigSettingContractParallelComputeV0 {
+        self.clone()
     }
 }

@@ -172,14 +172,14 @@ pub enum TransactionMetaView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionMetaView<'_> {
     type Owned = TransactionMeta;
-    fn into_owned(self) -> TransactionMeta {
+    fn into_owned(&self) -> TransactionMeta {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionMetaView::V0(value) => TransactionMeta::V0(value.into_owned()),
-            TransactionMetaView::V1(value) => TransactionMeta::V1(value.into_owned()),
-            TransactionMetaView::V2(value) => TransactionMeta::V2(value.into_owned()),
-            TransactionMetaView::V3(value) => TransactionMeta::V3(value.into_owned()),
-            TransactionMetaView::V4(value) => TransactionMeta::V4(value.into_owned()),
+            TransactionMetaView::V0(value) => TransactionMeta::V0(IntoOwned::into_owned(value)),
+            TransactionMetaView::V1(value) => TransactionMeta::V1(IntoOwned::into_owned(value)),
+            TransactionMetaView::V2(value) => TransactionMeta::V2(IntoOwned::into_owned(value)),
+            TransactionMetaView::V3(value) => TransactionMeta::V3(IntoOwned::into_owned(value)),
+            TransactionMetaView::V4(value) => TransactionMeta::V4(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -188,7 +188,7 @@ impl IntoOwned for TransactionMetaView<'_> {
 impl From<&TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
     fn from(v: &TransactionMetaView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -196,7 +196,7 @@ impl From<&TransactionMetaView<'_>> for TransactionMeta {
 impl From<TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
     fn from(v: TransactionMetaView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

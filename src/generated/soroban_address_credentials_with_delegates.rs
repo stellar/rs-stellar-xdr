@@ -61,10 +61,10 @@ pub struct SorobanAddressCredentialsWithDelegatesView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAddressCredentialsWithDelegatesView<'_> {
     type Owned = SorobanAddressCredentialsWithDelegates;
-    fn into_owned(self) -> SorobanAddressCredentialsWithDelegates {
+    fn into_owned(&self) -> SorobanAddressCredentialsWithDelegates {
         SorobanAddressCredentialsWithDelegates {
-            address_credentials: self.address_credentials.into_owned(),
-            delegates: self.delegates.into_owned(),
+            address_credentials: IntoOwned::into_owned(&self.address_credentials),
+            delegates: IntoOwned::into_owned(&self.delegates),
         }
     }
 }
@@ -75,7 +75,7 @@ impl From<&SorobanAddressCredentialsWithDelegatesView<'_>>
 {
     #[must_use]
     fn from(v: &SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -85,7 +85,7 @@ impl From<SorobanAddressCredentialsWithDelegatesView<'_>>
 {
     #[must_use]
     fn from(v: SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

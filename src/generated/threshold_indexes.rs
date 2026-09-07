@@ -143,7 +143,8 @@ impl WriteXdr for ThresholdIndexes {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ThresholdIndexes {
     type Owned = ThresholdIndexes;
-    fn into_owned(self) -> ThresholdIndexes {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ThresholdIndexes {
+        self.clone()
     }
 }

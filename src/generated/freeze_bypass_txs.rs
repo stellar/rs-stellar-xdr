@@ -55,9 +55,9 @@ pub struct FreezeBypassTxsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FreezeBypassTxsView<'_> {
     type Owned = FreezeBypassTxs;
-    fn into_owned(self) -> FreezeBypassTxs {
+    fn into_owned(&self) -> FreezeBypassTxs {
         FreezeBypassTxs {
-            tx_hashes: self.tx_hashes.into_owned(),
+            tx_hashes: IntoOwned::into_owned(&self.tx_hashes),
         }
     }
 }
@@ -66,7 +66,7 @@ impl IntoOwned for FreezeBypassTxsView<'_> {
 impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
     fn from(v: &FreezeBypassTxsView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -74,7 +74,7 @@ impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
 impl From<FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
     fn from(v: FreezeBypassTxsView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

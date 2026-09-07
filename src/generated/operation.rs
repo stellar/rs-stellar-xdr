@@ -122,10 +122,10 @@ pub struct OperationView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationView<'_> {
     type Owned = Operation;
-    fn into_owned(self) -> Operation {
+    fn into_owned(&self) -> Operation {
         Operation {
-            source_account: self.source_account.into_owned(),
-            body: self.body.into_owned(),
+            source_account: IntoOwned::into_owned(&self.source_account),
+            body: IntoOwned::into_owned(&self.body),
         }
     }
 }
@@ -134,7 +134,7 @@ impl IntoOwned for OperationView<'_> {
 impl From<&OperationView<'_>> for Operation {
     #[must_use]
     fn from(v: &OperationView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -142,7 +142,7 @@ impl From<&OperationView<'_>> for Operation {
 impl From<OperationView<'_>> for Operation {
     #[must_use]
     fn from(v: OperationView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

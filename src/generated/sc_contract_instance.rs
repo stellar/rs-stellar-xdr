@@ -60,10 +60,10 @@ pub struct ScContractInstanceView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScContractInstanceView<'_> {
     type Owned = ScContractInstance;
-    fn into_owned(self) -> ScContractInstance {
+    fn into_owned(&self) -> ScContractInstance {
         ScContractInstance {
-            executable: self.executable.into_owned(),
-            storage: self.storage.into_owned(),
+            executable: IntoOwned::into_owned(&self.executable),
+            storage: IntoOwned::into_owned(&self.storage),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for ScContractInstanceView<'_> {
 impl From<&ScContractInstanceView<'_>> for ScContractInstance {
     #[must_use]
     fn from(v: &ScContractInstanceView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&ScContractInstanceView<'_>> for ScContractInstance {
 impl From<ScContractInstanceView<'_>> for ScContractInstance {
     #[must_use]
     fn from(v: ScContractInstanceView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -148,11 +148,11 @@ pub enum AccountEntryExtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountEntryExtView<'_> {
     type Owned = AccountEntryExt;
-    fn into_owned(self) -> AccountEntryExt {
+    fn into_owned(&self) -> AccountEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
             AccountEntryExtView::V0 => AccountEntryExt::V0,
-            AccountEntryExtView::V1(value) => AccountEntryExt::V1(value.into_owned()),
+            AccountEntryExtView::V1(value) => AccountEntryExt::V1(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -161,7 +161,7 @@ impl IntoOwned for AccountEntryExtView<'_> {
 impl From<&AccountEntryExtView<'_>> for AccountEntryExt {
     #[must_use]
     fn from(v: &AccountEntryExtView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -169,7 +169,7 @@ impl From<&AccountEntryExtView<'_>> for AccountEntryExt {
 impl From<AccountEntryExtView<'_>> for AccountEntryExt {
     #[must_use]
     fn from(v: AccountEntryExtView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

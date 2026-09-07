@@ -145,7 +145,8 @@ impl WriteXdr for BucketEntryType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BucketEntryType {
     type Owned = BucketEntryType;
-    fn into_owned(self) -> BucketEntryType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> BucketEntryType {
+        self.clone()
     }
 }

@@ -116,8 +116,8 @@ pub struct SorobanAuthorizationEntriesView<'a>(pub VecMView<'a, SorobanAuthoriza
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAuthorizationEntriesView<'_> {
     type Owned = SorobanAuthorizationEntries;
-    fn into_owned(self) -> SorobanAuthorizationEntries {
-        SorobanAuthorizationEntries(self.0.into_owned())
+    fn into_owned(&self) -> SorobanAuthorizationEntries {
+        SorobanAuthorizationEntries(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for SorobanAuthorizationEntriesView<'_> {
 impl From<&SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
     #[must_use]
     fn from(v: &SorobanAuthorizationEntriesView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries 
 impl From<SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
     #[must_use]
     fn from(v: SorobanAuthorizationEntriesView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

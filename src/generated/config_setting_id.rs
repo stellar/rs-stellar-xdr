@@ -250,7 +250,8 @@ impl WriteXdr for ConfigSettingId {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ConfigSettingId {
     type Owned = ConfigSettingId;
-    fn into_owned(self) -> ConfigSettingId {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ConfigSettingId {
+        self.clone()
     }
 }

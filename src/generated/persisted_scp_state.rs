@@ -148,11 +148,11 @@ pub enum PersistedScpStateView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PersistedScpStateView<'_> {
     type Owned = PersistedScpState;
-    fn into_owned(self) -> PersistedScpState {
+    fn into_owned(&self) -> PersistedScpState {
         #[allow(clippy::match_same_arms)]
         match self {
-            PersistedScpStateView::V0(value) => PersistedScpState::V0(value.into_owned()),
-            PersistedScpStateView::V1(value) => PersistedScpState::V1(value.into_owned()),
+            PersistedScpStateView::V0(value) => PersistedScpState::V0(IntoOwned::into_owned(value)),
+            PersistedScpStateView::V1(value) => PersistedScpState::V1(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -161,7 +161,7 @@ impl IntoOwned for PersistedScpStateView<'_> {
 impl From<&PersistedScpStateView<'_>> for PersistedScpState {
     #[must_use]
     fn from(v: &PersistedScpStateView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -169,7 +169,7 @@ impl From<&PersistedScpStateView<'_>> for PersistedScpState {
 impl From<PersistedScpStateView<'_>> for PersistedScpState {
     #[must_use]
     fn from(v: PersistedScpStateView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -181,17 +181,17 @@ pub enum SorobanAuthorizedFunctionView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SorobanAuthorizedFunctionView<'_> {
     type Owned = SorobanAuthorizedFunction;
-    fn into_owned(self) -> SorobanAuthorizedFunction {
+    fn into_owned(&self) -> SorobanAuthorizedFunction {
         #[allow(clippy::match_same_arms)]
         match self {
             SorobanAuthorizedFunctionView::ContractFn(value) => {
-                SorobanAuthorizedFunction::ContractFn(value.into_owned())
+                SorobanAuthorizedFunction::ContractFn(IntoOwned::into_owned(value))
             }
             SorobanAuthorizedFunctionView::CreateContractHostFn(value) => {
-                SorobanAuthorizedFunction::CreateContractHostFn(value.into_owned())
+                SorobanAuthorizedFunction::CreateContractHostFn(IntoOwned::into_owned(value))
             }
             SorobanAuthorizedFunctionView::CreateContractV2HostFn(value) => {
-                SorobanAuthorizedFunction::CreateContractV2HostFn(value.into_owned())
+                SorobanAuthorizedFunction::CreateContractV2HostFn(IntoOwned::into_owned(value))
             }
         }
     }
@@ -201,7 +201,7 @@ impl IntoOwned for SorobanAuthorizedFunctionView<'_> {
 impl From<&SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
     #[must_use]
     fn from(v: &SorobanAuthorizedFunctionView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -209,7 +209,7 @@ impl From<&SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
 impl From<SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
     #[must_use]
     fn from(v: SorobanAuthorizedFunctionView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

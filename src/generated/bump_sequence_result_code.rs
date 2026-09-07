@@ -135,7 +135,8 @@ impl WriteXdr for BumpSequenceResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BumpSequenceResultCode {
     type Owned = BumpSequenceResultCode;
-    fn into_owned(self) -> BumpSequenceResultCode {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> BumpSequenceResultCode {
+        self.clone()
     }
 }

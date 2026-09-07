@@ -326,20 +326,20 @@ pub enum TransactionResultResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TransactionResultResultView<'_> {
     type Owned = TransactionResultResult;
-    fn into_owned(self) -> TransactionResultResult {
+    fn into_owned(&self) -> TransactionResultResult {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionResultResultView::TxFeeBumpInnerSuccess(value) => {
-                TransactionResultResult::TxFeeBumpInnerSuccess(value.into_owned())
+                TransactionResultResult::TxFeeBumpInnerSuccess(IntoOwned::into_owned(value))
             }
             TransactionResultResultView::TxFeeBumpInnerFailed(value) => {
-                TransactionResultResult::TxFeeBumpInnerFailed(value.into_owned())
+                TransactionResultResult::TxFeeBumpInnerFailed(IntoOwned::into_owned(value))
             }
             TransactionResultResultView::TxSuccess(value) => {
-                TransactionResultResult::TxSuccess(value.into_owned())
+                TransactionResultResult::TxSuccess(IntoOwned::into_owned(value))
             }
             TransactionResultResultView::TxFailed(value) => {
-                TransactionResultResult::TxFailed(value.into_owned())
+                TransactionResultResult::TxFailed(IntoOwned::into_owned(value))
             }
             TransactionResultResultView::TxTooEarly => TransactionResultResult::TxTooEarly,
             TransactionResultResultView::TxTooLate => TransactionResultResult::TxTooLate,
@@ -381,7 +381,7 @@ impl IntoOwned for TransactionResultResultView<'_> {
 impl From<&TransactionResultResultView<'_>> for TransactionResultResult {
     #[must_use]
     fn from(v: &TransactionResultResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -389,7 +389,7 @@ impl From<&TransactionResultResultView<'_>> for TransactionResultResult {
 impl From<TransactionResultResultView<'_>> for TransactionResultResult {
     #[must_use]
     fn from(v: TransactionResultResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

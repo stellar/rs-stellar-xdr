@@ -59,7 +59,8 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TrustLineEntryExtensionV2 {
     type Owned = TrustLineEntryExtensionV2;
-    fn into_owned(self) -> TrustLineEntryExtensionV2 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> TrustLineEntryExtensionV2 {
+        self.clone()
     }
 }

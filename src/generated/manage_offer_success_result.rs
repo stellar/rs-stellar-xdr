@@ -71,10 +71,10 @@ pub struct ManageOfferSuccessResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ManageOfferSuccessResultView<'_> {
     type Owned = ManageOfferSuccessResult;
-    fn into_owned(self) -> ManageOfferSuccessResult {
+    fn into_owned(&self) -> ManageOfferSuccessResult {
         ManageOfferSuccessResult {
-            offers_claimed: self.offers_claimed.into_owned(),
-            offer: self.offer.into_owned(),
+            offers_claimed: IntoOwned::into_owned(&self.offers_claimed),
+            offer: IntoOwned::into_owned(&self.offer),
         }
     }
 }
@@ -83,7 +83,7 @@ impl IntoOwned for ManageOfferSuccessResultView<'_> {
 impl From<&ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
     #[must_use]
     fn from(v: &ManageOfferSuccessResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -91,7 +91,7 @@ impl From<&ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
 impl From<ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
     #[must_use]
     fn from(v: ManageOfferSuccessResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

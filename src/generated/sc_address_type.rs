@@ -168,7 +168,8 @@ impl WriteXdr for ScAddressType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScAddressType {
     type Owned = ScAddressType;
-    fn into_owned(self) -> ScAddressType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ScAddressType {
+        self.clone()
     }
 }

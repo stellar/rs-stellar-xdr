@@ -116,8 +116,8 @@ pub struct ScBytesView<'a>(pub BytesMView<'a>);
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScBytesView<'_> {
     type Owned = ScBytes;
-    fn into_owned(self) -> ScBytes {
-        ScBytes(self.0.into_owned())
+    fn into_owned(&self) -> ScBytes {
+        ScBytes(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for ScBytesView<'_> {
 impl From<&ScBytesView<'_>> for ScBytes {
     #[must_use]
     fn from(v: &ScBytesView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&ScBytesView<'_>> for ScBytes {
 impl From<ScBytesView<'_>> for ScBytes {
     #[must_use]
     fn from(v: ScBytesView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

@@ -56,9 +56,9 @@ pub struct ScSpecTypeUdtView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeUdtView<'_> {
     type Owned = ScSpecTypeUdt;
-    fn into_owned(self) -> ScSpecTypeUdt {
+    fn into_owned(&self) -> ScSpecTypeUdt {
         ScSpecTypeUdt {
-            name: self.name.into_owned(),
+            name: IntoOwned::into_owned(&self.name),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for ScSpecTypeUdtView<'_> {
 impl From<&ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
     #[must_use]
     fn from(v: &ScSpecTypeUdtView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
 impl From<ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
     #[must_use]
     fn from(v: ScSpecTypeUdtView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

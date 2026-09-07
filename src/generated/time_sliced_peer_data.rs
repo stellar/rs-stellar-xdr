@@ -61,10 +61,10 @@ pub struct TimeSlicedPeerDataView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TimeSlicedPeerDataView<'_> {
     type Owned = TimeSlicedPeerData;
-    fn into_owned(self) -> TimeSlicedPeerData {
+    fn into_owned(&self) -> TimeSlicedPeerData {
         TimeSlicedPeerData {
-            peer_stats: self.peer_stats.into_owned(),
-            average_latency_ms: self.average_latency_ms.into_owned(),
+            peer_stats: IntoOwned::into_owned(&self.peer_stats),
+            average_latency_ms: IntoOwned::into_owned(&self.average_latency_ms),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TimeSlicedPeerDataView<'_> {
 impl From<&TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
     #[must_use]
     fn from(v: &TimeSlicedPeerDataView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
 impl From<TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
     #[must_use]
     fn from(v: TimeSlicedPeerDataView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

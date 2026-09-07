@@ -65,11 +65,11 @@ pub struct InvokeContractArgsView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for InvokeContractArgsView<'_> {
     type Owned = InvokeContractArgs;
-    fn into_owned(self) -> InvokeContractArgs {
+    fn into_owned(&self) -> InvokeContractArgs {
         InvokeContractArgs {
-            contract_address: self.contract_address.into_owned(),
-            function_name: self.function_name.into_owned(),
-            args: self.args.into_owned(),
+            contract_address: IntoOwned::into_owned(&self.contract_address),
+            function_name: IntoOwned::into_owned(&self.function_name),
+            args: IntoOwned::into_owned(&self.args),
         }
     }
 }
@@ -78,7 +78,7 @@ impl IntoOwned for InvokeContractArgsView<'_> {
 impl From<&InvokeContractArgsView<'_>> for InvokeContractArgs {
     #[must_use]
     fn from(v: &InvokeContractArgsView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -86,7 +86,7 @@ impl From<&InvokeContractArgsView<'_>> for InvokeContractArgs {
 impl From<InvokeContractArgsView<'_>> for InvokeContractArgs {
     #[must_use]
     fn from(v: InvokeContractArgsView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

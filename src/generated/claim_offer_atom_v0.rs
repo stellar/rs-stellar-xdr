@@ -86,7 +86,8 @@ impl WriteXdr for ClaimOfferAtomV0 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ClaimOfferAtomV0 {
     type Owned = ClaimOfferAtomV0;
-    fn into_owned(self) -> ClaimOfferAtomV0 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> ClaimOfferAtomV0 {
+        self.clone()
     }
 }

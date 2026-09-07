@@ -166,7 +166,8 @@ impl WriteXdr for RestoreFootprintResult {
 #[cfg(feature = "alloc")]
 impl IntoOwned for RestoreFootprintResult {
     type Owned = RestoreFootprintResult;
-    fn into_owned(self) -> RestoreFootprintResult {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> RestoreFootprintResult {
+        self.clone()
     }
 }

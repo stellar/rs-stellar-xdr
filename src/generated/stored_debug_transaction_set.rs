@@ -66,11 +66,11 @@ pub struct StoredDebugTransactionSetView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StoredDebugTransactionSetView<'_> {
     type Owned = StoredDebugTransactionSet;
-    fn into_owned(self) -> StoredDebugTransactionSet {
+    fn into_owned(&self) -> StoredDebugTransactionSet {
         StoredDebugTransactionSet {
-            tx_set: self.tx_set.into_owned(),
-            ledger_seq: self.ledger_seq.into_owned(),
-            scp_value: self.scp_value.into_owned(),
+            tx_set: IntoOwned::into_owned(&self.tx_set),
+            ledger_seq: IntoOwned::into_owned(&self.ledger_seq),
+            scp_value: IntoOwned::into_owned(&self.scp_value),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for StoredDebugTransactionSetView<'_> {
 impl From<&StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
     #[must_use]
     fn from(v: &StoredDebugTransactionSetView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
 impl From<StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
     #[must_use]
     fn from(v: StoredDebugTransactionSetView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

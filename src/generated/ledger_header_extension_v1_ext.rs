@@ -132,7 +132,8 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 #[cfg(feature = "alloc")]
 impl IntoOwned for LedgerHeaderExtensionV1Ext {
     type Owned = LedgerHeaderExtensionV1Ext;
-    fn into_owned(self) -> LedgerHeaderExtensionV1Ext {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> LedgerHeaderExtensionV1Ext {
+        self.clone()
     }
 }

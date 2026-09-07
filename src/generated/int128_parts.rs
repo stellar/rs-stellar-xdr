@@ -77,7 +77,8 @@ impl<'de> serde::Deserialize<'de> for Int128Parts {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Int128Parts {
     type Owned = Int128Parts;
-    fn into_owned(self) -> Int128Parts {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> Int128Parts {
+        self.clone()
     }
 }

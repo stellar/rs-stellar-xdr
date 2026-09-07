@@ -157,7 +157,8 @@ impl AsRef<[u8]> for Hash {
 #[cfg(feature = "alloc")]
 impl IntoOwned for Hash {
     type Owned = Hash;
-    fn into_owned(self) -> Hash {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> Hash {
+        self.clone()
     }
 }

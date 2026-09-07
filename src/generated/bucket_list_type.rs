@@ -130,7 +130,8 @@ impl WriteXdr for BucketListType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for BucketListType {
     type Owned = BucketListType;
-    fn into_owned(self) -> BucketListType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> BucketListType {
+        self.clone()
     }
 }

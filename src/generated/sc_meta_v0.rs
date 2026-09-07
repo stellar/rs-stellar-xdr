@@ -61,10 +61,10 @@ pub struct ScMetaV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScMetaV0View<'_> {
     type Owned = ScMetaV0;
-    fn into_owned(self) -> ScMetaV0 {
+    fn into_owned(&self) -> ScMetaV0 {
         ScMetaV0 {
-            key: self.key.into_owned(),
-            val: self.val.into_owned(),
+            key: IntoOwned::into_owned(&self.key),
+            val: IntoOwned::into_owned(&self.val),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScMetaV0View<'_> {
 impl From<&ScMetaV0View<'_>> for ScMetaV0 {
     #[must_use]
     fn from(v: &ScMetaV0View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScMetaV0View<'_>> for ScMetaV0 {
 impl From<ScMetaV0View<'_>> for ScMetaV0 {
     #[must_use]
     fn from(v: ScMetaV0View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

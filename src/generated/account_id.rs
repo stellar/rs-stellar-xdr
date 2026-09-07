@@ -60,7 +60,8 @@ impl WriteXdr for AccountId {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AccountId {
     type Owned = AccountId;
-    fn into_owned(self) -> AccountId {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> AccountId {
+        self.clone()
     }
 }

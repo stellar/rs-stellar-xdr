@@ -255,7 +255,7 @@ pub enum {{ u.name }}View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for {{ u.name }}View<'_> {
     type Owned = {{ u.name }};
-    fn into_owned(self) -> {{ u.name }} {
+    fn into_owned(&self) -> {{ u.name }} {
         #[allow(clippy::match_same_arms)]
         match self {
 {%- for arm in u.arms %}
@@ -265,7 +265,7 @@ impl IntoOwned for {{ u.name }}View<'_> {
 {%- if arm.is_void %}
             {{ u.name }}View::{{ arm.case_name }} => {{ u.name }}::{{ arm.case_name }},
 {%- else %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.into_owned()),
+            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(IntoOwned::into_owned(value)),
 {%- endif %}
 {%- endfor %}
         }
@@ -279,7 +279,7 @@ impl IntoOwned for {{ u.name }}View<'_> {
 impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
     fn from(v: &{{ u.name }}View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -290,7 +290,7 @@ impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
 impl From<{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
     fn from(v: {{ u.name }}View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

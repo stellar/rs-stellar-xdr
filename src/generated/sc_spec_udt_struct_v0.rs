@@ -71,12 +71,12 @@ pub struct ScSpecUdtStructV0View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecUdtStructV0View<'_> {
     type Owned = ScSpecUdtStructV0;
-    fn into_owned(self) -> ScSpecUdtStructV0 {
+    fn into_owned(&self) -> ScSpecUdtStructV0 {
         ScSpecUdtStructV0 {
-            doc: self.doc.into_owned(),
-            lib: self.lib.into_owned(),
-            name: self.name.into_owned(),
-            fields: self.fields.into_owned(),
+            doc: IntoOwned::into_owned(&self.doc),
+            lib: IntoOwned::into_owned(&self.lib),
+            name: IntoOwned::into_owned(&self.name),
+            fields: IntoOwned::into_owned(&self.fields),
         }
     }
 }
@@ -85,7 +85,7 @@ impl IntoOwned for ScSpecUdtStructV0View<'_> {
 impl From<&ScSpecUdtStructV0View<'_>> for ScSpecUdtStructV0 {
     #[must_use]
     fn from(v: &ScSpecUdtStructV0View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -93,7 +93,7 @@ impl From<&ScSpecUdtStructV0View<'_>> for ScSpecUdtStructV0 {
 impl From<ScSpecUdtStructV0View<'_>> for ScSpecUdtStructV0 {
     #[must_use]
     fn from(v: ScSpecUdtStructV0View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

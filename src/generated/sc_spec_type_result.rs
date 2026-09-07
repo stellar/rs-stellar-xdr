@@ -61,10 +61,10 @@ pub struct ScSpecTypeResultView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for ScSpecTypeResultView<'_> {
     type Owned = ScSpecTypeResult;
-    fn into_owned(self) -> ScSpecTypeResult {
+    fn into_owned(&self) -> ScSpecTypeResult {
         ScSpecTypeResult {
-            ok_type: self.ok_type.into_owned(),
-            error_type: self.error_type.into_owned(),
+            ok_type: IntoOwned::into_owned(&self.ok_type),
+            error_type: IntoOwned::into_owned(&self.error_type),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScSpecTypeResultView<'_> {
 impl From<&ScSpecTypeResultView<'_>> for ScSpecTypeResult {
     #[must_use]
     fn from(v: &ScSpecTypeResultView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScSpecTypeResultView<'_>> for ScSpecTypeResult {
 impl From<ScSpecTypeResultView<'_>> for ScSpecTypeResult {
     #[must_use]
     fn from(v: ScSpecTypeResultView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

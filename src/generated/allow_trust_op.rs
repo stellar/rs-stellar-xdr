@@ -59,7 +59,8 @@ impl WriteXdr for AllowTrustOp {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AllowTrustOp {
     type Owned = AllowTrustOp;
-    fn into_owned(self) -> AllowTrustOp {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> AllowTrustOp {
+        self.clone()
     }
 }

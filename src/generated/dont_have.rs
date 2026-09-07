@@ -58,7 +58,8 @@ impl WriteXdr for DontHave {
 #[cfg(feature = "alloc")]
 impl IntoOwned for DontHave {
     type Owned = DontHave;
-    fn into_owned(self) -> DontHave {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> DontHave {
+        self.clone()
     }
 }

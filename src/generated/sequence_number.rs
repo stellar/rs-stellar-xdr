@@ -69,7 +69,8 @@ impl WriteXdr for SequenceNumber {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SequenceNumber {
     type Owned = SequenceNumber;
-    fn into_owned(self) -> SequenceNumber {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> SequenceNumber {
+        self.clone()
     }
 }

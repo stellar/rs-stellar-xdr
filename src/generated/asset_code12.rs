@@ -107,7 +107,8 @@ impl AsRef<[u8]> for AssetCode12 {
 #[cfg(feature = "alloc")]
 impl IntoOwned for AssetCode12 {
     type Owned = AssetCode12;
-    fn into_owned(self) -> AssetCode12 {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> AssetCode12 {
+        self.clone()
     }
 }

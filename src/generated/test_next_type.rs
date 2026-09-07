@@ -53,7 +53,8 @@ impl WriteXdr for TestNextType {
 #[cfg(feature = "alloc")]
 impl IntoOwned for TestNextType {
     type Owned = TestNextType;
-    fn into_owned(self) -> TestNextType {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> TestNextType {
+        self.clone()
     }
 }

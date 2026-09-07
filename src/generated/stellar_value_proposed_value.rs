@@ -71,12 +71,12 @@ pub struct StellarValueProposedValueView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for StellarValueProposedValueView<'_> {
     type Owned = StellarValueProposedValue;
-    fn into_owned(self) -> StellarValueProposedValue {
+    fn into_owned(&self) -> StellarValueProposedValue {
         StellarValueProposedValue {
-            tx_set_hash: self.tx_set_hash.into_owned(),
-            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
-            previous_ledger_version: self.previous_ledger_version.into_owned(),
-            lc_value_signature: self.lc_value_signature.into_owned(),
+            tx_set_hash: IntoOwned::into_owned(&self.tx_set_hash),
+            previous_ledger_hash: IntoOwned::into_owned(&self.previous_ledger_hash),
+            previous_ledger_version: IntoOwned::into_owned(&self.previous_ledger_version),
+            lc_value_signature: IntoOwned::into_owned(&self.lc_value_signature),
         }
     }
 }
@@ -85,7 +85,7 @@ impl IntoOwned for StellarValueProposedValueView<'_> {
 impl From<&StellarValueProposedValueView<'_>> for StellarValueProposedValue {
     #[must_use]
     fn from(v: &StellarValueProposedValueView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -93,7 +93,7 @@ impl From<&StellarValueProposedValueView<'_>> for StellarValueProposedValue {
 impl From<StellarValueProposedValueView<'_>> for StellarValueProposedValue {
     #[must_use]
     fn from(v: StellarValueProposedValueView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

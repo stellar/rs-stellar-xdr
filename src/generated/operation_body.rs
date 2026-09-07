@@ -438,75 +438,87 @@ pub enum OperationBodyView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for OperationBodyView<'_> {
     type Owned = OperationBody;
-    fn into_owned(self) -> OperationBody {
+    fn into_owned(&self) -> OperationBody {
         #[allow(clippy::match_same_arms)]
         match self {
             OperationBodyView::CreateAccount(value) => {
-                OperationBody::CreateAccount(value.into_owned())
+                OperationBody::CreateAccount(IntoOwned::into_owned(value))
             }
-            OperationBodyView::Payment(value) => OperationBody::Payment(value.into_owned()),
+            OperationBodyView::Payment(value) => {
+                OperationBody::Payment(IntoOwned::into_owned(value))
+            }
             OperationBodyView::PathPaymentStrictReceive(value) => {
-                OperationBody::PathPaymentStrictReceive(value.into_owned())
+                OperationBody::PathPaymentStrictReceive(IntoOwned::into_owned(value))
             }
             OperationBodyView::ManageSellOffer(value) => {
-                OperationBody::ManageSellOffer(value.into_owned())
+                OperationBody::ManageSellOffer(IntoOwned::into_owned(value))
             }
             OperationBodyView::CreatePassiveSellOffer(value) => {
-                OperationBody::CreatePassiveSellOffer(value.into_owned())
+                OperationBody::CreatePassiveSellOffer(IntoOwned::into_owned(value))
             }
-            OperationBodyView::SetOptions(value) => OperationBody::SetOptions(value.into_owned()),
-            OperationBodyView::ChangeTrust(value) => OperationBody::ChangeTrust(value.into_owned()),
-            OperationBodyView::AllowTrust(value) => OperationBody::AllowTrust(value.into_owned()),
+            OperationBodyView::SetOptions(value) => {
+                OperationBody::SetOptions(IntoOwned::into_owned(value))
+            }
+            OperationBodyView::ChangeTrust(value) => {
+                OperationBody::ChangeTrust(IntoOwned::into_owned(value))
+            }
+            OperationBodyView::AllowTrust(value) => {
+                OperationBody::AllowTrust(IntoOwned::into_owned(value))
+            }
             OperationBodyView::AccountMerge(value) => {
-                OperationBody::AccountMerge(value.into_owned())
+                OperationBody::AccountMerge(IntoOwned::into_owned(value))
             }
             OperationBodyView::Inflation => OperationBody::Inflation,
-            OperationBodyView::ManageData(value) => OperationBody::ManageData(value.into_owned()),
+            OperationBodyView::ManageData(value) => {
+                OperationBody::ManageData(IntoOwned::into_owned(value))
+            }
             OperationBodyView::BumpSequence(value) => {
-                OperationBody::BumpSequence(value.into_owned())
+                OperationBody::BumpSequence(IntoOwned::into_owned(value))
             }
             OperationBodyView::ManageBuyOffer(value) => {
-                OperationBody::ManageBuyOffer(value.into_owned())
+                OperationBody::ManageBuyOffer(IntoOwned::into_owned(value))
             }
             OperationBodyView::PathPaymentStrictSend(value) => {
-                OperationBody::PathPaymentStrictSend(value.into_owned())
+                OperationBody::PathPaymentStrictSend(IntoOwned::into_owned(value))
             }
             OperationBodyView::CreateClaimableBalance(value) => {
-                OperationBody::CreateClaimableBalance(value.into_owned())
+                OperationBody::CreateClaimableBalance(IntoOwned::into_owned(value))
             }
             OperationBodyView::ClaimClaimableBalance(value) => {
-                OperationBody::ClaimClaimableBalance(value.into_owned())
+                OperationBody::ClaimClaimableBalance(IntoOwned::into_owned(value))
             }
             OperationBodyView::BeginSponsoringFutureReserves(value) => {
-                OperationBody::BeginSponsoringFutureReserves(value.into_owned())
+                OperationBody::BeginSponsoringFutureReserves(IntoOwned::into_owned(value))
             }
             OperationBodyView::EndSponsoringFutureReserves => {
                 OperationBody::EndSponsoringFutureReserves
             }
             OperationBodyView::RevokeSponsorship(value) => {
-                OperationBody::RevokeSponsorship(value.into_owned())
+                OperationBody::RevokeSponsorship(IntoOwned::into_owned(value))
             }
-            OperationBodyView::Clawback(value) => OperationBody::Clawback(value.into_owned()),
+            OperationBodyView::Clawback(value) => {
+                OperationBody::Clawback(IntoOwned::into_owned(value))
+            }
             OperationBodyView::ClawbackClaimableBalance(value) => {
-                OperationBody::ClawbackClaimableBalance(value.into_owned())
+                OperationBody::ClawbackClaimableBalance(IntoOwned::into_owned(value))
             }
             OperationBodyView::SetTrustLineFlags(value) => {
-                OperationBody::SetTrustLineFlags(value.into_owned())
+                OperationBody::SetTrustLineFlags(IntoOwned::into_owned(value))
             }
             OperationBodyView::LiquidityPoolDeposit(value) => {
-                OperationBody::LiquidityPoolDeposit(value.into_owned())
+                OperationBody::LiquidityPoolDeposit(IntoOwned::into_owned(value))
             }
             OperationBodyView::LiquidityPoolWithdraw(value) => {
-                OperationBody::LiquidityPoolWithdraw(value.into_owned())
+                OperationBody::LiquidityPoolWithdraw(IntoOwned::into_owned(value))
             }
             OperationBodyView::InvokeHostFunction(value) => {
-                OperationBody::InvokeHostFunction(value.into_owned())
+                OperationBody::InvokeHostFunction(IntoOwned::into_owned(value))
             }
             OperationBodyView::ExtendFootprintTtl(value) => {
-                OperationBody::ExtendFootprintTtl(value.into_owned())
+                OperationBody::ExtendFootprintTtl(IntoOwned::into_owned(value))
             }
             OperationBodyView::RestoreFootprint(value) => {
-                OperationBody::RestoreFootprint(value.into_owned())
+                OperationBody::RestoreFootprint(IntoOwned::into_owned(value))
             }
         }
     }
@@ -516,7 +528,7 @@ impl IntoOwned for OperationBodyView<'_> {
 impl From<&OperationBodyView<'_>> for OperationBody {
     #[must_use]
     fn from(v: &OperationBodyView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -524,7 +536,7 @@ impl From<&OperationBodyView<'_>> for OperationBody {
 impl From<OperationBodyView<'_>> for OperationBody {
     #[must_use]
     fn from(v: OperationBodyView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

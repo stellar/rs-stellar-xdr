@@ -55,9 +55,9 @@ pub struct FrozenLedgerKeysView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for FrozenLedgerKeysView<'_> {
     type Owned = FrozenLedgerKeys;
-    fn into_owned(self) -> FrozenLedgerKeys {
+    fn into_owned(&self) -> FrozenLedgerKeys {
         FrozenLedgerKeys {
-            keys: self.keys.into_owned(),
+            keys: IntoOwned::into_owned(&self.keys),
         }
     }
 }
@@ -66,7 +66,7 @@ impl IntoOwned for FrozenLedgerKeysView<'_> {
 impl From<&FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
     #[must_use]
     fn from(v: &FrozenLedgerKeysView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -74,7 +74,7 @@ impl From<&FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
 impl From<FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
     #[must_use]
     fn from(v: FrozenLedgerKeysView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

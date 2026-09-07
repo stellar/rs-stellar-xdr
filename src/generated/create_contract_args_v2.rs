@@ -67,11 +67,11 @@ pub struct CreateContractArgsV2View<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for CreateContractArgsV2View<'_> {
     type Owned = CreateContractArgsV2;
-    fn into_owned(self) -> CreateContractArgsV2 {
+    fn into_owned(&self) -> CreateContractArgsV2 {
         CreateContractArgsV2 {
-            contract_id_preimage: self.contract_id_preimage.into_owned(),
-            executable: self.executable.into_owned(),
-            constructor_args: self.constructor_args.into_owned(),
+            contract_id_preimage: IntoOwned::into_owned(&self.contract_id_preimage),
+            executable: IntoOwned::into_owned(&self.executable),
+            constructor_args: IntoOwned::into_owned(&self.constructor_args),
         }
     }
 }
@@ -80,7 +80,7 @@ impl IntoOwned for CreateContractArgsV2View<'_> {
 impl From<&CreateContractArgsV2View<'_>> for CreateContractArgsV2 {
     #[must_use]
     fn from(v: &CreateContractArgsV2View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -88,7 +88,7 @@ impl From<&CreateContractArgsV2View<'_>> for CreateContractArgsV2 {
 impl From<CreateContractArgsV2View<'_>> for CreateContractArgsV2 {
     #[must_use]
     fn from(v: CreateContractArgsV2View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

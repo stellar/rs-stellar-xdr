@@ -184,14 +184,14 @@ pub enum MemoView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for MemoView<'_> {
     type Owned = Memo;
-    fn into_owned(self) -> Memo {
+    fn into_owned(&self) -> Memo {
         #[allow(clippy::match_same_arms)]
         match self {
             MemoView::None => Memo::None,
-            MemoView::Text(value) => Memo::Text(value.into_owned()),
-            MemoView::Id(value) => Memo::Id(value.into_owned()),
-            MemoView::Hash(value) => Memo::Hash(value.into_owned()),
-            MemoView::Return(value) => Memo::Return(value.into_owned()),
+            MemoView::Text(value) => Memo::Text(IntoOwned::into_owned(value)),
+            MemoView::Id(value) => Memo::Id(IntoOwned::into_owned(value)),
+            MemoView::Hash(value) => Memo::Hash(IntoOwned::into_owned(value)),
+            MemoView::Return(value) => Memo::Return(IntoOwned::into_owned(value)),
         }
     }
 }
@@ -200,7 +200,7 @@ impl IntoOwned for MemoView<'_> {
 impl From<&MemoView<'_>> for Memo {
     #[must_use]
     fn from(v: &MemoView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -208,7 +208,7 @@ impl From<&MemoView<'_>> for Memo {
 impl From<MemoView<'_>> for Memo {
     #[must_use]
     fn from(v: MemoView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

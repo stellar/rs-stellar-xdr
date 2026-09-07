@@ -313,8 +313,8 @@ pub struct {{ t.name }}View<'a>(pub {{ t.view_type_ref }});
 #[cfg(feature = "alloc")]
 impl IntoOwned for {{ t.name }}View<'_> {
     type Owned = {{ t.name }};
-    fn into_owned(self) -> {{ t.name }} {
-        {{ t.name }}(self.0.into_owned())
+    fn into_owned(&self) -> {{ t.name }} {
+        {{ t.name }}(IntoOwned::into_owned(&self.0))
     }
 }
 
@@ -325,7 +325,7 @@ impl IntoOwned for {{ t.name }}View<'_> {
 impl From<&{{ t.name }}View<'_>> for {{ t.name }} {
     #[must_use]
     fn from(v: &{{ t.name }}View<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -336,7 +336,7 @@ impl From<&{{ t.name }}View<'_>> for {{ t.name }} {
 impl From<{{ t.name }}View<'_>> for {{ t.name }} {
     #[must_use]
     fn from(v: {{ t.name }}View<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

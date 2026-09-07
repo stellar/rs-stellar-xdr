@@ -214,7 +214,8 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 #[cfg(feature = "alloc")]
 impl IntoOwned for PathPaymentStrictReceiveResultCode {
     type Owned = PathPaymentStrictReceiveResultCode;
-    fn into_owned(self) -> PathPaymentStrictReceiveResultCode {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> PathPaymentStrictReceiveResultCode {
+        self.clone()
     }
 }

@@ -164,17 +164,17 @@ pub enum HotArchiveBucketEntryView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for HotArchiveBucketEntryView<'_> {
     type Owned = HotArchiveBucketEntry;
-    fn into_owned(self) -> HotArchiveBucketEntry {
+    fn into_owned(&self) -> HotArchiveBucketEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             HotArchiveBucketEntryView::Archived(value) => {
-                HotArchiveBucketEntry::Archived(value.into_owned())
+                HotArchiveBucketEntry::Archived(IntoOwned::into_owned(value))
             }
             HotArchiveBucketEntryView::Live(value) => {
-                HotArchiveBucketEntry::Live(value.into_owned())
+                HotArchiveBucketEntry::Live(IntoOwned::into_owned(value))
             }
             HotArchiveBucketEntryView::Metaentry(value) => {
-                HotArchiveBucketEntry::Metaentry(value.into_owned())
+                HotArchiveBucketEntry::Metaentry(IntoOwned::into_owned(value))
             }
         }
     }
@@ -184,7 +184,7 @@ impl IntoOwned for HotArchiveBucketEntryView<'_> {
 impl From<&HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
     #[must_use]
     fn from(v: &HotArchiveBucketEntryView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -192,7 +192,7 @@ impl From<&HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
 impl From<HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
     #[must_use]
     fn from(v: HotArchiveBucketEntryView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

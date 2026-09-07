@@ -61,10 +61,10 @@ pub struct SignedTimeSlicedSurveyResponseMessageView<'a> {
 #[cfg(feature = "alloc")]
 impl IntoOwned for SignedTimeSlicedSurveyResponseMessageView<'_> {
     type Owned = SignedTimeSlicedSurveyResponseMessage;
-    fn into_owned(self) -> SignedTimeSlicedSurveyResponseMessage {
+    fn into_owned(&self) -> SignedTimeSlicedSurveyResponseMessage {
         SignedTimeSlicedSurveyResponseMessage {
-            response_signature: self.response_signature.into_owned(),
-            response: self.response.into_owned(),
+            response_signature: IntoOwned::into_owned(&self.response_signature),
+            response: IntoOwned::into_owned(&self.response),
         }
     }
 }
@@ -75,7 +75,7 @@ impl From<&SignedTimeSlicedSurveyResponseMessageView<'_>>
 {
     #[must_use]
     fn from(v: &SignedTimeSlicedSurveyResponseMessageView<'_>) -> Self {
-        v.clone().into_owned()
+        IntoOwned::into_owned(v)
     }
 }
 
@@ -83,7 +83,7 @@ impl From<&SignedTimeSlicedSurveyResponseMessageView<'_>>
 impl From<SignedTimeSlicedSurveyResponseMessageView<'_>> for SignedTimeSlicedSurveyResponseMessage {
     #[must_use]
     fn from(v: SignedTimeSlicedSurveyResponseMessageView<'_>) -> Self {
-        v.into_owned()
+        IntoOwned::into_owned(&v)
     }
 }
 

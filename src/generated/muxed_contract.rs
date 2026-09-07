@@ -61,7 +61,8 @@ impl WriteXdr for MuxedContract {
 #[cfg(feature = "alloc")]
 impl IntoOwned for MuxedContract {
     type Owned = MuxedContract;
-    fn into_owned(self) -> MuxedContract {
-        self
+    #[allow(clippy::clone_on_copy)]
+    fn into_owned(&self) -> MuxedContract {
+        self.clone()
     }
 }

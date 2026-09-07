@@ -32,6 +32,8 @@ use stellar_xdr::{
 /// Serialize with `f`, measuring into an empty buffer and then filling a buffer
 /// of exactly that size: the two passes a caller such as a proc-macro makes,
 /// since the encoded length is only known by encoding.
+mod common;
+
 fn to_xdr_via<F: Fn(&mut ConstWriter)>(f: F) -> Vec<u8> {
     let mut empty: [u8; 0] = [];
     let mut w = ConstWriter::new(&mut empty);
@@ -341,6 +343,30 @@ fn const_transaction_envelope_matches_stream() {
     });
 
     assert_const_matches_stream!(write_type_transaction_envelope, r, TransactionEnvelope);
+}
+
+/// The same envelope as the `Ref`/owned encoding test in `ref_types`, written
+/// through the const writer instead. The oracle here is the hand-built owned
+/// value from the shared fixture, not one derived from the `Ref`, so a bug in
+/// the `Ref` -> owned conversion cannot hide the way it can in
+/// `const_transaction_envelope_matches_stream` above, which builds its owned
+/// value with `(&r).into()`.
+#[test]
+fn const_transaction_envelope_matches_hand_built_owned() {
+    let r = const { common::tx_env_ref() };
+    let owned = common::tx_env_owned();
+
+    let bytes = to_xdr_via(|w| w.write_type_transaction_envelope(&r));
+    assert_eq!(
+        bytes,
+        owned.to_xdr(Limits::none()).unwrap(),
+        "const bytes != the owned value's bytes"
+    );
+    assert_eq!(
+        TransactionEnvelope::from_xdr(&bytes, Limits::none()).unwrap(),
+        owned,
+        "const bytes did not round-trip back to the owned value"
+    );
 }
 
 /// Build a deeply-populated `LedgerCloseMetaRef` (the richest `V2` variant),

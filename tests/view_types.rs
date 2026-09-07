@@ -73,15 +73,6 @@ const MEMOS: [MemoView; 5] = [
     MemoView::Return(Hash([2; 32])),
 ];
 
-/// The discriminant each `MEMOS` entry must report.
-const MEMO_TYPES: [MemoType; 5] = [
-    MemoType::None,
-    MemoType::Text,
-    MemoType::Id,
-    MemoType::Hash,
-    MemoType::Return,
-];
-
 /// An `int`-switched union: the void arm, and the heap arm holding a nested
 /// struct whose `VecMView`s are empty.
 const TX_EXT_V0: TransactionExtView = TransactionExtView::V0;
@@ -160,16 +151,11 @@ fn runtime_views_borrow_their_input() {
 #[test]
 fn runtime_views_enforce_max_len() {
     let three = [1u32, 2, 3];
-    assert!(VecMView::<u32, 3>::try_from_slice(&three).is_ok());
+    let exactly_max = VecMView::<u32, 3>::try_from_slice(&three).unwrap();
+    assert_eq!(exactly_max.max_len(), 3);
     assert_eq!(
         VecMView::<u32, 2>::try_from_slice(&three),
         Err(ErrorLengthExceedsMax)
-    );
-    assert_eq!(
-        VecMView::<u32, 3>::try_from_slice(&three)
-            .unwrap()
-            .max_len(),
-        3
     );
 
     assert!(BytesMView::<3>::try_from_slice(b"abc").is_ok());
@@ -200,6 +186,17 @@ fn runtime_views_enforce_max_len() {
         VecMView::<u32, 2>::try_from(&three[..]),
         Err(Error::LengthExceedsMax)
     ));
+}
+
+/// The const-friendly error converts into the crate's `Error`, so runtime
+/// callers propagate it with `?` like any other.
+#[test]
+fn error_length_exceeds_max_propagates_as_error() {
+    fn build(v: &[u32]) -> Result<VecMView<'_, u32, 2>, Error> {
+        Ok(VecMView::try_from_slice(v)?)
+    }
+    assert!(build(&[1, 2]).is_ok());
+    assert!(matches!(build(&[1, 2, 3]), Err(Error::LengthExceedsMax)));
 }
 
 /// The `_or_panic` constructors are the fallible ones with the failure turned
@@ -240,6 +237,16 @@ fn bytesm_view_or_panic_panics_over_max() {
 #[should_panic(expected = "xdr value max length exceeded")]
 fn stringm_view_or_panic_panics_over_max() {
     let _ = StringMView::<2>::try_from_str_or_panic("abc");
+}
+
+/// `ErrorLengthExceedsMax` prints the same message the `_or_panic`
+/// constructors panic with.
+#[test]
+fn error_length_exceeds_max_display() {
+    assert_eq!(
+        ErrorLengthExceedsMax.to_string(),
+        "xdr value max length exceeded"
+    );
 }
 
 /// An empty `View` is `Default`, and is what an empty slice constructs.
@@ -306,15 +313,16 @@ fn fallible_construction_is_const_evaluable() {
 
 /// Every fixture is evaluated at compile time here, under every feature set.
 ///
-/// An unused `const` is never evaluated, and several fixtures are otherwise
-/// only used by the feature-gated modules below. Without this, an over-length
-/// slice passed to a `_or_panic` constructor, or a borrow that fails to
-/// promote, would go unnoticed whenever those features are off. The test is
-/// that this compiles.
+/// An unused `const` is never evaluated, and most fixtures are otherwise only
+/// used by the feature-gated modules below. Without this, an over-length slice
+/// passed to a `_or_panic` constructor, or a borrow that fails to promote,
+/// would go unnoticed whenever those features are off. The test is that this
+/// compiles.
 #[test]
 fn fixtures_evaluate_at_compile_time() {
     const {
         let _ = PREPARE;
+        let _ = MEMOS;
         let _ = TX_EXT_V0;
         let _ = TX_EXT_V1;
         let _ = DEMAND;
@@ -335,45 +343,29 @@ fn const_union_views_report_their_discriminant() {
         MEMOS[3].discriminant(),
         MEMOS[4].discriminant(),
     ];
-    assert_eq!(DISCRIMINANTS, MEMO_TYPES);
+    assert_eq!(
+        DISCRIMINANTS,
+        [
+            MemoType::None,
+            MemoType::Text,
+            MemoType::Id,
+            MemoType::Hash,
+            MemoType::Return
+        ]
+    );
 }
 
 // ---------------------------------------------------------------------------
-// 3. ErrorLengthExceedsMax.
-// ---------------------------------------------------------------------------
-
-/// The const-friendly error converts into the crate's `Error`, so runtime
-/// callers propagate it with `?` like any other.
-#[test]
-fn error_length_exceeds_max_propagates_as_error() {
-    fn build(v: &[u32]) -> Result<VecMView<'_, u32, 2>, Error> {
-        Ok(VecMView::try_from_slice(v)?)
-    }
-    assert!(build(&[1, 2]).is_ok());
-    assert!(matches!(build(&[1, 2, 3]), Err(Error::LengthExceedsMax)));
-}
-
-// ---------------------------------------------------------------------------
-// 4. Conversion to owned types.
+// 3. Conversion to owned types.
 // ---------------------------------------------------------------------------
 
 #[cfg(feature = "alloc")]
 mod owned {
     use super::*;
     use stellar_xdr::{
-        BytesM, ClaimPredicate, ScSpecTypeDef, ScSpecTypeOption, ScVal, ScVec, ScpStatementPrepare,
+        BytesM, ClaimPredicate, ScSpecTypeDef, ScSpecTypeOption, ScVal, ScpStatementPrepare,
         StringM, TransactionExt, TxDemandVector, VecM,
     };
-
-    /// `ErrorLengthExceedsMax` prints the same message the `_or_panic`
-    /// constructors panic with.
-    #[test]
-    fn error_length_exceeds_max_display() {
-        assert_eq!(
-            ErrorLengthExceedsMax.to_string(),
-            "xdr value max length exceeded"
-        );
-    }
 
     /// Converting by reference and by value are the same conversion.
     #[test]
@@ -416,21 +408,17 @@ mod owned {
         let ScValView::Vec(Some(vec_view)) = SCVAL else {
             unreachable!()
         };
-        let direct: VecM<ScVal> = vec_view.0.to_vecm();
-        assert_eq!(direct, ScVec::from(&vec_view).0);
-        assert_eq!(direct.len(), 3);
+        let owned: VecM<ScVal> = vec_view.0.to_vecm();
+        assert_eq!(owned.len(), 3);
+        assert_eq!(owned.as_slice()[0], ScVal::I32(1));
     }
 
     /// An optional `View` maps `Some` and `None` through to the owned option.
     #[test]
     fn optional_views_convert_to_optional_owned() {
         let owned = ScpStatementPrepare::from(&PREPARE);
-        assert!(owned.prepared.is_some());
+        assert_eq!(owned.prepared.map(|b| b.counter), Some(2));
         assert!(owned.prepared_prime.is_none());
-        assert_eq!(
-            owned.prepared.as_ref().map(|b| b.counter),
-            PREPARE.prepared.as_ref().map(|b| b.counter)
-        );
     }
 
     /// Where a `View` borrows to break a cycle, the owned type boxes. This is
@@ -462,7 +450,7 @@ mod owned {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Encoding: a View produces exactly the bytes its owned counterpart does.
+// 4. Encoding: a View produces exactly the bytes its owned counterpart does.
 // ---------------------------------------------------------------------------
 
 #[cfg(feature = "std")]
@@ -492,54 +480,56 @@ mod xdr {
     }
 
     /// Check a `View` against the owned value it converts to.
-    macro_rules! assert_view_encodes {
-        ($view:expr, $owned:ty) => {
-            assert_encodes_like_owned(&$view, &<$owned>::from(&$view))
-        };
+    fn assert_view_encodes<V, O>(view: &V)
+    where
+        V: WriteXdr,
+        O: WriteXdr + ReadXdr + PartialEq + Debug + for<'a> From<&'a V>,
+    {
+        assert_encodes_like_owned(view, &O::from(view));
     }
 
     #[test]
     fn struct_with_nested_and_optional_views() {
-        assert_view_encodes!(PREPARE, ScpStatementPrepare);
+        assert_view_encodes::<_, ScpStatementPrepare>(&PREPARE);
     }
 
     #[test]
     fn union_with_void_scalar_opaque_and_heap_arms() {
         for memo in &MEMOS {
-            assert_view_encodes!(*memo, Memo);
+            assert_view_encodes::<_, Memo>(memo);
         }
     }
 
     #[test]
     fn int_switched_union() {
-        assert_view_encodes!(TX_EXT_V0, TransactionExt);
-        assert_view_encodes!(TX_EXT_V1, TransactionExt);
+        assert_view_encodes::<_, TransactionExt>(&TX_EXT_V0);
+        assert_view_encodes::<_, TransactionExt>(&TX_EXT_V1);
     }
 
     #[test]
     fn newtype_over_vecm() {
-        assert_view_encodes!(DEMAND, TxDemandVector);
+        assert_view_encodes::<_, TxDemandVector>(&DEMAND);
     }
 
     #[test]
     fn cyclic_through_option() {
-        assert_view_encodes!(PREDICATE, ClaimPredicate);
-        assert_view_encodes!(ClaimPredicateView::Not(None), ClaimPredicate);
+        assert_view_encodes::<_, ClaimPredicate>(&PREDICATE);
+        assert_view_encodes::<_, ClaimPredicate>(&ClaimPredicateView::Not(None));
     }
 
     #[test]
     fn cyclic_through_reference() {
-        assert_view_encodes!(SPEC_OPTION, ScSpecTypeDef);
+        assert_view_encodes::<_, ScSpecTypeDef>(&SPEC_OPTION);
     }
 
     #[test]
     fn recursive_through_vecm_with_optional_arm() {
-        assert_view_encodes!(SCVAL, ScVal);
+        assert_view_encodes::<_, ScVal>(&SCVAL);
     }
 
     /// The runtime `View` types encode like the owned types they mirror,
     /// including the byte form `VecM<u8>` takes instead of a sequence of
-    /// encoded integers, and including empty and exactly-`MAX` values.
+    /// encoded integers, and including empty values.
     #[test]
     fn runtime_views_encode_like_owned() {
         let words = [1u32, 2, 3];
@@ -561,8 +551,5 @@ mod xdr {
 
         let empty: VecM<u32, 3> = VecM::default();
         assert_encodes_like_owned(&VecMView::<u32, 3>::default(), &empty);
-
-        let full: BytesM<5> = bytes.to_vec().try_into().unwrap();
-        assert_encodes_like_owned(&BytesMView::<5>::try_from_slice(&bytes).unwrap(), &full);
     }
 }

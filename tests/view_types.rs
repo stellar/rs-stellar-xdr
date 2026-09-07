@@ -361,8 +361,8 @@ fn error_length_exceeds_max_propagates_as_error() {
 mod owned {
     use super::*;
     use stellar_xdr::{
-        BytesM, ClaimPredicate, IntoOwned, ScSpecTypeDef, ScSpecTypeOption, ScVal, ScVec,
-        ScpStatementPrepare, StringM, TransactionExt, TxDemandVector, VecM,
+        BytesM, ClaimPredicate, ScSpecTypeDef, ScSpecTypeOption, ScVal, ScVec, ScpStatementPrepare,
+        StringM, TransactionExt, TxDemandVector, VecM,
     };
 
     /// `ErrorLengthExceedsMax` prints the same message the `_or_panic`
@@ -387,28 +387,6 @@ mod owned {
             TransactionExt::from(&TX_EXT_V1),
             TransactionExt::from(TX_EXT_V1)
         );
-    }
-
-    /// `IntoOwned` is the one conversion the generated `From` impls are built
-    /// on, so it must agree with `From` on generated `View`s and with the
-    /// named conversions on the runtime `View`s. A heap-free type converts to
-    /// itself.
-    #[test]
-    fn into_owned_agrees_with_from() {
-        assert_eq!(PREPARE.into_owned(), ScpStatementPrepare::from(&PREPARE));
-        assert_eq!(PREDICATE.into_owned(), ClaimPredicate::from(&PREDICATE));
-        assert_eq!(MEMO_TYPES[0].into_owned(), MEMO_TYPES[0]);
-        assert_eq!(
-            PREPARE.quorum_set_hash.clone().into_owned(),
-            PREPARE.quorum_set_hash
-        );
-
-        let vecm: VecM<u32, 5> = vec![1, 2, 3].try_into().unwrap();
-        assert_eq!(VecMView::from(&vecm).into_owned(), vecm);
-        let bytesm: BytesM<5> = vec![1u8, 2, 3].try_into().unwrap();
-        assert_eq!(BytesMView::from(&bytesm).into_owned(), bytesm);
-        let stringm: StringM<5> = "abc".try_into().unwrap();
-        assert_eq!(StringMView::from(&stringm).into_owned(), stringm);
     }
 
     /// The runtime `View` types round-trip through their owned counterparts

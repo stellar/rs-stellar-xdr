@@ -1574,21 +1574,26 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
 
 /// Conversion from the borrowing `View` form of a value to its owned form.
 ///
+/// This is an internal building block, not part of the public API: it exists so
+/// the generated conversions can be written field by field without knowing what
+/// each field holds. Convert a `View` to its owned form with [`From`]/[`Into`],
+/// which every `View` implements, or with [`VecMView::to_vecm`],
+/// [`BytesMView::to_bytesm`] and [`StringMView::to_stringm`] for the runtime
+/// types.
+///
 /// Every generated type implements it. A type with a `View` converts from that
 /// `View` to the owned type. A heap-free type has no `View`, appears as itself
 /// inside the `View`s that contain it, and converts to itself. The runtime
 /// types that appear inside `View`s implement it too: [`VecMView`],
 /// [`BytesMView`] and [`StringMView`] convert to [`VecM`], [`BytesM`] and
 /// [`StringM`], `Option`s and arrays convert element-wise, and a reference (the
-/// `View` form of a `Box`) converts to a `Box`. The generated conversions to
-/// owned types are built from it field by field, so they need no knowledge of
-/// what each field holds.
+/// `View` form of a `Box`) converts to a `Box`.
 ///
 /// A `View` is a cheap handle onto borrowed data, so the conversion consumes
 /// it; the `From<&View>` impls clone the handle first. The conversion
 /// allocates, so it is only available with the `alloc` feature.
 #[cfg(feature = "alloc")]
-pub trait IntoOwned {
+pub(crate) trait IntoOwned {
     /// The owned form of this type.
     type Owned;
 

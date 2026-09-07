@@ -1624,21 +1624,68 @@ impl<T: IntoOwned + Clone> IntoOwned for &T {
 }
 
 #[cfg(feature = "alloc")]
-macro_rules! impl_into_owned_identity {
-    ($($t:ty),* $(,)?) => {
-        $(
-            impl IntoOwned for $t {
-                type Owned = $t;
-                fn into_owned(self) -> $t {
-                    self
-                }
-            }
-        )*
-    };
+impl IntoOwned for bool {
+    type Owned = bool;
+    fn into_owned(self) -> bool {
+        self
+    }
 }
 
 #[cfg(feature = "alloc")]
-impl_into_owned_identity!(bool, u8, i32, u32, i64, u64, f32, f64);
+impl IntoOwned for u8 {
+    type Owned = u8;
+    fn into_owned(self) -> u8 {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for i32 {
+    type Owned = i32;
+    fn into_owned(self) -> i32 {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for u32 {
+    type Owned = u32;
+    fn into_owned(self) -> u32 {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for i64 {
+    type Owned = i64;
+    fn into_owned(self) -> i64 {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for u64 {
+    type Owned = u64;
+    fn into_owned(self) -> u64 {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for f32 {
+    type Owned = f32;
+    fn into_owned(self) -> f32 {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for f64 {
+    type Owned = f64;
+    fn into_owned(self) -> f64 {
+        self
+    }
+}
 
 #[cfg(feature = "alloc")]
 impl<T: IntoOwned> IntoOwned for Option<T> {

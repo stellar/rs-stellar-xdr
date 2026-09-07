@@ -62,8 +62,8 @@ impl IntoOwned for FrozenLedgerKeysDeltaView<'_> {
     type Owned = FrozenLedgerKeysDelta;
     fn into_owned(&self) -> FrozenLedgerKeysDelta {
         FrozenLedgerKeysDelta {
-            keys_to_freeze: IntoOwned::into_owned(&self.keys_to_freeze),
-            keys_to_unfreeze: IntoOwned::into_owned(&self.keys_to_unfreeze),
+            keys_to_freeze: self.keys_to_freeze.into_owned(),
+            keys_to_unfreeze: self.keys_to_unfreeze.into_owned(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for FrozenLedgerKeysDeltaView<'_> {
 impl From<&FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
     #[must_use]
     fn from(v: &FrozenLedgerKeysDeltaView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
 impl From<FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
     #[must_use]
     fn from(v: FrozenLedgerKeysDeltaView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

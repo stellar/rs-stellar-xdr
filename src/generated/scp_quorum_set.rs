@@ -68,9 +68,9 @@ impl IntoOwned for ScpQuorumSetView<'_> {
     type Owned = ScpQuorumSet;
     fn into_owned(&self) -> ScpQuorumSet {
         ScpQuorumSet {
-            threshold: IntoOwned::into_owned(&self.threshold),
-            validators: IntoOwned::into_owned(&self.validators),
-            inner_sets: IntoOwned::into_owned(&self.inner_sets),
+            threshold: self.threshold.into_owned(),
+            validators: self.validators.into_owned(),
+            inner_sets: self.inner_sets.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for ScpQuorumSetView<'_> {
 impl From<&ScpQuorumSetView<'_>> for ScpQuorumSet {
     #[must_use]
     fn from(v: &ScpQuorumSetView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&ScpQuorumSetView<'_>> for ScpQuorumSet {
 impl From<ScpQuorumSetView<'_>> for ScpQuorumSet {
     #[must_use]
     fn from(v: ScpQuorumSetView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

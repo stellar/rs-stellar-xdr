@@ -13,6 +13,7 @@ use crate::naming::{
 };
 use crate::options::RustOptions;
 use crate::output::{
+    CyclicBorrow,
     ConstOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
     GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
@@ -452,6 +453,7 @@ impl RustGenerator {
             emit_view: r.emit_view,
             view_cfg: r.view_cfg,
             view_type_ref: resolved.view_type_ref,
+            cyclic: resolved.cyclic,
             cfg,
         })
     }
@@ -493,6 +495,7 @@ impl RustGenerator {
             serde_as_type: resolved.serde_as_type,
             serde_rename,
             view_type_ref: resolved.view_type_ref,
+            cyclic: resolved.cyclic,
         }
     }
 
@@ -532,6 +535,10 @@ impl RustGenerator {
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     view_type_ref: resolved.as_ref().map(|r| r.view_type_ref.clone()),
+                    // A void arm has no payload, so nothing to box.
+                    cyclic: resolved
+                        .as_ref()
+                        .map_or(CyclicBorrow::NotCyclic, |r| r.cyclic),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }

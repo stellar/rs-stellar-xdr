@@ -71,8 +71,8 @@ impl IntoOwned for TransactionSignaturePayloadView<'_> {
     type Owned = TransactionSignaturePayload;
     fn into_owned(&self) -> TransactionSignaturePayload {
         TransactionSignaturePayload {
-            network_id: IntoOwned::into_owned(&self.network_id),
-            tagged_transaction: IntoOwned::into_owned(&self.tagged_transaction),
+            network_id: self.network_id.into_owned(),
+            tagged_transaction: self.tagged_transaction.into_owned(),
         }
     }
 }
@@ -81,7 +81,7 @@ impl IntoOwned for TransactionSignaturePayloadView<'_> {
 impl From<&TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
     #[must_use]
     fn from(v: &TransactionSignaturePayloadView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -89,7 +89,7 @@ impl From<&TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload 
 impl From<TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
     #[must_use]
     fn from(v: TransactionSignaturePayloadView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

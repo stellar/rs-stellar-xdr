@@ -117,7 +117,7 @@ pub struct EncodedLedgerKeyView<'a>(pub BytesMView<'a>);
 impl IntoOwned for EncodedLedgerKeyView<'_> {
     type Owned = EncodedLedgerKey;
     fn into_owned(&self) -> EncodedLedgerKey {
-        EncodedLedgerKey(IntoOwned::into_owned(&self.0))
+        EncodedLedgerKey(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for EncodedLedgerKeyView<'_> {
 impl From<&EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
     #[must_use]
     fn from(v: &EncodedLedgerKeyView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
 impl From<EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
     #[must_use]
     fn from(v: EncodedLedgerKeyView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

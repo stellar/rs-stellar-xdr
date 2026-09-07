@@ -63,8 +63,8 @@ impl IntoOwned for LedgerCloseValueSignatureView<'_> {
     type Owned = LedgerCloseValueSignature;
     fn into_owned(&self) -> LedgerCloseValueSignature {
         LedgerCloseValueSignature {
-            node_id: IntoOwned::into_owned(&self.node_id),
-            signature: IntoOwned::into_owned(&self.signature),
+            node_id: self.node_id.into_owned(),
+            signature: self.signature.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for LedgerCloseValueSignatureView<'_> {
 impl From<&LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
     #[must_use]
     fn from(v: &LedgerCloseValueSignatureView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
 impl From<LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
     #[must_use]
     fn from(v: LedgerCloseValueSignatureView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

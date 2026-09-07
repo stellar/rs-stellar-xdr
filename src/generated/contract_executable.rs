@@ -165,12 +165,10 @@ impl IntoOwned for ContractExecutableView<'_> {
     fn into_owned(&self) -> ContractExecutable {
         #[allow(clippy::match_same_arms)]
         match self {
-            ContractExecutableView::Wasm(value) => {
-                ContractExecutable::Wasm(IntoOwned::into_owned(value))
-            }
+            ContractExecutableView::Wasm(value) => ContractExecutable::Wasm(value.into_owned()),
             ContractExecutableView::StellarAsset => ContractExecutable::StellarAsset,
             ContractExecutableView::ExternalRef(value) => {
-                ContractExecutable::ExternalRef(IntoOwned::into_owned(value))
+                ContractExecutable::ExternalRef(value.into_owned())
             }
         }
     }
@@ -180,7 +178,7 @@ impl IntoOwned for ContractExecutableView<'_> {
 impl From<&ContractExecutableView<'_>> for ContractExecutable {
     #[must_use]
     fn from(v: &ContractExecutableView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -188,7 +186,7 @@ impl From<&ContractExecutableView<'_>> for ContractExecutable {
 impl From<ContractExecutableView<'_>> for ContractExecutable {
     #[must_use]
     fn from(v: ContractExecutableView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

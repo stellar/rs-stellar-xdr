@@ -117,7 +117,7 @@ pub struct SignatureView<'a>(pub BytesMView<'a, 64>);
 impl IntoOwned for SignatureView<'_> {
     type Owned = Signature;
     fn into_owned(&self) -> Signature {
-        Signature(IntoOwned::into_owned(&self.0))
+        Signature(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for SignatureView<'_> {
 impl From<&SignatureView<'_>> for Signature {
     #[must_use]
     fn from(v: &SignatureView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&SignatureView<'_>> for Signature {
 impl From<SignatureView<'_>> for Signature {
     #[must_use]
     fn from(v: SignatureView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

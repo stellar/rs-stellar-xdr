@@ -73,8 +73,8 @@ impl IntoOwned for ManageOfferSuccessResultView<'_> {
     type Owned = ManageOfferSuccessResult;
     fn into_owned(&self) -> ManageOfferSuccessResult {
         ManageOfferSuccessResult {
-            offers_claimed: IntoOwned::into_owned(&self.offers_claimed),
-            offer: IntoOwned::into_owned(&self.offer),
+            offers_claimed: self.offers_claimed.into_owned(),
+            offer: self.offer.into_owned(),
         }
     }
 }
@@ -83,7 +83,7 @@ impl IntoOwned for ManageOfferSuccessResultView<'_> {
 impl From<&ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
     #[must_use]
     fn from(v: &ManageOfferSuccessResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -91,7 +91,7 @@ impl From<&ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
 impl From<ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
     #[must_use]
     fn from(v: ManageOfferSuccessResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

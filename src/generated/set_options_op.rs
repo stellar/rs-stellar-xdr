@@ -105,15 +105,15 @@ impl IntoOwned for SetOptionsOpView<'_> {
     type Owned = SetOptionsOp;
     fn into_owned(&self) -> SetOptionsOp {
         SetOptionsOp {
-            inflation_dest: IntoOwned::into_owned(&self.inflation_dest),
-            clear_flags: IntoOwned::into_owned(&self.clear_flags),
-            set_flags: IntoOwned::into_owned(&self.set_flags),
-            master_weight: IntoOwned::into_owned(&self.master_weight),
-            low_threshold: IntoOwned::into_owned(&self.low_threshold),
-            med_threshold: IntoOwned::into_owned(&self.med_threshold),
-            high_threshold: IntoOwned::into_owned(&self.high_threshold),
-            home_domain: IntoOwned::into_owned(&self.home_domain),
-            signer: IntoOwned::into_owned(&self.signer),
+            inflation_dest: self.inflation_dest.into_owned(),
+            clear_flags: self.clear_flags.into_owned(),
+            set_flags: self.set_flags.into_owned(),
+            master_weight: self.master_weight.into_owned(),
+            low_threshold: self.low_threshold.into_owned(),
+            med_threshold: self.med_threshold.into_owned(),
+            high_threshold: self.high_threshold.into_owned(),
+            home_domain: self.home_domain.into_owned(),
+            signer: self.signer.into_owned(),
         }
     }
 }
@@ -122,7 +122,7 @@ impl IntoOwned for SetOptionsOpView<'_> {
 impl From<&SetOptionsOpView<'_>> for SetOptionsOp {
     #[must_use]
     fn from(v: &SetOptionsOpView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -130,7 +130,7 @@ impl From<&SetOptionsOpView<'_>> for SetOptionsOp {
 impl From<SetOptionsOpView<'_>> for SetOptionsOp {
     #[must_use]
     fn from(v: SetOptionsOpView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

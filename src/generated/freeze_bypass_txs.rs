@@ -57,7 +57,7 @@ impl IntoOwned for FreezeBypassTxsView<'_> {
     type Owned = FreezeBypassTxs;
     fn into_owned(&self) -> FreezeBypassTxs {
         FreezeBypassTxs {
-            tx_hashes: IntoOwned::into_owned(&self.tx_hashes),
+            tx_hashes: self.tx_hashes.into_owned(),
         }
     }
 }
@@ -66,7 +66,7 @@ impl IntoOwned for FreezeBypassTxsView<'_> {
 impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
     fn from(v: &FreezeBypassTxsView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -74,7 +74,7 @@ impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
 impl From<FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
     fn from(v: FreezeBypassTxsView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

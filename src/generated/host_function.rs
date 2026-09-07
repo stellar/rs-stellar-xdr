@@ -186,16 +186,16 @@ impl IntoOwned for HostFunctionView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             HostFunctionView::InvokeContract(value) => {
-                HostFunction::InvokeContract(IntoOwned::into_owned(value))
+                HostFunction::InvokeContract(value.into_owned())
             }
             HostFunctionView::CreateContract(value) => {
-                HostFunction::CreateContract(IntoOwned::into_owned(value))
+                HostFunction::CreateContract(value.into_owned())
             }
             HostFunctionView::UploadContractWasm(value) => {
-                HostFunction::UploadContractWasm(IntoOwned::into_owned(value))
+                HostFunction::UploadContractWasm(value.into_owned())
             }
             HostFunctionView::CreateContractV2(value) => {
-                HostFunction::CreateContractV2(IntoOwned::into_owned(value))
+                HostFunction::CreateContractV2(value.into_owned())
             }
         }
     }
@@ -205,7 +205,7 @@ impl IntoOwned for HostFunctionView<'_> {
 impl From<&HostFunctionView<'_>> for HostFunction {
     #[must_use]
     fn from(v: &HostFunctionView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -213,7 +213,7 @@ impl From<&HostFunctionView<'_>> for HostFunction {
 impl From<HostFunctionView<'_>> for HostFunction {
     #[must_use]
     fn from(v: HostFunctionView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

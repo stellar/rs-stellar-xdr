@@ -308,10 +308,10 @@ impl IntoOwned for InnerTransactionResultResultView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             InnerTransactionResultResultView::TxSuccess(value) => {
-                InnerTransactionResultResult::TxSuccess(IntoOwned::into_owned(value))
+                InnerTransactionResultResult::TxSuccess(value.into_owned())
             }
             InnerTransactionResultResultView::TxFailed(value) => {
-                InnerTransactionResultResult::TxFailed(IntoOwned::into_owned(value))
+                InnerTransactionResultResult::TxFailed(value.into_owned())
             }
             InnerTransactionResultResultView::TxTooEarly => {
                 InnerTransactionResultResult::TxTooEarly
@@ -363,7 +363,7 @@ impl IntoOwned for InnerTransactionResultResultView<'_> {
 impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
     fn from(v: &InnerTransactionResultResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -371,7 +371,7 @@ impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResul
 impl From<InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
     fn from(v: InnerTransactionResultResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -124,8 +124,8 @@ impl IntoOwned for OperationView<'_> {
     type Owned = Operation;
     fn into_owned(&self) -> Operation {
         Operation {
-            source_account: IntoOwned::into_owned(&self.source_account),
-            body: IntoOwned::into_owned(&self.body),
+            source_account: self.source_account.into_owned(),
+            body: self.body.into_owned(),
         }
     }
 }
@@ -134,7 +134,7 @@ impl IntoOwned for OperationView<'_> {
 impl From<&OperationView<'_>> for Operation {
     #[must_use]
     fn from(v: &OperationView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -142,7 +142,7 @@ impl From<&OperationView<'_>> for Operation {
 impl From<OperationView<'_>> for Operation {
     #[must_use]
     fn from(v: OperationView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -65,8 +65,8 @@ impl IntoOwned for FeeBumpTransactionEnvelopeView<'_> {
     type Owned = FeeBumpTransactionEnvelope;
     fn into_owned(&self) -> FeeBumpTransactionEnvelope {
         FeeBumpTransactionEnvelope {
-            tx: IntoOwned::into_owned(&self.tx),
-            signatures: IntoOwned::into_owned(&self.signatures),
+            tx: self.tx.into_owned(),
+            signatures: self.signatures.into_owned(),
         }
     }
 }
@@ -75,7 +75,7 @@ impl IntoOwned for FeeBumpTransactionEnvelopeView<'_> {
 impl From<&FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
     #[must_use]
     fn from(v: &FeeBumpTransactionEnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -83,7 +83,7 @@ impl From<&FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
 impl From<FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
     #[must_use]
     fn from(v: FeeBumpTransactionEnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

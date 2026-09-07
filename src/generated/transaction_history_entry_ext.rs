@@ -153,7 +153,7 @@ impl IntoOwned for TransactionHistoryEntryExtView<'_> {
         match self {
             TransactionHistoryEntryExtView::V0 => TransactionHistoryEntryExt::V0,
             TransactionHistoryEntryExtView::V1(value) => {
-                TransactionHistoryEntryExt::V1(IntoOwned::into_owned(value))
+                TransactionHistoryEntryExt::V1(value.into_owned())
             }
         }
     }
@@ -163,7 +163,7 @@ impl IntoOwned for TransactionHistoryEntryExtView<'_> {
 impl From<&TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
     #[must_use]
     fn from(v: &TransactionHistoryEntryExtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -171,7 +171,7 @@ impl From<&TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
 impl From<TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
     #[must_use]
     fn from(v: TransactionHistoryEntryExtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

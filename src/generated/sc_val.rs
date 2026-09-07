@@ -395,31 +395,29 @@ impl IntoOwned for ScValView<'_> {
     fn into_owned(&self) -> ScVal {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScValView::Bool(value) => ScVal::Bool(IntoOwned::into_owned(value)),
+            ScValView::Bool(value) => ScVal::Bool(value.into_owned()),
             ScValView::Void => ScVal::Void,
-            ScValView::Error(value) => ScVal::Error(IntoOwned::into_owned(value)),
-            ScValView::U32(value) => ScVal::U32(IntoOwned::into_owned(value)),
-            ScValView::I32(value) => ScVal::I32(IntoOwned::into_owned(value)),
-            ScValView::U64(value) => ScVal::U64(IntoOwned::into_owned(value)),
-            ScValView::I64(value) => ScVal::I64(IntoOwned::into_owned(value)),
-            ScValView::Timepoint(value) => ScVal::Timepoint(IntoOwned::into_owned(value)),
-            ScValView::Duration(value) => ScVal::Duration(IntoOwned::into_owned(value)),
-            ScValView::U128(value) => ScVal::U128(IntoOwned::into_owned(value)),
-            ScValView::I128(value) => ScVal::I128(IntoOwned::into_owned(value)),
-            ScValView::U256(value) => ScVal::U256(IntoOwned::into_owned(value)),
-            ScValView::I256(value) => ScVal::I256(IntoOwned::into_owned(value)),
-            ScValView::Bytes(value) => ScVal::Bytes(IntoOwned::into_owned(value)),
-            ScValView::String(value) => ScVal::String(IntoOwned::into_owned(value)),
-            ScValView::Symbol(value) => ScVal::Symbol(IntoOwned::into_owned(value)),
-            ScValView::Vec(value) => ScVal::Vec(IntoOwned::into_owned(value)),
-            ScValView::Map(value) => ScVal::Map(IntoOwned::into_owned(value)),
-            ScValView::Address(value) => ScVal::Address(IntoOwned::into_owned(value)),
-            ScValView::ContractInstance(value) => {
-                ScVal::ContractInstance(IntoOwned::into_owned(value))
-            }
+            ScValView::Error(value) => ScVal::Error(value.into_owned()),
+            ScValView::U32(value) => ScVal::U32(value.into_owned()),
+            ScValView::I32(value) => ScVal::I32(value.into_owned()),
+            ScValView::U64(value) => ScVal::U64(value.into_owned()),
+            ScValView::I64(value) => ScVal::I64(value.into_owned()),
+            ScValView::Timepoint(value) => ScVal::Timepoint(value.into_owned()),
+            ScValView::Duration(value) => ScVal::Duration(value.into_owned()),
+            ScValView::U128(value) => ScVal::U128(value.into_owned()),
+            ScValView::I128(value) => ScVal::I128(value.into_owned()),
+            ScValView::U256(value) => ScVal::U256(value.into_owned()),
+            ScValView::I256(value) => ScVal::I256(value.into_owned()),
+            ScValView::Bytes(value) => ScVal::Bytes(value.into_owned()),
+            ScValView::String(value) => ScVal::String(value.into_owned()),
+            ScValView::Symbol(value) => ScVal::Symbol(value.into_owned()),
+            ScValView::Vec(value) => ScVal::Vec(value.into_owned()),
+            ScValView::Map(value) => ScVal::Map(value.into_owned()),
+            ScValView::Address(value) => ScVal::Address(value.into_owned()),
+            ScValView::ContractInstance(value) => ScVal::ContractInstance(value.into_owned()),
             ScValView::LedgerKeyContractInstance => ScVal::LedgerKeyContractInstance,
-            ScValView::LedgerKeyNonce(value) => ScVal::LedgerKeyNonce(IntoOwned::into_owned(value)),
-            ScValView::ExecutableTag(value) => ScVal::ExecutableTag(IntoOwned::into_owned(value)),
+            ScValView::LedgerKeyNonce(value) => ScVal::LedgerKeyNonce(value.into_owned()),
+            ScValView::ExecutableTag(value) => ScVal::ExecutableTag(value.into_owned()),
         }
     }
 }
@@ -428,7 +426,7 @@ impl IntoOwned for ScValView<'_> {
 impl From<&ScValView<'_>> for ScVal {
     #[must_use]
     fn from(v: &ScValView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -436,7 +434,7 @@ impl From<&ScValView<'_>> for ScVal {
 impl From<ScValView<'_>> for ScVal {
     #[must_use]
     fn from(v: ScValView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

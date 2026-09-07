@@ -62,8 +62,8 @@ impl IntoOwned for TransactionEventView<'_> {
     type Owned = TransactionEvent;
     fn into_owned(&self) -> TransactionEvent {
         TransactionEvent {
-            stage: IntoOwned::into_owned(&self.stage),
-            event: IntoOwned::into_owned(&self.event),
+            stage: self.stage.into_owned(),
+            event: self.event.into_owned(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for TransactionEventView<'_> {
 impl From<&TransactionEventView<'_>> for TransactionEvent {
     #[must_use]
     fn from(v: &TransactionEventView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&TransactionEventView<'_>> for TransactionEvent {
 impl From<TransactionEventView<'_>> for TransactionEvent {
     #[must_use]
     fn from(v: TransactionEventView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

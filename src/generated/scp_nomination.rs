@@ -68,9 +68,9 @@ impl IntoOwned for ScpNominationView<'_> {
     type Owned = ScpNomination;
     fn into_owned(&self) -> ScpNomination {
         ScpNomination {
-            quorum_set_hash: IntoOwned::into_owned(&self.quorum_set_hash),
-            votes: IntoOwned::into_owned(&self.votes),
-            accepted: IntoOwned::into_owned(&self.accepted),
+            quorum_set_hash: self.quorum_set_hash.into_owned(),
+            votes: self.votes.into_owned(),
+            accepted: self.accepted.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for ScpNominationView<'_> {
 impl From<&ScpNominationView<'_>> for ScpNomination {
     #[must_use]
     fn from(v: &ScpNominationView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&ScpNominationView<'_>> for ScpNomination {
 impl From<ScpNominationView<'_>> for ScpNomination {
     #[must_use]
     fn from(v: ScpNominationView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

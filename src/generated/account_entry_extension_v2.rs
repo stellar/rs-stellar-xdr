@@ -81,10 +81,10 @@ impl IntoOwned for AccountEntryExtensionV2View<'_> {
     type Owned = AccountEntryExtensionV2;
     fn into_owned(&self) -> AccountEntryExtensionV2 {
         AccountEntryExtensionV2 {
-            num_sponsored: IntoOwned::into_owned(&self.num_sponsored),
-            num_sponsoring: IntoOwned::into_owned(&self.num_sponsoring),
-            signer_sponsoring_i_ds: IntoOwned::into_owned(&self.signer_sponsoring_i_ds),
-            ext: IntoOwned::into_owned(&self.ext),
+            num_sponsored: self.num_sponsored.into_owned(),
+            num_sponsoring: self.num_sponsoring.into_owned(),
+            signer_sponsoring_i_ds: self.signer_sponsoring_i_ds.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -93,7 +93,7 @@ impl IntoOwned for AccountEntryExtensionV2View<'_> {
 impl From<&AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
     #[must_use]
     fn from(v: &AccountEntryExtensionV2View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -101,7 +101,7 @@ impl From<&AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
 impl From<AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
     #[must_use]
     fn from(v: AccountEntryExtensionV2View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

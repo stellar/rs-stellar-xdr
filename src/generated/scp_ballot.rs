@@ -63,8 +63,8 @@ impl IntoOwned for ScpBallotView<'_> {
     type Owned = ScpBallot;
     fn into_owned(&self) -> ScpBallot {
         ScpBallot {
-            counter: IntoOwned::into_owned(&self.counter),
-            value: IntoOwned::into_owned(&self.value),
+            counter: self.counter.into_owned(),
+            value: self.value.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScpBallotView<'_> {
 impl From<&ScpBallotView<'_>> for ScpBallot {
     #[must_use]
     fn from(v: &ScpBallotView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScpBallotView<'_>> for ScpBallot {
 impl From<ScpBallotView<'_>> for ScpBallot {
     #[must_use]
     fn from(v: ScpBallotView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

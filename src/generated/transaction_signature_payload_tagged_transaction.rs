@@ -153,12 +153,10 @@ impl IntoOwned for TransactionSignaturePayloadTaggedTransactionView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionSignaturePayloadTaggedTransactionView::Tx(value) => {
-                TransactionSignaturePayloadTaggedTransaction::Tx(IntoOwned::into_owned(value))
+                TransactionSignaturePayloadTaggedTransaction::Tx(value.into_owned())
             }
             TransactionSignaturePayloadTaggedTransactionView::TxFeeBump(value) => {
-                TransactionSignaturePayloadTaggedTransaction::TxFeeBump(IntoOwned::into_owned(
-                    value,
-                ))
+                TransactionSignaturePayloadTaggedTransaction::TxFeeBump(value.into_owned())
             }
         }
     }
@@ -170,7 +168,7 @@ impl From<&TransactionSignaturePayloadTaggedTransactionView<'_>>
 {
     #[must_use]
     fn from(v: &TransactionSignaturePayloadTaggedTransactionView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -180,7 +178,7 @@ impl From<TransactionSignaturePayloadTaggedTransactionView<'_>>
 {
     #[must_use]
     fn from(v: TransactionSignaturePayloadTaggedTransactionView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

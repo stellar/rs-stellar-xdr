@@ -154,7 +154,7 @@ impl IntoOwned for TxSetComponentView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {
-                TxSetComponent::TxsetCompTxsMaybeDiscountedFee(IntoOwned::into_owned(value))
+                TxSetComponent::TxsetCompTxsMaybeDiscountedFee(value.into_owned())
             }
         }
     }
@@ -164,7 +164,7 @@ impl IntoOwned for TxSetComponentView<'_> {
 impl From<&TxSetComponentView<'_>> for TxSetComponent {
     #[must_use]
     fn from(v: &TxSetComponentView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -172,7 +172,7 @@ impl From<&TxSetComponentView<'_>> for TxSetComponent {
 impl From<TxSetComponentView<'_>> for TxSetComponent {
     #[must_use]
     fn from(v: TxSetComponentView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -63,8 +63,8 @@ impl IntoOwned for ManageDataOpView<'_> {
     type Owned = ManageDataOp;
     fn into_owned(&self) -> ManageDataOp {
         ManageDataOp {
-            data_name: IntoOwned::into_owned(&self.data_name),
-            data_value: IntoOwned::into_owned(&self.data_value),
+            data_name: self.data_name.into_owned(),
+            data_value: self.data_value.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ManageDataOpView<'_> {
 impl From<&ManageDataOpView<'_>> for ManageDataOp {
     #[must_use]
     fn from(v: &ManageDataOpView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ManageDataOpView<'_>> for ManageDataOp {
 impl From<ManageDataOpView<'_>> for ManageDataOp {
     #[must_use]
     fn from(v: ManageDataOpView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

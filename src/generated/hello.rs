@@ -98,15 +98,15 @@ impl IntoOwned for HelloView<'_> {
     type Owned = Hello;
     fn into_owned(&self) -> Hello {
         Hello {
-            ledger_version: IntoOwned::into_owned(&self.ledger_version),
-            overlay_version: IntoOwned::into_owned(&self.overlay_version),
-            overlay_min_version: IntoOwned::into_owned(&self.overlay_min_version),
-            network_id: IntoOwned::into_owned(&self.network_id),
-            version_str: IntoOwned::into_owned(&self.version_str),
-            listening_port: IntoOwned::into_owned(&self.listening_port),
-            peer_id: IntoOwned::into_owned(&self.peer_id),
-            cert: IntoOwned::into_owned(&self.cert),
-            nonce: IntoOwned::into_owned(&self.nonce),
+            ledger_version: self.ledger_version.into_owned(),
+            overlay_version: self.overlay_version.into_owned(),
+            overlay_min_version: self.overlay_min_version.into_owned(),
+            network_id: self.network_id.into_owned(),
+            version_str: self.version_str.into_owned(),
+            listening_port: self.listening_port.into_owned(),
+            peer_id: self.peer_id.into_owned(),
+            cert: self.cert.into_owned(),
+            nonce: self.nonce.into_owned(),
         }
     }
 }
@@ -115,7 +115,7 @@ impl IntoOwned for HelloView<'_> {
 impl From<&HelloView<'_>> for Hello {
     #[must_use]
     fn from(v: &HelloView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -123,7 +123,7 @@ impl From<&HelloView<'_>> for Hello {
 impl From<HelloView<'_>> for Hello {
     #[must_use]
     fn from(v: HelloView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

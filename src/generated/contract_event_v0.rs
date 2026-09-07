@@ -63,8 +63,8 @@ impl IntoOwned for ContractEventV0View<'_> {
     type Owned = ContractEventV0;
     fn into_owned(&self) -> ContractEventV0 {
         ContractEventV0 {
-            topics: IntoOwned::into_owned(&self.topics),
-            data: IntoOwned::into_owned(&self.data),
+            topics: self.topics.into_owned(),
+            data: self.data.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ContractEventV0View<'_> {
 impl From<&ContractEventV0View<'_>> for ContractEventV0 {
     #[must_use]
     fn from(v: &ContractEventV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ContractEventV0View<'_>> for ContractEventV0 {
 impl From<ContractEventV0View<'_>> for ContractEventV0 {
     #[must_use]
     fn from(v: ContractEventV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -260,7 +260,7 @@ impl IntoOwned for ManageSellOfferResultView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             ManageSellOfferResultView::Success(value) => {
-                ManageSellOfferResult::Success(IntoOwned::into_owned(value))
+                ManageSellOfferResult::Success(value.into_owned())
             }
             ManageSellOfferResultView::Malformed => ManageSellOfferResult::Malformed,
             ManageSellOfferResultView::SellNoTrust => ManageSellOfferResult::SellNoTrust,
@@ -284,7 +284,7 @@ impl IntoOwned for ManageSellOfferResultView<'_> {
 impl From<&ManageSellOfferResultView<'_>> for ManageSellOfferResult {
     #[must_use]
     fn from(v: &ManageSellOfferResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -292,7 +292,7 @@ impl From<&ManageSellOfferResultView<'_>> for ManageSellOfferResult {
 impl From<ManageSellOfferResultView<'_>> for ManageSellOfferResult {
     #[must_use]
     fn from(v: ManageSellOfferResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

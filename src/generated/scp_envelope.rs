@@ -63,8 +63,8 @@ impl IntoOwned for ScpEnvelopeView<'_> {
     type Owned = ScpEnvelope;
     fn into_owned(&self) -> ScpEnvelope {
         ScpEnvelope {
-            statement: IntoOwned::into_owned(&self.statement),
-            signature: IntoOwned::into_owned(&self.signature),
+            statement: self.statement.into_owned(),
+            signature: self.signature.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScpEnvelopeView<'_> {
 impl From<&ScpEnvelopeView<'_>> for ScpEnvelope {
     #[must_use]
     fn from(v: &ScpEnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScpEnvelopeView<'_>> for ScpEnvelope {
 impl From<ScpEnvelopeView<'_>> for ScpEnvelope {
     #[must_use]
     fn from(v: ScpEnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

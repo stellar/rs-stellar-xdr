@@ -159,10 +159,10 @@ impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             ScSpecUdtUnionCaseV0View::VoidV0(value) => {
-                ScSpecUdtUnionCaseV0::VoidV0(IntoOwned::into_owned(value))
+                ScSpecUdtUnionCaseV0::VoidV0(value.into_owned())
             }
             ScSpecUdtUnionCaseV0View::TupleV0(value) => {
-                ScSpecUdtUnionCaseV0::TupleV0(IntoOwned::into_owned(value))
+                ScSpecUdtUnionCaseV0::TupleV0(value.into_owned())
             }
         }
     }
@@ -172,7 +172,7 @@ impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
 impl From<&ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
     fn from(v: &ScSpecUdtUnionCaseV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -180,7 +180,7 @@ impl From<&ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
 impl From<ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
     fn from(v: ScSpecUdtUnionCaseV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

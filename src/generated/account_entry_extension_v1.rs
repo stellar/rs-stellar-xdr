@@ -71,8 +71,8 @@ impl IntoOwned for AccountEntryExtensionV1View<'_> {
     type Owned = AccountEntryExtensionV1;
     fn into_owned(&self) -> AccountEntryExtensionV1 {
         AccountEntryExtensionV1 {
-            liabilities: IntoOwned::into_owned(&self.liabilities),
-            ext: IntoOwned::into_owned(&self.ext),
+            liabilities: self.liabilities.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -81,7 +81,7 @@ impl IntoOwned for AccountEntryExtensionV1View<'_> {
 impl From<&AccountEntryExtensionV1View<'_>> for AccountEntryExtensionV1 {
     #[must_use]
     fn from(v: &AccountEntryExtensionV1View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -89,7 +89,7 @@ impl From<&AccountEntryExtensionV1View<'_>> for AccountEntryExtensionV1 {
 impl From<AccountEntryExtensionV1View<'_>> for AccountEntryExtensionV1 {
     #[must_use]
     fn from(v: AccountEntryExtensionV1View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

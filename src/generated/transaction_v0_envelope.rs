@@ -65,8 +65,8 @@ impl IntoOwned for TransactionV0EnvelopeView<'_> {
     type Owned = TransactionV0Envelope;
     fn into_owned(&self) -> TransactionV0Envelope {
         TransactionV0Envelope {
-            tx: IntoOwned::into_owned(&self.tx),
-            signatures: IntoOwned::into_owned(&self.signatures),
+            tx: self.tx.into_owned(),
+            signatures: self.signatures.into_owned(),
         }
     }
 }
@@ -75,7 +75,7 @@ impl IntoOwned for TransactionV0EnvelopeView<'_> {
 impl From<&TransactionV0EnvelopeView<'_>> for TransactionV0Envelope {
     #[must_use]
     fn from(v: &TransactionV0EnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -83,7 +83,7 @@ impl From<&TransactionV0EnvelopeView<'_>> for TransactionV0Envelope {
 impl From<TransactionV0EnvelopeView<'_>> for TransactionV0Envelope {
     #[must_use]
     fn from(v: TransactionV0EnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

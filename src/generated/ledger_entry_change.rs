@@ -181,20 +181,12 @@ impl IntoOwned for LedgerEntryChangeView<'_> {
     fn into_owned(&self) -> LedgerEntryChange {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerEntryChangeView::Created(value) => {
-                LedgerEntryChange::Created(IntoOwned::into_owned(value))
-            }
-            LedgerEntryChangeView::Updated(value) => {
-                LedgerEntryChange::Updated(IntoOwned::into_owned(value))
-            }
-            LedgerEntryChangeView::Removed(value) => {
-                LedgerEntryChange::Removed(IntoOwned::into_owned(value))
-            }
-            LedgerEntryChangeView::State(value) => {
-                LedgerEntryChange::State(IntoOwned::into_owned(value))
-            }
+            LedgerEntryChangeView::Created(value) => LedgerEntryChange::Created(value.into_owned()),
+            LedgerEntryChangeView::Updated(value) => LedgerEntryChange::Updated(value.into_owned()),
+            LedgerEntryChangeView::Removed(value) => LedgerEntryChange::Removed(value.into_owned()),
+            LedgerEntryChangeView::State(value) => LedgerEntryChange::State(value.into_owned()),
             LedgerEntryChangeView::Restored(value) => {
-                LedgerEntryChange::Restored(IntoOwned::into_owned(value))
+                LedgerEntryChange::Restored(value.into_owned())
             }
         }
     }
@@ -204,7 +196,7 @@ impl IntoOwned for LedgerEntryChangeView<'_> {
 impl From<&LedgerEntryChangeView<'_>> for LedgerEntryChange {
     #[must_use]
     fn from(v: &LedgerEntryChangeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -212,7 +204,7 @@ impl From<&LedgerEntryChangeView<'_>> for LedgerEntryChange {
 impl From<LedgerEntryChangeView<'_>> for LedgerEntryChange {
     #[must_use]
     fn from(v: LedgerEntryChangeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

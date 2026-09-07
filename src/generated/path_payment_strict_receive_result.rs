@@ -267,7 +267,7 @@ impl IntoOwned for PathPaymentStrictReceiveResultView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             PathPaymentStrictReceiveResultView::Success(value) => {
-                PathPaymentStrictReceiveResult::Success(IntoOwned::into_owned(value))
+                PathPaymentStrictReceiveResult::Success(value.into_owned())
             }
             PathPaymentStrictReceiveResultView::Malformed => {
                 PathPaymentStrictReceiveResult::Malformed
@@ -292,7 +292,7 @@ impl IntoOwned for PathPaymentStrictReceiveResultView<'_> {
                 PathPaymentStrictReceiveResult::LineFull
             }
             PathPaymentStrictReceiveResultView::NoIssuer(value) => {
-                PathPaymentStrictReceiveResult::NoIssuer(IntoOwned::into_owned(value))
+                PathPaymentStrictReceiveResult::NoIssuer(value.into_owned())
             }
             PathPaymentStrictReceiveResultView::TooFewOffers => {
                 PathPaymentStrictReceiveResult::TooFewOffers
@@ -311,7 +311,7 @@ impl IntoOwned for PathPaymentStrictReceiveResultView<'_> {
 impl From<&PathPaymentStrictReceiveResultView<'_>> for PathPaymentStrictReceiveResult {
     #[must_use]
     fn from(v: &PathPaymentStrictReceiveResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -319,7 +319,7 @@ impl From<&PathPaymentStrictReceiveResultView<'_>> for PathPaymentStrictReceiveR
 impl From<PathPaymentStrictReceiveResultView<'_>> for PathPaymentStrictReceiveResult {
     #[must_use]
     fn from(v: PathPaymentStrictReceiveResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -63,8 +63,8 @@ impl IntoOwned for LedgerFootprintView<'_> {
     type Owned = LedgerFootprint;
     fn into_owned(&self) -> LedgerFootprint {
         LedgerFootprint {
-            read_only: IntoOwned::into_owned(&self.read_only),
-            read_write: IntoOwned::into_owned(&self.read_write),
+            read_only: self.read_only.into_owned(),
+            read_write: self.read_write.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for LedgerFootprintView<'_> {
 impl From<&LedgerFootprintView<'_>> for LedgerFootprint {
     #[must_use]
     fn from(v: &LedgerFootprintView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&LedgerFootprintView<'_>> for LedgerFootprint {
 impl From<LedgerFootprintView<'_>> for LedgerFootprint {
     #[must_use]
     fn from(v: LedgerFootprintView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

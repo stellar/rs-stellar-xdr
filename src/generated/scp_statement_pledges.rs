@@ -195,16 +195,16 @@ impl IntoOwned for ScpStatementPledgesView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             ScpStatementPledgesView::Prepare(value) => {
-                ScpStatementPledges::Prepare(IntoOwned::into_owned(value))
+                ScpStatementPledges::Prepare(value.into_owned())
             }
             ScpStatementPledgesView::Confirm(value) => {
-                ScpStatementPledges::Confirm(IntoOwned::into_owned(value))
+                ScpStatementPledges::Confirm(value.into_owned())
             }
             ScpStatementPledgesView::Externalize(value) => {
-                ScpStatementPledges::Externalize(IntoOwned::into_owned(value))
+                ScpStatementPledges::Externalize(value.into_owned())
             }
             ScpStatementPledgesView::Nominate(value) => {
-                ScpStatementPledges::Nominate(IntoOwned::into_owned(value))
+                ScpStatementPledges::Nominate(value.into_owned())
             }
         }
     }
@@ -214,7 +214,7 @@ impl IntoOwned for ScpStatementPledgesView<'_> {
 impl From<&ScpStatementPledgesView<'_>> for ScpStatementPledges {
     #[must_use]
     fn from(v: &ScpStatementPledgesView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -222,7 +222,7 @@ impl From<&ScpStatementPledgesView<'_>> for ScpStatementPledges {
 impl From<ScpStatementPledgesView<'_>> for ScpStatementPledges {
     #[must_use]
     fn from(v: ScpStatementPledgesView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

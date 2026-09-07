@@ -73,10 +73,10 @@ impl IntoOwned for ScSpecFunctionV0View<'_> {
     type Owned = ScSpecFunctionV0;
     fn into_owned(&self) -> ScSpecFunctionV0 {
         ScSpecFunctionV0 {
-            doc: IntoOwned::into_owned(&self.doc),
-            name: IntoOwned::into_owned(&self.name),
-            inputs: IntoOwned::into_owned(&self.inputs),
-            outputs: IntoOwned::into_owned(&self.outputs),
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+            inputs: self.inputs.into_owned(),
+            outputs: self.outputs.into_owned(),
         }
     }
 }
@@ -85,7 +85,7 @@ impl IntoOwned for ScSpecFunctionV0View<'_> {
 impl From<&ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
     #[must_use]
     fn from(v: &ScSpecFunctionV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -93,7 +93,7 @@ impl From<&ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
 impl From<ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
     #[must_use]
     fn from(v: ScSpecFunctionV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

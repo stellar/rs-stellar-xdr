@@ -164,8 +164,8 @@ impl IntoOwned for PreconditionsView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             PreconditionsView::None => Preconditions::None,
-            PreconditionsView::Time(value) => Preconditions::Time(IntoOwned::into_owned(value)),
-            PreconditionsView::V2(value) => Preconditions::V2(IntoOwned::into_owned(value)),
+            PreconditionsView::Time(value) => Preconditions::Time(value.into_owned()),
+            PreconditionsView::V2(value) => Preconditions::V2(value.into_owned()),
         }
     }
 }
@@ -174,7 +174,7 @@ impl IntoOwned for PreconditionsView<'_> {
 impl From<&PreconditionsView<'_>> for Preconditions {
     #[must_use]
     fn from(v: &PreconditionsView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -182,7 +182,7 @@ impl From<&PreconditionsView<'_>> for Preconditions {
 impl From<PreconditionsView<'_>> for Preconditions {
     #[must_use]
     fn from(v: PreconditionsView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

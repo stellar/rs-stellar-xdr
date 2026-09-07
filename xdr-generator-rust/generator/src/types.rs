@@ -4,6 +4,7 @@ use xdr_parser::ast::{Size, Type};
 use xdr_parser::types::TypeInfo;
 
 use crate::naming::{const_name, type_name};
+use crate::output::CyclicBorrow;
 
 /// All resolved Rust type strings for an XDR type, computed together.
 pub struct ResolvedType {
@@ -14,6 +15,9 @@ pub struct ResolvedType {
     /// The Rust type used in the borrowing `View` variant of the containing
     /// type, e.g. `VecMView<'a, OperationView<'a>, 100>` for `VecM<Operation, 100>`.
     pub view_type_ref: String,
+    /// Whether the `View` form borrows to break a cycle, and so whether the
+    /// conversion to the owned form has to restore a `Box`.
+    pub cyclic: CyclicBorrow,
 }
 
 /// Resolve all Rust type information for an XDR type in one call.
@@ -36,6 +40,7 @@ pub(crate) fn resolve_type(
         serde_as_type: if custom_str { None } else { m.serde_as_type() },
         element_type: m.element_type(),
         view_type_ref: m.view_type_ref(view_required),
+        cyclic: m.cyclic_borrow(),
     }
 }
 
@@ -246,6 +251,24 @@ impl<'a> TypeMapping<'a> {
                     None => format!("VecMView<'a, {elem}>"),
                 }
             }
+        }
+    }
+
+    /// How the `View` form of this type breaks a cycle, if it does.
+    ///
+    /// Mirrors the cyclic branching of [`Self::view_type_ref`] and
+    /// [`Self::type_ref`]: those decide where a `&'a` and a `Box` appear, and
+    /// this reports it so the conversion between the two forms can restore the
+    /// `Box`. A cyclic array or `VecM` is already indirect, so neither form
+    /// wraps it and there is nothing to restore.
+    fn cyclic_borrow(&self) -> CyclicBorrow {
+        if !self.is_cyclic() {
+            return CyclicBorrow::NotCyclic;
+        }
+        match self.type_ {
+            Type::Optional(_) => CyclicBorrow::OptionalReference,
+            Type::Array { .. } | Type::VarArray { .. } => CyclicBorrow::NotCyclic,
+            _ => CyclicBorrow::Reference,
         }
     }
 

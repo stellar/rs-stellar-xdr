@@ -63,8 +63,8 @@ impl IntoOwned for InnerTransactionResultPairView<'_> {
     type Owned = InnerTransactionResultPair;
     fn into_owned(&self) -> InnerTransactionResultPair {
         InnerTransactionResultPair {
-            transaction_hash: IntoOwned::into_owned(&self.transaction_hash),
-            result: IntoOwned::into_owned(&self.result),
+            transaction_hash: self.transaction_hash.into_owned(),
+            result: self.result.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for InnerTransactionResultPairView<'_> {
 impl From<&InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
     #[must_use]
     fn from(v: &InnerTransactionResultPairView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
 impl From<InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
     #[must_use]
     fn from(v: InnerTransactionResultPairView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

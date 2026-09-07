@@ -83,12 +83,12 @@ impl IntoOwned for ScSpecEventV0View<'_> {
     type Owned = ScSpecEventV0;
     fn into_owned(&self) -> ScSpecEventV0 {
         ScSpecEventV0 {
-            doc: IntoOwned::into_owned(&self.doc),
-            lib: IntoOwned::into_owned(&self.lib),
-            name: IntoOwned::into_owned(&self.name),
-            prefix_topics: IntoOwned::into_owned(&self.prefix_topics),
-            params: IntoOwned::into_owned(&self.params),
-            data_format: IntoOwned::into_owned(&self.data_format),
+            doc: self.doc.into_owned(),
+            lib: self.lib.into_owned(),
+            name: self.name.into_owned(),
+            prefix_topics: self.prefix_topics.into_owned(),
+            params: self.params.into_owned(),
+            data_format: self.data_format.into_owned(),
         }
     }
 }
@@ -97,7 +97,7 @@ impl IntoOwned for ScSpecEventV0View<'_> {
 impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
     #[must_use]
     fn from(v: &ScSpecEventV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -105,7 +105,7 @@ impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
 impl From<ScSpecEventV0View<'_>> for ScSpecEventV0 {
     #[must_use]
     fn from(v: ScSpecEventV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

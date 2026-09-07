@@ -67,8 +67,8 @@ impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
     type Owned = TxSetComponentTxsMaybeDiscountedFee;
     fn into_owned(&self) -> TxSetComponentTxsMaybeDiscountedFee {
         TxSetComponentTxsMaybeDiscountedFee {
-            base_fee: IntoOwned::into_owned(&self.base_fee),
-            txs: IntoOwned::into_owned(&self.txs),
+            base_fee: self.base_fee.into_owned(),
+            txs: self.txs.into_owned(),
         }
     }
 }
@@ -77,7 +77,7 @@ impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
 impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
     fn from(v: &TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -85,7 +85,7 @@ impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMay
 impl From<TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
     fn from(v: TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

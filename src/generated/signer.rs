@@ -63,8 +63,8 @@ impl IntoOwned for SignerView<'_> {
     type Owned = Signer;
     fn into_owned(&self) -> Signer {
         Signer {
-            key: IntoOwned::into_owned(&self.key),
-            weight: IntoOwned::into_owned(&self.weight),
+            key: self.key.into_owned(),
+            weight: self.weight.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for SignerView<'_> {
 impl From<&SignerView<'_>> for Signer {
     #[must_use]
     fn from(v: &SignerView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&SignerView<'_>> for Signer {
 impl From<SignerView<'_>> for Signer {
     #[must_use]
     fn from(v: SignerView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

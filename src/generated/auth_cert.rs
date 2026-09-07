@@ -72,9 +72,9 @@ impl IntoOwned for AuthCertView<'_> {
     type Owned = AuthCert;
     fn into_owned(&self) -> AuthCert {
         AuthCert {
-            pubkey: IntoOwned::into_owned(&self.pubkey),
-            expiration: IntoOwned::into_owned(&self.expiration),
-            sig: IntoOwned::into_owned(&self.sig),
+            pubkey: self.pubkey.into_owned(),
+            expiration: self.expiration.into_owned(),
+            sig: self.sig.into_owned(),
         }
     }
 }
@@ -83,7 +83,7 @@ impl IntoOwned for AuthCertView<'_> {
 impl From<&AuthCertView<'_>> for AuthCert {
     #[must_use]
     fn from(v: &AuthCertView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -91,7 +91,7 @@ impl From<&AuthCertView<'_>> for AuthCert {
 impl From<AuthCertView<'_>> for AuthCert {
     #[must_use]
     fn from(v: AuthCertView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

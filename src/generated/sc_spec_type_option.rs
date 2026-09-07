@@ -58,7 +58,7 @@ impl IntoOwned for ScSpecTypeOptionView<'_> {
     type Owned = ScSpecTypeOption;
     fn into_owned(&self) -> ScSpecTypeOption {
         ScSpecTypeOption {
-            value_type: IntoOwned::into_owned(&self.value_type),
+            value_type: Box::new(self.value_type.into_owned()),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for ScSpecTypeOptionView<'_> {
 impl From<&ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
     #[must_use]
     fn from(v: &ScSpecTypeOptionView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
 impl From<ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
     #[must_use]
     fn from(v: ScSpecTypeOptionView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -150,7 +150,7 @@ impl IntoOwned for SurveyResponseBodyView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             SurveyResponseBodyView::SurveyTopologyResponseV2(value) => {
-                SurveyResponseBody::SurveyTopologyResponseV2(IntoOwned::into_owned(value))
+                SurveyResponseBody::SurveyTopologyResponseV2(value.into_owned())
             }
         }
     }
@@ -160,7 +160,7 @@ impl IntoOwned for SurveyResponseBodyView<'_> {
 impl From<&SurveyResponseBodyView<'_>> for SurveyResponseBody {
     #[must_use]
     fn from(v: &SurveyResponseBodyView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -168,7 +168,7 @@ impl From<&SurveyResponseBodyView<'_>> for SurveyResponseBody {
 impl From<SurveyResponseBodyView<'_>> for SurveyResponseBody {
     #[must_use]
     fn from(v: SurveyResponseBodyView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

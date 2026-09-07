@@ -98,11 +98,11 @@ impl IntoOwned for ClaimableBalanceEntryView<'_> {
     type Owned = ClaimableBalanceEntry;
     fn into_owned(&self) -> ClaimableBalanceEntry {
         ClaimableBalanceEntry {
-            balance_id: IntoOwned::into_owned(&self.balance_id),
-            claimants: IntoOwned::into_owned(&self.claimants),
-            asset: IntoOwned::into_owned(&self.asset),
-            amount: IntoOwned::into_owned(&self.amount),
-            ext: IntoOwned::into_owned(&self.ext),
+            balance_id: self.balance_id.into_owned(),
+            claimants: self.claimants.into_owned(),
+            asset: self.asset.into_owned(),
+            amount: self.amount.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -111,7 +111,7 @@ impl IntoOwned for ClaimableBalanceEntryView<'_> {
 impl From<&ClaimableBalanceEntryView<'_>> for ClaimableBalanceEntry {
     #[must_use]
     fn from(v: &ClaimableBalanceEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -119,7 +119,7 @@ impl From<&ClaimableBalanceEntryView<'_>> for ClaimableBalanceEntry {
 impl From<ClaimableBalanceEntryView<'_>> for ClaimableBalanceEntry {
     #[must_use]
     fn from(v: ClaimableBalanceEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

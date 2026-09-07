@@ -78,11 +78,11 @@ impl IntoOwned for ContractDataEntryView<'_> {
     type Owned = ContractDataEntry;
     fn into_owned(&self) -> ContractDataEntry {
         ContractDataEntry {
-            ext: IntoOwned::into_owned(&self.ext),
-            contract: IntoOwned::into_owned(&self.contract),
-            key: IntoOwned::into_owned(&self.key),
-            durability: IntoOwned::into_owned(&self.durability),
-            val: IntoOwned::into_owned(&self.val),
+            ext: self.ext.into_owned(),
+            contract: self.contract.into_owned(),
+            key: self.key.into_owned(),
+            durability: self.durability.into_owned(),
+            val: self.val.into_owned(),
         }
     }
 }
@@ -91,7 +91,7 @@ impl IntoOwned for ContractDataEntryView<'_> {
 impl From<&ContractDataEntryView<'_>> for ContractDataEntry {
     #[must_use]
     fn from(v: &ContractDataEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -99,7 +99,7 @@ impl From<&ContractDataEntryView<'_>> for ContractDataEntry {
 impl From<ContractDataEntryView<'_>> for ContractDataEntry {
     #[must_use]
     fn from(v: ContractDataEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

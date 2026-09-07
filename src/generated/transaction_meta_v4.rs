@@ -93,13 +93,13 @@ impl IntoOwned for TransactionMetaV4View<'_> {
     type Owned = TransactionMetaV4;
     fn into_owned(&self) -> TransactionMetaV4 {
         TransactionMetaV4 {
-            ext: IntoOwned::into_owned(&self.ext),
-            tx_changes_before: IntoOwned::into_owned(&self.tx_changes_before),
-            operations: IntoOwned::into_owned(&self.operations),
-            tx_changes_after: IntoOwned::into_owned(&self.tx_changes_after),
-            soroban_meta: IntoOwned::into_owned(&self.soroban_meta),
-            events: IntoOwned::into_owned(&self.events),
-            diagnostic_events: IntoOwned::into_owned(&self.diagnostic_events),
+            ext: self.ext.into_owned(),
+            tx_changes_before: self.tx_changes_before.into_owned(),
+            operations: self.operations.into_owned(),
+            tx_changes_after: self.tx_changes_after.into_owned(),
+            soroban_meta: self.soroban_meta.into_owned(),
+            events: self.events.into_owned(),
+            diagnostic_events: self.diagnostic_events.into_owned(),
         }
     }
 }
@@ -108,7 +108,7 @@ impl IntoOwned for TransactionMetaV4View<'_> {
 impl From<&TransactionMetaV4View<'_>> for TransactionMetaV4 {
     #[must_use]
     fn from(v: &TransactionMetaV4View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -116,7 +116,7 @@ impl From<&TransactionMetaV4View<'_>> for TransactionMetaV4 {
 impl From<TransactionMetaV4View<'_>> for TransactionMetaV4 {
     #[must_use]
     fn from(v: TransactionMetaV4View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

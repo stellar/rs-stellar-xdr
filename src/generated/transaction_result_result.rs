@@ -330,16 +330,16 @@ impl IntoOwned for TransactionResultResultView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionResultResultView::TxFeeBumpInnerSuccess(value) => {
-                TransactionResultResult::TxFeeBumpInnerSuccess(IntoOwned::into_owned(value))
+                TransactionResultResult::TxFeeBumpInnerSuccess(value.into_owned())
             }
             TransactionResultResultView::TxFeeBumpInnerFailed(value) => {
-                TransactionResultResult::TxFeeBumpInnerFailed(IntoOwned::into_owned(value))
+                TransactionResultResult::TxFeeBumpInnerFailed(value.into_owned())
             }
             TransactionResultResultView::TxSuccess(value) => {
-                TransactionResultResult::TxSuccess(IntoOwned::into_owned(value))
+                TransactionResultResult::TxSuccess(value.into_owned())
             }
             TransactionResultResultView::TxFailed(value) => {
-                TransactionResultResult::TxFailed(IntoOwned::into_owned(value))
+                TransactionResultResult::TxFailed(value.into_owned())
             }
             TransactionResultResultView::TxTooEarly => TransactionResultResult::TxTooEarly,
             TransactionResultResultView::TxTooLate => TransactionResultResult::TxTooLate,
@@ -381,7 +381,7 @@ impl IntoOwned for TransactionResultResultView<'_> {
 impl From<&TransactionResultResultView<'_>> for TransactionResultResult {
     #[must_use]
     fn from(v: &TransactionResultResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -389,7 +389,7 @@ impl From<&TransactionResultResultView<'_>> for TransactionResultResult {
 impl From<TransactionResultResultView<'_>> for TransactionResultResult {
     #[must_use]
     fn from(v: TransactionResultResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

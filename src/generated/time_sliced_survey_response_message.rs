@@ -63,8 +63,8 @@ impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
     type Owned = TimeSlicedSurveyResponseMessage;
     fn into_owned(&self) -> TimeSlicedSurveyResponseMessage {
         TimeSlicedSurveyResponseMessage {
-            response: IntoOwned::into_owned(&self.response),
-            nonce: IntoOwned::into_owned(&self.nonce),
+            response: self.response.into_owned(),
+            nonce: self.nonce.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
 impl From<&TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
     fn from(v: &TimeSlicedSurveyResponseMessageView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponse
 impl From<TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
     fn from(v: TimeSlicedSurveyResponseMessageView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

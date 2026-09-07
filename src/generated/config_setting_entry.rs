@@ -398,67 +398,67 @@ impl IntoOwned for ConfigSettingEntryView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             ConfigSettingEntryView::ContractMaxSizeBytes(value) => {
-                ConfigSettingEntry::ContractMaxSizeBytes(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractMaxSizeBytes(value.into_owned())
             }
             ConfigSettingEntryView::ContractComputeV0(value) => {
-                ConfigSettingEntry::ContractComputeV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractComputeV0(value.into_owned())
             }
             ConfigSettingEntryView::ContractLedgerCostV0(value) => {
-                ConfigSettingEntry::ContractLedgerCostV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractLedgerCostV0(value.into_owned())
             }
             ConfigSettingEntryView::ContractHistoricalDataV0(value) => {
-                ConfigSettingEntry::ContractHistoricalDataV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractHistoricalDataV0(value.into_owned())
             }
             ConfigSettingEntryView::ContractEventsV0(value) => {
-                ConfigSettingEntry::ContractEventsV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractEventsV0(value.into_owned())
             }
             ConfigSettingEntryView::ContractBandwidthV0(value) => {
-                ConfigSettingEntry::ContractBandwidthV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractBandwidthV0(value.into_owned())
             }
             ConfigSettingEntryView::ContractCostParamsCpuInstructions(value) => {
-                ConfigSettingEntry::ContractCostParamsCpuInstructions(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractCostParamsCpuInstructions(value.into_owned())
             }
             ConfigSettingEntryView::ContractCostParamsMemoryBytes(value) => {
-                ConfigSettingEntry::ContractCostParamsMemoryBytes(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractCostParamsMemoryBytes(value.into_owned())
             }
             ConfigSettingEntryView::ContractDataKeySizeBytes(value) => {
-                ConfigSettingEntry::ContractDataKeySizeBytes(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractDataKeySizeBytes(value.into_owned())
             }
             ConfigSettingEntryView::ContractDataEntrySizeBytes(value) => {
-                ConfigSettingEntry::ContractDataEntrySizeBytes(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractDataEntrySizeBytes(value.into_owned())
             }
             ConfigSettingEntryView::StateArchival(value) => {
-                ConfigSettingEntry::StateArchival(IntoOwned::into_owned(value))
+                ConfigSettingEntry::StateArchival(value.into_owned())
             }
             ConfigSettingEntryView::ContractExecutionLanes(value) => {
-                ConfigSettingEntry::ContractExecutionLanes(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractExecutionLanes(value.into_owned())
             }
             ConfigSettingEntryView::LiveSorobanStateSizeWindow(value) => {
-                ConfigSettingEntry::LiveSorobanStateSizeWindow(IntoOwned::into_owned(value))
+                ConfigSettingEntry::LiveSorobanStateSizeWindow(value.into_owned())
             }
             ConfigSettingEntryView::EvictionIterator(value) => {
-                ConfigSettingEntry::EvictionIterator(IntoOwned::into_owned(value))
+                ConfigSettingEntry::EvictionIterator(value.into_owned())
             }
             ConfigSettingEntryView::ContractParallelComputeV0(value) => {
-                ConfigSettingEntry::ContractParallelComputeV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractParallelComputeV0(value.into_owned())
             }
             ConfigSettingEntryView::ContractLedgerCostExtV0(value) => {
-                ConfigSettingEntry::ContractLedgerCostExtV0(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ContractLedgerCostExtV0(value.into_owned())
             }
             ConfigSettingEntryView::ScpTiming(value) => {
-                ConfigSettingEntry::ScpTiming(IntoOwned::into_owned(value))
+                ConfigSettingEntry::ScpTiming(value.into_owned())
             }
             ConfigSettingEntryView::FrozenLedgerKeys(value) => {
-                ConfigSettingEntry::FrozenLedgerKeys(IntoOwned::into_owned(value))
+                ConfigSettingEntry::FrozenLedgerKeys(value.into_owned())
             }
             ConfigSettingEntryView::FrozenLedgerKeysDelta(value) => {
-                ConfigSettingEntry::FrozenLedgerKeysDelta(IntoOwned::into_owned(value))
+                ConfigSettingEntry::FrozenLedgerKeysDelta(value.into_owned())
             }
             ConfigSettingEntryView::FreezeBypassTxs(value) => {
-                ConfigSettingEntry::FreezeBypassTxs(IntoOwned::into_owned(value))
+                ConfigSettingEntry::FreezeBypassTxs(value.into_owned())
             }
             ConfigSettingEntryView::FreezeBypassTxsDelta(value) => {
-                ConfigSettingEntry::FreezeBypassTxsDelta(IntoOwned::into_owned(value))
+                ConfigSettingEntry::FreezeBypassTxsDelta(value.into_owned())
             }
         }
     }
@@ -468,7 +468,7 @@ impl IntoOwned for ConfigSettingEntryView<'_> {
 impl From<&ConfigSettingEntryView<'_>> for ConfigSettingEntry {
     #[must_use]
     fn from(v: &ConfigSettingEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -476,7 +476,7 @@ impl From<&ConfigSettingEntryView<'_>> for ConfigSettingEntry {
 impl From<ConfigSettingEntryView<'_>> for ConfigSettingEntry {
     #[must_use]
     fn from(v: ConfigSettingEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

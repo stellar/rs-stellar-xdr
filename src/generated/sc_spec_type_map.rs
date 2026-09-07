@@ -63,8 +63,8 @@ impl IntoOwned for ScSpecTypeMapView<'_> {
     type Owned = ScSpecTypeMap;
     fn into_owned(&self) -> ScSpecTypeMap {
         ScSpecTypeMap {
-            key_type: IntoOwned::into_owned(&self.key_type),
-            value_type: IntoOwned::into_owned(&self.value_type),
+            key_type: Box::new(self.key_type.into_owned()),
+            value_type: Box::new(self.value_type.into_owned()),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScSpecTypeMapView<'_> {
 impl From<&ScSpecTypeMapView<'_>> for ScSpecTypeMap {
     #[must_use]
     fn from(v: &ScSpecTypeMapView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScSpecTypeMapView<'_>> for ScSpecTypeMap {
 impl From<ScSpecTypeMapView<'_>> for ScSpecTypeMap {
     #[must_use]
     fn from(v: ScSpecTypeMapView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

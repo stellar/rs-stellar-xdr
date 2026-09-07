@@ -68,9 +68,9 @@ impl IntoOwned for LedgerKeyContractDataView<'_> {
     type Owned = LedgerKeyContractData;
     fn into_owned(&self) -> LedgerKeyContractData {
         LedgerKeyContractData {
-            contract: IntoOwned::into_owned(&self.contract),
-            key: IntoOwned::into_owned(&self.key),
-            durability: IntoOwned::into_owned(&self.durability),
+            contract: self.contract.into_owned(),
+            key: self.key.into_owned(),
+            durability: self.durability.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for LedgerKeyContractDataView<'_> {
 impl From<&LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
     #[must_use]
     fn from(v: &LedgerKeyContractDataView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
 impl From<LedgerKeyContractDataView<'_>> for LedgerKeyContractData {
     #[must_use]
     fn from(v: LedgerKeyContractDataView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

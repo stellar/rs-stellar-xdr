@@ -117,7 +117,7 @@ pub struct LedgerEntryChangesView<'a>(pub VecMView<'a, LedgerEntryChangeView<'a>
 impl IntoOwned for LedgerEntryChangesView<'_> {
     type Owned = LedgerEntryChanges;
     fn into_owned(&self) -> LedgerEntryChanges {
-        LedgerEntryChanges(IntoOwned::into_owned(&self.0))
+        LedgerEntryChanges(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for LedgerEntryChangesView<'_> {
 impl From<&LedgerEntryChangesView<'_>> for LedgerEntryChanges {
     #[must_use]
     fn from(v: &LedgerEntryChangesView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&LedgerEntryChangesView<'_>> for LedgerEntryChanges {
 impl From<LedgerEntryChangesView<'_>> for LedgerEntryChanges {
     #[must_use]
     fn from(v: LedgerEntryChangesView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

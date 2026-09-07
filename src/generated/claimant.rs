@@ -147,9 +147,7 @@ impl IntoOwned for ClaimantView<'_> {
     fn into_owned(&self) -> Claimant {
         #[allow(clippy::match_same_arms)]
         match self {
-            ClaimantView::ClaimantTypeV0(value) => {
-                Claimant::ClaimantTypeV0(IntoOwned::into_owned(value))
-            }
+            ClaimantView::ClaimantTypeV0(value) => Claimant::ClaimantTypeV0(value.into_owned()),
         }
     }
 }
@@ -158,7 +156,7 @@ impl IntoOwned for ClaimantView<'_> {
 impl From<&ClaimantView<'_>> for Claimant {
     #[must_use]
     fn from(v: &ClaimantView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -166,7 +164,7 @@ impl From<&ClaimantView<'_>> for Claimant {
 impl From<ClaimantView<'_>> for Claimant {
     #[must_use]
     fn from(v: ClaimantView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

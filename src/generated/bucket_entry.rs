@@ -172,18 +172,10 @@ impl IntoOwned for BucketEntryView<'_> {
     fn into_owned(&self) -> BucketEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            BucketEntryView::Liveentry(value) => {
-                BucketEntry::Liveentry(IntoOwned::into_owned(value))
-            }
-            BucketEntryView::Initentry(value) => {
-                BucketEntry::Initentry(IntoOwned::into_owned(value))
-            }
-            BucketEntryView::Deadentry(value) => {
-                BucketEntry::Deadentry(IntoOwned::into_owned(value))
-            }
-            BucketEntryView::Metaentry(value) => {
-                BucketEntry::Metaentry(IntoOwned::into_owned(value))
-            }
+            BucketEntryView::Liveentry(value) => BucketEntry::Liveentry(value.into_owned()),
+            BucketEntryView::Initentry(value) => BucketEntry::Initentry(value.into_owned()),
+            BucketEntryView::Deadentry(value) => BucketEntry::Deadentry(value.into_owned()),
+            BucketEntryView::Metaentry(value) => BucketEntry::Metaentry(value.into_owned()),
         }
     }
 }
@@ -192,7 +184,7 @@ impl IntoOwned for BucketEntryView<'_> {
 impl From<&BucketEntryView<'_>> for BucketEntry {
     #[must_use]
     fn from(v: &BucketEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -200,7 +192,7 @@ impl From<&BucketEntryView<'_>> for BucketEntry {
 impl From<BucketEntryView<'_>> for BucketEntry {
     #[must_use]
     fn from(v: BucketEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

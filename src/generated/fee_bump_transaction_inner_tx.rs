@@ -144,7 +144,7 @@ impl IntoOwned for FeeBumpTransactionInnerTxView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             FeeBumpTransactionInnerTxView::Tx(value) => {
-                FeeBumpTransactionInnerTx::Tx(IntoOwned::into_owned(value))
+                FeeBumpTransactionInnerTx::Tx(value.into_owned())
             }
         }
     }
@@ -154,7 +154,7 @@ impl IntoOwned for FeeBumpTransactionInnerTxView<'_> {
 impl From<&FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
     fn from(v: &FeeBumpTransactionInnerTxView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -162,7 +162,7 @@ impl From<&FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
 impl From<FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
     fn from(v: FeeBumpTransactionInnerTxView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

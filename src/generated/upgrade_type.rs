@@ -117,7 +117,7 @@ pub struct UpgradeTypeView<'a>(pub BytesMView<'a, 128>);
 impl IntoOwned for UpgradeTypeView<'_> {
     type Owned = UpgradeType;
     fn into_owned(&self) -> UpgradeType {
-        UpgradeType(IntoOwned::into_owned(&self.0))
+        UpgradeType(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for UpgradeTypeView<'_> {
 impl From<&UpgradeTypeView<'_>> for UpgradeType {
     #[must_use]
     fn from(v: &UpgradeTypeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&UpgradeTypeView<'_>> for UpgradeType {
 impl From<UpgradeTypeView<'_>> for UpgradeType {
     #[must_use]
     fn from(v: UpgradeTypeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

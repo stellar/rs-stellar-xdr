@@ -58,7 +58,7 @@ impl IntoOwned for TransactionResultSetView<'_> {
     type Owned = TransactionResultSet;
     fn into_owned(&self) -> TransactionResultSet {
         TransactionResultSet {
-            results: IntoOwned::into_owned(&self.results),
+            results: self.results.into_owned(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for TransactionResultSetView<'_> {
 impl From<&TransactionResultSetView<'_>> for TransactionResultSet {
     #[must_use]
     fn from(v: &TransactionResultSetView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&TransactionResultSetView<'_>> for TransactionResultSet {
 impl From<TransactionResultSetView<'_>> for TransactionResultSet {
     #[must_use]
     fn from(v: TransactionResultSetView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

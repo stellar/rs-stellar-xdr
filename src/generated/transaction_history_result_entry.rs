@@ -75,9 +75,9 @@ impl IntoOwned for TransactionHistoryResultEntryView<'_> {
     type Owned = TransactionHistoryResultEntry;
     fn into_owned(&self) -> TransactionHistoryResultEntry {
         TransactionHistoryResultEntry {
-            ledger_seq: IntoOwned::into_owned(&self.ledger_seq),
-            tx_result_set: IntoOwned::into_owned(&self.tx_result_set),
-            ext: IntoOwned::into_owned(&self.ext),
+            ledger_seq: self.ledger_seq.into_owned(),
+            tx_result_set: self.tx_result_set.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -86,7 +86,7 @@ impl IntoOwned for TransactionHistoryResultEntryView<'_> {
 impl From<&TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEntry {
     #[must_use]
     fn from(v: &TransactionHistoryResultEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -94,7 +94,7 @@ impl From<&TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEn
 impl From<TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEntry {
     #[must_use]
     fn from(v: TransactionHistoryResultEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

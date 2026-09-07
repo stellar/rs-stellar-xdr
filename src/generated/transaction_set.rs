@@ -63,8 +63,8 @@ impl IntoOwned for TransactionSetView<'_> {
     type Owned = TransactionSet;
     fn into_owned(&self) -> TransactionSet {
         TransactionSet {
-            previous_ledger_hash: IntoOwned::into_owned(&self.previous_ledger_hash),
-            txs: IntoOwned::into_owned(&self.txs),
+            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
+            txs: self.txs.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TransactionSetView<'_> {
 impl From<&TransactionSetView<'_>> for TransactionSet {
     #[must_use]
     fn from(v: &TransactionSetView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TransactionSetView<'_>> for TransactionSet {
 impl From<TransactionSetView<'_>> for TransactionSet {
     #[must_use]
     fn from(v: TransactionSetView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

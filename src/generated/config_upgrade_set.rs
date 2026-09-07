@@ -57,7 +57,7 @@ impl IntoOwned for ConfigUpgradeSetView<'_> {
     type Owned = ConfigUpgradeSet;
     fn into_owned(&self) -> ConfigUpgradeSet {
         ConfigUpgradeSet {
-            updated_entry: IntoOwned::into_owned(&self.updated_entry),
+            updated_entry: self.updated_entry.into_owned(),
         }
     }
 }
@@ -66,7 +66,7 @@ impl IntoOwned for ConfigUpgradeSetView<'_> {
 impl From<&ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
     #[must_use]
     fn from(v: &ConfigUpgradeSetView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -74,7 +74,7 @@ impl From<&ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
 impl From<ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
     #[must_use]
     fn from(v: ConfigUpgradeSetView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

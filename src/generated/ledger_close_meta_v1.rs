@@ -119,17 +119,17 @@ impl IntoOwned for LedgerCloseMetaV1View<'_> {
     type Owned = LedgerCloseMetaV1;
     fn into_owned(&self) -> LedgerCloseMetaV1 {
         LedgerCloseMetaV1 {
-            ext: IntoOwned::into_owned(&self.ext),
-            ledger_header: IntoOwned::into_owned(&self.ledger_header),
-            tx_set: IntoOwned::into_owned(&self.tx_set),
-            tx_processing: IntoOwned::into_owned(&self.tx_processing),
-            upgrades_processing: IntoOwned::into_owned(&self.upgrades_processing),
-            scp_info: IntoOwned::into_owned(&self.scp_info),
-            total_byte_size_of_live_soroban_state: IntoOwned::into_owned(
-                &self.total_byte_size_of_live_soroban_state,
-            ),
-            evicted_keys: IntoOwned::into_owned(&self.evicted_keys),
-            unused: IntoOwned::into_owned(&self.unused),
+            ext: self.ext.into_owned(),
+            ledger_header: self.ledger_header.into_owned(),
+            tx_set: self.tx_set.into_owned(),
+            tx_processing: self.tx_processing.into_owned(),
+            upgrades_processing: self.upgrades_processing.into_owned(),
+            scp_info: self.scp_info.into_owned(),
+            total_byte_size_of_live_soroban_state: self
+                .total_byte_size_of_live_soroban_state
+                .into_owned(),
+            evicted_keys: self.evicted_keys.into_owned(),
+            unused: self.unused.into_owned(),
         }
     }
 }
@@ -138,7 +138,7 @@ impl IntoOwned for LedgerCloseMetaV1View<'_> {
 impl From<&LedgerCloseMetaV1View<'_>> for LedgerCloseMetaV1 {
     #[must_use]
     fn from(v: &LedgerCloseMetaV1View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -146,7 +146,7 @@ impl From<&LedgerCloseMetaV1View<'_>> for LedgerCloseMetaV1 {
 impl From<LedgerCloseMetaV1View<'_>> for LedgerCloseMetaV1 {
     #[must_use]
     fn from(v: LedgerCloseMetaV1View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -58,7 +58,7 @@ impl IntoOwned for OperationMetaView<'_> {
     type Owned = OperationMeta;
     fn into_owned(&self) -> OperationMeta {
         OperationMeta {
-            changes: IntoOwned::into_owned(&self.changes),
+            changes: self.changes.into_owned(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for OperationMetaView<'_> {
 impl From<&OperationMetaView<'_>> for OperationMeta {
     #[must_use]
     fn from(v: &OperationMetaView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&OperationMetaView<'_>> for OperationMeta {
 impl From<OperationMetaView<'_>> for OperationMeta {
     #[must_use]
     fn from(v: OperationMetaView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

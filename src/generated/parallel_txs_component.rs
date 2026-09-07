@@ -70,8 +70,8 @@ impl IntoOwned for ParallelTxsComponentView<'_> {
     type Owned = ParallelTxsComponent;
     fn into_owned(&self) -> ParallelTxsComponent {
         ParallelTxsComponent {
-            base_fee: IntoOwned::into_owned(&self.base_fee),
-            execution_stages: IntoOwned::into_owned(&self.execution_stages),
+            base_fee: self.base_fee.into_owned(),
+            execution_stages: self.execution_stages.into_owned(),
         }
     }
 }
@@ -80,7 +80,7 @@ impl IntoOwned for ParallelTxsComponentView<'_> {
 impl From<&ParallelTxsComponentView<'_>> for ParallelTxsComponent {
     #[must_use]
     fn from(v: &ParallelTxsComponentView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -88,7 +88,7 @@ impl From<&ParallelTxsComponentView<'_>> for ParallelTxsComponent {
 impl From<ParallelTxsComponentView<'_>> for ParallelTxsComponent {
     #[must_use]
     fn from(v: ParallelTxsComponentView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

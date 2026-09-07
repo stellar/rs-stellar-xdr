@@ -152,7 +152,7 @@ impl IntoOwned for TransactionExtView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             TransactionExtView::V0 => TransactionExt::V0,
-            TransactionExtView::V1(value) => TransactionExt::V1(IntoOwned::into_owned(value)),
+            TransactionExtView::V1(value) => TransactionExt::V1(value.into_owned()),
         }
     }
 }
@@ -161,7 +161,7 @@ impl IntoOwned for TransactionExtView<'_> {
 impl From<&TransactionExtView<'_>> for TransactionExt {
     #[must_use]
     fn from(v: &TransactionExtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -169,7 +169,7 @@ impl From<&TransactionExtView<'_>> for TransactionExt {
 impl From<TransactionExtView<'_>> for TransactionExt {
     #[must_use]
     fn from(v: TransactionExtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

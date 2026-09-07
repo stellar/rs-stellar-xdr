@@ -63,8 +63,8 @@ impl IntoOwned for SorobanAddressCredentialsWithDelegatesView<'_> {
     type Owned = SorobanAddressCredentialsWithDelegates;
     fn into_owned(&self) -> SorobanAddressCredentialsWithDelegates {
         SorobanAddressCredentialsWithDelegates {
-            address_credentials: IntoOwned::into_owned(&self.address_credentials),
-            delegates: IntoOwned::into_owned(&self.delegates),
+            address_credentials: self.address_credentials.into_owned(),
+            delegates: self.delegates.into_owned(),
         }
     }
 }
@@ -75,7 +75,7 @@ impl From<&SorobanAddressCredentialsWithDelegatesView<'_>>
 {
     #[must_use]
     fn from(v: &SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -85,7 +85,7 @@ impl From<SorobanAddressCredentialsWithDelegatesView<'_>>
 {
     #[must_use]
     fn from(v: SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

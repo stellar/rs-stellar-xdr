@@ -83,12 +83,12 @@ impl IntoOwned for ScpStatementPrepareView<'_> {
     type Owned = ScpStatementPrepare;
     fn into_owned(&self) -> ScpStatementPrepare {
         ScpStatementPrepare {
-            quorum_set_hash: IntoOwned::into_owned(&self.quorum_set_hash),
-            ballot: IntoOwned::into_owned(&self.ballot),
-            prepared: IntoOwned::into_owned(&self.prepared),
-            prepared_prime: IntoOwned::into_owned(&self.prepared_prime),
-            n_c: IntoOwned::into_owned(&self.n_c),
-            n_h: IntoOwned::into_owned(&self.n_h),
+            quorum_set_hash: self.quorum_set_hash.into_owned(),
+            ballot: self.ballot.into_owned(),
+            prepared: self.prepared.into_owned(),
+            prepared_prime: self.prepared_prime.into_owned(),
+            n_c: self.n_c.into_owned(),
+            n_h: self.n_h.into_owned(),
         }
     }
 }
@@ -97,7 +97,7 @@ impl IntoOwned for ScpStatementPrepareView<'_> {
 impl From<&ScpStatementPrepareView<'_>> for ScpStatementPrepare {
     #[must_use]
     fn from(v: &ScpStatementPrepareView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -105,7 +105,7 @@ impl From<&ScpStatementPrepareView<'_>> for ScpStatementPrepare {
 impl From<ScpStatementPrepareView<'_>> for ScpStatementPrepare {
     #[must_use]
     fn from(v: ScpStatementPrepareView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

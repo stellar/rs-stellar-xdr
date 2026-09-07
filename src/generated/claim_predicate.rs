@@ -215,14 +215,16 @@ impl IntoOwned for ClaimPredicateView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             ClaimPredicateView::Unconditional => ClaimPredicate::Unconditional,
-            ClaimPredicateView::And(value) => ClaimPredicate::And(IntoOwned::into_owned(value)),
-            ClaimPredicateView::Or(value) => ClaimPredicate::Or(IntoOwned::into_owned(value)),
-            ClaimPredicateView::Not(value) => ClaimPredicate::Not(IntoOwned::into_owned(value)),
+            ClaimPredicateView::And(value) => ClaimPredicate::And(value.into_owned()),
+            ClaimPredicateView::Or(value) => ClaimPredicate::Or(value.into_owned()),
+            ClaimPredicateView::Not(value) => {
+                ClaimPredicate::Not(value.as_ref().map(|v| Box::new(v.into_owned())))
+            }
             ClaimPredicateView::BeforeAbsoluteTime(value) => {
-                ClaimPredicate::BeforeAbsoluteTime(IntoOwned::into_owned(value))
+                ClaimPredicate::BeforeAbsoluteTime(value.into_owned())
             }
             ClaimPredicateView::BeforeRelativeTime(value) => {
-                ClaimPredicate::BeforeRelativeTime(IntoOwned::into_owned(value))
+                ClaimPredicate::BeforeRelativeTime(value.into_owned())
             }
         }
     }
@@ -232,7 +234,7 @@ impl IntoOwned for ClaimPredicateView<'_> {
 impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
     fn from(v: &ClaimPredicateView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -240,7 +242,7 @@ impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
 impl From<ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
     fn from(v: ClaimPredicateView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

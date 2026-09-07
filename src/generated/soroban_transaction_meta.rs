@@ -79,10 +79,10 @@ impl IntoOwned for SorobanTransactionMetaView<'_> {
     type Owned = SorobanTransactionMeta;
     fn into_owned(&self) -> SorobanTransactionMeta {
         SorobanTransactionMeta {
-            ext: IntoOwned::into_owned(&self.ext),
-            events: IntoOwned::into_owned(&self.events),
-            return_value: IntoOwned::into_owned(&self.return_value),
-            diagnostic_events: IntoOwned::into_owned(&self.diagnostic_events),
+            ext: self.ext.into_owned(),
+            events: self.events.into_owned(),
+            return_value: self.return_value.into_owned(),
+            diagnostic_events: self.diagnostic_events.into_owned(),
         }
     }
 }
@@ -91,7 +91,7 @@ impl IntoOwned for SorobanTransactionMetaView<'_> {
 impl From<&SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
     #[must_use]
     fn from(v: &SorobanTransactionMetaView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -99,7 +99,7 @@ impl From<&SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
 impl From<SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
     #[must_use]
     fn from(v: SorobanTransactionMetaView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -172,11 +172,9 @@ impl IntoOwned for StellarValueExtView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             StellarValueExtView::Basic => StellarValueExt::Basic,
-            StellarValueExtView::Signed(value) => {
-                StellarValueExt::Signed(IntoOwned::into_owned(value))
-            }
+            StellarValueExtView::Signed(value) => StellarValueExt::Signed(value.into_owned()),
             StellarValueExtView::EmptyTxSet(value) => {
-                StellarValueExt::EmptyTxSet(IntoOwned::into_owned(value))
+                StellarValueExt::EmptyTxSet(value.into_owned())
             }
         }
     }
@@ -186,7 +184,7 @@ impl IntoOwned for StellarValueExtView<'_> {
 impl From<&StellarValueExtView<'_>> for StellarValueExt {
     #[must_use]
     fn from(v: &StellarValueExtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -194,7 +192,7 @@ impl From<&StellarValueExtView<'_>> for StellarValueExt {
 impl From<StellarValueExtView<'_>> for StellarValueExt {
     #[must_use]
     fn from(v: StellarValueExtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

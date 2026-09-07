@@ -161,21 +161,21 @@ impl IntoOwned for LedgerHeaderView<'_> {
     type Owned = LedgerHeader;
     fn into_owned(&self) -> LedgerHeader {
         LedgerHeader {
-            ledger_version: IntoOwned::into_owned(&self.ledger_version),
-            previous_ledger_hash: IntoOwned::into_owned(&self.previous_ledger_hash),
-            scp_value: IntoOwned::into_owned(&self.scp_value),
-            tx_set_result_hash: IntoOwned::into_owned(&self.tx_set_result_hash),
-            bucket_list_hash: IntoOwned::into_owned(&self.bucket_list_hash),
-            ledger_seq: IntoOwned::into_owned(&self.ledger_seq),
-            total_coins: IntoOwned::into_owned(&self.total_coins),
-            fee_pool: IntoOwned::into_owned(&self.fee_pool),
-            inflation_seq: IntoOwned::into_owned(&self.inflation_seq),
-            id_pool: IntoOwned::into_owned(&self.id_pool),
-            base_fee: IntoOwned::into_owned(&self.base_fee),
-            base_reserve: IntoOwned::into_owned(&self.base_reserve),
-            max_tx_set_size: IntoOwned::into_owned(&self.max_tx_set_size),
-            skip_list: IntoOwned::into_owned(&self.skip_list),
-            ext: IntoOwned::into_owned(&self.ext),
+            ledger_version: self.ledger_version.into_owned(),
+            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
+            scp_value: self.scp_value.into_owned(),
+            tx_set_result_hash: self.tx_set_result_hash.into_owned(),
+            bucket_list_hash: self.bucket_list_hash.into_owned(),
+            ledger_seq: self.ledger_seq.into_owned(),
+            total_coins: self.total_coins.into_owned(),
+            fee_pool: self.fee_pool.into_owned(),
+            inflation_seq: self.inflation_seq.into_owned(),
+            id_pool: self.id_pool.into_owned(),
+            base_fee: self.base_fee.into_owned(),
+            base_reserve: self.base_reserve.into_owned(),
+            max_tx_set_size: self.max_tx_set_size.into_owned(),
+            skip_list: self.skip_list.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -184,7 +184,7 @@ impl IntoOwned for LedgerHeaderView<'_> {
 impl From<&LedgerHeaderView<'_>> for LedgerHeader {
     #[must_use]
     fn from(v: &LedgerHeaderView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -192,7 +192,7 @@ impl From<&LedgerHeaderView<'_>> for LedgerHeader {
 impl From<LedgerHeaderView<'_>> for LedgerHeader {
     #[must_use]
     fn from(v: LedgerHeaderView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

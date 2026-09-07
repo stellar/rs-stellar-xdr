@@ -259,9 +259,7 @@ impl IntoOwned for OperationResultView<'_> {
     fn into_owned(&self) -> OperationResult {
         #[allow(clippy::match_same_arms)]
         match self {
-            OperationResultView::OpInner(value) => {
-                OperationResult::OpInner(IntoOwned::into_owned(value))
-            }
+            OperationResultView::OpInner(value) => OperationResult::OpInner(value.into_owned()),
             OperationResultView::OpBadAuth => OperationResult::OpBadAuth,
             OperationResultView::OpNoAccount => OperationResult::OpNoAccount,
             OperationResultView::OpNotSupported => OperationResult::OpNotSupported,
@@ -276,7 +274,7 @@ impl IntoOwned for OperationResultView<'_> {
 impl From<&OperationResultView<'_>> for OperationResult {
     #[must_use]
     fn from(v: &OperationResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -284,7 +282,7 @@ impl From<&OperationResultView<'_>> for OperationResult {
 impl From<OperationResultView<'_>> for OperationResult {
     #[must_use]
     fn from(v: OperationResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

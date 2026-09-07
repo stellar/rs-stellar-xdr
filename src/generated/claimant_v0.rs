@@ -63,8 +63,8 @@ impl IntoOwned for ClaimantV0View<'_> {
     type Owned = ClaimantV0;
     fn into_owned(&self) -> ClaimantV0 {
         ClaimantV0 {
-            destination: IntoOwned::into_owned(&self.destination),
-            predicate: IntoOwned::into_owned(&self.predicate),
+            destination: self.destination.into_owned(),
+            predicate: self.predicate.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ClaimantV0View<'_> {
 impl From<&ClaimantV0View<'_>> for ClaimantV0 {
     #[must_use]
     fn from(v: &ClaimantV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ClaimantV0View<'_>> for ClaimantV0 {
 impl From<ClaimantV0View<'_>> for ClaimantV0 {
     #[must_use]
     fn from(v: ClaimantV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

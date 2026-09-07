@@ -63,8 +63,8 @@ impl IntoOwned for SorobanAuthorizationEntryView<'_> {
     type Owned = SorobanAuthorizationEntry;
     fn into_owned(&self) -> SorobanAuthorizationEntry {
         SorobanAuthorizationEntry {
-            credentials: IntoOwned::into_owned(&self.credentials),
-            root_invocation: IntoOwned::into_owned(&self.root_invocation),
+            credentials: self.credentials.into_owned(),
+            root_invocation: self.root_invocation.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for SorobanAuthorizationEntryView<'_> {
 impl From<&SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
     #[must_use]
     fn from(v: &SorobanAuthorizationEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
 impl From<SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
     #[must_use]
     fn from(v: SorobanAuthorizationEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

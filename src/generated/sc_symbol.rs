@@ -117,7 +117,7 @@ pub struct ScSymbolView<'a>(pub StringMView<'a, SCSYMBOL_LIMIT>);
 impl IntoOwned for ScSymbolView<'_> {
     type Owned = ScSymbol;
     fn into_owned(&self) -> ScSymbol {
-        ScSymbol(IntoOwned::into_owned(&self.0))
+        ScSymbol(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for ScSymbolView<'_> {
 impl From<&ScSymbolView<'_>> for ScSymbol {
     #[must_use]
     fn from(v: &ScSymbolView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&ScSymbolView<'_>> for ScSymbol {
 impl From<ScSymbolView<'_>> for ScSymbol {
     #[must_use]
     fn from(v: ScSymbolView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

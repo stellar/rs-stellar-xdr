@@ -57,6 +57,23 @@ pub struct StructOutput {
     pub cfg: Option<String>,
 }
 
+/// How a `View` field borrows to break a type cycle, and so how its conversion
+/// restores the `Box` the owned field holds.
+///
+/// A cycle has to be broken by indirection somewhere: the owned type uses a
+/// `Box` and the `View` a reference into data the caller already holds. Only
+/// these fields are boxed, so only their conversions add a `Box`.
+#[derive(Clone, Copy)]
+pub enum CyclicBorrow {
+    /// Not cyclic. The owned field holds the value itself.
+    NotCyclic,
+    /// The `View` holds `&'a T` where the owned field holds `Box<T>`.
+    Reference,
+    /// The `View` holds `Option<&'a T>` where the owned field holds
+    /// `Option<Box<T>>`.
+    OptionalReference,
+}
+
 pub struct StructMemberOutput {
     pub name: String,
     pub type_ref: String,
@@ -67,6 +84,8 @@ pub struct StructMemberOutput {
     pub serde_rename: Option<String>,
     /// The member's type in the borrowing `View` form of the parent type.
     pub view_type_ref: String,
+    /// Whether the member borrows to break a cycle, and so needs boxing.
+    pub cyclic: CyclicBorrow,
 }
 
 pub struct EnumOutput {
@@ -113,6 +132,8 @@ pub struct UnionArmOutput {
     pub serde_as_type: Option<String>,
     /// The arm's payload type in the borrowing `View` form of the parent type.
     pub view_type_ref: Option<String>,
+    /// Whether the payload borrows to break a cycle, and so needs boxing.
+    pub cyclic: CyclicBorrow,
     pub cfg: Option<String>,
 }
 
@@ -145,6 +166,8 @@ pub struct TypedefNewtypeOutput {
     pub view_cfg: Option<String>,
     /// The inner type in the borrowing `View` form of the newtype.
     pub view_type_ref: String,
+    /// Whether the inner value borrows to break a cycle, and so needs boxing.
+    pub cyclic: CyclicBorrow,
     pub cfg: Option<String>,
 }
 

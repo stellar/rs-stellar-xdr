@@ -64,8 +64,8 @@ impl IntoOwned for PersistedScpStateV1View<'_> {
     type Owned = PersistedScpStateV1;
     fn into_owned(&self) -> PersistedScpStateV1 {
         PersistedScpStateV1 {
-            scp_envelopes: IntoOwned::into_owned(&self.scp_envelopes),
-            quorum_sets: IntoOwned::into_owned(&self.quorum_sets),
+            scp_envelopes: self.scp_envelopes.into_owned(),
+            quorum_sets: self.quorum_sets.into_owned(),
         }
     }
 }
@@ -74,7 +74,7 @@ impl IntoOwned for PersistedScpStateV1View<'_> {
 impl From<&PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
     #[must_use]
     fn from(v: &PersistedScpStateV1View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -82,7 +82,7 @@ impl From<&PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
 impl From<PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
     #[must_use]
     fn from(v: PersistedScpStateV1View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

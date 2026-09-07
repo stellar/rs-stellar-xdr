@@ -62,8 +62,8 @@ impl IntoOwned for FreezeBypassTxsDeltaView<'_> {
     type Owned = FreezeBypassTxsDelta;
     fn into_owned(&self) -> FreezeBypassTxsDelta {
         FreezeBypassTxsDelta {
-            add_txs: IntoOwned::into_owned(&self.add_txs),
-            remove_txs: IntoOwned::into_owned(&self.remove_txs),
+            add_txs: self.add_txs.into_owned(),
+            remove_txs: self.remove_txs.into_owned(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for FreezeBypassTxsDeltaView<'_> {
 impl From<&FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
     #[must_use]
     fn from(v: &FreezeBypassTxsDeltaView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
 impl From<FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
     #[must_use]
     fn from(v: FreezeBypassTxsDeltaView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

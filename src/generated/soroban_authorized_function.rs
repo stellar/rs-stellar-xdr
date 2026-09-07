@@ -185,13 +185,13 @@ impl IntoOwned for SorobanAuthorizedFunctionView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             SorobanAuthorizedFunctionView::ContractFn(value) => {
-                SorobanAuthorizedFunction::ContractFn(IntoOwned::into_owned(value))
+                SorobanAuthorizedFunction::ContractFn(value.into_owned())
             }
             SorobanAuthorizedFunctionView::CreateContractHostFn(value) => {
-                SorobanAuthorizedFunction::CreateContractHostFn(IntoOwned::into_owned(value))
+                SorobanAuthorizedFunction::CreateContractHostFn(value.into_owned())
             }
             SorobanAuthorizedFunctionView::CreateContractV2HostFn(value) => {
-                SorobanAuthorizedFunction::CreateContractV2HostFn(IntoOwned::into_owned(value))
+                SorobanAuthorizedFunction::CreateContractV2HostFn(value.into_owned())
             }
         }
     }
@@ -201,7 +201,7 @@ impl IntoOwned for SorobanAuthorizedFunctionView<'_> {
 impl From<&SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
     #[must_use]
     fn from(v: &SorobanAuthorizedFunctionView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -209,7 +209,7 @@ impl From<&SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
 impl From<SorobanAuthorizedFunctionView<'_>> for SorobanAuthorizedFunction {
     #[must_use]
     fn from(v: SorobanAuthorizedFunctionView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

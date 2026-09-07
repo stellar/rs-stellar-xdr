@@ -80,10 +80,10 @@ impl IntoOwned for DataEntryView<'_> {
     type Owned = DataEntry;
     fn into_owned(&self) -> DataEntry {
         DataEntry {
-            account_id: IntoOwned::into_owned(&self.account_id),
-            data_name: IntoOwned::into_owned(&self.data_name),
-            data_value: IntoOwned::into_owned(&self.data_value),
-            ext: IntoOwned::into_owned(&self.ext),
+            account_id: self.account_id.into_owned(),
+            data_name: self.data_name.into_owned(),
+            data_value: self.data_value.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -92,7 +92,7 @@ impl IntoOwned for DataEntryView<'_> {
 impl From<&DataEntryView<'_>> for DataEntry {
     #[must_use]
     fn from(v: &DataEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -100,7 +100,7 @@ impl From<&DataEntryView<'_>> for DataEntry {
 impl From<DataEntryView<'_>> for DataEntry {
     #[must_use]
     fn from(v: DataEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

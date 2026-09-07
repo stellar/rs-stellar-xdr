@@ -161,10 +161,10 @@ impl IntoOwned for RevokeSponsorshipOpView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             RevokeSponsorshipOpView::LedgerEntry(value) => {
-                RevokeSponsorshipOp::LedgerEntry(IntoOwned::into_owned(value))
+                RevokeSponsorshipOp::LedgerEntry(value.into_owned())
             }
             RevokeSponsorshipOpView::Signer(value) => {
-                RevokeSponsorshipOp::Signer(IntoOwned::into_owned(value))
+                RevokeSponsorshipOp::Signer(value.into_owned())
             }
         }
     }
@@ -174,7 +174,7 @@ impl IntoOwned for RevokeSponsorshipOpView<'_> {
 impl From<&RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
     #[must_use]
     fn from(v: &RevokeSponsorshipOpView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -182,7 +182,7 @@ impl From<&RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
 impl From<RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
     #[must_use]
     fn from(v: RevokeSponsorshipOpView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

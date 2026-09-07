@@ -147,7 +147,7 @@ impl IntoOwned for ContractEventBodyView<'_> {
     fn into_owned(&self) -> ContractEventBody {
         #[allow(clippy::match_same_arms)]
         match self {
-            ContractEventBodyView::V0(value) => ContractEventBody::V0(IntoOwned::into_owned(value)),
+            ContractEventBodyView::V0(value) => ContractEventBody::V0(value.into_owned()),
         }
     }
 }
@@ -156,7 +156,7 @@ impl IntoOwned for ContractEventBodyView<'_> {
 impl From<&ContractEventBodyView<'_>> for ContractEventBody {
     #[must_use]
     fn from(v: &ContractEventBodyView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -164,7 +164,7 @@ impl From<&ContractEventBodyView<'_>> for ContractEventBody {
 impl From<ContractEventBodyView<'_>> for ContractEventBody {
     #[must_use]
     fn from(v: ContractEventBodyView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

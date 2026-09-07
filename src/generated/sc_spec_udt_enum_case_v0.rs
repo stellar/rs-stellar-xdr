@@ -68,9 +68,9 @@ impl IntoOwned for ScSpecUdtEnumCaseV0View<'_> {
     type Owned = ScSpecUdtEnumCaseV0;
     fn into_owned(&self) -> ScSpecUdtEnumCaseV0 {
         ScSpecUdtEnumCaseV0 {
-            doc: IntoOwned::into_owned(&self.doc),
-            name: IntoOwned::into_owned(&self.name),
-            value: IntoOwned::into_owned(&self.value),
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+            value: self.value.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for ScSpecUdtEnumCaseV0View<'_> {
 impl From<&ScSpecUdtEnumCaseV0View<'_>> for ScSpecUdtEnumCaseV0 {
     #[must_use]
     fn from(v: &ScSpecUdtEnumCaseV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&ScSpecUdtEnumCaseV0View<'_>> for ScSpecUdtEnumCaseV0 {
 impl From<ScSpecUdtEnumCaseV0View<'_>> for ScSpecUdtEnumCaseV0 {
     #[must_use]
     fn from(v: ScSpecUdtEnumCaseV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

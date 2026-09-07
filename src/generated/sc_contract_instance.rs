@@ -62,8 +62,8 @@ impl IntoOwned for ScContractInstanceView<'_> {
     type Owned = ScContractInstance;
     fn into_owned(&self) -> ScContractInstance {
         ScContractInstance {
-            executable: IntoOwned::into_owned(&self.executable),
-            storage: IntoOwned::into_owned(&self.storage),
+            executable: self.executable.into_owned(),
+            storage: self.storage.into_owned(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for ScContractInstanceView<'_> {
 impl From<&ScContractInstanceView<'_>> for ScContractInstance {
     #[must_use]
     fn from(v: &ScContractInstanceView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&ScContractInstanceView<'_>> for ScContractInstance {
 impl From<ScContractInstanceView<'_>> for ScContractInstance {
     #[must_use]
     fn from(v: ScContractInstanceView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

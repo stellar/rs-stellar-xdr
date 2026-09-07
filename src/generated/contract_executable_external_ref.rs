@@ -62,8 +62,8 @@ impl IntoOwned for ContractExecutableExternalRefView<'_> {
     type Owned = ContractExecutableExternalRef;
     fn into_owned(&self) -> ContractExecutableExternalRef {
         ContractExecutableExternalRef {
-            executable_owner: IntoOwned::into_owned(&self.executable_owner),
-            tag: IntoOwned::into_owned(&self.tag),
+            executable_owner: self.executable_owner.into_owned(),
+            tag: self.tag.into_owned(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl IntoOwned for ContractExecutableExternalRefView<'_> {
 impl From<&ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
     #[must_use]
     fn from(v: &ContractExecutableExternalRefView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -80,7 +80,7 @@ impl From<&ContractExecutableExternalRefView<'_>> for ContractExecutableExternal
 impl From<ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
     #[must_use]
     fn from(v: ContractExecutableExternalRefView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

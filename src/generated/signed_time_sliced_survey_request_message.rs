@@ -63,8 +63,8 @@ impl IntoOwned for SignedTimeSlicedSurveyRequestMessageView<'_> {
     type Owned = SignedTimeSlicedSurveyRequestMessage;
     fn into_owned(&self) -> SignedTimeSlicedSurveyRequestMessage {
         SignedTimeSlicedSurveyRequestMessage {
-            request_signature: IntoOwned::into_owned(&self.request_signature),
-            request: IntoOwned::into_owned(&self.request),
+            request_signature: self.request_signature.into_owned(),
+            request: self.request.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for SignedTimeSlicedSurveyRequestMessageView<'_> {
 impl From<&SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSurveyRequestMessage {
     #[must_use]
     fn from(v: &SignedTimeSlicedSurveyRequestMessageView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSur
 impl From<SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSurveyRequestMessage {
     #[must_use]
     fn from(v: SignedTimeSlicedSurveyRequestMessageView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

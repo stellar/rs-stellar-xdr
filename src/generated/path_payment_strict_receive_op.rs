@@ -95,12 +95,12 @@ impl IntoOwned for PathPaymentStrictReceiveOpView<'_> {
     type Owned = PathPaymentStrictReceiveOp;
     fn into_owned(&self) -> PathPaymentStrictReceiveOp {
         PathPaymentStrictReceiveOp {
-            send_asset: IntoOwned::into_owned(&self.send_asset),
-            send_max: IntoOwned::into_owned(&self.send_max),
-            destination: IntoOwned::into_owned(&self.destination),
-            dest_asset: IntoOwned::into_owned(&self.dest_asset),
-            dest_amount: IntoOwned::into_owned(&self.dest_amount),
-            path: IntoOwned::into_owned(&self.path),
+            send_asset: self.send_asset.into_owned(),
+            send_max: self.send_max.into_owned(),
+            destination: self.destination.into_owned(),
+            dest_asset: self.dest_asset.into_owned(),
+            dest_amount: self.dest_amount.into_owned(),
+            path: self.path.into_owned(),
         }
     }
 }
@@ -109,7 +109,7 @@ impl IntoOwned for PathPaymentStrictReceiveOpView<'_> {
 impl From<&PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
     #[must_use]
     fn from(v: &PathPaymentStrictReceiveOpView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -117,7 +117,7 @@ impl From<&PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
 impl From<PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
     #[must_use]
     fn from(v: PathPaymentStrictReceiveOpView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

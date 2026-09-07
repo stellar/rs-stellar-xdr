@@ -117,7 +117,7 @@ pub struct String32View<'a>(pub StringMView<'a, 32>);
 impl IntoOwned for String32View<'_> {
     type Owned = String32;
     fn into_owned(&self) -> String32 {
-        String32(IntoOwned::into_owned(&self.0))
+        String32(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for String32View<'_> {
 impl From<&String32View<'_>> for String32 {
     #[must_use]
     fn from(v: &String32View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&String32View<'_>> for String32 {
 impl From<String32View<'_>> for String32 {
     #[must_use]
     fn from(v: String32View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

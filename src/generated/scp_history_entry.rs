@@ -143,7 +143,7 @@ impl IntoOwned for ScpHistoryEntryView<'_> {
     fn into_owned(&self) -> ScpHistoryEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScpHistoryEntryView::V0(value) => ScpHistoryEntry::V0(IntoOwned::into_owned(value)),
+            ScpHistoryEntryView::V0(value) => ScpHistoryEntry::V0(value.into_owned()),
         }
     }
 }
@@ -152,7 +152,7 @@ impl IntoOwned for ScpHistoryEntryView<'_> {
 impl From<&ScpHistoryEntryView<'_>> for ScpHistoryEntry {
     #[must_use]
     fn from(v: &ScpHistoryEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -160,7 +160,7 @@ impl From<&ScpHistoryEntryView<'_>> for ScpHistoryEntry {
 impl From<ScpHistoryEntryView<'_>> for ScpHistoryEntry {
     #[must_use]
     fn from(v: ScpHistoryEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

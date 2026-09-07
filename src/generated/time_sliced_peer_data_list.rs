@@ -117,7 +117,7 @@ pub struct TimeSlicedPeerDataListView<'a>(pub VecMView<'a, TimeSlicedPeerDataVie
 impl IntoOwned for TimeSlicedPeerDataListView<'_> {
     type Owned = TimeSlicedPeerDataList;
     fn into_owned(&self) -> TimeSlicedPeerDataList {
-        TimeSlicedPeerDataList(IntoOwned::into_owned(&self.0))
+        TimeSlicedPeerDataList(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for TimeSlicedPeerDataListView<'_> {
 impl From<&TimeSlicedPeerDataListView<'_>> for TimeSlicedPeerDataList {
     #[must_use]
     fn from(v: &TimeSlicedPeerDataListView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&TimeSlicedPeerDataListView<'_>> for TimeSlicedPeerDataList {
 impl From<TimeSlicedPeerDataListView<'_>> for TimeSlicedPeerDataList {
     #[must_use]
     fn from(v: TimeSlicedPeerDataListView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

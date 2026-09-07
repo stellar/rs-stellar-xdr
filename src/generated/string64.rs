@@ -117,7 +117,7 @@ pub struct String64View<'a>(pub StringMView<'a, 64>);
 impl IntoOwned for String64View<'_> {
     type Owned = String64;
     fn into_owned(&self) -> String64 {
-        String64(IntoOwned::into_owned(&self.0))
+        String64(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for String64View<'_> {
 impl From<&String64View<'_>> for String64 {
     #[must_use]
     fn from(v: &String64View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&String64View<'_>> for String64 {
 impl From<String64View<'_>> for String64 {
     #[must_use]
     fn from(v: String64View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

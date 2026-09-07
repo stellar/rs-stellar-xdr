@@ -68,9 +68,9 @@ impl IntoOwned for TransactionResultMetaView<'_> {
     type Owned = TransactionResultMeta;
     fn into_owned(&self) -> TransactionResultMeta {
         TransactionResultMeta {
-            result: IntoOwned::into_owned(&self.result),
-            fee_processing: IntoOwned::into_owned(&self.fee_processing),
-            tx_apply_processing: IntoOwned::into_owned(&self.tx_apply_processing),
+            result: self.result.into_owned(),
+            fee_processing: self.fee_processing.into_owned(),
+            tx_apply_processing: self.tx_apply_processing.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for TransactionResultMetaView<'_> {
 impl From<&TransactionResultMetaView<'_>> for TransactionResultMeta {
     #[must_use]
     fn from(v: &TransactionResultMetaView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&TransactionResultMetaView<'_>> for TransactionResultMeta {
 impl From<TransactionResultMetaView<'_>> for TransactionResultMeta {
     #[must_use]
     fn from(v: TransactionResultMetaView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -154,9 +154,7 @@ impl IntoOwned for InflationResultView<'_> {
     fn into_owned(&self) -> InflationResult {
         #[allow(clippy::match_same_arms)]
         match self {
-            InflationResultView::Success(value) => {
-                InflationResult::Success(IntoOwned::into_owned(value))
-            }
+            InflationResultView::Success(value) => InflationResult::Success(value.into_owned()),
             InflationResultView::NotTime => InflationResult::NotTime,
         }
     }
@@ -166,7 +164,7 @@ impl IntoOwned for InflationResultView<'_> {
 impl From<&InflationResultView<'_>> for InflationResult {
     #[must_use]
     fn from(v: &InflationResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -174,7 +172,7 @@ impl From<&InflationResultView<'_>> for InflationResult {
 impl From<InflationResultView<'_>> for InflationResult {
     #[must_use]
     fn from(v: InflationResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

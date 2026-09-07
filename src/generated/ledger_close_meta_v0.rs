@@ -87,11 +87,11 @@ impl IntoOwned for LedgerCloseMetaV0View<'_> {
     type Owned = LedgerCloseMetaV0;
     fn into_owned(&self) -> LedgerCloseMetaV0 {
         LedgerCloseMetaV0 {
-            ledger_header: IntoOwned::into_owned(&self.ledger_header),
-            tx_set: IntoOwned::into_owned(&self.tx_set),
-            tx_processing: IntoOwned::into_owned(&self.tx_processing),
-            upgrades_processing: IntoOwned::into_owned(&self.upgrades_processing),
-            scp_info: IntoOwned::into_owned(&self.scp_info),
+            ledger_header: self.ledger_header.into_owned(),
+            tx_set: self.tx_set.into_owned(),
+            tx_processing: self.tx_processing.into_owned(),
+            upgrades_processing: self.upgrades_processing.into_owned(),
+            scp_info: self.scp_info.into_owned(),
         }
     }
 }
@@ -100,7 +100,7 @@ impl IntoOwned for LedgerCloseMetaV0View<'_> {
 impl From<&LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
     #[must_use]
     fn from(v: &LedgerCloseMetaV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -108,7 +108,7 @@ impl From<&LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
 impl From<LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
     #[must_use]
     fn from(v: LedgerCloseMetaV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

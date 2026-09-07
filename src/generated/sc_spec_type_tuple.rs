@@ -58,7 +58,7 @@ impl IntoOwned for ScSpecTypeTupleView<'_> {
     type Owned = ScSpecTypeTuple;
     fn into_owned(&self) -> ScSpecTypeTuple {
         ScSpecTypeTuple {
-            value_types: IntoOwned::into_owned(&self.value_types),
+            value_types: self.value_types.into_owned(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for ScSpecTypeTupleView<'_> {
 impl From<&ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
     #[must_use]
     fn from(v: &ScSpecTypeTupleView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
 impl From<ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
     #[must_use]
     fn from(v: ScSpecTypeTupleView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

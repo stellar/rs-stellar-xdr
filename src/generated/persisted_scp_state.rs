@@ -151,8 +151,8 @@ impl IntoOwned for PersistedScpStateView<'_> {
     fn into_owned(&self) -> PersistedScpState {
         #[allow(clippy::match_same_arms)]
         match self {
-            PersistedScpStateView::V0(value) => PersistedScpState::V0(IntoOwned::into_owned(value)),
-            PersistedScpStateView::V1(value) => PersistedScpState::V1(IntoOwned::into_owned(value)),
+            PersistedScpStateView::V0(value) => PersistedScpState::V0(value.into_owned()),
+            PersistedScpStateView::V1(value) => PersistedScpState::V1(value.into_owned()),
         }
     }
 }
@@ -161,7 +161,7 @@ impl IntoOwned for PersistedScpStateView<'_> {
 impl From<&PersistedScpStateView<'_>> for PersistedScpState {
     #[must_use]
     fn from(v: &PersistedScpStateView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -169,7 +169,7 @@ impl From<&PersistedScpStateView<'_>> for PersistedScpState {
 impl From<PersistedScpStateView<'_>> for PersistedScpState {
     #[must_use]
     fn from(v: PersistedScpStateView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

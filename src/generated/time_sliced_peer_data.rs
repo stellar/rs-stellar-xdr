@@ -63,8 +63,8 @@ impl IntoOwned for TimeSlicedPeerDataView<'_> {
     type Owned = TimeSlicedPeerData;
     fn into_owned(&self) -> TimeSlicedPeerData {
         TimeSlicedPeerData {
-            peer_stats: IntoOwned::into_owned(&self.peer_stats),
-            average_latency_ms: IntoOwned::into_owned(&self.average_latency_ms),
+            peer_stats: self.peer_stats.into_owned(),
+            average_latency_ms: self.average_latency_ms.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TimeSlicedPeerDataView<'_> {
 impl From<&TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
     #[must_use]
     fn from(v: &TimeSlicedPeerDataView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
 impl From<TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
     #[must_use]
     fn from(v: TimeSlicedPeerDataView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

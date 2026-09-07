@@ -63,8 +63,8 @@ impl IntoOwned for DiagnosticEventView<'_> {
     type Owned = DiagnosticEvent;
     fn into_owned(&self) -> DiagnosticEvent {
         DiagnosticEvent {
-            in_successful_contract_call: IntoOwned::into_owned(&self.in_successful_contract_call),
-            event: IntoOwned::into_owned(&self.event),
+            in_successful_contract_call: self.in_successful_contract_call.into_owned(),
+            event: self.event.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for DiagnosticEventView<'_> {
 impl From<&DiagnosticEventView<'_>> for DiagnosticEvent {
     #[must_use]
     fn from(v: &DiagnosticEventView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&DiagnosticEventView<'_>> for DiagnosticEvent {
 impl From<DiagnosticEventView<'_>> for DiagnosticEvent {
     #[must_use]
     fn from(v: DiagnosticEventView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -128,7 +128,14 @@ impl IntoOwned for {{ s.name }}View<'_> {
     fn into_owned(&self) -> {{ s.name }} {
         {{ s.name }} {
 {%- for m in s.members %}
-            {{ m.name }}: IntoOwned::into_owned(&self.{{ m.name }}),
+{%- match m.cyclic %}
+{%- when CyclicBorrow::NotCyclic %}
+            {{ m.name }}: self.{{ m.name }}.into_owned(),
+{%- when CyclicBorrow::Reference %}
+            {{ m.name }}: Box::new(self.{{ m.name }}.into_owned()),
+{%- when CyclicBorrow::OptionalReference %}
+            {{ m.name }}: self.{{ m.name }}.as_ref().map(|v| Box::new(v.into_owned())),
+{%- endmatch %}
 {%- endfor %}
         }
     }
@@ -141,7 +148,7 @@ impl IntoOwned for {{ s.name }}View<'_> {
 impl From<&{{ s.name }}View<'_>> for {{ s.name }} {
     #[must_use]
     fn from(v: &{{ s.name }}View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -152,7 +159,7 @@ impl From<&{{ s.name }}View<'_>> for {{ s.name }} {
 impl From<{{ s.name }}View<'_>> for {{ s.name }} {
     #[must_use]
     fn from(v: {{ s.name }}View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

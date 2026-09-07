@@ -68,9 +68,9 @@ impl IntoOwned for TopologyResponseBodyV2View<'_> {
     type Owned = TopologyResponseBodyV2;
     fn into_owned(&self) -> TopologyResponseBodyV2 {
         TopologyResponseBodyV2 {
-            inbound_peers: IntoOwned::into_owned(&self.inbound_peers),
-            outbound_peers: IntoOwned::into_owned(&self.outbound_peers),
-            node_data: IntoOwned::into_owned(&self.node_data),
+            inbound_peers: self.inbound_peers.into_owned(),
+            outbound_peers: self.outbound_peers.into_owned(),
+            node_data: self.node_data.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for TopologyResponseBodyV2View<'_> {
 impl From<&TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
     #[must_use]
     fn from(v: &TopologyResponseBodyV2View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
 impl From<TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
     #[must_use]
     fn from(v: TopologyResponseBodyV2View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -63,8 +63,8 @@ impl IntoOwned for SignedTimeSlicedSurveyStartCollectingMessageView<'_> {
     type Owned = SignedTimeSlicedSurveyStartCollectingMessage;
     fn into_owned(&self) -> SignedTimeSlicedSurveyStartCollectingMessage {
         SignedTimeSlicedSurveyStartCollectingMessage {
-            signature: IntoOwned::into_owned(&self.signature),
-            start_collecting: IntoOwned::into_owned(&self.start_collecting),
+            signature: self.signature.into_owned(),
+            start_collecting: self.start_collecting.into_owned(),
         }
     }
 }
@@ -75,7 +75,7 @@ impl From<&SignedTimeSlicedSurveyStartCollectingMessageView<'_>>
 {
     #[must_use]
     fn from(v: &SignedTimeSlicedSurveyStartCollectingMessageView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -85,7 +85,7 @@ impl From<SignedTimeSlicedSurveyStartCollectingMessageView<'_>>
 {
     #[must_use]
     fn from(v: SignedTimeSlicedSurveyStartCollectingMessageView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

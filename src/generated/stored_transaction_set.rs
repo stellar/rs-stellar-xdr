@@ -151,12 +151,8 @@ impl IntoOwned for StoredTransactionSetView<'_> {
     fn into_owned(&self) -> StoredTransactionSet {
         #[allow(clippy::match_same_arms)]
         match self {
-            StoredTransactionSetView::V0(value) => {
-                StoredTransactionSet::V0(IntoOwned::into_owned(value))
-            }
-            StoredTransactionSetView::V1(value) => {
-                StoredTransactionSet::V1(IntoOwned::into_owned(value))
-            }
+            StoredTransactionSetView::V0(value) => StoredTransactionSet::V0(value.into_owned()),
+            StoredTransactionSetView::V1(value) => StoredTransactionSet::V1(value.into_owned()),
         }
     }
 }
@@ -165,7 +161,7 @@ impl IntoOwned for StoredTransactionSetView<'_> {
 impl From<&StoredTransactionSetView<'_>> for StoredTransactionSet {
     #[must_use]
     fn from(v: &StoredTransactionSetView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -173,7 +169,7 @@ impl From<&StoredTransactionSetView<'_>> for StoredTransactionSet {
 impl From<StoredTransactionSetView<'_>> for StoredTransactionSet {
     #[must_use]
     fn from(v: StoredTransactionSetView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

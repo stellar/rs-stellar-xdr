@@ -288,26 +288,18 @@ impl IntoOwned for LedgerKeyView<'_> {
     fn into_owned(&self) -> LedgerKey {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerKeyView::Account(value) => LedgerKey::Account(IntoOwned::into_owned(value)),
-            LedgerKeyView::Trustline(value) => LedgerKey::Trustline(IntoOwned::into_owned(value)),
-            LedgerKeyView::Offer(value) => LedgerKey::Offer(IntoOwned::into_owned(value)),
-            LedgerKeyView::Data(value) => LedgerKey::Data(IntoOwned::into_owned(value)),
+            LedgerKeyView::Account(value) => LedgerKey::Account(value.into_owned()),
+            LedgerKeyView::Trustline(value) => LedgerKey::Trustline(value.into_owned()),
+            LedgerKeyView::Offer(value) => LedgerKey::Offer(value.into_owned()),
+            LedgerKeyView::Data(value) => LedgerKey::Data(value.into_owned()),
             LedgerKeyView::ClaimableBalance(value) => {
-                LedgerKey::ClaimableBalance(IntoOwned::into_owned(value))
+                LedgerKey::ClaimableBalance(value.into_owned())
             }
-            LedgerKeyView::LiquidityPool(value) => {
-                LedgerKey::LiquidityPool(IntoOwned::into_owned(value))
-            }
-            LedgerKeyView::ContractData(value) => {
-                LedgerKey::ContractData(IntoOwned::into_owned(value))
-            }
-            LedgerKeyView::ContractCode(value) => {
-                LedgerKey::ContractCode(IntoOwned::into_owned(value))
-            }
-            LedgerKeyView::ConfigSetting(value) => {
-                LedgerKey::ConfigSetting(IntoOwned::into_owned(value))
-            }
-            LedgerKeyView::Ttl(value) => LedgerKey::Ttl(IntoOwned::into_owned(value)),
+            LedgerKeyView::LiquidityPool(value) => LedgerKey::LiquidityPool(value.into_owned()),
+            LedgerKeyView::ContractData(value) => LedgerKey::ContractData(value.into_owned()),
+            LedgerKeyView::ContractCode(value) => LedgerKey::ContractCode(value.into_owned()),
+            LedgerKeyView::ConfigSetting(value) => LedgerKey::ConfigSetting(value.into_owned()),
+            LedgerKeyView::Ttl(value) => LedgerKey::Ttl(value.into_owned()),
         }
     }
 }
@@ -316,7 +308,7 @@ impl IntoOwned for LedgerKeyView<'_> {
 impl From<&LedgerKeyView<'_>> for LedgerKey {
     #[must_use]
     fn from(v: &LedgerKeyView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -324,7 +316,7 @@ impl From<&LedgerKeyView<'_>> for LedgerKey {
 impl From<LedgerKeyView<'_>> for LedgerKey {
     #[must_use]
     fn from(v: LedgerKeyView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

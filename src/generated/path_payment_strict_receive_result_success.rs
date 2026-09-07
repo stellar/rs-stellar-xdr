@@ -63,8 +63,8 @@ impl IntoOwned for PathPaymentStrictReceiveResultSuccessView<'_> {
     type Owned = PathPaymentStrictReceiveResultSuccess;
     fn into_owned(&self) -> PathPaymentStrictReceiveResultSuccess {
         PathPaymentStrictReceiveResultSuccess {
-            offers: IntoOwned::into_owned(&self.offers),
-            last: IntoOwned::into_owned(&self.last),
+            offers: self.offers.into_owned(),
+            last: self.last.into_owned(),
         }
     }
 }
@@ -75,7 +75,7 @@ impl From<&PathPaymentStrictReceiveResultSuccessView<'_>>
 {
     #[must_use]
     fn from(v: &PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -83,7 +83,7 @@ impl From<&PathPaymentStrictReceiveResultSuccessView<'_>>
 impl From<PathPaymentStrictReceiveResultSuccessView<'_>> for PathPaymentStrictReceiveResultSuccess {
     #[must_use]
     fn from(v: PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

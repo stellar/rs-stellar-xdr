@@ -61,7 +61,7 @@ impl IntoOwned for SorobanResourcesExtV0View<'_> {
     type Owned = SorobanResourcesExtV0;
     fn into_owned(&self) -> SorobanResourcesExtV0 {
         SorobanResourcesExtV0 {
-            archived_soroban_entries: IntoOwned::into_owned(&self.archived_soroban_entries),
+            archived_soroban_entries: self.archived_soroban_entries.into_owned(),
         }
     }
 }
@@ -70,7 +70,7 @@ impl IntoOwned for SorobanResourcesExtV0View<'_> {
 impl From<&SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
     #[must_use]
     fn from(v: &SorobanResourcesExtV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -78,7 +78,7 @@ impl From<&SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
 impl From<SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
     #[must_use]
     fn from(v: SorobanResourcesExtV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

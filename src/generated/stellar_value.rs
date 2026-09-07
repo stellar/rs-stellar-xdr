@@ -96,10 +96,10 @@ impl IntoOwned for StellarValueView<'_> {
     type Owned = StellarValue;
     fn into_owned(&self) -> StellarValue {
         StellarValue {
-            tx_set_hash: IntoOwned::into_owned(&self.tx_set_hash),
-            close_time: IntoOwned::into_owned(&self.close_time),
-            upgrades: IntoOwned::into_owned(&self.upgrades),
-            ext: IntoOwned::into_owned(&self.ext),
+            tx_set_hash: self.tx_set_hash.into_owned(),
+            close_time: self.close_time.into_owned(),
+            upgrades: self.upgrades.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -108,7 +108,7 @@ impl IntoOwned for StellarValueView<'_> {
 impl From<&StellarValueView<'_>> for StellarValue {
     #[must_use]
     fn from(v: &StellarValueView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -116,7 +116,7 @@ impl From<&StellarValueView<'_>> for StellarValue {
 impl From<StellarValueView<'_>> for StellarValue {
     #[must_use]
     fn from(v: StellarValueView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

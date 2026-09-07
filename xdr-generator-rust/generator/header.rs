@@ -1509,17 +1509,16 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
 /// inside the `View`s that contain it, and converts to itself. The runtime
 /// types that appear inside `View`s implement it too: [`VecMView`],
 /// [`BytesMView`] and [`StringMView`] convert to [`VecM`], [`BytesM`] and
-/// [`StringM`], `Option`s and arrays convert element-wise, and a reference (the
-/// `View` form of a `Box`) converts to a `Box`.
+/// [`StringM`], and `Option`s and arrays convert element-wise.
+///
+/// Where a `View` holds a reference to break a type cycle, the owned type holds
+/// a `Box`. That is a property of those fields rather than of references in
+/// general, so this trait says nothing about it: the generated conversion wraps
+/// them in `Box::new` itself.
 ///
 /// The conversion borrows, so a `View` can be converted without being consumed
 /// and no caller has to clone one first. It allocates, so it is only available
 /// with the `alloc` feature.
-///
-/// Callers use it as `IntoOwned::into_owned(&place)` rather than
-/// `place.into_owned()`: the explicit form pins `Self` to the exact type of
-/// `place`, so a `&View` field selects the `&T` impl below and becomes a `Box`,
-/// where method syntax would deref past it and produce the unboxed value.
 #[cfg(feature = "alloc")]
 pub(crate) trait IntoOwned {
     /// The owned form of this type.
@@ -1563,16 +1562,7 @@ impl<T: IntoOwned> IntoOwned for Option<T> {
 impl<T: IntoOwned, const N: usize> IntoOwned for [T; N] {
     type Owned = [T::Owned; N];
     fn into_owned(&self) -> Self::Owned {
-        core::array::from_fn(|i| IntoOwned::into_owned(&self[i]))
-    }
-}
-
-/// A reference is the `View` form of a `Box`, used where a type is cyclic.
-#[cfg(feature = "alloc")]
-impl<T: IntoOwned> IntoOwned for &T {
-    type Owned = Box<T::Owned>;
-    fn into_owned(&self) -> Self::Owned {
-        Box::new(IntoOwned::into_owned(&**self))
+        core::array::from_fn(|i| self[i].into_owned())
     }
 }
 

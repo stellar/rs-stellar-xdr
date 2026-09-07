@@ -152,7 +152,7 @@ impl IntoOwned for AccountEntryExtView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             AccountEntryExtView::V0 => AccountEntryExt::V0,
-            AccountEntryExtView::V1(value) => AccountEntryExt::V1(IntoOwned::into_owned(value)),
+            AccountEntryExtView::V1(value) => AccountEntryExt::V1(value.into_owned()),
         }
     }
 }
@@ -161,7 +161,7 @@ impl IntoOwned for AccountEntryExtView<'_> {
 impl From<&AccountEntryExtView<'_>> for AccountEntryExt {
     #[must_use]
     fn from(v: &AccountEntryExtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -169,7 +169,7 @@ impl From<&AccountEntryExtView<'_>> for AccountEntryExt {
 impl From<AccountEntryExtView<'_>> for AccountEntryExt {
     #[must_use]
     fn from(v: AccountEntryExtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

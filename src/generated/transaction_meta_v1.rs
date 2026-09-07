@@ -63,8 +63,8 @@ impl IntoOwned for TransactionMetaV1View<'_> {
     type Owned = TransactionMetaV1;
     fn into_owned(&self) -> TransactionMetaV1 {
         TransactionMetaV1 {
-            tx_changes: IntoOwned::into_owned(&self.tx_changes),
-            operations: IntoOwned::into_owned(&self.operations),
+            tx_changes: self.tx_changes.into_owned(),
+            operations: self.operations.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for TransactionMetaV1View<'_> {
 impl From<&TransactionMetaV1View<'_>> for TransactionMetaV1 {
     #[must_use]
     fn from(v: &TransactionMetaV1View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&TransactionMetaV1View<'_>> for TransactionMetaV1 {
 impl From<TransactionMetaV1View<'_>> for TransactionMetaV1 {
     #[must_use]
     fn from(v: TransactionMetaV1View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

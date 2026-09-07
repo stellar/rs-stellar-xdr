@@ -101,9 +101,9 @@ impl IntoOwned for LedgerEntryView<'_> {
     type Owned = LedgerEntry;
     fn into_owned(&self) -> LedgerEntry {
         LedgerEntry {
-            last_modified_ledger_seq: IntoOwned::into_owned(&self.last_modified_ledger_seq),
-            data: IntoOwned::into_owned(&self.data),
-            ext: IntoOwned::into_owned(&self.ext),
+            last_modified_ledger_seq: self.last_modified_ledger_seq.into_owned(),
+            data: self.data.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -112,7 +112,7 @@ impl IntoOwned for LedgerEntryView<'_> {
 impl From<&LedgerEntryView<'_>> for LedgerEntry {
     #[must_use]
     fn from(v: &LedgerEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -120,7 +120,7 @@ impl From<&LedgerEntryView<'_>> for LedgerEntry {
 impl From<LedgerEntryView<'_>> for LedgerEntry {
     #[must_use]
     fn from(v: LedgerEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

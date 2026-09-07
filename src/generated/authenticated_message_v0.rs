@@ -72,9 +72,9 @@ impl IntoOwned for AuthenticatedMessageV0View<'_> {
     type Owned = AuthenticatedMessageV0;
     fn into_owned(&self) -> AuthenticatedMessageV0 {
         AuthenticatedMessageV0 {
-            sequence: IntoOwned::into_owned(&self.sequence),
-            message: IntoOwned::into_owned(&self.message),
-            mac: IntoOwned::into_owned(&self.mac),
+            sequence: self.sequence.into_owned(),
+            message: self.message.into_owned(),
+            mac: self.mac.into_owned(),
         }
     }
 }
@@ -83,7 +83,7 @@ impl IntoOwned for AuthenticatedMessageV0View<'_> {
 impl From<&AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
     #[must_use]
     fn from(v: &AuthenticatedMessageV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -91,7 +91,7 @@ impl From<&AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
 impl From<AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
     #[must_use]
     fn from(v: AuthenticatedMessageV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

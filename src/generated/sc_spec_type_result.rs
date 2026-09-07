@@ -63,8 +63,8 @@ impl IntoOwned for ScSpecTypeResultView<'_> {
     type Owned = ScSpecTypeResult;
     fn into_owned(&self) -> ScSpecTypeResult {
         ScSpecTypeResult {
-            ok_type: IntoOwned::into_owned(&self.ok_type),
-            error_type: IntoOwned::into_owned(&self.error_type),
+            ok_type: Box::new(self.ok_type.into_owned()),
+            error_type: Box::new(self.error_type.into_owned()),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScSpecTypeResultView<'_> {
 impl From<&ScSpecTypeResultView<'_>> for ScSpecTypeResult {
     #[must_use]
     fn from(v: &ScSpecTypeResultView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScSpecTypeResultView<'_>> for ScSpecTypeResult {
 impl From<ScSpecTypeResultView<'_>> for ScSpecTypeResult {
     #[must_use]
     fn from(v: ScSpecTypeResultView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

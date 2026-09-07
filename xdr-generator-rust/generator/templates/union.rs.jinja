@@ -265,7 +265,14 @@ impl IntoOwned for {{ u.name }}View<'_> {
 {%- if arm.is_void %}
             {{ u.name }}View::{{ arm.case_name }} => {{ u.name }}::{{ arm.case_name }},
 {%- else %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(IntoOwned::into_owned(value)),
+{%- match arm.cyclic %}
+{%- when CyclicBorrow::NotCyclic %}
+            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.into_owned()),
+{%- when CyclicBorrow::Reference %}
+            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(Box::new(value.into_owned())),
+{%- when CyclicBorrow::OptionalReference %}
+            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.as_ref().map(|v| Box::new(v.into_owned()))),
+{%- endmatch %}
 {%- endif %}
 {%- endfor %}
         }
@@ -279,7 +286,7 @@ impl IntoOwned for {{ u.name }}View<'_> {
 impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
     fn from(v: &{{ u.name }}View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -290,7 +297,7 @@ impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
 impl From<{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
     fn from(v: {{ u.name }}View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -67,9 +67,9 @@ impl IntoOwned for InvokeContractArgsView<'_> {
     type Owned = InvokeContractArgs;
     fn into_owned(&self) -> InvokeContractArgs {
         InvokeContractArgs {
-            contract_address: IntoOwned::into_owned(&self.contract_address),
-            function_name: IntoOwned::into_owned(&self.function_name),
-            args: IntoOwned::into_owned(&self.args),
+            contract_address: self.contract_address.into_owned(),
+            function_name: self.function_name.into_owned(),
+            args: self.args.into_owned(),
         }
     }
 }
@@ -78,7 +78,7 @@ impl IntoOwned for InvokeContractArgsView<'_> {
 impl From<&InvokeContractArgsView<'_>> for InvokeContractArgs {
     #[must_use]
     fn from(v: &InvokeContractArgsView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -86,7 +86,7 @@ impl From<&InvokeContractArgsView<'_>> for InvokeContractArgs {
 impl From<InvokeContractArgsView<'_>> for InvokeContractArgs {
     #[must_use]
     fn from(v: InvokeContractArgsView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

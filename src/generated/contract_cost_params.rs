@@ -119,7 +119,7 @@ pub struct ContractCostParamsView<'a>(
 impl IntoOwned for ContractCostParamsView<'_> {
     type Owned = ContractCostParams;
     fn into_owned(&self) -> ContractCostParams {
-        ContractCostParams(IntoOwned::into_owned(&self.0))
+        ContractCostParams(self.0.into_owned())
     }
 }
 
@@ -127,7 +127,7 @@ impl IntoOwned for ContractCostParamsView<'_> {
 impl From<&ContractCostParamsView<'_>> for ContractCostParams {
     #[must_use]
     fn from(v: &ContractCostParamsView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -135,7 +135,7 @@ impl From<&ContractCostParamsView<'_>> for ContractCostParams {
 impl From<ContractCostParamsView<'_>> for ContractCostParams {
     #[must_use]
     fn from(v: ContractCostParamsView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

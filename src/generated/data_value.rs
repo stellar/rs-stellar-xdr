@@ -117,7 +117,7 @@ pub struct DataValueView<'a>(pub BytesMView<'a, 64>);
 impl IntoOwned for DataValueView<'_> {
     type Owned = DataValue;
     fn into_owned(&self) -> DataValue {
-        DataValue(IntoOwned::into_owned(&self.0))
+        DataValue(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for DataValueView<'_> {
 impl From<&DataValueView<'_>> for DataValue {
     #[must_use]
     fn from(v: &DataValueView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&DataValueView<'_>> for DataValue {
 impl From<DataValueView<'_>> for DataValue {
     #[must_use]
     fn from(v: DataValueView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -117,7 +117,7 @@ pub struct ParallelTxExecutionStageView<'a>(pub VecMView<'a, DependentTxClusterV
 impl IntoOwned for ParallelTxExecutionStageView<'_> {
     type Owned = ParallelTxExecutionStage;
     fn into_owned(&self) -> ParallelTxExecutionStage {
-        ParallelTxExecutionStage(IntoOwned::into_owned(&self.0))
+        ParallelTxExecutionStage(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for ParallelTxExecutionStageView<'_> {
 impl From<&ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
     #[must_use]
     fn from(v: &ParallelTxExecutionStageView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
 impl From<ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
     #[must_use]
     fn from(v: ParallelTxExecutionStageView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -58,7 +58,7 @@ impl IntoOwned for ScSpecTypeUdtView<'_> {
     type Owned = ScSpecTypeUdt;
     fn into_owned(&self) -> ScSpecTypeUdt {
         ScSpecTypeUdt {
-            name: IntoOwned::into_owned(&self.name),
+            name: self.name.into_owned(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for ScSpecTypeUdtView<'_> {
 impl From<&ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
     #[must_use]
     fn from(v: &ScSpecTypeUdtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
 impl From<ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
     #[must_use]
     fn from(v: ScSpecTypeUdtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

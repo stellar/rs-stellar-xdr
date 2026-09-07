@@ -117,7 +117,7 @@ pub struct ScBytesView<'a>(pub BytesMView<'a>);
 impl IntoOwned for ScBytesView<'_> {
     type Owned = ScBytes;
     fn into_owned(&self) -> ScBytes {
-        ScBytes(IntoOwned::into_owned(&self.0))
+        ScBytes(self.0.into_owned())
     }
 }
 
@@ -125,7 +125,7 @@ impl IntoOwned for ScBytesView<'_> {
 impl From<&ScBytesView<'_>> for ScBytes {
     #[must_use]
     fn from(v: &ScBytesView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -133,7 +133,7 @@ impl From<&ScBytesView<'_>> for ScBytes {
 impl From<ScBytesView<'_>> for ScBytes {
     #[must_use]
     fn from(v: ScBytesView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

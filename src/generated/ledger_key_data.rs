@@ -63,8 +63,8 @@ impl IntoOwned for LedgerKeyDataView<'_> {
     type Owned = LedgerKeyData;
     fn into_owned(&self) -> LedgerKeyData {
         LedgerKeyData {
-            account_id: IntoOwned::into_owned(&self.account_id),
-            data_name: IntoOwned::into_owned(&self.data_name),
+            account_id: self.account_id.into_owned(),
+            data_name: self.data_name.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for LedgerKeyDataView<'_> {
 impl From<&LedgerKeyDataView<'_>> for LedgerKeyData {
     #[must_use]
     fn from(v: &LedgerKeyDataView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&LedgerKeyDataView<'_>> for LedgerKeyData {
 impl From<LedgerKeyDataView<'_>> for LedgerKeyData {
     #[must_use]
     fn from(v: LedgerKeyDataView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

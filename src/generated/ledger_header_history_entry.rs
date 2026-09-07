@@ -75,9 +75,9 @@ impl IntoOwned for LedgerHeaderHistoryEntryView<'_> {
     type Owned = LedgerHeaderHistoryEntry;
     fn into_owned(&self) -> LedgerHeaderHistoryEntry {
         LedgerHeaderHistoryEntry {
-            hash: IntoOwned::into_owned(&self.hash),
-            header: IntoOwned::into_owned(&self.header),
-            ext: IntoOwned::into_owned(&self.ext),
+            hash: self.hash.into_owned(),
+            header: self.header.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -86,7 +86,7 @@ impl IntoOwned for LedgerHeaderHistoryEntryView<'_> {
 impl From<&LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
     #[must_use]
     fn from(v: &LedgerHeaderHistoryEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -94,7 +94,7 @@ impl From<&LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
 impl From<LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
     #[must_use]
     fn from(v: LedgerHeaderHistoryEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

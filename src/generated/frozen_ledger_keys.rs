@@ -57,7 +57,7 @@ impl IntoOwned for FrozenLedgerKeysView<'_> {
     type Owned = FrozenLedgerKeys;
     fn into_owned(&self) -> FrozenLedgerKeys {
         FrozenLedgerKeys {
-            keys: IntoOwned::into_owned(&self.keys),
+            keys: self.keys.into_owned(),
         }
     }
 }
@@ -66,7 +66,7 @@ impl IntoOwned for FrozenLedgerKeysView<'_> {
 impl From<&FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
     #[must_use]
     fn from(v: &FrozenLedgerKeysView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -74,7 +74,7 @@ impl From<&FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
 impl From<FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
     #[must_use]
     fn from(v: FrozenLedgerKeysView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

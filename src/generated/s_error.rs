@@ -63,8 +63,8 @@ impl IntoOwned for SErrorView<'_> {
     type Owned = SError;
     fn into_owned(&self) -> SError {
         SError {
-            code: IntoOwned::into_owned(&self.code),
-            msg: IntoOwned::into_owned(&self.msg),
+            code: self.code.into_owned(),
+            msg: self.msg.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for SErrorView<'_> {
 impl From<&SErrorView<'_>> for SError {
     #[must_use]
     fn from(v: &SErrorView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&SErrorView<'_>> for SError {
 impl From<SErrorView<'_>> for SError {
     #[must_use]
     fn from(v: SErrorView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -158,14 +158,10 @@ impl IntoOwned for TransactionEnvelopeView<'_> {
     fn into_owned(&self) -> TransactionEnvelope {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionEnvelopeView::TxV0(value) => {
-                TransactionEnvelope::TxV0(IntoOwned::into_owned(value))
-            }
-            TransactionEnvelopeView::Tx(value) => {
-                TransactionEnvelope::Tx(IntoOwned::into_owned(value))
-            }
+            TransactionEnvelopeView::TxV0(value) => TransactionEnvelope::TxV0(value.into_owned()),
+            TransactionEnvelopeView::Tx(value) => TransactionEnvelope::Tx(value.into_owned()),
             TransactionEnvelopeView::TxFeeBump(value) => {
-                TransactionEnvelope::TxFeeBump(IntoOwned::into_owned(value))
+                TransactionEnvelope::TxFeeBump(value.into_owned())
             }
         }
     }
@@ -175,7 +171,7 @@ impl IntoOwned for TransactionEnvelopeView<'_> {
 impl From<&TransactionEnvelopeView<'_>> for TransactionEnvelope {
     #[must_use]
     fn from(v: &TransactionEnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -183,7 +179,7 @@ impl From<&TransactionEnvelopeView<'_>> for TransactionEnvelope {
 impl From<TransactionEnvelopeView<'_>> for TransactionEnvelope {
     #[must_use]
     fn from(v: TransactionEnvelopeView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -228,18 +228,16 @@ impl IntoOwned for HashIdPreimageView<'_> {
     fn into_owned(&self) -> HashIdPreimage {
         #[allow(clippy::match_same_arms)]
         match self {
-            HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(IntoOwned::into_owned(value)),
+            HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(value.into_owned()),
             HashIdPreimageView::PoolRevokeOpId(value) => {
-                HashIdPreimage::PoolRevokeOpId(IntoOwned::into_owned(value))
+                HashIdPreimage::PoolRevokeOpId(value.into_owned())
             }
-            HashIdPreimageView::ContractId(value) => {
-                HashIdPreimage::ContractId(IntoOwned::into_owned(value))
-            }
+            HashIdPreimageView::ContractId(value) => HashIdPreimage::ContractId(value.into_owned()),
             HashIdPreimageView::SorobanAuthorization(value) => {
-                HashIdPreimage::SorobanAuthorization(IntoOwned::into_owned(value))
+                HashIdPreimage::SorobanAuthorization(value.into_owned())
             }
             HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
-                HashIdPreimage::SorobanAuthorizationWithAddress(IntoOwned::into_owned(value))
+                HashIdPreimage::SorobanAuthorizationWithAddress(value.into_owned())
             }
         }
     }
@@ -249,7 +247,7 @@ impl IntoOwned for HashIdPreimageView<'_> {
 impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
     fn from(v: &HashIdPreimageView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -257,7 +255,7 @@ impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
 impl From<HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
     fn from(v: HashIdPreimageView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

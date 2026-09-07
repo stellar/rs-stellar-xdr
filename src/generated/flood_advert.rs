@@ -58,7 +58,7 @@ impl IntoOwned for FloodAdvertView<'_> {
     type Owned = FloodAdvert;
     fn into_owned(&self) -> FloodAdvert {
         FloodAdvert {
-            tx_hashes: IntoOwned::into_owned(&self.tx_hashes),
+            tx_hashes: self.tx_hashes.into_owned(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl IntoOwned for FloodAdvertView<'_> {
 impl From<&FloodAdvertView<'_>> for FloodAdvert {
     #[must_use]
     fn from(v: &FloodAdvertView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -75,7 +75,7 @@ impl From<&FloodAdvertView<'_>> for FloodAdvert {
 impl From<FloodAdvertView<'_>> for FloodAdvert {
     #[must_use]
     fn from(v: FloodAdvertView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

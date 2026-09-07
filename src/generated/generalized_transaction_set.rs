@@ -145,7 +145,7 @@ impl IntoOwned for GeneralizedTransactionSetView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             GeneralizedTransactionSetView::V1(value) => {
-                GeneralizedTransactionSet::V1(IntoOwned::into_owned(value))
+                GeneralizedTransactionSet::V1(value.into_owned())
             }
         }
     }
@@ -155,7 +155,7 @@ impl IntoOwned for GeneralizedTransactionSetView<'_> {
 impl From<&GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
     #[must_use]
     fn from(v: &GeneralizedTransactionSetView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -163,7 +163,7 @@ impl From<&GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
 impl From<GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
     #[must_use]
     fn from(v: GeneralizedTransactionSetView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

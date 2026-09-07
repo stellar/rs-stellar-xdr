@@ -143,7 +143,7 @@ impl IntoOwned for ScMetaEntryView<'_> {
     fn into_owned(&self) -> ScMetaEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScMetaEntryView::ScMetaV0(value) => ScMetaEntry::ScMetaV0(IntoOwned::into_owned(value)),
+            ScMetaEntryView::ScMetaV0(value) => ScMetaEntry::ScMetaV0(value.into_owned()),
         }
     }
 }
@@ -152,7 +152,7 @@ impl IntoOwned for ScMetaEntryView<'_> {
 impl From<&ScMetaEntryView<'_>> for ScMetaEntry {
     #[must_use]
     fn from(v: &ScMetaEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -160,7 +160,7 @@ impl From<&ScMetaEntryView<'_>> for ScMetaEntry {
 impl From<ScMetaEntryView<'_>> for ScMetaEntry {
     #[must_use]
     fn from(v: ScMetaEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

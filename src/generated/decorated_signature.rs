@@ -63,8 +63,8 @@ impl IntoOwned for DecoratedSignatureView<'_> {
     type Owned = DecoratedSignature;
     fn into_owned(&self) -> DecoratedSignature {
         DecoratedSignature {
-            hint: IntoOwned::into_owned(&self.hint),
-            signature: IntoOwned::into_owned(&self.signature),
+            hint: self.hint.into_owned(),
+            signature: self.signature.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for DecoratedSignatureView<'_> {
 impl From<&DecoratedSignatureView<'_>> for DecoratedSignature {
     #[must_use]
     fn from(v: &DecoratedSignatureView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&DecoratedSignatureView<'_>> for DecoratedSignature {
 impl From<DecoratedSignatureView<'_>> for DecoratedSignature {
     #[must_use]
     fn from(v: DecoratedSignatureView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

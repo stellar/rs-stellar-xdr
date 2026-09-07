@@ -153,7 +153,7 @@ impl IntoOwned for SorobanTransactionDataExtView<'_> {
         match self {
             SorobanTransactionDataExtView::V0 => SorobanTransactionDataExt::V0,
             SorobanTransactionDataExtView::V1(value) => {
-                SorobanTransactionDataExt::V1(IntoOwned::into_owned(value))
+                SorobanTransactionDataExt::V1(value.into_owned())
             }
         }
     }
@@ -163,7 +163,7 @@ impl IntoOwned for SorobanTransactionDataExtView<'_> {
 impl From<&SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
     #[must_use]
     fn from(v: &SorobanTransactionDataExtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -171,7 +171,7 @@ impl From<&SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
 impl From<SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
     #[must_use]
     fn from(v: SorobanTransactionDataExtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -65,8 +65,8 @@ impl IntoOwned for InvokeHostFunctionOpView<'_> {
     type Owned = InvokeHostFunctionOp;
     fn into_owned(&self) -> InvokeHostFunctionOp {
         InvokeHostFunctionOp {
-            host_function: IntoOwned::into_owned(&self.host_function),
-            auth: IntoOwned::into_owned(&self.auth),
+            host_function: self.host_function.into_owned(),
+            auth: self.auth.into_owned(),
         }
     }
 }
@@ -75,7 +75,7 @@ impl IntoOwned for InvokeHostFunctionOpView<'_> {
 impl From<&InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     #[must_use]
     fn from(v: &InvokeHostFunctionOpView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -83,7 +83,7 @@ impl From<&InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
 impl From<InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     #[must_use]
     fn from(v: InvokeHostFunctionOpView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

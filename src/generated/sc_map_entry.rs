@@ -63,8 +63,8 @@ impl IntoOwned for ScMapEntryView<'_> {
     type Owned = ScMapEntry;
     fn into_owned(&self) -> ScMapEntry {
         ScMapEntry {
-            key: IntoOwned::into_owned(&self.key),
-            val: IntoOwned::into_owned(&self.val),
+            key: self.key.into_owned(),
+            val: self.val.into_owned(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl IntoOwned for ScMapEntryView<'_> {
 impl From<&ScMapEntryView<'_>> for ScMapEntry {
     #[must_use]
     fn from(v: &ScMapEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -81,7 +81,7 @@ impl From<&ScMapEntryView<'_>> for ScMapEntry {
 impl From<ScMapEntryView<'_>> for ScMapEntry {
     #[must_use]
     fn from(v: ScMapEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

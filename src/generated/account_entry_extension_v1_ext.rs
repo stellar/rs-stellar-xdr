@@ -153,7 +153,7 @@ impl IntoOwned for AccountEntryExtensionV1ExtView<'_> {
         match self {
             AccountEntryExtensionV1ExtView::V0 => AccountEntryExtensionV1Ext::V0,
             AccountEntryExtensionV1ExtView::V2(value) => {
-                AccountEntryExtensionV1Ext::V2(IntoOwned::into_owned(value))
+                AccountEntryExtensionV1Ext::V2(value.into_owned())
             }
         }
     }
@@ -163,7 +163,7 @@ impl IntoOwned for AccountEntryExtensionV1ExtView<'_> {
 impl From<&AccountEntryExtensionV1ExtView<'_>> for AccountEntryExtensionV1Ext {
     #[must_use]
     fn from(v: &AccountEntryExtensionV1ExtView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -171,7 +171,7 @@ impl From<&AccountEntryExtensionV1ExtView<'_>> for AccountEntryExtensionV1Ext {
 impl From<AccountEntryExtensionV1ExtView<'_>> for AccountEntryExtensionV1Ext {
     #[must_use]
     fn from(v: AccountEntryExtensionV1ExtView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

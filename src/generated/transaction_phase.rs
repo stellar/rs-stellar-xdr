@@ -151,8 +151,8 @@ impl IntoOwned for TransactionPhaseView<'_> {
     fn into_owned(&self) -> TransactionPhase {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionPhaseView::V0(value) => TransactionPhase::V0(IntoOwned::into_owned(value)),
-            TransactionPhaseView::V1(value) => TransactionPhase::V1(IntoOwned::into_owned(value)),
+            TransactionPhaseView::V0(value) => TransactionPhase::V0(value.into_owned()),
+            TransactionPhaseView::V1(value) => TransactionPhase::V1(value.into_owned()),
         }
     }
 }
@@ -161,7 +161,7 @@ impl IntoOwned for TransactionPhaseView<'_> {
 impl From<&TransactionPhaseView<'_>> for TransactionPhase {
     #[must_use]
     fn from(v: &TransactionPhaseView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -169,7 +169,7 @@ impl From<&TransactionPhaseView<'_>> for TransactionPhase {
 impl From<TransactionPhaseView<'_>> for TransactionPhase {
     #[must_use]
     fn from(v: TransactionPhaseView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -168,13 +168,13 @@ impl IntoOwned for HotArchiveBucketEntryView<'_> {
         #[allow(clippy::match_same_arms)]
         match self {
             HotArchiveBucketEntryView::Archived(value) => {
-                HotArchiveBucketEntry::Archived(IntoOwned::into_owned(value))
+                HotArchiveBucketEntry::Archived(value.into_owned())
             }
             HotArchiveBucketEntryView::Live(value) => {
-                HotArchiveBucketEntry::Live(IntoOwned::into_owned(value))
+                HotArchiveBucketEntry::Live(value.into_owned())
             }
             HotArchiveBucketEntryView::Metaentry(value) => {
-                HotArchiveBucketEntry::Metaentry(IntoOwned::into_owned(value))
+                HotArchiveBucketEntry::Metaentry(value.into_owned())
             }
         }
     }
@@ -184,7 +184,7 @@ impl IntoOwned for HotArchiveBucketEntryView<'_> {
 impl From<&HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
     #[must_use]
     fn from(v: &HotArchiveBucketEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -192,7 +192,7 @@ impl From<&HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
 impl From<HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
     #[must_use]
     fn from(v: HotArchiveBucketEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

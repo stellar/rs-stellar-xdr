@@ -185,13 +185,13 @@ impl IntoOwned for SorobanCredentialsView<'_> {
         match self {
             SorobanCredentialsView::SourceAccount => SorobanCredentials::SourceAccount,
             SorobanCredentialsView::Address(value) => {
-                SorobanCredentials::Address(IntoOwned::into_owned(value))
+                SorobanCredentials::Address(value.into_owned())
             }
             SorobanCredentialsView::AddressV2(value) => {
-                SorobanCredentials::AddressV2(IntoOwned::into_owned(value))
+                SorobanCredentials::AddressV2(value.into_owned())
             }
             SorobanCredentialsView::AddressWithDelegates(value) => {
-                SorobanCredentials::AddressWithDelegates(IntoOwned::into_owned(value))
+                SorobanCredentials::AddressWithDelegates(value.into_owned())
             }
         }
     }
@@ -201,7 +201,7 @@ impl IntoOwned for SorobanCredentialsView<'_> {
 impl From<&SorobanCredentialsView<'_>> for SorobanCredentials {
     #[must_use]
     fn from(v: &SorobanCredentialsView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -209,7 +209,7 @@ impl From<&SorobanCredentialsView<'_>> for SorobanCredentials {
 impl From<SorobanCredentialsView<'_>> for SorobanCredentials {
     #[must_use]
     fn from(v: SorobanCredentialsView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

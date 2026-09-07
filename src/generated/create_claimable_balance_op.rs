@@ -72,9 +72,9 @@ impl IntoOwned for CreateClaimableBalanceOpView<'_> {
     type Owned = CreateClaimableBalanceOp;
     fn into_owned(&self) -> CreateClaimableBalanceOp {
         CreateClaimableBalanceOp {
-            asset: IntoOwned::into_owned(&self.asset),
-            amount: IntoOwned::into_owned(&self.amount),
-            claimants: IntoOwned::into_owned(&self.claimants),
+            asset: self.asset.into_owned(),
+            amount: self.amount.into_owned(),
+            claimants: self.claimants.into_owned(),
         }
     }
 }
@@ -83,7 +83,7 @@ impl IntoOwned for CreateClaimableBalanceOpView<'_> {
 impl From<&CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
     #[must_use]
     fn from(v: &CreateClaimableBalanceOpView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -91,7 +91,7 @@ impl From<&CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
 impl From<CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
     #[must_use]
     fn from(v: CreateClaimableBalanceOpView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

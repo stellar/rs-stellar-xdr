@@ -122,16 +122,16 @@ impl IntoOwned for AccountEntryView<'_> {
     type Owned = AccountEntry;
     fn into_owned(&self) -> AccountEntry {
         AccountEntry {
-            account_id: IntoOwned::into_owned(&self.account_id),
-            balance: IntoOwned::into_owned(&self.balance),
-            seq_num: IntoOwned::into_owned(&self.seq_num),
-            num_sub_entries: IntoOwned::into_owned(&self.num_sub_entries),
-            inflation_dest: IntoOwned::into_owned(&self.inflation_dest),
-            flags: IntoOwned::into_owned(&self.flags),
-            home_domain: IntoOwned::into_owned(&self.home_domain),
-            thresholds: IntoOwned::into_owned(&self.thresholds),
-            signers: IntoOwned::into_owned(&self.signers),
-            ext: IntoOwned::into_owned(&self.ext),
+            account_id: self.account_id.into_owned(),
+            balance: self.balance.into_owned(),
+            seq_num: self.seq_num.into_owned(),
+            num_sub_entries: self.num_sub_entries.into_owned(),
+            inflation_dest: self.inflation_dest.into_owned(),
+            flags: self.flags.into_owned(),
+            home_domain: self.home_domain.into_owned(),
+            thresholds: self.thresholds.into_owned(),
+            signers: self.signers.into_owned(),
+            ext: self.ext.into_owned(),
         }
     }
 }
@@ -140,7 +140,7 @@ impl IntoOwned for AccountEntryView<'_> {
 impl From<&AccountEntryView<'_>> for AccountEntry {
     #[must_use]
     fn from(v: &AccountEntryView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -148,7 +148,7 @@ impl From<&AccountEntryView<'_>> for AccountEntry {
 impl From<AccountEntryView<'_>> for AccountEntry {
     #[must_use]
     fn from(v: AccountEntryView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

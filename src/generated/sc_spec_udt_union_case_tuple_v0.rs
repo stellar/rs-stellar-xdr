@@ -73,9 +73,9 @@ impl IntoOwned for ScSpecUdtUnionCaseTupleV0View<'_> {
     type Owned = ScSpecUdtUnionCaseTupleV0;
     fn into_owned(&self) -> ScSpecUdtUnionCaseTupleV0 {
         ScSpecUdtUnionCaseTupleV0 {
-            doc: IntoOwned::into_owned(&self.doc),
-            name: IntoOwned::into_owned(&self.name),
-            type_: IntoOwned::into_owned(&self.type_),
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+            type_: self.type_.into_owned(),
         }
     }
 }
@@ -84,7 +84,7 @@ impl IntoOwned for ScSpecUdtUnionCaseTupleV0View<'_> {
 impl From<&ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
     #[must_use]
     fn from(v: &ScSpecUdtUnionCaseTupleV0View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -92,7 +92,7 @@ impl From<&ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
 impl From<ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
     #[must_use]
     fn from(v: ScSpecUdtUnionCaseTupleV0View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

@@ -175,11 +175,11 @@ impl IntoOwned for TransactionMetaView<'_> {
     fn into_owned(&self) -> TransactionMeta {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionMetaView::V0(value) => TransactionMeta::V0(IntoOwned::into_owned(value)),
-            TransactionMetaView::V1(value) => TransactionMeta::V1(IntoOwned::into_owned(value)),
-            TransactionMetaView::V2(value) => TransactionMeta::V2(IntoOwned::into_owned(value)),
-            TransactionMetaView::V3(value) => TransactionMeta::V3(IntoOwned::into_owned(value)),
-            TransactionMetaView::V4(value) => TransactionMeta::V4(IntoOwned::into_owned(value)),
+            TransactionMetaView::V0(value) => TransactionMeta::V0(value.into_owned()),
+            TransactionMetaView::V1(value) => TransactionMeta::V1(value.into_owned()),
+            TransactionMetaView::V2(value) => TransactionMeta::V2(value.into_owned()),
+            TransactionMetaView::V3(value) => TransactionMeta::V3(value.into_owned()),
+            TransactionMetaView::V4(value) => TransactionMeta::V4(value.into_owned()),
         }
     }
 }
@@ -188,7 +188,7 @@ impl IntoOwned for TransactionMetaView<'_> {
 impl From<&TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
     fn from(v: &TransactionMetaView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -196,7 +196,7 @@ impl From<&TransactionMetaView<'_>> for TransactionMeta {
 impl From<TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
     fn from(v: TransactionMetaView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

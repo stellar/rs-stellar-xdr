@@ -68,9 +68,9 @@ impl IntoOwned for SorobanDelegateSignatureView<'_> {
     type Owned = SorobanDelegateSignature;
     fn into_owned(&self) -> SorobanDelegateSignature {
         SorobanDelegateSignature {
-            address: IntoOwned::into_owned(&self.address),
-            signature: IntoOwned::into_owned(&self.signature),
-            nested_delegates: IntoOwned::into_owned(&self.nested_delegates),
+            address: self.address.into_owned(),
+            signature: self.signature.into_owned(),
+            nested_delegates: self.nested_delegates.into_owned(),
         }
     }
 }
@@ -79,7 +79,7 @@ impl IntoOwned for SorobanDelegateSignatureView<'_> {
 impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
     #[must_use]
     fn from(v: &SorobanDelegateSignatureView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
 impl From<SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
     #[must_use]
     fn from(v: SorobanDelegateSignatureView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

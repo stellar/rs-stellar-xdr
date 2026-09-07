@@ -78,11 +78,11 @@ impl IntoOwned for ScpStatementConfirmView<'_> {
     type Owned = ScpStatementConfirm;
     fn into_owned(&self) -> ScpStatementConfirm {
         ScpStatementConfirm {
-            ballot: IntoOwned::into_owned(&self.ballot),
-            n_prepared: IntoOwned::into_owned(&self.n_prepared),
-            n_commit: IntoOwned::into_owned(&self.n_commit),
-            n_h: IntoOwned::into_owned(&self.n_h),
-            quorum_set_hash: IntoOwned::into_owned(&self.quorum_set_hash),
+            ballot: self.ballot.into_owned(),
+            n_prepared: self.n_prepared.into_owned(),
+            n_commit: self.n_commit.into_owned(),
+            n_h: self.n_h.into_owned(),
+            quorum_set_hash: self.quorum_set_hash.into_owned(),
         }
     }
 }
@@ -91,7 +91,7 @@ impl IntoOwned for ScpStatementConfirmView<'_> {
 impl From<&ScpStatementConfirmView<'_>> for ScpStatementConfirm {
     #[must_use]
     fn from(v: &ScpStatementConfirmView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -99,7 +99,7 @@ impl From<&ScpStatementConfirmView<'_>> for ScpStatementConfirm {
 impl From<ScpStatementConfirmView<'_>> for ScpStatementConfirm {
     #[must_use]
     fn from(v: ScpStatementConfirmView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

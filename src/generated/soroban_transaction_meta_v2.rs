@@ -64,8 +64,8 @@ impl IntoOwned for SorobanTransactionMetaV2View<'_> {
     type Owned = SorobanTransactionMetaV2;
     fn into_owned(&self) -> SorobanTransactionMetaV2 {
         SorobanTransactionMetaV2 {
-            ext: IntoOwned::into_owned(&self.ext),
-            return_value: IntoOwned::into_owned(&self.return_value),
+            ext: self.ext.into_owned(),
+            return_value: self.return_value.into_owned(),
         }
     }
 }
@@ -74,7 +74,7 @@ impl IntoOwned for SorobanTransactionMetaV2View<'_> {
 impl From<&SorobanTransactionMetaV2View<'_>> for SorobanTransactionMetaV2 {
     #[must_use]
     fn from(v: &SorobanTransactionMetaV2View<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -82,7 +82,7 @@ impl From<&SorobanTransactionMetaV2View<'_>> for SorobanTransactionMetaV2 {
 impl From<SorobanTransactionMetaV2View<'_>> for SorobanTransactionMetaV2 {
     #[must_use]
     fn from(v: SorobanTransactionMetaV2View<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

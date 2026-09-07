@@ -398,13 +398,13 @@ impl IntoOwned for ScSpecTypeDefView<'_> {
             ScSpecTypeDefView::Symbol => ScSpecTypeDef::Symbol,
             ScSpecTypeDefView::Address => ScSpecTypeDef::Address,
             ScSpecTypeDefView::MuxedAddress => ScSpecTypeDef::MuxedAddress,
-            ScSpecTypeDefView::Option(value) => ScSpecTypeDef::Option(IntoOwned::into_owned(value)),
-            ScSpecTypeDefView::Result(value) => ScSpecTypeDef::Result(IntoOwned::into_owned(value)),
-            ScSpecTypeDefView::Vec(value) => ScSpecTypeDef::Vec(IntoOwned::into_owned(value)),
-            ScSpecTypeDefView::Map(value) => ScSpecTypeDef::Map(IntoOwned::into_owned(value)),
-            ScSpecTypeDefView::Tuple(value) => ScSpecTypeDef::Tuple(IntoOwned::into_owned(value)),
-            ScSpecTypeDefView::BytesN(value) => ScSpecTypeDef::BytesN(IntoOwned::into_owned(value)),
-            ScSpecTypeDefView::Udt(value) => ScSpecTypeDef::Udt(IntoOwned::into_owned(value)),
+            ScSpecTypeDefView::Option(value) => ScSpecTypeDef::Option(Box::new(value.into_owned())),
+            ScSpecTypeDefView::Result(value) => ScSpecTypeDef::Result(Box::new(value.into_owned())),
+            ScSpecTypeDefView::Vec(value) => ScSpecTypeDef::Vec(Box::new(value.into_owned())),
+            ScSpecTypeDefView::Map(value) => ScSpecTypeDef::Map(Box::new(value.into_owned())),
+            ScSpecTypeDefView::Tuple(value) => ScSpecTypeDef::Tuple(Box::new(value.into_owned())),
+            ScSpecTypeDefView::BytesN(value) => ScSpecTypeDef::BytesN(value.into_owned()),
+            ScSpecTypeDefView::Udt(value) => ScSpecTypeDef::Udt(value.into_owned()),
         }
     }
 }
@@ -413,7 +413,7 @@ impl IntoOwned for ScSpecTypeDefView<'_> {
 impl From<&ScSpecTypeDefView<'_>> for ScSpecTypeDef {
     #[must_use]
     fn from(v: &ScSpecTypeDefView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -421,7 +421,7 @@ impl From<&ScSpecTypeDefView<'_>> for ScSpecTypeDef {
 impl From<ScSpecTypeDefView<'_>> for ScSpecTypeDef {
     #[must_use]
     fn from(v: ScSpecTypeDefView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

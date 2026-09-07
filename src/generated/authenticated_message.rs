@@ -148,9 +148,7 @@ impl IntoOwned for AuthenticatedMessageView<'_> {
     fn into_owned(&self) -> AuthenticatedMessage {
         #[allow(clippy::match_same_arms)]
         match self {
-            AuthenticatedMessageView::V0(value) => {
-                AuthenticatedMessage::V0(IntoOwned::into_owned(value))
-            }
+            AuthenticatedMessageView::V0(value) => AuthenticatedMessage::V0(value.into_owned()),
         }
     }
 }
@@ -159,7 +157,7 @@ impl IntoOwned for AuthenticatedMessageView<'_> {
 impl From<&AuthenticatedMessageView<'_>> for AuthenticatedMessage {
     #[must_use]
     fn from(v: &AuthenticatedMessageView<'_>) -> Self {
-        IntoOwned::into_owned(v)
+        v.into_owned()
     }
 }
 
@@ -167,7 +165,7 @@ impl From<&AuthenticatedMessageView<'_>> for AuthenticatedMessage {
 impl From<AuthenticatedMessageView<'_>> for AuthenticatedMessage {
     #[must_use]
     fn from(v: AuthenticatedMessageView<'_>) -> Self {
-        IntoOwned::into_owned(&v)
+        v.into_owned()
     }
 }
 

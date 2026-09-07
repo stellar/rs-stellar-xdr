@@ -50,16 +50,16 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyRequestMessageView is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`], usable in
+/// SignedTimeSlicedSurveyRequestMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyRequestMessageView<'a> {
-    pub request_signature: SignatureView<'a>,
+pub struct SignedTimeSlicedSurveyRequestMessageRef<'a> {
+    pub request_signature: SignatureRef<'a>,
     pub request: TimeSlicedSurveyRequestMessage,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SignedTimeSlicedSurveyRequestMessageView<'_> {
+impl IntoOwned for SignedTimeSlicedSurveyRequestMessageRef<'_> {
     type Owned = SignedTimeSlicedSurveyRequestMessage;
     fn into_owned(self) -> SignedTimeSlicedSurveyRequestMessage {
         SignedTimeSlicedSurveyRequestMessage {
@@ -70,22 +70,22 @@ impl IntoOwned for SignedTimeSlicedSurveyRequestMessageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSurveyRequestMessage {
+impl From<&SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
     #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyRequestMessageView<'_>) -> Self {
+    fn from(v: &SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyRequestMessageView<'_>> for SignedTimeSlicedSurveyRequestMessage {
+impl From<SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
     #[must_use]
-    fn from(v: SignedTimeSlicedSurveyRequestMessageView<'_>) -> Self {
+    fn from(v: SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SignedTimeSlicedSurveyRequestMessageView<'_> {
+impl WriteXdr for SignedTimeSlicedSurveyRequestMessageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

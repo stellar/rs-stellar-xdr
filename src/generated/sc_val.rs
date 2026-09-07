@@ -359,11 +359,11 @@ impl WriteXdr for ScVal {
     }
 }
 
-/// ScValView is a borrowing equivalent of [`ScVal`], usable in
+/// ScValRef is a borrowing equivalent of [`ScVal`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScValView<'a> {
+pub enum ScValRef<'a> {
     Bool(bool),
     Void,
     Error(ScError),
@@ -377,68 +377,68 @@ pub enum ScValView<'a> {
     I128(Int128Parts),
     U256(UInt256Parts),
     I256(Int256Parts),
-    Bytes(ScBytesView<'a>),
-    String(ScStringView<'a>),
-    Symbol(ScSymbolView<'a>),
-    Vec(Option<ScVecView<'a>>),
-    Map(Option<ScMapView<'a>>),
+    Bytes(ScBytesRef<'a>),
+    String(ScStringRef<'a>),
+    Symbol(ScSymbolRef<'a>),
+    Vec(Option<ScVecRef<'a>>),
+    Map(Option<ScMapRef<'a>>),
     Address(ScAddress),
-    ContractInstance(ScContractInstanceView<'a>),
+    ContractInstance(ScContractInstanceRef<'a>),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    ExecutableTag(ScStringView<'a>),
+    ExecutableTag(ScStringRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScValView<'_> {
+impl IntoOwned for ScValRef<'_> {
     type Owned = ScVal;
     fn into_owned(self) -> ScVal {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScValView::Bool(value) => ScVal::Bool(value.into_owned()),
-            ScValView::Void => ScVal::Void,
-            ScValView::Error(value) => ScVal::Error(value.into_owned()),
-            ScValView::U32(value) => ScVal::U32(value.into_owned()),
-            ScValView::I32(value) => ScVal::I32(value.into_owned()),
-            ScValView::U64(value) => ScVal::U64(value.into_owned()),
-            ScValView::I64(value) => ScVal::I64(value.into_owned()),
-            ScValView::Timepoint(value) => ScVal::Timepoint(value.into_owned()),
-            ScValView::Duration(value) => ScVal::Duration(value.into_owned()),
-            ScValView::U128(value) => ScVal::U128(value.into_owned()),
-            ScValView::I128(value) => ScVal::I128(value.into_owned()),
-            ScValView::U256(value) => ScVal::U256(value.into_owned()),
-            ScValView::I256(value) => ScVal::I256(value.into_owned()),
-            ScValView::Bytes(value) => ScVal::Bytes(value.into_owned()),
-            ScValView::String(value) => ScVal::String(value.into_owned()),
-            ScValView::Symbol(value) => ScVal::Symbol(value.into_owned()),
-            ScValView::Vec(value) => ScVal::Vec(value.into_owned()),
-            ScValView::Map(value) => ScVal::Map(value.into_owned()),
-            ScValView::Address(value) => ScVal::Address(value.into_owned()),
-            ScValView::ContractInstance(value) => ScVal::ContractInstance(value.into_owned()),
-            ScValView::LedgerKeyContractInstance => ScVal::LedgerKeyContractInstance,
-            ScValView::LedgerKeyNonce(value) => ScVal::LedgerKeyNonce(value.into_owned()),
-            ScValView::ExecutableTag(value) => ScVal::ExecutableTag(value.into_owned()),
+            ScValRef::Bool(value) => ScVal::Bool(value.into_owned()),
+            ScValRef::Void => ScVal::Void,
+            ScValRef::Error(value) => ScVal::Error(value.into_owned()),
+            ScValRef::U32(value) => ScVal::U32(value.into_owned()),
+            ScValRef::I32(value) => ScVal::I32(value.into_owned()),
+            ScValRef::U64(value) => ScVal::U64(value.into_owned()),
+            ScValRef::I64(value) => ScVal::I64(value.into_owned()),
+            ScValRef::Timepoint(value) => ScVal::Timepoint(value.into_owned()),
+            ScValRef::Duration(value) => ScVal::Duration(value.into_owned()),
+            ScValRef::U128(value) => ScVal::U128(value.into_owned()),
+            ScValRef::I128(value) => ScVal::I128(value.into_owned()),
+            ScValRef::U256(value) => ScVal::U256(value.into_owned()),
+            ScValRef::I256(value) => ScVal::I256(value.into_owned()),
+            ScValRef::Bytes(value) => ScVal::Bytes(value.into_owned()),
+            ScValRef::String(value) => ScVal::String(value.into_owned()),
+            ScValRef::Symbol(value) => ScVal::Symbol(value.into_owned()),
+            ScValRef::Vec(value) => ScVal::Vec(value.into_owned()),
+            ScValRef::Map(value) => ScVal::Map(value.into_owned()),
+            ScValRef::Address(value) => ScVal::Address(value.into_owned()),
+            ScValRef::ContractInstance(value) => ScVal::ContractInstance(value.into_owned()),
+            ScValRef::LedgerKeyContractInstance => ScVal::LedgerKeyContractInstance,
+            ScValRef::LedgerKeyNonce(value) => ScVal::LedgerKeyNonce(value.into_owned()),
+            ScValRef::ExecutableTag(value) => ScVal::ExecutableTag(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScValView<'_>> for ScVal {
+impl From<&ScValRef<'_>> for ScVal {
     #[must_use]
-    fn from(v: &ScValView<'_>) -> Self {
+    fn from(v: &ScValRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScValView<'_>> for ScVal {
+impl From<ScValRef<'_>> for ScVal {
     #[must_use]
-    fn from(v: ScValView<'_>) -> Self {
+    fn from(v: ScValRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ScValView<'_> {
+impl ScValRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
@@ -470,7 +470,7 @@ impl ScValView<'_> {
     }
 }
 
-impl WriteXdr for ScValView<'_> {
+impl WriteXdr for ScValRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

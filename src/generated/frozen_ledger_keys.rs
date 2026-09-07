@@ -45,15 +45,15 @@ impl WriteXdr for FrozenLedgerKeys {
     }
 }
 
-/// FrozenLedgerKeysView is a borrowing equivalent of [`FrozenLedgerKeys`], usable in
+/// FrozenLedgerKeysRef is a borrowing equivalent of [`FrozenLedgerKeys`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FrozenLedgerKeysView<'a> {
-    pub keys: VecMView<'a, EncodedLedgerKeyView<'a>>,
+pub struct FrozenLedgerKeysRef<'a> {
+    pub keys: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FrozenLedgerKeysView<'_> {
+impl IntoOwned for FrozenLedgerKeysRef<'_> {
     type Owned = FrozenLedgerKeys;
     fn into_owned(self) -> FrozenLedgerKeys {
         FrozenLedgerKeys {
@@ -63,22 +63,22 @@ impl IntoOwned for FrozenLedgerKeysView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
+impl From<&FrozenLedgerKeysRef<'_>> for FrozenLedgerKeys {
     #[must_use]
-    fn from(v: &FrozenLedgerKeysView<'_>) -> Self {
+    fn from(v: &FrozenLedgerKeysRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FrozenLedgerKeysView<'_>> for FrozenLedgerKeys {
+impl From<FrozenLedgerKeysRef<'_>> for FrozenLedgerKeys {
     #[must_use]
-    fn from(v: FrozenLedgerKeysView<'_>) -> Self {
+    fn from(v: FrozenLedgerKeysRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for FrozenLedgerKeysView<'_> {
+impl WriteXdr for FrozenLedgerKeysRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

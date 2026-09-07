@@ -46,15 +46,15 @@ impl WriteXdr for ScSpecTypeUdt {
     }
 }
 
-/// ScSpecTypeUdtView is a borrowing equivalent of [`ScSpecTypeUdt`], usable in
+/// ScSpecTypeUdtRef is a borrowing equivalent of [`ScSpecTypeUdt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeUdtView<'a> {
-    pub name: StringMView<'a, 60>,
+pub struct ScSpecTypeUdtRef<'a> {
+    pub name: StringMRef<'a, 60>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeUdtView<'_> {
+impl IntoOwned for ScSpecTypeUdtRef<'_> {
     type Owned = ScSpecTypeUdt;
     fn into_owned(self) -> ScSpecTypeUdt {
         ScSpecTypeUdt {
@@ -64,22 +64,22 @@ impl IntoOwned for ScSpecTypeUdtView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
+impl From<&ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
     #[must_use]
-    fn from(v: &ScSpecTypeUdtView<'_>) -> Self {
+    fn from(v: &ScSpecTypeUdtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeUdtView<'_>> for ScSpecTypeUdt {
+impl From<ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
     #[must_use]
-    fn from(v: ScSpecTypeUdtView<'_>) -> Self {
+    fn from(v: ScSpecTypeUdtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecTypeUdtView<'_> {
+impl WriteXdr for ScSpecTypeUdtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

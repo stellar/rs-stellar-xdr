@@ -136,44 +136,44 @@ impl WriteXdr for TransactionPhase {
     }
 }
 
-/// TransactionPhaseView is a borrowing equivalent of [`TransactionPhase`], usable in
+/// TransactionPhaseRef is a borrowing equivalent of [`TransactionPhase`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionPhaseView<'a> {
-    V0(VecMView<'a, TxSetComponentView<'a>>),
-    V1(ParallelTxsComponentView<'a>),
+pub enum TransactionPhaseRef<'a> {
+    V0(VecMRef<'a, TxSetComponentRef<'a>>),
+    V1(ParallelTxsComponentRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionPhaseView<'_> {
+impl IntoOwned for TransactionPhaseRef<'_> {
     type Owned = TransactionPhase;
     fn into_owned(self) -> TransactionPhase {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionPhaseView::V0(value) => TransactionPhase::V0(value.into_owned()),
-            TransactionPhaseView::V1(value) => TransactionPhase::V1(value.into_owned()),
+            TransactionPhaseRef::V0(value) => TransactionPhase::V0(value.into_owned()),
+            TransactionPhaseRef::V1(value) => TransactionPhase::V1(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionPhaseView<'_>> for TransactionPhase {
+impl From<&TransactionPhaseRef<'_>> for TransactionPhase {
     #[must_use]
-    fn from(v: &TransactionPhaseView<'_>) -> Self {
+    fn from(v: &TransactionPhaseRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionPhaseView<'_>> for TransactionPhase {
+impl From<TransactionPhaseRef<'_>> for TransactionPhase {
     #[must_use]
-    fn from(v: TransactionPhaseView<'_>) -> Self {
+    fn from(v: TransactionPhaseRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl TransactionPhaseView<'_> {
+impl TransactionPhaseRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,7 +184,7 @@ impl TransactionPhaseView<'_> {
     }
 }
 
-impl WriteXdr for TransactionPhaseView<'_> {
+impl WriteXdr for TransactionPhaseRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

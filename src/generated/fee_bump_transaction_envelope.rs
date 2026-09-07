@@ -52,16 +52,16 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
     }
 }
 
-/// FeeBumpTransactionEnvelopeView is a borrowing equivalent of [`FeeBumpTransactionEnvelope`], usable in
+/// FeeBumpTransactionEnvelopeRef is a borrowing equivalent of [`FeeBumpTransactionEnvelope`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FeeBumpTransactionEnvelopeView<'a> {
-    pub tx: FeeBumpTransactionView<'a>,
-    pub signatures: VecMView<'a, DecoratedSignatureView<'a>, 20>,
+pub struct FeeBumpTransactionEnvelopeRef<'a> {
+    pub tx: FeeBumpTransactionRef<'a>,
+    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionEnvelopeView<'_> {
+impl IntoOwned for FeeBumpTransactionEnvelopeRef<'_> {
     type Owned = FeeBumpTransactionEnvelope;
     fn into_owned(self) -> FeeBumpTransactionEnvelope {
         FeeBumpTransactionEnvelope {
@@ -72,22 +72,22 @@ impl IntoOwned for FeeBumpTransactionEnvelopeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
+impl From<&FeeBumpTransactionEnvelopeRef<'_>> for FeeBumpTransactionEnvelope {
     #[must_use]
-    fn from(v: &FeeBumpTransactionEnvelopeView<'_>) -> Self {
+    fn from(v: &FeeBumpTransactionEnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
+impl From<FeeBumpTransactionEnvelopeRef<'_>> for FeeBumpTransactionEnvelope {
     #[must_use]
-    fn from(v: FeeBumpTransactionEnvelopeView<'_>) -> Self {
+    fn from(v: FeeBumpTransactionEnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for FeeBumpTransactionEnvelopeView<'_> {
+impl WriteXdr for FeeBumpTransactionEnvelopeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -93,17 +93,17 @@ impl WriteXdr for TransactionResult {
     }
 }
 
-/// TransactionResultView is a borrowing equivalent of [`TransactionResult`], usable in
+/// TransactionResultRef is a borrowing equivalent of [`TransactionResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultView<'a> {
+pub struct TransactionResultRef<'a> {
     pub fee_charged: i64,
-    pub result: TransactionResultResultView<'a>,
+    pub result: TransactionResultResultRef<'a>,
     pub ext: TransactionResultExt,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultView<'_> {
+impl IntoOwned for TransactionResultRef<'_> {
     type Owned = TransactionResult;
     fn into_owned(self) -> TransactionResult {
         TransactionResult {
@@ -115,22 +115,22 @@ impl IntoOwned for TransactionResultView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultView<'_>> for TransactionResult {
+impl From<&TransactionResultRef<'_>> for TransactionResult {
     #[must_use]
-    fn from(v: &TransactionResultView<'_>) -> Self {
+    fn from(v: &TransactionResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultView<'_>> for TransactionResult {
+impl From<TransactionResultRef<'_>> for TransactionResult {
     #[must_use]
-    fn from(v: TransactionResultView<'_>) -> Self {
+    fn from(v: TransactionResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionResultView<'_> {
+impl WriteXdr for TransactionResultRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

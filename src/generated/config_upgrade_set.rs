@@ -45,15 +45,15 @@ impl WriteXdr for ConfigUpgradeSet {
     }
 }
 
-/// ConfigUpgradeSetView is a borrowing equivalent of [`ConfigUpgradeSet`], usable in
+/// ConfigUpgradeSetRef is a borrowing equivalent of [`ConfigUpgradeSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ConfigUpgradeSetView<'a> {
-    pub updated_entry: VecMView<'a, ConfigSettingEntryView<'a>>,
+pub struct ConfigUpgradeSetRef<'a> {
+    pub updated_entry: VecMRef<'a, ConfigSettingEntryRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ConfigUpgradeSetView<'_> {
+impl IntoOwned for ConfigUpgradeSetRef<'_> {
     type Owned = ConfigUpgradeSet;
     fn into_owned(self) -> ConfigUpgradeSet {
         ConfigUpgradeSet {
@@ -63,22 +63,22 @@ impl IntoOwned for ConfigUpgradeSetView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
+impl From<&ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
     #[must_use]
-    fn from(v: &ConfigUpgradeSetView<'_>) -> Self {
+    fn from(v: &ConfigUpgradeSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
+impl From<ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
     #[must_use]
-    fn from(v: ConfigUpgradeSetView<'_>) -> Self {
+    fn from(v: ConfigUpgradeSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ConfigUpgradeSetView<'_> {
+impl WriteXdr for ConfigUpgradeSetRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

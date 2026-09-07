@@ -363,101 +363,101 @@ impl WriteXdr for ConfigSettingEntry {
     }
 }
 
-/// ConfigSettingEntryView is a borrowing equivalent of [`ConfigSettingEntry`], usable in
+/// ConfigSettingEntryRef is a borrowing equivalent of [`ConfigSettingEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ConfigSettingEntryView<'a> {
+pub enum ConfigSettingEntryRef<'a> {
     ContractMaxSizeBytes(u32),
     ContractComputeV0(ConfigSettingContractComputeV0),
     ContractLedgerCostV0(ConfigSettingContractLedgerCostV0),
     ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0),
     ContractEventsV0(ConfigSettingContractEventsV0),
     ContractBandwidthV0(ConfigSettingContractBandwidthV0),
-    ContractCostParamsCpuInstructions(ContractCostParamsView<'a>),
-    ContractCostParamsMemoryBytes(ContractCostParamsView<'a>),
+    ContractCostParamsCpuInstructions(ContractCostParamsRef<'a>),
+    ContractCostParamsMemoryBytes(ContractCostParamsRef<'a>),
     ContractDataKeySizeBytes(u32),
     ContractDataEntrySizeBytes(u32),
     StateArchival(StateArchivalSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
-    LiveSorobanStateSizeWindow(VecMView<'a, u64>),
+    LiveSorobanStateSizeWindow(VecMRef<'a, u64>),
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
     ScpTiming(ConfigSettingScpTiming),
-    FrozenLedgerKeys(FrozenLedgerKeysView<'a>),
-    FrozenLedgerKeysDelta(FrozenLedgerKeysDeltaView<'a>),
-    FreezeBypassTxs(FreezeBypassTxsView<'a>),
-    FreezeBypassTxsDelta(FreezeBypassTxsDeltaView<'a>),
+    FrozenLedgerKeys(FrozenLedgerKeysRef<'a>),
+    FrozenLedgerKeysDelta(FrozenLedgerKeysDeltaRef<'a>),
+    FreezeBypassTxs(FreezeBypassTxsRef<'a>),
+    FreezeBypassTxsDelta(FreezeBypassTxsDeltaRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ConfigSettingEntryView<'_> {
+impl IntoOwned for ConfigSettingEntryRef<'_> {
     type Owned = ConfigSettingEntry;
     fn into_owned(self) -> ConfigSettingEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            ConfigSettingEntryView::ContractMaxSizeBytes(value) => {
+            ConfigSettingEntryRef::ContractMaxSizeBytes(value) => {
                 ConfigSettingEntry::ContractMaxSizeBytes(value.into_owned())
             }
-            ConfigSettingEntryView::ContractComputeV0(value) => {
+            ConfigSettingEntryRef::ContractComputeV0(value) => {
                 ConfigSettingEntry::ContractComputeV0(value.into_owned())
             }
-            ConfigSettingEntryView::ContractLedgerCostV0(value) => {
+            ConfigSettingEntryRef::ContractLedgerCostV0(value) => {
                 ConfigSettingEntry::ContractLedgerCostV0(value.into_owned())
             }
-            ConfigSettingEntryView::ContractHistoricalDataV0(value) => {
+            ConfigSettingEntryRef::ContractHistoricalDataV0(value) => {
                 ConfigSettingEntry::ContractHistoricalDataV0(value.into_owned())
             }
-            ConfigSettingEntryView::ContractEventsV0(value) => {
+            ConfigSettingEntryRef::ContractEventsV0(value) => {
                 ConfigSettingEntry::ContractEventsV0(value.into_owned())
             }
-            ConfigSettingEntryView::ContractBandwidthV0(value) => {
+            ConfigSettingEntryRef::ContractBandwidthV0(value) => {
                 ConfigSettingEntry::ContractBandwidthV0(value.into_owned())
             }
-            ConfigSettingEntryView::ContractCostParamsCpuInstructions(value) => {
+            ConfigSettingEntryRef::ContractCostParamsCpuInstructions(value) => {
                 ConfigSettingEntry::ContractCostParamsCpuInstructions(value.into_owned())
             }
-            ConfigSettingEntryView::ContractCostParamsMemoryBytes(value) => {
+            ConfigSettingEntryRef::ContractCostParamsMemoryBytes(value) => {
                 ConfigSettingEntry::ContractCostParamsMemoryBytes(value.into_owned())
             }
-            ConfigSettingEntryView::ContractDataKeySizeBytes(value) => {
+            ConfigSettingEntryRef::ContractDataKeySizeBytes(value) => {
                 ConfigSettingEntry::ContractDataKeySizeBytes(value.into_owned())
             }
-            ConfigSettingEntryView::ContractDataEntrySizeBytes(value) => {
+            ConfigSettingEntryRef::ContractDataEntrySizeBytes(value) => {
                 ConfigSettingEntry::ContractDataEntrySizeBytes(value.into_owned())
             }
-            ConfigSettingEntryView::StateArchival(value) => {
+            ConfigSettingEntryRef::StateArchival(value) => {
                 ConfigSettingEntry::StateArchival(value.into_owned())
             }
-            ConfigSettingEntryView::ContractExecutionLanes(value) => {
+            ConfigSettingEntryRef::ContractExecutionLanes(value) => {
                 ConfigSettingEntry::ContractExecutionLanes(value.into_owned())
             }
-            ConfigSettingEntryView::LiveSorobanStateSizeWindow(value) => {
+            ConfigSettingEntryRef::LiveSorobanStateSizeWindow(value) => {
                 ConfigSettingEntry::LiveSorobanStateSizeWindow(value.into_owned())
             }
-            ConfigSettingEntryView::EvictionIterator(value) => {
+            ConfigSettingEntryRef::EvictionIterator(value) => {
                 ConfigSettingEntry::EvictionIterator(value.into_owned())
             }
-            ConfigSettingEntryView::ContractParallelComputeV0(value) => {
+            ConfigSettingEntryRef::ContractParallelComputeV0(value) => {
                 ConfigSettingEntry::ContractParallelComputeV0(value.into_owned())
             }
-            ConfigSettingEntryView::ContractLedgerCostExtV0(value) => {
+            ConfigSettingEntryRef::ContractLedgerCostExtV0(value) => {
                 ConfigSettingEntry::ContractLedgerCostExtV0(value.into_owned())
             }
-            ConfigSettingEntryView::ScpTiming(value) => {
+            ConfigSettingEntryRef::ScpTiming(value) => {
                 ConfigSettingEntry::ScpTiming(value.into_owned())
             }
-            ConfigSettingEntryView::FrozenLedgerKeys(value) => {
+            ConfigSettingEntryRef::FrozenLedgerKeys(value) => {
                 ConfigSettingEntry::FrozenLedgerKeys(value.into_owned())
             }
-            ConfigSettingEntryView::FrozenLedgerKeysDelta(value) => {
+            ConfigSettingEntryRef::FrozenLedgerKeysDelta(value) => {
                 ConfigSettingEntry::FrozenLedgerKeysDelta(value.into_owned())
             }
-            ConfigSettingEntryView::FreezeBypassTxs(value) => {
+            ConfigSettingEntryRef::FreezeBypassTxs(value) => {
                 ConfigSettingEntry::FreezeBypassTxs(value.into_owned())
             }
-            ConfigSettingEntryView::FreezeBypassTxsDelta(value) => {
+            ConfigSettingEntryRef::FreezeBypassTxsDelta(value) => {
                 ConfigSettingEntry::FreezeBypassTxsDelta(value.into_owned())
             }
         }
@@ -465,22 +465,22 @@ impl IntoOwned for ConfigSettingEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ConfigSettingEntryView<'_>> for ConfigSettingEntry {
+impl From<&ConfigSettingEntryRef<'_>> for ConfigSettingEntry {
     #[must_use]
-    fn from(v: &ConfigSettingEntryView<'_>) -> Self {
+    fn from(v: &ConfigSettingEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ConfigSettingEntryView<'_>> for ConfigSettingEntry {
+impl From<ConfigSettingEntryRef<'_>> for ConfigSettingEntry {
     #[must_use]
-    fn from(v: ConfigSettingEntryView<'_>) -> Self {
+    fn from(v: ConfigSettingEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ConfigSettingEntryView<'_> {
+impl ConfigSettingEntryRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ConfigSettingId {
         #[allow(clippy::match_same_arms)]
@@ -514,7 +514,7 @@ impl ConfigSettingEntryView<'_> {
     }
 }
 
-impl WriteXdr for ConfigSettingEntryView<'_> {
+impl WriteXdr for ConfigSettingEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

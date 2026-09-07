@@ -136,23 +136,23 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
     }
 }
 
-/// AccountEntryExtensionV1ExtView is a borrowing equivalent of [`AccountEntryExtensionV1Ext`], usable in
+/// AccountEntryExtensionV1ExtRef is a borrowing equivalent of [`AccountEntryExtensionV1Ext`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AccountEntryExtensionV1ExtView<'a> {
+pub enum AccountEntryExtensionV1ExtRef<'a> {
     V0,
-    V2(AccountEntryExtensionV2View<'a>),
+    V2(AccountEntryExtensionV2Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV1ExtView<'_> {
+impl IntoOwned for AccountEntryExtensionV1ExtRef<'_> {
     type Owned = AccountEntryExtensionV1Ext;
     fn into_owned(self) -> AccountEntryExtensionV1Ext {
         #[allow(clippy::match_same_arms)]
         match self {
-            AccountEntryExtensionV1ExtView::V0 => AccountEntryExtensionV1Ext::V0,
-            AccountEntryExtensionV1ExtView::V2(value) => {
+            AccountEntryExtensionV1ExtRef::V0 => AccountEntryExtensionV1Ext::V0,
+            AccountEntryExtensionV1ExtRef::V2(value) => {
                 AccountEntryExtensionV1Ext::V2(value.into_owned())
             }
         }
@@ -160,22 +160,22 @@ impl IntoOwned for AccountEntryExtensionV1ExtView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV1ExtView<'_>> for AccountEntryExtensionV1Ext {
+impl From<&AccountEntryExtensionV1ExtRef<'_>> for AccountEntryExtensionV1Ext {
     #[must_use]
-    fn from(v: &AccountEntryExtensionV1ExtView<'_>) -> Self {
+    fn from(v: &AccountEntryExtensionV1ExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV1ExtView<'_>> for AccountEntryExtensionV1Ext {
+impl From<AccountEntryExtensionV1ExtRef<'_>> for AccountEntryExtensionV1Ext {
     #[must_use]
-    fn from(v: AccountEntryExtensionV1ExtView<'_>) -> Self {
+    fn from(v: AccountEntryExtensionV1ExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl AccountEntryExtensionV1ExtView<'_> {
+impl AccountEntryExtensionV1ExtRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -186,7 +186,7 @@ impl AccountEntryExtensionV1ExtView<'_> {
     }
 }
 
-impl WriteXdr for AccountEntryExtensionV1ExtView<'_> {
+impl WriteXdr for AccountEntryExtensionV1ExtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

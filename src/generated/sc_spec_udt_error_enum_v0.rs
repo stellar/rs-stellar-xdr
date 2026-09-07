@@ -58,18 +58,18 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
     }
 }
 
-/// ScSpecUdtErrorEnumV0View is a borrowing equivalent of [`ScSpecUdtErrorEnumV0`], usable in
+/// ScSpecUdtErrorEnumV0Ref is a borrowing equivalent of [`ScSpecUdtErrorEnumV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtErrorEnumV0View<'a> {
-    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
-    pub lib: StringMView<'a, 80>,
-    pub name: StringMView<'a, 60>,
-    pub cases: VecMView<'a, ScSpecUdtErrorEnumCaseV0View<'a>>,
+pub struct ScSpecUdtErrorEnumV0Ref<'a> {
+    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
+    pub lib: StringMRef<'a, 80>,
+    pub name: StringMRef<'a, 60>,
+    pub cases: VecMRef<'a, ScSpecUdtErrorEnumCaseV0Ref<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtErrorEnumV0View<'_> {
+impl IntoOwned for ScSpecUdtErrorEnumV0Ref<'_> {
     type Owned = ScSpecUdtErrorEnumV0;
     fn into_owned(self) -> ScSpecUdtErrorEnumV0 {
         ScSpecUdtErrorEnumV0 {
@@ -82,22 +82,22 @@ impl IntoOwned for ScSpecUdtErrorEnumV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtErrorEnumV0View<'_>> for ScSpecUdtErrorEnumV0 {
+impl From<&ScSpecUdtErrorEnumV0Ref<'_>> for ScSpecUdtErrorEnumV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtErrorEnumV0View<'_>) -> Self {
+    fn from(v: &ScSpecUdtErrorEnumV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtErrorEnumV0View<'_>> for ScSpecUdtErrorEnumV0 {
+impl From<ScSpecUdtErrorEnumV0Ref<'_>> for ScSpecUdtErrorEnumV0 {
     #[must_use]
-    fn from(v: ScSpecUdtErrorEnumV0View<'_>) -> Self {
+    fn from(v: ScSpecUdtErrorEnumV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecUdtErrorEnumV0View<'_> {
+impl WriteXdr for ScSpecUdtErrorEnumV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

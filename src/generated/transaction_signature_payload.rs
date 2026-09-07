@@ -58,16 +58,16 @@ impl WriteXdr for TransactionSignaturePayload {
     }
 }
 
-/// TransactionSignaturePayloadView is a borrowing equivalent of [`TransactionSignaturePayload`], usable in
+/// TransactionSignaturePayloadRef is a borrowing equivalent of [`TransactionSignaturePayload`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionSignaturePayloadView<'a> {
+pub struct TransactionSignaturePayloadRef<'a> {
     pub network_id: Hash,
-    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionView<'a>,
+    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionSignaturePayloadView<'_> {
+impl IntoOwned for TransactionSignaturePayloadRef<'_> {
     type Owned = TransactionSignaturePayload;
     fn into_owned(self) -> TransactionSignaturePayload {
         TransactionSignaturePayload {
@@ -78,22 +78,22 @@ impl IntoOwned for TransactionSignaturePayloadView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
+impl From<&TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
     #[must_use]
-    fn from(v: &TransactionSignaturePayloadView<'_>) -> Self {
+    fn from(v: &TransactionSignaturePayloadRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionSignaturePayloadView<'_>> for TransactionSignaturePayload {
+impl From<TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
     #[must_use]
-    fn from(v: TransactionSignaturePayloadView<'_>) -> Self {
+    fn from(v: TransactionSignaturePayloadRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionSignaturePayloadView<'_> {
+impl WriteXdr for TransactionSignaturePayloadRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

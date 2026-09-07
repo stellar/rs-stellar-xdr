@@ -46,15 +46,15 @@ impl WriteXdr for ScSpecTypeTuple {
     }
 }
 
-/// ScSpecTypeTupleView is a borrowing equivalent of [`ScSpecTypeTuple`], usable in
+/// ScSpecTypeTupleRef is a borrowing equivalent of [`ScSpecTypeTuple`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeTupleView<'a> {
-    pub value_types: VecMView<'a, ScSpecTypeDefView<'a>, 12>,
+pub struct ScSpecTypeTupleRef<'a> {
+    pub value_types: VecMRef<'a, ScSpecTypeDefRef<'a>, 12>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeTupleView<'_> {
+impl IntoOwned for ScSpecTypeTupleRef<'_> {
     type Owned = ScSpecTypeTuple;
     fn into_owned(self) -> ScSpecTypeTuple {
         ScSpecTypeTuple {
@@ -64,22 +64,22 @@ impl IntoOwned for ScSpecTypeTupleView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
+impl From<&ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
     #[must_use]
-    fn from(v: &ScSpecTypeTupleView<'_>) -> Self {
+    fn from(v: &ScSpecTypeTupleRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
+impl From<ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
     #[must_use]
-    fn from(v: ScSpecTypeTupleView<'_>) -> Self {
+    fn from(v: ScSpecTypeTupleRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecTypeTupleView<'_> {
+impl WriteXdr for ScSpecTypeTupleRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

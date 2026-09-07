@@ -108,13 +108,13 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     }
 }
 
-/// DependentTxClusterView is a borrowing equivalent of [`DependentTxCluster`], usable in
+/// DependentTxClusterRef is a borrowing equivalent of [`DependentTxCluster`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DependentTxClusterView<'a>(pub VecMView<'a, TransactionEnvelopeView<'a>>);
+pub struct DependentTxClusterRef<'a>(pub VecMRef<'a, TransactionEnvelopeRef<'a>>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for DependentTxClusterView<'_> {
+impl IntoOwned for DependentTxClusterRef<'_> {
     type Owned = DependentTxCluster;
     fn into_owned(self) -> DependentTxCluster {
         DependentTxCluster(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for DependentTxClusterView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&DependentTxClusterView<'_>> for DependentTxCluster {
+impl From<&DependentTxClusterRef<'_>> for DependentTxCluster {
     #[must_use]
-    fn from(v: &DependentTxClusterView<'_>) -> Self {
+    fn from(v: &DependentTxClusterRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<DependentTxClusterView<'_>> for DependentTxCluster {
+impl From<DependentTxClusterRef<'_>> for DependentTxCluster {
     #[must_use]
-    fn from(v: DependentTxClusterView<'_>) -> Self {
+    fn from(v: DependentTxClusterRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for DependentTxClusterView<'_> {
+impl WriteXdr for DependentTxClusterRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

@@ -108,13 +108,13 @@ impl AsRef<[u8]> for EncryptedBody {
     }
 }
 
-/// EncryptedBodyView is a borrowing equivalent of [`EncryptedBody`], usable in
+/// EncryptedBodyRef is a borrowing equivalent of [`EncryptedBody`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EncryptedBodyView<'a>(pub BytesMView<'a, 64000>);
+pub struct EncryptedBodyRef<'a>(pub BytesMRef<'a, 64000>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for EncryptedBodyView<'_> {
+impl IntoOwned for EncryptedBodyRef<'_> {
     type Owned = EncryptedBody;
     fn into_owned(self) -> EncryptedBody {
         EncryptedBody(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for EncryptedBodyView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&EncryptedBodyView<'_>> for EncryptedBody {
+impl From<&EncryptedBodyRef<'_>> for EncryptedBody {
     #[must_use]
-    fn from(v: &EncryptedBodyView<'_>) -> Self {
+    fn from(v: &EncryptedBodyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<EncryptedBodyView<'_>> for EncryptedBody {
+impl From<EncryptedBodyRef<'_>> for EncryptedBody {
     #[must_use]
-    fn from(v: EncryptedBodyView<'_>) -> Self {
+    fn from(v: EncryptedBodyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for EncryptedBodyView<'_> {
+impl WriteXdr for EncryptedBodyRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

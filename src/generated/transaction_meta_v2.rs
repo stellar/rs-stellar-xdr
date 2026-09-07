@@ -56,17 +56,17 @@ impl WriteXdr for TransactionMetaV2 {
     }
 }
 
-/// TransactionMetaV2View is a borrowing equivalent of [`TransactionMetaV2`], usable in
+/// TransactionMetaV2Ref is a borrowing equivalent of [`TransactionMetaV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionMetaV2View<'a> {
-    pub tx_changes_before: LedgerEntryChangesView<'a>,
-    pub operations: VecMView<'a, OperationMetaView<'a>>,
-    pub tx_changes_after: LedgerEntryChangesView<'a>,
+pub struct TransactionMetaV2Ref<'a> {
+    pub tx_changes_before: LedgerEntryChangesRef<'a>,
+    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
+    pub tx_changes_after: LedgerEntryChangesRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionMetaV2View<'_> {
+impl IntoOwned for TransactionMetaV2Ref<'_> {
     type Owned = TransactionMetaV2;
     fn into_owned(self) -> TransactionMetaV2 {
         TransactionMetaV2 {
@@ -78,22 +78,22 @@ impl IntoOwned for TransactionMetaV2View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionMetaV2View<'_>> for TransactionMetaV2 {
+impl From<&TransactionMetaV2Ref<'_>> for TransactionMetaV2 {
     #[must_use]
-    fn from(v: &TransactionMetaV2View<'_>) -> Self {
+    fn from(v: &TransactionMetaV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionMetaV2View<'_>> for TransactionMetaV2 {
+impl From<TransactionMetaV2Ref<'_>> for TransactionMetaV2 {
     #[must_use]
-    fn from(v: TransactionMetaV2View<'_>) -> Self {
+    fn from(v: TransactionMetaV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionMetaV2View<'_> {
+impl WriteXdr for TransactionMetaV2Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

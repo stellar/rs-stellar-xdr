@@ -58,16 +58,16 @@ impl WriteXdr for AccountEntryExtensionV1 {
     }
 }
 
-/// AccountEntryExtensionV1View is a borrowing equivalent of [`AccountEntryExtensionV1`], usable in
+/// AccountEntryExtensionV1Ref is a borrowing equivalent of [`AccountEntryExtensionV1`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryExtensionV1View<'a> {
+pub struct AccountEntryExtensionV1Ref<'a> {
     pub liabilities: Liabilities,
-    pub ext: AccountEntryExtensionV1ExtView<'a>,
+    pub ext: AccountEntryExtensionV1ExtRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV1View<'_> {
+impl IntoOwned for AccountEntryExtensionV1Ref<'_> {
     type Owned = AccountEntryExtensionV1;
     fn into_owned(self) -> AccountEntryExtensionV1 {
         AccountEntryExtensionV1 {
@@ -78,22 +78,22 @@ impl IntoOwned for AccountEntryExtensionV1View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV1View<'_>> for AccountEntryExtensionV1 {
+impl From<&AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
     #[must_use]
-    fn from(v: &AccountEntryExtensionV1View<'_>) -> Self {
+    fn from(v: &AccountEntryExtensionV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV1View<'_>> for AccountEntryExtensionV1 {
+impl From<AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
     #[must_use]
-    fn from(v: AccountEntryExtensionV1View<'_>) -> Self {
+    fn from(v: AccountEntryExtensionV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for AccountEntryExtensionV1View<'_> {
+impl WriteXdr for AccountEntryExtensionV1Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

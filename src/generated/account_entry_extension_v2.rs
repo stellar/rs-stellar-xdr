@@ -66,18 +66,18 @@ impl WriteXdr for AccountEntryExtensionV2 {
     }
 }
 
-/// AccountEntryExtensionV2View is a borrowing equivalent of [`AccountEntryExtensionV2`], usable in
+/// AccountEntryExtensionV2Ref is a borrowing equivalent of [`AccountEntryExtensionV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryExtensionV2View<'a> {
+pub struct AccountEntryExtensionV2Ref<'a> {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
-    pub signer_sponsoring_i_ds: VecMView<'a, SponsorshipDescriptor, MAX_SIGNERS>,
+    pub signer_sponsoring_i_ds: VecMRef<'a, SponsorshipDescriptor, MAX_SIGNERS>,
     pub ext: AccountEntryExtensionV2Ext,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV2View<'_> {
+impl IntoOwned for AccountEntryExtensionV2Ref<'_> {
     type Owned = AccountEntryExtensionV2;
     fn into_owned(self) -> AccountEntryExtensionV2 {
         AccountEntryExtensionV2 {
@@ -90,22 +90,22 @@ impl IntoOwned for AccountEntryExtensionV2View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
+impl From<&AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
     #[must_use]
-    fn from(v: &AccountEntryExtensionV2View<'_>) -> Self {
+    fn from(v: &AccountEntryExtensionV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
+impl From<AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
     #[must_use]
-    fn from(v: AccountEntryExtensionV2View<'_>) -> Self {
+    fn from(v: AccountEntryExtensionV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for AccountEntryExtensionV2View<'_> {
+impl WriteXdr for AccountEntryExtensionV2Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

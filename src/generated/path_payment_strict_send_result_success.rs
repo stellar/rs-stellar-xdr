@@ -50,16 +50,16 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
     }
 }
 
-/// PathPaymentStrictSendResultSuccessView is a borrowing equivalent of [`PathPaymentStrictSendResultSuccess`], usable in
+/// PathPaymentStrictSendResultSuccessRef is a borrowing equivalent of [`PathPaymentStrictSendResultSuccess`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictSendResultSuccessView<'a> {
-    pub offers: VecMView<'a, ClaimAtom>,
+pub struct PathPaymentStrictSendResultSuccessRef<'a> {
+    pub offers: VecMRef<'a, ClaimAtom>,
     pub last: SimplePaymentResult,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictSendResultSuccessView<'_> {
+impl IntoOwned for PathPaymentStrictSendResultSuccessRef<'_> {
     type Owned = PathPaymentStrictSendResultSuccess;
     fn into_owned(self) -> PathPaymentStrictSendResultSuccess {
         PathPaymentStrictSendResultSuccess {
@@ -70,22 +70,22 @@ impl IntoOwned for PathPaymentStrictSendResultSuccessView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictSendResultSuccessView<'_>> for PathPaymentStrictSendResultSuccess {
+impl From<&PathPaymentStrictSendResultSuccessRef<'_>> for PathPaymentStrictSendResultSuccess {
     #[must_use]
-    fn from(v: &PathPaymentStrictSendResultSuccessView<'_>) -> Self {
+    fn from(v: &PathPaymentStrictSendResultSuccessRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictSendResultSuccessView<'_>> for PathPaymentStrictSendResultSuccess {
+impl From<PathPaymentStrictSendResultSuccessRef<'_>> for PathPaymentStrictSendResultSuccess {
     #[must_use]
-    fn from(v: PathPaymentStrictSendResultSuccessView<'_>) -> Self {
+    fn from(v: PathPaymentStrictSendResultSuccessRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PathPaymentStrictSendResultSuccessView<'_> {
+impl WriteXdr for PathPaymentStrictSendResultSuccessRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

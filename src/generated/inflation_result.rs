@@ -139,44 +139,44 @@ impl WriteXdr for InflationResult {
     }
 }
 
-/// InflationResultView is a borrowing equivalent of [`InflationResult`], usable in
+/// InflationResultRef is a borrowing equivalent of [`InflationResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum InflationResultView<'a> {
-    Success(VecMView<'a, InflationPayout>),
+pub enum InflationResultRef<'a> {
+    Success(VecMRef<'a, InflationPayout>),
     NotTime,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for InflationResultView<'_> {
+impl IntoOwned for InflationResultRef<'_> {
     type Owned = InflationResult;
     fn into_owned(self) -> InflationResult {
         #[allow(clippy::match_same_arms)]
         match self {
-            InflationResultView::Success(value) => InflationResult::Success(value.into_owned()),
-            InflationResultView::NotTime => InflationResult::NotTime,
+            InflationResultRef::Success(value) => InflationResult::Success(value.into_owned()),
+            InflationResultRef::NotTime => InflationResult::NotTime,
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InflationResultView<'_>> for InflationResult {
+impl From<&InflationResultRef<'_>> for InflationResult {
     #[must_use]
-    fn from(v: &InflationResultView<'_>) -> Self {
+    fn from(v: &InflationResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<InflationResultView<'_>> for InflationResult {
+impl From<InflationResultRef<'_>> for InflationResult {
     #[must_use]
-    fn from(v: InflationResultView<'_>) -> Self {
+    fn from(v: InflationResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl InflationResultView<'_> {
+impl InflationResultRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> InflationResultCode {
         #[allow(clippy::match_same_arms)]
@@ -187,7 +187,7 @@ impl InflationResultView<'_> {
     }
 }
 
-impl WriteXdr for InflationResultView<'_> {
+impl WriteXdr for InflationResultRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -58,18 +58,18 @@ impl WriteXdr for StellarValueProposedValue {
     }
 }
 
-/// StellarValueProposedValueView is a borrowing equivalent of [`StellarValueProposedValue`], usable in
+/// StellarValueProposedValueRef is a borrowing equivalent of [`StellarValueProposedValue`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StellarValueProposedValueView<'a> {
+pub struct StellarValueProposedValueRef<'a> {
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,
     pub previous_ledger_version: u32,
-    pub lc_value_signature: LedgerCloseValueSignatureView<'a>,
+    pub lc_value_signature: LedgerCloseValueSignatureRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueProposedValueView<'_> {
+impl IntoOwned for StellarValueProposedValueRef<'_> {
     type Owned = StellarValueProposedValue;
     fn into_owned(self) -> StellarValueProposedValue {
         StellarValueProposedValue {
@@ -82,22 +82,22 @@ impl IntoOwned for StellarValueProposedValueView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StellarValueProposedValueView<'_>> for StellarValueProposedValue {
+impl From<&StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
     #[must_use]
-    fn from(v: &StellarValueProposedValueView<'_>) -> Self {
+    fn from(v: &StellarValueProposedValueRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StellarValueProposedValueView<'_>> for StellarValueProposedValue {
+impl From<StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
     #[must_use]
-    fn from(v: StellarValueProposedValueView<'_>) -> Self {
+    fn from(v: StellarValueProposedValueRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for StellarValueProposedValueView<'_> {
+impl WriteXdr for StellarValueProposedValueRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

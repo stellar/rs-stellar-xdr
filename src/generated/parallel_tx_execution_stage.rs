@@ -108,13 +108,13 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     }
 }
 
-/// ParallelTxExecutionStageView is a borrowing equivalent of [`ParallelTxExecutionStage`], usable in
+/// ParallelTxExecutionStageRef is a borrowing equivalent of [`ParallelTxExecutionStage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParallelTxExecutionStageView<'a>(pub VecMView<'a, DependentTxClusterView<'a>>);
+pub struct ParallelTxExecutionStageRef<'a>(pub VecMRef<'a, DependentTxClusterRef<'a>>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ParallelTxExecutionStageView<'_> {
+impl IntoOwned for ParallelTxExecutionStageRef<'_> {
     type Owned = ParallelTxExecutionStage;
     fn into_owned(self) -> ParallelTxExecutionStage {
         ParallelTxExecutionStage(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for ParallelTxExecutionStageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
+impl From<&ParallelTxExecutionStageRef<'_>> for ParallelTxExecutionStage {
     #[must_use]
-    fn from(v: &ParallelTxExecutionStageView<'_>) -> Self {
+    fn from(v: &ParallelTxExecutionStageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
+impl From<ParallelTxExecutionStageRef<'_>> for ParallelTxExecutionStage {
     #[must_use]
-    fn from(v: ParallelTxExecutionStageView<'_>) -> Self {
+    fn from(v: ParallelTxExecutionStageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ParallelTxExecutionStageView<'_> {
+impl WriteXdr for ParallelTxExecutionStageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

@@ -59,17 +59,17 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseTupleV0View is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`], usable in
+/// ScSpecUdtUnionCaseTupleV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtUnionCaseTupleV0View<'a> {
-    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: StringMView<'a, 60>,
-    pub type_: VecMView<'a, ScSpecTypeDefView<'a>>,
+pub struct ScSpecUdtUnionCaseTupleV0Ref<'a> {
+    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
+    pub name: StringMRef<'a, 60>,
+    pub type_: VecMRef<'a, ScSpecTypeDefRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionCaseTupleV0View<'_> {
+impl IntoOwned for ScSpecUdtUnionCaseTupleV0Ref<'_> {
     type Owned = ScSpecUdtUnionCaseTupleV0;
     fn into_owned(self) -> ScSpecUdtUnionCaseTupleV0 {
         ScSpecUdtUnionCaseTupleV0 {
@@ -81,22 +81,22 @@ impl IntoOwned for ScSpecUdtUnionCaseTupleV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
+impl From<&ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseTupleV0View<'_>) -> Self {
+    fn from(v: &ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseTupleV0View<'_>> for ScSpecUdtUnionCaseTupleV0 {
+impl From<ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
     #[must_use]
-    fn from(v: ScSpecUdtUnionCaseTupleV0View<'_>) -> Self {
+    fn from(v: ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionCaseTupleV0View<'_> {
+impl WriteXdr for ScSpecUdtUnionCaseTupleV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -108,13 +108,13 @@ impl AsRef<[u8]> for ScString {
     }
 }
 
-/// ScStringView is a borrowing equivalent of [`ScString`], usable in
+/// ScStringRef is a borrowing equivalent of [`ScString`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScStringView<'a>(pub StringMView<'a>);
+pub struct ScStringRef<'a>(pub StringMRef<'a>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScStringView<'_> {
+impl IntoOwned for ScStringRef<'_> {
     type Owned = ScString;
     fn into_owned(self) -> ScString {
         ScString(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for ScStringView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScStringView<'_>> for ScString {
+impl From<&ScStringRef<'_>> for ScString {
     #[must_use]
-    fn from(v: &ScStringView<'_>) -> Self {
+    fn from(v: &ScStringRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScStringView<'_>> for ScString {
+impl From<ScStringRef<'_>> for ScString {
     #[must_use]
-    fn from(v: ScStringView<'_>) -> Self {
+    fn from(v: ScStringRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScStringView<'_> {
+impl WriteXdr for ScStringRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

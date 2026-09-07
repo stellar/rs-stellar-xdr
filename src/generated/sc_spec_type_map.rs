@@ -50,16 +50,16 @@ impl WriteXdr for ScSpecTypeMap {
     }
 }
 
-/// ScSpecTypeMapView is a borrowing equivalent of [`ScSpecTypeMap`], usable in
+/// ScSpecTypeMapRef is a borrowing equivalent of [`ScSpecTypeMap`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeMapView<'a> {
-    pub key_type: &'a ScSpecTypeDefView<'a>,
-    pub value_type: &'a ScSpecTypeDefView<'a>,
+pub struct ScSpecTypeMapRef<'a> {
+    pub key_type: &'a ScSpecTypeDefRef<'a>,
+    pub value_type: &'a ScSpecTypeDefRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeMapView<'_> {
+impl IntoOwned for ScSpecTypeMapRef<'_> {
     type Owned = ScSpecTypeMap;
     fn into_owned(self) -> ScSpecTypeMap {
         ScSpecTypeMap {
@@ -70,22 +70,22 @@ impl IntoOwned for ScSpecTypeMapView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeMapView<'_>> for ScSpecTypeMap {
+impl From<&ScSpecTypeMapRef<'_>> for ScSpecTypeMap {
     #[must_use]
-    fn from(v: &ScSpecTypeMapView<'_>) -> Self {
+    fn from(v: &ScSpecTypeMapRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeMapView<'_>> for ScSpecTypeMap {
+impl From<ScSpecTypeMapRef<'_>> for ScSpecTypeMap {
     #[must_use]
-    fn from(v: ScSpecTypeMapView<'_>) -> Self {
+    fn from(v: ScSpecTypeMapRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecTypeMapView<'_> {
+impl WriteXdr for ScSpecTypeMapRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

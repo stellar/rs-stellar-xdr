@@ -50,16 +50,16 @@ impl WriteXdr for Signer {
     }
 }
 
-/// SignerView is a borrowing equivalent of [`Signer`], usable in
+/// SignerRef is a borrowing equivalent of [`Signer`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignerView<'a> {
-    pub key: SignerKeyView<'a>,
+pub struct SignerRef<'a> {
+    pub key: SignerKeyRef<'a>,
     pub weight: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SignerView<'_> {
+impl IntoOwned for SignerRef<'_> {
     type Owned = Signer;
     fn into_owned(self) -> Signer {
         Signer {
@@ -70,22 +70,22 @@ impl IntoOwned for SignerView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignerView<'_>> for Signer {
+impl From<&SignerRef<'_>> for Signer {
     #[must_use]
-    fn from(v: &SignerView<'_>) -> Self {
+    fn from(v: &SignerRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignerView<'_>> for Signer {
+impl From<SignerRef<'_>> for Signer {
     #[must_use]
-    fn from(v: SignerView<'_>) -> Self {
+    fn from(v: SignerRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SignerView<'_> {
+impl WriteXdr for SignerRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

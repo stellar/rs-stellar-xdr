@@ -56,17 +56,17 @@ impl WriteXdr for OperationMetaV2 {
     }
 }
 
-/// OperationMetaV2View is a borrowing equivalent of [`OperationMetaV2`], usable in
+/// OperationMetaV2Ref is a borrowing equivalent of [`OperationMetaV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationMetaV2View<'a> {
+pub struct OperationMetaV2Ref<'a> {
     pub ext: ExtensionPoint,
-    pub changes: LedgerEntryChangesView<'a>,
-    pub events: VecMView<'a, ContractEventView<'a>>,
+    pub changes: LedgerEntryChangesRef<'a>,
+    pub events: VecMRef<'a, ContractEventRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for OperationMetaV2View<'_> {
+impl IntoOwned for OperationMetaV2Ref<'_> {
     type Owned = OperationMetaV2;
     fn into_owned(self) -> OperationMetaV2 {
         OperationMetaV2 {
@@ -78,22 +78,22 @@ impl IntoOwned for OperationMetaV2View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationMetaV2View<'_>> for OperationMetaV2 {
+impl From<&OperationMetaV2Ref<'_>> for OperationMetaV2 {
     #[must_use]
-    fn from(v: &OperationMetaV2View<'_>) -> Self {
+    fn from(v: &OperationMetaV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationMetaV2View<'_>> for OperationMetaV2 {
+impl From<OperationMetaV2Ref<'_>> for OperationMetaV2 {
     #[must_use]
-    fn from(v: OperationMetaV2View<'_>) -> Self {
+    fn from(v: OperationMetaV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for OperationMetaV2View<'_> {
+impl WriteXdr for OperationMetaV2Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

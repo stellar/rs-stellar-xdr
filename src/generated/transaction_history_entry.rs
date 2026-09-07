@@ -63,17 +63,17 @@ impl WriteXdr for TransactionHistoryEntry {
     }
 }
 
-/// TransactionHistoryEntryView is a borrowing equivalent of [`TransactionHistoryEntry`], usable in
+/// TransactionHistoryEntryRef is a borrowing equivalent of [`TransactionHistoryEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionHistoryEntryView<'a> {
+pub struct TransactionHistoryEntryRef<'a> {
     pub ledger_seq: u32,
-    pub tx_set: TransactionSetView<'a>,
-    pub ext: TransactionHistoryEntryExtView<'a>,
+    pub tx_set: TransactionSetRef<'a>,
+    pub ext: TransactionHistoryEntryExtRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionHistoryEntryView<'_> {
+impl IntoOwned for TransactionHistoryEntryRef<'_> {
     type Owned = TransactionHistoryEntry;
     fn into_owned(self) -> TransactionHistoryEntry {
         TransactionHistoryEntry {
@@ -85,22 +85,22 @@ impl IntoOwned for TransactionHistoryEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionHistoryEntryView<'_>> for TransactionHistoryEntry {
+impl From<&TransactionHistoryEntryRef<'_>> for TransactionHistoryEntry {
     #[must_use]
-    fn from(v: &TransactionHistoryEntryView<'_>) -> Self {
+    fn from(v: &TransactionHistoryEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionHistoryEntryView<'_>> for TransactionHistoryEntry {
+impl From<TransactionHistoryEntryRef<'_>> for TransactionHistoryEntry {
     #[must_use]
-    fn from(v: TransactionHistoryEntryView<'_>) -> Self {
+    fn from(v: TransactionHistoryEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionHistoryEntryView<'_> {
+impl WriteXdr for TransactionHistoryEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

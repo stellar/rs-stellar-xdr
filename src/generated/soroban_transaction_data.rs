@@ -73,17 +73,17 @@ impl WriteXdr for SorobanTransactionData {
     }
 }
 
-/// SorobanTransactionDataView is a borrowing equivalent of [`SorobanTransactionData`], usable in
+/// SorobanTransactionDataRef is a borrowing equivalent of [`SorobanTransactionData`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionDataView<'a> {
-    pub ext: SorobanTransactionDataExtView<'a>,
-    pub resources: SorobanResourcesView<'a>,
+pub struct SorobanTransactionDataRef<'a> {
+    pub ext: SorobanTransactionDataExtRef<'a>,
+    pub resources: SorobanResourcesRef<'a>,
     pub resource_fee: i64,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionDataView<'_> {
+impl IntoOwned for SorobanTransactionDataRef<'_> {
     type Owned = SorobanTransactionData;
     fn into_owned(self) -> SorobanTransactionData {
         SorobanTransactionData {
@@ -95,22 +95,22 @@ impl IntoOwned for SorobanTransactionDataView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanTransactionDataView<'_>> for SorobanTransactionData {
+impl From<&SorobanTransactionDataRef<'_>> for SorobanTransactionData {
     #[must_use]
-    fn from(v: &SorobanTransactionDataView<'_>) -> Self {
+    fn from(v: &SorobanTransactionDataRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanTransactionDataView<'_>> for SorobanTransactionData {
+impl From<SorobanTransactionDataRef<'_>> for SorobanTransactionData {
     #[must_use]
-    fn from(v: SorobanTransactionDataView<'_>) -> Self {
+    fn from(v: SorobanTransactionDataRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanTransactionDataView<'_> {
+impl WriteXdr for SorobanTransactionDataRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

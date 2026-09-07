@@ -54,17 +54,17 @@ impl WriteXdr for TopologyResponseBodyV2 {
     }
 }
 
-/// TopologyResponseBodyV2View is a borrowing equivalent of [`TopologyResponseBodyV2`], usable in
+/// TopologyResponseBodyV2Ref is a borrowing equivalent of [`TopologyResponseBodyV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TopologyResponseBodyV2View<'a> {
-    pub inbound_peers: TimeSlicedPeerDataListView<'a>,
-    pub outbound_peers: TimeSlicedPeerDataListView<'a>,
+pub struct TopologyResponseBodyV2Ref<'a> {
+    pub inbound_peers: TimeSlicedPeerDataListRef<'a>,
+    pub outbound_peers: TimeSlicedPeerDataListRef<'a>,
     pub node_data: TimeSlicedNodeData,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TopologyResponseBodyV2View<'_> {
+impl IntoOwned for TopologyResponseBodyV2Ref<'_> {
     type Owned = TopologyResponseBodyV2;
     fn into_owned(self) -> TopologyResponseBodyV2 {
         TopologyResponseBodyV2 {
@@ -76,22 +76,22 @@ impl IntoOwned for TopologyResponseBodyV2View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
+impl From<&TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
     #[must_use]
-    fn from(v: &TopologyResponseBodyV2View<'_>) -> Self {
+    fn from(v: &TopologyResponseBodyV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
+impl From<TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
     #[must_use]
-    fn from(v: TopologyResponseBodyV2View<'_>) -> Self {
+    fn from(v: TopologyResponseBodyV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TopologyResponseBodyV2View<'_> {
+impl WriteXdr for TopologyResponseBodyV2Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

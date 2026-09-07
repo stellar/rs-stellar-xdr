@@ -50,16 +50,16 @@ impl WriteXdr for TimeSlicedPeerData {
     }
 }
 
-/// TimeSlicedPeerDataView is a borrowing equivalent of [`TimeSlicedPeerData`], usable in
+/// TimeSlicedPeerDataRef is a borrowing equivalent of [`TimeSlicedPeerData`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedPeerDataView<'a> {
-    pub peer_stats: PeerStatsView<'a>,
+pub struct TimeSlicedPeerDataRef<'a> {
+    pub peer_stats: PeerStatsRef<'a>,
     pub average_latency_ms: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedPeerDataView<'_> {
+impl IntoOwned for TimeSlicedPeerDataRef<'_> {
     type Owned = TimeSlicedPeerData;
     fn into_owned(self) -> TimeSlicedPeerData {
         TimeSlicedPeerData {
@@ -70,22 +70,22 @@ impl IntoOwned for TimeSlicedPeerDataView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
+impl From<&TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
     #[must_use]
-    fn from(v: &TimeSlicedPeerDataView<'_>) -> Self {
+    fn from(v: &TimeSlicedPeerDataRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TimeSlicedPeerDataView<'_>> for TimeSlicedPeerData {
+impl From<TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
     #[must_use]
-    fn from(v: TimeSlicedPeerDataView<'_>) -> Self {
+    fn from(v: TimeSlicedPeerDataRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TimeSlicedPeerDataView<'_> {
+impl WriteXdr for TimeSlicedPeerDataRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

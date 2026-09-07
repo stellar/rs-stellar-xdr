@@ -57,16 +57,16 @@ impl WriteXdr for ParallelTxsComponent {
     }
 }
 
-/// ParallelTxsComponentView is a borrowing equivalent of [`ParallelTxsComponent`], usable in
+/// ParallelTxsComponentRef is a borrowing equivalent of [`ParallelTxsComponent`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParallelTxsComponentView<'a> {
+pub struct ParallelTxsComponentRef<'a> {
     pub base_fee: Option<i64>,
-    pub execution_stages: VecMView<'a, ParallelTxExecutionStageView<'a>>,
+    pub execution_stages: VecMRef<'a, ParallelTxExecutionStageRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ParallelTxsComponentView<'_> {
+impl IntoOwned for ParallelTxsComponentRef<'_> {
     type Owned = ParallelTxsComponent;
     fn into_owned(self) -> ParallelTxsComponent {
         ParallelTxsComponent {
@@ -77,22 +77,22 @@ impl IntoOwned for ParallelTxsComponentView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ParallelTxsComponentView<'_>> for ParallelTxsComponent {
+impl From<&ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
     #[must_use]
-    fn from(v: &ParallelTxsComponentView<'_>) -> Self {
+    fn from(v: &ParallelTxsComponentRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ParallelTxsComponentView<'_>> for ParallelTxsComponent {
+impl From<ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
     #[must_use]
-    fn from(v: ParallelTxsComponentView<'_>) -> Self {
+    fn from(v: ParallelTxsComponentRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ParallelTxsComponentView<'_> {
+impl WriteXdr for ParallelTxsComponentRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

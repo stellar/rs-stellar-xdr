@@ -162,27 +162,27 @@ impl WriteXdr for SignerKey {
     }
 }
 
-/// SignerKeyView is a borrowing equivalent of [`SignerKey`], usable in
+/// SignerKeyRef is a borrowing equivalent of [`SignerKey`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SignerKeyView<'a> {
+pub enum SignerKeyRef<'a> {
     Ed25519(Uint256),
     PreAuthTx(Uint256),
     HashX(Uint256),
-    Ed25519SignedPayload(SignerKeyEd25519SignedPayloadView<'a>),
+    Ed25519SignedPayload(SignerKeyEd25519SignedPayloadRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SignerKeyView<'_> {
+impl IntoOwned for SignerKeyRef<'_> {
     type Owned = SignerKey;
     fn into_owned(self) -> SignerKey {
         #[allow(clippy::match_same_arms)]
         match self {
-            SignerKeyView::Ed25519(value) => SignerKey::Ed25519(value.into_owned()),
-            SignerKeyView::PreAuthTx(value) => SignerKey::PreAuthTx(value.into_owned()),
-            SignerKeyView::HashX(value) => SignerKey::HashX(value.into_owned()),
-            SignerKeyView::Ed25519SignedPayload(value) => {
+            SignerKeyRef::Ed25519(value) => SignerKey::Ed25519(value.into_owned()),
+            SignerKeyRef::PreAuthTx(value) => SignerKey::PreAuthTx(value.into_owned()),
+            SignerKeyRef::HashX(value) => SignerKey::HashX(value.into_owned()),
+            SignerKeyRef::Ed25519SignedPayload(value) => {
                 SignerKey::Ed25519SignedPayload(value.into_owned())
             }
         }
@@ -190,22 +190,22 @@ impl IntoOwned for SignerKeyView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignerKeyView<'_>> for SignerKey {
+impl From<&SignerKeyRef<'_>> for SignerKey {
     #[must_use]
-    fn from(v: &SignerKeyView<'_>) -> Self {
+    fn from(v: &SignerKeyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignerKeyView<'_>> for SignerKey {
+impl From<SignerKeyRef<'_>> for SignerKey {
     #[must_use]
-    fn from(v: SignerKeyView<'_>) -> Self {
+    fn from(v: SignerKeyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl SignerKeyView<'_> {
+impl SignerKeyRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> SignerKeyType {
         #[allow(clippy::match_same_arms)]
@@ -218,7 +218,7 @@ impl SignerKeyView<'_> {
     }
 }
 
-impl WriteXdr for SignerKeyView<'_> {
+impl WriteXdr for SignerKeyRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

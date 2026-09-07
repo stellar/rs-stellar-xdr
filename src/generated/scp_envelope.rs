@@ -50,16 +50,16 @@ impl WriteXdr for ScpEnvelope {
     }
 }
 
-/// ScpEnvelopeView is a borrowing equivalent of [`ScpEnvelope`], usable in
+/// ScpEnvelopeRef is a borrowing equivalent of [`ScpEnvelope`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpEnvelopeView<'a> {
-    pub statement: ScpStatementView<'a>,
-    pub signature: SignatureView<'a>,
+pub struct ScpEnvelopeRef<'a> {
+    pub statement: ScpStatementRef<'a>,
+    pub signature: SignatureRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpEnvelopeView<'_> {
+impl IntoOwned for ScpEnvelopeRef<'_> {
     type Owned = ScpEnvelope;
     fn into_owned(self) -> ScpEnvelope {
         ScpEnvelope {
@@ -70,22 +70,22 @@ impl IntoOwned for ScpEnvelopeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpEnvelopeView<'_>> for ScpEnvelope {
+impl From<&ScpEnvelopeRef<'_>> for ScpEnvelope {
     #[must_use]
-    fn from(v: &ScpEnvelopeView<'_>) -> Self {
+    fn from(v: &ScpEnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpEnvelopeView<'_>> for ScpEnvelope {
+impl From<ScpEnvelopeRef<'_>> for ScpEnvelope {
     #[must_use]
-    fn from(v: ScpEnvelopeView<'_>) -> Self {
+    fn from(v: ScpEnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpEnvelopeView<'_> {
+impl WriteXdr for ScpEnvelopeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

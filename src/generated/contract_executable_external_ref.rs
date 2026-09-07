@@ -49,16 +49,16 @@ impl WriteXdr for ContractExecutableExternalRef {
     }
 }
 
-/// ContractExecutableExternalRefView is a borrowing equivalent of [`ContractExecutableExternalRef`], usable in
+/// ContractExecutableExternalRefRef is a borrowing equivalent of [`ContractExecutableExternalRef`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractExecutableExternalRefView<'a> {
+pub struct ContractExecutableExternalRefRef<'a> {
     pub executable_owner: ScAddress,
-    pub tag: ScStringView<'a>,
+    pub tag: ScStringRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ContractExecutableExternalRefView<'_> {
+impl IntoOwned for ContractExecutableExternalRefRef<'_> {
     type Owned = ContractExecutableExternalRef;
     fn into_owned(self) -> ContractExecutableExternalRef {
         ContractExecutableExternalRef {
@@ -69,22 +69,22 @@ impl IntoOwned for ContractExecutableExternalRefView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
+impl From<&ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
     #[must_use]
-    fn from(v: &ContractExecutableExternalRefView<'_>) -> Self {
+    fn from(v: &ContractExecutableExternalRefRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
+impl From<ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
     #[must_use]
-    fn from(v: ContractExecutableExternalRefView<'_>) -> Self {
+    fn from(v: ContractExecutableExternalRefRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ContractExecutableExternalRefView<'_> {
+impl WriteXdr for ContractExecutableExternalRefRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

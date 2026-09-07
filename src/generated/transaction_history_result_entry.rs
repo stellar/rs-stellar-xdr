@@ -61,17 +61,17 @@ impl WriteXdr for TransactionHistoryResultEntry {
     }
 }
 
-/// TransactionHistoryResultEntryView is a borrowing equivalent of [`TransactionHistoryResultEntry`], usable in
+/// TransactionHistoryResultEntryRef is a borrowing equivalent of [`TransactionHistoryResultEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionHistoryResultEntryView<'a> {
+pub struct TransactionHistoryResultEntryRef<'a> {
     pub ledger_seq: u32,
-    pub tx_result_set: TransactionResultSetView<'a>,
+    pub tx_result_set: TransactionResultSetRef<'a>,
     pub ext: TransactionHistoryResultEntryExt,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionHistoryResultEntryView<'_> {
+impl IntoOwned for TransactionHistoryResultEntryRef<'_> {
     type Owned = TransactionHistoryResultEntry;
     fn into_owned(self) -> TransactionHistoryResultEntry {
         TransactionHistoryResultEntry {
@@ -83,22 +83,22 @@ impl IntoOwned for TransactionHistoryResultEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEntry {
+impl From<&TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntry {
     #[must_use]
-    fn from(v: &TransactionHistoryResultEntryView<'_>) -> Self {
+    fn from(v: &TransactionHistoryResultEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEntry {
+impl From<TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntry {
     #[must_use]
-    fn from(v: TransactionHistoryResultEntryView<'_>) -> Self {
+    fn from(v: TransactionHistoryResultEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionHistoryResultEntryView<'_> {
+impl WriteXdr for TransactionHistoryResultEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

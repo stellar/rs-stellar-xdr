@@ -64,18 +64,18 @@ impl WriteXdr for SorobanTransactionMeta {
     }
 }
 
-/// SorobanTransactionMetaView is a borrowing equivalent of [`SorobanTransactionMeta`], usable in
+/// SorobanTransactionMetaRef is a borrowing equivalent of [`SorobanTransactionMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionMetaView<'a> {
+pub struct SorobanTransactionMetaRef<'a> {
     pub ext: SorobanTransactionMetaExt,
-    pub events: VecMView<'a, ContractEventView<'a>>,
-    pub return_value: ScValView<'a>,
-    pub diagnostic_events: VecMView<'a, DiagnosticEventView<'a>>,
+    pub events: VecMRef<'a, ContractEventRef<'a>>,
+    pub return_value: ScValRef<'a>,
+    pub diagnostic_events: VecMRef<'a, DiagnosticEventRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionMetaView<'_> {
+impl IntoOwned for SorobanTransactionMetaRef<'_> {
     type Owned = SorobanTransactionMeta;
     fn into_owned(self) -> SorobanTransactionMeta {
         SorobanTransactionMeta {
@@ -88,22 +88,22 @@ impl IntoOwned for SorobanTransactionMetaView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
+impl From<&SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
     #[must_use]
-    fn from(v: &SorobanTransactionMetaView<'_>) -> Self {
+    fn from(v: &SorobanTransactionMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanTransactionMetaView<'_>> for SorobanTransactionMeta {
+impl From<SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
     #[must_use]
-    fn from(v: SorobanTransactionMetaView<'_>) -> Self {
+    fn from(v: SorobanTransactionMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanTransactionMetaView<'_> {
+impl WriteXdr for SorobanTransactionMetaRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

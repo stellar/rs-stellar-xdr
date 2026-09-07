@@ -50,16 +50,16 @@ impl WriteXdr for SorobanAuthorizedInvocation {
     }
 }
 
-/// SorobanAuthorizedInvocationView is a borrowing equivalent of [`SorobanAuthorizedInvocation`], usable in
+/// SorobanAuthorizedInvocationRef is a borrowing equivalent of [`SorobanAuthorizedInvocation`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizedInvocationView<'a> {
-    pub function: SorobanAuthorizedFunctionView<'a>,
-    pub sub_invocations: VecMView<'a, SorobanAuthorizedInvocationView<'a>>,
+pub struct SorobanAuthorizedInvocationRef<'a> {
+    pub function: SorobanAuthorizedFunctionRef<'a>,
+    pub sub_invocations: VecMRef<'a, SorobanAuthorizedInvocationRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizedInvocationView<'_> {
+impl IntoOwned for SorobanAuthorizedInvocationRef<'_> {
     type Owned = SorobanAuthorizedInvocation;
     fn into_owned(self) -> SorobanAuthorizedInvocation {
         SorobanAuthorizedInvocation {
@@ -70,22 +70,22 @@ impl IntoOwned for SorobanAuthorizedInvocationView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation {
+impl From<&SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
     #[must_use]
-    fn from(v: &SorobanAuthorizedInvocationView<'_>) -> Self {
+    fn from(v: &SorobanAuthorizedInvocationRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizedInvocationView<'_>> for SorobanAuthorizedInvocation {
+impl From<SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
     #[must_use]
-    fn from(v: SorobanAuthorizedInvocationView<'_>) -> Self {
+    fn from(v: SorobanAuthorizedInvocationRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanAuthorizedInvocationView<'_> {
+impl WriteXdr for SorobanAuthorizedInvocationRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

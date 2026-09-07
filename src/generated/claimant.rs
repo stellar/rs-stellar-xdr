@@ -133,42 +133,42 @@ impl WriteXdr for Claimant {
     }
 }
 
-/// ClaimantView is a borrowing equivalent of [`Claimant`], usable in
+/// ClaimantRef is a borrowing equivalent of [`Claimant`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ClaimantView<'a> {
-    ClaimantTypeV0(ClaimantV0View<'a>),
+pub enum ClaimantRef<'a> {
+    ClaimantTypeV0(ClaimantV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ClaimantView<'_> {
+impl IntoOwned for ClaimantRef<'_> {
     type Owned = Claimant;
     fn into_owned(self) -> Claimant {
         #[allow(clippy::match_same_arms)]
         match self {
-            ClaimantView::ClaimantTypeV0(value) => Claimant::ClaimantTypeV0(value.into_owned()),
+            ClaimantRef::ClaimantTypeV0(value) => Claimant::ClaimantTypeV0(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ClaimantView<'_>> for Claimant {
+impl From<&ClaimantRef<'_>> for Claimant {
     #[must_use]
-    fn from(v: &ClaimantView<'_>) -> Self {
+    fn from(v: &ClaimantRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ClaimantView<'_>> for Claimant {
+impl From<ClaimantRef<'_>> for Claimant {
     #[must_use]
-    fn from(v: ClaimantView<'_>) -> Self {
+    fn from(v: ClaimantRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ClaimantView<'_> {
+impl ClaimantRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimantType {
         #[allow(clippy::match_same_arms)]
@@ -178,7 +178,7 @@ impl ClaimantView<'_> {
     }
 }
 
-impl WriteXdr for ClaimantView<'_> {
+impl WriteXdr for ClaimantRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

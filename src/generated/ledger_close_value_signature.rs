@@ -50,16 +50,16 @@ impl WriteXdr for LedgerCloseValueSignature {
     }
 }
 
-/// LedgerCloseValueSignatureView is a borrowing equivalent of [`LedgerCloseValueSignature`], usable in
+/// LedgerCloseValueSignatureRef is a borrowing equivalent of [`LedgerCloseValueSignature`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseValueSignatureView<'a> {
+pub struct LedgerCloseValueSignatureRef<'a> {
     pub node_id: NodeId,
-    pub signature: SignatureView<'a>,
+    pub signature: SignatureRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseValueSignatureView<'_> {
+impl IntoOwned for LedgerCloseValueSignatureRef<'_> {
     type Owned = LedgerCloseValueSignature;
     fn into_owned(self) -> LedgerCloseValueSignature {
         LedgerCloseValueSignature {
@@ -70,22 +70,22 @@ impl IntoOwned for LedgerCloseValueSignatureView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
+impl From<&LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
     #[must_use]
-    fn from(v: &LedgerCloseValueSignatureView<'_>) -> Self {
+    fn from(v: &LedgerCloseValueSignatureRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
+impl From<LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
     #[must_use]
-    fn from(v: LedgerCloseValueSignatureView<'_>) -> Self {
+    fn from(v: LedgerCloseValueSignatureRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerCloseValueSignatureView<'_> {
+impl WriteXdr for LedgerCloseValueSignatureRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

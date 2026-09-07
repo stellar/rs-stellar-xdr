@@ -50,16 +50,16 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     }
 }
 
-/// InvokeHostFunctionSuccessPreImageView is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`], usable in
+/// InvokeHostFunctionSuccessPreImageRef is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeHostFunctionSuccessPreImageView<'a> {
-    pub return_value: ScValView<'a>,
-    pub events: VecMView<'a, ContractEventView<'a>>,
+pub struct InvokeHostFunctionSuccessPreImageRef<'a> {
+    pub return_value: ScValRef<'a>,
+    pub events: VecMRef<'a, ContractEventRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for InvokeHostFunctionSuccessPreImageView<'_> {
+impl IntoOwned for InvokeHostFunctionSuccessPreImageRef<'_> {
     type Owned = InvokeHostFunctionSuccessPreImage;
     fn into_owned(self) -> InvokeHostFunctionSuccessPreImage {
         InvokeHostFunctionSuccessPreImage {
@@ -70,22 +70,22 @@ impl IntoOwned for InvokeHostFunctionSuccessPreImageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSuccessPreImage {
+impl From<&InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
     #[must_use]
-    fn from(v: &InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
+    fn from(v: &InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSuccessPreImage {
+impl From<InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
     #[must_use]
-    fn from(v: InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
+    fn from(v: InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for InvokeHostFunctionSuccessPreImageView<'_> {
+impl WriteXdr for InvokeHostFunctionSuccessPreImageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -143,46 +143,46 @@ impl WriteXdr for LedgerCloseMeta {
     }
 }
 
-/// LedgerCloseMetaView is a borrowing equivalent of [`LedgerCloseMeta`], usable in
+/// LedgerCloseMetaRef is a borrowing equivalent of [`LedgerCloseMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerCloseMetaView<'a> {
-    V0(LedgerCloseMetaV0View<'a>),
-    V1(LedgerCloseMetaV1View<'a>),
-    V2(LedgerCloseMetaV2View<'a>),
+pub enum LedgerCloseMetaRef<'a> {
+    V0(LedgerCloseMetaV0Ref<'a>),
+    V1(LedgerCloseMetaV1Ref<'a>),
+    V2(LedgerCloseMetaV2Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaView<'_> {
+impl IntoOwned for LedgerCloseMetaRef<'_> {
     type Owned = LedgerCloseMeta;
     fn into_owned(self) -> LedgerCloseMeta {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerCloseMetaView::V0(value) => LedgerCloseMeta::V0(value.into_owned()),
-            LedgerCloseMetaView::V1(value) => LedgerCloseMeta::V1(value.into_owned()),
-            LedgerCloseMetaView::V2(value) => LedgerCloseMeta::V2(value.into_owned()),
+            LedgerCloseMetaRef::V0(value) => LedgerCloseMeta::V0(value.into_owned()),
+            LedgerCloseMetaRef::V1(value) => LedgerCloseMeta::V1(value.into_owned()),
+            LedgerCloseMetaRef::V2(value) => LedgerCloseMeta::V2(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaView<'_>> for LedgerCloseMeta {
+impl From<&LedgerCloseMetaRef<'_>> for LedgerCloseMeta {
     #[must_use]
-    fn from(v: &LedgerCloseMetaView<'_>) -> Self {
+    fn from(v: &LedgerCloseMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaView<'_>> for LedgerCloseMeta {
+impl From<LedgerCloseMetaRef<'_>> for LedgerCloseMeta {
     #[must_use]
-    fn from(v: LedgerCloseMetaView<'_>) -> Self {
+    fn from(v: LedgerCloseMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl LedgerCloseMetaView<'_> {
+impl LedgerCloseMetaRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -194,7 +194,7 @@ impl LedgerCloseMetaView<'_> {
     }
 }
 
-impl WriteXdr for LedgerCloseMetaView<'_> {
+impl WriteXdr for LedgerCloseMetaRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

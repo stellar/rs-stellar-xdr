@@ -54,16 +54,16 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     }
 }
 
-/// TxSetComponentTxsMaybeDiscountedFeeView is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`], usable in
+/// TxSetComponentTxsMaybeDiscountedFeeRef is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxSetComponentTxsMaybeDiscountedFeeView<'a> {
+pub struct TxSetComponentTxsMaybeDiscountedFeeRef<'a> {
     pub base_fee: Option<i64>,
-    pub txs: VecMView<'a, TransactionEnvelopeView<'a>>,
+    pub txs: VecMRef<'a, TransactionEnvelopeRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
+impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
     type Owned = TxSetComponentTxsMaybeDiscountedFee;
     fn into_owned(self) -> TxSetComponentTxsMaybeDiscountedFee {
         TxSetComponentTxsMaybeDiscountedFee {
@@ -74,22 +74,22 @@ impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
+impl From<&TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
-    fn from(v: &TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
+    fn from(v: &TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
+impl From<TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
-    fn from(v: TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
+    fn from(v: TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
+impl WriteXdr for TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -143,25 +143,25 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseV0View is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`], usable in
+/// ScSpecUdtUnionCaseV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecUdtUnionCaseV0View<'a> {
-    VoidV0(ScSpecUdtUnionCaseVoidV0View<'a>),
-    TupleV0(ScSpecUdtUnionCaseTupleV0View<'a>),
+pub enum ScSpecUdtUnionCaseV0Ref<'a> {
+    VoidV0(ScSpecUdtUnionCaseVoidV0Ref<'a>),
+    TupleV0(ScSpecUdtUnionCaseTupleV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
+impl IntoOwned for ScSpecUdtUnionCaseV0Ref<'_> {
     type Owned = ScSpecUdtUnionCaseV0;
     fn into_owned(self) -> ScSpecUdtUnionCaseV0 {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScSpecUdtUnionCaseV0View::VoidV0(value) => {
+            ScSpecUdtUnionCaseV0Ref::VoidV0(value) => {
                 ScSpecUdtUnionCaseV0::VoidV0(value.into_owned())
             }
-            ScSpecUdtUnionCaseV0View::TupleV0(value) => {
+            ScSpecUdtUnionCaseV0Ref::TupleV0(value) => {
                 ScSpecUdtUnionCaseV0::TupleV0(value.into_owned())
             }
         }
@@ -169,22 +169,22 @@ impl IntoOwned for ScSpecUdtUnionCaseV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
+impl From<&ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseV0View<'_>) -> Self {
+    fn from(v: &ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseV0View<'_>> for ScSpecUdtUnionCaseV0 {
+impl From<ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
     #[must_use]
-    fn from(v: ScSpecUdtUnionCaseV0View<'_>) -> Self {
+    fn from(v: ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ScSpecUdtUnionCaseV0View<'_> {
+impl ScSpecUdtUnionCaseV0Ref<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
         #[allow(clippy::match_same_arms)]
@@ -195,7 +195,7 @@ impl ScSpecUdtUnionCaseV0View<'_> {
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionCaseV0View<'_> {
+impl WriteXdr for ScSpecUdtUnionCaseV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

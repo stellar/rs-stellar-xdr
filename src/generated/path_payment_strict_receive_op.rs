@@ -78,20 +78,20 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
     }
 }
 
-/// PathPaymentStrictReceiveOpView is a borrowing equivalent of [`PathPaymentStrictReceiveOp`], usable in
+/// PathPaymentStrictReceiveOpRef is a borrowing equivalent of [`PathPaymentStrictReceiveOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictReceiveOpView<'a> {
+pub struct PathPaymentStrictReceiveOpRef<'a> {
     pub send_asset: Asset,
     pub send_max: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
     pub dest_amount: i64,
-    pub path: VecMView<'a, Asset, 5>,
+    pub path: VecMRef<'a, Asset, 5>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictReceiveOpView<'_> {
+impl IntoOwned for PathPaymentStrictReceiveOpRef<'_> {
     type Owned = PathPaymentStrictReceiveOp;
     fn into_owned(self) -> PathPaymentStrictReceiveOp {
         PathPaymentStrictReceiveOp {
@@ -106,22 +106,22 @@ impl IntoOwned for PathPaymentStrictReceiveOpView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
+impl From<&PathPaymentStrictReceiveOpRef<'_>> for PathPaymentStrictReceiveOp {
     #[must_use]
-    fn from(v: &PathPaymentStrictReceiveOpView<'_>) -> Self {
+    fn from(v: &PathPaymentStrictReceiveOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
+impl From<PathPaymentStrictReceiveOpRef<'_>> for PathPaymentStrictReceiveOp {
     #[must_use]
-    fn from(v: PathPaymentStrictReceiveOpView<'_>) -> Self {
+    fn from(v: PathPaymentStrictReceiveOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PathPaymentStrictReceiveOpView<'_> {
+impl WriteXdr for PathPaymentStrictReceiveOpRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

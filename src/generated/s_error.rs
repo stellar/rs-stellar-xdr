@@ -50,16 +50,16 @@ impl WriteXdr for SError {
     }
 }
 
-/// SErrorView is a borrowing equivalent of [`SError`], usable in
+/// SErrorRef is a borrowing equivalent of [`SError`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SErrorView<'a> {
+pub struct SErrorRef<'a> {
     pub code: ErrorCode,
-    pub msg: StringMView<'a, 100>,
+    pub msg: StringMRef<'a, 100>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SErrorView<'_> {
+impl IntoOwned for SErrorRef<'_> {
     type Owned = SError;
     fn into_owned(self) -> SError {
         SError {
@@ -70,22 +70,22 @@ impl IntoOwned for SErrorView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SErrorView<'_>> for SError {
+impl From<&SErrorRef<'_>> for SError {
     #[must_use]
-    fn from(v: &SErrorView<'_>) -> Self {
+    fn from(v: &SErrorRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SErrorView<'_>> for SError {
+impl From<SErrorRef<'_>> for SError {
     #[must_use]
-    fn from(v: SErrorView<'_>) -> Self {
+    fn from(v: SErrorRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SErrorView<'_> {
+impl WriteXdr for SErrorRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

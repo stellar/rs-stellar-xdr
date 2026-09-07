@@ -155,25 +155,25 @@ impl WriteXdr for StellarValueExt {
     }
 }
 
-/// StellarValueExtView is a borrowing equivalent of [`StellarValueExt`], usable in
+/// StellarValueExtRef is a borrowing equivalent of [`StellarValueExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StellarValueExtView<'a> {
+pub enum StellarValueExtRef<'a> {
     Basic,
-    Signed(LedgerCloseValueSignatureView<'a>),
-    EmptyTxSet(StellarValueProposedValueView<'a>),
+    Signed(LedgerCloseValueSignatureRef<'a>),
+    EmptyTxSet(StellarValueProposedValueRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueExtView<'_> {
+impl IntoOwned for StellarValueExtRef<'_> {
     type Owned = StellarValueExt;
     fn into_owned(self) -> StellarValueExt {
         #[allow(clippy::match_same_arms)]
         match self {
-            StellarValueExtView::Basic => StellarValueExt::Basic,
-            StellarValueExtView::Signed(value) => StellarValueExt::Signed(value.into_owned()),
-            StellarValueExtView::EmptyTxSet(value) => {
+            StellarValueExtRef::Basic => StellarValueExt::Basic,
+            StellarValueExtRef::Signed(value) => StellarValueExt::Signed(value.into_owned()),
+            StellarValueExtRef::EmptyTxSet(value) => {
                 StellarValueExt::EmptyTxSet(value.into_owned())
             }
         }
@@ -181,22 +181,22 @@ impl IntoOwned for StellarValueExtView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StellarValueExtView<'_>> for StellarValueExt {
+impl From<&StellarValueExtRef<'_>> for StellarValueExt {
     #[must_use]
-    fn from(v: &StellarValueExtView<'_>) -> Self {
+    fn from(v: &StellarValueExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StellarValueExtView<'_>> for StellarValueExt {
+impl From<StellarValueExtRef<'_>> for StellarValueExt {
     #[must_use]
-    fn from(v: StellarValueExtView<'_>) -> Self {
+    fn from(v: StellarValueExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl StellarValueExtView<'_> {
+impl StellarValueExtRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> StellarValueType {
         #[allow(clippy::match_same_arms)]
@@ -208,7 +208,7 @@ impl StellarValueExtView<'_> {
     }
 }
 
-impl WriteXdr for StellarValueExtView<'_> {
+impl WriteXdr for StellarValueExtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -63,18 +63,18 @@ impl WriteXdr for SorobanResources {
     }
 }
 
-/// SorobanResourcesView is a borrowing equivalent of [`SorobanResources`], usable in
+/// SorobanResourcesRef is a borrowing equivalent of [`SorobanResources`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanResourcesView<'a> {
-    pub footprint: LedgerFootprintView<'a>,
+pub struct SorobanResourcesRef<'a> {
+    pub footprint: LedgerFootprintRef<'a>,
     pub instructions: u32,
     pub disk_read_bytes: u32,
     pub write_bytes: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanResourcesView<'_> {
+impl IntoOwned for SorobanResourcesRef<'_> {
     type Owned = SorobanResources;
     fn into_owned(self) -> SorobanResources {
         SorobanResources {
@@ -87,22 +87,22 @@ impl IntoOwned for SorobanResourcesView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanResourcesView<'_>> for SorobanResources {
+impl From<&SorobanResourcesRef<'_>> for SorobanResources {
     #[must_use]
-    fn from(v: &SorobanResourcesView<'_>) -> Self {
+    fn from(v: &SorobanResourcesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanResourcesView<'_>> for SorobanResources {
+impl From<SorobanResourcesRef<'_>> for SorobanResources {
     #[must_use]
-    fn from(v: SorobanResourcesView<'_>) -> Self {
+    fn from(v: SorobanResourcesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanResourcesView<'_> {
+impl WriteXdr for SorobanResourcesRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

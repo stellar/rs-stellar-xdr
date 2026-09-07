@@ -85,10 +85,10 @@ impl WriteXdr for SetOptionsOp {
     }
 }
 
-/// SetOptionsOpView is a borrowing equivalent of [`SetOptionsOp`], usable in
+/// SetOptionsOpRef is a borrowing equivalent of [`SetOptionsOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SetOptionsOpView<'a> {
+pub struct SetOptionsOpRef<'a> {
     pub inflation_dest: Option<AccountId>,
     pub clear_flags: Option<u32>,
     pub set_flags: Option<u32>,
@@ -96,12 +96,12 @@ pub struct SetOptionsOpView<'a> {
     pub low_threshold: Option<u32>,
     pub med_threshold: Option<u32>,
     pub high_threshold: Option<u32>,
-    pub home_domain: Option<String32View<'a>>,
-    pub signer: Option<SignerView<'a>>,
+    pub home_domain: Option<String32Ref<'a>>,
+    pub signer: Option<SignerRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SetOptionsOpView<'_> {
+impl IntoOwned for SetOptionsOpRef<'_> {
     type Owned = SetOptionsOp;
     fn into_owned(self) -> SetOptionsOp {
         SetOptionsOp {
@@ -119,22 +119,22 @@ impl IntoOwned for SetOptionsOpView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SetOptionsOpView<'_>> for SetOptionsOp {
+impl From<&SetOptionsOpRef<'_>> for SetOptionsOp {
     #[must_use]
-    fn from(v: &SetOptionsOpView<'_>) -> Self {
+    fn from(v: &SetOptionsOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SetOptionsOpView<'_>> for SetOptionsOp {
+impl From<SetOptionsOpRef<'_>> for SetOptionsOp {
     #[must_use]
-    fn from(v: SetOptionsOpView<'_>) -> Self {
+    fn from(v: SetOptionsOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SetOptionsOpView<'_> {
+impl WriteXdr for SetOptionsOpRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

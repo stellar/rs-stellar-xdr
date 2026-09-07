@@ -155,48 +155,48 @@ impl WriteXdr for BucketEntry {
     }
 }
 
-/// BucketEntryView is a borrowing equivalent of [`BucketEntry`], usable in
+/// BucketEntryRef is a borrowing equivalent of [`BucketEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum BucketEntryView<'a> {
-    Liveentry(LedgerEntryView<'a>),
-    Initentry(LedgerEntryView<'a>),
-    Deadentry(LedgerKeyView<'a>),
+pub enum BucketEntryRef<'a> {
+    Liveentry(LedgerEntryRef<'a>),
+    Initentry(LedgerEntryRef<'a>),
+    Deadentry(LedgerKeyRef<'a>),
     Metaentry(BucketMetadata),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for BucketEntryView<'_> {
+impl IntoOwned for BucketEntryRef<'_> {
     type Owned = BucketEntry;
     fn into_owned(self) -> BucketEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            BucketEntryView::Liveentry(value) => BucketEntry::Liveentry(value.into_owned()),
-            BucketEntryView::Initentry(value) => BucketEntry::Initentry(value.into_owned()),
-            BucketEntryView::Deadentry(value) => BucketEntry::Deadentry(value.into_owned()),
-            BucketEntryView::Metaentry(value) => BucketEntry::Metaentry(value.into_owned()),
+            BucketEntryRef::Liveentry(value) => BucketEntry::Liveentry(value.into_owned()),
+            BucketEntryRef::Initentry(value) => BucketEntry::Initentry(value.into_owned()),
+            BucketEntryRef::Deadentry(value) => BucketEntry::Deadentry(value.into_owned()),
+            BucketEntryRef::Metaentry(value) => BucketEntry::Metaentry(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&BucketEntryView<'_>> for BucketEntry {
+impl From<&BucketEntryRef<'_>> for BucketEntry {
     #[must_use]
-    fn from(v: &BucketEntryView<'_>) -> Self {
+    fn from(v: &BucketEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<BucketEntryView<'_>> for BucketEntry {
+impl From<BucketEntryRef<'_>> for BucketEntry {
     #[must_use]
-    fn from(v: BucketEntryView<'_>) -> Self {
+    fn from(v: BucketEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl BucketEntryView<'_> {
+impl BucketEntryRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> BucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -209,7 +209,7 @@ impl BucketEntryView<'_> {
     }
 }
 
-impl WriteXdr for BucketEntryView<'_> {
+impl WriteXdr for BucketEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

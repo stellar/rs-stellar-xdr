@@ -151,29 +151,29 @@ impl WriteXdr for HotArchiveBucketEntry {
     }
 }
 
-/// HotArchiveBucketEntryView is a borrowing equivalent of [`HotArchiveBucketEntry`], usable in
+/// HotArchiveBucketEntryRef is a borrowing equivalent of [`HotArchiveBucketEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HotArchiveBucketEntryView<'a> {
-    Archived(LedgerEntryView<'a>),
-    Live(LedgerKeyView<'a>),
+pub enum HotArchiveBucketEntryRef<'a> {
+    Archived(LedgerEntryRef<'a>),
+    Live(LedgerKeyRef<'a>),
     Metaentry(BucketMetadata),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for HotArchiveBucketEntryView<'_> {
+impl IntoOwned for HotArchiveBucketEntryRef<'_> {
     type Owned = HotArchiveBucketEntry;
     fn into_owned(self) -> HotArchiveBucketEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            HotArchiveBucketEntryView::Archived(value) => {
+            HotArchiveBucketEntryRef::Archived(value) => {
                 HotArchiveBucketEntry::Archived(value.into_owned())
             }
-            HotArchiveBucketEntryView::Live(value) => {
+            HotArchiveBucketEntryRef::Live(value) => {
                 HotArchiveBucketEntry::Live(value.into_owned())
             }
-            HotArchiveBucketEntryView::Metaentry(value) => {
+            HotArchiveBucketEntryRef::Metaentry(value) => {
                 HotArchiveBucketEntry::Metaentry(value.into_owned())
             }
         }
@@ -181,22 +181,22 @@ impl IntoOwned for HotArchiveBucketEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
+impl From<&HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
     #[must_use]
-    fn from(v: &HotArchiveBucketEntryView<'_>) -> Self {
+    fn from(v: &HotArchiveBucketEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<HotArchiveBucketEntryView<'_>> for HotArchiveBucketEntry {
+impl From<HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
     #[must_use]
-    fn from(v: HotArchiveBucketEntryView<'_>) -> Self {
+    fn from(v: HotArchiveBucketEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl HotArchiveBucketEntryView<'_> {
+impl HotArchiveBucketEntryRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> HotArchiveBucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -208,7 +208,7 @@ impl HotArchiveBucketEntryView<'_> {
     }
 }
 
-impl WriteXdr for HotArchiveBucketEntryView<'_> {
+impl WriteXdr for HotArchiveBucketEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

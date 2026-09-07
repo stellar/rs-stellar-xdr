@@ -64,19 +64,19 @@ impl WriteXdr for TransactionResultMetaV1 {
     }
 }
 
-/// TransactionResultMetaV1View is a borrowing equivalent of [`TransactionResultMetaV1`], usable in
+/// TransactionResultMetaV1Ref is a borrowing equivalent of [`TransactionResultMetaV1`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultMetaV1View<'a> {
+pub struct TransactionResultMetaV1Ref<'a> {
     pub ext: ExtensionPoint,
-    pub result: TransactionResultPairView<'a>,
-    pub fee_processing: LedgerEntryChangesView<'a>,
-    pub tx_apply_processing: TransactionMetaView<'a>,
-    pub post_tx_apply_fee_processing: LedgerEntryChangesView<'a>,
+    pub result: TransactionResultPairRef<'a>,
+    pub fee_processing: LedgerEntryChangesRef<'a>,
+    pub tx_apply_processing: TransactionMetaRef<'a>,
+    pub post_tx_apply_fee_processing: LedgerEntryChangesRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultMetaV1View<'_> {
+impl IntoOwned for TransactionResultMetaV1Ref<'_> {
     type Owned = TransactionResultMetaV1;
     fn into_owned(self) -> TransactionResultMetaV1 {
         TransactionResultMetaV1 {
@@ -90,22 +90,22 @@ impl IntoOwned for TransactionResultMetaV1View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultMetaV1View<'_>> for TransactionResultMetaV1 {
+impl From<&TransactionResultMetaV1Ref<'_>> for TransactionResultMetaV1 {
     #[must_use]
-    fn from(v: &TransactionResultMetaV1View<'_>) -> Self {
+    fn from(v: &TransactionResultMetaV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultMetaV1View<'_>> for TransactionResultMetaV1 {
+impl From<TransactionResultMetaV1Ref<'_>> for TransactionResultMetaV1 {
     #[must_use]
-    fn from(v: TransactionResultMetaV1View<'_>) -> Self {
+    fn from(v: TransactionResultMetaV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionResultMetaV1View<'_> {
+impl WriteXdr for TransactionResultMetaV1Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

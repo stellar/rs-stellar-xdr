@@ -78,20 +78,20 @@ impl WriteXdr for PathPaymentStrictSendOp {
     }
 }
 
-/// PathPaymentStrictSendOpView is a borrowing equivalent of [`PathPaymentStrictSendOp`], usable in
+/// PathPaymentStrictSendOpRef is a borrowing equivalent of [`PathPaymentStrictSendOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictSendOpView<'a> {
+pub struct PathPaymentStrictSendOpRef<'a> {
     pub send_asset: Asset,
     pub send_amount: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
     pub dest_min: i64,
-    pub path: VecMView<'a, Asset, 5>,
+    pub path: VecMRef<'a, Asset, 5>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictSendOpView<'_> {
+impl IntoOwned for PathPaymentStrictSendOpRef<'_> {
     type Owned = PathPaymentStrictSendOp;
     fn into_owned(self) -> PathPaymentStrictSendOp {
         PathPaymentStrictSendOp {
@@ -106,22 +106,22 @@ impl IntoOwned for PathPaymentStrictSendOpView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
+impl From<&PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
     #[must_use]
-    fn from(v: &PathPaymentStrictSendOpView<'_>) -> Self {
+    fn from(v: &PathPaymentStrictSendOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
+impl From<PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
     #[must_use]
-    fn from(v: PathPaymentStrictSendOpView<'_>) -> Self {
+    fn from(v: PathPaymentStrictSendOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PathPaymentStrictSendOpView<'_> {
+impl WriteXdr for PathPaymentStrictSendOpRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

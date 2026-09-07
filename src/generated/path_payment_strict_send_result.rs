@@ -239,12 +239,12 @@ impl WriteXdr for PathPaymentStrictSendResult {
     }
 }
 
-/// PathPaymentStrictSendResultView is a borrowing equivalent of [`PathPaymentStrictSendResult`], usable in
+/// PathPaymentStrictSendResultRef is a borrowing equivalent of [`PathPaymentStrictSendResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PathPaymentStrictSendResultView<'a> {
-    Success(PathPaymentStrictSendResultSuccessView<'a>),
+pub enum PathPaymentStrictSendResultRef<'a> {
+    Success(PathPaymentStrictSendResultSuccessRef<'a>),
     Malformed,
     Underfunded,
     SrcNoTrust,
@@ -260,40 +260,38 @@ pub enum PathPaymentStrictSendResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictSendResultView<'_> {
+impl IntoOwned for PathPaymentStrictSendResultRef<'_> {
     type Owned = PathPaymentStrictSendResult;
     fn into_owned(self) -> PathPaymentStrictSendResult {
         #[allow(clippy::match_same_arms)]
         match self {
-            PathPaymentStrictSendResultView::Success(value) => {
+            PathPaymentStrictSendResultRef::Success(value) => {
                 PathPaymentStrictSendResult::Success(value.into_owned())
             }
-            PathPaymentStrictSendResultView::Malformed => PathPaymentStrictSendResult::Malformed,
-            PathPaymentStrictSendResultView::Underfunded => {
-                PathPaymentStrictSendResult::Underfunded
-            }
-            PathPaymentStrictSendResultView::SrcNoTrust => PathPaymentStrictSendResult::SrcNoTrust,
-            PathPaymentStrictSendResultView::SrcNotAuthorized => {
+            PathPaymentStrictSendResultRef::Malformed => PathPaymentStrictSendResult::Malformed,
+            PathPaymentStrictSendResultRef::Underfunded => PathPaymentStrictSendResult::Underfunded,
+            PathPaymentStrictSendResultRef::SrcNoTrust => PathPaymentStrictSendResult::SrcNoTrust,
+            PathPaymentStrictSendResultRef::SrcNotAuthorized => {
                 PathPaymentStrictSendResult::SrcNotAuthorized
             }
-            PathPaymentStrictSendResultView::NoDestination => {
+            PathPaymentStrictSendResultRef::NoDestination => {
                 PathPaymentStrictSendResult::NoDestination
             }
-            PathPaymentStrictSendResultView::NoTrust => PathPaymentStrictSendResult::NoTrust,
-            PathPaymentStrictSendResultView::NotAuthorized => {
+            PathPaymentStrictSendResultRef::NoTrust => PathPaymentStrictSendResult::NoTrust,
+            PathPaymentStrictSendResultRef::NotAuthorized => {
                 PathPaymentStrictSendResult::NotAuthorized
             }
-            PathPaymentStrictSendResultView::LineFull => PathPaymentStrictSendResult::LineFull,
-            PathPaymentStrictSendResultView::NoIssuer(value) => {
+            PathPaymentStrictSendResultRef::LineFull => PathPaymentStrictSendResult::LineFull,
+            PathPaymentStrictSendResultRef::NoIssuer(value) => {
                 PathPaymentStrictSendResult::NoIssuer(value.into_owned())
             }
-            PathPaymentStrictSendResultView::TooFewOffers => {
+            PathPaymentStrictSendResultRef::TooFewOffers => {
                 PathPaymentStrictSendResult::TooFewOffers
             }
-            PathPaymentStrictSendResultView::OfferCrossSelf => {
+            PathPaymentStrictSendResultRef::OfferCrossSelf => {
                 PathPaymentStrictSendResult::OfferCrossSelf
             }
-            PathPaymentStrictSendResultView::UnderDestmin => {
+            PathPaymentStrictSendResultRef::UnderDestmin => {
                 PathPaymentStrictSendResult::UnderDestmin
             }
         }
@@ -301,22 +299,22 @@ impl IntoOwned for PathPaymentStrictSendResultView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictSendResultView<'_>> for PathPaymentStrictSendResult {
+impl From<&PathPaymentStrictSendResultRef<'_>> for PathPaymentStrictSendResult {
     #[must_use]
-    fn from(v: &PathPaymentStrictSendResultView<'_>) -> Self {
+    fn from(v: &PathPaymentStrictSendResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictSendResultView<'_>> for PathPaymentStrictSendResult {
+impl From<PathPaymentStrictSendResultRef<'_>> for PathPaymentStrictSendResult {
     #[must_use]
-    fn from(v: PathPaymentStrictSendResultView<'_>) -> Self {
+    fn from(v: PathPaymentStrictSendResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl PathPaymentStrictSendResultView<'_> {
+impl PathPaymentStrictSendResultRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         #[allow(clippy::match_same_arms)]
@@ -338,7 +336,7 @@ impl PathPaymentStrictSendResultView<'_> {
     }
 }
 
-impl WriteXdr for PathPaymentStrictSendResultView<'_> {
+impl WriteXdr for PathPaymentStrictSendResultRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

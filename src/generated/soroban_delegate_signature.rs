@@ -54,17 +54,17 @@ impl WriteXdr for SorobanDelegateSignature {
     }
 }
 
-/// SorobanDelegateSignatureView is a borrowing equivalent of [`SorobanDelegateSignature`], usable in
+/// SorobanDelegateSignatureRef is a borrowing equivalent of [`SorobanDelegateSignature`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanDelegateSignatureView<'a> {
+pub struct SorobanDelegateSignatureRef<'a> {
     pub address: ScAddress,
-    pub signature: ScValView<'a>,
-    pub nested_delegates: VecMView<'a, SorobanDelegateSignatureView<'a>>,
+    pub signature: ScValRef<'a>,
+    pub nested_delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanDelegateSignatureView<'_> {
+impl IntoOwned for SorobanDelegateSignatureRef<'_> {
     type Owned = SorobanDelegateSignature;
     fn into_owned(self) -> SorobanDelegateSignature {
         SorobanDelegateSignature {
@@ -76,22 +76,22 @@ impl IntoOwned for SorobanDelegateSignatureView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
+impl From<&SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
     #[must_use]
-    fn from(v: &SorobanDelegateSignatureView<'_>) -> Self {
+    fn from(v: &SorobanDelegateSignatureRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
+impl From<SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
     #[must_use]
-    fn from(v: SorobanDelegateSignatureView<'_>) -> Self {
+    fn from(v: SorobanDelegateSignatureRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanDelegateSignatureView<'_> {
+impl WriteXdr for SorobanDelegateSignatureRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

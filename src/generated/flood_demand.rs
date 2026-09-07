@@ -46,15 +46,15 @@ impl WriteXdr for FloodDemand {
     }
 }
 
-/// FloodDemandView is a borrowing equivalent of [`FloodDemand`], usable in
+/// FloodDemandRef is a borrowing equivalent of [`FloodDemand`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FloodDemandView<'a> {
-    pub tx_hashes: TxDemandVectorView<'a>,
+pub struct FloodDemandRef<'a> {
+    pub tx_hashes: TxDemandVectorRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FloodDemandView<'_> {
+impl IntoOwned for FloodDemandRef<'_> {
     type Owned = FloodDemand;
     fn into_owned(self) -> FloodDemand {
         FloodDemand {
@@ -64,22 +64,22 @@ impl IntoOwned for FloodDemandView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FloodDemandView<'_>> for FloodDemand {
+impl From<&FloodDemandRef<'_>> for FloodDemand {
     #[must_use]
-    fn from(v: &FloodDemandView<'_>) -> Self {
+    fn from(v: &FloodDemandRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FloodDemandView<'_>> for FloodDemand {
+impl From<FloodDemandRef<'_>> for FloodDemand {
     #[must_use]
-    fn from(v: FloodDemandView<'_>) -> Self {
+    fn from(v: FloodDemandRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for FloodDemandView<'_> {
+impl WriteXdr for FloodDemandRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

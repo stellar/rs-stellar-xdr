@@ -46,15 +46,15 @@ impl WriteXdr for ScSpecTypeVec {
     }
 }
 
-/// ScSpecTypeVecView is a borrowing equivalent of [`ScSpecTypeVec`], usable in
+/// ScSpecTypeVecRef is a borrowing equivalent of [`ScSpecTypeVec`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeVecView<'a> {
-    pub element_type: &'a ScSpecTypeDefView<'a>,
+pub struct ScSpecTypeVecRef<'a> {
+    pub element_type: &'a ScSpecTypeDefRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeVecView<'_> {
+impl IntoOwned for ScSpecTypeVecRef<'_> {
     type Owned = ScSpecTypeVec;
     fn into_owned(self) -> ScSpecTypeVec {
         ScSpecTypeVec {
@@ -64,22 +64,22 @@ impl IntoOwned for ScSpecTypeVecView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeVecView<'_>> for ScSpecTypeVec {
+impl From<&ScSpecTypeVecRef<'_>> for ScSpecTypeVec {
     #[must_use]
-    fn from(v: &ScSpecTypeVecView<'_>) -> Self {
+    fn from(v: &ScSpecTypeVecRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeVecView<'_>> for ScSpecTypeVec {
+impl From<ScSpecTypeVecRef<'_>> for ScSpecTypeVec {
     #[must_use]
-    fn from(v: ScSpecTypeVecView<'_>) -> Self {
+    fn from(v: ScSpecTypeVecRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecTypeVecView<'_> {
+impl WriteXdr for ScSpecTypeVecRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

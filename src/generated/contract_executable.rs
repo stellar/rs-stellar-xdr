@@ -149,25 +149,25 @@ impl WriteXdr for ContractExecutable {
     }
 }
 
-/// ContractExecutableView is a borrowing equivalent of [`ContractExecutable`], usable in
+/// ContractExecutableRef is a borrowing equivalent of [`ContractExecutable`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ContractExecutableView<'a> {
+pub enum ContractExecutableRef<'a> {
     Wasm(Hash),
     StellarAsset,
-    ExternalRef(ContractExecutableExternalRefView<'a>),
+    ExternalRef(ContractExecutableExternalRefRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ContractExecutableView<'_> {
+impl IntoOwned for ContractExecutableRef<'_> {
     type Owned = ContractExecutable;
     fn into_owned(self) -> ContractExecutable {
         #[allow(clippy::match_same_arms)]
         match self {
-            ContractExecutableView::Wasm(value) => ContractExecutable::Wasm(value.into_owned()),
-            ContractExecutableView::StellarAsset => ContractExecutable::StellarAsset,
-            ContractExecutableView::ExternalRef(value) => {
+            ContractExecutableRef::Wasm(value) => ContractExecutable::Wasm(value.into_owned()),
+            ContractExecutableRef::StellarAsset => ContractExecutable::StellarAsset,
+            ContractExecutableRef::ExternalRef(value) => {
                 ContractExecutable::ExternalRef(value.into_owned())
             }
         }
@@ -175,22 +175,22 @@ impl IntoOwned for ContractExecutableView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractExecutableView<'_>> for ContractExecutable {
+impl From<&ContractExecutableRef<'_>> for ContractExecutable {
     #[must_use]
-    fn from(v: &ContractExecutableView<'_>) -> Self {
+    fn from(v: &ContractExecutableRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractExecutableView<'_>> for ContractExecutable {
+impl From<ContractExecutableRef<'_>> for ContractExecutable {
     #[must_use]
-    fn from(v: ContractExecutableView<'_>) -> Self {
+    fn from(v: ContractExecutableRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ContractExecutableView<'_> {
+impl ContractExecutableRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ContractExecutableType {
         #[allow(clippy::match_same_arms)]
@@ -202,7 +202,7 @@ impl ContractExecutableView<'_> {
     }
 }
 
-impl WriteXdr for ContractExecutableView<'_> {
+impl WriteXdr for ContractExecutableRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

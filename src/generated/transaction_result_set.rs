@@ -46,15 +46,15 @@ impl WriteXdr for TransactionResultSet {
     }
 }
 
-/// TransactionResultSetView is a borrowing equivalent of [`TransactionResultSet`], usable in
+/// TransactionResultSetRef is a borrowing equivalent of [`TransactionResultSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultSetView<'a> {
-    pub results: VecMView<'a, TransactionResultPairView<'a>>,
+pub struct TransactionResultSetRef<'a> {
+    pub results: VecMRef<'a, TransactionResultPairRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultSetView<'_> {
+impl IntoOwned for TransactionResultSetRef<'_> {
     type Owned = TransactionResultSet;
     fn into_owned(self) -> TransactionResultSet {
         TransactionResultSet {
@@ -64,22 +64,22 @@ impl IntoOwned for TransactionResultSetView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultSetView<'_>> for TransactionResultSet {
+impl From<&TransactionResultSetRef<'_>> for TransactionResultSet {
     #[must_use]
-    fn from(v: &TransactionResultSetView<'_>) -> Self {
+    fn from(v: &TransactionResultSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultSetView<'_>> for TransactionResultSet {
+impl From<TransactionResultSetRef<'_>> for TransactionResultSet {
     #[must_use]
-    fn from(v: TransactionResultSetView<'_>) -> Self {
+    fn from(v: TransactionResultSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionResultSetView<'_> {
+impl WriteXdr for TransactionResultSetRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -101,24 +101,24 @@ impl WriteXdr for AccountEntry {
     }
 }
 
-/// AccountEntryView is a borrowing equivalent of [`AccountEntry`], usable in
+/// AccountEntryRef is a borrowing equivalent of [`AccountEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryView<'a> {
+pub struct AccountEntryRef<'a> {
     pub account_id: AccountId,
     pub balance: i64,
     pub seq_num: SequenceNumber,
     pub num_sub_entries: u32,
     pub inflation_dest: Option<AccountId>,
     pub flags: u32,
-    pub home_domain: String32View<'a>,
+    pub home_domain: String32Ref<'a>,
     pub thresholds: Thresholds,
-    pub signers: VecMView<'a, SignerView<'a>, MAX_SIGNERS>,
-    pub ext: AccountEntryExtView<'a>,
+    pub signers: VecMRef<'a, SignerRef<'a>, MAX_SIGNERS>,
+    pub ext: AccountEntryExtRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryView<'_> {
+impl IntoOwned for AccountEntryRef<'_> {
     type Owned = AccountEntry;
     fn into_owned(self) -> AccountEntry {
         AccountEntry {
@@ -137,22 +137,22 @@ impl IntoOwned for AccountEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryView<'_>> for AccountEntry {
+impl From<&AccountEntryRef<'_>> for AccountEntry {
     #[must_use]
-    fn from(v: &AccountEntryView<'_>) -> Self {
+    fn from(v: &AccountEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryView<'_>> for AccountEntry {
+impl From<AccountEntryRef<'_>> for AccountEntry {
     #[must_use]
-    fn from(v: AccountEntryView<'_>) -> Self {
+    fn from(v: AccountEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for AccountEntryView<'_> {
+impl WriteXdr for AccountEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

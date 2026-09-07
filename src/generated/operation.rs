@@ -111,16 +111,16 @@ impl WriteXdr for Operation {
     }
 }
 
-/// OperationView is a borrowing equivalent of [`Operation`], usable in
+/// OperationRef is a borrowing equivalent of [`Operation`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationView<'a> {
+pub struct OperationRef<'a> {
     pub source_account: Option<MuxedAccount>,
-    pub body: OperationBodyView<'a>,
+    pub body: OperationBodyRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for OperationView<'_> {
+impl IntoOwned for OperationRef<'_> {
     type Owned = Operation;
     fn into_owned(self) -> Operation {
         Operation {
@@ -131,22 +131,22 @@ impl IntoOwned for OperationView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationView<'_>> for Operation {
+impl From<&OperationRef<'_>> for Operation {
     #[must_use]
-    fn from(v: &OperationView<'_>) -> Self {
+    fn from(v: &OperationRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationView<'_>> for Operation {
+impl From<OperationRef<'_>> for Operation {
     #[must_use]
-    fn from(v: OperationView<'_>) -> Self {
+    fn from(v: OperationRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for OperationView<'_> {
+impl WriteXdr for OperationRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

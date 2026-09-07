@@ -136,44 +136,44 @@ impl WriteXdr for PersistedScpState {
     }
 }
 
-/// PersistedScpStateView is a borrowing equivalent of [`PersistedScpState`], usable in
+/// PersistedScpStateRef is a borrowing equivalent of [`PersistedScpState`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PersistedScpStateView<'a> {
-    V0(PersistedScpStateV0View<'a>),
-    V1(PersistedScpStateV1View<'a>),
+pub enum PersistedScpStateRef<'a> {
+    V0(PersistedScpStateV0Ref<'a>),
+    V1(PersistedScpStateV1Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PersistedScpStateView<'_> {
+impl IntoOwned for PersistedScpStateRef<'_> {
     type Owned = PersistedScpState;
     fn into_owned(self) -> PersistedScpState {
         #[allow(clippy::match_same_arms)]
         match self {
-            PersistedScpStateView::V0(value) => PersistedScpState::V0(value.into_owned()),
-            PersistedScpStateView::V1(value) => PersistedScpState::V1(value.into_owned()),
+            PersistedScpStateRef::V0(value) => PersistedScpState::V0(value.into_owned()),
+            PersistedScpStateRef::V1(value) => PersistedScpState::V1(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PersistedScpStateView<'_>> for PersistedScpState {
+impl From<&PersistedScpStateRef<'_>> for PersistedScpState {
     #[must_use]
-    fn from(v: &PersistedScpStateView<'_>) -> Self {
+    fn from(v: &PersistedScpStateRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PersistedScpStateView<'_>> for PersistedScpState {
+impl From<PersistedScpStateRef<'_>> for PersistedScpState {
     #[must_use]
-    fn from(v: PersistedScpStateView<'_>) -> Self {
+    fn from(v: PersistedScpStateRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl PersistedScpStateView<'_> {
+impl PersistedScpStateRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,7 +184,7 @@ impl PersistedScpStateView<'_> {
     }
 }
 
-impl WriteXdr for PersistedScpStateView<'_> {
+impl WriteXdr for PersistedScpStateRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

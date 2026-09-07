@@ -180,54 +180,54 @@ impl WriteXdr for ScSpecEntry {
     }
 }
 
-/// ScSpecEntryView is a borrowing equivalent of [`ScSpecEntry`], usable in
+/// ScSpecEntryRef is a borrowing equivalent of [`ScSpecEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecEntryView<'a> {
-    FunctionV0(ScSpecFunctionV0View<'a>),
-    UdtStructV0(ScSpecUdtStructV0View<'a>),
-    UdtUnionV0(ScSpecUdtUnionV0View<'a>),
-    UdtEnumV0(ScSpecUdtEnumV0View<'a>),
-    UdtErrorEnumV0(ScSpecUdtErrorEnumV0View<'a>),
-    EventV0(ScSpecEventV0View<'a>),
+pub enum ScSpecEntryRef<'a> {
+    FunctionV0(ScSpecFunctionV0Ref<'a>),
+    UdtStructV0(ScSpecUdtStructV0Ref<'a>),
+    UdtUnionV0(ScSpecUdtUnionV0Ref<'a>),
+    UdtEnumV0(ScSpecUdtEnumV0Ref<'a>),
+    UdtErrorEnumV0(ScSpecUdtErrorEnumV0Ref<'a>),
+    EventV0(ScSpecEventV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecEntryView<'_> {
+impl IntoOwned for ScSpecEntryRef<'_> {
     type Owned = ScSpecEntry;
     fn into_owned(self) -> ScSpecEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScSpecEntryView::FunctionV0(value) => ScSpecEntry::FunctionV0(value.into_owned()),
-            ScSpecEntryView::UdtStructV0(value) => ScSpecEntry::UdtStructV0(value.into_owned()),
-            ScSpecEntryView::UdtUnionV0(value) => ScSpecEntry::UdtUnionV0(value.into_owned()),
-            ScSpecEntryView::UdtEnumV0(value) => ScSpecEntry::UdtEnumV0(value.into_owned()),
-            ScSpecEntryView::UdtErrorEnumV0(value) => {
+            ScSpecEntryRef::FunctionV0(value) => ScSpecEntry::FunctionV0(value.into_owned()),
+            ScSpecEntryRef::UdtStructV0(value) => ScSpecEntry::UdtStructV0(value.into_owned()),
+            ScSpecEntryRef::UdtUnionV0(value) => ScSpecEntry::UdtUnionV0(value.into_owned()),
+            ScSpecEntryRef::UdtEnumV0(value) => ScSpecEntry::UdtEnumV0(value.into_owned()),
+            ScSpecEntryRef::UdtErrorEnumV0(value) => {
                 ScSpecEntry::UdtErrorEnumV0(value.into_owned())
             }
-            ScSpecEntryView::EventV0(value) => ScSpecEntry::EventV0(value.into_owned()),
+            ScSpecEntryRef::EventV0(value) => ScSpecEntry::EventV0(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecEntryView<'_>> for ScSpecEntry {
+impl From<&ScSpecEntryRef<'_>> for ScSpecEntry {
     #[must_use]
-    fn from(v: &ScSpecEntryView<'_>) -> Self {
+    fn from(v: &ScSpecEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecEntryView<'_>> for ScSpecEntry {
+impl From<ScSpecEntryRef<'_>> for ScSpecEntry {
     #[must_use]
-    fn from(v: ScSpecEntryView<'_>) -> Self {
+    fn from(v: ScSpecEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ScSpecEntryView<'_> {
+impl ScSpecEntryRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecEntryKind {
         #[allow(clippy::match_same_arms)]
@@ -242,7 +242,7 @@ impl ScSpecEntryView<'_> {
     }
 }
 
-impl WriteXdr for ScSpecEntryView<'_> {
+impl WriteXdr for ScSpecEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

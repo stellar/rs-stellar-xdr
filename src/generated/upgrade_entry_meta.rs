@@ -50,16 +50,16 @@ impl WriteXdr for UpgradeEntryMeta {
     }
 }
 
-/// UpgradeEntryMetaView is a borrowing equivalent of [`UpgradeEntryMeta`], usable in
+/// UpgradeEntryMetaRef is a borrowing equivalent of [`UpgradeEntryMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct UpgradeEntryMetaView<'a> {
+pub struct UpgradeEntryMetaRef<'a> {
     pub upgrade: LedgerUpgrade,
-    pub changes: LedgerEntryChangesView<'a>,
+    pub changes: LedgerEntryChangesRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for UpgradeEntryMetaView<'_> {
+impl IntoOwned for UpgradeEntryMetaRef<'_> {
     type Owned = UpgradeEntryMeta;
     fn into_owned(self) -> UpgradeEntryMeta {
         UpgradeEntryMeta {
@@ -70,22 +70,22 @@ impl IntoOwned for UpgradeEntryMetaView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&UpgradeEntryMetaView<'_>> for UpgradeEntryMeta {
+impl From<&UpgradeEntryMetaRef<'_>> for UpgradeEntryMeta {
     #[must_use]
-    fn from(v: &UpgradeEntryMetaView<'_>) -> Self {
+    fn from(v: &UpgradeEntryMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<UpgradeEntryMetaView<'_>> for UpgradeEntryMeta {
+impl From<UpgradeEntryMetaRef<'_>> for UpgradeEntryMeta {
     #[must_use]
-    fn from(v: UpgradeEntryMetaView<'_>) -> Self {
+    fn from(v: UpgradeEntryMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for UpgradeEntryMetaView<'_> {
+impl WriteXdr for UpgradeEntryMetaRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -139,21 +139,21 @@ impl WriteXdr for TxSetComponent {
     }
 }
 
-/// TxSetComponentView is a borrowing equivalent of [`TxSetComponent`], usable in
+/// TxSetComponentRef is a borrowing equivalent of [`TxSetComponent`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TxSetComponentView<'a> {
-    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeView<'a>),
+pub enum TxSetComponentRef<'a> {
+    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TxSetComponentView<'_> {
+impl IntoOwned for TxSetComponentRef<'_> {
     type Owned = TxSetComponent;
     fn into_owned(self) -> TxSetComponent {
         #[allow(clippy::match_same_arms)]
         match self {
-            TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {
+            TxSetComponentRef::TxsetCompTxsMaybeDiscountedFee(value) => {
                 TxSetComponent::TxsetCompTxsMaybeDiscountedFee(value.into_owned())
             }
         }
@@ -161,22 +161,22 @@ impl IntoOwned for TxSetComponentView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TxSetComponentView<'_>> for TxSetComponent {
+impl From<&TxSetComponentRef<'_>> for TxSetComponent {
     #[must_use]
-    fn from(v: &TxSetComponentView<'_>) -> Self {
+    fn from(v: &TxSetComponentRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxSetComponentView<'_>> for TxSetComponent {
+impl From<TxSetComponentRef<'_>> for TxSetComponent {
     #[must_use]
-    fn from(v: TxSetComponentView<'_>) -> Self {
+    fn from(v: TxSetComponentRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl TxSetComponentView<'_> {
+impl TxSetComponentRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> TxSetComponentType {
         #[allow(clippy::match_same_arms)]
@@ -188,7 +188,7 @@ impl TxSetComponentView<'_> {
     }
 }
 
-impl WriteXdr for TxSetComponentView<'_> {
+impl WriteXdr for TxSetComponentRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

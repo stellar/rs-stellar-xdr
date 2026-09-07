@@ -58,17 +58,17 @@ impl WriteXdr for AuthenticatedMessageV0 {
     }
 }
 
-/// AuthenticatedMessageV0View is a borrowing equivalent of [`AuthenticatedMessageV0`], usable in
+/// AuthenticatedMessageV0Ref is a borrowing equivalent of [`AuthenticatedMessageV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AuthenticatedMessageV0View<'a> {
+pub struct AuthenticatedMessageV0Ref<'a> {
     pub sequence: u64,
-    pub message: StellarMessageView<'a>,
+    pub message: StellarMessageRef<'a>,
     pub mac: HmacSha256Mac,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AuthenticatedMessageV0View<'_> {
+impl IntoOwned for AuthenticatedMessageV0Ref<'_> {
     type Owned = AuthenticatedMessageV0;
     fn into_owned(self) -> AuthenticatedMessageV0 {
         AuthenticatedMessageV0 {
@@ -80,22 +80,22 @@ impl IntoOwned for AuthenticatedMessageV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
+impl From<&AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
     #[must_use]
-    fn from(v: &AuthenticatedMessageV0View<'_>) -> Self {
+    fn from(v: &AuthenticatedMessageV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
+impl From<AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
     #[must_use]
-    fn from(v: AuthenticatedMessageV0View<'_>) -> Self {
+    fn from(v: AuthenticatedMessageV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for AuthenticatedMessageV0View<'_> {
+impl WriteXdr for AuthenticatedMessageV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

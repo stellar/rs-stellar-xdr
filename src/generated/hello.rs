@@ -78,23 +78,23 @@ impl WriteXdr for Hello {
     }
 }
 
-/// HelloView is a borrowing equivalent of [`Hello`], usable in
+/// HelloRef is a borrowing equivalent of [`Hello`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HelloView<'a> {
+pub struct HelloRef<'a> {
     pub ledger_version: u32,
     pub overlay_version: u32,
     pub overlay_min_version: u32,
     pub network_id: Hash,
-    pub version_str: StringMView<'a, 100>,
+    pub version_str: StringMRef<'a, 100>,
     pub listening_port: i32,
     pub peer_id: NodeId,
-    pub cert: AuthCertView<'a>,
+    pub cert: AuthCertRef<'a>,
     pub nonce: Uint256,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for HelloView<'_> {
+impl IntoOwned for HelloRef<'_> {
     type Owned = Hello;
     fn into_owned(self) -> Hello {
         Hello {
@@ -112,22 +112,22 @@ impl IntoOwned for HelloView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HelloView<'_>> for Hello {
+impl From<&HelloRef<'_>> for Hello {
     #[must_use]
-    fn from(v: &HelloView<'_>) -> Self {
+    fn from(v: &HelloRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<HelloView<'_>> for Hello {
+impl From<HelloRef<'_>> for Hello {
     #[must_use]
-    fn from(v: HelloView<'_>) -> Self {
+    fn from(v: HelloRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for HelloView<'_> {
+impl WriteXdr for HelloRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

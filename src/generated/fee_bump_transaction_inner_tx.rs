@@ -129,21 +129,21 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     }
 }
 
-/// FeeBumpTransactionInnerTxView is a borrowing equivalent of [`FeeBumpTransactionInnerTx`], usable in
+/// FeeBumpTransactionInnerTxRef is a borrowing equivalent of [`FeeBumpTransactionInnerTx`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum FeeBumpTransactionInnerTxView<'a> {
-    Tx(TransactionV1EnvelopeView<'a>),
+pub enum FeeBumpTransactionInnerTxRef<'a> {
+    Tx(TransactionV1EnvelopeRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionInnerTxView<'_> {
+impl IntoOwned for FeeBumpTransactionInnerTxRef<'_> {
     type Owned = FeeBumpTransactionInnerTx;
     fn into_owned(self) -> FeeBumpTransactionInnerTx {
         #[allow(clippy::match_same_arms)]
         match self {
-            FeeBumpTransactionInnerTxView::Tx(value) => {
+            FeeBumpTransactionInnerTxRef::Tx(value) => {
                 FeeBumpTransactionInnerTx::Tx(value.into_owned())
             }
         }
@@ -151,22 +151,22 @@ impl IntoOwned for FeeBumpTransactionInnerTxView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
+impl From<&FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
-    fn from(v: &FeeBumpTransactionInnerTxView<'_>) -> Self {
+    fn from(v: &FeeBumpTransactionInnerTxRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
+impl From<FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
-    fn from(v: FeeBumpTransactionInnerTxView<'_>) -> Self {
+    fn from(v: FeeBumpTransactionInnerTxRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl FeeBumpTransactionInnerTxView<'_> {
+impl FeeBumpTransactionInnerTxRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -176,7 +176,7 @@ impl FeeBumpTransactionInnerTxView<'_> {
     }
 }
 
-impl WriteXdr for FeeBumpTransactionInnerTxView<'_> {
+impl WriteXdr for FeeBumpTransactionInnerTxRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

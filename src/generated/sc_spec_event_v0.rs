@@ -66,20 +66,20 @@ impl WriteXdr for ScSpecEventV0 {
     }
 }
 
-/// ScSpecEventV0View is a borrowing equivalent of [`ScSpecEventV0`], usable in
+/// ScSpecEventV0Ref is a borrowing equivalent of [`ScSpecEventV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecEventV0View<'a> {
-    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
-    pub lib: StringMView<'a, 80>,
-    pub name: ScSymbolView<'a>,
-    pub prefix_topics: VecMView<'a, ScSymbolView<'a>, 2>,
-    pub params: VecMView<'a, ScSpecEventParamV0View<'a>>,
+pub struct ScSpecEventV0Ref<'a> {
+    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
+    pub lib: StringMRef<'a, 80>,
+    pub name: ScSymbolRef<'a>,
+    pub prefix_topics: VecMRef<'a, ScSymbolRef<'a>, 2>,
+    pub params: VecMRef<'a, ScSpecEventParamV0Ref<'a>>,
     pub data_format: ScSpecEventDataFormat,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecEventV0View<'_> {
+impl IntoOwned for ScSpecEventV0Ref<'_> {
     type Owned = ScSpecEventV0;
     fn into_owned(self) -> ScSpecEventV0 {
         ScSpecEventV0 {
@@ -94,22 +94,22 @@ impl IntoOwned for ScSpecEventV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
+impl From<&ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
     #[must_use]
-    fn from(v: &ScSpecEventV0View<'_>) -> Self {
+    fn from(v: &ScSpecEventV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecEventV0View<'_>> for ScSpecEventV0 {
+impl From<ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
     #[must_use]
-    fn from(v: ScSpecEventV0View<'_>) -> Self {
+    fn from(v: ScSpecEventV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecEventV0View<'_> {
+impl WriteXdr for ScSpecEventV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

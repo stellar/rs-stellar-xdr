@@ -50,16 +50,16 @@ impl WriteXdr for SorobanAuthorizationEntry {
     }
 }
 
-/// SorobanAuthorizationEntryView is a borrowing equivalent of [`SorobanAuthorizationEntry`], usable in
+/// SorobanAuthorizationEntryRef is a borrowing equivalent of [`SorobanAuthorizationEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizationEntryView<'a> {
-    pub credentials: SorobanCredentialsView<'a>,
-    pub root_invocation: SorobanAuthorizedInvocationView<'a>,
+pub struct SorobanAuthorizationEntryRef<'a> {
+    pub credentials: SorobanCredentialsRef<'a>,
+    pub root_invocation: SorobanAuthorizedInvocationRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizationEntryView<'_> {
+impl IntoOwned for SorobanAuthorizationEntryRef<'_> {
     type Owned = SorobanAuthorizationEntry;
     fn into_owned(self) -> SorobanAuthorizationEntry {
         SorobanAuthorizationEntry {
@@ -70,22 +70,22 @@ impl IntoOwned for SorobanAuthorizationEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
+impl From<&SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
     #[must_use]
-    fn from(v: &SorobanAuthorizationEntryView<'_>) -> Self {
+    fn from(v: &SorobanAuthorizationEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizationEntryView<'_>> for SorobanAuthorizationEntry {
+impl From<SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
     #[must_use]
-    fn from(v: SorobanAuthorizationEntryView<'_>) -> Self {
+    fn from(v: SorobanAuthorizationEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanAuthorizationEntryView<'_> {
+impl WriteXdr for SorobanAuthorizationEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

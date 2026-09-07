@@ -89,20 +89,20 @@ impl WriteXdr for PreconditionsV2 {
     }
 }
 
-/// PreconditionsV2View is a borrowing equivalent of [`PreconditionsV2`], usable in
+/// PreconditionsV2Ref is a borrowing equivalent of [`PreconditionsV2`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PreconditionsV2View<'a> {
+pub struct PreconditionsV2Ref<'a> {
     pub time_bounds: Option<TimeBounds>,
     pub ledger_bounds: Option<LedgerBounds>,
     pub min_seq_num: Option<SequenceNumber>,
     pub min_seq_age: Duration,
     pub min_seq_ledger_gap: u32,
-    pub extra_signers: VecMView<'a, SignerKeyView<'a>, 2>,
+    pub extra_signers: VecMRef<'a, SignerKeyRef<'a>, 2>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PreconditionsV2View<'_> {
+impl IntoOwned for PreconditionsV2Ref<'_> {
     type Owned = PreconditionsV2;
     fn into_owned(self) -> PreconditionsV2 {
         PreconditionsV2 {
@@ -117,22 +117,22 @@ impl IntoOwned for PreconditionsV2View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PreconditionsV2View<'_>> for PreconditionsV2 {
+impl From<&PreconditionsV2Ref<'_>> for PreconditionsV2 {
     #[must_use]
-    fn from(v: &PreconditionsV2View<'_>) -> Self {
+    fn from(v: &PreconditionsV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PreconditionsV2View<'_>> for PreconditionsV2 {
+impl From<PreconditionsV2Ref<'_>> for PreconditionsV2 {
     #[must_use]
-    fn from(v: PreconditionsV2View<'_>) -> Self {
+    fn from(v: PreconditionsV2Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PreconditionsV2View<'_> {
+impl WriteXdr for PreconditionsV2Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

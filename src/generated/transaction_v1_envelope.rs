@@ -52,16 +52,16 @@ impl WriteXdr for TransactionV1Envelope {
     }
 }
 
-/// TransactionV1EnvelopeView is a borrowing equivalent of [`TransactionV1Envelope`], usable in
+/// TransactionV1EnvelopeRef is a borrowing equivalent of [`TransactionV1Envelope`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionV1EnvelopeView<'a> {
-    pub tx: TransactionView<'a>,
-    pub signatures: VecMView<'a, DecoratedSignatureView<'a>, 20>,
+pub struct TransactionV1EnvelopeRef<'a> {
+    pub tx: TransactionRef<'a>,
+    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionV1EnvelopeView<'_> {
+impl IntoOwned for TransactionV1EnvelopeRef<'_> {
     type Owned = TransactionV1Envelope;
     fn into_owned(self) -> TransactionV1Envelope {
         TransactionV1Envelope {
@@ -72,22 +72,22 @@ impl IntoOwned for TransactionV1EnvelopeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionV1EnvelopeView<'_>> for TransactionV1Envelope {
+impl From<&TransactionV1EnvelopeRef<'_>> for TransactionV1Envelope {
     #[must_use]
-    fn from(v: &TransactionV1EnvelopeView<'_>) -> Self {
+    fn from(v: &TransactionV1EnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionV1EnvelopeView<'_>> for TransactionV1Envelope {
+impl From<TransactionV1EnvelopeRef<'_>> for TransactionV1Envelope {
     #[must_use]
-    fn from(v: TransactionV1EnvelopeView<'_>) -> Self {
+    fn from(v: TransactionV1EnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionV1EnvelopeView<'_> {
+impl WriteXdr for TransactionV1EnvelopeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

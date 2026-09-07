@@ -168,33 +168,33 @@ impl WriteXdr for HostFunction {
     }
 }
 
-/// HostFunctionView is a borrowing equivalent of [`HostFunction`], usable in
+/// HostFunctionRef is a borrowing equivalent of [`HostFunction`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HostFunctionView<'a> {
-    InvokeContract(InvokeContractArgsView<'a>),
-    CreateContract(CreateContractArgsView<'a>),
-    UploadContractWasm(BytesMView<'a>),
-    CreateContractV2(CreateContractArgsV2View<'a>),
+pub enum HostFunctionRef<'a> {
+    InvokeContract(InvokeContractArgsRef<'a>),
+    CreateContract(CreateContractArgsRef<'a>),
+    UploadContractWasm(BytesMRef<'a>),
+    CreateContractV2(CreateContractArgsV2Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for HostFunctionView<'_> {
+impl IntoOwned for HostFunctionRef<'_> {
     type Owned = HostFunction;
     fn into_owned(self) -> HostFunction {
         #[allow(clippy::match_same_arms)]
         match self {
-            HostFunctionView::InvokeContract(value) => {
+            HostFunctionRef::InvokeContract(value) => {
                 HostFunction::InvokeContract(value.into_owned())
             }
-            HostFunctionView::CreateContract(value) => {
+            HostFunctionRef::CreateContract(value) => {
                 HostFunction::CreateContract(value.into_owned())
             }
-            HostFunctionView::UploadContractWasm(value) => {
+            HostFunctionRef::UploadContractWasm(value) => {
                 HostFunction::UploadContractWasm(value.into_owned())
             }
-            HostFunctionView::CreateContractV2(value) => {
+            HostFunctionRef::CreateContractV2(value) => {
                 HostFunction::CreateContractV2(value.into_owned())
             }
         }
@@ -202,22 +202,22 @@ impl IntoOwned for HostFunctionView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HostFunctionView<'_>> for HostFunction {
+impl From<&HostFunctionRef<'_>> for HostFunction {
     #[must_use]
-    fn from(v: &HostFunctionView<'_>) -> Self {
+    fn from(v: &HostFunctionRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<HostFunctionView<'_>> for HostFunction {
+impl From<HostFunctionRef<'_>> for HostFunction {
     #[must_use]
-    fn from(v: HostFunctionView<'_>) -> Self {
+    fn from(v: HostFunctionRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl HostFunctionView<'_> {
+impl HostFunctionRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> HostFunctionType {
         #[allow(clippy::match_same_arms)]
@@ -230,7 +230,7 @@ impl HostFunctionView<'_> {
     }
 }
 
-impl WriteXdr for HostFunctionView<'_> {
+impl WriteXdr for HostFunctionRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

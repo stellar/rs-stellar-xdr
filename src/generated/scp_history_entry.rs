@@ -129,42 +129,42 @@ impl WriteXdr for ScpHistoryEntry {
     }
 }
 
-/// ScpHistoryEntryView is a borrowing equivalent of [`ScpHistoryEntry`], usable in
+/// ScpHistoryEntryRef is a borrowing equivalent of [`ScpHistoryEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScpHistoryEntryView<'a> {
-    V0(ScpHistoryEntryV0View<'a>),
+pub enum ScpHistoryEntryRef<'a> {
+    V0(ScpHistoryEntryV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpHistoryEntryView<'_> {
+impl IntoOwned for ScpHistoryEntryRef<'_> {
     type Owned = ScpHistoryEntry;
     fn into_owned(self) -> ScpHistoryEntry {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScpHistoryEntryView::V0(value) => ScpHistoryEntry::V0(value.into_owned()),
+            ScpHistoryEntryRef::V0(value) => ScpHistoryEntry::V0(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpHistoryEntryView<'_>> for ScpHistoryEntry {
+impl From<&ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
     #[must_use]
-    fn from(v: &ScpHistoryEntryView<'_>) -> Self {
+    fn from(v: &ScpHistoryEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpHistoryEntryView<'_>> for ScpHistoryEntry {
+impl From<ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
     #[must_use]
-    fn from(v: ScpHistoryEntryView<'_>) -> Self {
+    fn from(v: ScpHistoryEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ScpHistoryEntryView<'_> {
+impl ScpHistoryEntryRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -174,7 +174,7 @@ impl ScpHistoryEntryView<'_> {
     }
 }
 
-impl WriteXdr for ScpHistoryEntryView<'_> {
+impl WriteXdr for ScpHistoryEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

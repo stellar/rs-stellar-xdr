@@ -405,25 +405,25 @@ impl WriteXdr for OperationResultTr {
     }
 }
 
-/// OperationResultTrView is a borrowing equivalent of [`OperationResultTr`], usable in
+/// OperationResultTrRef is a borrowing equivalent of [`OperationResultTr`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum OperationResultTrView<'a> {
+pub enum OperationResultTrRef<'a> {
     CreateAccount(CreateAccountResult),
     Payment(PaymentResult),
-    PathPaymentStrictReceive(PathPaymentStrictReceiveResultView<'a>),
-    ManageSellOffer(ManageSellOfferResultView<'a>),
-    CreatePassiveSellOffer(ManageSellOfferResultView<'a>),
+    PathPaymentStrictReceive(PathPaymentStrictReceiveResultRef<'a>),
+    ManageSellOffer(ManageSellOfferResultRef<'a>),
+    CreatePassiveSellOffer(ManageSellOfferResultRef<'a>),
     SetOptions(SetOptionsResult),
     ChangeTrust(ChangeTrustResult),
     AllowTrust(AllowTrustResult),
     AccountMerge(AccountMergeResult),
-    Inflation(InflationResultView<'a>),
+    Inflation(InflationResultRef<'a>),
     ManageData(ManageDataResult),
     BumpSequence(BumpSequenceResult),
-    ManageBuyOffer(ManageBuyOfferResultView<'a>),
-    PathPaymentStrictSend(PathPaymentStrictSendResultView<'a>),
+    ManageBuyOffer(ManageBuyOfferResultRef<'a>),
+    PathPaymentStrictSend(PathPaymentStrictSendResultRef<'a>),
     CreateClaimableBalance(CreateClaimableBalanceResult),
     ClaimClaimableBalance(ClaimClaimableBalanceResult),
     BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult),
@@ -440,88 +440,88 @@ pub enum OperationResultTrView<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for OperationResultTrView<'_> {
+impl IntoOwned for OperationResultTrRef<'_> {
     type Owned = OperationResultTr;
     fn into_owned(self) -> OperationResultTr {
         #[allow(clippy::match_same_arms)]
         match self {
-            OperationResultTrView::CreateAccount(value) => {
+            OperationResultTrRef::CreateAccount(value) => {
                 OperationResultTr::CreateAccount(value.into_owned())
             }
-            OperationResultTrView::Payment(value) => OperationResultTr::Payment(value.into_owned()),
-            OperationResultTrView::PathPaymentStrictReceive(value) => {
+            OperationResultTrRef::Payment(value) => OperationResultTr::Payment(value.into_owned()),
+            OperationResultTrRef::PathPaymentStrictReceive(value) => {
                 OperationResultTr::PathPaymentStrictReceive(value.into_owned())
             }
-            OperationResultTrView::ManageSellOffer(value) => {
+            OperationResultTrRef::ManageSellOffer(value) => {
                 OperationResultTr::ManageSellOffer(value.into_owned())
             }
-            OperationResultTrView::CreatePassiveSellOffer(value) => {
+            OperationResultTrRef::CreatePassiveSellOffer(value) => {
                 OperationResultTr::CreatePassiveSellOffer(value.into_owned())
             }
-            OperationResultTrView::SetOptions(value) => {
+            OperationResultTrRef::SetOptions(value) => {
                 OperationResultTr::SetOptions(value.into_owned())
             }
-            OperationResultTrView::ChangeTrust(value) => {
+            OperationResultTrRef::ChangeTrust(value) => {
                 OperationResultTr::ChangeTrust(value.into_owned())
             }
-            OperationResultTrView::AllowTrust(value) => {
+            OperationResultTrRef::AllowTrust(value) => {
                 OperationResultTr::AllowTrust(value.into_owned())
             }
-            OperationResultTrView::AccountMerge(value) => {
+            OperationResultTrRef::AccountMerge(value) => {
                 OperationResultTr::AccountMerge(value.into_owned())
             }
-            OperationResultTrView::Inflation(value) => {
+            OperationResultTrRef::Inflation(value) => {
                 OperationResultTr::Inflation(value.into_owned())
             }
-            OperationResultTrView::ManageData(value) => {
+            OperationResultTrRef::ManageData(value) => {
                 OperationResultTr::ManageData(value.into_owned())
             }
-            OperationResultTrView::BumpSequence(value) => {
+            OperationResultTrRef::BumpSequence(value) => {
                 OperationResultTr::BumpSequence(value.into_owned())
             }
-            OperationResultTrView::ManageBuyOffer(value) => {
+            OperationResultTrRef::ManageBuyOffer(value) => {
                 OperationResultTr::ManageBuyOffer(value.into_owned())
             }
-            OperationResultTrView::PathPaymentStrictSend(value) => {
+            OperationResultTrRef::PathPaymentStrictSend(value) => {
                 OperationResultTr::PathPaymentStrictSend(value.into_owned())
             }
-            OperationResultTrView::CreateClaimableBalance(value) => {
+            OperationResultTrRef::CreateClaimableBalance(value) => {
                 OperationResultTr::CreateClaimableBalance(value.into_owned())
             }
-            OperationResultTrView::ClaimClaimableBalance(value) => {
+            OperationResultTrRef::ClaimClaimableBalance(value) => {
                 OperationResultTr::ClaimClaimableBalance(value.into_owned())
             }
-            OperationResultTrView::BeginSponsoringFutureReserves(value) => {
+            OperationResultTrRef::BeginSponsoringFutureReserves(value) => {
                 OperationResultTr::BeginSponsoringFutureReserves(value.into_owned())
             }
-            OperationResultTrView::EndSponsoringFutureReserves(value) => {
+            OperationResultTrRef::EndSponsoringFutureReserves(value) => {
                 OperationResultTr::EndSponsoringFutureReserves(value.into_owned())
             }
-            OperationResultTrView::RevokeSponsorship(value) => {
+            OperationResultTrRef::RevokeSponsorship(value) => {
                 OperationResultTr::RevokeSponsorship(value.into_owned())
             }
-            OperationResultTrView::Clawback(value) => {
+            OperationResultTrRef::Clawback(value) => {
                 OperationResultTr::Clawback(value.into_owned())
             }
-            OperationResultTrView::ClawbackClaimableBalance(value) => {
+            OperationResultTrRef::ClawbackClaimableBalance(value) => {
                 OperationResultTr::ClawbackClaimableBalance(value.into_owned())
             }
-            OperationResultTrView::SetTrustLineFlags(value) => {
+            OperationResultTrRef::SetTrustLineFlags(value) => {
                 OperationResultTr::SetTrustLineFlags(value.into_owned())
             }
-            OperationResultTrView::LiquidityPoolDeposit(value) => {
+            OperationResultTrRef::LiquidityPoolDeposit(value) => {
                 OperationResultTr::LiquidityPoolDeposit(value.into_owned())
             }
-            OperationResultTrView::LiquidityPoolWithdraw(value) => {
+            OperationResultTrRef::LiquidityPoolWithdraw(value) => {
                 OperationResultTr::LiquidityPoolWithdraw(value.into_owned())
             }
-            OperationResultTrView::InvokeHostFunction(value) => {
+            OperationResultTrRef::InvokeHostFunction(value) => {
                 OperationResultTr::InvokeHostFunction(value.into_owned())
             }
-            OperationResultTrView::ExtendFootprintTtl(value) => {
+            OperationResultTrRef::ExtendFootprintTtl(value) => {
                 OperationResultTr::ExtendFootprintTtl(value.into_owned())
             }
-            OperationResultTrView::RestoreFootprint(value) => {
+            OperationResultTrRef::RestoreFootprint(value) => {
                 OperationResultTr::RestoreFootprint(value.into_owned())
             }
         }
@@ -529,22 +529,22 @@ impl IntoOwned for OperationResultTrView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&OperationResultTrView<'_>> for OperationResultTr {
+impl From<&OperationResultTrRef<'_>> for OperationResultTr {
     #[must_use]
-    fn from(v: &OperationResultTrView<'_>) -> Self {
+    fn from(v: &OperationResultTrRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<OperationResultTrView<'_>> for OperationResultTr {
+impl From<OperationResultTrRef<'_>> for OperationResultTr {
     #[must_use]
-    fn from(v: OperationResultTrView<'_>) -> Self {
+    fn from(v: OperationResultTrRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl OperationResultTrView<'_> {
+impl OperationResultTrRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
@@ -580,7 +580,7 @@ impl OperationResultTrView<'_> {
     }
 }
 
-impl WriteXdr for OperationResultTrView<'_> {
+impl WriteXdr for OperationResultTrRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

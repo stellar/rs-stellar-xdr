@@ -108,13 +108,13 @@ impl AsRef<[u8]> for ScSymbol {
     }
 }
 
-/// ScSymbolView is a borrowing equivalent of [`ScSymbol`], usable in
+/// ScSymbolRef is a borrowing equivalent of [`ScSymbol`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSymbolView<'a>(pub StringMView<'a, SCSYMBOL_LIMIT>);
+pub struct ScSymbolRef<'a>(pub StringMRef<'a, SCSYMBOL_LIMIT>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSymbolView<'_> {
+impl IntoOwned for ScSymbolRef<'_> {
     type Owned = ScSymbol;
     fn into_owned(self) -> ScSymbol {
         ScSymbol(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for ScSymbolView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSymbolView<'_>> for ScSymbol {
+impl From<&ScSymbolRef<'_>> for ScSymbol {
     #[must_use]
-    fn from(v: &ScSymbolView<'_>) -> Self {
+    fn from(v: &ScSymbolRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSymbolView<'_>> for ScSymbol {
+impl From<ScSymbolRef<'_>> for ScSymbol {
     #[must_use]
-    fn from(v: ScSymbolView<'_>) -> Self {
+    fn from(v: ScSymbolRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSymbolView<'_> {
+impl WriteXdr for ScSymbolRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

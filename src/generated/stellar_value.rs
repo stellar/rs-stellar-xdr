@@ -81,18 +81,18 @@ impl WriteXdr for StellarValue {
     }
 }
 
-/// StellarValueView is a borrowing equivalent of [`StellarValue`], usable in
+/// StellarValueRef is a borrowing equivalent of [`StellarValue`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StellarValueView<'a> {
+pub struct StellarValueRef<'a> {
     pub tx_set_hash: Hash,
     pub close_time: TimePoint,
-    pub upgrades: VecMView<'a, UpgradeTypeView<'a>, 6>,
-    pub ext: StellarValueExtView<'a>,
+    pub upgrades: VecMRef<'a, UpgradeTypeRef<'a>, 6>,
+    pub ext: StellarValueExtRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueView<'_> {
+impl IntoOwned for StellarValueRef<'_> {
     type Owned = StellarValue;
     fn into_owned(self) -> StellarValue {
         StellarValue {
@@ -105,22 +105,22 @@ impl IntoOwned for StellarValueView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StellarValueView<'_>> for StellarValue {
+impl From<&StellarValueRef<'_>> for StellarValue {
     #[must_use]
-    fn from(v: &StellarValueView<'_>) -> Self {
+    fn from(v: &StellarValueRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StellarValueView<'_>> for StellarValue {
+impl From<StellarValueRef<'_>> for StellarValue {
     #[must_use]
-    fn from(v: StellarValueView<'_>) -> Self {
+    fn from(v: StellarValueRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for StellarValueView<'_> {
+impl WriteXdr for StellarValueRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

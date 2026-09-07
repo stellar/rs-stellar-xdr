@@ -50,16 +50,16 @@ impl WriteXdr for SorobanAddressCredentialsWithDelegates {
     }
 }
 
-/// SorobanAddressCredentialsWithDelegatesView is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`], usable in
+/// SorobanAddressCredentialsWithDelegatesRef is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAddressCredentialsWithDelegatesView<'a> {
-    pub address_credentials: SorobanAddressCredentialsView<'a>,
-    pub delegates: VecMView<'a, SorobanDelegateSignatureView<'a>>,
+pub struct SorobanAddressCredentialsWithDelegatesRef<'a> {
+    pub address_credentials: SorobanAddressCredentialsRef<'a>,
+    pub delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAddressCredentialsWithDelegatesView<'_> {
+impl IntoOwned for SorobanAddressCredentialsWithDelegatesRef<'_> {
     type Owned = SorobanAddressCredentialsWithDelegates;
     fn into_owned(self) -> SorobanAddressCredentialsWithDelegates {
         SorobanAddressCredentialsWithDelegates {
@@ -70,26 +70,26 @@ impl IntoOwned for SorobanAddressCredentialsWithDelegatesView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAddressCredentialsWithDelegatesView<'_>>
+impl From<&SorobanAddressCredentialsWithDelegatesRef<'_>>
     for SorobanAddressCredentialsWithDelegates
 {
     #[must_use]
-    fn from(v: &SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
+    fn from(v: &SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAddressCredentialsWithDelegatesView<'_>>
+impl From<SorobanAddressCredentialsWithDelegatesRef<'_>>
     for SorobanAddressCredentialsWithDelegates
 {
     #[must_use]
-    fn from(v: SorobanAddressCredentialsWithDelegatesView<'_>) -> Self {
+    fn from(v: SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanAddressCredentialsWithDelegatesView<'_> {
+impl WriteXdr for SorobanAddressCredentialsWithDelegatesRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

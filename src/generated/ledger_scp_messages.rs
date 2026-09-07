@@ -50,16 +50,16 @@ impl WriteXdr for LedgerScpMessages {
     }
 }
 
-/// LedgerScpMessagesView is a borrowing equivalent of [`LedgerScpMessages`], usable in
+/// LedgerScpMessagesRef is a borrowing equivalent of [`LedgerScpMessages`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerScpMessagesView<'a> {
+pub struct LedgerScpMessagesRef<'a> {
     pub ledger_seq: u32,
-    pub messages: VecMView<'a, ScpEnvelopeView<'a>>,
+    pub messages: VecMRef<'a, ScpEnvelopeRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerScpMessagesView<'_> {
+impl IntoOwned for LedgerScpMessagesRef<'_> {
     type Owned = LedgerScpMessages;
     fn into_owned(self) -> LedgerScpMessages {
         LedgerScpMessages {
@@ -70,22 +70,22 @@ impl IntoOwned for LedgerScpMessagesView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerScpMessagesView<'_>> for LedgerScpMessages {
+impl From<&LedgerScpMessagesRef<'_>> for LedgerScpMessages {
     #[must_use]
-    fn from(v: &LedgerScpMessagesView<'_>) -> Self {
+    fn from(v: &LedgerScpMessagesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerScpMessagesView<'_>> for LedgerScpMessages {
+impl From<LedgerScpMessagesRef<'_>> for LedgerScpMessages {
     #[must_use]
-    fn from(v: LedgerScpMessagesView<'_>) -> Self {
+    fn from(v: LedgerScpMessagesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerScpMessagesView<'_> {
+impl WriteXdr for LedgerScpMessagesRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

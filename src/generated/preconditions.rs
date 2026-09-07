@@ -147,46 +147,46 @@ impl WriteXdr for Preconditions {
     }
 }
 
-/// PreconditionsView is a borrowing equivalent of [`Preconditions`], usable in
+/// PreconditionsRef is a borrowing equivalent of [`Preconditions`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PreconditionsView<'a> {
+pub enum PreconditionsRef<'a> {
     None,
     Time(TimeBounds),
-    V2(PreconditionsV2View<'a>),
+    V2(PreconditionsV2Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PreconditionsView<'_> {
+impl IntoOwned for PreconditionsRef<'_> {
     type Owned = Preconditions;
     fn into_owned(self) -> Preconditions {
         #[allow(clippy::match_same_arms)]
         match self {
-            PreconditionsView::None => Preconditions::None,
-            PreconditionsView::Time(value) => Preconditions::Time(value.into_owned()),
-            PreconditionsView::V2(value) => Preconditions::V2(value.into_owned()),
+            PreconditionsRef::None => Preconditions::None,
+            PreconditionsRef::Time(value) => Preconditions::Time(value.into_owned()),
+            PreconditionsRef::V2(value) => Preconditions::V2(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PreconditionsView<'_>> for Preconditions {
+impl From<&PreconditionsRef<'_>> for Preconditions {
     #[must_use]
-    fn from(v: &PreconditionsView<'_>) -> Self {
+    fn from(v: &PreconditionsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PreconditionsView<'_>> for Preconditions {
+impl From<PreconditionsRef<'_>> for Preconditions {
     #[must_use]
-    fn from(v: PreconditionsView<'_>) -> Self {
+    fn from(v: PreconditionsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl PreconditionsView<'_> {
+impl PreconditionsRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> PreconditionType {
         #[allow(clippy::match_same_arms)]
@@ -198,7 +198,7 @@ impl PreconditionsView<'_> {
     }
 }
 
-impl WriteXdr for PreconditionsView<'_> {
+impl WriteXdr for PreconditionsRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -66,20 +66,20 @@ impl WriteXdr for ScpStatementPrepare {
     }
 }
 
-/// ScpStatementPrepareView is a borrowing equivalent of [`ScpStatementPrepare`], usable in
+/// ScpStatementPrepareRef is a borrowing equivalent of [`ScpStatementPrepare`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementPrepareView<'a> {
+pub struct ScpStatementPrepareRef<'a> {
     pub quorum_set_hash: Hash,
-    pub ballot: ScpBallotView<'a>,
-    pub prepared: Option<ScpBallotView<'a>>,
-    pub prepared_prime: Option<ScpBallotView<'a>>,
+    pub ballot: ScpBallotRef<'a>,
+    pub prepared: Option<ScpBallotRef<'a>>,
+    pub prepared_prime: Option<ScpBallotRef<'a>>,
     pub n_c: u32,
     pub n_h: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementPrepareView<'_> {
+impl IntoOwned for ScpStatementPrepareRef<'_> {
     type Owned = ScpStatementPrepare;
     fn into_owned(self) -> ScpStatementPrepare {
         ScpStatementPrepare {
@@ -94,22 +94,22 @@ impl IntoOwned for ScpStatementPrepareView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementPrepareView<'_>> for ScpStatementPrepare {
+impl From<&ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
     #[must_use]
-    fn from(v: &ScpStatementPrepareView<'_>) -> Self {
+    fn from(v: &ScpStatementPrepareRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementPrepareView<'_>> for ScpStatementPrepare {
+impl From<ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
     #[must_use]
-    fn from(v: ScpStatementPrepareView<'_>) -> Self {
+    fn from(v: ScpStatementPrepareRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpStatementPrepareView<'_> {
+impl WriteXdr for ScpStatementPrepareRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

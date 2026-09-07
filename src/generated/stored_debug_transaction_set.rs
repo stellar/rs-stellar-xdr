@@ -54,17 +54,17 @@ impl WriteXdr for StoredDebugTransactionSet {
     }
 }
 
-/// StoredDebugTransactionSetView is a borrowing equivalent of [`StoredDebugTransactionSet`], usable in
+/// StoredDebugTransactionSetRef is a borrowing equivalent of [`StoredDebugTransactionSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StoredDebugTransactionSetView<'a> {
-    pub tx_set: StoredTransactionSetView<'a>,
+pub struct StoredDebugTransactionSetRef<'a> {
+    pub tx_set: StoredTransactionSetRef<'a>,
     pub ledger_seq: u32,
-    pub scp_value: StellarValueView<'a>,
+    pub scp_value: StellarValueRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for StoredDebugTransactionSetView<'_> {
+impl IntoOwned for StoredDebugTransactionSetRef<'_> {
     type Owned = StoredDebugTransactionSet;
     fn into_owned(self) -> StoredDebugTransactionSet {
         StoredDebugTransactionSet {
@@ -76,22 +76,22 @@ impl IntoOwned for StoredDebugTransactionSetView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
+impl From<&StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
     #[must_use]
-    fn from(v: &StoredDebugTransactionSetView<'_>) -> Self {
+    fn from(v: &StoredDebugTransactionSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StoredDebugTransactionSetView<'_>> for StoredDebugTransactionSet {
+impl From<StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
     #[must_use]
-    fn from(v: StoredDebugTransactionSetView<'_>) -> Self {
+    fn from(v: StoredDebugTransactionSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for StoredDebugTransactionSetView<'_> {
+impl WriteXdr for StoredDebugTransactionSetRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -62,18 +62,18 @@ impl WriteXdr for SorobanAddressCredentials {
     }
 }
 
-/// SorobanAddressCredentialsView is a borrowing equivalent of [`SorobanAddressCredentials`], usable in
+/// SorobanAddressCredentialsRef is a borrowing equivalent of [`SorobanAddressCredentials`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAddressCredentialsView<'a> {
+pub struct SorobanAddressCredentialsRef<'a> {
     pub address: ScAddress,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
-    pub signature: ScValView<'a>,
+    pub signature: ScValRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAddressCredentialsView<'_> {
+impl IntoOwned for SorobanAddressCredentialsRef<'_> {
     type Owned = SorobanAddressCredentials;
     fn into_owned(self) -> SorobanAddressCredentials {
         SorobanAddressCredentials {
@@ -86,22 +86,22 @@ impl IntoOwned for SorobanAddressCredentialsView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
+impl From<&SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
     #[must_use]
-    fn from(v: &SorobanAddressCredentialsView<'_>) -> Self {
+    fn from(v: &SorobanAddressCredentialsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
+impl From<SorobanAddressCredentialsRef<'_>> for SorobanAddressCredentials {
     #[must_use]
-    fn from(v: SorobanAddressCredentialsView<'_>) -> Self {
+    fn from(v: SorobanAddressCredentialsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanAddressCredentialsView<'_> {
+impl WriteXdr for SorobanAddressCredentialsRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

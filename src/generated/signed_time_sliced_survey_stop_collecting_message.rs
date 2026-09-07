@@ -50,16 +50,16 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyStopCollectingMessageView is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`], usable in
+/// SignedTimeSlicedSurveyStopCollectingMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyStopCollectingMessageView<'a> {
-    pub signature: SignatureView<'a>,
+pub struct SignedTimeSlicedSurveyStopCollectingMessageRef<'a> {
+    pub signature: SignatureRef<'a>,
     pub stop_collecting: TimeSlicedSurveyStopCollectingMessage,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SignedTimeSlicedSurveyStopCollectingMessageView<'_> {
+impl IntoOwned for SignedTimeSlicedSurveyStopCollectingMessageRef<'_> {
     type Owned = SignedTimeSlicedSurveyStopCollectingMessage;
     fn into_owned(self) -> SignedTimeSlicedSurveyStopCollectingMessage {
         SignedTimeSlicedSurveyStopCollectingMessage {
@@ -70,26 +70,26 @@ impl IntoOwned for SignedTimeSlicedSurveyStopCollectingMessageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyStopCollectingMessageView<'_>>
+impl From<&SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
     for SignedTimeSlicedSurveyStopCollectingMessage
 {
     #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyStopCollectingMessageView<'_>) -> Self {
+    fn from(v: &SignedTimeSlicedSurveyStopCollectingMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyStopCollectingMessageView<'_>>
+impl From<SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
     for SignedTimeSlicedSurveyStopCollectingMessage
 {
     #[must_use]
-    fn from(v: SignedTimeSlicedSurveyStopCollectingMessageView<'_>) -> Self {
+    fn from(v: SignedTimeSlicedSurveyStopCollectingMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessageView<'_> {
+impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

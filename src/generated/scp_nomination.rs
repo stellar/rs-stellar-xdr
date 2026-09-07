@@ -54,17 +54,17 @@ impl WriteXdr for ScpNomination {
     }
 }
 
-/// ScpNominationView is a borrowing equivalent of [`ScpNomination`], usable in
+/// ScpNominationRef is a borrowing equivalent of [`ScpNomination`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpNominationView<'a> {
+pub struct ScpNominationRef<'a> {
     pub quorum_set_hash: Hash,
-    pub votes: VecMView<'a, ValueView<'a>>,
-    pub accepted: VecMView<'a, ValueView<'a>>,
+    pub votes: VecMRef<'a, ValueRef<'a>>,
+    pub accepted: VecMRef<'a, ValueRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpNominationView<'_> {
+impl IntoOwned for ScpNominationRef<'_> {
     type Owned = ScpNomination;
     fn into_owned(self) -> ScpNomination {
         ScpNomination {
@@ -76,22 +76,22 @@ impl IntoOwned for ScpNominationView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpNominationView<'_>> for ScpNomination {
+impl From<&ScpNominationRef<'_>> for ScpNomination {
     #[must_use]
-    fn from(v: &ScpNominationView<'_>) -> Self {
+    fn from(v: &ScpNominationRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpNominationView<'_>> for ScpNomination {
+impl From<ScpNominationRef<'_>> for ScpNomination {
     #[must_use]
-    fn from(v: ScpNominationView<'_>) -> Self {
+    fn from(v: ScpNominationRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpNominationView<'_> {
+impl WriteXdr for ScpNominationRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

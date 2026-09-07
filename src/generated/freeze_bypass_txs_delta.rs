@@ -49,16 +49,16 @@ impl WriteXdr for FreezeBypassTxsDelta {
     }
 }
 
-/// FreezeBypassTxsDeltaView is a borrowing equivalent of [`FreezeBypassTxsDelta`], usable in
+/// FreezeBypassTxsDeltaRef is a borrowing equivalent of [`FreezeBypassTxsDelta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FreezeBypassTxsDeltaView<'a> {
-    pub add_txs: VecMView<'a, Hash>,
-    pub remove_txs: VecMView<'a, Hash>,
+pub struct FreezeBypassTxsDeltaRef<'a> {
+    pub add_txs: VecMRef<'a, Hash>,
+    pub remove_txs: VecMRef<'a, Hash>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FreezeBypassTxsDeltaView<'_> {
+impl IntoOwned for FreezeBypassTxsDeltaRef<'_> {
     type Owned = FreezeBypassTxsDelta;
     fn into_owned(self) -> FreezeBypassTxsDelta {
         FreezeBypassTxsDelta {
@@ -69,22 +69,22 @@ impl IntoOwned for FreezeBypassTxsDeltaView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
+impl From<&FreezeBypassTxsDeltaRef<'_>> for FreezeBypassTxsDelta {
     #[must_use]
-    fn from(v: &FreezeBypassTxsDeltaView<'_>) -> Self {
+    fn from(v: &FreezeBypassTxsDeltaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
+impl From<FreezeBypassTxsDeltaRef<'_>> for FreezeBypassTxsDelta {
     #[must_use]
-    fn from(v: FreezeBypassTxsDeltaView<'_>) -> Self {
+    fn from(v: FreezeBypassTxsDeltaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for FreezeBypassTxsDeltaView<'_> {
+impl WriteXdr for FreezeBypassTxsDeltaRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

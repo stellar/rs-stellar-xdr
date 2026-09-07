@@ -136,23 +136,23 @@ impl WriteXdr for TransactionHistoryEntryExt {
     }
 }
 
-/// TransactionHistoryEntryExtView is a borrowing equivalent of [`TransactionHistoryEntryExt`], usable in
+/// TransactionHistoryEntryExtRef is a borrowing equivalent of [`TransactionHistoryEntryExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionHistoryEntryExtView<'a> {
+pub enum TransactionHistoryEntryExtRef<'a> {
     V0,
-    V1(GeneralizedTransactionSetView<'a>),
+    V1(GeneralizedTransactionSetRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionHistoryEntryExtView<'_> {
+impl IntoOwned for TransactionHistoryEntryExtRef<'_> {
     type Owned = TransactionHistoryEntryExt;
     fn into_owned(self) -> TransactionHistoryEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionHistoryEntryExtView::V0 => TransactionHistoryEntryExt::V0,
-            TransactionHistoryEntryExtView::V1(value) => {
+            TransactionHistoryEntryExtRef::V0 => TransactionHistoryEntryExt::V0,
+            TransactionHistoryEntryExtRef::V1(value) => {
                 TransactionHistoryEntryExt::V1(value.into_owned())
             }
         }
@@ -160,22 +160,22 @@ impl IntoOwned for TransactionHistoryEntryExtView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
+impl From<&TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
     #[must_use]
-    fn from(v: &TransactionHistoryEntryExtView<'_>) -> Self {
+    fn from(v: &TransactionHistoryEntryExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionHistoryEntryExtView<'_>> for TransactionHistoryEntryExt {
+impl From<TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
     #[must_use]
-    fn from(v: TransactionHistoryEntryExtView<'_>) -> Self {
+    fn from(v: TransactionHistoryEntryExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl TransactionHistoryEntryExtView<'_> {
+impl TransactionHistoryEntryExtRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -186,7 +186,7 @@ impl TransactionHistoryEntryExtView<'_> {
     }
 }
 
-impl WriteXdr for TransactionHistoryEntryExtView<'_> {
+impl WriteXdr for TransactionHistoryEntryExtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

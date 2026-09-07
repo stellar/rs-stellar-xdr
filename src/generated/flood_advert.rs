@@ -46,15 +46,15 @@ impl WriteXdr for FloodAdvert {
     }
 }
 
-/// FloodAdvertView is a borrowing equivalent of [`FloodAdvert`], usable in
+/// FloodAdvertRef is a borrowing equivalent of [`FloodAdvert`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FloodAdvertView<'a> {
-    pub tx_hashes: TxAdvertVectorView<'a>,
+pub struct FloodAdvertRef<'a> {
+    pub tx_hashes: TxAdvertVectorRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FloodAdvertView<'_> {
+impl IntoOwned for FloodAdvertRef<'_> {
     type Owned = FloodAdvert;
     fn into_owned(self) -> FloodAdvert {
         FloodAdvert {
@@ -64,22 +64,22 @@ impl IntoOwned for FloodAdvertView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FloodAdvertView<'_>> for FloodAdvert {
+impl From<&FloodAdvertRef<'_>> for FloodAdvert {
     #[must_use]
-    fn from(v: &FloodAdvertView<'_>) -> Self {
+    fn from(v: &FloodAdvertRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FloodAdvertView<'_>> for FloodAdvert {
+impl From<FloodAdvertRef<'_>> for FloodAdvert {
     #[must_use]
-    fn from(v: FloodAdvertView<'_>) -> Self {
+    fn from(v: FloodAdvertRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for FloodAdvertView<'_> {
+impl WriteXdr for FloodAdvertRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

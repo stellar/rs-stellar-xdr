@@ -163,29 +163,29 @@ impl WriteXdr for LedgerEntryChange {
     }
 }
 
-/// LedgerEntryChangeView is a borrowing equivalent of [`LedgerEntryChange`], usable in
+/// LedgerEntryChangeRef is a borrowing equivalent of [`LedgerEntryChange`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerEntryChangeView<'a> {
-    Created(LedgerEntryView<'a>),
-    Updated(LedgerEntryView<'a>),
-    Removed(LedgerKeyView<'a>),
-    State(LedgerEntryView<'a>),
-    Restored(LedgerEntryView<'a>),
+pub enum LedgerEntryChangeRef<'a> {
+    Created(LedgerEntryRef<'a>),
+    Updated(LedgerEntryRef<'a>),
+    Removed(LedgerKeyRef<'a>),
+    State(LedgerEntryRef<'a>),
+    Restored(LedgerEntryRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryChangeView<'_> {
+impl IntoOwned for LedgerEntryChangeRef<'_> {
     type Owned = LedgerEntryChange;
     fn into_owned(self) -> LedgerEntryChange {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerEntryChangeView::Created(value) => LedgerEntryChange::Created(value.into_owned()),
-            LedgerEntryChangeView::Updated(value) => LedgerEntryChange::Updated(value.into_owned()),
-            LedgerEntryChangeView::Removed(value) => LedgerEntryChange::Removed(value.into_owned()),
-            LedgerEntryChangeView::State(value) => LedgerEntryChange::State(value.into_owned()),
-            LedgerEntryChangeView::Restored(value) => {
+            LedgerEntryChangeRef::Created(value) => LedgerEntryChange::Created(value.into_owned()),
+            LedgerEntryChangeRef::Updated(value) => LedgerEntryChange::Updated(value.into_owned()),
+            LedgerEntryChangeRef::Removed(value) => LedgerEntryChange::Removed(value.into_owned()),
+            LedgerEntryChangeRef::State(value) => LedgerEntryChange::State(value.into_owned()),
+            LedgerEntryChangeRef::Restored(value) => {
                 LedgerEntryChange::Restored(value.into_owned())
             }
         }
@@ -193,22 +193,22 @@ impl IntoOwned for LedgerEntryChangeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerEntryChangeView<'_>> for LedgerEntryChange {
+impl From<&LedgerEntryChangeRef<'_>> for LedgerEntryChange {
     #[must_use]
-    fn from(v: &LedgerEntryChangeView<'_>) -> Self {
+    fn from(v: &LedgerEntryChangeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerEntryChangeView<'_>> for LedgerEntryChange {
+impl From<LedgerEntryChangeRef<'_>> for LedgerEntryChange {
     #[must_use]
-    fn from(v: LedgerEntryChangeView<'_>) -> Self {
+    fn from(v: LedgerEntryChangeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl LedgerEntryChangeView<'_> {
+impl LedgerEntryChangeRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryChangeType {
         #[allow(clippy::match_same_arms)]
@@ -222,7 +222,7 @@ impl LedgerEntryChangeView<'_> {
     }
 }
 
-impl WriteXdr for LedgerEntryChangeView<'_> {
+impl WriteXdr for LedgerEntryChangeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

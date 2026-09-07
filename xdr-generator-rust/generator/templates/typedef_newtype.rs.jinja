@@ -297,21 +297,21 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     }
 }
 {%- endif %}
-{%- if t.emit_view %}
+{%- if t.emit_ref %}
 
-/// {{ t.name }}View is a borrowing equivalent of [`{{ t.name }}`], usable in
+/// {{ t.name }}Ref is a borrowing equivalent of [`{{ t.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = t.view_cfg %}
+{%- if let Some(cfg) = t.ref_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct {{ t.name }}View<'a>(pub {{ t.view_type_ref }});
+pub struct {{ t.name }}Ref<'a>(pub {{ t.ref_type }});
 
-{% if let Some(cfg) = t.view_cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl IntoOwned for {{ t.name }}View<'_> {
+impl IntoOwned for {{ t.name }}Ref<'_> {
     type Owned = {{ t.name }};
     fn into_owned(self) -> {{ t.name }} {
 {%- match t.cyclic %}
@@ -325,38 +325,38 @@ impl IntoOwned for {{ t.name }}View<'_> {
     }
 }
 
-{% if let Some(cfg) = t.view_cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<&{{ t.name }}View<'_>> for {{ t.name }} {
+impl From<&{{ t.name }}Ref<'_>> for {{ t.name }} {
     #[must_use]
-    fn from(v: &{{ t.name }}View<'_>) -> Self {
+    fn from(v: &{{ t.name }}Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-{% if let Some(cfg) = t.view_cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<{{ t.name }}View<'_>> for {{ t.name }} {
+impl From<{{ t.name }}Ref<'_>> for {{ t.name }} {
     #[must_use]
-    fn from(v: {{ t.name }}View<'_>) -> Self {
+    fn from(v: {{ t.name }}Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-{% if let Some(cfg) = t.view_cfg -%}
+{% if let Some(cfg) = t.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-impl WriteXdr for {{ t.name }}View<'_> {
+impl WriteXdr for {{ t.name }}Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 {%- endif %}
-{%- if !t.emit_view %}
+{%- if !t.emit_ref %}
 {% call into_owned::identity(t.name, t.cfg) %}
 {%- endif %}

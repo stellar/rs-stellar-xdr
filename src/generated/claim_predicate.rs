@@ -195,35 +195,35 @@ impl WriteXdr for ClaimPredicate {
     }
 }
 
-/// ClaimPredicateView is a borrowing equivalent of [`ClaimPredicate`], usable in
+/// ClaimPredicateRef is a borrowing equivalent of [`ClaimPredicate`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ClaimPredicateView<'a> {
+pub enum ClaimPredicateRef<'a> {
     Unconditional,
-    And(VecMView<'a, ClaimPredicateView<'a>, 2>),
-    Or(VecMView<'a, ClaimPredicateView<'a>, 2>),
-    Not(Option<&'a ClaimPredicateView<'a>>),
+    And(VecMRef<'a, ClaimPredicateRef<'a>, 2>),
+    Or(VecMRef<'a, ClaimPredicateRef<'a>, 2>),
+    Not(Option<&'a ClaimPredicateRef<'a>>),
     BeforeAbsoluteTime(i64),
     BeforeRelativeTime(i64),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ClaimPredicateView<'_> {
+impl IntoOwned for ClaimPredicateRef<'_> {
     type Owned = ClaimPredicate;
     fn into_owned(self) -> ClaimPredicate {
         #[allow(clippy::match_same_arms)]
         match self {
-            ClaimPredicateView::Unconditional => ClaimPredicate::Unconditional,
-            ClaimPredicateView::And(value) => ClaimPredicate::And(value.into_owned()),
-            ClaimPredicateView::Or(value) => ClaimPredicate::Or(value.into_owned()),
-            ClaimPredicateView::Not(value) => {
+            ClaimPredicateRef::Unconditional => ClaimPredicate::Unconditional,
+            ClaimPredicateRef::And(value) => ClaimPredicate::And(value.into_owned()),
+            ClaimPredicateRef::Or(value) => ClaimPredicate::Or(value.into_owned()),
+            ClaimPredicateRef::Not(value) => {
                 ClaimPredicate::Not(value.map(|v| Box::new(v.into_owned())))
             }
-            ClaimPredicateView::BeforeAbsoluteTime(value) => {
+            ClaimPredicateRef::BeforeAbsoluteTime(value) => {
                 ClaimPredicate::BeforeAbsoluteTime(value.into_owned())
             }
-            ClaimPredicateView::BeforeRelativeTime(value) => {
+            ClaimPredicateRef::BeforeRelativeTime(value) => {
                 ClaimPredicate::BeforeRelativeTime(value.into_owned())
             }
         }
@@ -231,22 +231,22 @@ impl IntoOwned for ClaimPredicateView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
+impl From<&ClaimPredicateRef<'_>> for ClaimPredicate {
     #[must_use]
-    fn from(v: &ClaimPredicateView<'_>) -> Self {
+    fn from(v: &ClaimPredicateRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ClaimPredicateView<'_>> for ClaimPredicate {
+impl From<ClaimPredicateRef<'_>> for ClaimPredicate {
     #[must_use]
-    fn from(v: ClaimPredicateView<'_>) -> Self {
+    fn from(v: ClaimPredicateRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ClaimPredicateView<'_> {
+impl ClaimPredicateRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimPredicateType {
         #[allow(clippy::match_same_arms)]
@@ -261,7 +261,7 @@ impl ClaimPredicateView<'_> {
     }
 }
 
-impl WriteXdr for ClaimPredicateView<'_> {
+impl WriteXdr for ClaimPredicateRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

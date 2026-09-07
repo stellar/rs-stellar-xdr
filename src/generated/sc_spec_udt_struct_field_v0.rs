@@ -59,17 +59,17 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
     }
 }
 
-/// ScSpecUdtStructFieldV0View is a borrowing equivalent of [`ScSpecUdtStructFieldV0`], usable in
+/// ScSpecUdtStructFieldV0Ref is a borrowing equivalent of [`ScSpecUdtStructFieldV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtStructFieldV0View<'a> {
-    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: StringMView<'a, 30>,
-    pub type_: ScSpecTypeDefView<'a>,
+pub struct ScSpecUdtStructFieldV0Ref<'a> {
+    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
+    pub name: StringMRef<'a, 30>,
+    pub type_: ScSpecTypeDefRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtStructFieldV0View<'_> {
+impl IntoOwned for ScSpecUdtStructFieldV0Ref<'_> {
     type Owned = ScSpecUdtStructFieldV0;
     fn into_owned(self) -> ScSpecUdtStructFieldV0 {
         ScSpecUdtStructFieldV0 {
@@ -81,22 +81,22 @@ impl IntoOwned for ScSpecUdtStructFieldV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecUdtStructFieldV0View<'_>> for ScSpecUdtStructFieldV0 {
+impl From<&ScSpecUdtStructFieldV0Ref<'_>> for ScSpecUdtStructFieldV0 {
     #[must_use]
-    fn from(v: &ScSpecUdtStructFieldV0View<'_>) -> Self {
+    fn from(v: &ScSpecUdtStructFieldV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecUdtStructFieldV0View<'_>> for ScSpecUdtStructFieldV0 {
+impl From<ScSpecUdtStructFieldV0Ref<'_>> for ScSpecUdtStructFieldV0 {
     #[must_use]
-    fn from(v: ScSpecUdtStructFieldV0View<'_>) -> Self {
+    fn from(v: ScSpecUdtStructFieldV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecUdtStructFieldV0View<'_> {
+impl WriteXdr for ScSpecUdtStructFieldV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

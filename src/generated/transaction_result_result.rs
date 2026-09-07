@@ -296,15 +296,15 @@ impl WriteXdr for TransactionResultResult {
     }
 }
 
-/// TransactionResultResultView is a borrowing equivalent of [`TransactionResultResult`], usable in
+/// TransactionResultResultRef is a borrowing equivalent of [`TransactionResultResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionResultResultView<'a> {
-    TxFeeBumpInnerSuccess(InnerTransactionResultPairView<'a>),
-    TxFeeBumpInnerFailed(InnerTransactionResultPairView<'a>),
-    TxSuccess(VecMView<'a, OperationResultView<'a>>),
-    TxFailed(VecMView<'a, OperationResultView<'a>>),
+pub enum TransactionResultResultRef<'a> {
+    TxFeeBumpInnerSuccess(InnerTransactionResultPairRef<'a>),
+    TxFeeBumpInnerFailed(InnerTransactionResultPairRef<'a>),
+    TxSuccess(VecMRef<'a, OperationResultRef<'a>>),
+    TxFailed(VecMRef<'a, OperationResultRef<'a>>),
     TxTooEarly,
     TxTooLate,
     TxMissingOperation,
@@ -324,53 +324,51 @@ pub enum TransactionResultResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultResultView<'_> {
+impl IntoOwned for TransactionResultResultRef<'_> {
     type Owned = TransactionResultResult;
     fn into_owned(self) -> TransactionResultResult {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionResultResultView::TxFeeBumpInnerSuccess(value) => {
+            TransactionResultResultRef::TxFeeBumpInnerSuccess(value) => {
                 TransactionResultResult::TxFeeBumpInnerSuccess(value.into_owned())
             }
-            TransactionResultResultView::TxFeeBumpInnerFailed(value) => {
+            TransactionResultResultRef::TxFeeBumpInnerFailed(value) => {
                 TransactionResultResult::TxFeeBumpInnerFailed(value.into_owned())
             }
-            TransactionResultResultView::TxSuccess(value) => {
+            TransactionResultResultRef::TxSuccess(value) => {
                 TransactionResultResult::TxSuccess(value.into_owned())
             }
-            TransactionResultResultView::TxFailed(value) => {
+            TransactionResultResultRef::TxFailed(value) => {
                 TransactionResultResult::TxFailed(value.into_owned())
             }
-            TransactionResultResultView::TxTooEarly => TransactionResultResult::TxTooEarly,
-            TransactionResultResultView::TxTooLate => TransactionResultResult::TxTooLate,
-            TransactionResultResultView::TxMissingOperation => {
+            TransactionResultResultRef::TxTooEarly => TransactionResultResult::TxTooEarly,
+            TransactionResultResultRef::TxTooLate => TransactionResultResult::TxTooLate,
+            TransactionResultResultRef::TxMissingOperation => {
                 TransactionResultResult::TxMissingOperation
             }
-            TransactionResultResultView::TxBadSeq => TransactionResultResult::TxBadSeq,
-            TransactionResultResultView::TxBadAuth => TransactionResultResult::TxBadAuth,
-            TransactionResultResultView::TxInsufficientBalance => {
+            TransactionResultResultRef::TxBadSeq => TransactionResultResult::TxBadSeq,
+            TransactionResultResultRef::TxBadAuth => TransactionResultResult::TxBadAuth,
+            TransactionResultResultRef::TxInsufficientBalance => {
                 TransactionResultResult::TxInsufficientBalance
             }
-            TransactionResultResultView::TxNoAccount => TransactionResultResult::TxNoAccount,
-            TransactionResultResultView::TxInsufficientFee => {
+            TransactionResultResultRef::TxNoAccount => TransactionResultResult::TxNoAccount,
+            TransactionResultResultRef::TxInsufficientFee => {
                 TransactionResultResult::TxInsufficientFee
             }
-            TransactionResultResultView::TxBadAuthExtra => TransactionResultResult::TxBadAuthExtra,
-            TransactionResultResultView::TxInternalError => {
-                TransactionResultResult::TxInternalError
-            }
-            TransactionResultResultView::TxNotSupported => TransactionResultResult::TxNotSupported,
-            TransactionResultResultView::TxBadSponsorship => {
+            TransactionResultResultRef::TxBadAuthExtra => TransactionResultResult::TxBadAuthExtra,
+            TransactionResultResultRef::TxInternalError => TransactionResultResult::TxInternalError,
+            TransactionResultResultRef::TxNotSupported => TransactionResultResult::TxNotSupported,
+            TransactionResultResultRef::TxBadSponsorship => {
                 TransactionResultResult::TxBadSponsorship
             }
-            TransactionResultResultView::TxBadMinSeqAgeOrGap => {
+            TransactionResultResultRef::TxBadMinSeqAgeOrGap => {
                 TransactionResultResult::TxBadMinSeqAgeOrGap
             }
-            TransactionResultResultView::TxMalformed => TransactionResultResult::TxMalformed,
-            TransactionResultResultView::TxSorobanInvalid => {
+            TransactionResultResultRef::TxMalformed => TransactionResultResult::TxMalformed,
+            TransactionResultResultRef::TxSorobanInvalid => {
                 TransactionResultResult::TxSorobanInvalid
             }
-            TransactionResultResultView::TxFrozenKeyAccessed => {
+            TransactionResultResultRef::TxFrozenKeyAccessed => {
                 TransactionResultResult::TxFrozenKeyAccessed
             }
         }
@@ -378,22 +376,22 @@ impl IntoOwned for TransactionResultResultView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultResultView<'_>> for TransactionResultResult {
+impl From<&TransactionResultResultRef<'_>> for TransactionResultResult {
     #[must_use]
-    fn from(v: &TransactionResultResultView<'_>) -> Self {
+    fn from(v: &TransactionResultResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultResultView<'_>> for TransactionResultResult {
+impl From<TransactionResultResultRef<'_>> for TransactionResultResult {
     #[must_use]
-    fn from(v: TransactionResultResultView<'_>) -> Self {
+    fn from(v: TransactionResultResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl TransactionResultResultView<'_> {
+impl TransactionResultResultRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
@@ -422,7 +420,7 @@ impl TransactionResultResultView<'_> {
     }
 }
 
-impl WriteXdr for TransactionResultResultView<'_> {
+impl WriteXdr for TransactionResultResultRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

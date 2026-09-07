@@ -265,62 +265,62 @@ impl WriteXdr for LedgerKey {
     }
 }
 
-/// LedgerKeyView is a borrowing equivalent of [`LedgerKey`], usable in
+/// LedgerKeyRef is a borrowing equivalent of [`LedgerKey`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerKeyView<'a> {
+pub enum LedgerKeyRef<'a> {
     Account(LedgerKeyAccount),
     Trustline(LedgerKeyTrustLine),
     Offer(LedgerKeyOffer),
-    Data(LedgerKeyDataView<'a>),
+    Data(LedgerKeyDataRef<'a>),
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
-    ContractData(LedgerKeyContractDataView<'a>),
+    ContractData(LedgerKeyContractDataRef<'a>),
     ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
     Ttl(LedgerKeyTtl),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyView<'_> {
+impl IntoOwned for LedgerKeyRef<'_> {
     type Owned = LedgerKey;
     fn into_owned(self) -> LedgerKey {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerKeyView::Account(value) => LedgerKey::Account(value.into_owned()),
-            LedgerKeyView::Trustline(value) => LedgerKey::Trustline(value.into_owned()),
-            LedgerKeyView::Offer(value) => LedgerKey::Offer(value.into_owned()),
-            LedgerKeyView::Data(value) => LedgerKey::Data(value.into_owned()),
-            LedgerKeyView::ClaimableBalance(value) => {
+            LedgerKeyRef::Account(value) => LedgerKey::Account(value.into_owned()),
+            LedgerKeyRef::Trustline(value) => LedgerKey::Trustline(value.into_owned()),
+            LedgerKeyRef::Offer(value) => LedgerKey::Offer(value.into_owned()),
+            LedgerKeyRef::Data(value) => LedgerKey::Data(value.into_owned()),
+            LedgerKeyRef::ClaimableBalance(value) => {
                 LedgerKey::ClaimableBalance(value.into_owned())
             }
-            LedgerKeyView::LiquidityPool(value) => LedgerKey::LiquidityPool(value.into_owned()),
-            LedgerKeyView::ContractData(value) => LedgerKey::ContractData(value.into_owned()),
-            LedgerKeyView::ContractCode(value) => LedgerKey::ContractCode(value.into_owned()),
-            LedgerKeyView::ConfigSetting(value) => LedgerKey::ConfigSetting(value.into_owned()),
-            LedgerKeyView::Ttl(value) => LedgerKey::Ttl(value.into_owned()),
+            LedgerKeyRef::LiquidityPool(value) => LedgerKey::LiquidityPool(value.into_owned()),
+            LedgerKeyRef::ContractData(value) => LedgerKey::ContractData(value.into_owned()),
+            LedgerKeyRef::ContractCode(value) => LedgerKey::ContractCode(value.into_owned()),
+            LedgerKeyRef::ConfigSetting(value) => LedgerKey::ConfigSetting(value.into_owned()),
+            LedgerKeyRef::Ttl(value) => LedgerKey::Ttl(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerKeyView<'_>> for LedgerKey {
+impl From<&LedgerKeyRef<'_>> for LedgerKey {
     #[must_use]
-    fn from(v: &LedgerKeyView<'_>) -> Self {
+    fn from(v: &LedgerKeyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerKeyView<'_>> for LedgerKey {
+impl From<LedgerKeyRef<'_>> for LedgerKey {
     #[must_use]
-    fn from(v: LedgerKeyView<'_>) -> Self {
+    fn from(v: LedgerKeyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl LedgerKeyView<'_> {
+impl LedgerKeyRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
@@ -339,7 +339,7 @@ impl LedgerKeyView<'_> {
     }
 }
 
-impl WriteXdr for LedgerKeyView<'_> {
+impl WriteXdr for LedgerKeyRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

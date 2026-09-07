@@ -136,44 +136,44 @@ impl WriteXdr for StoredTransactionSet {
     }
 }
 
-/// StoredTransactionSetView is a borrowing equivalent of [`StoredTransactionSet`], usable in
+/// StoredTransactionSetRef is a borrowing equivalent of [`StoredTransactionSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StoredTransactionSetView<'a> {
-    V0(TransactionSetView<'a>),
-    V1(GeneralizedTransactionSetView<'a>),
+pub enum StoredTransactionSetRef<'a> {
+    V0(TransactionSetRef<'a>),
+    V1(GeneralizedTransactionSetRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for StoredTransactionSetView<'_> {
+impl IntoOwned for StoredTransactionSetRef<'_> {
     type Owned = StoredTransactionSet;
     fn into_owned(self) -> StoredTransactionSet {
         #[allow(clippy::match_same_arms)]
         match self {
-            StoredTransactionSetView::V0(value) => StoredTransactionSet::V0(value.into_owned()),
-            StoredTransactionSetView::V1(value) => StoredTransactionSet::V1(value.into_owned()),
+            StoredTransactionSetRef::V0(value) => StoredTransactionSet::V0(value.into_owned()),
+            StoredTransactionSetRef::V1(value) => StoredTransactionSet::V1(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&StoredTransactionSetView<'_>> for StoredTransactionSet {
+impl From<&StoredTransactionSetRef<'_>> for StoredTransactionSet {
     #[must_use]
-    fn from(v: &StoredTransactionSetView<'_>) -> Self {
+    fn from(v: &StoredTransactionSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<StoredTransactionSetView<'_>> for StoredTransactionSet {
+impl From<StoredTransactionSetRef<'_>> for StoredTransactionSet {
     #[must_use]
-    fn from(v: StoredTransactionSetView<'_>) -> Self {
+    fn from(v: StoredTransactionSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl StoredTransactionSetView<'_> {
+impl StoredTransactionSetRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,7 +184,7 @@ impl StoredTransactionSetView<'_> {
     }
 }
 
-impl WriteXdr for StoredTransactionSetView<'_> {
+impl WriteXdr for StoredTransactionSetRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -50,16 +50,16 @@ impl WriteXdr for ScpHistoryEntryV0 {
     }
 }
 
-/// ScpHistoryEntryV0View is a borrowing equivalent of [`ScpHistoryEntryV0`], usable in
+/// ScpHistoryEntryV0Ref is a borrowing equivalent of [`ScpHistoryEntryV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpHistoryEntryV0View<'a> {
-    pub quorum_sets: VecMView<'a, ScpQuorumSetView<'a>>,
-    pub ledger_messages: LedgerScpMessagesView<'a>,
+pub struct ScpHistoryEntryV0Ref<'a> {
+    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
+    pub ledger_messages: LedgerScpMessagesRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpHistoryEntryV0View<'_> {
+impl IntoOwned for ScpHistoryEntryV0Ref<'_> {
     type Owned = ScpHistoryEntryV0;
     fn into_owned(self) -> ScpHistoryEntryV0 {
         ScpHistoryEntryV0 {
@@ -70,22 +70,22 @@ impl IntoOwned for ScpHistoryEntryV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
+impl From<&ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
     #[must_use]
-    fn from(v: &ScpHistoryEntryV0View<'_>) -> Self {
+    fn from(v: &ScpHistoryEntryV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpHistoryEntryV0View<'_>> for ScpHistoryEntryV0 {
+impl From<ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
     #[must_use]
-    fn from(v: ScpHistoryEntryV0View<'_>) -> Self {
+    fn from(v: ScpHistoryEntryV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpHistoryEntryV0View<'_> {
+impl WriteXdr for ScpHistoryEntryV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

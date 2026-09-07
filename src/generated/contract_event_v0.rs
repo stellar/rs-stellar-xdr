@@ -50,16 +50,16 @@ impl WriteXdr for ContractEventV0 {
     }
 }
 
-/// ContractEventV0View is a borrowing equivalent of [`ContractEventV0`], usable in
+/// ContractEventV0Ref is a borrowing equivalent of [`ContractEventV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractEventV0View<'a> {
-    pub topics: VecMView<'a, ScValView<'a>>,
-    pub data: ScValView<'a>,
+pub struct ContractEventV0Ref<'a> {
+    pub topics: VecMRef<'a, ScValRef<'a>>,
+    pub data: ScValRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ContractEventV0View<'_> {
+impl IntoOwned for ContractEventV0Ref<'_> {
     type Owned = ContractEventV0;
     fn into_owned(self) -> ContractEventV0 {
         ContractEventV0 {
@@ -70,22 +70,22 @@ impl IntoOwned for ContractEventV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractEventV0View<'_>> for ContractEventV0 {
+impl From<&ContractEventV0Ref<'_>> for ContractEventV0 {
     #[must_use]
-    fn from(v: &ContractEventV0View<'_>) -> Self {
+    fn from(v: &ContractEventV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractEventV0View<'_>> for ContractEventV0 {
+impl From<ContractEventV0Ref<'_>> for ContractEventV0 {
     #[must_use]
-    fn from(v: ContractEventV0View<'_>) -> Self {
+    fn from(v: ContractEventV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ContractEventV0View<'_> {
+impl WriteXdr for ContractEventV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

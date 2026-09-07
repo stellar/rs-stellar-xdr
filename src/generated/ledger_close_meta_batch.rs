@@ -59,17 +59,17 @@ impl WriteXdr for LedgerCloseMetaBatch {
     }
 }
 
-/// LedgerCloseMetaBatchView is a borrowing equivalent of [`LedgerCloseMetaBatch`], usable in
+/// LedgerCloseMetaBatchRef is a borrowing equivalent of [`LedgerCloseMetaBatch`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseMetaBatchView<'a> {
+pub struct LedgerCloseMetaBatchRef<'a> {
     pub start_sequence: u32,
     pub end_sequence: u32,
-    pub ledger_close_metas: VecMView<'a, LedgerCloseMetaView<'a>>,
+    pub ledger_close_metas: VecMRef<'a, LedgerCloseMetaRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaBatchView<'_> {
+impl IntoOwned for LedgerCloseMetaBatchRef<'_> {
     type Owned = LedgerCloseMetaBatch;
     fn into_owned(self) -> LedgerCloseMetaBatch {
         LedgerCloseMetaBatch {
@@ -81,22 +81,22 @@ impl IntoOwned for LedgerCloseMetaBatchView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaBatchView<'_>> for LedgerCloseMetaBatch {
+impl From<&LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
     #[must_use]
-    fn from(v: &LedgerCloseMetaBatchView<'_>) -> Self {
+    fn from(v: &LedgerCloseMetaBatchRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaBatchView<'_>> for LedgerCloseMetaBatch {
+impl From<LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
     #[must_use]
-    fn from(v: LedgerCloseMetaBatchView<'_>) -> Self {
+    fn from(v: LedgerCloseMetaBatchRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerCloseMetaBatchView<'_> {
+impl WriteXdr for LedgerCloseMetaBatchRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

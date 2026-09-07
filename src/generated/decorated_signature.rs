@@ -50,16 +50,16 @@ impl WriteXdr for DecoratedSignature {
     }
 }
 
-/// DecoratedSignatureView is a borrowing equivalent of [`DecoratedSignature`], usable in
+/// DecoratedSignatureRef is a borrowing equivalent of [`DecoratedSignature`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DecoratedSignatureView<'a> {
+pub struct DecoratedSignatureRef<'a> {
     pub hint: SignatureHint,
-    pub signature: SignatureView<'a>,
+    pub signature: SignatureRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for DecoratedSignatureView<'_> {
+impl IntoOwned for DecoratedSignatureRef<'_> {
     type Owned = DecoratedSignature;
     fn into_owned(self) -> DecoratedSignature {
         DecoratedSignature {
@@ -70,22 +70,22 @@ impl IntoOwned for DecoratedSignatureView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&DecoratedSignatureView<'_>> for DecoratedSignature {
+impl From<&DecoratedSignatureRef<'_>> for DecoratedSignature {
     #[must_use]
-    fn from(v: &DecoratedSignatureView<'_>) -> Self {
+    fn from(v: &DecoratedSignatureRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<DecoratedSignatureView<'_>> for DecoratedSignature {
+impl From<DecoratedSignatureRef<'_>> for DecoratedSignature {
     #[must_use]
-    fn from(v: DecoratedSignatureView<'_>) -> Self {
+    fn from(v: DecoratedSignatureRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for DecoratedSignatureView<'_> {
+impl WriteXdr for DecoratedSignatureRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

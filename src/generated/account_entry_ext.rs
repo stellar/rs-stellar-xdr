@@ -136,44 +136,44 @@ impl WriteXdr for AccountEntryExt {
     }
 }
 
-/// AccountEntryExtView is a borrowing equivalent of [`AccountEntryExt`], usable in
+/// AccountEntryExtRef is a borrowing equivalent of [`AccountEntryExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AccountEntryExtView<'a> {
+pub enum AccountEntryExtRef<'a> {
     V0,
-    V1(AccountEntryExtensionV1View<'a>),
+    V1(AccountEntryExtensionV1Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtView<'_> {
+impl IntoOwned for AccountEntryExtRef<'_> {
     type Owned = AccountEntryExt;
     fn into_owned(self) -> AccountEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
-            AccountEntryExtView::V0 => AccountEntryExt::V0,
-            AccountEntryExtView::V1(value) => AccountEntryExt::V1(value.into_owned()),
+            AccountEntryExtRef::V0 => AccountEntryExt::V0,
+            AccountEntryExtRef::V1(value) => AccountEntryExt::V1(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AccountEntryExtView<'_>> for AccountEntryExt {
+impl From<&AccountEntryExtRef<'_>> for AccountEntryExt {
     #[must_use]
-    fn from(v: &AccountEntryExtView<'_>) -> Self {
+    fn from(v: &AccountEntryExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AccountEntryExtView<'_>> for AccountEntryExt {
+impl From<AccountEntryExtRef<'_>> for AccountEntryExt {
     #[must_use]
-    fn from(v: AccountEntryExtView<'_>) -> Self {
+    fn from(v: AccountEntryExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl AccountEntryExtView<'_> {
+impl AccountEntryExtRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,7 +184,7 @@ impl AccountEntryExtView<'_> {
     }
 }
 
-impl WriteXdr for AccountEntryExtView<'_> {
+impl WriteXdr for AccountEntryExtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

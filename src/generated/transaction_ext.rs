@@ -136,44 +136,44 @@ impl WriteXdr for TransactionExt {
     }
 }
 
-/// TransactionExtView is a borrowing equivalent of [`TransactionExt`], usable in
+/// TransactionExtRef is a borrowing equivalent of [`TransactionExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionExtView<'a> {
+pub enum TransactionExtRef<'a> {
     V0,
-    V1(SorobanTransactionDataView<'a>),
+    V1(SorobanTransactionDataRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionExtView<'_> {
+impl IntoOwned for TransactionExtRef<'_> {
     type Owned = TransactionExt;
     fn into_owned(self) -> TransactionExt {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionExtView::V0 => TransactionExt::V0,
-            TransactionExtView::V1(value) => TransactionExt::V1(value.into_owned()),
+            TransactionExtRef::V0 => TransactionExt::V0,
+            TransactionExtRef::V1(value) => TransactionExt::V1(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionExtView<'_>> for TransactionExt {
+impl From<&TransactionExtRef<'_>> for TransactionExt {
     #[must_use]
-    fn from(v: &TransactionExtView<'_>) -> Self {
+    fn from(v: &TransactionExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionExtView<'_>> for TransactionExt {
+impl From<TransactionExtRef<'_>> for TransactionExt {
     #[must_use]
-    fn from(v: TransactionExtView<'_>) -> Self {
+    fn from(v: TransactionExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl TransactionExtView<'_> {
+impl TransactionExtRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,7 +184,7 @@ impl TransactionExtView<'_> {
     }
 }
 
-impl WriteXdr for TransactionExtView<'_> {
+impl WriteXdr for TransactionExtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

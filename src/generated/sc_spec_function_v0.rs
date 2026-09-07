@@ -58,18 +58,18 @@ impl WriteXdr for ScSpecFunctionV0 {
     }
 }
 
-/// ScSpecFunctionV0View is a borrowing equivalent of [`ScSpecFunctionV0`], usable in
+/// ScSpecFunctionV0Ref is a borrowing equivalent of [`ScSpecFunctionV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecFunctionV0View<'a> {
-    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: ScSymbolView<'a>,
-    pub inputs: VecMView<'a, ScSpecFunctionInputV0View<'a>>,
-    pub outputs: VecMView<'a, ScSpecTypeDefView<'a>, 1>,
+pub struct ScSpecFunctionV0Ref<'a> {
+    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
+    pub name: ScSymbolRef<'a>,
+    pub inputs: VecMRef<'a, ScSpecFunctionInputV0Ref<'a>>,
+    pub outputs: VecMRef<'a, ScSpecTypeDefRef<'a>, 1>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecFunctionV0View<'_> {
+impl IntoOwned for ScSpecFunctionV0Ref<'_> {
     type Owned = ScSpecFunctionV0;
     fn into_owned(self) -> ScSpecFunctionV0 {
         ScSpecFunctionV0 {
@@ -82,22 +82,22 @@ impl IntoOwned for ScSpecFunctionV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
+impl From<&ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
     #[must_use]
-    fn from(v: &ScSpecFunctionV0View<'_>) -> Self {
+    fn from(v: &ScSpecFunctionV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
+impl From<ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
     #[must_use]
-    fn from(v: ScSpecFunctionV0View<'_>) -> Self {
+    fn from(v: ScSpecFunctionV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecFunctionV0View<'_> {
+impl WriteXdr for ScSpecFunctionV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

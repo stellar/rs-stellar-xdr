@@ -133,42 +133,42 @@ impl WriteXdr for ContractEventBody {
     }
 }
 
-/// ContractEventBodyView is a borrowing equivalent of [`ContractEventBody`], usable in
+/// ContractEventBodyRef is a borrowing equivalent of [`ContractEventBody`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ContractEventBodyView<'a> {
-    V0(ContractEventV0View<'a>),
+pub enum ContractEventBodyRef<'a> {
+    V0(ContractEventV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ContractEventBodyView<'_> {
+impl IntoOwned for ContractEventBodyRef<'_> {
     type Owned = ContractEventBody;
     fn into_owned(self) -> ContractEventBody {
         #[allow(clippy::match_same_arms)]
         match self {
-            ContractEventBodyView::V0(value) => ContractEventBody::V0(value.into_owned()),
+            ContractEventBodyRef::V0(value) => ContractEventBody::V0(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ContractEventBodyView<'_>> for ContractEventBody {
+impl From<&ContractEventBodyRef<'_>> for ContractEventBody {
     #[must_use]
-    fn from(v: &ContractEventBodyView<'_>) -> Self {
+    fn from(v: &ContractEventBodyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ContractEventBodyView<'_>> for ContractEventBody {
+impl From<ContractEventBodyRef<'_>> for ContractEventBody {
     #[must_use]
-    fn from(v: ContractEventBodyView<'_>) -> Self {
+    fn from(v: ContractEventBodyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ContractEventBodyView<'_> {
+impl ContractEventBodyRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -178,7 +178,7 @@ impl ContractEventBodyView<'_> {
     }
 }
 
-impl WriteXdr for ContractEventBodyView<'_> {
+impl WriteXdr for ContractEventBodyRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -66,19 +66,19 @@ impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     }
 }
 
-/// HashIdPreimageSorobanAuthorizationWithAddressView is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`], usable in
+/// HashIdPreimageSorobanAuthorizationWithAddressRef is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HashIdPreimageSorobanAuthorizationWithAddressView<'a> {
+pub struct HashIdPreimageSorobanAuthorizationWithAddressRef<'a> {
     pub network_id: Hash,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
     pub address: ScAddress,
-    pub invocation: SorobanAuthorizedInvocationView<'a>,
+    pub invocation: SorobanAuthorizedInvocationRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for HashIdPreimageSorobanAuthorizationWithAddressView<'_> {
+impl IntoOwned for HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
     type Owned = HashIdPreimageSorobanAuthorizationWithAddress;
     fn into_owned(self) -> HashIdPreimageSorobanAuthorizationWithAddress {
         HashIdPreimageSorobanAuthorizationWithAddress {
@@ -92,26 +92,26 @@ impl IntoOwned for HashIdPreimageSorobanAuthorizationWithAddressView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HashIdPreimageSorobanAuthorizationWithAddressView<'_>>
+impl From<&HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
     for HashIdPreimageSorobanAuthorizationWithAddress
 {
     #[must_use]
-    fn from(v: &HashIdPreimageSorobanAuthorizationWithAddressView<'_>) -> Self {
+    fn from(v: &HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<HashIdPreimageSorobanAuthorizationWithAddressView<'_>>
+impl From<HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
     for HashIdPreimageSorobanAuthorizationWithAddress
 {
     #[must_use]
-    fn from(v: HashIdPreimageSorobanAuthorizationWithAddressView<'_>) -> Self {
+    fn from(v: HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddressView<'_> {
+impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

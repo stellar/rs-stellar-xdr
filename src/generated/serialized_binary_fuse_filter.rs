@@ -89,10 +89,10 @@ impl WriteXdr for SerializedBinaryFuseFilter {
     }
 }
 
-/// SerializedBinaryFuseFilterView is a borrowing equivalent of [`SerializedBinaryFuseFilter`], usable in
+/// SerializedBinaryFuseFilterRef is a borrowing equivalent of [`SerializedBinaryFuseFilter`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SerializedBinaryFuseFilterView<'a> {
+pub struct SerializedBinaryFuseFilterRef<'a> {
     pub type_: BinaryFuseFilterType,
     pub input_hash_seed: ShortHashSeed,
     pub filter_seed: ShortHashSeed,
@@ -101,11 +101,11 @@ pub struct SerializedBinaryFuseFilterView<'a> {
     pub segment_count: u32,
     pub segment_count_length: u32,
     pub fingerprint_length: u32,
-    pub fingerprints: BytesMView<'a>,
+    pub fingerprints: BytesMRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SerializedBinaryFuseFilterView<'_> {
+impl IntoOwned for SerializedBinaryFuseFilterRef<'_> {
     type Owned = SerializedBinaryFuseFilter;
     fn into_owned(self) -> SerializedBinaryFuseFilter {
         SerializedBinaryFuseFilter {
@@ -123,22 +123,22 @@ impl IntoOwned for SerializedBinaryFuseFilterView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
+impl From<&SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
-    fn from(v: &SerializedBinaryFuseFilterView<'_>) -> Self {
+    fn from(v: &SerializedBinaryFuseFilterRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
+impl From<SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
-    fn from(v: SerializedBinaryFuseFilterView<'_>) -> Self {
+    fn from(v: SerializedBinaryFuseFilterRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SerializedBinaryFuseFilterView<'_> {
+impl WriteXdr for SerializedBinaryFuseFilterRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

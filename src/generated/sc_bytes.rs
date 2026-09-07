@@ -108,13 +108,13 @@ impl AsRef<[u8]> for ScBytes {
     }
 }
 
-/// ScBytesView is a borrowing equivalent of [`ScBytes`], usable in
+/// ScBytesRef is a borrowing equivalent of [`ScBytes`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScBytesView<'a>(pub BytesMView<'a>);
+pub struct ScBytesRef<'a>(pub BytesMRef<'a>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScBytesView<'_> {
+impl IntoOwned for ScBytesRef<'_> {
     type Owned = ScBytes;
     fn into_owned(self) -> ScBytes {
         ScBytes(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for ScBytesView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScBytesView<'_>> for ScBytes {
+impl From<&ScBytesRef<'_>> for ScBytes {
     #[must_use]
-    fn from(v: &ScBytesView<'_>) -> Self {
+    fn from(v: &ScBytesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScBytesView<'_>> for ScBytes {
+impl From<ScBytesRef<'_>> for ScBytes {
     #[must_use]
-    fn from(v: ScBytesView<'_>) -> Self {
+    fn from(v: ScBytesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScBytesView<'_> {
+impl WriteXdr for ScBytesRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

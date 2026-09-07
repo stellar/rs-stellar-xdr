@@ -50,16 +50,16 @@ impl WriteXdr for InnerTransactionResultPair {
     }
 }
 
-/// InnerTransactionResultPairView is a borrowing equivalent of [`InnerTransactionResultPair`], usable in
+/// InnerTransactionResultPairRef is a borrowing equivalent of [`InnerTransactionResultPair`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InnerTransactionResultPairView<'a> {
+pub struct InnerTransactionResultPairRef<'a> {
     pub transaction_hash: Hash,
-    pub result: InnerTransactionResultView<'a>,
+    pub result: InnerTransactionResultRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for InnerTransactionResultPairView<'_> {
+impl IntoOwned for InnerTransactionResultPairRef<'_> {
     type Owned = InnerTransactionResultPair;
     fn into_owned(self) -> InnerTransactionResultPair {
         InnerTransactionResultPair {
@@ -70,22 +70,22 @@ impl IntoOwned for InnerTransactionResultPairView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
+impl From<&InnerTransactionResultPairRef<'_>> for InnerTransactionResultPair {
     #[must_use]
-    fn from(v: &InnerTransactionResultPairView<'_>) -> Self {
+    fn from(v: &InnerTransactionResultPairRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
+impl From<InnerTransactionResultPairRef<'_>> for InnerTransactionResultPair {
     #[must_use]
-    fn from(v: InnerTransactionResultPairView<'_>) -> Self {
+    fn from(v: InnerTransactionResultPairRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for InnerTransactionResultPairView<'_> {
+impl WriteXdr for InnerTransactionResultPairRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

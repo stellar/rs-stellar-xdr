@@ -50,16 +50,16 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyResponseMessageView is a borrowing equivalent of [`SignedTimeSlicedSurveyResponseMessage`], usable in
+/// SignedTimeSlicedSurveyResponseMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyResponseMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyResponseMessageView<'a> {
-    pub response_signature: SignatureView<'a>,
-    pub response: TimeSlicedSurveyResponseMessageView<'a>,
+pub struct SignedTimeSlicedSurveyResponseMessageRef<'a> {
+    pub response_signature: SignatureRef<'a>,
+    pub response: TimeSlicedSurveyResponseMessageRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SignedTimeSlicedSurveyResponseMessageView<'_> {
+impl IntoOwned for SignedTimeSlicedSurveyResponseMessageRef<'_> {
     type Owned = SignedTimeSlicedSurveyResponseMessage;
     fn into_owned(self) -> SignedTimeSlicedSurveyResponseMessage {
         SignedTimeSlicedSurveyResponseMessage {
@@ -70,24 +70,22 @@ impl IntoOwned for SignedTimeSlicedSurveyResponseMessageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyResponseMessageView<'_>>
-    for SignedTimeSlicedSurveyResponseMessage
-{
+impl From<&SignedTimeSlicedSurveyResponseMessageRef<'_>> for SignedTimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyResponseMessageView<'_>) -> Self {
+    fn from(v: &SignedTimeSlicedSurveyResponseMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyResponseMessageView<'_>> for SignedTimeSlicedSurveyResponseMessage {
+impl From<SignedTimeSlicedSurveyResponseMessageRef<'_>> for SignedTimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: SignedTimeSlicedSurveyResponseMessageView<'_>) -> Self {
+    fn from(v: SignedTimeSlicedSurveyResponseMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SignedTimeSlicedSurveyResponseMessageView<'_> {
+impl WriteXdr for SignedTimeSlicedSurveyResponseMessageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

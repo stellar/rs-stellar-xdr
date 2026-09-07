@@ -54,17 +54,17 @@ impl WriteXdr for ScpStatementExternalize {
     }
 }
 
-/// ScpStatementExternalizeView is a borrowing equivalent of [`ScpStatementExternalize`], usable in
+/// ScpStatementExternalizeRef is a borrowing equivalent of [`ScpStatementExternalize`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementExternalizeView<'a> {
-    pub commit: ScpBallotView<'a>,
+pub struct ScpStatementExternalizeRef<'a> {
+    pub commit: ScpBallotRef<'a>,
     pub n_h: u32,
     pub commit_quorum_set_hash: Hash,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementExternalizeView<'_> {
+impl IntoOwned for ScpStatementExternalizeRef<'_> {
     type Owned = ScpStatementExternalize;
     fn into_owned(self) -> ScpStatementExternalize {
         ScpStatementExternalize {
@@ -76,22 +76,22 @@ impl IntoOwned for ScpStatementExternalizeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementExternalizeView<'_>> for ScpStatementExternalize {
+impl From<&ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
     #[must_use]
-    fn from(v: &ScpStatementExternalizeView<'_>) -> Self {
+    fn from(v: &ScpStatementExternalizeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementExternalizeView<'_>> for ScpStatementExternalize {
+impl From<ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
     #[must_use]
-    fn from(v: ScpStatementExternalizeView<'_>) -> Self {
+    fn from(v: ScpStatementExternalizeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpStatementExternalizeView<'_> {
+impl WriteXdr for ScpStatementExternalizeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -142,25 +142,25 @@ impl WriteXdr for TransactionEnvelope {
     }
 }
 
-/// TransactionEnvelopeView is a borrowing equivalent of [`TransactionEnvelope`], usable in
+/// TransactionEnvelopeRef is a borrowing equivalent of [`TransactionEnvelope`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionEnvelopeView<'a> {
-    TxV0(TransactionV0EnvelopeView<'a>),
-    Tx(TransactionV1EnvelopeView<'a>),
-    TxFeeBump(FeeBumpTransactionEnvelopeView<'a>),
+pub enum TransactionEnvelopeRef<'a> {
+    TxV0(TransactionV0EnvelopeRef<'a>),
+    Tx(TransactionV1EnvelopeRef<'a>),
+    TxFeeBump(FeeBumpTransactionEnvelopeRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionEnvelopeView<'_> {
+impl IntoOwned for TransactionEnvelopeRef<'_> {
     type Owned = TransactionEnvelope;
     fn into_owned(self) -> TransactionEnvelope {
         #[allow(clippy::match_same_arms)]
         match self {
-            TransactionEnvelopeView::TxV0(value) => TransactionEnvelope::TxV0(value.into_owned()),
-            TransactionEnvelopeView::Tx(value) => TransactionEnvelope::Tx(value.into_owned()),
-            TransactionEnvelopeView::TxFeeBump(value) => {
+            TransactionEnvelopeRef::TxV0(value) => TransactionEnvelope::TxV0(value.into_owned()),
+            TransactionEnvelopeRef::Tx(value) => TransactionEnvelope::Tx(value.into_owned()),
+            TransactionEnvelopeRef::TxFeeBump(value) => {
                 TransactionEnvelope::TxFeeBump(value.into_owned())
             }
         }
@@ -168,22 +168,22 @@ impl IntoOwned for TransactionEnvelopeView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionEnvelopeView<'_>> for TransactionEnvelope {
+impl From<&TransactionEnvelopeRef<'_>> for TransactionEnvelope {
     #[must_use]
-    fn from(v: &TransactionEnvelopeView<'_>) -> Self {
+    fn from(v: &TransactionEnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionEnvelopeView<'_>> for TransactionEnvelope {
+impl From<TransactionEnvelopeRef<'_>> for TransactionEnvelope {
     #[must_use]
-    fn from(v: TransactionEnvelopeView<'_>) -> Self {
+    fn from(v: TransactionEnvelopeRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl TransactionEnvelopeView<'_> {
+impl TransactionEnvelopeRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -195,7 +195,7 @@ impl TransactionEnvelopeView<'_> {
     }
 }
 
-impl WriteXdr for TransactionEnvelopeView<'_> {
+impl WriteXdr for TransactionEnvelopeRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -58,17 +58,17 @@ impl WriteXdr for AuthCert {
     }
 }
 
-/// AuthCertView is a borrowing equivalent of [`AuthCert`], usable in
+/// AuthCertRef is a borrowing equivalent of [`AuthCert`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AuthCertView<'a> {
+pub struct AuthCertRef<'a> {
     pub pubkey: Curve25519Public,
     pub expiration: u64,
-    pub sig: SignatureView<'a>,
+    pub sig: SignatureRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AuthCertView<'_> {
+impl IntoOwned for AuthCertRef<'_> {
     type Owned = AuthCert;
     fn into_owned(self) -> AuthCert {
         AuthCert {
@@ -80,22 +80,22 @@ impl IntoOwned for AuthCertView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AuthCertView<'_>> for AuthCert {
+impl From<&AuthCertRef<'_>> for AuthCert {
     #[must_use]
-    fn from(v: &AuthCertView<'_>) -> Self {
+    fn from(v: &AuthCertRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AuthCertView<'_>> for AuthCert {
+impl From<AuthCertRef<'_>> for AuthCert {
     #[must_use]
-    fn from(v: AuthCertView<'_>) -> Self {
+    fn from(v: AuthCertRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for AuthCertView<'_> {
+impl WriteXdr for AuthCertRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

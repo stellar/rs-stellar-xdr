@@ -130,21 +130,21 @@ impl WriteXdr for GeneralizedTransactionSet {
     }
 }
 
-/// GeneralizedTransactionSetView is a borrowing equivalent of [`GeneralizedTransactionSet`], usable in
+/// GeneralizedTransactionSetRef is a borrowing equivalent of [`GeneralizedTransactionSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum GeneralizedTransactionSetView<'a> {
-    V1(TransactionSetV1View<'a>),
+pub enum GeneralizedTransactionSetRef<'a> {
+    V1(TransactionSetV1Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for GeneralizedTransactionSetView<'_> {
+impl IntoOwned for GeneralizedTransactionSetRef<'_> {
     type Owned = GeneralizedTransactionSet;
     fn into_owned(self) -> GeneralizedTransactionSet {
         #[allow(clippy::match_same_arms)]
         match self {
-            GeneralizedTransactionSetView::V1(value) => {
+            GeneralizedTransactionSetRef::V1(value) => {
                 GeneralizedTransactionSet::V1(value.into_owned())
             }
         }
@@ -152,22 +152,22 @@ impl IntoOwned for GeneralizedTransactionSetView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
+impl From<&GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
     #[must_use]
-    fn from(v: &GeneralizedTransactionSetView<'_>) -> Self {
+    fn from(v: &GeneralizedTransactionSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
+impl From<GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
     #[must_use]
-    fn from(v: GeneralizedTransactionSetView<'_>) -> Self {
+    fn from(v: GeneralizedTransactionSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl GeneralizedTransactionSetView<'_> {
+impl GeneralizedTransactionSetRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -177,7 +177,7 @@ impl GeneralizedTransactionSetView<'_> {
     }
 }
 
-impl WriteXdr for GeneralizedTransactionSetView<'_> {
+impl WriteXdr for GeneralizedTransactionSetRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

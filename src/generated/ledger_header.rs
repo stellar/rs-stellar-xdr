@@ -135,13 +135,13 @@ impl WriteXdr for LedgerHeader {
     }
 }
 
-/// LedgerHeaderView is a borrowing equivalent of [`LedgerHeader`], usable in
+/// LedgerHeaderRef is a borrowing equivalent of [`LedgerHeader`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerHeaderView<'a> {
+pub struct LedgerHeaderRef<'a> {
     pub ledger_version: u32,
     pub previous_ledger_hash: Hash,
-    pub scp_value: StellarValueView<'a>,
+    pub scp_value: StellarValueRef<'a>,
     pub tx_set_result_hash: Hash,
     pub bucket_list_hash: Hash,
     pub ledger_seq: u32,
@@ -157,7 +157,7 @@ pub struct LedgerHeaderView<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerHeaderView<'_> {
+impl IntoOwned for LedgerHeaderRef<'_> {
     type Owned = LedgerHeader;
     fn into_owned(self) -> LedgerHeader {
         LedgerHeader {
@@ -181,22 +181,22 @@ impl IntoOwned for LedgerHeaderView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerHeaderView<'_>> for LedgerHeader {
+impl From<&LedgerHeaderRef<'_>> for LedgerHeader {
     #[must_use]
-    fn from(v: &LedgerHeaderView<'_>) -> Self {
+    fn from(v: &LedgerHeaderRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerHeaderView<'_>> for LedgerHeader {
+impl From<LedgerHeaderRef<'_>> for LedgerHeader {
     #[must_use]
-    fn from(v: LedgerHeaderView<'_>) -> Self {
+    fn from(v: LedgerHeaderRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerHeaderView<'_> {
+impl WriteXdr for LedgerHeaderRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

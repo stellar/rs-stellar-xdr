@@ -72,18 +72,18 @@ impl WriteXdr for FeeBumpTransaction {
     }
 }
 
-/// FeeBumpTransactionView is a borrowing equivalent of [`FeeBumpTransaction`], usable in
+/// FeeBumpTransactionRef is a borrowing equivalent of [`FeeBumpTransaction`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FeeBumpTransactionView<'a> {
+pub struct FeeBumpTransactionRef<'a> {
     pub fee_source: MuxedAccount,
     pub fee: i64,
-    pub inner_tx: FeeBumpTransactionInnerTxView<'a>,
+    pub inner_tx: FeeBumpTransactionInnerTxRef<'a>,
     pub ext: FeeBumpTransactionExt,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionView<'_> {
+impl IntoOwned for FeeBumpTransactionRef<'_> {
     type Owned = FeeBumpTransaction;
     fn into_owned(self) -> FeeBumpTransaction {
         FeeBumpTransaction {
@@ -96,22 +96,22 @@ impl IntoOwned for FeeBumpTransactionView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionView<'_>> for FeeBumpTransaction {
+impl From<&FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
     #[must_use]
-    fn from(v: &FeeBumpTransactionView<'_>) -> Self {
+    fn from(v: &FeeBumpTransactionRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionView<'_>> for FeeBumpTransaction {
+impl From<FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
     #[must_use]
-    fn from(v: FeeBumpTransactionView<'_>) -> Self {
+    fn from(v: FeeBumpTransactionRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for FeeBumpTransactionView<'_> {
+impl WriteXdr for FeeBumpTransactionRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

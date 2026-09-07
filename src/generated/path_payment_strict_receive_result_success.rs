@@ -50,16 +50,16 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     }
 }
 
-/// PathPaymentStrictReceiveResultSuccessView is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`], usable in
+/// PathPaymentStrictReceiveResultSuccessRef is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictReceiveResultSuccessView<'a> {
-    pub offers: VecMView<'a, ClaimAtom>,
+pub struct PathPaymentStrictReceiveResultSuccessRef<'a> {
+    pub offers: VecMRef<'a, ClaimAtom>,
     pub last: SimplePaymentResult,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictReceiveResultSuccessView<'_> {
+impl IntoOwned for PathPaymentStrictReceiveResultSuccessRef<'_> {
     type Owned = PathPaymentStrictReceiveResultSuccess;
     fn into_owned(self) -> PathPaymentStrictReceiveResultSuccess {
         PathPaymentStrictReceiveResultSuccess {
@@ -70,24 +70,22 @@ impl IntoOwned for PathPaymentStrictReceiveResultSuccessView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictReceiveResultSuccessView<'_>>
-    for PathPaymentStrictReceiveResultSuccess
-{
+impl From<&PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictReceiveResultSuccess {
     #[must_use]
-    fn from(v: &PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
+    fn from(v: &PathPaymentStrictReceiveResultSuccessRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PathPaymentStrictReceiveResultSuccessView<'_>> for PathPaymentStrictReceiveResultSuccess {
+impl From<PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictReceiveResultSuccess {
     #[must_use]
-    fn from(v: PathPaymentStrictReceiveResultSuccessView<'_>) -> Self {
+    fn from(v: PathPaymentStrictReceiveResultSuccessRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PathPaymentStrictReceiveResultSuccessView<'_> {
+impl WriteXdr for PathPaymentStrictReceiveResultSuccessRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

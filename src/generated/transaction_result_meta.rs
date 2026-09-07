@@ -54,17 +54,17 @@ impl WriteXdr for TransactionResultMeta {
     }
 }
 
-/// TransactionResultMetaView is a borrowing equivalent of [`TransactionResultMeta`], usable in
+/// TransactionResultMetaRef is a borrowing equivalent of [`TransactionResultMeta`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultMetaView<'a> {
-    pub result: TransactionResultPairView<'a>,
-    pub fee_processing: LedgerEntryChangesView<'a>,
-    pub tx_apply_processing: TransactionMetaView<'a>,
+pub struct TransactionResultMetaRef<'a> {
+    pub result: TransactionResultPairRef<'a>,
+    pub fee_processing: LedgerEntryChangesRef<'a>,
+    pub tx_apply_processing: TransactionMetaRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultMetaView<'_> {
+impl IntoOwned for TransactionResultMetaRef<'_> {
     type Owned = TransactionResultMeta;
     fn into_owned(self) -> TransactionResultMeta {
         TransactionResultMeta {
@@ -76,22 +76,22 @@ impl IntoOwned for TransactionResultMetaView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionResultMetaView<'_>> for TransactionResultMeta {
+impl From<&TransactionResultMetaRef<'_>> for TransactionResultMeta {
     #[must_use]
-    fn from(v: &TransactionResultMetaView<'_>) -> Self {
+    fn from(v: &TransactionResultMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionResultMetaView<'_>> for TransactionResultMeta {
+impl From<TransactionResultMetaRef<'_>> for TransactionResultMeta {
     #[must_use]
-    fn from(v: TransactionResultMetaView<'_>) -> Self {
+    fn from(v: TransactionResultMetaRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionResultMetaView<'_> {
+impl WriteXdr for TransactionResultMetaRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -145,25 +145,25 @@ impl WriteXdr for RevokeSponsorshipOp {
     }
 }
 
-/// RevokeSponsorshipOpView is a borrowing equivalent of [`RevokeSponsorshipOp`], usable in
+/// RevokeSponsorshipOpRef is a borrowing equivalent of [`RevokeSponsorshipOp`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum RevokeSponsorshipOpView<'a> {
-    LedgerEntry(LedgerKeyView<'a>),
-    Signer(RevokeSponsorshipOpSignerView<'a>),
+pub enum RevokeSponsorshipOpRef<'a> {
+    LedgerEntry(LedgerKeyRef<'a>),
+    Signer(RevokeSponsorshipOpSignerRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for RevokeSponsorshipOpView<'_> {
+impl IntoOwned for RevokeSponsorshipOpRef<'_> {
     type Owned = RevokeSponsorshipOp;
     fn into_owned(self) -> RevokeSponsorshipOp {
         #[allow(clippy::match_same_arms)]
         match self {
-            RevokeSponsorshipOpView::LedgerEntry(value) => {
+            RevokeSponsorshipOpRef::LedgerEntry(value) => {
                 RevokeSponsorshipOp::LedgerEntry(value.into_owned())
             }
-            RevokeSponsorshipOpView::Signer(value) => {
+            RevokeSponsorshipOpRef::Signer(value) => {
                 RevokeSponsorshipOp::Signer(value.into_owned())
             }
         }
@@ -171,22 +171,22 @@ impl IntoOwned for RevokeSponsorshipOpView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
+impl From<&RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
     #[must_use]
-    fn from(v: &RevokeSponsorshipOpView<'_>) -> Self {
+    fn from(v: &RevokeSponsorshipOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<RevokeSponsorshipOpView<'_>> for RevokeSponsorshipOp {
+impl From<RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
     #[must_use]
-    fn from(v: RevokeSponsorshipOpView<'_>) -> Self {
+    fn from(v: RevokeSponsorshipOpRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl RevokeSponsorshipOpView<'_> {
+impl RevokeSponsorshipOpRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> RevokeSponsorshipType {
         #[allow(clippy::match_same_arms)]
@@ -197,7 +197,7 @@ impl RevokeSponsorshipOpView<'_> {
     }
 }
 
-impl WriteXdr for RevokeSponsorshipOpView<'_> {
+impl WriteXdr for RevokeSponsorshipOpRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

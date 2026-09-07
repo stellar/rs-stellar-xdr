@@ -108,13 +108,13 @@ impl AsRef<[u8]> for String64 {
     }
 }
 
-/// String64View is a borrowing equivalent of [`String64`], usable in
+/// String64Ref is a borrowing equivalent of [`String64`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct String64View<'a>(pub StringMView<'a, 64>);
+pub struct String64Ref<'a>(pub StringMRef<'a, 64>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for String64View<'_> {
+impl IntoOwned for String64Ref<'_> {
     type Owned = String64;
     fn into_owned(self) -> String64 {
         String64(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for String64View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&String64View<'_>> for String64 {
+impl From<&String64Ref<'_>> for String64 {
     #[must_use]
-    fn from(v: &String64View<'_>) -> Self {
+    fn from(v: &String64Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<String64View<'_>> for String64 {
+impl From<String64Ref<'_>> for String64 {
     #[must_use]
-    fn from(v: String64View<'_>) -> Self {
+    fn from(v: String64Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for String64View<'_> {
+impl WriteXdr for String64Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

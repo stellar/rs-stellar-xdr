@@ -90,17 +90,17 @@ impl WriteXdr for ScpStatement {
     }
 }
 
-/// ScpStatementView is a borrowing equivalent of [`ScpStatement`], usable in
+/// ScpStatementRef is a borrowing equivalent of [`ScpStatement`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementView<'a> {
+pub struct ScpStatementRef<'a> {
     pub node_id: NodeId,
     pub slot_index: u64,
-    pub pledges: ScpStatementPledgesView<'a>,
+    pub pledges: ScpStatementPledgesRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementView<'_> {
+impl IntoOwned for ScpStatementRef<'_> {
     type Owned = ScpStatement;
     fn into_owned(self) -> ScpStatement {
         ScpStatement {
@@ -112,22 +112,22 @@ impl IntoOwned for ScpStatementView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementView<'_>> for ScpStatement {
+impl From<&ScpStatementRef<'_>> for ScpStatement {
     #[must_use]
-    fn from(v: &ScpStatementView<'_>) -> Self {
+    fn from(v: &ScpStatementRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementView<'_>> for ScpStatement {
+impl From<ScpStatementRef<'_>> for ScpStatement {
     #[must_use]
-    fn from(v: ScpStatementView<'_>) -> Self {
+    fn from(v: ScpStatementRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpStatementView<'_> {
+impl WriteXdr for ScpStatementRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

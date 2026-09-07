@@ -54,17 +54,17 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
-/// ScpQuorumSetView is a borrowing equivalent of [`ScpQuorumSet`], usable in
+/// ScpQuorumSetRef is a borrowing equivalent of [`ScpQuorumSet`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpQuorumSetView<'a> {
+pub struct ScpQuorumSetRef<'a> {
     pub threshold: u32,
-    pub validators: VecMView<'a, NodeId>,
-    pub inner_sets: VecMView<'a, ScpQuorumSetView<'a>>,
+    pub validators: VecMRef<'a, NodeId>,
+    pub inner_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpQuorumSetView<'_> {
+impl IntoOwned for ScpQuorumSetRef<'_> {
     type Owned = ScpQuorumSet;
     fn into_owned(self) -> ScpQuorumSet {
         ScpQuorumSet {
@@ -76,22 +76,22 @@ impl IntoOwned for ScpQuorumSetView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpQuorumSetView<'_>> for ScpQuorumSet {
+impl From<&ScpQuorumSetRef<'_>> for ScpQuorumSet {
     #[must_use]
-    fn from(v: &ScpQuorumSetView<'_>) -> Self {
+    fn from(v: &ScpQuorumSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpQuorumSetView<'_>> for ScpQuorumSet {
+impl From<ScpQuorumSetRef<'_>> for ScpQuorumSet {
     #[must_use]
-    fn from(v: ScpQuorumSetView<'_>) -> Self {
+    fn from(v: ScpQuorumSetRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpQuorumSetView<'_> {
+impl WriteXdr for ScpQuorumSetRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

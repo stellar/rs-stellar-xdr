@@ -50,16 +50,16 @@ impl WriteXdr for ClaimantV0 {
     }
 }
 
-/// ClaimantV0View is a borrowing equivalent of [`ClaimantV0`], usable in
+/// ClaimantV0Ref is a borrowing equivalent of [`ClaimantV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ClaimantV0View<'a> {
+pub struct ClaimantV0Ref<'a> {
     pub destination: AccountId,
-    pub predicate: ClaimPredicateView<'a>,
+    pub predicate: ClaimPredicateRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ClaimantV0View<'_> {
+impl IntoOwned for ClaimantV0Ref<'_> {
     type Owned = ClaimantV0;
     fn into_owned(self) -> ClaimantV0 {
         ClaimantV0 {
@@ -70,22 +70,22 @@ impl IntoOwned for ClaimantV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ClaimantV0View<'_>> for ClaimantV0 {
+impl From<&ClaimantV0Ref<'_>> for ClaimantV0 {
     #[must_use]
-    fn from(v: &ClaimantV0View<'_>) -> Self {
+    fn from(v: &ClaimantV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ClaimantV0View<'_>> for ClaimantV0 {
+impl From<ClaimantV0Ref<'_>> for ClaimantV0 {
     #[must_use]
-    fn from(v: ClaimantV0View<'_>) -> Self {
+    fn from(v: ClaimantV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ClaimantV0View<'_> {
+impl WriteXdr for ClaimantV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

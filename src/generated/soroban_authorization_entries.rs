@@ -108,13 +108,13 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
     }
 }
 
-/// SorobanAuthorizationEntriesView is a borrowing equivalent of [`SorobanAuthorizationEntries`], usable in
+/// SorobanAuthorizationEntriesRef is a borrowing equivalent of [`SorobanAuthorizationEntries`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizationEntriesView<'a>(pub VecMView<'a, SorobanAuthorizationEntryView<'a>>);
+pub struct SorobanAuthorizationEntriesRef<'a>(pub VecMRef<'a, SorobanAuthorizationEntryRef<'a>>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizationEntriesView<'_> {
+impl IntoOwned for SorobanAuthorizationEntriesRef<'_> {
     type Owned = SorobanAuthorizationEntries;
     fn into_owned(self) -> SorobanAuthorizationEntries {
         SorobanAuthorizationEntries(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for SorobanAuthorizationEntriesView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
+impl From<&SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
     #[must_use]
-    fn from(v: &SorobanAuthorizationEntriesView<'_>) -> Self {
+    fn from(v: &SorobanAuthorizationEntriesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanAuthorizationEntriesView<'_>> for SorobanAuthorizationEntries {
+impl From<SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
     #[must_use]
-    fn from(v: SorobanAuthorizationEntriesView<'_>) -> Self {
+    fn from(v: SorobanAuthorizationEntriesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SorobanAuthorizationEntriesView<'_> {
+impl WriteXdr for SorobanAuthorizationEntriesRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

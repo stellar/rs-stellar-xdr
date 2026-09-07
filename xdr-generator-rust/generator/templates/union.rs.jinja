@@ -227,16 +227,16 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
-{%- if u.emit_view %}
+{%- if u.emit_ref %}
 
-/// {{ u.name }}View is a borrowing equivalent of [`{{ u.name }}`], usable in
+/// {{ u.name }}Ref is a borrowing equivalent of [`{{ u.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = u.view_cfg %}
+{%- if let Some(cfg) = u.ref_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum {{ u.name }}View<'a> {
+pub enum {{ u.name }}Ref<'a> {
 {%- for arm in u.arms %}
 {%- if let Some(cfg) = arm.cfg %}
     #[cfg({{ cfg }})]
@@ -244,16 +244,16 @@ pub enum {{ u.name }}View<'a> {
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
-    {{ arm.case_name }}({{ arm.view_type_ref.as_ref().unwrap() }}),
+    {{ arm.case_name }}({{ arm.ref_type.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
 }
 
-{% if let Some(cfg) = u.view_cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl IntoOwned for {{ u.name }}View<'_> {
+impl IntoOwned for {{ u.name }}Ref<'_> {
     type Owned = {{ u.name }};
     fn into_owned(self) -> {{ u.name }} {
         #[allow(clippy::match_same_arms)]
@@ -263,15 +263,15 @@ impl IntoOwned for {{ u.name }}View<'_> {
             #[cfg({{ cfg }})]
 {%- endif %}
 {%- if arm.is_void %}
-            {{ u.name }}View::{{ arm.case_name }} => {{ u.name }}::{{ arm.case_name }},
+            {{ u.name }}Ref::{{ arm.case_name }} => {{ u.name }}::{{ arm.case_name }},
 {%- else %}
 {%- match arm.cyclic %}
 {%- when CyclicBorrow::NotCyclic %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.into_owned()),
+            {{ u.name }}Ref::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.into_owned()),
 {%- when CyclicBorrow::Reference %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(Box::new(value.into_owned())),
+            {{ u.name }}Ref::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(Box::new(value.into_owned())),
 {%- when CyclicBorrow::OptionalReference %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.map(|v| Box::new(v.into_owned()))),
+            {{ u.name }}Ref::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.map(|v| Box::new(v.into_owned()))),
 {%- endmatch %}
 {%- endif %}
 {%- endfor %}
@@ -279,32 +279,32 @@ impl IntoOwned for {{ u.name }}View<'_> {
     }
 }
 
-{% if let Some(cfg) = u.view_cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
+impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
     #[must_use]
-    fn from(v: &{{ u.name }}View<'_>) -> Self {
+    fn from(v: &{{ u.name }}Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-{% if let Some(cfg) = u.view_cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<{{ u.name }}View<'_>> for {{ u.name }} {
+impl From<{{ u.name }}Ref<'_>> for {{ u.name }} {
     #[must_use]
-    fn from(v: {{ u.name }}View<'_>) -> Self {
+    fn from(v: {{ u.name }}Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-{% if let Some(cfg) = u.view_cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-impl {{ u.name }}View<'_> {
+impl {{ u.name }}Ref<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
         #[allow(clippy::match_same_arms)]
@@ -323,10 +323,10 @@ impl {{ u.name }}View<'_> {
     }
 }
 
-{% if let Some(cfg) = u.view_cfg -%}
+{% if let Some(cfg) = u.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-impl WriteXdr for {{ u.name }}View<'_> {
+impl WriteXdr for {{ u.name }}Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -349,6 +349,6 @@ impl WriteXdr for {{ u.name }}View<'_> {
     }
 }
 {%- endif %}
-{%- if !u.emit_view %}
+{%- if !u.emit_ref %}
 {% call into_owned::identity(u.name, u.cfg) %}
 {%- endif %}

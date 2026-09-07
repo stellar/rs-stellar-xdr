@@ -87,17 +87,17 @@ impl WriteXdr for LedgerEntry {
     }
 }
 
-/// LedgerEntryView is a borrowing equivalent of [`LedgerEntry`], usable in
+/// LedgerEntryRef is a borrowing equivalent of [`LedgerEntry`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerEntryView<'a> {
+pub struct LedgerEntryRef<'a> {
     pub last_modified_ledger_seq: u32,
-    pub data: LedgerEntryDataView<'a>,
+    pub data: LedgerEntryDataRef<'a>,
     pub ext: LedgerEntryExt,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryView<'_> {
+impl IntoOwned for LedgerEntryRef<'_> {
     type Owned = LedgerEntry;
     fn into_owned(self) -> LedgerEntry {
         LedgerEntry {
@@ -109,22 +109,22 @@ impl IntoOwned for LedgerEntryView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerEntryView<'_>> for LedgerEntry {
+impl From<&LedgerEntryRef<'_>> for LedgerEntry {
     #[must_use]
-    fn from(v: &LedgerEntryView<'_>) -> Self {
+    fn from(v: &LedgerEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerEntryView<'_>> for LedgerEntry {
+impl From<LedgerEntryRef<'_>> for LedgerEntry {
     #[must_use]
-    fn from(v: LedgerEntryView<'_>) -> Self {
+    fn from(v: LedgerEntryRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerEntryView<'_> {
+impl WriteXdr for LedgerEntryRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

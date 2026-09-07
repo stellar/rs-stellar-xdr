@@ -50,16 +50,16 @@ impl WriteXdr for ScSpecTypeResult {
     }
 }
 
-/// ScSpecTypeResultView is a borrowing equivalent of [`ScSpecTypeResult`], usable in
+/// ScSpecTypeResultRef is a borrowing equivalent of [`ScSpecTypeResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeResultView<'a> {
-    pub ok_type: &'a ScSpecTypeDefView<'a>,
-    pub error_type: &'a ScSpecTypeDefView<'a>,
+pub struct ScSpecTypeResultRef<'a> {
+    pub ok_type: &'a ScSpecTypeDefRef<'a>,
+    pub error_type: &'a ScSpecTypeDefRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeResultView<'_> {
+impl IntoOwned for ScSpecTypeResultRef<'_> {
     type Owned = ScSpecTypeResult;
     fn into_owned(self) -> ScSpecTypeResult {
         ScSpecTypeResult {
@@ -70,22 +70,22 @@ impl IntoOwned for ScSpecTypeResultView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeResultView<'_>> for ScSpecTypeResult {
+impl From<&ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
     #[must_use]
-    fn from(v: &ScSpecTypeResultView<'_>) -> Self {
+    fn from(v: &ScSpecTypeResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeResultView<'_>> for ScSpecTypeResult {
+impl From<ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
     #[must_use]
-    fn from(v: ScSpecTypeResultView<'_>) -> Self {
+    fn from(v: ScSpecTypeResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecTypeResultView<'_> {
+impl WriteXdr for ScSpecTypeResultRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

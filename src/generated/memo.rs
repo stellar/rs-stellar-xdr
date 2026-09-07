@@ -169,50 +169,50 @@ impl WriteXdr for Memo {
     }
 }
 
-/// MemoView is a borrowing equivalent of [`Memo`], usable in
+/// MemoRef is a borrowing equivalent of [`Memo`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum MemoView<'a> {
+pub enum MemoRef<'a> {
     None,
-    Text(StringMView<'a, 28>),
+    Text(StringMRef<'a, 28>),
     Id(u64),
     Hash(Hash),
     Return(Hash),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for MemoView<'_> {
+impl IntoOwned for MemoRef<'_> {
     type Owned = Memo;
     fn into_owned(self) -> Memo {
         #[allow(clippy::match_same_arms)]
         match self {
-            MemoView::None => Memo::None,
-            MemoView::Text(value) => Memo::Text(value.into_owned()),
-            MemoView::Id(value) => Memo::Id(value.into_owned()),
-            MemoView::Hash(value) => Memo::Hash(value.into_owned()),
-            MemoView::Return(value) => Memo::Return(value.into_owned()),
+            MemoRef::None => Memo::None,
+            MemoRef::Text(value) => Memo::Text(value.into_owned()),
+            MemoRef::Id(value) => Memo::Id(value.into_owned()),
+            MemoRef::Hash(value) => Memo::Hash(value.into_owned()),
+            MemoRef::Return(value) => Memo::Return(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&MemoView<'_>> for Memo {
+impl From<&MemoRef<'_>> for Memo {
     #[must_use]
-    fn from(v: &MemoView<'_>) -> Self {
+    fn from(v: &MemoRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<MemoView<'_>> for Memo {
+impl From<MemoRef<'_>> for Memo {
     #[must_use]
-    fn from(v: MemoView<'_>) -> Self {
+    fn from(v: MemoRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl MemoView<'_> {
+impl MemoRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> MemoType {
         #[allow(clippy::match_same_arms)]
@@ -226,7 +226,7 @@ impl MemoView<'_> {
     }
 }
 
-impl WriteXdr for MemoView<'_> {
+impl WriteXdr for MemoRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

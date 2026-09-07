@@ -50,16 +50,16 @@ impl WriteXdr for LedgerFootprint {
     }
 }
 
-/// LedgerFootprintView is a borrowing equivalent of [`LedgerFootprint`], usable in
+/// LedgerFootprintRef is a borrowing equivalent of [`LedgerFootprint`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerFootprintView<'a> {
-    pub read_only: VecMView<'a, LedgerKeyView<'a>>,
-    pub read_write: VecMView<'a, LedgerKeyView<'a>>,
+pub struct LedgerFootprintRef<'a> {
+    pub read_only: VecMRef<'a, LedgerKeyRef<'a>>,
+    pub read_write: VecMRef<'a, LedgerKeyRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerFootprintView<'_> {
+impl IntoOwned for LedgerFootprintRef<'_> {
     type Owned = LedgerFootprint;
     fn into_owned(self) -> LedgerFootprint {
         LedgerFootprint {
@@ -70,22 +70,22 @@ impl IntoOwned for LedgerFootprintView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerFootprintView<'_>> for LedgerFootprint {
+impl From<&LedgerFootprintRef<'_>> for LedgerFootprint {
     #[must_use]
-    fn from(v: &LedgerFootprintView<'_>) -> Self {
+    fn from(v: &LedgerFootprintRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerFootprintView<'_>> for LedgerFootprint {
+impl From<LedgerFootprintRef<'_>> for LedgerFootprint {
     #[must_use]
-    fn from(v: LedgerFootprintView<'_>) -> Self {
+    fn from(v: LedgerFootprintRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerFootprintView<'_> {
+impl WriteXdr for LedgerFootprintRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

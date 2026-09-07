@@ -108,13 +108,13 @@ impl AsRef<[u8]> for Value {
     }
 }
 
-/// ValueView is a borrowing equivalent of [`Value`], usable in
+/// ValueRef is a borrowing equivalent of [`Value`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ValueView<'a>(pub BytesMView<'a>);
+pub struct ValueRef<'a>(pub BytesMRef<'a>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ValueView<'_> {
+impl IntoOwned for ValueRef<'_> {
     type Owned = Value;
     fn into_owned(self) -> Value {
         Value(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for ValueView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ValueView<'_>> for Value {
+impl From<&ValueRef<'_>> for Value {
     #[must_use]
-    fn from(v: &ValueView<'_>) -> Self {
+    fn from(v: &ValueRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ValueView<'_>> for Value {
+impl From<ValueRef<'_>> for Value {
     #[must_use]
-    fn from(v: ValueView<'_>) -> Self {
+    fn from(v: ValueRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ValueView<'_> {
+impl WriteXdr for ValueRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

@@ -224,70 +224,70 @@ impl WriteXdr for LedgerEntryData {
     }
 }
 
-/// LedgerEntryDataView is a borrowing equivalent of [`LedgerEntryData`], usable in
+/// LedgerEntryDataRef is a borrowing equivalent of [`LedgerEntryData`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerEntryDataView<'a> {
-    Account(AccountEntryView<'a>),
+pub enum LedgerEntryDataRef<'a> {
+    Account(AccountEntryRef<'a>),
     Trustline(TrustLineEntry),
     Offer(OfferEntry),
-    Data(DataEntryView<'a>),
-    ClaimableBalance(ClaimableBalanceEntryView<'a>),
+    Data(DataEntryRef<'a>),
+    ClaimableBalance(ClaimableBalanceEntryRef<'a>),
     LiquidityPool(LiquidityPoolEntry),
-    ContractData(ContractDataEntryView<'a>),
-    ContractCode(ContractCodeEntryView<'a>),
-    ConfigSetting(ConfigSettingEntryView<'a>),
+    ContractData(ContractDataEntryRef<'a>),
+    ContractCode(ContractCodeEntryRef<'a>),
+    ConfigSetting(ConfigSettingEntryRef<'a>),
     Ttl(TtlEntry),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryDataView<'_> {
+impl IntoOwned for LedgerEntryDataRef<'_> {
     type Owned = LedgerEntryData;
     fn into_owned(self) -> LedgerEntryData {
         #[allow(clippy::match_same_arms)]
         match self {
-            LedgerEntryDataView::Account(value) => LedgerEntryData::Account(value.into_owned()),
-            LedgerEntryDataView::Trustline(value) => LedgerEntryData::Trustline(value.into_owned()),
-            LedgerEntryDataView::Offer(value) => LedgerEntryData::Offer(value.into_owned()),
-            LedgerEntryDataView::Data(value) => LedgerEntryData::Data(value.into_owned()),
-            LedgerEntryDataView::ClaimableBalance(value) => {
+            LedgerEntryDataRef::Account(value) => LedgerEntryData::Account(value.into_owned()),
+            LedgerEntryDataRef::Trustline(value) => LedgerEntryData::Trustline(value.into_owned()),
+            LedgerEntryDataRef::Offer(value) => LedgerEntryData::Offer(value.into_owned()),
+            LedgerEntryDataRef::Data(value) => LedgerEntryData::Data(value.into_owned()),
+            LedgerEntryDataRef::ClaimableBalance(value) => {
                 LedgerEntryData::ClaimableBalance(value.into_owned())
             }
-            LedgerEntryDataView::LiquidityPool(value) => {
+            LedgerEntryDataRef::LiquidityPool(value) => {
                 LedgerEntryData::LiquidityPool(value.into_owned())
             }
-            LedgerEntryDataView::ContractData(value) => {
+            LedgerEntryDataRef::ContractData(value) => {
                 LedgerEntryData::ContractData(value.into_owned())
             }
-            LedgerEntryDataView::ContractCode(value) => {
+            LedgerEntryDataRef::ContractCode(value) => {
                 LedgerEntryData::ContractCode(value.into_owned())
             }
-            LedgerEntryDataView::ConfigSetting(value) => {
+            LedgerEntryDataRef::ConfigSetting(value) => {
                 LedgerEntryData::ConfigSetting(value.into_owned())
             }
-            LedgerEntryDataView::Ttl(value) => LedgerEntryData::Ttl(value.into_owned()),
+            LedgerEntryDataRef::Ttl(value) => LedgerEntryData::Ttl(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerEntryDataView<'_>> for LedgerEntryData {
+impl From<&LedgerEntryDataRef<'_>> for LedgerEntryData {
     #[must_use]
-    fn from(v: &LedgerEntryDataView<'_>) -> Self {
+    fn from(v: &LedgerEntryDataRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerEntryDataView<'_>> for LedgerEntryData {
+impl From<LedgerEntryDataRef<'_>> for LedgerEntryData {
     #[must_use]
-    fn from(v: LedgerEntryDataView<'_>) -> Self {
+    fn from(v: LedgerEntryDataRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl LedgerEntryDataView<'_> {
+impl LedgerEntryDataRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
@@ -306,7 +306,7 @@ impl LedgerEntryDataView<'_> {
     }
 }
 
-impl WriteXdr for LedgerEntryDataView<'_> {
+impl WriteXdr for LedgerEntryDataRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

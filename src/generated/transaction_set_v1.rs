@@ -50,16 +50,16 @@ impl WriteXdr for TransactionSetV1 {
     }
 }
 
-/// TransactionSetV1View is a borrowing equivalent of [`TransactionSetV1`], usable in
+/// TransactionSetV1Ref is a borrowing equivalent of [`TransactionSetV1`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionSetV1View<'a> {
+pub struct TransactionSetV1Ref<'a> {
     pub previous_ledger_hash: Hash,
-    pub phases: VecMView<'a, TransactionPhaseView<'a>>,
+    pub phases: VecMRef<'a, TransactionPhaseRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionSetV1View<'_> {
+impl IntoOwned for TransactionSetV1Ref<'_> {
     type Owned = TransactionSetV1;
     fn into_owned(self) -> TransactionSetV1 {
         TransactionSetV1 {
@@ -70,22 +70,22 @@ impl IntoOwned for TransactionSetV1View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionSetV1View<'_>> for TransactionSetV1 {
+impl From<&TransactionSetV1Ref<'_>> for TransactionSetV1 {
     #[must_use]
-    fn from(v: &TransactionSetV1View<'_>) -> Self {
+    fn from(v: &TransactionSetV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionSetV1View<'_>> for TransactionSetV1 {
+impl From<TransactionSetV1Ref<'_>> for TransactionSetV1 {
     #[must_use]
-    fn from(v: TransactionSetV1View<'_>) -> Self {
+    fn from(v: TransactionSetV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionSetV1View<'_> {
+impl WriteXdr for TransactionSetV1Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

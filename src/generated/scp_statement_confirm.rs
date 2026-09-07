@@ -62,11 +62,11 @@ impl WriteXdr for ScpStatementConfirm {
     }
 }
 
-/// ScpStatementConfirmView is a borrowing equivalent of [`ScpStatementConfirm`], usable in
+/// ScpStatementConfirmRef is a borrowing equivalent of [`ScpStatementConfirm`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementConfirmView<'a> {
-    pub ballot: ScpBallotView<'a>,
+pub struct ScpStatementConfirmRef<'a> {
+    pub ballot: ScpBallotRef<'a>,
     pub n_prepared: u32,
     pub n_commit: u32,
     pub n_h: u32,
@@ -74,7 +74,7 @@ pub struct ScpStatementConfirmView<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementConfirmView<'_> {
+impl IntoOwned for ScpStatementConfirmRef<'_> {
     type Owned = ScpStatementConfirm;
     fn into_owned(self) -> ScpStatementConfirm {
         ScpStatementConfirm {
@@ -88,22 +88,22 @@ impl IntoOwned for ScpStatementConfirmView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementConfirmView<'_>> for ScpStatementConfirm {
+impl From<&ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
     #[must_use]
-    fn from(v: &ScpStatementConfirmView<'_>) -> Self {
+    fn from(v: &ScpStatementConfirmRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementConfirmView<'_>> for ScpStatementConfirm {
+impl From<ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
     #[must_use]
-    fn from(v: ScpStatementConfirmView<'_>) -> Self {
+    fn from(v: ScpStatementConfirmRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScpStatementConfirmView<'_> {
+impl WriteXdr for ScpStatementConfirmRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

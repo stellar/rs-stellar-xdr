@@ -60,16 +60,16 @@ impl WriteXdr for ManageOfferSuccessResult {
     }
 }
 
-/// ManageOfferSuccessResultView is a borrowing equivalent of [`ManageOfferSuccessResult`], usable in
+/// ManageOfferSuccessResultRef is a borrowing equivalent of [`ManageOfferSuccessResult`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ManageOfferSuccessResultView<'a> {
-    pub offers_claimed: VecMView<'a, ClaimAtom>,
+pub struct ManageOfferSuccessResultRef<'a> {
+    pub offers_claimed: VecMRef<'a, ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ManageOfferSuccessResultView<'_> {
+impl IntoOwned for ManageOfferSuccessResultRef<'_> {
     type Owned = ManageOfferSuccessResult;
     fn into_owned(self) -> ManageOfferSuccessResult {
         ManageOfferSuccessResult {
@@ -80,22 +80,22 @@ impl IntoOwned for ManageOfferSuccessResultView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
+impl From<&ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
     #[must_use]
-    fn from(v: &ManageOfferSuccessResultView<'_>) -> Self {
+    fn from(v: &ManageOfferSuccessResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ManageOfferSuccessResultView<'_>> for ManageOfferSuccessResult {
+impl From<ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
     #[must_use]
-    fn from(v: ManageOfferSuccessResultView<'_>) -> Self {
+    fn from(v: ManageOfferSuccessResultRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ManageOfferSuccessResultView<'_> {
+impl WriteXdr for ManageOfferSuccessResultRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -108,13 +108,13 @@ impl AsRef<[ScVal]> for ScVec {
     }
 }
 
-/// ScVecView is a borrowing equivalent of [`ScVec`], usable in
+/// ScVecRef is a borrowing equivalent of [`ScVec`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScVecView<'a>(pub VecMView<'a, ScValView<'a>>);
+pub struct ScVecRef<'a>(pub VecMRef<'a, ScValRef<'a>>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScVecView<'_> {
+impl IntoOwned for ScVecRef<'_> {
     type Owned = ScVec;
     fn into_owned(self) -> ScVec {
         ScVec(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for ScVecView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScVecView<'_>> for ScVec {
+impl From<&ScVecRef<'_>> for ScVec {
     #[must_use]
-    fn from(v: &ScVecView<'_>) -> Self {
+    fn from(v: &ScVecRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScVecView<'_>> for ScVec {
+impl From<ScVecRef<'_>> for ScVec {
     #[must_use]
-    fn from(v: ScVecView<'_>) -> Self {
+    fn from(v: ScVecRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScVecView<'_> {
+impl WriteXdr for ScVecRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

@@ -49,16 +49,16 @@ impl WriteXdr for TransactionEvent {
     }
 }
 
-/// TransactionEventView is a borrowing equivalent of [`TransactionEvent`], usable in
+/// TransactionEventRef is a borrowing equivalent of [`TransactionEvent`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionEventView<'a> {
+pub struct TransactionEventRef<'a> {
     pub stage: TransactionEventStage,
-    pub event: ContractEventView<'a>,
+    pub event: ContractEventRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TransactionEventView<'_> {
+impl IntoOwned for TransactionEventRef<'_> {
     type Owned = TransactionEvent;
     fn into_owned(self) -> TransactionEvent {
         TransactionEvent {
@@ -69,22 +69,22 @@ impl IntoOwned for TransactionEventView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TransactionEventView<'_>> for TransactionEvent {
+impl From<&TransactionEventRef<'_>> for TransactionEvent {
     #[must_use]
-    fn from(v: &TransactionEventView<'_>) -> Self {
+    fn from(v: &TransactionEventRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TransactionEventView<'_>> for TransactionEvent {
+impl From<TransactionEventRef<'_>> for TransactionEvent {
     #[must_use]
-    fn from(v: TransactionEventView<'_>) -> Self {
+    fn from(v: TransactionEventRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TransactionEventView<'_> {
+impl WriteXdr for TransactionEventRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

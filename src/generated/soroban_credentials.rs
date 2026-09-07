@@ -166,31 +166,31 @@ impl WriteXdr for SorobanCredentials {
     }
 }
 
-/// SorobanCredentialsView is a borrowing equivalent of [`SorobanCredentials`], usable in
+/// SorobanCredentialsRef is a borrowing equivalent of [`SorobanCredentials`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanCredentialsView<'a> {
+pub enum SorobanCredentialsRef<'a> {
     SourceAccount,
-    Address(SorobanAddressCredentialsView<'a>),
-    AddressV2(SorobanAddressCredentialsView<'a>),
-    AddressWithDelegates(SorobanAddressCredentialsWithDelegatesView<'a>),
+    Address(SorobanAddressCredentialsRef<'a>),
+    AddressV2(SorobanAddressCredentialsRef<'a>),
+    AddressWithDelegates(SorobanAddressCredentialsWithDelegatesRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanCredentialsView<'_> {
+impl IntoOwned for SorobanCredentialsRef<'_> {
     type Owned = SorobanCredentials;
     fn into_owned(self) -> SorobanCredentials {
         #[allow(clippy::match_same_arms)]
         match self {
-            SorobanCredentialsView::SourceAccount => SorobanCredentials::SourceAccount,
-            SorobanCredentialsView::Address(value) => {
+            SorobanCredentialsRef::SourceAccount => SorobanCredentials::SourceAccount,
+            SorobanCredentialsRef::Address(value) => {
                 SorobanCredentials::Address(value.into_owned())
             }
-            SorobanCredentialsView::AddressV2(value) => {
+            SorobanCredentialsRef::AddressV2(value) => {
                 SorobanCredentials::AddressV2(value.into_owned())
             }
-            SorobanCredentialsView::AddressWithDelegates(value) => {
+            SorobanCredentialsRef::AddressWithDelegates(value) => {
                 SorobanCredentials::AddressWithDelegates(value.into_owned())
             }
         }
@@ -198,22 +198,22 @@ impl IntoOwned for SorobanCredentialsView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanCredentialsView<'_>> for SorobanCredentials {
+impl From<&SorobanCredentialsRef<'_>> for SorobanCredentials {
     #[must_use]
-    fn from(v: &SorobanCredentialsView<'_>) -> Self {
+    fn from(v: &SorobanCredentialsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanCredentialsView<'_>> for SorobanCredentials {
+impl From<SorobanCredentialsRef<'_>> for SorobanCredentials {
     #[must_use]
-    fn from(v: SorobanCredentialsView<'_>) -> Self {
+    fn from(v: SorobanCredentialsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl SorobanCredentialsView<'_> {
+impl SorobanCredentialsRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> SorobanCredentialsType {
         #[allow(clippy::match_same_arms)]
@@ -226,7 +226,7 @@ impl SorobanCredentialsView<'_> {
     }
 }
 
-impl WriteXdr for SorobanCredentialsView<'_> {
+impl WriteXdr for SorobanCredentialsRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

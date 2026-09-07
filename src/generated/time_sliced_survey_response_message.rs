@@ -50,16 +50,16 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
     }
 }
 
-/// TimeSlicedSurveyResponseMessageView is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`], usable in
+/// TimeSlicedSurveyResponseMessageRef is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedSurveyResponseMessageView<'a> {
-    pub response: SurveyResponseMessageView<'a>,
+pub struct TimeSlicedSurveyResponseMessageRef<'a> {
+    pub response: SurveyResponseMessageRef<'a>,
     pub nonce: u32,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
+impl IntoOwned for TimeSlicedSurveyResponseMessageRef<'_> {
     type Owned = TimeSlicedSurveyResponseMessage;
     fn into_owned(self) -> TimeSlicedSurveyResponseMessage {
         TimeSlicedSurveyResponseMessage {
@@ -70,22 +70,22 @@ impl IntoOwned for TimeSlicedSurveyResponseMessageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
+impl From<&TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: &TimeSlicedSurveyResponseMessageView<'_>) -> Self {
+    fn from(v: &TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TimeSlicedSurveyResponseMessageView<'_>> for TimeSlicedSurveyResponseMessage {
+impl From<TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
     #[must_use]
-    fn from(v: TimeSlicedSurveyResponseMessageView<'_>) -> Self {
+    fn from(v: TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TimeSlicedSurveyResponseMessageView<'_> {
+impl WriteXdr for TimeSlicedSurveyResponseMessageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

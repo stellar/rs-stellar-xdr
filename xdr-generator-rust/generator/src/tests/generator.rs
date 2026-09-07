@@ -217,10 +217,10 @@ pub const MAX_SIZE: u32 = 100;"#,
 }
 
 #[test]
-fn test_no_view_form_when_only_one_ifdef_branch_borrows() {
+fn test_no_ref_form_when_only_one_ifdef_branch_borrows() {
     // Foo holds heap data only in the FEATURE_X branch, so it borrows under
-    // some cfgs but not all. A cfg-gated FooView would be named unconditionally
-    // by any always-borrowing type holding a Foo, so no View form is emitted.
+    // some cfgs but not all. A cfg-gated FooRef would be named unconditionally
+    // by any always-borrowing type holding a Foo, so no Ref form is emitted.
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -230,11 +230,11 @@ fn test_no_view_form_when_only_one_ifdef_branch_borrows() {
         #endif
     "#,
     );
-    assert_not_contains(&output, "FooView");
+    assert_not_contains(&output, "FooRef");
 }
 
 #[test]
-fn test_no_view_form_when_only_one_ifdef_branch_borrows_typedef() {
+fn test_no_ref_form_when_only_one_ifdef_branch_borrows_typedef() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -244,11 +244,11 @@ fn test_no_view_form_when_only_one_ifdef_branch_borrows_typedef() {
         #endif
     "#,
     );
-    assert_not_contains(&output, "FooView");
+    assert_not_contains(&output, "FooRef");
 }
 
 #[test]
-fn test_no_view_form_when_only_one_ifdef_branch_borrows_union() {
+fn test_no_ref_form_when_only_one_ifdef_branch_borrows_union() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -258,13 +258,13 @@ fn test_no_view_form_when_only_one_ifdef_branch_borrows_union() {
         #endif
     "#,
     );
-    assert_not_contains(&output, "FooView");
+    assert_not_contains(&output, "FooRef");
 }
 
 #[test]
-fn test_no_view_form_when_only_a_cfg_gated_arm_borrows() {
+fn test_no_ref_form_when_only_a_cfg_gated_arm_borrows() {
     // The union's only heap sits behind a cfg-gated arm, so it borrows under
-    // some cfgs but not all and gets no View form.
+    // some cfgs but not all and gets no Ref form.
     let output = generate_from_xdr(
         r#"
         union Foo switch (int v) {
@@ -275,16 +275,16 @@ fn test_no_view_form_when_only_a_cfg_gated_arm_borrows() {
         };
     "#,
     );
-    assert_not_contains(&output, "FooView");
+    assert_not_contains(&output, "FooRef");
 }
 
 #[test]
 fn test_cfg_conditional_heap_leaves_containing_types_owned() {
     // Exec borrows only via its cfg-gated arm, so neither it nor OnlyExec —
-    // whose sole heap comes from Exec — gets a View form. Parent has heap of
+    // whose sole heap comes from Exec — gets a Ref form. Parent has heap of
     // its own, so it does, and holds the owned Exec in that position. That
-    // compiles whether or not the feature is on, which a cfg-gated ExecView
-    // named by the unconditional ParentView would not.
+    // compiles whether or not the feature is on, which a cfg-gated ExecRef
+    // named by the unconditional ParentRef would not.
     let output = generate_from_xdr(
         r#"
         union Exec switch (int type)
@@ -300,26 +300,26 @@ fn test_cfg_conditional_heap_leaves_containing_types_owned() {
         struct Parent { Exec exec; string label<32>; };
     "#,
     );
-    assert_not_contains(&output, "ExecView");
-    assert_not_contains(&output, "OnlyExecView");
+    assert_not_contains(&output, "ExecRef");
+    assert_not_contains(&output, "OnlyExecRef");
     assert_contains(
         &output,
         r#"#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParentView<'a> {
+pub struct ParentRef<'a> {
     pub exec: Exec,
-    pub label: StringMView<'a, 32>,
+    pub label: StringMRef<'a, 32>,
 }"#,
     );
 }
 
 #[test]
-fn test_no_view_form_for_heap_free_types() {
-    // A type with no heap under any cfg gets no View form at all, since there
+fn test_no_ref_form_for_heap_free_types() {
+    // A type with no heap under any cfg gets no Ref form at all, since there
     // is nothing for it to borrow.
     let output = generate_from_xdr(
         r#"
         struct Flat { int a; opaque b[4]; };
     "#,
     );
-    assert_not_contains(&output, "FlatView");
+    assert_not_contains(&output, "FlatRef");
 }

@@ -50,16 +50,16 @@ impl WriteXdr for ScMetaV0 {
     }
 }
 
-/// ScMetaV0View is a borrowing equivalent of [`ScMetaV0`], usable in
+/// ScMetaV0Ref is a borrowing equivalent of [`ScMetaV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMetaV0View<'a> {
-    pub key: StringMView<'a>,
-    pub val: StringMView<'a>,
+pub struct ScMetaV0Ref<'a> {
+    pub key: StringMRef<'a>,
+    pub val: StringMRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScMetaV0View<'_> {
+impl IntoOwned for ScMetaV0Ref<'_> {
     type Owned = ScMetaV0;
     fn into_owned(self) -> ScMetaV0 {
         ScMetaV0 {
@@ -70,22 +70,22 @@ impl IntoOwned for ScMetaV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScMetaV0View<'_>> for ScMetaV0 {
+impl From<&ScMetaV0Ref<'_>> for ScMetaV0 {
     #[must_use]
-    fn from(v: &ScMetaV0View<'_>) -> Self {
+    fn from(v: &ScMetaV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScMetaV0View<'_>> for ScMetaV0 {
+impl From<ScMetaV0Ref<'_>> for ScMetaV0 {
     #[must_use]
-    fn from(v: ScMetaV0View<'_>) -> Self {
+    fn from(v: ScMetaV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScMetaV0View<'_> {
+impl WriteXdr for ScMetaV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

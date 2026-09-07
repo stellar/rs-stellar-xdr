@@ -135,21 +135,21 @@ impl WriteXdr for SurveyResponseBody {
     }
 }
 
-/// SurveyResponseBodyView is a borrowing equivalent of [`SurveyResponseBody`], usable in
+/// SurveyResponseBodyRef is a borrowing equivalent of [`SurveyResponseBody`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SurveyResponseBodyView<'a> {
-    SurveyTopologyResponseV2(TopologyResponseBodyV2View<'a>),
+pub enum SurveyResponseBodyRef<'a> {
+    SurveyTopologyResponseV2(TopologyResponseBodyV2Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SurveyResponseBodyView<'_> {
+impl IntoOwned for SurveyResponseBodyRef<'_> {
     type Owned = SurveyResponseBody;
     fn into_owned(self) -> SurveyResponseBody {
         #[allow(clippy::match_same_arms)]
         match self {
-            SurveyResponseBodyView::SurveyTopologyResponseV2(value) => {
+            SurveyResponseBodyRef::SurveyTopologyResponseV2(value) => {
                 SurveyResponseBody::SurveyTopologyResponseV2(value.into_owned())
             }
         }
@@ -157,22 +157,22 @@ impl IntoOwned for SurveyResponseBodyView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SurveyResponseBodyView<'_>> for SurveyResponseBody {
+impl From<&SurveyResponseBodyRef<'_>> for SurveyResponseBody {
     #[must_use]
-    fn from(v: &SurveyResponseBodyView<'_>) -> Self {
+    fn from(v: &SurveyResponseBodyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SurveyResponseBodyView<'_>> for SurveyResponseBody {
+impl From<SurveyResponseBodyRef<'_>> for SurveyResponseBody {
     #[must_use]
-    fn from(v: SurveyResponseBodyView<'_>) -> Self {
+    fn from(v: SurveyResponseBodyRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl SurveyResponseBodyView<'_> {
+impl SurveyResponseBodyRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> SurveyMessageResponseType {
         #[allow(clippy::match_same_arms)]
@@ -184,7 +184,7 @@ impl SurveyResponseBodyView<'_> {
     }
 }
 
-impl WriteXdr for SurveyResponseBodyView<'_> {
+impl WriteXdr for SurveyResponseBodyRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

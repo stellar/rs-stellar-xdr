@@ -49,16 +49,16 @@ impl WriteXdr for ScContractInstance {
     }
 }
 
-/// ScContractInstanceView is a borrowing equivalent of [`ScContractInstance`], usable in
+/// ScContractInstanceRef is a borrowing equivalent of [`ScContractInstance`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScContractInstanceView<'a> {
-    pub executable: ContractExecutableView<'a>,
-    pub storage: Option<ScMapView<'a>>,
+pub struct ScContractInstanceRef<'a> {
+    pub executable: ContractExecutableRef<'a>,
+    pub storage: Option<ScMapRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScContractInstanceView<'_> {
+impl IntoOwned for ScContractInstanceRef<'_> {
     type Owned = ScContractInstance;
     fn into_owned(self) -> ScContractInstance {
         ScContractInstance {
@@ -69,22 +69,22 @@ impl IntoOwned for ScContractInstanceView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScContractInstanceView<'_>> for ScContractInstance {
+impl From<&ScContractInstanceRef<'_>> for ScContractInstance {
     #[must_use]
-    fn from(v: &ScContractInstanceView<'_>) -> Self {
+    fn from(v: &ScContractInstanceRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScContractInstanceView<'_>> for ScContractInstance {
+impl From<ScContractInstanceRef<'_>> for ScContractInstance {
     #[must_use]
-    fn from(v: ScContractInstanceView<'_>) -> Self {
+    fn from(v: ScContractInstanceRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScContractInstanceView<'_> {
+impl WriteXdr for ScContractInstanceRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

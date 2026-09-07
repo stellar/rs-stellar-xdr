@@ -156,12 +156,12 @@ impl WriteXdr for PeerStats {
     }
 }
 
-/// PeerStatsView is a borrowing equivalent of [`PeerStats`], usable in
+/// PeerStatsRef is a borrowing equivalent of [`PeerStats`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PeerStatsView<'a> {
+pub struct PeerStatsRef<'a> {
     pub id: NodeId,
-    pub version_str: StringMView<'a, 100>,
+    pub version_str: StringMRef<'a, 100>,
     pub messages_read: u64,
     pub messages_written: u64,
     pub bytes_read: u64,
@@ -178,7 +178,7 @@ pub struct PeerStatsView<'a> {
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PeerStatsView<'_> {
+impl IntoOwned for PeerStatsRef<'_> {
     type Owned = PeerStats;
     fn into_owned(self) -> PeerStats {
         PeerStats {
@@ -202,22 +202,22 @@ impl IntoOwned for PeerStatsView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PeerStatsView<'_>> for PeerStats {
+impl From<&PeerStatsRef<'_>> for PeerStats {
     #[must_use]
-    fn from(v: &PeerStatsView<'_>) -> Self {
+    fn from(v: &PeerStatsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PeerStatsView<'_>> for PeerStats {
+impl From<PeerStatsRef<'_>> for PeerStats {
     #[must_use]
-    fn from(v: PeerStatsView<'_>) -> Self {
+    fn from(v: PeerStatsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PeerStatsView<'_> {
+impl WriteXdr for PeerStatsRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

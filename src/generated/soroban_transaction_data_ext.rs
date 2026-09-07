@@ -136,23 +136,23 @@ impl WriteXdr for SorobanTransactionDataExt {
     }
 }
 
-/// SorobanTransactionDataExtView is a borrowing equivalent of [`SorobanTransactionDataExt`], usable in
+/// SorobanTransactionDataExtRef is a borrowing equivalent of [`SorobanTransactionDataExt`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanTransactionDataExtView<'a> {
+pub enum SorobanTransactionDataExtRef<'a> {
     V0,
-    V1(SorobanResourcesExtV0View<'a>),
+    V1(SorobanResourcesExtV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionDataExtView<'_> {
+impl IntoOwned for SorobanTransactionDataExtRef<'_> {
     type Owned = SorobanTransactionDataExt;
     fn into_owned(self) -> SorobanTransactionDataExt {
         #[allow(clippy::match_same_arms)]
         match self {
-            SorobanTransactionDataExtView::V0 => SorobanTransactionDataExt::V0,
-            SorobanTransactionDataExtView::V1(value) => {
+            SorobanTransactionDataExtRef::V0 => SorobanTransactionDataExt::V0,
+            SorobanTransactionDataExtRef::V1(value) => {
                 SorobanTransactionDataExt::V1(value.into_owned())
             }
         }
@@ -160,22 +160,22 @@ impl IntoOwned for SorobanTransactionDataExtView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
+impl From<&SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
     #[must_use]
-    fn from(v: &SorobanTransactionDataExtView<'_>) -> Self {
+    fn from(v: &SorobanTransactionDataExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SorobanTransactionDataExtView<'_>> for SorobanTransactionDataExt {
+impl From<SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
     #[must_use]
-    fn from(v: SorobanTransactionDataExtView<'_>) -> Self {
+    fn from(v: SorobanTransactionDataExtRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl SorobanTransactionDataExtView<'_> {
+impl SorobanTransactionDataExtRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -186,7 +186,7 @@ impl SorobanTransactionDataExtView<'_> {
     }
 }
 
-impl WriteXdr for SorobanTransactionDataExtView<'_> {
+impl WriteXdr for SorobanTransactionDataExtRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

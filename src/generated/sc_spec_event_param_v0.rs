@@ -63,18 +63,18 @@ impl WriteXdr for ScSpecEventParamV0 {
     }
 }
 
-/// ScSpecEventParamV0View is a borrowing equivalent of [`ScSpecEventParamV0`], usable in
+/// ScSpecEventParamV0Ref is a borrowing equivalent of [`ScSpecEventParamV0`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecEventParamV0View<'a> {
-    pub doc: StringMView<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: StringMView<'a, 30>,
-    pub type_: ScSpecTypeDefView<'a>,
+pub struct ScSpecEventParamV0Ref<'a> {
+    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
+    pub name: StringMRef<'a, 30>,
+    pub type_: ScSpecTypeDefRef<'a>,
     pub location: ScSpecEventParamLocationV0,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecEventParamV0View<'_> {
+impl IntoOwned for ScSpecEventParamV0Ref<'_> {
     type Owned = ScSpecEventParamV0;
     fn into_owned(self) -> ScSpecEventParamV0 {
         ScSpecEventParamV0 {
@@ -87,22 +87,22 @@ impl IntoOwned for ScSpecEventParamV0View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecEventParamV0View<'_>> for ScSpecEventParamV0 {
+impl From<&ScSpecEventParamV0Ref<'_>> for ScSpecEventParamV0 {
     #[must_use]
-    fn from(v: &ScSpecEventParamV0View<'_>) -> Self {
+    fn from(v: &ScSpecEventParamV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecEventParamV0View<'_>> for ScSpecEventParamV0 {
+impl From<ScSpecEventParamV0Ref<'_>> for ScSpecEventParamV0 {
     #[must_use]
-    fn from(v: ScSpecEventParamV0View<'_>) -> Self {
+    fn from(v: ScSpecEventParamV0Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for ScSpecEventParamV0View<'_> {
+impl WriteXdr for ScSpecEventParamV0Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

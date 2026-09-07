@@ -99,23 +99,23 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
-/// LedgerCloseMetaV1View is a borrowing equivalent of [`LedgerCloseMetaV1`], usable in
+/// LedgerCloseMetaV1Ref is a borrowing equivalent of [`LedgerCloseMetaV1`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseMetaV1View<'a> {
+pub struct LedgerCloseMetaV1Ref<'a> {
     pub ext: LedgerCloseMetaExt,
-    pub ledger_header: LedgerHeaderHistoryEntryView<'a>,
-    pub tx_set: GeneralizedTransactionSetView<'a>,
-    pub tx_processing: VecMView<'a, TransactionResultMetaView<'a>>,
-    pub upgrades_processing: VecMView<'a, UpgradeEntryMetaView<'a>>,
-    pub scp_info: VecMView<'a, ScpHistoryEntryView<'a>>,
+    pub ledger_header: LedgerHeaderHistoryEntryRef<'a>,
+    pub tx_set: GeneralizedTransactionSetRef<'a>,
+    pub tx_processing: VecMRef<'a, TransactionResultMetaRef<'a>>,
+    pub upgrades_processing: VecMRef<'a, UpgradeEntryMetaRef<'a>>,
+    pub scp_info: VecMRef<'a, ScpHistoryEntryRef<'a>>,
     pub total_byte_size_of_live_soroban_state: u64,
-    pub evicted_keys: VecMView<'a, LedgerKeyView<'a>>,
-    pub unused: VecMView<'a, LedgerEntryView<'a>>,
+    pub evicted_keys: VecMRef<'a, LedgerKeyRef<'a>>,
+    pub unused: VecMRef<'a, LedgerEntryRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaV1View<'_> {
+impl IntoOwned for LedgerCloseMetaV1Ref<'_> {
     type Owned = LedgerCloseMetaV1;
     fn into_owned(self) -> LedgerCloseMetaV1 {
         LedgerCloseMetaV1 {
@@ -135,22 +135,22 @@ impl IntoOwned for LedgerCloseMetaV1View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaV1View<'_>> for LedgerCloseMetaV1 {
+impl From<&LedgerCloseMetaV1Ref<'_>> for LedgerCloseMetaV1 {
     #[must_use]
-    fn from(v: &LedgerCloseMetaV1View<'_>) -> Self {
+    fn from(v: &LedgerCloseMetaV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaV1View<'_>> for LedgerCloseMetaV1 {
+impl From<LedgerCloseMetaV1Ref<'_>> for LedgerCloseMetaV1 {
     #[must_use]
-    fn from(v: LedgerCloseMetaV1View<'_>) -> Self {
+    fn from(v: LedgerCloseMetaV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for LedgerCloseMetaV1View<'_> {
+impl WriteXdr for LedgerCloseMetaV1Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

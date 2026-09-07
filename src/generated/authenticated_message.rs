@@ -134,42 +134,42 @@ impl WriteXdr for AuthenticatedMessage {
     }
 }
 
-/// AuthenticatedMessageView is a borrowing equivalent of [`AuthenticatedMessage`], usable in
+/// AuthenticatedMessageRef is a borrowing equivalent of [`AuthenticatedMessage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AuthenticatedMessageView<'a> {
-    V0(AuthenticatedMessageV0View<'a>),
+pub enum AuthenticatedMessageRef<'a> {
+    V0(AuthenticatedMessageV0Ref<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for AuthenticatedMessageView<'_> {
+impl IntoOwned for AuthenticatedMessageRef<'_> {
     type Owned = AuthenticatedMessage;
     fn into_owned(self) -> AuthenticatedMessage {
         #[allow(clippy::match_same_arms)]
         match self {
-            AuthenticatedMessageView::V0(value) => AuthenticatedMessage::V0(value.into_owned()),
+            AuthenticatedMessageRef::V0(value) => AuthenticatedMessage::V0(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&AuthenticatedMessageView<'_>> for AuthenticatedMessage {
+impl From<&AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
     #[must_use]
-    fn from(v: &AuthenticatedMessageView<'_>) -> Self {
+    fn from(v: &AuthenticatedMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<AuthenticatedMessageView<'_>> for AuthenticatedMessage {
+impl From<AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
     #[must_use]
-    fn from(v: AuthenticatedMessageView<'_>) -> Self {
+    fn from(v: AuthenticatedMessageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl AuthenticatedMessageView<'_> {
+impl AuthenticatedMessageRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> u32 {
         #[allow(clippy::match_same_arms)]
@@ -179,7 +179,7 @@ impl AuthenticatedMessageView<'_> {
     }
 }
 
-impl WriteXdr for AuthenticatedMessageView<'_> {
+impl WriteXdr for AuthenticatedMessageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

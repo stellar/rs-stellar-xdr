@@ -105,25 +105,25 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     }
 }
 {%- endif %}
-{%- if s.emit_view %}
+{%- if s.emit_ref %}
 
-/// {{ s.name }}View is a borrowing equivalent of [`{{ s.name }}`], usable in
+/// {{ s.name }}Ref is a borrowing equivalent of [`{{ s.name }}`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = s.view_cfg %}
+{%- if let Some(cfg) = s.ref_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct {{ s.name }}View<'a> {
+pub struct {{ s.name }}Ref<'a> {
 {%- for m in s.members %}
-    pub {{ m.name }}: {{ m.view_type_ref }},
+    pub {{ m.name }}: {{ m.ref_type }},
 {%- endfor %}
 }
 
-{% if let Some(cfg) = s.view_cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl IntoOwned for {{ s.name }}View<'_> {
+impl IntoOwned for {{ s.name }}Ref<'_> {
     type Owned = {{ s.name }};
     fn into_owned(self) -> {{ s.name }} {
         {{ s.name }} {
@@ -141,32 +141,32 @@ impl IntoOwned for {{ s.name }}View<'_> {
     }
 }
 
-{% if let Some(cfg) = s.view_cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<&{{ s.name }}View<'_>> for {{ s.name }} {
+impl From<&{{ s.name }}Ref<'_>> for {{ s.name }} {
     #[must_use]
-    fn from(v: &{{ s.name }}View<'_>) -> Self {
+    fn from(v: &{{ s.name }}Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-{% if let Some(cfg) = s.view_cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<{{ s.name }}View<'_>> for {{ s.name }} {
+impl From<{{ s.name }}Ref<'_>> for {{ s.name }} {
     #[must_use]
-    fn from(v: {{ s.name }}View<'_>) -> Self {
+    fn from(v: {{ s.name }}Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-{% if let Some(cfg) = s.view_cfg -%}
+{% if let Some(cfg) = s.ref_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-impl WriteXdr for {{ s.name }}View<'_> {
+impl WriteXdr for {{ s.name }}Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
@@ -178,6 +178,6 @@ impl WriteXdr for {{ s.name }}View<'_> {
     }
 }
 {%- endif %}
-{%- if !s.emit_view %}
+{%- if !s.emit_ref %}
 {% call into_owned::identity(s.name, s.cfg) %}
 {%- endif %}

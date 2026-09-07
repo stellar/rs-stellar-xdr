@@ -210,33 +210,33 @@ impl WriteXdr for HashIdPreimage {
     }
 }
 
-/// HashIdPreimageView is a borrowing equivalent of [`HashIdPreimage`], usable in
+/// HashIdPreimageRef is a borrowing equivalent of [`HashIdPreimage`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HashIdPreimageView<'a> {
+pub enum HashIdPreimageRef<'a> {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractId(HashIdPreimageContractId),
-    SorobanAuthorization(HashIdPreimageSorobanAuthorizationView<'a>),
-    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressView<'a>),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorizationRef<'a>),
+    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for HashIdPreimageView<'_> {
+impl IntoOwned for HashIdPreimageRef<'_> {
     type Owned = HashIdPreimage;
     fn into_owned(self) -> HashIdPreimage {
         #[allow(clippy::match_same_arms)]
         match self {
-            HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(value.into_owned()),
-            HashIdPreimageView::PoolRevokeOpId(value) => {
+            HashIdPreimageRef::OpId(value) => HashIdPreimage::OpId(value.into_owned()),
+            HashIdPreimageRef::PoolRevokeOpId(value) => {
                 HashIdPreimage::PoolRevokeOpId(value.into_owned())
             }
-            HashIdPreimageView::ContractId(value) => HashIdPreimage::ContractId(value.into_owned()),
-            HashIdPreimageView::SorobanAuthorization(value) => {
+            HashIdPreimageRef::ContractId(value) => HashIdPreimage::ContractId(value.into_owned()),
+            HashIdPreimageRef::SorobanAuthorization(value) => {
                 HashIdPreimage::SorobanAuthorization(value.into_owned())
             }
-            HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
+            HashIdPreimageRef::SorobanAuthorizationWithAddress(value) => {
                 HashIdPreimage::SorobanAuthorizationWithAddress(value.into_owned())
             }
         }
@@ -244,22 +244,22 @@ impl IntoOwned for HashIdPreimageView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
+impl From<&HashIdPreimageRef<'_>> for HashIdPreimage {
     #[must_use]
-    fn from(v: &HashIdPreimageView<'_>) -> Self {
+    fn from(v: &HashIdPreimageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<HashIdPreimageView<'_>> for HashIdPreimage {
+impl From<HashIdPreimageRef<'_>> for HashIdPreimage {
     #[must_use]
-    fn from(v: HashIdPreimageView<'_>) -> Self {
+    fn from(v: HashIdPreimageRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl HashIdPreimageView<'_> {
+impl HashIdPreimageRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -275,7 +275,7 @@ impl HashIdPreimageView<'_> {
     }
 }
 
-impl WriteXdr for HashIdPreimageView<'_> {
+impl WriteXdr for HashIdPreimageRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

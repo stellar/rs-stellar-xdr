@@ -340,11 +340,11 @@ impl WriteXdr for ScSpecTypeDef {
     }
 }
 
-/// ScSpecTypeDefView is a borrowing equivalent of [`ScSpecTypeDef`], usable in
+/// ScSpecTypeDefRef is a borrowing equivalent of [`ScSpecTypeDef`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecTypeDefView<'a> {
+pub enum ScSpecTypeDefRef<'a> {
     Val,
     Bool,
     Void,
@@ -364,68 +364,68 @@ pub enum ScSpecTypeDefView<'a> {
     Symbol,
     Address,
     MuxedAddress,
-    Option(&'a ScSpecTypeOptionView<'a>),
-    Result(&'a ScSpecTypeResultView<'a>),
-    Vec(&'a ScSpecTypeVecView<'a>),
-    Map(&'a ScSpecTypeMapView<'a>),
-    Tuple(&'a ScSpecTypeTupleView<'a>),
+    Option(&'a ScSpecTypeOptionRef<'a>),
+    Result(&'a ScSpecTypeResultRef<'a>),
+    Vec(&'a ScSpecTypeVecRef<'a>),
+    Map(&'a ScSpecTypeMapRef<'a>),
+    Tuple(&'a ScSpecTypeTupleRef<'a>),
     BytesN(ScSpecTypeBytesN),
-    Udt(ScSpecTypeUdtView<'a>),
+    Udt(ScSpecTypeUdtRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeDefView<'_> {
+impl IntoOwned for ScSpecTypeDefRef<'_> {
     type Owned = ScSpecTypeDef;
     fn into_owned(self) -> ScSpecTypeDef {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScSpecTypeDefView::Val => ScSpecTypeDef::Val,
-            ScSpecTypeDefView::Bool => ScSpecTypeDef::Bool,
-            ScSpecTypeDefView::Void => ScSpecTypeDef::Void,
-            ScSpecTypeDefView::Error => ScSpecTypeDef::Error,
-            ScSpecTypeDefView::U32 => ScSpecTypeDef::U32,
-            ScSpecTypeDefView::I32 => ScSpecTypeDef::I32,
-            ScSpecTypeDefView::U64 => ScSpecTypeDef::U64,
-            ScSpecTypeDefView::I64 => ScSpecTypeDef::I64,
-            ScSpecTypeDefView::Timepoint => ScSpecTypeDef::Timepoint,
-            ScSpecTypeDefView::Duration => ScSpecTypeDef::Duration,
-            ScSpecTypeDefView::U128 => ScSpecTypeDef::U128,
-            ScSpecTypeDefView::I128 => ScSpecTypeDef::I128,
-            ScSpecTypeDefView::U256 => ScSpecTypeDef::U256,
-            ScSpecTypeDefView::I256 => ScSpecTypeDef::I256,
-            ScSpecTypeDefView::Bytes => ScSpecTypeDef::Bytes,
-            ScSpecTypeDefView::String => ScSpecTypeDef::String,
-            ScSpecTypeDefView::Symbol => ScSpecTypeDef::Symbol,
-            ScSpecTypeDefView::Address => ScSpecTypeDef::Address,
-            ScSpecTypeDefView::MuxedAddress => ScSpecTypeDef::MuxedAddress,
-            ScSpecTypeDefView::Option(value) => ScSpecTypeDef::Option(Box::new(value.into_owned())),
-            ScSpecTypeDefView::Result(value) => ScSpecTypeDef::Result(Box::new(value.into_owned())),
-            ScSpecTypeDefView::Vec(value) => ScSpecTypeDef::Vec(Box::new(value.into_owned())),
-            ScSpecTypeDefView::Map(value) => ScSpecTypeDef::Map(Box::new(value.into_owned())),
-            ScSpecTypeDefView::Tuple(value) => ScSpecTypeDef::Tuple(Box::new(value.into_owned())),
-            ScSpecTypeDefView::BytesN(value) => ScSpecTypeDef::BytesN(value.into_owned()),
-            ScSpecTypeDefView::Udt(value) => ScSpecTypeDef::Udt(value.into_owned()),
+            ScSpecTypeDefRef::Val => ScSpecTypeDef::Val,
+            ScSpecTypeDefRef::Bool => ScSpecTypeDef::Bool,
+            ScSpecTypeDefRef::Void => ScSpecTypeDef::Void,
+            ScSpecTypeDefRef::Error => ScSpecTypeDef::Error,
+            ScSpecTypeDefRef::U32 => ScSpecTypeDef::U32,
+            ScSpecTypeDefRef::I32 => ScSpecTypeDef::I32,
+            ScSpecTypeDefRef::U64 => ScSpecTypeDef::U64,
+            ScSpecTypeDefRef::I64 => ScSpecTypeDef::I64,
+            ScSpecTypeDefRef::Timepoint => ScSpecTypeDef::Timepoint,
+            ScSpecTypeDefRef::Duration => ScSpecTypeDef::Duration,
+            ScSpecTypeDefRef::U128 => ScSpecTypeDef::U128,
+            ScSpecTypeDefRef::I128 => ScSpecTypeDef::I128,
+            ScSpecTypeDefRef::U256 => ScSpecTypeDef::U256,
+            ScSpecTypeDefRef::I256 => ScSpecTypeDef::I256,
+            ScSpecTypeDefRef::Bytes => ScSpecTypeDef::Bytes,
+            ScSpecTypeDefRef::String => ScSpecTypeDef::String,
+            ScSpecTypeDefRef::Symbol => ScSpecTypeDef::Symbol,
+            ScSpecTypeDefRef::Address => ScSpecTypeDef::Address,
+            ScSpecTypeDefRef::MuxedAddress => ScSpecTypeDef::MuxedAddress,
+            ScSpecTypeDefRef::Option(value) => ScSpecTypeDef::Option(Box::new(value.into_owned())),
+            ScSpecTypeDefRef::Result(value) => ScSpecTypeDef::Result(Box::new(value.into_owned())),
+            ScSpecTypeDefRef::Vec(value) => ScSpecTypeDef::Vec(Box::new(value.into_owned())),
+            ScSpecTypeDefRef::Map(value) => ScSpecTypeDef::Map(Box::new(value.into_owned())),
+            ScSpecTypeDefRef::Tuple(value) => ScSpecTypeDef::Tuple(Box::new(value.into_owned())),
+            ScSpecTypeDefRef::BytesN(value) => ScSpecTypeDef::BytesN(value.into_owned()),
+            ScSpecTypeDefRef::Udt(value) => ScSpecTypeDef::Udt(value.into_owned()),
         }
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScSpecTypeDefView<'_>> for ScSpecTypeDef {
+impl From<&ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
     #[must_use]
-    fn from(v: &ScSpecTypeDefView<'_>) -> Self {
+    fn from(v: &ScSpecTypeDefRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScSpecTypeDefView<'_>> for ScSpecTypeDef {
+impl From<ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
     #[must_use]
-    fn from(v: ScSpecTypeDefView<'_>) -> Self {
+    fn from(v: ScSpecTypeDefRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ScSpecTypeDefView<'_> {
+impl ScSpecTypeDefRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecType {
         #[allow(clippy::match_same_arms)]
@@ -460,7 +460,7 @@ impl ScSpecTypeDefView<'_> {
     }
 }
 
-impl WriteXdr for ScSpecTypeDefView<'_> {
+impl WriteXdr for ScSpecTypeDefRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

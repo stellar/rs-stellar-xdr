@@ -50,16 +50,16 @@ impl WriteXdr for CreateContractArgs {
     }
 }
 
-/// CreateContractArgsView is a borrowing equivalent of [`CreateContractArgs`], usable in
+/// CreateContractArgsRef is a borrowing equivalent of [`CreateContractArgs`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct CreateContractArgsView<'a> {
+pub struct CreateContractArgsRef<'a> {
     pub contract_id_preimage: ContractIdPreimage,
-    pub executable: ContractExecutableView<'a>,
+    pub executable: ContractExecutableRef<'a>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for CreateContractArgsView<'_> {
+impl IntoOwned for CreateContractArgsRef<'_> {
     type Owned = CreateContractArgs;
     fn into_owned(self) -> CreateContractArgs {
         CreateContractArgs {
@@ -70,22 +70,22 @@ impl IntoOwned for CreateContractArgsView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&CreateContractArgsView<'_>> for CreateContractArgs {
+impl From<&CreateContractArgsRef<'_>> for CreateContractArgs {
     #[must_use]
-    fn from(v: &CreateContractArgsView<'_>) -> Self {
+    fn from(v: &CreateContractArgsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<CreateContractArgsView<'_>> for CreateContractArgs {
+impl From<CreateContractArgsRef<'_>> for CreateContractArgs {
     #[must_use]
-    fn from(v: CreateContractArgsView<'_>) -> Self {
+    fn from(v: CreateContractArgsRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for CreateContractArgsView<'_> {
+impl WriteXdr for CreateContractArgsRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

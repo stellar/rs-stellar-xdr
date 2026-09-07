@@ -108,13 +108,13 @@ impl AsRef<[Hash]> for TxAdvertVector {
     }
 }
 
-/// TxAdvertVectorView is a borrowing equivalent of [`TxAdvertVector`], usable in
+/// TxAdvertVectorRef is a borrowing equivalent of [`TxAdvertVector`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxAdvertVectorView<'a>(pub VecMView<'a, Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
+pub struct TxAdvertVectorRef<'a>(pub VecMRef<'a, Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for TxAdvertVectorView<'_> {
+impl IntoOwned for TxAdvertVectorRef<'_> {
     type Owned = TxAdvertVector;
     fn into_owned(self) -> TxAdvertVector {
         TxAdvertVector(self.0.into_owned())
@@ -122,22 +122,22 @@ impl IntoOwned for TxAdvertVectorView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&TxAdvertVectorView<'_>> for TxAdvertVector {
+impl From<&TxAdvertVectorRef<'_>> for TxAdvertVector {
     #[must_use]
-    fn from(v: &TxAdvertVectorView<'_>) -> Self {
+    fn from(v: &TxAdvertVectorRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<TxAdvertVectorView<'_>> for TxAdvertVector {
+impl From<TxAdvertVectorRef<'_>> for TxAdvertVector {
     #[must_use]
-    fn from(v: TxAdvertVectorView<'_>) -> Self {
+    fn from(v: TxAdvertVectorRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for TxAdvertVectorView<'_> {
+impl WriteXdr for TxAdvertVectorRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

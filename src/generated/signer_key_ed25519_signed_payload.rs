@@ -81,16 +81,16 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
     }
 }
 
-/// SignerKeyEd25519SignedPayloadView is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`], usable in
+/// SignerKeyEd25519SignedPayloadRef is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignerKeyEd25519SignedPayloadView<'a> {
+pub struct SignerKeyEd25519SignedPayloadRef<'a> {
     pub ed25519: Uint256,
-    pub payload: BytesMView<'a, 64>,
+    pub payload: BytesMRef<'a, 64>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for SignerKeyEd25519SignedPayloadView<'_> {
+impl IntoOwned for SignerKeyEd25519SignedPayloadRef<'_> {
     type Owned = SignerKeyEd25519SignedPayload;
     fn into_owned(self) -> SignerKeyEd25519SignedPayload {
         SignerKeyEd25519SignedPayload {
@@ -101,22 +101,22 @@ impl IntoOwned for SignerKeyEd25519SignedPayloadView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayload {
+impl From<&SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
     #[must_use]
-    fn from(v: &SignerKeyEd25519SignedPayloadView<'_>) -> Self {
+    fn from(v: &SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<SignerKeyEd25519SignedPayloadView<'_>> for SignerKeyEd25519SignedPayload {
+impl From<SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
     #[must_use]
-    fn from(v: SignerKeyEd25519SignedPayloadView<'_>) -> Self {
+    fn from(v: SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for SignerKeyEd25519SignedPayloadView<'_> {
+impl WriteXdr for SignerKeyEd25519SignedPayloadRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

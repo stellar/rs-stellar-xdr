@@ -51,16 +51,16 @@ impl WriteXdr for PersistedScpStateV1 {
     }
 }
 
-/// PersistedScpStateV1View is a borrowing equivalent of [`PersistedScpStateV1`], usable in
+/// PersistedScpStateV1Ref is a borrowing equivalent of [`PersistedScpStateV1`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PersistedScpStateV1View<'a> {
-    pub scp_envelopes: VecMView<'a, ScpEnvelopeView<'a>>,
-    pub quorum_sets: VecMView<'a, ScpQuorumSetView<'a>>,
+pub struct PersistedScpStateV1Ref<'a> {
+    pub scp_envelopes: VecMRef<'a, ScpEnvelopeRef<'a>>,
+    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for PersistedScpStateV1View<'_> {
+impl IntoOwned for PersistedScpStateV1Ref<'_> {
     type Owned = PersistedScpStateV1;
     fn into_owned(self) -> PersistedScpStateV1 {
         PersistedScpStateV1 {
@@ -71,22 +71,22 @@ impl IntoOwned for PersistedScpStateV1View<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
+impl From<&PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
     #[must_use]
-    fn from(v: &PersistedScpStateV1View<'_>) -> Self {
+    fn from(v: &PersistedScpStateV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
+impl From<PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
     #[must_use]
-    fn from(v: PersistedScpStateV1View<'_>) -> Self {
+    fn from(v: PersistedScpStateV1Ref<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl WriteXdr for PersistedScpStateV1View<'_> {
+impl WriteXdr for PersistedScpStateV1Ref<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

@@ -177,33 +177,33 @@ impl WriteXdr for ScpStatementPledges {
     }
 }
 
-/// ScpStatementPledgesView is a borrowing equivalent of [`ScpStatementPledges`], usable in
+/// ScpStatementPledgesRef is a borrowing equivalent of [`ScpStatementPledges`], usable in
 /// const contexts and convertible to the owned type via [`From`]/[`Into`].
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScpStatementPledgesView<'a> {
-    Prepare(ScpStatementPrepareView<'a>),
-    Confirm(ScpStatementConfirmView<'a>),
-    Externalize(ScpStatementExternalizeView<'a>),
-    Nominate(ScpNominationView<'a>),
+pub enum ScpStatementPledgesRef<'a> {
+    Prepare(ScpStatementPrepareRef<'a>),
+    Confirm(ScpStatementConfirmRef<'a>),
+    Externalize(ScpStatementExternalizeRef<'a>),
+    Nominate(ScpNominationRef<'a>),
 }
 
 #[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementPledgesView<'_> {
+impl IntoOwned for ScpStatementPledgesRef<'_> {
     type Owned = ScpStatementPledges;
     fn into_owned(self) -> ScpStatementPledges {
         #[allow(clippy::match_same_arms)]
         match self {
-            ScpStatementPledgesView::Prepare(value) => {
+            ScpStatementPledgesRef::Prepare(value) => {
                 ScpStatementPledges::Prepare(value.into_owned())
             }
-            ScpStatementPledgesView::Confirm(value) => {
+            ScpStatementPledgesRef::Confirm(value) => {
                 ScpStatementPledges::Confirm(value.into_owned())
             }
-            ScpStatementPledgesView::Externalize(value) => {
+            ScpStatementPledgesRef::Externalize(value) => {
                 ScpStatementPledges::Externalize(value.into_owned())
             }
-            ScpStatementPledgesView::Nominate(value) => {
+            ScpStatementPledgesRef::Nominate(value) => {
                 ScpStatementPledges::Nominate(value.into_owned())
             }
         }
@@ -211,22 +211,22 @@ impl IntoOwned for ScpStatementPledgesView<'_> {
 }
 
 #[cfg(feature = "alloc")]
-impl From<&ScpStatementPledgesView<'_>> for ScpStatementPledges {
+impl From<&ScpStatementPledgesRef<'_>> for ScpStatementPledges {
     #[must_use]
-    fn from(v: &ScpStatementPledgesView<'_>) -> Self {
+    fn from(v: &ScpStatementPledgesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
 #[cfg(feature = "alloc")]
-impl From<ScpStatementPledgesView<'_>> for ScpStatementPledges {
+impl From<ScpStatementPledgesRef<'_>> for ScpStatementPledges {
     #[must_use]
-    fn from(v: ScpStatementPledgesView<'_>) -> Self {
+    fn from(v: ScpStatementPledgesRef<'_>) -> Self {
         v.into_owned()
     }
 }
 
-impl ScpStatementPledgesView<'_> {
+impl ScpStatementPledgesRef<'_> {
     #[must_use]
     pub const fn discriminant(&self) -> ScpStatementType {
         #[allow(clippy::match_same_arms)]
@@ -239,7 +239,7 @@ impl ScpStatementPledgesView<'_> {
     }
 }
 
-impl WriteXdr for ScpStatementPledgesView<'_> {
+impl WriteXdr for ScpStatementPledgesRef<'_> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

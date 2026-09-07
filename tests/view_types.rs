@@ -1,22 +1,26 @@
 //! Tests for the borrowing `View` types.
 
+use stellar_xdr::{BytesMView, ErrorLengthExceedsMax, StringMView, VecMView};
+
+#[cfg(feature = "alloc")]
 use stellar_xdr::{
-    AccountId, AlphaNum4, Asset, AssetCode4, BytesMView, ClaimPredicate, ClaimPredicateView,
-    Claimant, ClaimantV0, ClaimantV0View, ClaimantView, CreateClaimableBalanceOp,
+    AccountId, AlphaNum4, Asset, AssetCode4, ClaimPredicate, ClaimPredicateView, Claimant,
+    ClaimantV0, ClaimantV0View, ClaimantView, CreateClaimableBalanceOp,
     CreateClaimableBalanceOpView, DataValue, DataValueView, DecoratedSignature,
-    DecoratedSignatureView, Duration, ErrorLengthExceedsMax, LedgerFootprint, LedgerFootprintView,
-    LedgerKey, LedgerKeyAccount, LedgerKeyView, Limits, ManageDataOp, ManageDataOpView, Memo,
-    MemoView, MuxedAccount, MuxedAccountMed25519, Operation, OperationBody, OperationBodyView,
-    OperationView, PaymentOp, Preconditions, PreconditionsV2, PreconditionsV2View,
-    PreconditionsView, PublicKey, SequenceNumber, Signature, SignatureHint, SignatureView,
-    SignerKey, SignerKeyEd25519SignedPayload, SignerKeyEd25519SignedPayloadView, SignerKeyView,
+    DecoratedSignatureView, Duration, LedgerFootprint, LedgerFootprintView, LedgerKey,
+    LedgerKeyAccount, LedgerKeyView, ManageDataOp, ManageDataOpView, Memo, MemoView, MuxedAccount,
+    MuxedAccountMed25519, Operation, OperationBody, OperationBodyView, OperationView, PaymentOp,
+    Preconditions, PreconditionsV2, PreconditionsV2View, PreconditionsView, PublicKey,
+    SequenceNumber, Signature, SignatureHint, SignatureView, SignerKey,
+    SignerKeyEd25519SignedPayload, SignerKeyEd25519SignedPayloadView, SignerKeyView,
     SorobanResources, SorobanResourcesView, SorobanTransactionData, SorobanTransactionDataExt,
-    SorobanTransactionDataExtView, SorobanTransactionDataView, String64, String64View, StringMView,
-    TimeBounds, TimePoint, Transaction, TransactionEnvelope, TransactionEnvelopeView,
-    TransactionExt, TransactionExtView, TransactionV1Envelope, TransactionV1EnvelopeView,
-    TransactionView, Uint256, VecMView, WriteXdr,
+    SorobanTransactionDataExtView, SorobanTransactionDataView, String64, String64View, TimeBounds,
+    TimePoint, Transaction, TransactionEnvelope, TransactionEnvelopeView, TransactionExt,
+    TransactionExtView, TransactionV1Envelope, TransactionV1EnvelopeView, TransactionView, Uint256,
 };
 
+#[cfg(feature = "std")]
+use stellar_xdr::{Limits, WriteXdr};
 #[test]
 fn views_try_from_enforce_max_len() {
     assert!(VecMView::<u32, 3>::try_from_slice(&[1, 2, 3]).is_ok());
@@ -97,14 +101,22 @@ fn views_default() {
     );
 }
 
+#[cfg(feature = "alloc")]
+#[test]
+fn view_converts_to_owned() {
+    // A view and owned value that are identically defined.
+    let view: TransactionEnvelopeView = const { view() };
+    let owned: TransactionEnvelope = owned();
+
+    assert_eq!(TransactionEnvelope::from(&view), owned);
+}
+
+#[cfg(feature = "std")]
 #[test]
 fn view_and_owned_encode_same() {
     // A view and owned value that are identically defined.
     let view: TransactionEnvelopeView = const { view() };
     let owned: TransactionEnvelope = owned();
-
-    // View converts to owned.
-    assert_eq!(TransactionEnvelope::from(&view), owned);
 
     // View and owned encode to the same XDR.
     let view_xdr = view.to_xdr(Limits::none()).unwrap();
@@ -112,6 +124,8 @@ fn view_and_owned_encode_same() {
     assert_eq!(view_xdr, owned_xdr);
 }
 
+#[cfg(feature = "alloc")]
+#[allow(clippy::too_many_lines)]
 const fn view() -> TransactionEnvelopeView<'static> {
     TransactionEnvelopeView::Tx(TransactionV1EnvelopeView {
         tx: TransactionView {
@@ -239,6 +253,8 @@ const fn view() -> TransactionEnvelopeView<'static> {
     })
 }
 
+#[cfg(feature = "alloc")]
+#[allow(clippy::too_many_lines)]
 fn owned() -> TransactionEnvelope {
     TransactionEnvelope::Tx(TransactionV1Envelope {
         tx: Transaction {

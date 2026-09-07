@@ -59,13 +59,21 @@ pub struct InnerTransactionResultPairView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for InnerTransactionResultPairView<'_> {
+    type Owned = InnerTransactionResultPair;
+    fn into_owned(self) -> InnerTransactionResultPair {
+        InnerTransactionResultPair {
+            transaction_hash: self.transaction_hash.into_owned(),
+            result: self.result.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
     #[must_use]
     fn from(v: &InnerTransactionResultPairView<'_>) -> Self {
-        Self {
-            transaction_hash: v.transaction_hash.clone(),
-            result: (&v.result).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
 impl From<InnerTransactionResultPairView<'_>> for InnerTransactionResultPair {
     #[must_use]
     fn from(v: InnerTransactionResultPairView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

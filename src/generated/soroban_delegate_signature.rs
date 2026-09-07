@@ -64,14 +64,22 @@ pub struct SorobanDelegateSignatureView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SorobanDelegateSignatureView<'_> {
+    type Owned = SorobanDelegateSignature;
+    fn into_owned(self) -> SorobanDelegateSignature {
+        SorobanDelegateSignature {
+            address: self.address.into_owned(),
+            signature: self.signature.into_owned(),
+            nested_delegates: self.nested_delegates.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
     #[must_use]
     fn from(v: &SorobanDelegateSignatureView<'_>) -> Self {
-        Self {
-            address: v.address.clone(),
-            signature: (&v.signature).into(),
-            nested_delegates: v.nested_delegates.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -79,7 +87,7 @@ impl From<&SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
 impl From<SorobanDelegateSignatureView<'_>> for SorobanDelegateSignature {
     #[must_use]
     fn from(v: SorobanDelegateSignatureView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

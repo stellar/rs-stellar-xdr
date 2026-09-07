@@ -138,3 +138,11 @@ impl WriteXdr for MuxedAccount {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for MuxedAccount {
+    type Owned = MuxedAccount;
+    fn into_owned(self) -> MuxedAccount {
+        self
+    }
+}

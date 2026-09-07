@@ -58,13 +58,21 @@ pub struct ContractExecutableExternalRefView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ContractExecutableExternalRefView<'_> {
+    type Owned = ContractExecutableExternalRef;
+    fn into_owned(self) -> ContractExecutableExternalRef {
+        ContractExecutableExternalRef {
+            executable_owner: self.executable_owner.into_owned(),
+            tag: self.tag.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
     #[must_use]
     fn from(v: &ContractExecutableExternalRefView<'_>) -> Self {
-        Self {
-            executable_owner: v.executable_owner.clone(),
-            tag: (&v.tag).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -72,7 +80,7 @@ impl From<&ContractExecutableExternalRefView<'_>> for ContractExecutableExternal
 impl From<ContractExecutableExternalRefView<'_>> for ContractExecutableExternalRef {
     #[must_use]
     fn from(v: ContractExecutableExternalRefView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

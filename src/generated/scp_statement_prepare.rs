@@ -79,17 +79,25 @@ pub struct ScpStatementPrepareView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScpStatementPrepareView<'_> {
+    type Owned = ScpStatementPrepare;
+    fn into_owned(self) -> ScpStatementPrepare {
+        ScpStatementPrepare {
+            quorum_set_hash: self.quorum_set_hash.into_owned(),
+            ballot: self.ballot.into_owned(),
+            prepared: self.prepared.into_owned(),
+            prepared_prime: self.prepared_prime.into_owned(),
+            n_c: self.n_c.into_owned(),
+            n_h: self.n_h.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScpStatementPrepareView<'_>> for ScpStatementPrepare {
     #[must_use]
     fn from(v: &ScpStatementPrepareView<'_>) -> Self {
-        Self {
-            quorum_set_hash: v.quorum_set_hash.clone(),
-            ballot: (&v.ballot).into(),
-            prepared: v.prepared.as_ref().map(Into::into),
-            prepared_prime: v.prepared_prime.as_ref().map(Into::into),
-            n_c: v.n_c,
-            n_h: v.n_h,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -97,7 +105,7 @@ impl From<&ScpStatementPrepareView<'_>> for ScpStatementPrepare {
 impl From<ScpStatementPrepareView<'_>> for ScpStatementPrepare {
     #[must_use]
     fn from(v: ScpStatementPrepareView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

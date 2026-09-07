@@ -56,3 +56,11 @@ impl WriteXdr for AccountId {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for AccountId {
+    type Owned = AccountId;
+    fn into_owned(self) -> AccountId {
+        self
+    }
+}

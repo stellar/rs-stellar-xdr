@@ -165,3 +165,11 @@ impl WriteXdr for CreateAccountResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for CreateAccountResult {
+    type Owned = CreateAccountResult;
+    fn into_owned(self) -> CreateAccountResult {
+        self
+    }
+}

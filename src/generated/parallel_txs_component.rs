@@ -66,13 +66,21 @@ pub struct ParallelTxsComponentView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ParallelTxsComponentView<'_> {
+    type Owned = ParallelTxsComponent;
+    fn into_owned(self) -> ParallelTxsComponent {
+        ParallelTxsComponent {
+            base_fee: self.base_fee.into_owned(),
+            execution_stages: self.execution_stages.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ParallelTxsComponentView<'_>> for ParallelTxsComponent {
     #[must_use]
     fn from(v: &ParallelTxsComponentView<'_>) -> Self {
-        Self {
-            base_fee: v.base_fee,
-            execution_stages: v.execution_stages.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -80,7 +88,7 @@ impl From<&ParallelTxsComponentView<'_>> for ParallelTxsComponent {
 impl From<ParallelTxsComponentView<'_>> for ParallelTxsComponent {
     #[must_use]
     fn from(v: ParallelTxsComponentView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

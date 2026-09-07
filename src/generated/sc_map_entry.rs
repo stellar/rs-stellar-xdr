@@ -59,13 +59,21 @@ pub struct ScMapEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScMapEntryView<'_> {
+    type Owned = ScMapEntry;
+    fn into_owned(self) -> ScMapEntry {
+        ScMapEntry {
+            key: self.key.into_owned(),
+            val: self.val.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScMapEntryView<'_>> for ScMapEntry {
     #[must_use]
     fn from(v: &ScMapEntryView<'_>) -> Self {
-        Self {
-            key: (&v.key).into(),
-            val: (&v.val).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&ScMapEntryView<'_>> for ScMapEntry {
 impl From<ScMapEntryView<'_>> for ScMapEntry {
     #[must_use]
     fn from(v: ScMapEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

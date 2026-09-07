@@ -156,3 +156,11 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for CreateClaimableBalanceResultCode {
+    type Owned = CreateClaimableBalanceResultCode;
+    fn into_owned(self) -> CreateClaimableBalanceResultCode {
+        self
+    }
+}

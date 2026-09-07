@@ -45,3 +45,11 @@ impl WriteXdr for LedgerKeyClaimableBalance {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerKeyClaimableBalance {
+    type Owned = LedgerKeyClaimableBalance;
+    fn into_owned(self) -> LedgerKeyClaimableBalance {
+        self
+    }
+}

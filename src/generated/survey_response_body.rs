@@ -144,15 +144,23 @@ pub enum SurveyResponseBodyView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SurveyResponseBodyView<'_> {
+    type Owned = SurveyResponseBody;
+    fn into_owned(self) -> SurveyResponseBody {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            SurveyResponseBodyView::SurveyTopologyResponseV2(value) => {
+                SurveyResponseBody::SurveyTopologyResponseV2(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SurveyResponseBodyView<'_>> for SurveyResponseBody {
     #[must_use]
     fn from(v: &SurveyResponseBodyView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            SurveyResponseBodyView::SurveyTopologyResponseV2(value) => {
-                Self::SurveyTopologyResponseV2(value.into())
-            }
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -160,7 +168,7 @@ impl From<&SurveyResponseBodyView<'_>> for SurveyResponseBody {
 impl From<SurveyResponseBodyView<'_>> for SurveyResponseBody {
     #[must_use]
     fn from(v: SurveyResponseBodyView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

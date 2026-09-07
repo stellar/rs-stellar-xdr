@@ -53,3 +53,11 @@ impl WriteXdr for HashIdPreimageOperationId {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for HashIdPreimageOperationId {
+    type Owned = HashIdPreimageOperationId;
+    fn into_owned(self) -> HashIdPreimageOperationId {
+        self
+    }
+}

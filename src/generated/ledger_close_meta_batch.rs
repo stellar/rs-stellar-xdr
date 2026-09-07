@@ -69,14 +69,22 @@ pub struct LedgerCloseMetaBatchView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerCloseMetaBatchView<'_> {
+    type Owned = LedgerCloseMetaBatch;
+    fn into_owned(self) -> LedgerCloseMetaBatch {
+        LedgerCloseMetaBatch {
+            start_sequence: self.start_sequence.into_owned(),
+            end_sequence: self.end_sequence.into_owned(),
+            ledger_close_metas: self.ledger_close_metas.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerCloseMetaBatchView<'_>> for LedgerCloseMetaBatch {
     #[must_use]
     fn from(v: &LedgerCloseMetaBatchView<'_>) -> Self {
-        Self {
-            start_sequence: v.start_sequence,
-            end_sequence: v.end_sequence,
-            ledger_close_metas: v.ledger_close_metas.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -84,7 +92,7 @@ impl From<&LedgerCloseMetaBatchView<'_>> for LedgerCloseMetaBatch {
 impl From<LedgerCloseMetaBatchView<'_>> for LedgerCloseMetaBatch {
     #[must_use]
     fn from(v: LedgerCloseMetaBatchView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -100,14 +100,22 @@ pub struct ScpStatementView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScpStatementView<'_> {
+    type Owned = ScpStatement;
+    fn into_owned(self) -> ScpStatement {
+        ScpStatement {
+            node_id: self.node_id.into_owned(),
+            slot_index: self.slot_index.into_owned(),
+            pledges: self.pledges.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScpStatementView<'_>> for ScpStatement {
     #[must_use]
     fn from(v: &ScpStatementView<'_>) -> Self {
-        Self {
-            node_id: v.node_id.clone(),
-            slot_index: v.slot_index,
-            pledges: (&v.pledges).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -115,7 +123,7 @@ impl From<&ScpStatementView<'_>> for ScpStatement {
 impl From<ScpStatementView<'_>> for ScpStatement {
     #[must_use]
     fn from(v: ScpStatementView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

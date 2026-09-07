@@ -94,3 +94,11 @@ impl WriteXdr for OfferEntry {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for OfferEntry {
+    type Owned = OfferEntry;
+    fn into_owned(self) -> OfferEntry {
+        self
+    }
+}

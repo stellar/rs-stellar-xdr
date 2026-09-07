@@ -436,57 +436,87 @@ pub enum OperationBodyView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for OperationBodyView<'_> {
+    type Owned = OperationBody;
+    fn into_owned(self) -> OperationBody {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            OperationBodyView::CreateAccount(value) => {
+                OperationBody::CreateAccount(value.into_owned())
+            }
+            OperationBodyView::Payment(value) => OperationBody::Payment(value.into_owned()),
+            OperationBodyView::PathPaymentStrictReceive(value) => {
+                OperationBody::PathPaymentStrictReceive(value.into_owned())
+            }
+            OperationBodyView::ManageSellOffer(value) => {
+                OperationBody::ManageSellOffer(value.into_owned())
+            }
+            OperationBodyView::CreatePassiveSellOffer(value) => {
+                OperationBody::CreatePassiveSellOffer(value.into_owned())
+            }
+            OperationBodyView::SetOptions(value) => OperationBody::SetOptions(value.into_owned()),
+            OperationBodyView::ChangeTrust(value) => OperationBody::ChangeTrust(value.into_owned()),
+            OperationBodyView::AllowTrust(value) => OperationBody::AllowTrust(value.into_owned()),
+            OperationBodyView::AccountMerge(value) => {
+                OperationBody::AccountMerge(value.into_owned())
+            }
+            OperationBodyView::Inflation => OperationBody::Inflation,
+            OperationBodyView::ManageData(value) => OperationBody::ManageData(value.into_owned()),
+            OperationBodyView::BumpSequence(value) => {
+                OperationBody::BumpSequence(value.into_owned())
+            }
+            OperationBodyView::ManageBuyOffer(value) => {
+                OperationBody::ManageBuyOffer(value.into_owned())
+            }
+            OperationBodyView::PathPaymentStrictSend(value) => {
+                OperationBody::PathPaymentStrictSend(value.into_owned())
+            }
+            OperationBodyView::CreateClaimableBalance(value) => {
+                OperationBody::CreateClaimableBalance(value.into_owned())
+            }
+            OperationBodyView::ClaimClaimableBalance(value) => {
+                OperationBody::ClaimClaimableBalance(value.into_owned())
+            }
+            OperationBodyView::BeginSponsoringFutureReserves(value) => {
+                OperationBody::BeginSponsoringFutureReserves(value.into_owned())
+            }
+            OperationBodyView::EndSponsoringFutureReserves => {
+                OperationBody::EndSponsoringFutureReserves
+            }
+            OperationBodyView::RevokeSponsorship(value) => {
+                OperationBody::RevokeSponsorship(value.into_owned())
+            }
+            OperationBodyView::Clawback(value) => OperationBody::Clawback(value.into_owned()),
+            OperationBodyView::ClawbackClaimableBalance(value) => {
+                OperationBody::ClawbackClaimableBalance(value.into_owned())
+            }
+            OperationBodyView::SetTrustLineFlags(value) => {
+                OperationBody::SetTrustLineFlags(value.into_owned())
+            }
+            OperationBodyView::LiquidityPoolDeposit(value) => {
+                OperationBody::LiquidityPoolDeposit(value.into_owned())
+            }
+            OperationBodyView::LiquidityPoolWithdraw(value) => {
+                OperationBody::LiquidityPoolWithdraw(value.into_owned())
+            }
+            OperationBodyView::InvokeHostFunction(value) => {
+                OperationBody::InvokeHostFunction(value.into_owned())
+            }
+            OperationBodyView::ExtendFootprintTtl(value) => {
+                OperationBody::ExtendFootprintTtl(value.into_owned())
+            }
+            OperationBodyView::RestoreFootprint(value) => {
+                OperationBody::RestoreFootprint(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&OperationBodyView<'_>> for OperationBody {
     #[must_use]
     fn from(v: &OperationBodyView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            OperationBodyView::CreateAccount(value) => Self::CreateAccount(value.clone()),
-            OperationBodyView::Payment(value) => Self::Payment(value.clone()),
-            OperationBodyView::PathPaymentStrictReceive(value) => {
-                Self::PathPaymentStrictReceive(value.into())
-            }
-            OperationBodyView::ManageSellOffer(value) => Self::ManageSellOffer(value.clone()),
-            OperationBodyView::CreatePassiveSellOffer(value) => {
-                Self::CreatePassiveSellOffer(value.clone())
-            }
-            OperationBodyView::SetOptions(value) => Self::SetOptions(value.into()),
-            OperationBodyView::ChangeTrust(value) => Self::ChangeTrust(value.clone()),
-            OperationBodyView::AllowTrust(value) => Self::AllowTrust(value.clone()),
-            OperationBodyView::AccountMerge(value) => Self::AccountMerge(value.clone()),
-            OperationBodyView::Inflation => Self::Inflation,
-            OperationBodyView::ManageData(value) => Self::ManageData(value.into()),
-            OperationBodyView::BumpSequence(value) => Self::BumpSequence(value.clone()),
-            OperationBodyView::ManageBuyOffer(value) => Self::ManageBuyOffer(value.clone()),
-            OperationBodyView::PathPaymentStrictSend(value) => {
-                Self::PathPaymentStrictSend(value.into())
-            }
-            OperationBodyView::CreateClaimableBalance(value) => {
-                Self::CreateClaimableBalance(value.into())
-            }
-            OperationBodyView::ClaimClaimableBalance(value) => {
-                Self::ClaimClaimableBalance(value.clone())
-            }
-            OperationBodyView::BeginSponsoringFutureReserves(value) => {
-                Self::BeginSponsoringFutureReserves(value.clone())
-            }
-            OperationBodyView::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves,
-            OperationBodyView::RevokeSponsorship(value) => Self::RevokeSponsorship(value.into()),
-            OperationBodyView::Clawback(value) => Self::Clawback(value.clone()),
-            OperationBodyView::ClawbackClaimableBalance(value) => {
-                Self::ClawbackClaimableBalance(value.clone())
-            }
-            OperationBodyView::SetTrustLineFlags(value) => Self::SetTrustLineFlags(value.clone()),
-            OperationBodyView::LiquidityPoolDeposit(value) => {
-                Self::LiquidityPoolDeposit(value.clone())
-            }
-            OperationBodyView::LiquidityPoolWithdraw(value) => {
-                Self::LiquidityPoolWithdraw(value.clone())
-            }
-            OperationBodyView::InvokeHostFunction(value) => Self::InvokeHostFunction(value.into()),
-            OperationBodyView::ExtendFootprintTtl(value) => Self::ExtendFootprintTtl(value.clone()),
-            OperationBodyView::RestoreFootprint(value) => Self::RestoreFootprint(value.clone()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -494,7 +524,7 @@ impl From<&OperationBodyView<'_>> for OperationBody {
 impl From<OperationBodyView<'_>> for OperationBody {
     #[must_use]
     fn from(v: OperationBodyView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

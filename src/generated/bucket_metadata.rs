@@ -59,3 +59,11 @@ impl WriteXdr for BucketMetadata {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for BucketMetadata {
+    type Owned = BucketMetadata;
+    fn into_owned(self) -> BucketMetadata {
+        self
+    }
+}

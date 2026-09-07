@@ -153,15 +153,25 @@ pub enum TransactionEnvelopeView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionEnvelopeView<'_> {
+    type Owned = TransactionEnvelope;
+    fn into_owned(self) -> TransactionEnvelope {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            TransactionEnvelopeView::TxV0(value) => TransactionEnvelope::TxV0(value.into_owned()),
+            TransactionEnvelopeView::Tx(value) => TransactionEnvelope::Tx(value.into_owned()),
+            TransactionEnvelopeView::TxFeeBump(value) => {
+                TransactionEnvelope::TxFeeBump(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionEnvelopeView<'_>> for TransactionEnvelope {
     #[must_use]
     fn from(v: &TransactionEnvelopeView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            TransactionEnvelopeView::TxV0(value) => Self::TxV0(value.into()),
-            TransactionEnvelopeView::Tx(value) => Self::Tx(value.into()),
-            TransactionEnvelopeView::TxFeeBump(value) => Self::TxFeeBump(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -169,7 +179,7 @@ impl From<&TransactionEnvelopeView<'_>> for TransactionEnvelope {
 impl From<TransactionEnvelopeView<'_>> for TransactionEnvelope {
     #[must_use]
     fn from(v: TransactionEnvelopeView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

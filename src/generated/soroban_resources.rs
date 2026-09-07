@@ -74,15 +74,23 @@ pub struct SorobanResourcesView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SorobanResourcesView<'_> {
+    type Owned = SorobanResources;
+    fn into_owned(self) -> SorobanResources {
+        SorobanResources {
+            footprint: self.footprint.into_owned(),
+            instructions: self.instructions.into_owned(),
+            disk_read_bytes: self.disk_read_bytes.into_owned(),
+            write_bytes: self.write_bytes.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SorobanResourcesView<'_>> for SorobanResources {
     #[must_use]
     fn from(v: &SorobanResourcesView<'_>) -> Self {
-        Self {
-            footprint: (&v.footprint).into(),
-            instructions: v.instructions,
-            disk_read_bytes: v.disk_read_bytes,
-            write_bytes: v.write_bytes,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -90,7 +98,7 @@ impl From<&SorobanResourcesView<'_>> for SorobanResources {
 impl From<SorobanResourcesView<'_>> for SorobanResources {
     #[must_use]
     fn from(v: SorobanResourcesView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

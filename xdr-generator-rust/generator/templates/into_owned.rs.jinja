@@ -1,0 +1,15 @@
+{#- The `IntoOwned` impl of a generated type that has no `View`: it holds no
+    heap data, so it appears as itself inside `View`s and its owned form is
+    itself. -#}
+{%- macro identity(name, cfg) %}
+{% if let Some(cfg) = cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
+impl IntoOwned for {{ name }} {
+    type Owned = {{ name }};
+    fn into_owned(self) -> {{ name }} {
+        self
+    }
+}
+{%- endmacro %}

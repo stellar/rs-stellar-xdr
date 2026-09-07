@@ -1,3 +1,4 @@
+{%- import "into_owned.rs.jinja" as into_owned %}
 /// {{ t.name }}{{ t.source_comment }}
 {%- if let Some(cfg) = t.cfg %}
 #[cfg({{ cfg }})]
@@ -310,10 +311,21 @@ pub struct {{ t.name }}View<'a>(pub {{ t.view_type_ref }});
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
+impl IntoOwned for {{ t.name }}View<'_> {
+    type Owned = {{ t.name }};
+    fn into_owned(self) -> {{ t.name }} {
+        {{ t.name }}(self.0.into_owned())
+    }
+}
+
+{% if let Some(cfg) = t.view_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
 impl From<&{{ t.name }}View<'_>> for {{ t.name }} {
     #[must_use]
     fn from(v: &{{ t.name }}View<'_>) -> Self {
-        Self({{ t.from_view_expr }})
+        v.clone().into_owned()
     }
 }
 
@@ -324,7 +336,7 @@ impl From<&{{ t.name }}View<'_>> for {{ t.name }} {
 impl From<{{ t.name }}View<'_>> for {{ t.name }} {
     #[must_use]
     fn from(v: {{ t.name }}View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 
@@ -338,4 +350,6 @@ impl WriteXdr for {{ t.name }}View<'_> {
     }
 }
 {%- endif %}
-
+{%- if !t.emit_view %}
+{% call into_owned::identity(t.name, t.cfg) %}
+{%- endif %}

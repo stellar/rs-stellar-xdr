@@ -55,3 +55,11 @@ impl WriteXdr for LedgerEntryExtensionV1 {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryExtensionV1 {
+    type Owned = LedgerEntryExtensionV1;
+    fn into_owned(self) -> LedgerEntryExtensionV1 {
+        self
+    }
+}

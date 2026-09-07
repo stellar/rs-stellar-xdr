@@ -59,3 +59,11 @@ impl WriteXdr for SponsorshipDescriptor {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SponsorshipDescriptor {
+    type Owned = SponsorshipDescriptor;
+    fn into_owned(self) -> SponsorshipDescriptor {
+        self
+    }
+}

@@ -59,13 +59,21 @@ pub struct UpgradeEntryMetaView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for UpgradeEntryMetaView<'_> {
+    type Owned = UpgradeEntryMeta;
+    fn into_owned(self) -> UpgradeEntryMeta {
+        UpgradeEntryMeta {
+            upgrade: self.upgrade.into_owned(),
+            changes: self.changes.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&UpgradeEntryMetaView<'_>> for UpgradeEntryMeta {
     #[must_use]
     fn from(v: &UpgradeEntryMetaView<'_>) -> Self {
-        Self {
-            upgrade: v.upgrade.clone(),
-            changes: (&v.changes).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&UpgradeEntryMetaView<'_>> for UpgradeEntryMeta {
 impl From<UpgradeEntryMetaView<'_>> for UpgradeEntryMeta {
     #[must_use]
     fn from(v: UpgradeEntryMetaView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

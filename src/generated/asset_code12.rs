@@ -103,3 +103,11 @@ impl AsRef<[u8]> for AssetCode12 {
         &self.0
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for AssetCode12 {
+    type Owned = AssetCode12;
+    fn into_owned(self) -> AssetCode12 {
+        self
+    }
+}

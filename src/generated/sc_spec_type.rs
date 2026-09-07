@@ -282,3 +282,11 @@ impl WriteXdr for ScSpecType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecType {
+    type Owned = ScSpecType;
+    fn into_owned(self) -> ScSpecType {
+        self
+    }
+}

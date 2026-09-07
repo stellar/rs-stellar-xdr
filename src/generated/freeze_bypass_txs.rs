@@ -53,12 +53,20 @@ pub struct FreezeBypassTxsView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FreezeBypassTxsView<'_> {
+    type Owned = FreezeBypassTxs;
+    fn into_owned(self) -> FreezeBypassTxs {
+        FreezeBypassTxs {
+            tx_hashes: self.tx_hashes.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
     fn from(v: &FreezeBypassTxsView<'_>) -> Self {
-        Self {
-            tx_hashes: v.tx_hashes.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -66,7 +74,7 @@ impl From<&FreezeBypassTxsView<'_>> for FreezeBypassTxs {
 impl From<FreezeBypassTxsView<'_>> for FreezeBypassTxs {
     #[must_use]
     fn from(v: FreezeBypassTxsView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

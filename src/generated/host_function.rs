@@ -180,18 +180,32 @@ pub enum HostFunctionView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for HostFunctionView<'_> {
+    type Owned = HostFunction;
+    fn into_owned(self) -> HostFunction {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            HostFunctionView::InvokeContract(value) => {
+                HostFunction::InvokeContract(value.into_owned())
+            }
+            HostFunctionView::CreateContract(value) => {
+                HostFunction::CreateContract(value.into_owned())
+            }
+            HostFunctionView::UploadContractWasm(value) => {
+                HostFunction::UploadContractWasm(value.into_owned())
+            }
+            HostFunctionView::CreateContractV2(value) => {
+                HostFunction::CreateContractV2(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&HostFunctionView<'_>> for HostFunction {
     #[must_use]
     fn from(v: &HostFunctionView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            HostFunctionView::InvokeContract(value) => Self::InvokeContract(value.into()),
-            HostFunctionView::CreateContract(value) => Self::CreateContract(value.into()),
-            HostFunctionView::UploadContractWasm(value) => {
-                Self::UploadContractWasm(value.to_bytesm())
-            }
-            HostFunctionView::CreateContractV2(value) => Self::CreateContractV2(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -199,7 +213,7 @@ impl From<&HostFunctionView<'_>> for HostFunction {
 impl From<HostFunctionView<'_>> for HostFunction {
     #[must_use]
     fn from(v: HostFunctionView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

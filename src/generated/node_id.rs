@@ -56,3 +56,11 @@ impl WriteXdr for NodeId {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for NodeId {
+    type Owned = NodeId;
+    fn into_owned(self) -> NodeId {
+        self
+    }
+}

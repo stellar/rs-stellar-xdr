@@ -54,12 +54,20 @@ pub struct ScSpecTypeTupleView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecTypeTupleView<'_> {
+    type Owned = ScSpecTypeTuple;
+    fn into_owned(self) -> ScSpecTypeTuple {
+        ScSpecTypeTuple {
+            value_types: self.value_types.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
     #[must_use]
     fn from(v: &ScSpecTypeTupleView<'_>) -> Self {
-        Self {
-            value_types: v.value_types.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -67,7 +75,7 @@ impl From<&ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
 impl From<ScSpecTypeTupleView<'_>> for ScSpecTypeTuple {
     #[must_use]
     fn from(v: ScSpecTypeTupleView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

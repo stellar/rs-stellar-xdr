@@ -423,8 +423,6 @@ impl RustGenerator {
             &self.type_info,
             custom_str,
             &self.view_required,
-            "v.0",
-            false,
         );
 
         let size = match &t.type_ {
@@ -454,7 +452,6 @@ impl RustGenerator {
             emit_view: r.emit_view,
             view_cfg: r.view_cfg,
             view_type_ref: resolved.view_type_ref,
-            from_view_expr: resolved.from_view_expr,
             cfg,
         })
     }
@@ -487,8 +484,6 @@ impl RustGenerator {
             &self.type_info,
             custom_str,
             &self.view_required,
-            &format!("v.{name}"),
-            false,
         );
 
         StructMemberOutput {
@@ -498,7 +493,6 @@ impl RustGenerator {
             serde_as_type: resolved.serde_as_type,
             serde_rename,
             view_type_ref: resolved.view_type_ref,
-            from_view_expr: resolved.from_view_expr,
         }
     }
 
@@ -528,8 +522,6 @@ impl RustGenerator {
                         &self.type_info,
                         custom_str,
                         &self.view_required,
-                        "value",
-                        true,
                     )
                 });
 
@@ -540,7 +532,6 @@ impl RustGenerator {
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
                     view_type_ref: resolved.as_ref().map(|r| r.view_type_ref.clone()),
-                    from_view_expr: resolved.as_ref().map(|r| r.from_view_expr.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }

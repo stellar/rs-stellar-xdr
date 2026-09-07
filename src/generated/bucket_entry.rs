@@ -167,16 +167,24 @@ pub enum BucketEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for BucketEntryView<'_> {
+    type Owned = BucketEntry;
+    fn into_owned(self) -> BucketEntry {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            BucketEntryView::Liveentry(value) => BucketEntry::Liveentry(value.into_owned()),
+            BucketEntryView::Initentry(value) => BucketEntry::Initentry(value.into_owned()),
+            BucketEntryView::Deadentry(value) => BucketEntry::Deadentry(value.into_owned()),
+            BucketEntryView::Metaentry(value) => BucketEntry::Metaentry(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&BucketEntryView<'_>> for BucketEntry {
     #[must_use]
     fn from(v: &BucketEntryView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            BucketEntryView::Liveentry(value) => Self::Liveentry(value.into()),
-            BucketEntryView::Initentry(value) => Self::Initentry(value.into()),
-            BucketEntryView::Deadentry(value) => Self::Deadentry(value.into()),
-            BucketEntryView::Metaentry(value) => Self::Metaentry(value.clone()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -184,7 +192,7 @@ impl From<&BucketEntryView<'_>> for BucketEntry {
 impl From<BucketEntryView<'_>> for BucketEntry {
     #[must_use]
     fn from(v: BucketEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -1,3 +1,4 @@
+{%- import "into_owned.rs.jinja" as into_owned %}
 /// {{ u.name }}{{ u.source_comment }}
 // union with discriminant {{ u.discriminant_type }}
 {%- if let Some(cfg) = u.cfg %}
@@ -252,19 +253,19 @@ pub enum {{ u.name }}View<'a> {
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
-impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
-    #[must_use]
-    fn from(v: &{{ u.name }}View<'_>) -> Self {
+impl IntoOwned for {{ u.name }}View<'_> {
+    type Owned = {{ u.name }};
+    fn into_owned(self) -> {{ u.name }} {
         #[allow(clippy::match_same_arms)]
-        match v {
+        match self {
 {%- for arm in u.arms %}
 {%- if let Some(cfg) = arm.cfg %}
             #[cfg({{ cfg }})]
 {%- endif %}
 {%- if arm.is_void %}
-            {{ u.name }}View::{{ arm.case_name }} => Self::{{ arm.case_name }},
+            {{ u.name }}View::{{ arm.case_name }} => {{ u.name }}::{{ arm.case_name }},
 {%- else %}
-            {{ u.name }}View::{{ arm.case_name }}(value) => Self::{{ arm.case_name }}({{ arm.from_view_expr.as_ref().unwrap() }}),
+            {{ u.name }}View::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.into_owned()),
 {%- endif %}
 {%- endfor %}
         }
@@ -275,10 +276,21 @@ impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 #[cfg(feature = "alloc")]
+impl From<&{{ u.name }}View<'_>> for {{ u.name }} {
+    #[must_use]
+    fn from(v: &{{ u.name }}View<'_>) -> Self {
+        v.clone().into_owned()
+    }
+}
+
+{% if let Some(cfg) = u.view_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+#[cfg(feature = "alloc")]
 impl From<{{ u.name }}View<'_>> for {{ u.name }} {
     #[must_use]
     fn from(v: {{ u.name }}View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 
@@ -330,4 +342,6 @@ impl WriteXdr for {{ u.name }}View<'_> {
     }
 }
 {%- endif %}
-
+{%- if !u.emit_view %}
+{% call into_owned::identity(u.name, u.cfg) %}
+{%- endif %}

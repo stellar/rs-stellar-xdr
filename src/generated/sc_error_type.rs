@@ -172,3 +172,11 @@ impl WriteXdr for ScErrorType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScErrorType {
+    type Owned = ScErrorType;
+    fn into_owned(self) -> ScErrorType {
+        self
+    }
+}

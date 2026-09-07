@@ -69,14 +69,22 @@ pub struct ScSpecUdtStructFieldV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecUdtStructFieldV0View<'_> {
+    type Owned = ScSpecUdtStructFieldV0;
+    fn into_owned(self) -> ScSpecUdtStructFieldV0 {
+        ScSpecUdtStructFieldV0 {
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+            type_: self.type_.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecUdtStructFieldV0View<'_>> for ScSpecUdtStructFieldV0 {
     #[must_use]
     fn from(v: &ScSpecUdtStructFieldV0View<'_>) -> Self {
-        Self {
-            doc: v.doc.to_stringm(),
-            name: v.name.to_stringm(),
-            type_: (&v.type_).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -84,7 +92,7 @@ impl From<&ScSpecUdtStructFieldV0View<'_>> for ScSpecUdtStructFieldV0 {
 impl From<ScSpecUdtStructFieldV0View<'_>> for ScSpecUdtStructFieldV0 {
     #[must_use]
     fn from(v: ScSpecUdtStructFieldV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

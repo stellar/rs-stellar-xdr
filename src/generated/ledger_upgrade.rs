@@ -191,3 +191,11 @@ impl WriteXdr for LedgerUpgrade {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerUpgrade {
+    type Owned = LedgerUpgrade;
+    fn into_owned(self) -> LedgerUpgrade {
+        self
+    }
+}

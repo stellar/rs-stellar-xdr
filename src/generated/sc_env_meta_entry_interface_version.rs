@@ -48,3 +48,11 @@ impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScEnvMetaEntryInterfaceVersion {
+    type Owned = ScEnvMetaEntryInterfaceVersion;
+    fn into_owned(self) -> ScEnvMetaEntryInterfaceVersion {
+        self
+    }
+}

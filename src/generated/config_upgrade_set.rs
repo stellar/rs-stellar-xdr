@@ -53,12 +53,20 @@ pub struct ConfigUpgradeSetView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ConfigUpgradeSetView<'_> {
+    type Owned = ConfigUpgradeSet;
+    fn into_owned(self) -> ConfigUpgradeSet {
+        ConfigUpgradeSet {
+            updated_entry: self.updated_entry.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
     #[must_use]
     fn from(v: &ConfigUpgradeSetView<'_>) -> Self {
-        Self {
-            updated_entry: v.updated_entry.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -66,7 +74,7 @@ impl From<&ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
 impl From<ConfigUpgradeSetView<'_>> for ConfigUpgradeSet {
     #[must_use]
     fn from(v: ConfigUpgradeSetView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

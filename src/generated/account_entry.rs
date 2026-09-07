@@ -118,21 +118,29 @@ pub struct AccountEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for AccountEntryView<'_> {
+    type Owned = AccountEntry;
+    fn into_owned(self) -> AccountEntry {
+        AccountEntry {
+            account_id: self.account_id.into_owned(),
+            balance: self.balance.into_owned(),
+            seq_num: self.seq_num.into_owned(),
+            num_sub_entries: self.num_sub_entries.into_owned(),
+            inflation_dest: self.inflation_dest.into_owned(),
+            flags: self.flags.into_owned(),
+            home_domain: self.home_domain.into_owned(),
+            thresholds: self.thresholds.into_owned(),
+            signers: self.signers.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&AccountEntryView<'_>> for AccountEntry {
     #[must_use]
     fn from(v: &AccountEntryView<'_>) -> Self {
-        Self {
-            account_id: v.account_id.clone(),
-            balance: v.balance,
-            seq_num: v.seq_num.clone(),
-            num_sub_entries: v.num_sub_entries,
-            inflation_dest: v.inflation_dest.clone(),
-            flags: v.flags,
-            home_domain: (&v.home_domain).into(),
-            thresholds: v.thresholds.clone(),
-            signers: v.signers.to_vecm(),
-            ext: (&v.ext).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -140,7 +148,7 @@ impl From<&AccountEntryView<'_>> for AccountEntry {
 impl From<AccountEntryView<'_>> for AccountEntry {
     #[must_use]
     fn from(v: AccountEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

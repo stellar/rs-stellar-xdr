@@ -144,3 +144,11 @@ impl WriteXdr for MemoType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for MemoType {
+    type Owned = MemoType;
+    fn into_owned(self) -> MemoType {
+        self
+    }
+}

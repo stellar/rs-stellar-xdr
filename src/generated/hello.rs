@@ -94,20 +94,28 @@ pub struct HelloView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for HelloView<'_> {
+    type Owned = Hello;
+    fn into_owned(self) -> Hello {
+        Hello {
+            ledger_version: self.ledger_version.into_owned(),
+            overlay_version: self.overlay_version.into_owned(),
+            overlay_min_version: self.overlay_min_version.into_owned(),
+            network_id: self.network_id.into_owned(),
+            version_str: self.version_str.into_owned(),
+            listening_port: self.listening_port.into_owned(),
+            peer_id: self.peer_id.into_owned(),
+            cert: self.cert.into_owned(),
+            nonce: self.nonce.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&HelloView<'_>> for Hello {
     #[must_use]
     fn from(v: &HelloView<'_>) -> Self {
-        Self {
-            ledger_version: v.ledger_version,
-            overlay_version: v.overlay_version,
-            overlay_min_version: v.overlay_min_version,
-            network_id: v.network_id.clone(),
-            version_str: v.version_str.to_stringm(),
-            listening_port: v.listening_port,
-            peer_id: v.peer_id.clone(),
-            cert: (&v.cert).into(),
-            nonce: v.nonce.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -115,7 +123,7 @@ impl From<&HelloView<'_>> for Hello {
 impl From<HelloView<'_>> for Hello {
     #[must_use]
     fn from(v: HelloView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

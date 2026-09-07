@@ -58,13 +58,21 @@ pub struct FrozenLedgerKeysDeltaView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FrozenLedgerKeysDeltaView<'_> {
+    type Owned = FrozenLedgerKeysDelta;
+    fn into_owned(self) -> FrozenLedgerKeysDelta {
+        FrozenLedgerKeysDelta {
+            keys_to_freeze: self.keys_to_freeze.into_owned(),
+            keys_to_unfreeze: self.keys_to_unfreeze.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
     #[must_use]
     fn from(v: &FrozenLedgerKeysDeltaView<'_>) -> Self {
-        Self {
-            keys_to_freeze: v.keys_to_freeze.to_vecm(),
-            keys_to_unfreeze: v.keys_to_unfreeze.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -72,7 +80,7 @@ impl From<&FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
 impl From<FrozenLedgerKeysDeltaView<'_>> for FrozenLedgerKeysDelta {
     #[must_use]
     fn from(v: FrozenLedgerKeysDeltaView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

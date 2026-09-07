@@ -73,15 +73,23 @@ pub struct HashIdPreimageSorobanAuthorizationView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for HashIdPreimageSorobanAuthorizationView<'_> {
+    type Owned = HashIdPreimageSorobanAuthorization;
+    fn into_owned(self) -> HashIdPreimageSorobanAuthorization {
+        HashIdPreimageSorobanAuthorization {
+            network_id: self.network_id.into_owned(),
+            nonce: self.nonce.into_owned(),
+            signature_expiration_ledger: self.signature_expiration_ledger.into_owned(),
+            invocation: self.invocation.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&HashIdPreimageSorobanAuthorizationView<'_>> for HashIdPreimageSorobanAuthorization {
     #[must_use]
     fn from(v: &HashIdPreimageSorobanAuthorizationView<'_>) -> Self {
-        Self {
-            network_id: v.network_id.clone(),
-            nonce: v.nonce,
-            signature_expiration_ledger: v.signature_expiration_ledger,
-            invocation: (&v.invocation).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -89,7 +97,7 @@ impl From<&HashIdPreimageSorobanAuthorizationView<'_>> for HashIdPreimageSoroban
 impl From<HashIdPreimageSorobanAuthorizationView<'_>> for HashIdPreimageSorobanAuthorization {
     #[must_use]
     fn from(v: HashIdPreimageSorobanAuthorizationView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

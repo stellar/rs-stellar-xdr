@@ -135,3 +135,11 @@ impl WriteXdr for PeerAddressIp {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for PeerAddressIp {
+    type Owned = PeerAddressIp;
+    fn into_owned(self) -> PeerAddressIp {
+        self
+    }
+}

@@ -83,15 +83,23 @@ pub struct FeeBumpTransactionView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FeeBumpTransactionView<'_> {
+    type Owned = FeeBumpTransaction;
+    fn into_owned(self) -> FeeBumpTransaction {
+        FeeBumpTransaction {
+            fee_source: self.fee_source.into_owned(),
+            fee: self.fee.into_owned(),
+            inner_tx: self.inner_tx.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FeeBumpTransactionView<'_>> for FeeBumpTransaction {
     #[must_use]
     fn from(v: &FeeBumpTransactionView<'_>) -> Self {
-        Self {
-            fee_source: v.fee_source.clone(),
-            fee: v.fee,
-            inner_tx: (&v.inner_tx).into(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -99,7 +107,7 @@ impl From<&FeeBumpTransactionView<'_>> for FeeBumpTransaction {
 impl From<FeeBumpTransactionView<'_>> for FeeBumpTransaction {
     #[must_use]
     fn from(v: FeeBumpTransactionView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -142,3 +142,11 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for BeginSponsoringFutureReservesResultCode {
+    type Owned = BeginSponsoringFutureReservesResultCode;
+    fn into_owned(self) -> BeginSponsoringFutureReservesResultCode {
+        self
+    }
+}

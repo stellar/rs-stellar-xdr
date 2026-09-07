@@ -89,18 +89,26 @@ pub struct TransactionMetaV4View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionMetaV4View<'_> {
+    type Owned = TransactionMetaV4;
+    fn into_owned(self) -> TransactionMetaV4 {
+        TransactionMetaV4 {
+            ext: self.ext.into_owned(),
+            tx_changes_before: self.tx_changes_before.into_owned(),
+            operations: self.operations.into_owned(),
+            tx_changes_after: self.tx_changes_after.into_owned(),
+            soroban_meta: self.soroban_meta.into_owned(),
+            events: self.events.into_owned(),
+            diagnostic_events: self.diagnostic_events.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionMetaV4View<'_>> for TransactionMetaV4 {
     #[must_use]
     fn from(v: &TransactionMetaV4View<'_>) -> Self {
-        Self {
-            ext: v.ext.clone(),
-            tx_changes_before: (&v.tx_changes_before).into(),
-            operations: v.operations.to_vecm(),
-            tx_changes_after: (&v.tx_changes_after).into(),
-            soroban_meta: v.soroban_meta.as_ref().map(Into::into),
-            events: v.events.to_vecm(),
-            diagnostic_events: v.diagnostic_events.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -108,7 +116,7 @@ impl From<&TransactionMetaV4View<'_>> for TransactionMetaV4 {
 impl From<TransactionMetaV4View<'_>> for TransactionMetaV4 {
     #[must_use]
     fn from(v: TransactionMetaV4View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

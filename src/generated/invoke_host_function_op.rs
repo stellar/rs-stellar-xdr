@@ -61,13 +61,21 @@ pub struct InvokeHostFunctionOpView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for InvokeHostFunctionOpView<'_> {
+    type Owned = InvokeHostFunctionOp;
+    fn into_owned(self) -> InvokeHostFunctionOp {
+        InvokeHostFunctionOp {
+            host_function: self.host_function.into_owned(),
+            auth: self.auth.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     #[must_use]
     fn from(v: &InvokeHostFunctionOpView<'_>) -> Self {
-        Self {
-            host_function: (&v.host_function).into(),
-            auth: v.auth.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -75,7 +83,7 @@ impl From<&InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
 impl From<InvokeHostFunctionOpView<'_>> for InvokeHostFunctionOp {
     #[must_use]
     fn from(v: InvokeHostFunctionOpView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

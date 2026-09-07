@@ -59,13 +59,21 @@ pub struct ScSpecTypeMapView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecTypeMapView<'_> {
+    type Owned = ScSpecTypeMap;
+    fn into_owned(self) -> ScSpecTypeMap {
+        ScSpecTypeMap {
+            key_type: self.key_type.into_owned(),
+            value_type: self.value_type.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecTypeMapView<'_>> for ScSpecTypeMap {
     #[must_use]
     fn from(v: &ScSpecTypeMapView<'_>) -> Self {
-        Self {
-            key_type: Box::new(v.key_type.into()),
-            value_type: Box::new(v.value_type.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&ScSpecTypeMapView<'_>> for ScSpecTypeMap {
 impl From<ScSpecTypeMapView<'_>> for ScSpecTypeMap {
     #[must_use]
     fn from(v: ScSpecTypeMapView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

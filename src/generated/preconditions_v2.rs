@@ -102,17 +102,25 @@ pub struct PreconditionsV2View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PreconditionsV2View<'_> {
+    type Owned = PreconditionsV2;
+    fn into_owned(self) -> PreconditionsV2 {
+        PreconditionsV2 {
+            time_bounds: self.time_bounds.into_owned(),
+            ledger_bounds: self.ledger_bounds.into_owned(),
+            min_seq_num: self.min_seq_num.into_owned(),
+            min_seq_age: self.min_seq_age.into_owned(),
+            min_seq_ledger_gap: self.min_seq_ledger_gap.into_owned(),
+            extra_signers: self.extra_signers.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PreconditionsV2View<'_>> for PreconditionsV2 {
     #[must_use]
     fn from(v: &PreconditionsV2View<'_>) -> Self {
-        Self {
-            time_bounds: v.time_bounds.clone(),
-            ledger_bounds: v.ledger_bounds.clone(),
-            min_seq_num: v.min_seq_num.clone(),
-            min_seq_age: v.min_seq_age.clone(),
-            min_seq_ledger_gap: v.min_seq_ledger_gap,
-            extra_signers: v.extra_signers.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -120,7 +128,7 @@ impl From<&PreconditionsV2View<'_>> for PreconditionsV2 {
 impl From<PreconditionsV2View<'_>> for PreconditionsV2 {
     #[must_use]
     fn from(v: PreconditionsV2View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

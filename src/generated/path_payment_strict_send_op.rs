@@ -91,17 +91,25 @@ pub struct PathPaymentStrictSendOpView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PathPaymentStrictSendOpView<'_> {
+    type Owned = PathPaymentStrictSendOp;
+    fn into_owned(self) -> PathPaymentStrictSendOp {
+        PathPaymentStrictSendOp {
+            send_asset: self.send_asset.into_owned(),
+            send_amount: self.send_amount.into_owned(),
+            destination: self.destination.into_owned(),
+            dest_asset: self.dest_asset.into_owned(),
+            dest_min: self.dest_min.into_owned(),
+            path: self.path.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
     #[must_use]
     fn from(v: &PathPaymentStrictSendOpView<'_>) -> Self {
-        Self {
-            send_asset: v.send_asset.clone(),
-            send_amount: v.send_amount,
-            destination: v.destination.clone(),
-            dest_asset: v.dest_asset.clone(),
-            dest_min: v.dest_min,
-            path: v.path.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -109,7 +117,7 @@ impl From<&PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
 impl From<PathPaymentStrictSendOpView<'_>> for PathPaymentStrictSendOp {
     #[must_use]
     fn from(v: PathPaymentStrictSendOpView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

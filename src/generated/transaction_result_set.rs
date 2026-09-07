@@ -54,12 +54,20 @@ pub struct TransactionResultSetView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionResultSetView<'_> {
+    type Owned = TransactionResultSet;
+    fn into_owned(self) -> TransactionResultSet {
+        TransactionResultSet {
+            results: self.results.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionResultSetView<'_>> for TransactionResultSet {
     #[must_use]
     fn from(v: &TransactionResultSetView<'_>) -> Self {
-        Self {
-            results: v.results.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -67,7 +75,7 @@ impl From<&TransactionResultSetView<'_>> for TransactionResultSet {
 impl From<TransactionResultSetView<'_>> for TransactionResultSet {
     #[must_use]
     fn from(v: TransactionResultSetView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

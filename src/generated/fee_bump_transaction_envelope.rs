@@ -61,13 +61,21 @@ pub struct FeeBumpTransactionEnvelopeView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FeeBumpTransactionEnvelopeView<'_> {
+    type Owned = FeeBumpTransactionEnvelope;
+    fn into_owned(self) -> FeeBumpTransactionEnvelope {
+        FeeBumpTransactionEnvelope {
+            tx: self.tx.into_owned(),
+            signatures: self.signatures.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
     #[must_use]
     fn from(v: &FeeBumpTransactionEnvelopeView<'_>) -> Self {
-        Self {
-            tx: (&v.tx).into(),
-            signatures: v.signatures.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -75,7 +83,7 @@ impl From<&FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
 impl From<FeeBumpTransactionEnvelopeView<'_>> for FeeBumpTransactionEnvelope {
     #[must_use]
     fn from(v: FeeBumpTransactionEnvelopeView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

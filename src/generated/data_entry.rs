@@ -76,15 +76,23 @@ pub struct DataEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for DataEntryView<'_> {
+    type Owned = DataEntry;
+    fn into_owned(self) -> DataEntry {
+        DataEntry {
+            account_id: self.account_id.into_owned(),
+            data_name: self.data_name.into_owned(),
+            data_value: self.data_value.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&DataEntryView<'_>> for DataEntry {
     #[must_use]
     fn from(v: &DataEntryView<'_>) -> Self {
-        Self {
-            account_id: v.account_id.clone(),
-            data_name: (&v.data_name).into(),
-            data_value: (&v.data_value).into(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -92,7 +100,7 @@ impl From<&DataEntryView<'_>> for DataEntry {
 impl From<DataEntryView<'_>> for DataEntry {
     #[must_use]
     fn from(v: DataEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

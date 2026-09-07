@@ -65,3 +65,11 @@ impl WriteXdr for TimePoint {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TimePoint {
+    type Owned = TimePoint;
+    fn into_owned(self) -> TimePoint {
+        self
+    }
+}

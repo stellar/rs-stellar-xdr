@@ -1570,6 +1570,75 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     }
 }
 
+// IntoOwned -----------------------------------------------------------------------
+
+/// Conversion from the borrowing `View` form of a value to its owned form.
+///
+/// Every generated type implements it. A type with a `View` converts from that
+/// `View` to the owned type. A heap-free type has no `View`, appears as itself
+/// inside the `View`s that contain it, and converts to itself. The runtime
+/// types that appear inside `View`s implement it too: [`VecMView`],
+/// [`BytesMView`] and [`StringMView`] convert to [`VecM`], [`BytesM`] and
+/// [`StringM`], `Option`s and arrays convert element-wise, and a reference (the
+/// `View` form of a `Box`) converts to a `Box`. The generated conversions to
+/// owned types are built from it field by field, so they need no knowledge of
+/// what each field holds.
+///
+/// A `View` is a cheap handle onto borrowed data, so the conversion consumes
+/// it; the `From<&View>` impls clone the handle first. The conversion
+/// allocates, so it is only available with the `alloc` feature.
+#[cfg(feature = "alloc")]
+pub trait IntoOwned {
+    /// The owned form of this type.
+    type Owned;
+
+    /// Converts to the owned form, cloning borrowed data.
+    #[must_use]
+    fn into_owned(self) -> Self::Owned;
+}
+
+#[cfg(feature = "alloc")]
+macro_rules! impl_into_owned_identity {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl IntoOwned for $t {
+                type Owned = $t;
+                fn into_owned(self) -> $t {
+                    self
+                }
+            }
+        )*
+    };
+}
+
+#[cfg(feature = "alloc")]
+impl_into_owned_identity!(bool, u8, i32, u32, i64, u64, f32, f64);
+
+#[cfg(feature = "alloc")]
+impl<T: IntoOwned> IntoOwned for Option<T> {
+    type Owned = Option<T::Owned>;
+    fn into_owned(self) -> Self::Owned {
+        self.map(IntoOwned::into_owned)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: IntoOwned, const N: usize> IntoOwned for [T; N] {
+    type Owned = [T::Owned; N];
+    fn into_owned(self) -> Self::Owned {
+        self.map(IntoOwned::into_owned)
+    }
+}
+
+/// A reference is the `View` form of a `Box`, used where a type is cyclic.
+#[cfg(feature = "alloc")]
+impl<T: IntoOwned + Clone> IntoOwned for &T {
+    type Owned = Box<T::Owned>;
+    fn into_owned(self) -> Self::Owned {
+        Box::new(self.clone().into_owned())
+    }
+}
+
 // VecMView ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`VecM`] that wraps a slice instead of owning a
@@ -1686,6 +1755,14 @@ impl<T: Clone, const MAX: u32> VecMView<'_, T, MAX> {
     #[must_use]
     pub fn to_vecm<U: From<T>>(&self) -> VecM<U, MAX> {
         VecM(self.0.iter().cloned().map(U::from).collect())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: IntoOwned + Clone, const MAX: u32> IntoOwned for VecMView<'_, T, MAX> {
+    type Owned = VecM<T::Owned, MAX>;
+    fn into_owned(self) -> Self::Owned {
+        VecM(self.0.iter().cloned().map(IntoOwned::into_owned).collect())
     }
 }
 
@@ -2253,6 +2330,14 @@ impl<const MAX: u32> BytesMView<'_, MAX> {
     #[must_use]
     pub fn to_bytesm(&self) -> BytesM<MAX> {
         BytesM(self.0.to_vec())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> IntoOwned for BytesMView<'_, MAX> {
+    type Owned = BytesM<MAX>;
+    fn into_owned(self) -> Self::Owned {
+        self.to_bytesm()
     }
 }
 
@@ -2830,6 +2915,14 @@ impl<const MAX: u32> StringMView<'_, MAX> {
     #[must_use]
     pub fn to_stringm(&self) -> StringM<MAX> {
         StringM(self.0.to_vec())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> IntoOwned for StringMView<'_, MAX> {
+    type Owned = StringM<MAX>;
+    fn into_owned(self) -> Self::Owned {
+        self.to_stringm()
     }
 }
 

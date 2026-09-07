@@ -129,3 +129,11 @@ impl WriteXdr for ContractIdPreimageType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ContractIdPreimageType {
+    type Owned = ContractIdPreimageType;
+    fn into_owned(self) -> ContractIdPreimageType {
+        self
+    }
+}

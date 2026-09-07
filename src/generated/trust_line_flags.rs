@@ -143,3 +143,11 @@ impl WriteXdr for TrustLineFlags {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TrustLineFlags {
+    type Owned = TrustLineFlags;
+    fn into_owned(self) -> TrustLineFlags {
+        self
+    }
+}

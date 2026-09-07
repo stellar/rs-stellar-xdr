@@ -134,3 +134,11 @@ impl WriteXdr for LedgerHeaderFlags {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerHeaderFlags {
+    type Owned = LedgerHeaderFlags;
+    fn into_owned(self) -> LedgerHeaderFlags {
+        self
+    }
+}

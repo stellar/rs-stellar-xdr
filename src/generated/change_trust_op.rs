@@ -55,3 +55,11 @@ impl WriteXdr for ChangeTrustOp {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ChangeTrustOp {
+    type Owned = ChangeTrustOp;
+    fn into_owned(self) -> ChangeTrustOp {
+        self
+    }
+}

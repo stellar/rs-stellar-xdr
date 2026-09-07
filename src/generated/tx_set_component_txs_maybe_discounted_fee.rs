@@ -63,13 +63,21 @@ pub struct TxSetComponentTxsMaybeDiscountedFeeView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeView<'_> {
+    type Owned = TxSetComponentTxsMaybeDiscountedFee;
+    fn into_owned(self) -> TxSetComponentTxsMaybeDiscountedFee {
+        TxSetComponentTxsMaybeDiscountedFee {
+            base_fee: self.base_fee.into_owned(),
+            txs: self.txs.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
     fn from(v: &TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
-        Self {
-            base_fee: v.base_fee,
-            txs: v.txs.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -77,7 +85,7 @@ impl From<&TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMay
 impl From<TxSetComponentTxsMaybeDiscountedFeeView<'_>> for TxSetComponentTxsMaybeDiscountedFee {
     #[must_use]
     fn from(v: TxSetComponentTxsMaybeDiscountedFeeView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

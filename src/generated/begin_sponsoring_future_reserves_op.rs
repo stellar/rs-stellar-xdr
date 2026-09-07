@@ -45,3 +45,11 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for BeginSponsoringFutureReservesOp {
+    type Owned = BeginSponsoringFutureReservesOp;
+    fn into_owned(self) -> BeginSponsoringFutureReservesOp {
+        self
+    }
+}

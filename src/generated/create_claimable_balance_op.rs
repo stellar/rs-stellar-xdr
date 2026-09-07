@@ -68,14 +68,22 @@ pub struct CreateClaimableBalanceOpView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for CreateClaimableBalanceOpView<'_> {
+    type Owned = CreateClaimableBalanceOp;
+    fn into_owned(self) -> CreateClaimableBalanceOp {
+        CreateClaimableBalanceOp {
+            asset: self.asset.into_owned(),
+            amount: self.amount.into_owned(),
+            claimants: self.claimants.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
     #[must_use]
     fn from(v: &CreateClaimableBalanceOpView<'_>) -> Self {
-        Self {
-            asset: v.asset.clone(),
-            amount: v.amount,
-            claimants: v.claimants.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -83,7 +91,7 @@ impl From<&CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
 impl From<CreateClaimableBalanceOpView<'_>> for CreateClaimableBalanceOp {
     #[must_use]
     fn from(v: CreateClaimableBalanceOpView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

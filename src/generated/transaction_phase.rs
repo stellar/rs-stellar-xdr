@@ -146,14 +146,22 @@ pub enum TransactionPhaseView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionPhaseView<'_> {
+    type Owned = TransactionPhase;
+    fn into_owned(self) -> TransactionPhase {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            TransactionPhaseView::V0(value) => TransactionPhase::V0(value.into_owned()),
+            TransactionPhaseView::V1(value) => TransactionPhase::V1(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionPhaseView<'_>> for TransactionPhase {
     #[must_use]
     fn from(v: &TransactionPhaseView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            TransactionPhaseView::V0(value) => Self::V0(value.to_vecm()),
-            TransactionPhaseView::V1(value) => Self::V1(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -161,7 +169,7 @@ impl From<&TransactionPhaseView<'_>> for TransactionPhase {
 impl From<TransactionPhaseView<'_>> for TransactionPhase {
     #[must_use]
     fn from(v: TransactionPhaseView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

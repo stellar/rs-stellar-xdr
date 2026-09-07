@@ -128,3 +128,11 @@ impl WriteXdr for DataEntryExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for DataEntryExt {
+    type Owned = DataEntryExt;
+    fn into_owned(self) -> DataEntryExt {
+        self
+    }
+}

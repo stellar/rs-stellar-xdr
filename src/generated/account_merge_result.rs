@@ -195,3 +195,11 @@ impl WriteXdr for AccountMergeResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for AccountMergeResult {
+    type Owned = AccountMergeResult;
+    fn into_owned(self) -> AccountMergeResult {
+        self
+    }
+}

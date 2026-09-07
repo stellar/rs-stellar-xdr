@@ -147,3 +147,11 @@ impl WriteXdr for RestoreFootprintResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for RestoreFootprintResultCode {
+    type Owned = RestoreFootprintResultCode;
+    fn into_owned(self) -> RestoreFootprintResultCode {
+        self
+    }
+}

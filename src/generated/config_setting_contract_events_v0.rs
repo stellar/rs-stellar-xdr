@@ -55,3 +55,11 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ConfigSettingContractEventsV0 {
+    type Owned = ConfigSettingContractEventsV0;
+    fn into_owned(self) -> ConfigSettingContractEventsV0 {
+        self
+    }
+}

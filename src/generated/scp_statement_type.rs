@@ -139,3 +139,11 @@ impl WriteXdr for ScpStatementType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScpStatementType {
+    type Owned = ScpStatementType;
+    fn into_owned(self) -> ScpStatementType {
+        self
+    }
+}

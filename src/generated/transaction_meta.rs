@@ -170,17 +170,25 @@ pub enum TransactionMetaView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionMetaView<'_> {
+    type Owned = TransactionMeta;
+    fn into_owned(self) -> TransactionMeta {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            TransactionMetaView::V0(value) => TransactionMeta::V0(value.into_owned()),
+            TransactionMetaView::V1(value) => TransactionMeta::V1(value.into_owned()),
+            TransactionMetaView::V2(value) => TransactionMeta::V2(value.into_owned()),
+            TransactionMetaView::V3(value) => TransactionMeta::V3(value.into_owned()),
+            TransactionMetaView::V4(value) => TransactionMeta::V4(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
     fn from(v: &TransactionMetaView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            TransactionMetaView::V0(value) => Self::V0(value.to_vecm()),
-            TransactionMetaView::V1(value) => Self::V1(value.into()),
-            TransactionMetaView::V2(value) => Self::V2(value.into()),
-            TransactionMetaView::V3(value) => Self::V3(value.into()),
-            TransactionMetaView::V4(value) => Self::V4(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -188,7 +196,7 @@ impl From<&TransactionMetaView<'_>> for TransactionMeta {
 impl From<TransactionMetaView<'_>> for TransactionMeta {
     #[must_use]
     fn from(v: TransactionMetaView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

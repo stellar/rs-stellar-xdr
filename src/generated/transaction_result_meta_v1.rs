@@ -76,16 +76,24 @@ pub struct TransactionResultMetaV1View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionResultMetaV1View<'_> {
+    type Owned = TransactionResultMetaV1;
+    fn into_owned(self) -> TransactionResultMetaV1 {
+        TransactionResultMetaV1 {
+            ext: self.ext.into_owned(),
+            result: self.result.into_owned(),
+            fee_processing: self.fee_processing.into_owned(),
+            tx_apply_processing: self.tx_apply_processing.into_owned(),
+            post_tx_apply_fee_processing: self.post_tx_apply_fee_processing.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionResultMetaV1View<'_>> for TransactionResultMetaV1 {
     #[must_use]
     fn from(v: &TransactionResultMetaV1View<'_>) -> Self {
-        Self {
-            ext: v.ext.clone(),
-            result: (&v.result).into(),
-            fee_processing: (&v.fee_processing).into(),
-            tx_apply_processing: (&v.tx_apply_processing).into(),
-            post_tx_apply_fee_processing: (&v.post_tx_apply_fee_processing).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -93,7 +101,7 @@ impl From<&TransactionResultMetaV1View<'_>> for TransactionResultMetaV1 {
 impl From<TransactionResultMetaV1View<'_>> for TransactionResultMetaV1 {
     #[must_use]
     fn from(v: TransactionResultMetaV1View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

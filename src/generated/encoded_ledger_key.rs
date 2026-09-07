@@ -114,10 +114,18 @@ impl AsRef<[u8]> for EncodedLedgerKey {
 pub struct EncodedLedgerKeyView<'a>(pub BytesMView<'a>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for EncodedLedgerKeyView<'_> {
+    type Owned = EncodedLedgerKey;
+    fn into_owned(self) -> EncodedLedgerKey {
+        EncodedLedgerKey(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
     #[must_use]
     fn from(v: &EncodedLedgerKeyView<'_>) -> Self {
-        Self(v.0.to_bytesm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
 impl From<EncodedLedgerKeyView<'_>> for EncodedLedgerKey {
     #[must_use]
     fn from(v: EncodedLedgerKeyView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

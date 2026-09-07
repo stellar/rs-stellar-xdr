@@ -83,14 +83,22 @@ pub struct SorobanTransactionDataView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SorobanTransactionDataView<'_> {
+    type Owned = SorobanTransactionData;
+    fn into_owned(self) -> SorobanTransactionData {
+        SorobanTransactionData {
+            ext: self.ext.into_owned(),
+            resources: self.resources.into_owned(),
+            resource_fee: self.resource_fee.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SorobanTransactionDataView<'_>> for SorobanTransactionData {
     #[must_use]
     fn from(v: &SorobanTransactionDataView<'_>) -> Self {
-        Self {
-            ext: (&v.ext).into(),
-            resources: (&v.resources).into(),
-            resource_fee: v.resource_fee,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -98,7 +106,7 @@ impl From<&SorobanTransactionDataView<'_>> for SorobanTransactionData {
 impl From<SorobanTransactionDataView<'_>> for SorobanTransactionData {
     #[must_use]
     fn from(v: SorobanTransactionDataView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

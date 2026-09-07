@@ -181,3 +181,11 @@ impl WriteXdr for AllowTrustResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for AllowTrustResult {
+    type Owned = AllowTrustResult;
+    fn into_owned(self) -> AllowTrustResult {
+        self
+    }
+}

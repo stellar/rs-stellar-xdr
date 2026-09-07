@@ -59,13 +59,21 @@ pub struct LedgerFootprintView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerFootprintView<'_> {
+    type Owned = LedgerFootprint;
+    fn into_owned(self) -> LedgerFootprint {
+        LedgerFootprint {
+            read_only: self.read_only.into_owned(),
+            read_write: self.read_write.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerFootprintView<'_>> for LedgerFootprint {
     #[must_use]
     fn from(v: &LedgerFootprintView<'_>) -> Self {
-        Self {
-            read_only: v.read_only.to_vecm(),
-            read_write: v.read_write.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&LedgerFootprintView<'_>> for LedgerFootprint {
 impl From<LedgerFootprintView<'_>> for LedgerFootprint {
     #[must_use]
     fn from(v: LedgerFootprintView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

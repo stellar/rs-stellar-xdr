@@ -159,3 +159,11 @@ impl WriteXdr for RevokeSponsorshipResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for RevokeSponsorshipResultCode {
+    type Owned = RevokeSponsorshipResultCode;
+    fn into_owned(self) -> RevokeSponsorshipResultCode {
+        self
+    }
+}

@@ -150,3 +150,11 @@ impl WriteXdr for Asset {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Asset {
+    type Owned = Asset;
+    fn into_owned(self) -> Asset {
+        self
+    }
+}

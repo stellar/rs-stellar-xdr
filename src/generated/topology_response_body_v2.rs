@@ -64,14 +64,22 @@ pub struct TopologyResponseBodyV2View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TopologyResponseBodyV2View<'_> {
+    type Owned = TopologyResponseBodyV2;
+    fn into_owned(self) -> TopologyResponseBodyV2 {
+        TopologyResponseBodyV2 {
+            inbound_peers: self.inbound_peers.into_owned(),
+            outbound_peers: self.outbound_peers.into_owned(),
+            node_data: self.node_data.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
     #[must_use]
     fn from(v: &TopologyResponseBodyV2View<'_>) -> Self {
-        Self {
-            inbound_peers: (&v.inbound_peers).into(),
-            outbound_peers: (&v.outbound_peers).into(),
-            node_data: v.node_data.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -79,7 +87,7 @@ impl From<&TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
 impl From<TopologyResponseBodyV2View<'_>> for TopologyResponseBodyV2 {
     #[must_use]
     fn from(v: TopologyResponseBodyV2View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

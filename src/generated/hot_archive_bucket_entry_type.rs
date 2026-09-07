@@ -136,3 +136,11 @@ impl WriteXdr for HotArchiveBucketEntryType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for HotArchiveBucketEntryType {
+    type Owned = HotArchiveBucketEntryType;
+    fn into_owned(self) -> HotArchiveBucketEntryType {
+        self
+    }
+}

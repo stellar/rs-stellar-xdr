@@ -64,14 +64,22 @@ pub struct ScSpecUdtErrorEnumCaseV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecUdtErrorEnumCaseV0View<'_> {
+    type Owned = ScSpecUdtErrorEnumCaseV0;
+    fn into_owned(self) -> ScSpecUdtErrorEnumCaseV0 {
+        ScSpecUdtErrorEnumCaseV0 {
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+            value: self.value.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecUdtErrorEnumCaseV0View<'_>> for ScSpecUdtErrorEnumCaseV0 {
     #[must_use]
     fn from(v: &ScSpecUdtErrorEnumCaseV0View<'_>) -> Self {
-        Self {
-            doc: v.doc.to_stringm(),
-            name: v.name.to_stringm(),
-            value: v.value,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -79,7 +87,7 @@ impl From<&ScSpecUdtErrorEnumCaseV0View<'_>> for ScSpecUdtErrorEnumCaseV0 {
 impl From<ScSpecUdtErrorEnumCaseV0View<'_>> for ScSpecUdtErrorEnumCaseV0 {
     #[must_use]
     fn from(v: ScSpecUdtErrorEnumCaseV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

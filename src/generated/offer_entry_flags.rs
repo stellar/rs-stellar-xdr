@@ -124,3 +124,11 @@ impl WriteXdr for OfferEntryFlags {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for OfferEntryFlags {
+    type Owned = OfferEntryFlags;
+    fn into_owned(self) -> OfferEntryFlags {
+        self
+    }
+}

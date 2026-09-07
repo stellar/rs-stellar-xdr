@@ -114,10 +114,18 @@ impl AsRef<[Hash]> for TxDemandVector {
 pub struct TxDemandVectorView<'a>(pub VecMView<'a, Hash, TX_DEMAND_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TxDemandVectorView<'_> {
+    type Owned = TxDemandVector;
+    fn into_owned(self) -> TxDemandVector {
+        TxDemandVector(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TxDemandVectorView<'_>> for TxDemandVector {
     #[must_use]
     fn from(v: &TxDemandVectorView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&TxDemandVectorView<'_>> for TxDemandVector {
 impl From<TxDemandVectorView<'_>> for TxDemandVector {
     #[must_use]
     fn from(v: TxDemandVectorView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

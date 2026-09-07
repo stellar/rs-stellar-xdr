@@ -128,3 +128,11 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TransactionHistoryResultEntryExt {
+    type Owned = TransactionHistoryResultEntryExt;
+    fn into_owned(self) -> TransactionHistoryResultEntryExt {
+        self
+    }
+}

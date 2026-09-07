@@ -68,14 +68,22 @@ pub struct AuthCertView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for AuthCertView<'_> {
+    type Owned = AuthCert;
+    fn into_owned(self) -> AuthCert {
+        AuthCert {
+            pubkey: self.pubkey.into_owned(),
+            expiration: self.expiration.into_owned(),
+            sig: self.sig.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&AuthCertView<'_>> for AuthCert {
     #[must_use]
     fn from(v: &AuthCertView<'_>) -> Self {
-        Self {
-            pubkey: v.pubkey.clone(),
-            expiration: v.expiration,
-            sig: (&v.sig).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -83,7 +91,7 @@ impl From<&AuthCertView<'_>> for AuthCert {
 impl From<AuthCertView<'_>> for AuthCert {
     #[must_use]
     fn from(v: AuthCertView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

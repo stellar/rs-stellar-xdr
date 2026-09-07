@@ -199,3 +199,11 @@ impl WriteXdr for ChangeTrustResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ChangeTrustResult {
+    type Owned = ChangeTrustResult;
+    fn into_owned(self) -> ChangeTrustResult {
+        self
+    }
+}

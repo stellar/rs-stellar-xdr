@@ -69,15 +69,23 @@ pub struct ScSpecFunctionV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecFunctionV0View<'_> {
+    type Owned = ScSpecFunctionV0;
+    fn into_owned(self) -> ScSpecFunctionV0 {
+        ScSpecFunctionV0 {
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+            inputs: self.inputs.into_owned(),
+            outputs: self.outputs.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
     #[must_use]
     fn from(v: &ScSpecFunctionV0View<'_>) -> Self {
-        Self {
-            doc: v.doc.to_stringm(),
-            name: (&v.name).into(),
-            inputs: v.inputs.to_vecm(),
-            outputs: v.outputs.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -85,7 +93,7 @@ impl From<&ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
 impl From<ScSpecFunctionV0View<'_>> for ScSpecFunctionV0 {
     #[must_use]
     fn from(v: ScSpecFunctionV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

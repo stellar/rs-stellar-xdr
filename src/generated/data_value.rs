@@ -114,10 +114,18 @@ impl AsRef<[u8]> for DataValue {
 pub struct DataValueView<'a>(pub BytesMView<'a, 64>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for DataValueView<'_> {
+    type Owned = DataValue;
+    fn into_owned(self) -> DataValue {
+        DataValue(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&DataValueView<'_>> for DataValue {
     #[must_use]
     fn from(v: &DataValueView<'_>) -> Self {
-        Self(v.0.to_bytesm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&DataValueView<'_>> for DataValue {
 impl From<DataValueView<'_>> for DataValue {
     #[must_use]
     fn from(v: DataValueView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

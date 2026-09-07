@@ -45,3 +45,11 @@ impl WriteXdr for SendMore {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SendMore {
+    type Owned = SendMore;
+    fn into_owned(self) -> SendMore {
+        self
+    }
+}

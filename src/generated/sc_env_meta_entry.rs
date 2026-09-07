@@ -135,3 +135,11 @@ impl WriteXdr for ScEnvMetaEntry {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScEnvMetaEntry {
+    type Owned = ScEnvMetaEntry;
+    fn into_owned(self) -> ScEnvMetaEntry {
+        self
+    }
+}

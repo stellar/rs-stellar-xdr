@@ -59,13 +59,21 @@ pub struct LedgerKeyDataView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerKeyDataView<'_> {
+    type Owned = LedgerKeyData;
+    fn into_owned(self) -> LedgerKeyData {
+        LedgerKeyData {
+            account_id: self.account_id.into_owned(),
+            data_name: self.data_name.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerKeyDataView<'_>> for LedgerKeyData {
     #[must_use]
     fn from(v: &LedgerKeyDataView<'_>) -> Self {
-        Self {
-            account_id: v.account_id.clone(),
-            data_name: (&v.data_name).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&LedgerKeyDataView<'_>> for LedgerKeyData {
 impl From<LedgerKeyDataView<'_>> for LedgerKeyData {
     #[must_use]
     fn from(v: LedgerKeyDataView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

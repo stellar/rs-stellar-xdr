@@ -96,3 +96,11 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SorobanTransactionMetaExtV1 {
+    type Owned = SorobanTransactionMetaExtV1;
+    fn into_owned(self) -> SorobanTransactionMetaExtV1 {
+        self
+    }
+}

@@ -135,3 +135,11 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for AccountEntryExtensionV2Ext {
+    type Owned = AccountEntryExtensionV2Ext;
+    fn into_owned(self) -> AccountEntryExtensionV2Ext {
+        self
+    }
+}

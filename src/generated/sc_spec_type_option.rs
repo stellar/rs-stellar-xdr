@@ -54,12 +54,20 @@ pub struct ScSpecTypeOptionView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecTypeOptionView<'_> {
+    type Owned = ScSpecTypeOption;
+    fn into_owned(self) -> ScSpecTypeOption {
+        ScSpecTypeOption {
+            value_type: self.value_type.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
     #[must_use]
     fn from(v: &ScSpecTypeOptionView<'_>) -> Self {
-        Self {
-            value_type: Box::new(v.value_type.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -67,7 +75,7 @@ impl From<&ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
 impl From<ScSpecTypeOptionView<'_>> for ScSpecTypeOption {
     #[must_use]
     fn from(v: ScSpecTypeOptionView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

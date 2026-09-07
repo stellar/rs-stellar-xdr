@@ -114,10 +114,18 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
 pub struct ParallelTxExecutionStageView<'a>(pub VecMView<'a, DependentTxClusterView<'a>>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ParallelTxExecutionStageView<'_> {
+    type Owned = ParallelTxExecutionStage;
+    fn into_owned(self) -> ParallelTxExecutionStage {
+        ParallelTxExecutionStage(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
     #[must_use]
     fn from(v: &ParallelTxExecutionStageView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
 impl From<ParallelTxExecutionStageView<'_>> for ParallelTxExecutionStage {
     #[must_use]
     fn from(v: ParallelTxExecutionStageView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

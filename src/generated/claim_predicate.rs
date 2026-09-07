@@ -209,18 +209,30 @@ pub enum ClaimPredicateView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ClaimPredicateView<'_> {
+    type Owned = ClaimPredicate;
+    fn into_owned(self) -> ClaimPredicate {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ClaimPredicateView::Unconditional => ClaimPredicate::Unconditional,
+            ClaimPredicateView::And(value) => ClaimPredicate::And(value.into_owned()),
+            ClaimPredicateView::Or(value) => ClaimPredicate::Or(value.into_owned()),
+            ClaimPredicateView::Not(value) => ClaimPredicate::Not(value.into_owned()),
+            ClaimPredicateView::BeforeAbsoluteTime(value) => {
+                ClaimPredicate::BeforeAbsoluteTime(value.into_owned())
+            }
+            ClaimPredicateView::BeforeRelativeTime(value) => {
+                ClaimPredicate::BeforeRelativeTime(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
     fn from(v: &ClaimPredicateView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ClaimPredicateView::Unconditional => Self::Unconditional,
-            ClaimPredicateView::And(value) => Self::And(value.to_vecm()),
-            ClaimPredicateView::Or(value) => Self::Or(value.to_vecm()),
-            ClaimPredicateView::Not(value) => Self::Not(value.map(|v| Box::new(v.into()))),
-            ClaimPredicateView::BeforeAbsoluteTime(value) => Self::BeforeAbsoluteTime(*value),
-            ClaimPredicateView::BeforeRelativeTime(value) => Self::BeforeRelativeTime(*value),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -228,7 +240,7 @@ impl From<&ClaimPredicateView<'_>> for ClaimPredicate {
 impl From<ClaimPredicateView<'_>> for ClaimPredicate {
     #[must_use]
     fn from(v: ClaimPredicateView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

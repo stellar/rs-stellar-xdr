@@ -53,3 +53,11 @@ impl WriteXdr for LedgerKeyOffer {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerKeyOffer {
+    type Owned = LedgerKeyOffer;
+    fn into_owned(self) -> LedgerKeyOffer {
+        self
+    }
+}

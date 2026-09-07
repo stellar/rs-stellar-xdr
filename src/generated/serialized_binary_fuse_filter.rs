@@ -105,20 +105,28 @@ pub struct SerializedBinaryFuseFilterView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SerializedBinaryFuseFilterView<'_> {
+    type Owned = SerializedBinaryFuseFilter;
+    fn into_owned(self) -> SerializedBinaryFuseFilter {
+        SerializedBinaryFuseFilter {
+            type_: self.type_.into_owned(),
+            input_hash_seed: self.input_hash_seed.into_owned(),
+            filter_seed: self.filter_seed.into_owned(),
+            segment_length: self.segment_length.into_owned(),
+            segement_length_mask: self.segement_length_mask.into_owned(),
+            segment_count: self.segment_count.into_owned(),
+            segment_count_length: self.segment_count_length.into_owned(),
+            fingerprint_length: self.fingerprint_length.into_owned(),
+            fingerprints: self.fingerprints.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
     fn from(v: &SerializedBinaryFuseFilterView<'_>) -> Self {
-        Self {
-            type_: v.type_,
-            input_hash_seed: v.input_hash_seed.clone(),
-            filter_seed: v.filter_seed.clone(),
-            segment_length: v.segment_length,
-            segement_length_mask: v.segement_length_mask,
-            segment_count: v.segment_count,
-            segment_count_length: v.segment_count_length,
-            fingerprint_length: v.fingerprint_length,
-            fingerprints: v.fingerprints.to_bytesm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -126,7 +134,7 @@ impl From<&SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
 impl From<SerializedBinaryFuseFilterView<'_>> for SerializedBinaryFuseFilter {
     #[must_use]
     fn from(v: SerializedBinaryFuseFilterView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -254,19 +254,27 @@ pub enum OperationResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for OperationResultView<'_> {
+    type Owned = OperationResult;
+    fn into_owned(self) -> OperationResult {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            OperationResultView::OpInner(value) => OperationResult::OpInner(value.into_owned()),
+            OperationResultView::OpBadAuth => OperationResult::OpBadAuth,
+            OperationResultView::OpNoAccount => OperationResult::OpNoAccount,
+            OperationResultView::OpNotSupported => OperationResult::OpNotSupported,
+            OperationResultView::OpTooManySubentries => OperationResult::OpTooManySubentries,
+            OperationResultView::OpExceededWorkLimit => OperationResult::OpExceededWorkLimit,
+            OperationResultView::OpTooManySponsoring => OperationResult::OpTooManySponsoring,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&OperationResultView<'_>> for OperationResult {
     #[must_use]
     fn from(v: &OperationResultView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            OperationResultView::OpInner(value) => Self::OpInner(value.into()),
-            OperationResultView::OpBadAuth => Self::OpBadAuth,
-            OperationResultView::OpNoAccount => Self::OpNoAccount,
-            OperationResultView::OpNotSupported => Self::OpNotSupported,
-            OperationResultView::OpTooManySubentries => Self::OpTooManySubentries,
-            OperationResultView::OpExceededWorkLimit => Self::OpExceededWorkLimit,
-            OperationResultView::OpTooManySponsoring => Self::OpTooManySponsoring,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -274,7 +282,7 @@ impl From<&OperationResultView<'_>> for OperationResult {
 impl From<OperationResultView<'_>> for OperationResult {
     #[must_use]
     fn from(v: OperationResultView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

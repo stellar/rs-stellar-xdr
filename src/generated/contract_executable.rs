@@ -160,15 +160,25 @@ pub enum ContractExecutableView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ContractExecutableView<'_> {
+    type Owned = ContractExecutable;
+    fn into_owned(self) -> ContractExecutable {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ContractExecutableView::Wasm(value) => ContractExecutable::Wasm(value.into_owned()),
+            ContractExecutableView::StellarAsset => ContractExecutable::StellarAsset,
+            ContractExecutableView::ExternalRef(value) => {
+                ContractExecutable::ExternalRef(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ContractExecutableView<'_>> for ContractExecutable {
     #[must_use]
     fn from(v: &ContractExecutableView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ContractExecutableView::Wasm(value) => Self::Wasm(value.clone()),
-            ContractExecutableView::StellarAsset => Self::StellarAsset,
-            ContractExecutableView::ExternalRef(value) => Self::ExternalRef(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -176,7 +186,7 @@ impl From<&ContractExecutableView<'_>> for ContractExecutable {
 impl From<ContractExecutableView<'_>> for ContractExecutable {
     #[must_use]
     fn from(v: ContractExecutableView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

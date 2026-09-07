@@ -149,14 +149,22 @@ pub enum InflationResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for InflationResultView<'_> {
+    type Owned = InflationResult;
+    fn into_owned(self) -> InflationResult {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            InflationResultView::Success(value) => InflationResult::Success(value.into_owned()),
+            InflationResultView::NotTime => InflationResult::NotTime,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&InflationResultView<'_>> for InflationResult {
     #[must_use]
     fn from(v: &InflationResultView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            InflationResultView::Success(value) => Self::Success(value.to_vecm()),
-            InflationResultView::NotTime => Self::NotTime,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -164,7 +172,7 @@ impl From<&InflationResultView<'_>> for InflationResult {
 impl From<InflationResultView<'_>> for InflationResult {
     #[must_use]
     fn from(v: InflationResultView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

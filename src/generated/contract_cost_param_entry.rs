@@ -62,3 +62,11 @@ impl WriteXdr for ContractCostParamEntry {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ContractCostParamEntry {
+    type Owned = ContractCostParamEntry;
+    fn into_owned(self) -> ContractCostParamEntry {
+        self
+    }
+}

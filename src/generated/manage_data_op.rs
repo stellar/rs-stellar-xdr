@@ -59,13 +59,21 @@ pub struct ManageDataOpView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ManageDataOpView<'_> {
+    type Owned = ManageDataOp;
+    fn into_owned(self) -> ManageDataOp {
+        ManageDataOp {
+            data_name: self.data_name.into_owned(),
+            data_value: self.data_value.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ManageDataOpView<'_>> for ManageDataOp {
     #[must_use]
     fn from(v: &ManageDataOpView<'_>) -> Self {
-        Self {
-            data_name: (&v.data_name).into(),
-            data_value: v.data_value.as_ref().map(Into::into),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&ManageDataOpView<'_>> for ManageDataOp {
 impl From<ManageDataOpView<'_>> for ManageDataOp {
     #[must_use]
     fn from(v: ManageDataOpView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

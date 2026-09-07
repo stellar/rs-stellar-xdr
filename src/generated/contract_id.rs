@@ -56,3 +56,11 @@ impl WriteXdr for ContractId {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ContractId {
+    type Owned = ContractId;
+    fn into_owned(self) -> ContractId {
+        self
+    }
+}

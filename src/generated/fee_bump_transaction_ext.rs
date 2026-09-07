@@ -128,3 +128,11 @@ impl WriteXdr for FeeBumpTransactionExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for FeeBumpTransactionExt {
+    type Owned = FeeBumpTransactionExt;
+    fn into_owned(self) -> FeeBumpTransactionExt {
+        self
+    }
+}

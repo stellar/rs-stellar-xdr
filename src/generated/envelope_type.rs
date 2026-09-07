@@ -186,3 +186,11 @@ impl WriteXdr for EnvelopeType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for EnvelopeType {
+    type Owned = EnvelopeType;
+    fn into_owned(self) -> EnvelopeType {
+        self
+    }
+}

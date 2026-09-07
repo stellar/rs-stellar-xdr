@@ -178,26 +178,34 @@ pub struct PeerStatsView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PeerStatsView<'_> {
+    type Owned = PeerStats;
+    fn into_owned(self) -> PeerStats {
+        PeerStats {
+            id: self.id.into_owned(),
+            version_str: self.version_str.into_owned(),
+            messages_read: self.messages_read.into_owned(),
+            messages_written: self.messages_written.into_owned(),
+            bytes_read: self.bytes_read.into_owned(),
+            bytes_written: self.bytes_written.into_owned(),
+            seconds_connected: self.seconds_connected.into_owned(),
+            unique_flood_bytes_recv: self.unique_flood_bytes_recv.into_owned(),
+            duplicate_flood_bytes_recv: self.duplicate_flood_bytes_recv.into_owned(),
+            unique_fetch_bytes_recv: self.unique_fetch_bytes_recv.into_owned(),
+            duplicate_fetch_bytes_recv: self.duplicate_fetch_bytes_recv.into_owned(),
+            unique_flood_message_recv: self.unique_flood_message_recv.into_owned(),
+            duplicate_flood_message_recv: self.duplicate_flood_message_recv.into_owned(),
+            unique_fetch_message_recv: self.unique_fetch_message_recv.into_owned(),
+            duplicate_fetch_message_recv: self.duplicate_fetch_message_recv.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PeerStatsView<'_>> for PeerStats {
     #[must_use]
     fn from(v: &PeerStatsView<'_>) -> Self {
-        Self {
-            id: v.id.clone(),
-            version_str: v.version_str.to_stringm(),
-            messages_read: v.messages_read,
-            messages_written: v.messages_written,
-            bytes_read: v.bytes_read,
-            bytes_written: v.bytes_written,
-            seconds_connected: v.seconds_connected,
-            unique_flood_bytes_recv: v.unique_flood_bytes_recv,
-            duplicate_flood_bytes_recv: v.duplicate_flood_bytes_recv,
-            unique_fetch_bytes_recv: v.unique_fetch_bytes_recv,
-            duplicate_fetch_bytes_recv: v.duplicate_fetch_bytes_recv,
-            unique_flood_message_recv: v.unique_flood_message_recv,
-            duplicate_flood_message_recv: v.duplicate_flood_message_recv,
-            unique_fetch_message_recv: v.unique_fetch_message_recv,
-            duplicate_fetch_message_recv: v.duplicate_fetch_message_recv,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -205,7 +213,7 @@ impl From<&PeerStatsView<'_>> for PeerStats {
 impl From<PeerStatsView<'_>> for PeerStats {
     #[must_use]
     fn from(v: PeerStatsView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

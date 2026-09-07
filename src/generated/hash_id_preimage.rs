@@ -223,21 +223,31 @@ pub enum HashIdPreimageView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for HashIdPreimageView<'_> {
+    type Owned = HashIdPreimage;
+    fn into_owned(self) -> HashIdPreimage {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            HashIdPreimageView::OpId(value) => HashIdPreimage::OpId(value.into_owned()),
+            HashIdPreimageView::PoolRevokeOpId(value) => {
+                HashIdPreimage::PoolRevokeOpId(value.into_owned())
+            }
+            HashIdPreimageView::ContractId(value) => HashIdPreimage::ContractId(value.into_owned()),
+            HashIdPreimageView::SorobanAuthorization(value) => {
+                HashIdPreimage::SorobanAuthorization(value.into_owned())
+            }
+            HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
+                HashIdPreimage::SorobanAuthorizationWithAddress(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
     fn from(v: &HashIdPreimageView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            HashIdPreimageView::OpId(value) => Self::OpId(value.clone()),
-            HashIdPreimageView::PoolRevokeOpId(value) => Self::PoolRevokeOpId(value.clone()),
-            HashIdPreimageView::ContractId(value) => Self::ContractId(value.clone()),
-            HashIdPreimageView::SorobanAuthorization(value) => {
-                Self::SorobanAuthorization(value.into())
-            }
-            HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
-                Self::SorobanAuthorizationWithAddress(value.into())
-            }
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -245,7 +255,7 @@ impl From<&HashIdPreimageView<'_>> for HashIdPreimage {
 impl From<HashIdPreimageView<'_>> for HashIdPreimage {
     #[must_use]
     fn from(v: HashIdPreimageView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

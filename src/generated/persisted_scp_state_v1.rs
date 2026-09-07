@@ -60,13 +60,21 @@ pub struct PersistedScpStateV1View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PersistedScpStateV1View<'_> {
+    type Owned = PersistedScpStateV1;
+    fn into_owned(self) -> PersistedScpStateV1 {
+        PersistedScpStateV1 {
+            scp_envelopes: self.scp_envelopes.into_owned(),
+            quorum_sets: self.quorum_sets.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
     #[must_use]
     fn from(v: &PersistedScpStateV1View<'_>) -> Self {
-        Self {
-            scp_envelopes: v.scp_envelopes.to_vecm(),
-            quorum_sets: v.quorum_sets.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -74,7 +82,7 @@ impl From<&PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
 impl From<PersistedScpStateV1View<'_>> for PersistedScpStateV1 {
     #[must_use]
     fn from(v: PersistedScpStateV1View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

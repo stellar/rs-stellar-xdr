@@ -205,3 +205,11 @@ impl WriteXdr for PaymentResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for PaymentResult {
+    type Owned = PaymentResult;
+    fn into_owned(self) -> PaymentResult {
+        self
+    }
+}

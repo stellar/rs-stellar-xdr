@@ -390,35 +390,43 @@ pub enum ScValView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScValView<'_> {
+    type Owned = ScVal;
+    fn into_owned(self) -> ScVal {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ScValView::Bool(value) => ScVal::Bool(value.into_owned()),
+            ScValView::Void => ScVal::Void,
+            ScValView::Error(value) => ScVal::Error(value.into_owned()),
+            ScValView::U32(value) => ScVal::U32(value.into_owned()),
+            ScValView::I32(value) => ScVal::I32(value.into_owned()),
+            ScValView::U64(value) => ScVal::U64(value.into_owned()),
+            ScValView::I64(value) => ScVal::I64(value.into_owned()),
+            ScValView::Timepoint(value) => ScVal::Timepoint(value.into_owned()),
+            ScValView::Duration(value) => ScVal::Duration(value.into_owned()),
+            ScValView::U128(value) => ScVal::U128(value.into_owned()),
+            ScValView::I128(value) => ScVal::I128(value.into_owned()),
+            ScValView::U256(value) => ScVal::U256(value.into_owned()),
+            ScValView::I256(value) => ScVal::I256(value.into_owned()),
+            ScValView::Bytes(value) => ScVal::Bytes(value.into_owned()),
+            ScValView::String(value) => ScVal::String(value.into_owned()),
+            ScValView::Symbol(value) => ScVal::Symbol(value.into_owned()),
+            ScValView::Vec(value) => ScVal::Vec(value.into_owned()),
+            ScValView::Map(value) => ScVal::Map(value.into_owned()),
+            ScValView::Address(value) => ScVal::Address(value.into_owned()),
+            ScValView::ContractInstance(value) => ScVal::ContractInstance(value.into_owned()),
+            ScValView::LedgerKeyContractInstance => ScVal::LedgerKeyContractInstance,
+            ScValView::LedgerKeyNonce(value) => ScVal::LedgerKeyNonce(value.into_owned()),
+            ScValView::ExecutableTag(value) => ScVal::ExecutableTag(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScValView<'_>> for ScVal {
     #[must_use]
     fn from(v: &ScValView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ScValView::Bool(value) => Self::Bool(*value),
-            ScValView::Void => Self::Void,
-            ScValView::Error(value) => Self::Error(value.clone()),
-            ScValView::U32(value) => Self::U32(*value),
-            ScValView::I32(value) => Self::I32(*value),
-            ScValView::U64(value) => Self::U64(*value),
-            ScValView::I64(value) => Self::I64(*value),
-            ScValView::Timepoint(value) => Self::Timepoint(value.clone()),
-            ScValView::Duration(value) => Self::Duration(value.clone()),
-            ScValView::U128(value) => Self::U128(value.clone()),
-            ScValView::I128(value) => Self::I128(value.clone()),
-            ScValView::U256(value) => Self::U256(value.clone()),
-            ScValView::I256(value) => Self::I256(value.clone()),
-            ScValView::Bytes(value) => Self::Bytes(value.into()),
-            ScValView::String(value) => Self::String(value.into()),
-            ScValView::Symbol(value) => Self::Symbol(value.into()),
-            ScValView::Vec(value) => Self::Vec(value.as_ref().map(Into::into)),
-            ScValView::Map(value) => Self::Map(value.as_ref().map(Into::into)),
-            ScValView::Address(value) => Self::Address(value.clone()),
-            ScValView::ContractInstance(value) => Self::ContractInstance(value.into()),
-            ScValView::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
-            ScValView::LedgerKeyNonce(value) => Self::LedgerKeyNonce(value.clone()),
-            ScValView::ExecutableTag(value) => Self::ExecutableTag(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -426,7 +434,7 @@ impl From<&ScValView<'_>> for ScVal {
 impl From<ScValView<'_>> for ScVal {
     #[must_use]
     fn from(v: ScValView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

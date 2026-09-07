@@ -79,17 +79,25 @@ pub struct ScSpecEventV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecEventV0View<'_> {
+    type Owned = ScSpecEventV0;
+    fn into_owned(self) -> ScSpecEventV0 {
+        ScSpecEventV0 {
+            doc: self.doc.into_owned(),
+            lib: self.lib.into_owned(),
+            name: self.name.into_owned(),
+            prefix_topics: self.prefix_topics.into_owned(),
+            params: self.params.into_owned(),
+            data_format: self.data_format.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
     #[must_use]
     fn from(v: &ScSpecEventV0View<'_>) -> Self {
-        Self {
-            doc: v.doc.to_stringm(),
-            lib: v.lib.to_stringm(),
-            name: (&v.name).into(),
-            prefix_topics: v.prefix_topics.to_vecm(),
-            params: v.params.to_vecm(),
-            data_format: v.data_format,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -97,7 +105,7 @@ impl From<&ScSpecEventV0View<'_>> for ScSpecEventV0 {
 impl From<ScSpecEventV0View<'_>> for ScSpecEventV0 {
     #[must_use]
     fn from(v: ScSpecEventV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

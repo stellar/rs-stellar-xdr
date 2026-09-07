@@ -114,10 +114,18 @@ impl AsRef<[ScMapEntry]> for ScMap {
 pub struct ScMapView<'a>(pub VecMView<'a, ScMapEntryView<'a>>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScMapView<'_> {
+    type Owned = ScMap;
+    fn into_owned(self) -> ScMap {
+        ScMap(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScMapView<'_>> for ScMap {
     #[must_use]
     fn from(v: &ScMapView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&ScMapView<'_>> for ScMap {
 impl From<ScMapView<'_>> for ScMap {
     #[must_use]
     fn from(v: ScMapView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

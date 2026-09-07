@@ -57,12 +57,20 @@ pub struct SorobanResourcesExtV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SorobanResourcesExtV0View<'_> {
+    type Owned = SorobanResourcesExtV0;
+    fn into_owned(self) -> SorobanResourcesExtV0 {
+        SorobanResourcesExtV0 {
+            archived_soroban_entries: self.archived_soroban_entries.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
     #[must_use]
     fn from(v: &SorobanResourcesExtV0View<'_>) -> Self {
-        Self {
-            archived_soroban_entries: v.archived_soroban_entries.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -70,7 +78,7 @@ impl From<&SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
 impl From<SorobanResourcesExtV0View<'_>> for SorobanResourcesExtV0 {
     #[must_use]
     fn from(v: SorobanResourcesExtV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

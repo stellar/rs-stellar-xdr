@@ -97,14 +97,22 @@ pub struct LedgerEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryView<'_> {
+    type Owned = LedgerEntry;
+    fn into_owned(self) -> LedgerEntry {
+        LedgerEntry {
+            last_modified_ledger_seq: self.last_modified_ledger_seq.into_owned(),
+            data: self.data.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerEntryView<'_>> for LedgerEntry {
     #[must_use]
     fn from(v: &LedgerEntryView<'_>) -> Self {
-        Self {
-            last_modified_ledger_seq: v.last_modified_ledger_seq,
-            data: (&v.data).into(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -112,7 +120,7 @@ impl From<&LedgerEntryView<'_>> for LedgerEntry {
 impl From<LedgerEntryView<'_>> for LedgerEntry {
     #[must_use]
     fn from(v: LedgerEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

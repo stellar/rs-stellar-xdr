@@ -144,3 +144,11 @@ impl WriteXdr for LedgerEntryChangeType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryChangeType {
+    type Owned = LedgerEntryChangeType;
+    fn into_owned(self) -> LedgerEntryChangeType {
+        self
+    }
+}

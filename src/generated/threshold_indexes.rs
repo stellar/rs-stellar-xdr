@@ -139,3 +139,11 @@ impl WriteXdr for ThresholdIndexes {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ThresholdIndexes {
+    type Owned = ThresholdIndexes;
+    fn into_owned(self) -> ThresholdIndexes {
+        self
+    }
+}

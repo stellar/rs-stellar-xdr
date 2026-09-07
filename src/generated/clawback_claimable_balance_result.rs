@@ -154,3 +154,11 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClawbackClaimableBalanceResult {
+    type Owned = ClawbackClaimableBalanceResult;
+    fn into_owned(self) -> ClawbackClaimableBalanceResult {
+        self
+    }
+}

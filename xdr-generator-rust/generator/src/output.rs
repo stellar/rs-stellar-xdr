@@ -67,8 +67,6 @@ pub struct StructMemberOutput {
     pub serde_rename: Option<String>,
     /// The member's type in the borrowing `View` form of the parent type.
     pub view_type_ref: String,
-    /// Expression converting the member from `View` form to owned form.
-    pub from_view_expr: String,
 }
 
 pub struct EnumOutput {
@@ -115,9 +113,6 @@ pub struct UnionArmOutput {
     pub serde_as_type: Option<String>,
     /// The arm's payload type in the borrowing `View` form of the parent type.
     pub view_type_ref: Option<String>,
-    /// Expression converting the payload from `View` form to owned form, with
-    /// the payload bound by reference to `value`.
-    pub from_view_expr: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -150,8 +145,6 @@ pub struct TypedefNewtypeOutput {
     pub view_cfg: Option<String>,
     /// The inner type in the borrowing `View` form of the newtype.
     pub view_type_ref: String,
-    /// Expression converting the inner value from `View` form to owned form.
-    pub from_view_expr: String,
     pub cfg: Option<String>,
 }
 

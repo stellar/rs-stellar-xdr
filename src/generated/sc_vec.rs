@@ -114,10 +114,18 @@ impl AsRef<[ScVal]> for ScVec {
 pub struct ScVecView<'a>(pub VecMView<'a, ScValView<'a>>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScVecView<'_> {
+    type Owned = ScVec;
+    fn into_owned(self) -> ScVec {
+        ScVec(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScVecView<'_>> for ScVec {
     #[must_use]
     fn from(v: &ScVecView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&ScVecView<'_>> for ScVec {
 impl From<ScVecView<'_>> for ScVec {
     #[must_use]
     fn from(v: ScVecView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

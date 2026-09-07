@@ -146,14 +146,22 @@ pub enum TransactionExtView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionExtView<'_> {
+    type Owned = TransactionExt;
+    fn into_owned(self) -> TransactionExt {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            TransactionExtView::V0 => TransactionExt::V0,
+            TransactionExtView::V1(value) => TransactionExt::V1(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionExtView<'_>> for TransactionExt {
     #[must_use]
     fn from(v: &TransactionExtView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            TransactionExtView::V0 => Self::V0,
-            TransactionExtView::V1(value) => Self::V1(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -161,7 +169,7 @@ impl From<&TransactionExtView<'_>> for TransactionExt {
 impl From<TransactionExtView<'_>> for TransactionExt {
     #[must_use]
     fn from(v: TransactionExtView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

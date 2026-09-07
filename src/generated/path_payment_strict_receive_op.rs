@@ -91,17 +91,25 @@ pub struct PathPaymentStrictReceiveOpView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PathPaymentStrictReceiveOpView<'_> {
+    type Owned = PathPaymentStrictReceiveOp;
+    fn into_owned(self) -> PathPaymentStrictReceiveOp {
+        PathPaymentStrictReceiveOp {
+            send_asset: self.send_asset.into_owned(),
+            send_max: self.send_max.into_owned(),
+            destination: self.destination.into_owned(),
+            dest_asset: self.dest_asset.into_owned(),
+            dest_amount: self.dest_amount.into_owned(),
+            path: self.path.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
     #[must_use]
     fn from(v: &PathPaymentStrictReceiveOpView<'_>) -> Self {
-        Self {
-            send_asset: v.send_asset.clone(),
-            send_max: v.send_max,
-            destination: v.destination.clone(),
-            dest_asset: v.dest_asset.clone(),
-            dest_amount: v.dest_amount,
-            path: v.path.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -109,7 +117,7 @@ impl From<&PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
 impl From<PathPaymentStrictReceiveOpView<'_>> for PathPaymentStrictReceiveOp {
     #[must_use]
     fn from(v: PathPaymentStrictReceiveOpView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

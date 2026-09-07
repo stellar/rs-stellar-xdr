@@ -49,3 +49,11 @@ impl WriteXdr for TtlEntry {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TtlEntry {
+    type Owned = TtlEntry;
+    fn into_owned(self) -> TtlEntry {
+        self
+    }
+}

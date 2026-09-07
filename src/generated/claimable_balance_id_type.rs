@@ -123,3 +123,11 @@ impl WriteXdr for ClaimableBalanceIdType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClaimableBalanceIdType {
+    type Owned = ClaimableBalanceIdType;
+    fn into_owned(self) -> ClaimableBalanceIdType {
+        self
+    }
+}

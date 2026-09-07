@@ -114,10 +114,18 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
 pub struct DependentTxClusterView<'a>(pub VecMView<'a, TransactionEnvelopeView<'a>>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for DependentTxClusterView<'_> {
+    type Owned = DependentTxCluster;
+    fn into_owned(self) -> DependentTxCluster {
+        DependentTxCluster(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&DependentTxClusterView<'_>> for DependentTxCluster {
     #[must_use]
     fn from(v: &DependentTxClusterView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&DependentTxClusterView<'_>> for DependentTxCluster {
 impl From<DependentTxClusterView<'_>> for DependentTxCluster {
     #[must_use]
     fn from(v: DependentTxClusterView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

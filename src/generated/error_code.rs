@@ -144,3 +144,11 @@ impl WriteXdr for ErrorCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ErrorCode {
+    type Owned = ErrorCode;
+    fn into_owned(self) -> ErrorCode {
+        self
+    }
+}

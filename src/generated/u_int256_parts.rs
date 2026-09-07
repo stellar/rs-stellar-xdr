@@ -91,3 +91,11 @@ impl<'de> serde::Deserialize<'de> for UInt256Parts {
         }
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for UInt256Parts {
+    type Owned = UInt256Parts;
+    fn into_owned(self) -> UInt256Parts {
+        self
+    }
+}

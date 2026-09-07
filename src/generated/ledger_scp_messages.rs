@@ -59,13 +59,21 @@ pub struct LedgerScpMessagesView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerScpMessagesView<'_> {
+    type Owned = LedgerScpMessages;
+    fn into_owned(self) -> LedgerScpMessages {
+        LedgerScpMessages {
+            ledger_seq: self.ledger_seq.into_owned(),
+            messages: self.messages.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerScpMessagesView<'_>> for LedgerScpMessages {
     #[must_use]
     fn from(v: &LedgerScpMessagesView<'_>) -> Self {
-        Self {
-            ledger_seq: v.ledger_seq,
-            messages: v.messages.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&LedgerScpMessagesView<'_>> for LedgerScpMessages {
 impl From<LedgerScpMessagesView<'_>> for LedgerScpMessages {
     #[must_use]
     fn from(v: LedgerScpMessagesView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

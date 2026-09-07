@@ -74,14 +74,22 @@ pub struct ContractCodeEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ContractCodeEntryView<'_> {
+    type Owned = ContractCodeEntry;
+    fn into_owned(self) -> ContractCodeEntry {
+        ContractCodeEntry {
+            ext: self.ext.into_owned(),
+            hash: self.hash.into_owned(),
+            code: self.code.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ContractCodeEntryView<'_>> for ContractCodeEntry {
     #[must_use]
     fn from(v: &ContractCodeEntryView<'_>) -> Self {
-        Self {
-            ext: v.ext.clone(),
-            hash: v.hash.clone(),
-            code: v.code.to_bytesm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -89,7 +97,7 @@ impl From<&ContractCodeEntryView<'_>> for ContractCodeEntry {
 impl From<ContractCodeEntryView<'_>> for ContractCodeEntry {
     #[must_use]
     fn from(v: ContractCodeEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

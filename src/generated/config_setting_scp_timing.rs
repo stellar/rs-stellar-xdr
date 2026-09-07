@@ -61,3 +61,11 @@ impl WriteXdr for ConfigSettingScpTiming {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ConfigSettingScpTiming {
+    type Owned = ConfigSettingScpTiming;
+    fn into_owned(self) -> ConfigSettingScpTiming {
+        self
+    }
+}

@@ -139,13 +139,23 @@ pub enum GeneralizedTransactionSetView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for GeneralizedTransactionSetView<'_> {
+    type Owned = GeneralizedTransactionSet;
+    fn into_owned(self) -> GeneralizedTransactionSet {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            GeneralizedTransactionSetView::V1(value) => {
+                GeneralizedTransactionSet::V1(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
     #[must_use]
     fn from(v: &GeneralizedTransactionSetView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            GeneralizedTransactionSetView::V1(value) => Self::V1(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -153,7 +163,7 @@ impl From<&GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
 impl From<GeneralizedTransactionSetView<'_>> for GeneralizedTransactionSet {
     #[must_use]
     fn from(v: GeneralizedTransactionSetView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

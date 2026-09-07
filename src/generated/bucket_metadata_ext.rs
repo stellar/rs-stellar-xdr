@@ -135,3 +135,11 @@ impl WriteXdr for BucketMetadataExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for BucketMetadataExt {
+    type Owned = BucketMetadataExt;
+    fn into_owned(self) -> BucketMetadataExt {
+        self
+    }
+}

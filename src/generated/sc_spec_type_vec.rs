@@ -54,12 +54,20 @@ pub struct ScSpecTypeVecView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecTypeVecView<'_> {
+    type Owned = ScSpecTypeVec;
+    fn into_owned(self) -> ScSpecTypeVec {
+        ScSpecTypeVec {
+            element_type: self.element_type.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecTypeVecView<'_>> for ScSpecTypeVec {
     #[must_use]
     fn from(v: &ScSpecTypeVecView<'_>) -> Self {
-        Self {
-            element_type: Box::new(v.element_type.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -67,7 +75,7 @@ impl From<&ScSpecTypeVecView<'_>> for ScSpecTypeVec {
 impl From<ScSpecTypeVecView<'_>> for ScSpecTypeVec {
     #[must_use]
     fn from(v: ScSpecTypeVecView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

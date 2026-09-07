@@ -253,25 +253,35 @@ pub enum ManageBuyOfferResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ManageBuyOfferResultView<'_> {
+    type Owned = ManageBuyOfferResult;
+    fn into_owned(self) -> ManageBuyOfferResult {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ManageBuyOfferResultView::Success(value) => {
+                ManageBuyOfferResult::Success(value.into_owned())
+            }
+            ManageBuyOfferResultView::Malformed => ManageBuyOfferResult::Malformed,
+            ManageBuyOfferResultView::SellNoTrust => ManageBuyOfferResult::SellNoTrust,
+            ManageBuyOfferResultView::BuyNoTrust => ManageBuyOfferResult::BuyNoTrust,
+            ManageBuyOfferResultView::SellNotAuthorized => ManageBuyOfferResult::SellNotAuthorized,
+            ManageBuyOfferResultView::BuyNotAuthorized => ManageBuyOfferResult::BuyNotAuthorized,
+            ManageBuyOfferResultView::LineFull => ManageBuyOfferResult::LineFull,
+            ManageBuyOfferResultView::Underfunded => ManageBuyOfferResult::Underfunded,
+            ManageBuyOfferResultView::CrossSelf => ManageBuyOfferResult::CrossSelf,
+            ManageBuyOfferResultView::SellNoIssuer => ManageBuyOfferResult::SellNoIssuer,
+            ManageBuyOfferResultView::BuyNoIssuer => ManageBuyOfferResult::BuyNoIssuer,
+            ManageBuyOfferResultView::NotFound => ManageBuyOfferResult::NotFound,
+            ManageBuyOfferResultView::LowReserve => ManageBuyOfferResult::LowReserve,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
     #[must_use]
     fn from(v: &ManageBuyOfferResultView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ManageBuyOfferResultView::Success(value) => Self::Success(value.into()),
-            ManageBuyOfferResultView::Malformed => Self::Malformed,
-            ManageBuyOfferResultView::SellNoTrust => Self::SellNoTrust,
-            ManageBuyOfferResultView::BuyNoTrust => Self::BuyNoTrust,
-            ManageBuyOfferResultView::SellNotAuthorized => Self::SellNotAuthorized,
-            ManageBuyOfferResultView::BuyNotAuthorized => Self::BuyNotAuthorized,
-            ManageBuyOfferResultView::LineFull => Self::LineFull,
-            ManageBuyOfferResultView::Underfunded => Self::Underfunded,
-            ManageBuyOfferResultView::CrossSelf => Self::CrossSelf,
-            ManageBuyOfferResultView::SellNoIssuer => Self::SellNoIssuer,
-            ManageBuyOfferResultView::BuyNoIssuer => Self::BuyNoIssuer,
-            ManageBuyOfferResultView::NotFound => Self::NotFound,
-            ManageBuyOfferResultView::LowReserve => Self::LowReserve,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -279,7 +289,7 @@ impl From<&ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
 impl From<ManageBuyOfferResultView<'_>> for ManageBuyOfferResult {
     #[must_use]
     fn from(v: ManageBuyOfferResultView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

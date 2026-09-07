@@ -101,20 +101,28 @@ pub struct SetOptionsOpView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SetOptionsOpView<'_> {
+    type Owned = SetOptionsOp;
+    fn into_owned(self) -> SetOptionsOp {
+        SetOptionsOp {
+            inflation_dest: self.inflation_dest.into_owned(),
+            clear_flags: self.clear_flags.into_owned(),
+            set_flags: self.set_flags.into_owned(),
+            master_weight: self.master_weight.into_owned(),
+            low_threshold: self.low_threshold.into_owned(),
+            med_threshold: self.med_threshold.into_owned(),
+            high_threshold: self.high_threshold.into_owned(),
+            home_domain: self.home_domain.into_owned(),
+            signer: self.signer.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SetOptionsOpView<'_>> for SetOptionsOp {
     #[must_use]
     fn from(v: &SetOptionsOpView<'_>) -> Self {
-        Self {
-            inflation_dest: v.inflation_dest.clone(),
-            clear_flags: v.clear_flags,
-            set_flags: v.set_flags,
-            master_weight: v.master_weight,
-            low_threshold: v.low_threshold,
-            med_threshold: v.med_threshold,
-            high_threshold: v.high_threshold,
-            home_domain: v.home_domain.as_ref().map(Into::into),
-            signer: v.signer.as_ref().map(Into::into),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -122,7 +130,7 @@ impl From<&SetOptionsOpView<'_>> for SetOptionsOp {
 impl From<SetOptionsOpView<'_>> for SetOptionsOp {
     #[must_use]
     fn from(v: SetOptionsOpView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

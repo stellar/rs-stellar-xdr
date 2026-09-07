@@ -174,16 +174,26 @@ pub enum SignerKeyView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SignerKeyView<'_> {
+    type Owned = SignerKey;
+    fn into_owned(self) -> SignerKey {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            SignerKeyView::Ed25519(value) => SignerKey::Ed25519(value.into_owned()),
+            SignerKeyView::PreAuthTx(value) => SignerKey::PreAuthTx(value.into_owned()),
+            SignerKeyView::HashX(value) => SignerKey::HashX(value.into_owned()),
+            SignerKeyView::Ed25519SignedPayload(value) => {
+                SignerKey::Ed25519SignedPayload(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SignerKeyView<'_>> for SignerKey {
     #[must_use]
     fn from(v: &SignerKeyView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            SignerKeyView::Ed25519(value) => Self::Ed25519(value.clone()),
-            SignerKeyView::PreAuthTx(value) => Self::PreAuthTx(value.clone()),
-            SignerKeyView::HashX(value) => Self::HashX(value.clone()),
-            SignerKeyView::Ed25519SignedPayload(value) => Self::Ed25519SignedPayload(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -191,7 +201,7 @@ impl From<&SignerKeyView<'_>> for SignerKey {
 impl From<SignerKeyView<'_>> for SignerKey {
     #[must_use]
     fn from(v: SignerKeyView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

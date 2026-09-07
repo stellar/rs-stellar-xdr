@@ -165,3 +165,11 @@ impl WriteXdr for ManageDataResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ManageDataResult {
+    type Owned = ManageDataResult;
+    fn into_owned(self) -> ManageDataResult {
+        self
+    }
+}

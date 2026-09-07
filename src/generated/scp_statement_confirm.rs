@@ -74,16 +74,24 @@ pub struct ScpStatementConfirmView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScpStatementConfirmView<'_> {
+    type Owned = ScpStatementConfirm;
+    fn into_owned(self) -> ScpStatementConfirm {
+        ScpStatementConfirm {
+            ballot: self.ballot.into_owned(),
+            n_prepared: self.n_prepared.into_owned(),
+            n_commit: self.n_commit.into_owned(),
+            n_h: self.n_h.into_owned(),
+            quorum_set_hash: self.quorum_set_hash.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScpStatementConfirmView<'_>> for ScpStatementConfirm {
     #[must_use]
     fn from(v: &ScpStatementConfirmView<'_>) -> Self {
-        Self {
-            ballot: (&v.ballot).into(),
-            n_prepared: v.n_prepared,
-            n_commit: v.n_commit,
-            n_h: v.n_h,
-            quorum_set_hash: v.quorum_set_hash.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -91,7 +99,7 @@ impl From<&ScpStatementConfirmView<'_>> for ScpStatementConfirm {
 impl From<ScpStatementConfirmView<'_>> for ScpStatementConfirm {
     #[must_use]
     fn from(v: ScpStatementConfirmView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

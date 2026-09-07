@@ -125,3 +125,11 @@ impl WriteXdr for ClaimableBalanceFlags {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClaimableBalanceFlags {
+    type Owned = ClaimableBalanceFlags;
+    fn into_owned(self) -> ClaimableBalanceFlags {
+        self
+    }
+}

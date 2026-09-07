@@ -49,3 +49,11 @@ impl WriteXdr for LedgerBounds {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerBounds {
+    type Owned = LedgerBounds;
+    fn into_owned(self) -> LedgerBounds {
+        self
+    }
+}

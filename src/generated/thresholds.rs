@@ -153,3 +153,11 @@ impl AsRef<[u8]> for Thresholds {
         &self.0
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Thresholds {
+    type Owned = Thresholds;
+    fn into_owned(self) -> Thresholds {
+        self
+    }
+}

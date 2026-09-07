@@ -144,3 +144,11 @@ impl WriteXdr for SorobanCredentialsType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SorobanCredentialsType {
+    type Owned = SorobanCredentialsType;
+    fn into_owned(self) -> SorobanCredentialsType {
+        self
+    }
+}

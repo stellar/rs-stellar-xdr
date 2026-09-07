@@ -68,14 +68,22 @@ pub struct AuthenticatedMessageV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for AuthenticatedMessageV0View<'_> {
+    type Owned = AuthenticatedMessageV0;
+    fn into_owned(self) -> AuthenticatedMessageV0 {
+        AuthenticatedMessageV0 {
+            sequence: self.sequence.into_owned(),
+            message: self.message.into_owned(),
+            mac: self.mac.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
     #[must_use]
     fn from(v: &AuthenticatedMessageV0View<'_>) -> Self {
-        Self {
-            sequence: v.sequence,
-            message: (&v.message).into(),
-            mac: v.mac.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -83,7 +91,7 @@ impl From<&AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
 impl From<AuthenticatedMessageV0View<'_>> for AuthenticatedMessageV0 {
     #[must_use]
     fn from(v: AuthenticatedMessageV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

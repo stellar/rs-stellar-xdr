@@ -45,3 +45,11 @@ impl WriteXdr for ClaimClaimableBalanceOp {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClaimClaimableBalanceOp {
+    type Owned = ClaimClaimableBalanceOp;
+    fn into_owned(self) -> ClaimClaimableBalanceOp {
+        self
+    }
+}

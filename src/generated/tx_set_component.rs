@@ -148,15 +148,23 @@ pub enum TxSetComponentView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TxSetComponentView<'_> {
+    type Owned = TxSetComponent;
+    fn into_owned(self) -> TxSetComponent {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {
+                TxSetComponent::TxsetCompTxsMaybeDiscountedFee(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TxSetComponentView<'_>> for TxSetComponent {
     #[must_use]
     fn from(v: &TxSetComponentView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {
-                Self::TxsetCompTxsMaybeDiscountedFee(value.into())
-            }
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -164,7 +172,7 @@ impl From<&TxSetComponentView<'_>> for TxSetComponent {
 impl From<TxSetComponentView<'_>> for TxSetComponent {
     #[must_use]
     fn from(v: TxSetComponentView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -157,26 +157,34 @@ pub struct LedgerHeaderView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerHeaderView<'_> {
+    type Owned = LedgerHeader;
+    fn into_owned(self) -> LedgerHeader {
+        LedgerHeader {
+            ledger_version: self.ledger_version.into_owned(),
+            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
+            scp_value: self.scp_value.into_owned(),
+            tx_set_result_hash: self.tx_set_result_hash.into_owned(),
+            bucket_list_hash: self.bucket_list_hash.into_owned(),
+            ledger_seq: self.ledger_seq.into_owned(),
+            total_coins: self.total_coins.into_owned(),
+            fee_pool: self.fee_pool.into_owned(),
+            inflation_seq: self.inflation_seq.into_owned(),
+            id_pool: self.id_pool.into_owned(),
+            base_fee: self.base_fee.into_owned(),
+            base_reserve: self.base_reserve.into_owned(),
+            max_tx_set_size: self.max_tx_set_size.into_owned(),
+            skip_list: self.skip_list.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerHeaderView<'_>> for LedgerHeader {
     #[must_use]
     fn from(v: &LedgerHeaderView<'_>) -> Self {
-        Self {
-            ledger_version: v.ledger_version,
-            previous_ledger_hash: v.previous_ledger_hash.clone(),
-            scp_value: (&v.scp_value).into(),
-            tx_set_result_hash: v.tx_set_result_hash.clone(),
-            bucket_list_hash: v.bucket_list_hash.clone(),
-            ledger_seq: v.ledger_seq,
-            total_coins: v.total_coins,
-            fee_pool: v.fee_pool,
-            inflation_seq: v.inflation_seq,
-            id_pool: v.id_pool,
-            base_fee: v.base_fee,
-            base_reserve: v.base_reserve,
-            max_tx_set_size: v.max_tx_set_size,
-            skip_list: v.skip_list.clone(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -184,7 +192,7 @@ impl From<&LedgerHeaderView<'_>> for LedgerHeader {
 impl From<LedgerHeaderView<'_>> for LedgerHeader {
     #[must_use]
     fn from(v: LedgerHeaderView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

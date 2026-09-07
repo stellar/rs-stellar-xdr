@@ -1,3 +1,4 @@
+{%- import "into_owned.rs.jinja" as into_owned %}
 /// {{ e.name }}{{ e.source_comment }}
 // enum
 {%- if let Some(cfg) = e.cfg %}
@@ -182,3 +183,4 @@ impl WriteXdr for {{ e.name }} {
     }
 }
 
+{% call into_owned::identity(e.name, e.cfg) %}

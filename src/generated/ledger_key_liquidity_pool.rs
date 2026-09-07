@@ -45,3 +45,11 @@ impl WriteXdr for LedgerKeyLiquidityPool {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerKeyLiquidityPool {
+    type Owned = LedgerKeyLiquidityPool;
+    fn into_owned(self) -> LedgerKeyLiquidityPool {
+        self
+    }
+}

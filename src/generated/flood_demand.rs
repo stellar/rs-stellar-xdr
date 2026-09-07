@@ -54,12 +54,20 @@ pub struct FloodDemandView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FloodDemandView<'_> {
+    type Owned = FloodDemand;
+    fn into_owned(self) -> FloodDemand {
+        FloodDemand {
+            tx_hashes: self.tx_hashes.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FloodDemandView<'_>> for FloodDemand {
     #[must_use]
     fn from(v: &FloodDemandView<'_>) -> Self {
-        Self {
-            tx_hashes: (&v.tx_hashes).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -67,7 +75,7 @@ impl From<&FloodDemandView<'_>> for FloodDemand {
 impl From<FloodDemandView<'_>> for FloodDemand {
     #[must_use]
     fn from(v: FloodDemandView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

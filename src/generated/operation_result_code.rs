@@ -163,3 +163,11 @@ impl WriteXdr for OperationResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for OperationResultCode {
+    type Owned = OperationResultCode;
+    fn into_owned(self) -> OperationResultCode {
+        self
+    }
+}

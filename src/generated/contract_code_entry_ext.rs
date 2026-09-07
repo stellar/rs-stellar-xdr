@@ -139,3 +139,11 @@ impl WriteXdr for ContractCodeEntryExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ContractCodeEntryExt {
+    type Owned = ContractCodeEntryExt;
+    fn into_owned(self) -> ContractCodeEntryExt {
+        self
+    }
+}

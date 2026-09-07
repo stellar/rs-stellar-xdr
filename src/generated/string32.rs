@@ -114,10 +114,18 @@ impl AsRef<[u8]> for String32 {
 pub struct String32View<'a>(pub StringMView<'a, 32>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for String32View<'_> {
+    type Owned = String32;
+    fn into_owned(self) -> String32 {
+        String32(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&String32View<'_>> for String32 {
     #[must_use]
     fn from(v: &String32View<'_>) -> Self {
-        Self(v.0.to_stringm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&String32View<'_>> for String32 {
 impl From<String32View<'_>> for String32 {
     #[must_use]
     fn from(v: String32View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

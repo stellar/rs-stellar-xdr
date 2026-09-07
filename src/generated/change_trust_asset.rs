@@ -159,3 +159,11 @@ impl WriteXdr for ChangeTrustAsset {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ChangeTrustAsset {
+    type Owned = ChangeTrustAsset;
+    fn into_owned(self) -> ChangeTrustAsset {
+        self
+    }
+}

@@ -59,13 +59,21 @@ pub struct ContractEventV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ContractEventV0View<'_> {
+    type Owned = ContractEventV0;
+    fn into_owned(self) -> ContractEventV0 {
+        ContractEventV0 {
+            topics: self.topics.into_owned(),
+            data: self.data.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ContractEventV0View<'_>> for ContractEventV0 {
     #[must_use]
     fn from(v: &ContractEventV0View<'_>) -> Self {
-        Self {
-            topics: v.topics.to_vecm(),
-            data: (&v.data).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&ContractEventV0View<'_>> for ContractEventV0 {
 impl From<ContractEventV0View<'_>> for ContractEventV0 {
     #[must_use]
     fn from(v: ContractEventV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

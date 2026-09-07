@@ -123,3 +123,11 @@ impl WriteXdr for SurveyMessageCommandType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SurveyMessageCommandType {
+    type Owned = SurveyMessageCommandType;
+    fn into_owned(self) -> SurveyMessageCommandType {
+        self
+    }
+}

@@ -114,10 +114,18 @@ impl AsRef<[u8]> for ScString {
 pub struct ScStringView<'a>(pub StringMView<'a>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScStringView<'_> {
+    type Owned = ScString;
+    fn into_owned(self) -> ScString {
+        ScString(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScStringView<'_>> for ScString {
     #[must_use]
     fn from(v: &ScStringView<'_>) -> Self {
-        Self(v.0.to_stringm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&ScStringView<'_>> for ScString {
 impl From<ScStringView<'_>> for ScString {
     #[must_use]
     fn from(v: ScStringView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -71,14 +71,22 @@ pub struct TransactionHistoryResultEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionHistoryResultEntryView<'_> {
+    type Owned = TransactionHistoryResultEntry;
+    fn into_owned(self) -> TransactionHistoryResultEntry {
+        TransactionHistoryResultEntry {
+            ledger_seq: self.ledger_seq.into_owned(),
+            tx_result_set: self.tx_result_set.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEntry {
     #[must_use]
     fn from(v: &TransactionHistoryResultEntryView<'_>) -> Self {
-        Self {
-            ledger_seq: v.ledger_seq,
-            tx_result_set: (&v.tx_result_set).into(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -86,7 +94,7 @@ impl From<&TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEn
 impl From<TransactionHistoryResultEntryView<'_>> for TransactionHistoryResultEntry {
     #[must_use]
     fn from(v: TransactionHistoryResultEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

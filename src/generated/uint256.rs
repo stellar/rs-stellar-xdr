@@ -153,3 +153,11 @@ impl AsRef<[u8]> for Uint256 {
         &self.0
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Uint256 {
+    type Owned = Uint256;
+    fn into_owned(self) -> Uint256 {
+        self
+    }
+}

@@ -114,10 +114,18 @@ impl AsRef<[u8]> for ScSymbol {
 pub struct ScSymbolView<'a>(pub StringMView<'a, SCSYMBOL_LIMIT>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSymbolView<'_> {
+    type Owned = ScSymbol;
+    fn into_owned(self) -> ScSymbol {
+        ScSymbol(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSymbolView<'_>> for ScSymbol {
     #[must_use]
     fn from(v: &ScSymbolView<'_>) -> Self {
-        Self(v.0.to_stringm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&ScSymbolView<'_>> for ScSymbol {
 impl From<ScSymbolView<'_>> for ScSymbol {
     #[must_use]
     fn from(v: ScSymbolView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

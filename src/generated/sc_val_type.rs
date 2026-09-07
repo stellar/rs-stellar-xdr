@@ -288,3 +288,11 @@ impl WriteXdr for ScValType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScValType {
+    type Owned = ScValType;
+    fn into_owned(self) -> ScValType {
+        self
+    }
+}

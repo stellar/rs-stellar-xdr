@@ -59,13 +59,21 @@ pub struct SignerView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SignerView<'_> {
+    type Owned = Signer;
+    fn into_owned(self) -> Signer {
+        Signer {
+            key: self.key.into_owned(),
+            weight: self.weight.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SignerView<'_>> for Signer {
     #[must_use]
     fn from(v: &SignerView<'_>) -> Self {
-        Self {
-            key: (&v.key).into(),
-            weight: v.weight,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&SignerView<'_>> for Signer {
 impl From<SignerView<'_>> for Signer {
     #[must_use]
     fn from(v: SignerView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

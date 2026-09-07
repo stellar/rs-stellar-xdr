@@ -159,3 +159,11 @@ impl WriteXdr for TrustLineAsset {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TrustLineAsset {
+    type Owned = TrustLineAsset;
+    fn into_owned(self) -> TrustLineAsset {
+        self
+    }
+}

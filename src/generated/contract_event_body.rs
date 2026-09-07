@@ -142,13 +142,21 @@ pub enum ContractEventBodyView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ContractEventBodyView<'_> {
+    type Owned = ContractEventBody;
+    fn into_owned(self) -> ContractEventBody {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ContractEventBodyView::V0(value) => ContractEventBody::V0(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ContractEventBodyView<'_>> for ContractEventBody {
     #[must_use]
     fn from(v: &ContractEventBodyView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ContractEventBodyView::V0(value) => Self::V0(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -156,7 +164,7 @@ impl From<&ContractEventBodyView<'_>> for ContractEventBody {
 impl From<ContractEventBodyView<'_>> for ContractEventBody {
     #[must_use]
     fn from(v: ContractEventBodyView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

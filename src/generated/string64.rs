@@ -114,10 +114,18 @@ impl AsRef<[u8]> for String64 {
 pub struct String64View<'a>(pub StringMView<'a, 64>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for String64View<'_> {
+    type Owned = String64;
+    fn into_owned(self) -> String64 {
+        String64(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&String64View<'_>> for String64 {
     #[must_use]
     fn from(v: &String64View<'_>) -> Self {
-        Self(v.0.to_stringm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&String64View<'_>> for String64 {
 impl From<String64View<'_>> for String64 {
     #[must_use]
     fn from(v: String64View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

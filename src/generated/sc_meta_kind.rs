@@ -122,3 +122,11 @@ impl WriteXdr for ScMetaKind {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScMetaKind {
+    type Owned = ScMetaKind;
+    fn into_owned(self) -> ScMetaKind {
+        self
+    }
+}

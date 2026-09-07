@@ -49,3 +49,11 @@ impl WriteXdr for AlphaNum4 {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for AlphaNum4 {
+    type Owned = AlphaNum4;
+    fn into_owned(self) -> AlphaNum4 {
+        self
+    }
+}

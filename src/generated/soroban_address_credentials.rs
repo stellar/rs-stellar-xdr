@@ -73,15 +73,23 @@ pub struct SorobanAddressCredentialsView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SorobanAddressCredentialsView<'_> {
+    type Owned = SorobanAddressCredentials;
+    fn into_owned(self) -> SorobanAddressCredentials {
+        SorobanAddressCredentials {
+            address: self.address.into_owned(),
+            nonce: self.nonce.into_owned(),
+            signature_expiration_ledger: self.signature_expiration_ledger.into_owned(),
+            signature: self.signature.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
     #[must_use]
     fn from(v: &SorobanAddressCredentialsView<'_>) -> Self {
-        Self {
-            address: v.address.clone(),
-            nonce: v.nonce,
-            signature_expiration_ledger: v.signature_expiration_ledger,
-            signature: (&v.signature).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -89,7 +97,7 @@ impl From<&SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
 impl From<SorobanAddressCredentialsView<'_>> for SorobanAddressCredentials {
     #[must_use]
     fn from(v: SorobanAddressCredentialsView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

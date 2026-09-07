@@ -134,3 +134,11 @@ impl WriteXdr for BinaryFuseFilterType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for BinaryFuseFilterType {
+    type Owned = BinaryFuseFilterType;
+    fn into_owned(self) -> BinaryFuseFilterType {
+        self
+    }
+}

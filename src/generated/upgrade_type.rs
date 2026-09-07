@@ -114,10 +114,18 @@ impl AsRef<[u8]> for UpgradeType {
 pub struct UpgradeTypeView<'a>(pub BytesMView<'a, 128>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for UpgradeTypeView<'_> {
+    type Owned = UpgradeType;
+    fn into_owned(self) -> UpgradeType {
+        UpgradeType(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&UpgradeTypeView<'_>> for UpgradeType {
     #[must_use]
     fn from(v: &UpgradeTypeView<'_>) -> Self {
-        Self(v.0.to_bytesm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&UpgradeTypeView<'_>> for UpgradeType {
 impl From<UpgradeTypeView<'_>> for UpgradeType {
     #[must_use]
     fn from(v: UpgradeTypeView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

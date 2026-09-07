@@ -114,10 +114,18 @@ impl AsRef<[Hash]> for TxAdvertVector {
 pub struct TxAdvertVectorView<'a>(pub VecMView<'a, Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TxAdvertVectorView<'_> {
+    type Owned = TxAdvertVector;
+    fn into_owned(self) -> TxAdvertVector {
+        TxAdvertVector(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TxAdvertVectorView<'_>> for TxAdvertVector {
     #[must_use]
     fn from(v: &TxAdvertVectorView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&TxAdvertVectorView<'_>> for TxAdvertVector {
 impl From<TxAdvertVectorView<'_>> for TxAdvertVector {
     #[must_use]
     fn from(v: TxAdvertVectorView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

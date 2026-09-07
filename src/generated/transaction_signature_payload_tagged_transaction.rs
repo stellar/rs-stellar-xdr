@@ -147,18 +147,28 @@ pub enum TransactionSignaturePayloadTaggedTransactionView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionSignaturePayloadTaggedTransactionView<'_> {
+    type Owned = TransactionSignaturePayloadTaggedTransaction;
+    fn into_owned(self) -> TransactionSignaturePayloadTaggedTransaction {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            TransactionSignaturePayloadTaggedTransactionView::Tx(value) => {
+                TransactionSignaturePayloadTaggedTransaction::Tx(value.into_owned())
+            }
+            TransactionSignaturePayloadTaggedTransactionView::TxFeeBump(value) => {
+                TransactionSignaturePayloadTaggedTransaction::TxFeeBump(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionSignaturePayloadTaggedTransactionView<'_>>
     for TransactionSignaturePayloadTaggedTransaction
 {
     #[must_use]
     fn from(v: &TransactionSignaturePayloadTaggedTransactionView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            TransactionSignaturePayloadTaggedTransactionView::Tx(value) => Self::Tx(value.into()),
-            TransactionSignaturePayloadTaggedTransactionView::TxFeeBump(value) => {
-                Self::TxFeeBump(value.into())
-            }
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -168,7 +178,7 @@ impl From<TransactionSignaturePayloadTaggedTransactionView<'_>>
 {
     #[must_use]
     fn from(v: TransactionSignaturePayloadTaggedTransactionView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

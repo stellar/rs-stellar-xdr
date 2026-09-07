@@ -82,3 +82,11 @@ impl WriteXdr for ClaimOfferAtom {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClaimOfferAtom {
+    type Owned = ClaimOfferAtom;
+    fn into_owned(self) -> ClaimOfferAtom {
+        self
+    }
+}

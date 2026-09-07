@@ -205,3 +205,11 @@ impl WriteXdr for ManageBuyOfferResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ManageBuyOfferResultCode {
+    type Owned = ManageBuyOfferResultCode;
+    fn into_owned(self) -> ManageBuyOfferResultCode {
+        self
+    }
+}

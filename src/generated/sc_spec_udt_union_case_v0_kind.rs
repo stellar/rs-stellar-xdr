@@ -129,3 +129,11 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecUdtUnionCaseV0Kind {
+    type Owned = ScSpecUdtUnionCaseV0Kind;
+    fn into_owned(self) -> ScSpecUdtUnionCaseV0Kind {
+        self
+    }
+}

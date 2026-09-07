@@ -153,3 +153,11 @@ impl WriteXdr for ClawbackResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClawbackResultCode {
+    type Owned = ClawbackResultCode;
+    fn into_owned(self) -> ClawbackResultCode {
+        self
+    }
+}

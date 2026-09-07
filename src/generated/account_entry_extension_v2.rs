@@ -77,15 +77,23 @@ pub struct AccountEntryExtensionV2View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for AccountEntryExtensionV2View<'_> {
+    type Owned = AccountEntryExtensionV2;
+    fn into_owned(self) -> AccountEntryExtensionV2 {
+        AccountEntryExtensionV2 {
+            num_sponsored: self.num_sponsored.into_owned(),
+            num_sponsoring: self.num_sponsoring.into_owned(),
+            signer_sponsoring_i_ds: self.signer_sponsoring_i_ds.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
     #[must_use]
     fn from(v: &AccountEntryExtensionV2View<'_>) -> Self {
-        Self {
-            num_sponsored: v.num_sponsored,
-            num_sponsoring: v.num_sponsoring,
-            signer_sponsoring_i_ds: v.signer_sponsoring_i_ds.to_vecm(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -93,7 +101,7 @@ impl From<&AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
 impl From<AccountEntryExtensionV2View<'_>> for AccountEntryExtensionV2 {
     #[must_use]
     fn from(v: AccountEntryExtensionV2View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

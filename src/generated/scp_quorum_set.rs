@@ -64,14 +64,22 @@ pub struct ScpQuorumSetView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScpQuorumSetView<'_> {
+    type Owned = ScpQuorumSet;
+    fn into_owned(self) -> ScpQuorumSet {
+        ScpQuorumSet {
+            threshold: self.threshold.into_owned(),
+            validators: self.validators.into_owned(),
+            inner_sets: self.inner_sets.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScpQuorumSetView<'_>> for ScpQuorumSet {
     #[must_use]
     fn from(v: &ScpQuorumSetView<'_>) -> Self {
-        Self {
-            threshold: v.threshold,
-            validators: v.validators.to_vecm(),
-            inner_sets: v.inner_sets.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -79,7 +87,7 @@ impl From<&ScpQuorumSetView<'_>> for ScpQuorumSet {
 impl From<ScpQuorumSetView<'_>> for ScpQuorumSet {
     #[must_use]
     fn from(v: ScpQuorumSetView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

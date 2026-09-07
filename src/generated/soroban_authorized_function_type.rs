@@ -138,3 +138,11 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SorobanAuthorizedFunctionType {
+    type Owned = SorobanAuthorizedFunctionType;
+    fn into_owned(self) -> SorobanAuthorizedFunctionType {
+        self
+    }
+}

@@ -153,3 +153,11 @@ impl AsRef<[u8]> for SignatureHint {
         &self.0
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SignatureHint {
+    type Owned = SignatureHint;
+    fn into_owned(self) -> SignatureHint {
+        self
+    }
+}

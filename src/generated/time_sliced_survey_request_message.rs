@@ -57,3 +57,11 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TimeSlicedSurveyRequestMessage {
+    type Owned = TimeSlicedSurveyRequestMessage;
+    fn into_owned(self) -> TimeSlicedSurveyRequestMessage {
+        self
+    }
+}

@@ -59,13 +59,21 @@ pub struct InvokeHostFunctionSuccessPreImageView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for InvokeHostFunctionSuccessPreImageView<'_> {
+    type Owned = InvokeHostFunctionSuccessPreImage;
+    fn into_owned(self) -> InvokeHostFunctionSuccessPreImage {
+        InvokeHostFunctionSuccessPreImage {
+            return_value: self.return_value.into_owned(),
+            events: self.events.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSuccessPreImage {
     #[must_use]
     fn from(v: &InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
-        Self {
-            return_value: (&v.return_value).into(),
-            events: v.events.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSucc
 impl From<InvokeHostFunctionSuccessPreImageView<'_>> for InvokeHostFunctionSuccessPreImage {
     #[must_use]
     fn from(v: InvokeHostFunctionSuccessPreImageView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

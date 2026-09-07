@@ -153,3 +153,11 @@ impl AsRef<[u8]> for Hash {
         &self.0
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Hash {
+    type Owned = Hash;
+    fn into_owned(self) -> Hash {
+        self
+    }
+}

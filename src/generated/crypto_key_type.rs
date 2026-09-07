@@ -152,3 +152,11 @@ impl WriteXdr for CryptoKeyType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for CryptoKeyType {
+    type Owned = CryptoKeyType;
+    fn into_owned(self) -> CryptoKeyType {
+        self
+    }
+}

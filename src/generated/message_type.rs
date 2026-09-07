@@ -260,3 +260,11 @@ impl WriteXdr for MessageType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for MessageType {
+    type Owned = MessageType;
+    fn into_owned(self) -> MessageType {
+        self
+    }
+}

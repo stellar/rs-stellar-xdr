@@ -194,18 +194,28 @@ pub enum ScSpecEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecEntryView<'_> {
+    type Owned = ScSpecEntry;
+    fn into_owned(self) -> ScSpecEntry {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ScSpecEntryView::FunctionV0(value) => ScSpecEntry::FunctionV0(value.into_owned()),
+            ScSpecEntryView::UdtStructV0(value) => ScSpecEntry::UdtStructV0(value.into_owned()),
+            ScSpecEntryView::UdtUnionV0(value) => ScSpecEntry::UdtUnionV0(value.into_owned()),
+            ScSpecEntryView::UdtEnumV0(value) => ScSpecEntry::UdtEnumV0(value.into_owned()),
+            ScSpecEntryView::UdtErrorEnumV0(value) => {
+                ScSpecEntry::UdtErrorEnumV0(value.into_owned())
+            }
+            ScSpecEntryView::EventV0(value) => ScSpecEntry::EventV0(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecEntryView<'_>> for ScSpecEntry {
     #[must_use]
     fn from(v: &ScSpecEntryView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ScSpecEntryView::FunctionV0(value) => Self::FunctionV0(value.into()),
-            ScSpecEntryView::UdtStructV0(value) => Self::UdtStructV0(value.into()),
-            ScSpecEntryView::UdtUnionV0(value) => Self::UdtUnionV0(value.into()),
-            ScSpecEntryView::UdtEnumV0(value) => Self::UdtEnumV0(value.into()),
-            ScSpecEntryView::UdtErrorEnumV0(value) => Self::UdtErrorEnumV0(value.into()),
-            ScSpecEntryView::EventV0(value) => Self::EventV0(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -213,7 +223,7 @@ impl From<&ScSpecEntryView<'_>> for ScSpecEntry {
 impl From<ScSpecEntryView<'_>> for ScSpecEntry {
     #[must_use]
     fn from(v: ScSpecEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

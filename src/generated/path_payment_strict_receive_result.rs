@@ -261,25 +261,57 @@ pub enum PathPaymentStrictReceiveResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PathPaymentStrictReceiveResultView<'_> {
+    type Owned = PathPaymentStrictReceiveResult;
+    fn into_owned(self) -> PathPaymentStrictReceiveResult {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            PathPaymentStrictReceiveResultView::Success(value) => {
+                PathPaymentStrictReceiveResult::Success(value.into_owned())
+            }
+            PathPaymentStrictReceiveResultView::Malformed => {
+                PathPaymentStrictReceiveResult::Malformed
+            }
+            PathPaymentStrictReceiveResultView::Underfunded => {
+                PathPaymentStrictReceiveResult::Underfunded
+            }
+            PathPaymentStrictReceiveResultView::SrcNoTrust => {
+                PathPaymentStrictReceiveResult::SrcNoTrust
+            }
+            PathPaymentStrictReceiveResultView::SrcNotAuthorized => {
+                PathPaymentStrictReceiveResult::SrcNotAuthorized
+            }
+            PathPaymentStrictReceiveResultView::NoDestination => {
+                PathPaymentStrictReceiveResult::NoDestination
+            }
+            PathPaymentStrictReceiveResultView::NoTrust => PathPaymentStrictReceiveResult::NoTrust,
+            PathPaymentStrictReceiveResultView::NotAuthorized => {
+                PathPaymentStrictReceiveResult::NotAuthorized
+            }
+            PathPaymentStrictReceiveResultView::LineFull => {
+                PathPaymentStrictReceiveResult::LineFull
+            }
+            PathPaymentStrictReceiveResultView::NoIssuer(value) => {
+                PathPaymentStrictReceiveResult::NoIssuer(value.into_owned())
+            }
+            PathPaymentStrictReceiveResultView::TooFewOffers => {
+                PathPaymentStrictReceiveResult::TooFewOffers
+            }
+            PathPaymentStrictReceiveResultView::OfferCrossSelf => {
+                PathPaymentStrictReceiveResult::OfferCrossSelf
+            }
+            PathPaymentStrictReceiveResultView::OverSendmax => {
+                PathPaymentStrictReceiveResult::OverSendmax
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PathPaymentStrictReceiveResultView<'_>> for PathPaymentStrictReceiveResult {
     #[must_use]
     fn from(v: &PathPaymentStrictReceiveResultView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            PathPaymentStrictReceiveResultView::Success(value) => Self::Success(value.into()),
-            PathPaymentStrictReceiveResultView::Malformed => Self::Malformed,
-            PathPaymentStrictReceiveResultView::Underfunded => Self::Underfunded,
-            PathPaymentStrictReceiveResultView::SrcNoTrust => Self::SrcNoTrust,
-            PathPaymentStrictReceiveResultView::SrcNotAuthorized => Self::SrcNotAuthorized,
-            PathPaymentStrictReceiveResultView::NoDestination => Self::NoDestination,
-            PathPaymentStrictReceiveResultView::NoTrust => Self::NoTrust,
-            PathPaymentStrictReceiveResultView::NotAuthorized => Self::NotAuthorized,
-            PathPaymentStrictReceiveResultView::LineFull => Self::LineFull,
-            PathPaymentStrictReceiveResultView::NoIssuer(value) => Self::NoIssuer(value.clone()),
-            PathPaymentStrictReceiveResultView::TooFewOffers => Self::TooFewOffers,
-            PathPaymentStrictReceiveResultView::OfferCrossSelf => Self::OfferCrossSelf,
-            PathPaymentStrictReceiveResultView::OverSendmax => Self::OverSendmax,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -287,7 +319,7 @@ impl From<&PathPaymentStrictReceiveResultView<'_>> for PathPaymentStrictReceiveR
 impl From<PathPaymentStrictReceiveResultView<'_>> for PathPaymentStrictReceiveResult {
     #[must_use]
     fn from(v: PathPaymentStrictReceiveResultView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

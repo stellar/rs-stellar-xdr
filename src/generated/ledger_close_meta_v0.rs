@@ -83,16 +83,24 @@ pub struct LedgerCloseMetaV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerCloseMetaV0View<'_> {
+    type Owned = LedgerCloseMetaV0;
+    fn into_owned(self) -> LedgerCloseMetaV0 {
+        LedgerCloseMetaV0 {
+            ledger_header: self.ledger_header.into_owned(),
+            tx_set: self.tx_set.into_owned(),
+            tx_processing: self.tx_processing.into_owned(),
+            upgrades_processing: self.upgrades_processing.into_owned(),
+            scp_info: self.scp_info.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
     #[must_use]
     fn from(v: &LedgerCloseMetaV0View<'_>) -> Self {
-        Self {
-            ledger_header: (&v.ledger_header).into(),
-            tx_set: (&v.tx_set).into(),
-            tx_processing: v.tx_processing.to_vecm(),
-            upgrades_processing: v.upgrades_processing.to_vecm(),
-            scp_info: v.scp_info.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -100,7 +108,7 @@ impl From<&LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
 impl From<LedgerCloseMetaV0View<'_>> for LedgerCloseMetaV0 {
     #[must_use]
     fn from(v: LedgerCloseMetaV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

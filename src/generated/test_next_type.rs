@@ -48,3 +48,12 @@ impl WriteXdr for TestNextType {
         })
     }
 }
+
+#[cfg(feature = "test_feature")]
+#[cfg(feature = "alloc")]
+impl IntoOwned for TestNextType {
+    type Owned = TestNextType;
+    fn into_owned(self) -> TestNextType {
+        self
+    }
+}

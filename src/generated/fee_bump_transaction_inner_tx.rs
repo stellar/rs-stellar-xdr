@@ -138,13 +138,23 @@ pub enum FeeBumpTransactionInnerTxView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FeeBumpTransactionInnerTxView<'_> {
+    type Owned = FeeBumpTransactionInnerTx;
+    fn into_owned(self) -> FeeBumpTransactionInnerTx {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            FeeBumpTransactionInnerTxView::Tx(value) => {
+                FeeBumpTransactionInnerTx::Tx(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
     fn from(v: &FeeBumpTransactionInnerTxView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            FeeBumpTransactionInnerTxView::Tx(value) => Self::Tx(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -152,7 +162,7 @@ impl From<&FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
 impl From<FeeBumpTransactionInnerTxView<'_>> for FeeBumpTransactionInnerTx {
     #[must_use]
     fn from(v: FeeBumpTransactionInnerTxView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -66,14 +66,22 @@ pub struct OperationMetaV2View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for OperationMetaV2View<'_> {
+    type Owned = OperationMetaV2;
+    fn into_owned(self) -> OperationMetaV2 {
+        OperationMetaV2 {
+            ext: self.ext.into_owned(),
+            changes: self.changes.into_owned(),
+            events: self.events.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&OperationMetaV2View<'_>> for OperationMetaV2 {
     #[must_use]
     fn from(v: &OperationMetaV2View<'_>) -> Self {
-        Self {
-            ext: v.ext.clone(),
-            changes: (&v.changes).into(),
-            events: v.events.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -81,7 +89,7 @@ impl From<&OperationMetaV2View<'_>> for OperationMetaV2 {
 impl From<OperationMetaV2View<'_>> for OperationMetaV2 {
     #[must_use]
     fn from(v: OperationMetaV2View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

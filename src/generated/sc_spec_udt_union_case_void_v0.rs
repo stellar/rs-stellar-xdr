@@ -59,13 +59,21 @@ pub struct ScSpecUdtUnionCaseVoidV0View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecUdtUnionCaseVoidV0View<'_> {
+    type Owned = ScSpecUdtUnionCaseVoidV0;
+    fn into_owned(self) -> ScSpecUdtUnionCaseVoidV0 {
+        ScSpecUdtUnionCaseVoidV0 {
+            doc: self.doc.into_owned(),
+            name: self.name.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecUdtUnionCaseVoidV0View<'_>> for ScSpecUdtUnionCaseVoidV0 {
     #[must_use]
     fn from(v: &ScSpecUdtUnionCaseVoidV0View<'_>) -> Self {
-        Self {
-            doc: v.doc.to_stringm(),
-            name: v.name.to_stringm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&ScSpecUdtUnionCaseVoidV0View<'_>> for ScSpecUdtUnionCaseVoidV0 {
 impl From<ScSpecUdtUnionCaseVoidV0View<'_>> for ScSpecUdtUnionCaseVoidV0 {
     #[must_use]
     fn from(v: ScSpecUdtUnionCaseVoidV0View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

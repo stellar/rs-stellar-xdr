@@ -56,3 +56,12 @@ impl WriteXdr for MuxedContract {
         })
     }
 }
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[cfg(feature = "alloc")]
+impl IntoOwned for MuxedContract {
+    type Owned = MuxedContract;
+    fn into_owned(self) -> MuxedContract {
+        self
+    }
+}

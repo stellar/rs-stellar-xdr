@@ -189,3 +189,11 @@ impl WriteXdr for SetOptionsResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SetOptionsResultCode {
+    type Owned = SetOptionsResultCode;
+    fn into_owned(self) -> SetOptionsResultCode {
+        self
+    }
+}

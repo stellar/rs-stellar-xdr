@@ -134,3 +134,11 @@ impl WriteXdr for ContractExecutableType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ContractExecutableType {
+    type Owned = ContractExecutableType;
+    fn into_owned(self) -> ContractExecutableType {
+        self
+    }
+}

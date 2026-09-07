@@ -122,3 +122,11 @@ impl WriteXdr for LiquidityPoolType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LiquidityPoolType {
+    type Owned = LiquidityPoolType;
+    fn into_owned(self) -> LiquidityPoolType {
+        self
+    }
+}

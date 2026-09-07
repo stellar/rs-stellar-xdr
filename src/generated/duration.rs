@@ -65,3 +65,11 @@ impl WriteXdr for Duration {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Duration {
+    type Owned = Duration;
+    fn into_owned(self) -> Duration {
+        self
+    }
+}

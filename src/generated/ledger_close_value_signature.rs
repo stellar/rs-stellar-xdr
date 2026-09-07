@@ -59,13 +59,21 @@ pub struct LedgerCloseValueSignatureView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerCloseValueSignatureView<'_> {
+    type Owned = LedgerCloseValueSignature;
+    fn into_owned(self) -> LedgerCloseValueSignature {
+        LedgerCloseValueSignature {
+            node_id: self.node_id.into_owned(),
+            signature: self.signature.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
     #[must_use]
     fn from(v: &LedgerCloseValueSignatureView<'_>) -> Self {
-        Self {
-            node_id: v.node_id.clone(),
-            signature: (&v.signature).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
 impl From<LedgerCloseValueSignatureView<'_>> for LedgerCloseValueSignature {
     #[must_use]
     fn from(v: LedgerCloseValueSignatureView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

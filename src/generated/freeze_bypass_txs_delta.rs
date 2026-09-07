@@ -58,13 +58,21 @@ pub struct FreezeBypassTxsDeltaView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for FreezeBypassTxsDeltaView<'_> {
+    type Owned = FreezeBypassTxsDelta;
+    fn into_owned(self) -> FreezeBypassTxsDelta {
+        FreezeBypassTxsDelta {
+            add_txs: self.add_txs.into_owned(),
+            remove_txs: self.remove_txs.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
     #[must_use]
     fn from(v: &FreezeBypassTxsDeltaView<'_>) -> Self {
-        Self {
-            add_txs: v.add_txs.to_vecm(),
-            remove_txs: v.remove_txs.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -72,7 +80,7 @@ impl From<&FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
 impl From<FreezeBypassTxsDeltaView<'_>> for FreezeBypassTxsDelta {
     #[must_use]
     fn from(v: FreezeBypassTxsDeltaView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

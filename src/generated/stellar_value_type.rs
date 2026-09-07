@@ -134,3 +134,11 @@ impl WriteXdr for StellarValueType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for StellarValueType {
+    type Owned = StellarValueType;
+    fn into_owned(self) -> StellarValueType {
+        self
+    }
+}

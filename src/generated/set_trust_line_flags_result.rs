@@ -174,3 +174,11 @@ impl WriteXdr for SetTrustLineFlagsResult {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for SetTrustLineFlagsResult {
+    type Owned = SetTrustLineFlagsResult;
+    fn into_owned(self) -> SetTrustLineFlagsResult {
+        self
+    }
+}

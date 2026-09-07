@@ -242,22 +242,40 @@ pub enum LedgerEntryDataView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryDataView<'_> {
+    type Owned = LedgerEntryData;
+    fn into_owned(self) -> LedgerEntryData {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            LedgerEntryDataView::Account(value) => LedgerEntryData::Account(value.into_owned()),
+            LedgerEntryDataView::Trustline(value) => LedgerEntryData::Trustline(value.into_owned()),
+            LedgerEntryDataView::Offer(value) => LedgerEntryData::Offer(value.into_owned()),
+            LedgerEntryDataView::Data(value) => LedgerEntryData::Data(value.into_owned()),
+            LedgerEntryDataView::ClaimableBalance(value) => {
+                LedgerEntryData::ClaimableBalance(value.into_owned())
+            }
+            LedgerEntryDataView::LiquidityPool(value) => {
+                LedgerEntryData::LiquidityPool(value.into_owned())
+            }
+            LedgerEntryDataView::ContractData(value) => {
+                LedgerEntryData::ContractData(value.into_owned())
+            }
+            LedgerEntryDataView::ContractCode(value) => {
+                LedgerEntryData::ContractCode(value.into_owned())
+            }
+            LedgerEntryDataView::ConfigSetting(value) => {
+                LedgerEntryData::ConfigSetting(value.into_owned())
+            }
+            LedgerEntryDataView::Ttl(value) => LedgerEntryData::Ttl(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerEntryDataView<'_>> for LedgerEntryData {
     #[must_use]
     fn from(v: &LedgerEntryDataView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            LedgerEntryDataView::Account(value) => Self::Account(value.into()),
-            LedgerEntryDataView::Trustline(value) => Self::Trustline(value.clone()),
-            LedgerEntryDataView::Offer(value) => Self::Offer(value.clone()),
-            LedgerEntryDataView::Data(value) => Self::Data(value.into()),
-            LedgerEntryDataView::ClaimableBalance(value) => Self::ClaimableBalance(value.into()),
-            LedgerEntryDataView::LiquidityPool(value) => Self::LiquidityPool(value.clone()),
-            LedgerEntryDataView::ContractData(value) => Self::ContractData(value.into()),
-            LedgerEntryDataView::ContractCode(value) => Self::ContractCode(value.into()),
-            LedgerEntryDataView::ConfigSetting(value) => Self::ConfigSetting(value.into()),
-            LedgerEntryDataView::Ttl(value) => Self::Ttl(value.clone()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -265,7 +283,7 @@ impl From<&LedgerEntryDataView<'_>> for LedgerEntryData {
 impl From<LedgerEntryDataView<'_>> for LedgerEntryData {
     #[must_use]
     fn from(v: LedgerEntryDataView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -134,3 +134,11 @@ impl WriteXdr for PreconditionType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for PreconditionType {
+    type Owned = PreconditionType;
+    fn into_owned(self) -> PreconditionType {
+        self
+    }
+}

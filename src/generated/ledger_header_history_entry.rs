@@ -71,14 +71,22 @@ pub struct LedgerHeaderHistoryEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerHeaderHistoryEntryView<'_> {
+    type Owned = LedgerHeaderHistoryEntry;
+    fn into_owned(self) -> LedgerHeaderHistoryEntry {
+        LedgerHeaderHistoryEntry {
+            hash: self.hash.into_owned(),
+            header: self.header.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
     #[must_use]
     fn from(v: &LedgerHeaderHistoryEntryView<'_>) -> Self {
-        Self {
-            hash: v.hash.clone(),
-            header: (&v.header).into(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -86,7 +94,7 @@ impl From<&LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
 impl From<LedgerHeaderHistoryEntryView<'_>> for LedgerHeaderHistoryEntry {
     #[must_use]
     fn from(v: LedgerHeaderHistoryEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

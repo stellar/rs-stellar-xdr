@@ -122,3 +122,11 @@ impl WriteXdr for ClaimantType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClaimantType {
+    type Owned = ClaimantType;
+    fn into_owned(self) -> ClaimantType {
+        self
+    }
+}

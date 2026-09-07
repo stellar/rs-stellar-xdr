@@ -114,10 +114,18 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 pub struct LedgerEntryChangesView<'a>(pub VecMView<'a, LedgerEntryChangeView<'a>>);
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryChangesView<'_> {
+    type Owned = LedgerEntryChanges;
+    fn into_owned(self) -> LedgerEntryChanges {
+        LedgerEntryChanges(self.0.into_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerEntryChangesView<'_>> for LedgerEntryChanges {
     #[must_use]
     fn from(v: &LedgerEntryChangesView<'_>) -> Self {
-        Self(v.0.to_vecm())
+        v.clone().into_owned()
     }
 }
 
@@ -125,7 +133,7 @@ impl From<&LedgerEntryChangesView<'_>> for LedgerEntryChanges {
 impl From<LedgerEntryChangesView<'_>> for LedgerEntryChanges {
     #[must_use]
     fn from(v: LedgerEntryChangesView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

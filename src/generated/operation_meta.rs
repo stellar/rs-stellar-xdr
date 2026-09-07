@@ -54,12 +54,20 @@ pub struct OperationMetaView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for OperationMetaView<'_> {
+    type Owned = OperationMeta;
+    fn into_owned(self) -> OperationMeta {
+        OperationMeta {
+            changes: self.changes.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&OperationMetaView<'_>> for OperationMeta {
     #[must_use]
     fn from(v: &OperationMetaView<'_>) -> Self {
-        Self {
-            changes: (&v.changes).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -67,7 +75,7 @@ impl From<&OperationMetaView<'_>> for OperationMeta {
 impl From<OperationMetaView<'_>> for OperationMeta {
     #[must_use]
     fn from(v: OperationMetaView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

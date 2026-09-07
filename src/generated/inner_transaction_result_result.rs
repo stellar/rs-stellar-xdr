@@ -302,30 +302,68 @@ pub enum InnerTransactionResultResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for InnerTransactionResultResultView<'_> {
+    type Owned = InnerTransactionResultResult;
+    fn into_owned(self) -> InnerTransactionResultResult {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            InnerTransactionResultResultView::TxSuccess(value) => {
+                InnerTransactionResultResult::TxSuccess(value.into_owned())
+            }
+            InnerTransactionResultResultView::TxFailed(value) => {
+                InnerTransactionResultResult::TxFailed(value.into_owned())
+            }
+            InnerTransactionResultResultView::TxTooEarly => {
+                InnerTransactionResultResult::TxTooEarly
+            }
+            InnerTransactionResultResultView::TxTooLate => InnerTransactionResultResult::TxTooLate,
+            InnerTransactionResultResultView::TxMissingOperation => {
+                InnerTransactionResultResult::TxMissingOperation
+            }
+            InnerTransactionResultResultView::TxBadSeq => InnerTransactionResultResult::TxBadSeq,
+            InnerTransactionResultResultView::TxBadAuth => InnerTransactionResultResult::TxBadAuth,
+            InnerTransactionResultResultView::TxInsufficientBalance => {
+                InnerTransactionResultResult::TxInsufficientBalance
+            }
+            InnerTransactionResultResultView::TxNoAccount => {
+                InnerTransactionResultResult::TxNoAccount
+            }
+            InnerTransactionResultResultView::TxInsufficientFee => {
+                InnerTransactionResultResult::TxInsufficientFee
+            }
+            InnerTransactionResultResultView::TxBadAuthExtra => {
+                InnerTransactionResultResult::TxBadAuthExtra
+            }
+            InnerTransactionResultResultView::TxInternalError => {
+                InnerTransactionResultResult::TxInternalError
+            }
+            InnerTransactionResultResultView::TxNotSupported => {
+                InnerTransactionResultResult::TxNotSupported
+            }
+            InnerTransactionResultResultView::TxBadSponsorship => {
+                InnerTransactionResultResult::TxBadSponsorship
+            }
+            InnerTransactionResultResultView::TxBadMinSeqAgeOrGap => {
+                InnerTransactionResultResult::TxBadMinSeqAgeOrGap
+            }
+            InnerTransactionResultResultView::TxMalformed => {
+                InnerTransactionResultResult::TxMalformed
+            }
+            InnerTransactionResultResultView::TxSorobanInvalid => {
+                InnerTransactionResultResult::TxSorobanInvalid
+            }
+            InnerTransactionResultResultView::TxFrozenKeyAccessed => {
+                InnerTransactionResultResult::TxFrozenKeyAccessed
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
     fn from(v: &InnerTransactionResultResultView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            InnerTransactionResultResultView::TxSuccess(value) => Self::TxSuccess(value.to_vecm()),
-            InnerTransactionResultResultView::TxFailed(value) => Self::TxFailed(value.to_vecm()),
-            InnerTransactionResultResultView::TxTooEarly => Self::TxTooEarly,
-            InnerTransactionResultResultView::TxTooLate => Self::TxTooLate,
-            InnerTransactionResultResultView::TxMissingOperation => Self::TxMissingOperation,
-            InnerTransactionResultResultView::TxBadSeq => Self::TxBadSeq,
-            InnerTransactionResultResultView::TxBadAuth => Self::TxBadAuth,
-            InnerTransactionResultResultView::TxInsufficientBalance => Self::TxInsufficientBalance,
-            InnerTransactionResultResultView::TxNoAccount => Self::TxNoAccount,
-            InnerTransactionResultResultView::TxInsufficientFee => Self::TxInsufficientFee,
-            InnerTransactionResultResultView::TxBadAuthExtra => Self::TxBadAuthExtra,
-            InnerTransactionResultResultView::TxInternalError => Self::TxInternalError,
-            InnerTransactionResultResultView::TxNotSupported => Self::TxNotSupported,
-            InnerTransactionResultResultView::TxBadSponsorship => Self::TxBadSponsorship,
-            InnerTransactionResultResultView::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
-            InnerTransactionResultResultView::TxMalformed => Self::TxMalformed,
-            InnerTransactionResultResultView::TxSorobanInvalid => Self::TxSorobanInvalid,
-            InnerTransactionResultResultView::TxFrozenKeyAccessed => Self::TxFrozenKeyAccessed,
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -333,7 +371,7 @@ impl From<&InnerTransactionResultResultView<'_>> for InnerTransactionResultResul
 impl From<InnerTransactionResultResultView<'_>> for InnerTransactionResultResult {
     #[must_use]
     fn from(v: InnerTransactionResultResultView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

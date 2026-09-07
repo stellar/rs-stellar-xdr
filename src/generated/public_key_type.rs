@@ -122,3 +122,11 @@ impl WriteXdr for PublicKeyType {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for PublicKeyType {
+    type Owned = PublicKeyType;
+    fn into_owned(self) -> PublicKeyType {
+        self
+    }
+}

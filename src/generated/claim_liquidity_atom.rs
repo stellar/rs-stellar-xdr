@@ -73,3 +73,11 @@ impl WriteXdr for ClaimLiquidityAtom {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ClaimLiquidityAtom {
+    type Owned = ClaimLiquidityAtom;
+    fn into_owned(self) -> ClaimLiquidityAtom {
+        self
+    }
+}

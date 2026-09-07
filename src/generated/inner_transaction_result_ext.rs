@@ -128,3 +128,11 @@ impl WriteXdr for InnerTransactionResultExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for InnerTransactionResultExt {
+    type Owned = InnerTransactionResultExt;
+    fn into_owned(self) -> InnerTransactionResultExt {
+        self
+    }
+}

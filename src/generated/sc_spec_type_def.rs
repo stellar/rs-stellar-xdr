@@ -374,38 +374,46 @@ pub enum ScSpecTypeDefView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecTypeDefView<'_> {
+    type Owned = ScSpecTypeDef;
+    fn into_owned(self) -> ScSpecTypeDef {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ScSpecTypeDefView::Val => ScSpecTypeDef::Val,
+            ScSpecTypeDefView::Bool => ScSpecTypeDef::Bool,
+            ScSpecTypeDefView::Void => ScSpecTypeDef::Void,
+            ScSpecTypeDefView::Error => ScSpecTypeDef::Error,
+            ScSpecTypeDefView::U32 => ScSpecTypeDef::U32,
+            ScSpecTypeDefView::I32 => ScSpecTypeDef::I32,
+            ScSpecTypeDefView::U64 => ScSpecTypeDef::U64,
+            ScSpecTypeDefView::I64 => ScSpecTypeDef::I64,
+            ScSpecTypeDefView::Timepoint => ScSpecTypeDef::Timepoint,
+            ScSpecTypeDefView::Duration => ScSpecTypeDef::Duration,
+            ScSpecTypeDefView::U128 => ScSpecTypeDef::U128,
+            ScSpecTypeDefView::I128 => ScSpecTypeDef::I128,
+            ScSpecTypeDefView::U256 => ScSpecTypeDef::U256,
+            ScSpecTypeDefView::I256 => ScSpecTypeDef::I256,
+            ScSpecTypeDefView::Bytes => ScSpecTypeDef::Bytes,
+            ScSpecTypeDefView::String => ScSpecTypeDef::String,
+            ScSpecTypeDefView::Symbol => ScSpecTypeDef::Symbol,
+            ScSpecTypeDefView::Address => ScSpecTypeDef::Address,
+            ScSpecTypeDefView::MuxedAddress => ScSpecTypeDef::MuxedAddress,
+            ScSpecTypeDefView::Option(value) => ScSpecTypeDef::Option(value.into_owned()),
+            ScSpecTypeDefView::Result(value) => ScSpecTypeDef::Result(value.into_owned()),
+            ScSpecTypeDefView::Vec(value) => ScSpecTypeDef::Vec(value.into_owned()),
+            ScSpecTypeDefView::Map(value) => ScSpecTypeDef::Map(value.into_owned()),
+            ScSpecTypeDefView::Tuple(value) => ScSpecTypeDef::Tuple(value.into_owned()),
+            ScSpecTypeDefView::BytesN(value) => ScSpecTypeDef::BytesN(value.into_owned()),
+            ScSpecTypeDefView::Udt(value) => ScSpecTypeDef::Udt(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ScSpecTypeDefView<'_>> for ScSpecTypeDef {
     #[must_use]
     fn from(v: &ScSpecTypeDefView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ScSpecTypeDefView::Val => Self::Val,
-            ScSpecTypeDefView::Bool => Self::Bool,
-            ScSpecTypeDefView::Void => Self::Void,
-            ScSpecTypeDefView::Error => Self::Error,
-            ScSpecTypeDefView::U32 => Self::U32,
-            ScSpecTypeDefView::I32 => Self::I32,
-            ScSpecTypeDefView::U64 => Self::U64,
-            ScSpecTypeDefView::I64 => Self::I64,
-            ScSpecTypeDefView::Timepoint => Self::Timepoint,
-            ScSpecTypeDefView::Duration => Self::Duration,
-            ScSpecTypeDefView::U128 => Self::U128,
-            ScSpecTypeDefView::I128 => Self::I128,
-            ScSpecTypeDefView::U256 => Self::U256,
-            ScSpecTypeDefView::I256 => Self::I256,
-            ScSpecTypeDefView::Bytes => Self::Bytes,
-            ScSpecTypeDefView::String => Self::String,
-            ScSpecTypeDefView::Symbol => Self::Symbol,
-            ScSpecTypeDefView::Address => Self::Address,
-            ScSpecTypeDefView::MuxedAddress => Self::MuxedAddress,
-            ScSpecTypeDefView::Option(value) => Self::Option(Box::new((*value).into())),
-            ScSpecTypeDefView::Result(value) => Self::Result(Box::new((*value).into())),
-            ScSpecTypeDefView::Vec(value) => Self::Vec(Box::new((*value).into())),
-            ScSpecTypeDefView::Map(value) => Self::Map(Box::new((*value).into())),
-            ScSpecTypeDefView::Tuple(value) => Self::Tuple(Box::new((*value).into())),
-            ScSpecTypeDefView::BytesN(value) => Self::BytesN(value.clone()),
-            ScSpecTypeDefView::Udt(value) => Self::Udt(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -413,7 +421,7 @@ impl From<&ScSpecTypeDefView<'_>> for ScSpecTypeDef {
 impl From<ScSpecTypeDefView<'_>> for ScSpecTypeDef {
     #[must_use]
     fn from(v: ScSpecTypeDefView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

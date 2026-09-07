@@ -169,3 +169,11 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LiquidityPoolWithdrawResultCode {
+    type Owned = LiquidityPoolWithdrawResultCode;
+    fn into_owned(self) -> LiquidityPoolWithdrawResultCode {
+        self
+    }
+}

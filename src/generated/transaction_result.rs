@@ -103,14 +103,22 @@ pub struct TransactionResultView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for TransactionResultView<'_> {
+    type Owned = TransactionResult;
+    fn into_owned(self) -> TransactionResult {
+        TransactionResult {
+            fee_charged: self.fee_charged.into_owned(),
+            result: self.result.into_owned(),
+            ext: self.ext.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&TransactionResultView<'_>> for TransactionResult {
     #[must_use]
     fn from(v: &TransactionResultView<'_>) -> Self {
-        Self {
-            fee_charged: v.fee_charged,
-            result: (&v.result).into(),
-            ext: v.ext.clone(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -118,7 +126,7 @@ impl From<&TransactionResultView<'_>> for TransactionResult {
 impl From<TransactionResultView<'_>> for TransactionResult {
     #[must_use]
     fn from(v: TransactionResultView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

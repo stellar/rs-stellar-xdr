@@ -108,19 +108,29 @@ pub struct LedgerCloseMetaV2View<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerCloseMetaV2View<'_> {
+    type Owned = LedgerCloseMetaV2;
+    fn into_owned(self) -> LedgerCloseMetaV2 {
+        LedgerCloseMetaV2 {
+            ext: self.ext.into_owned(),
+            ledger_header: self.ledger_header.into_owned(),
+            tx_set: self.tx_set.into_owned(),
+            tx_processing: self.tx_processing.into_owned(),
+            upgrades_processing: self.upgrades_processing.into_owned(),
+            scp_info: self.scp_info.into_owned(),
+            total_byte_size_of_live_soroban_state: self
+                .total_byte_size_of_live_soroban_state
+                .into_owned(),
+            evicted_keys: self.evicted_keys.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerCloseMetaV2View<'_>> for LedgerCloseMetaV2 {
     #[must_use]
     fn from(v: &LedgerCloseMetaV2View<'_>) -> Self {
-        Self {
-            ext: v.ext.clone(),
-            ledger_header: (&v.ledger_header).into(),
-            tx_set: (&v.tx_set).into(),
-            tx_processing: v.tx_processing.to_vecm(),
-            upgrades_processing: v.upgrades_processing.to_vecm(),
-            scp_info: v.scp_info.to_vecm(),
-            total_byte_size_of_live_soroban_state: v.total_byte_size_of_live_soroban_state,
-            evicted_keys: v.evicted_keys.to_vecm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -128,7 +138,7 @@ impl From<&LedgerCloseMetaV2View<'_>> for LedgerCloseMetaV2 {
 impl From<LedgerCloseMetaV2View<'_>> for LedgerCloseMetaV2 {
     #[must_use]
     fn from(v: LedgerCloseMetaV2View<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

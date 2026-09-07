@@ -158,15 +158,23 @@ pub enum PreconditionsView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for PreconditionsView<'_> {
+    type Owned = Preconditions;
+    fn into_owned(self) -> Preconditions {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            PreconditionsView::None => Preconditions::None,
+            PreconditionsView::Time(value) => Preconditions::Time(value.into_owned()),
+            PreconditionsView::V2(value) => Preconditions::V2(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&PreconditionsView<'_>> for Preconditions {
     #[must_use]
     fn from(v: &PreconditionsView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            PreconditionsView::None => Self::None,
-            PreconditionsView::Time(value) => Self::Time(value.clone()),
-            PreconditionsView::V2(value) => Self::V2(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -174,7 +182,7 @@ impl From<&PreconditionsView<'_>> for Preconditions {
 impl From<PreconditionsView<'_>> for Preconditions {
     #[must_use]
     fn from(v: PreconditionsView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

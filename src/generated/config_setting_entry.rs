@@ -392,67 +392,83 @@ pub enum ConfigSettingEntryView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for ConfigSettingEntryView<'_> {
+    type Owned = ConfigSettingEntry;
+    fn into_owned(self) -> ConfigSettingEntry {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            ConfigSettingEntryView::ContractMaxSizeBytes(value) => {
+                ConfigSettingEntry::ContractMaxSizeBytes(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractComputeV0(value) => {
+                ConfigSettingEntry::ContractComputeV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractLedgerCostV0(value) => {
+                ConfigSettingEntry::ContractLedgerCostV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractHistoricalDataV0(value) => {
+                ConfigSettingEntry::ContractHistoricalDataV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractEventsV0(value) => {
+                ConfigSettingEntry::ContractEventsV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractBandwidthV0(value) => {
+                ConfigSettingEntry::ContractBandwidthV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractCostParamsCpuInstructions(value) => {
+                ConfigSettingEntry::ContractCostParamsCpuInstructions(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractCostParamsMemoryBytes(value) => {
+                ConfigSettingEntry::ContractCostParamsMemoryBytes(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractDataKeySizeBytes(value) => {
+                ConfigSettingEntry::ContractDataKeySizeBytes(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractDataEntrySizeBytes(value) => {
+                ConfigSettingEntry::ContractDataEntrySizeBytes(value.into_owned())
+            }
+            ConfigSettingEntryView::StateArchival(value) => {
+                ConfigSettingEntry::StateArchival(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractExecutionLanes(value) => {
+                ConfigSettingEntry::ContractExecutionLanes(value.into_owned())
+            }
+            ConfigSettingEntryView::LiveSorobanStateSizeWindow(value) => {
+                ConfigSettingEntry::LiveSorobanStateSizeWindow(value.into_owned())
+            }
+            ConfigSettingEntryView::EvictionIterator(value) => {
+                ConfigSettingEntry::EvictionIterator(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractParallelComputeV0(value) => {
+                ConfigSettingEntry::ContractParallelComputeV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ContractLedgerCostExtV0(value) => {
+                ConfigSettingEntry::ContractLedgerCostExtV0(value.into_owned())
+            }
+            ConfigSettingEntryView::ScpTiming(value) => {
+                ConfigSettingEntry::ScpTiming(value.into_owned())
+            }
+            ConfigSettingEntryView::FrozenLedgerKeys(value) => {
+                ConfigSettingEntry::FrozenLedgerKeys(value.into_owned())
+            }
+            ConfigSettingEntryView::FrozenLedgerKeysDelta(value) => {
+                ConfigSettingEntry::FrozenLedgerKeysDelta(value.into_owned())
+            }
+            ConfigSettingEntryView::FreezeBypassTxs(value) => {
+                ConfigSettingEntry::FreezeBypassTxs(value.into_owned())
+            }
+            ConfigSettingEntryView::FreezeBypassTxsDelta(value) => {
+                ConfigSettingEntry::FreezeBypassTxsDelta(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&ConfigSettingEntryView<'_>> for ConfigSettingEntry {
     #[must_use]
     fn from(v: &ConfigSettingEntryView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            ConfigSettingEntryView::ContractMaxSizeBytes(value) => {
-                Self::ContractMaxSizeBytes(*value)
-            }
-            ConfigSettingEntryView::ContractComputeV0(value) => {
-                Self::ContractComputeV0(value.clone())
-            }
-            ConfigSettingEntryView::ContractLedgerCostV0(value) => {
-                Self::ContractLedgerCostV0(value.clone())
-            }
-            ConfigSettingEntryView::ContractHistoricalDataV0(value) => {
-                Self::ContractHistoricalDataV0(value.clone())
-            }
-            ConfigSettingEntryView::ContractEventsV0(value) => {
-                Self::ContractEventsV0(value.clone())
-            }
-            ConfigSettingEntryView::ContractBandwidthV0(value) => {
-                Self::ContractBandwidthV0(value.clone())
-            }
-            ConfigSettingEntryView::ContractCostParamsCpuInstructions(value) => {
-                Self::ContractCostParamsCpuInstructions(value.into())
-            }
-            ConfigSettingEntryView::ContractCostParamsMemoryBytes(value) => {
-                Self::ContractCostParamsMemoryBytes(value.into())
-            }
-            ConfigSettingEntryView::ContractDataKeySizeBytes(value) => {
-                Self::ContractDataKeySizeBytes(*value)
-            }
-            ConfigSettingEntryView::ContractDataEntrySizeBytes(value) => {
-                Self::ContractDataEntrySizeBytes(*value)
-            }
-            ConfigSettingEntryView::StateArchival(value) => Self::StateArchival(value.clone()),
-            ConfigSettingEntryView::ContractExecutionLanes(value) => {
-                Self::ContractExecutionLanes(value.clone())
-            }
-            ConfigSettingEntryView::LiveSorobanStateSizeWindow(value) => {
-                Self::LiveSorobanStateSizeWindow(value.to_vecm())
-            }
-            ConfigSettingEntryView::EvictionIterator(value) => {
-                Self::EvictionIterator(value.clone())
-            }
-            ConfigSettingEntryView::ContractParallelComputeV0(value) => {
-                Self::ContractParallelComputeV0(value.clone())
-            }
-            ConfigSettingEntryView::ContractLedgerCostExtV0(value) => {
-                Self::ContractLedgerCostExtV0(value.clone())
-            }
-            ConfigSettingEntryView::ScpTiming(value) => Self::ScpTiming(value.clone()),
-            ConfigSettingEntryView::FrozenLedgerKeys(value) => Self::FrozenLedgerKeys(value.into()),
-            ConfigSettingEntryView::FrozenLedgerKeysDelta(value) => {
-                Self::FrozenLedgerKeysDelta(value.into())
-            }
-            ConfigSettingEntryView::FreezeBypassTxs(value) => Self::FreezeBypassTxs(value.into()),
-            ConfigSettingEntryView::FreezeBypassTxsDelta(value) => {
-                Self::FreezeBypassTxsDelta(value.into())
-            }
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -460,7 +476,7 @@ impl From<&ConfigSettingEntryView<'_>> for ConfigSettingEntry {
 impl From<ConfigSettingEntryView<'_>> for ConfigSettingEntry {
     #[must_use]
     fn from(v: ConfigSettingEntryView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

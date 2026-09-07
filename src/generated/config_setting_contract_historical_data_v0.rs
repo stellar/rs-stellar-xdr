@@ -49,3 +49,11 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ConfigSettingContractHistoricalDataV0 {
+    type Owned = ConfigSettingContractHistoricalDataV0;
+    fn into_owned(self) -> ConfigSettingContractHistoricalDataV0 {
+        self
+    }
+}

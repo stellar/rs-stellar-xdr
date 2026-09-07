@@ -45,3 +45,11 @@ impl WriteXdr for Auth {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Auth {
+    type Owned = Auth;
+    fn into_owned(self) -> Auth {
+        self
+    }
+}

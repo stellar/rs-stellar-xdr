@@ -134,3 +134,11 @@ impl WriteXdr for ScSpecEventDataFormat {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScSpecEventDataFormat {
+    type Owned = ScSpecEventDataFormat;
+    fn into_owned(self) -> ScSpecEventDataFormat {
+        self
+    }
+}

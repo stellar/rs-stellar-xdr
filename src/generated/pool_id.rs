@@ -56,3 +56,11 @@ impl WriteXdr for PoolId {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for PoolId {
+    type Owned = PoolId;
+    fn into_owned(self) -> PoolId {
+        self
+    }
+}

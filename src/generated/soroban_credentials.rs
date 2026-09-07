@@ -178,18 +178,30 @@ pub enum SorobanCredentialsView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SorobanCredentialsView<'_> {
+    type Owned = SorobanCredentials;
+    fn into_owned(self) -> SorobanCredentials {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            SorobanCredentialsView::SourceAccount => SorobanCredentials::SourceAccount,
+            SorobanCredentialsView::Address(value) => {
+                SorobanCredentials::Address(value.into_owned())
+            }
+            SorobanCredentialsView::AddressV2(value) => {
+                SorobanCredentials::AddressV2(value.into_owned())
+            }
+            SorobanCredentialsView::AddressWithDelegates(value) => {
+                SorobanCredentials::AddressWithDelegates(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SorobanCredentialsView<'_>> for SorobanCredentials {
     #[must_use]
     fn from(v: &SorobanCredentialsView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            SorobanCredentialsView::SourceAccount => Self::SourceAccount,
-            SorobanCredentialsView::Address(value) => Self::Address(value.into()),
-            SorobanCredentialsView::AddressV2(value) => Self::AddressV2(value.into()),
-            SorobanCredentialsView::AddressWithDelegates(value) => {
-                Self::AddressWithDelegates(value.into())
-            }
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -197,7 +209,7 @@ impl From<&SorobanCredentialsView<'_>> for SorobanCredentials {
 impl From<SorobanCredentialsView<'_>> for SorobanCredentials {
     #[must_use]
     fn from(v: SorobanCredentialsView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

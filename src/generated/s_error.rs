@@ -59,13 +59,21 @@ pub struct SErrorView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for SErrorView<'_> {
+    type Owned = SError;
+    fn into_owned(self) -> SError {
+        SError {
+            code: self.code.into_owned(),
+            msg: self.msg.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&SErrorView<'_>> for SError {
     #[must_use]
     fn from(v: &SErrorView<'_>) -> Self {
-        Self {
-            code: v.code,
-            msg: v.msg.to_stringm(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&SErrorView<'_>> for SError {
 impl From<SErrorView<'_>> for SError {
     #[must_use]
     fn from(v: SErrorView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

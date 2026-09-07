@@ -283,22 +283,32 @@ pub enum LedgerKeyView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerKeyView<'_> {
+    type Owned = LedgerKey;
+    fn into_owned(self) -> LedgerKey {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            LedgerKeyView::Account(value) => LedgerKey::Account(value.into_owned()),
+            LedgerKeyView::Trustline(value) => LedgerKey::Trustline(value.into_owned()),
+            LedgerKeyView::Offer(value) => LedgerKey::Offer(value.into_owned()),
+            LedgerKeyView::Data(value) => LedgerKey::Data(value.into_owned()),
+            LedgerKeyView::ClaimableBalance(value) => {
+                LedgerKey::ClaimableBalance(value.into_owned())
+            }
+            LedgerKeyView::LiquidityPool(value) => LedgerKey::LiquidityPool(value.into_owned()),
+            LedgerKeyView::ContractData(value) => LedgerKey::ContractData(value.into_owned()),
+            LedgerKeyView::ContractCode(value) => LedgerKey::ContractCode(value.into_owned()),
+            LedgerKeyView::ConfigSetting(value) => LedgerKey::ConfigSetting(value.into_owned()),
+            LedgerKeyView::Ttl(value) => LedgerKey::Ttl(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerKeyView<'_>> for LedgerKey {
     #[must_use]
     fn from(v: &LedgerKeyView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            LedgerKeyView::Account(value) => Self::Account(value.clone()),
-            LedgerKeyView::Trustline(value) => Self::Trustline(value.clone()),
-            LedgerKeyView::Offer(value) => Self::Offer(value.clone()),
-            LedgerKeyView::Data(value) => Self::Data(value.into()),
-            LedgerKeyView::ClaimableBalance(value) => Self::ClaimableBalance(value.clone()),
-            LedgerKeyView::LiquidityPool(value) => Self::LiquidityPool(value.clone()),
-            LedgerKeyView::ContractData(value) => Self::ContractData(value.into()),
-            LedgerKeyView::ContractCode(value) => Self::ContractCode(value.clone()),
-            LedgerKeyView::ConfigSetting(value) => Self::ConfigSetting(value.clone()),
-            LedgerKeyView::Ttl(value) => Self::Ttl(value.clone()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -306,7 +316,7 @@ impl From<&LedgerKeyView<'_>> for LedgerKey {
 impl From<LedgerKeyView<'_>> for LedgerKey {
     #[must_use]
     fn from(v: LedgerKeyView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

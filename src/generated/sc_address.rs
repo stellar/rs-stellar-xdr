@@ -187,3 +187,11 @@ impl WriteXdr for ScAddress {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ScAddress {
+    type Owned = ScAddress;
+    fn into_owned(self) -> ScAddress {
+        self
+    }
+}

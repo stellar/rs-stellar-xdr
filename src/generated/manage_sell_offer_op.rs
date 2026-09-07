@@ -71,3 +71,11 @@ impl WriteXdr for ManageSellOfferOp {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ManageSellOfferOp {
+    type Owned = ManageSellOfferOp;
+    fn into_owned(self) -> ManageSellOfferOp {
+        self
+    }
+}

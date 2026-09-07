@@ -59,13 +59,21 @@ pub struct DecoratedSignatureView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for DecoratedSignatureView<'_> {
+    type Owned = DecoratedSignature;
+    fn into_owned(self) -> DecoratedSignature {
+        DecoratedSignature {
+            hint: self.hint.into_owned(),
+            signature: self.signature.into_owned(),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&DecoratedSignatureView<'_>> for DecoratedSignature {
     #[must_use]
     fn from(v: &DecoratedSignatureView<'_>) -> Self {
-        Self {
-            hint: v.hint.clone(),
-            signature: (&v.signature).into(),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -73,7 +81,7 @@ impl From<&DecoratedSignatureView<'_>> for DecoratedSignature {
 impl From<DecoratedSignatureView<'_>> for DecoratedSignature {
     #[must_use]
     fn from(v: DecoratedSignatureView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

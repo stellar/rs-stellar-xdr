@@ -244,3 +244,11 @@ impl WriteXdr for TransactionResultCode {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for TransactionResultCode {
+    type Owned = TransactionResultCode;
+    fn into_owned(self) -> TransactionResultCode {
+        self
+    }
+}

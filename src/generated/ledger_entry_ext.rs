@@ -135,3 +135,11 @@ impl WriteXdr for LedgerEntryExt {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryExt {
+    type Owned = LedgerEntryExt;
+    fn into_owned(self) -> LedgerEntryExt {
+        self
+    }
+}

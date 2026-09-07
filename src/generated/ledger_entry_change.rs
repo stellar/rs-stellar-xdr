@@ -176,17 +176,27 @@ pub enum LedgerEntryChangeView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for LedgerEntryChangeView<'_> {
+    type Owned = LedgerEntryChange;
+    fn into_owned(self) -> LedgerEntryChange {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            LedgerEntryChangeView::Created(value) => LedgerEntryChange::Created(value.into_owned()),
+            LedgerEntryChangeView::Updated(value) => LedgerEntryChange::Updated(value.into_owned()),
+            LedgerEntryChangeView::Removed(value) => LedgerEntryChange::Removed(value.into_owned()),
+            LedgerEntryChangeView::State(value) => LedgerEntryChange::State(value.into_owned()),
+            LedgerEntryChangeView::Restored(value) => {
+                LedgerEntryChange::Restored(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&LedgerEntryChangeView<'_>> for LedgerEntryChange {
     #[must_use]
     fn from(v: &LedgerEntryChangeView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            LedgerEntryChangeView::Created(value) => Self::Created(value.into()),
-            LedgerEntryChangeView::Updated(value) => Self::Updated(value.into()),
-            LedgerEntryChangeView::Removed(value) => Self::Removed(value.into()),
-            LedgerEntryChangeView::State(value) => Self::State(value.into()),
-            LedgerEntryChangeView::Restored(value) => Self::Restored(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -194,7 +204,7 @@ impl From<&LedgerEntryChangeView<'_>> for LedgerEntryChange {
 impl From<LedgerEntryChangeView<'_>> for LedgerEntryChange {
     #[must_use]
     fn from(v: LedgerEntryChangeView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

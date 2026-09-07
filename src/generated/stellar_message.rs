@@ -371,41 +371,65 @@ pub enum StellarMessageView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for StellarMessageView<'_> {
+    type Owned = StellarMessage;
+    fn into_owned(self) -> StellarMessage {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            StellarMessageView::ErrorMsg(value) => StellarMessage::ErrorMsg(value.into_owned()),
+            StellarMessageView::Hello(value) => StellarMessage::Hello(value.into_owned()),
+            StellarMessageView::Auth(value) => StellarMessage::Auth(value.into_owned()),
+            StellarMessageView::DontHave(value) => StellarMessage::DontHave(value.into_owned()),
+            StellarMessageView::Peers(value) => StellarMessage::Peers(value.into_owned()),
+            StellarMessageView::GetTxSet(value) => StellarMessage::GetTxSet(value.into_owned()),
+            StellarMessageView::TxSet(value) => StellarMessage::TxSet(value.into_owned()),
+            StellarMessageView::GeneralizedTxSet(value) => {
+                StellarMessage::GeneralizedTxSet(value.into_owned())
+            }
+            StellarMessageView::Transaction(value) => {
+                StellarMessage::Transaction(value.into_owned())
+            }
+            StellarMessageView::TimeSlicedSurveyRequest(value) => {
+                StellarMessage::TimeSlicedSurveyRequest(value.into_owned())
+            }
+            StellarMessageView::TimeSlicedSurveyResponse(value) => {
+                StellarMessage::TimeSlicedSurveyResponse(value.into_owned())
+            }
+            StellarMessageView::TimeSlicedSurveyStartCollecting(value) => {
+                StellarMessage::TimeSlicedSurveyStartCollecting(value.into_owned())
+            }
+            StellarMessageView::TimeSlicedSurveyStopCollecting(value) => {
+                StellarMessage::TimeSlicedSurveyStopCollecting(value.into_owned())
+            }
+            StellarMessageView::GetScpQuorumset(value) => {
+                StellarMessage::GetScpQuorumset(value.into_owned())
+            }
+            StellarMessageView::ScpQuorumset(value) => {
+                StellarMessage::ScpQuorumset(value.into_owned())
+            }
+            StellarMessageView::ScpMessage(value) => StellarMessage::ScpMessage(value.into_owned()),
+            StellarMessageView::GetScpState(value) => {
+                StellarMessage::GetScpState(value.into_owned())
+            }
+            StellarMessageView::SendMore(value) => StellarMessage::SendMore(value.into_owned()),
+            StellarMessageView::SendMoreExtended(value) => {
+                StellarMessage::SendMoreExtended(value.into_owned())
+            }
+            StellarMessageView::FloodAdvert(value) => {
+                StellarMessage::FloodAdvert(value.into_owned())
+            }
+            StellarMessageView::FloodDemand(value) => {
+                StellarMessage::FloodDemand(value.into_owned())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&StellarMessageView<'_>> for StellarMessage {
     #[must_use]
     fn from(v: &StellarMessageView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            StellarMessageView::ErrorMsg(value) => Self::ErrorMsg(value.into()),
-            StellarMessageView::Hello(value) => Self::Hello(value.into()),
-            StellarMessageView::Auth(value) => Self::Auth(value.clone()),
-            StellarMessageView::DontHave(value) => Self::DontHave(value.clone()),
-            StellarMessageView::Peers(value) => Self::Peers(value.to_vecm()),
-            StellarMessageView::GetTxSet(value) => Self::GetTxSet(value.clone()),
-            StellarMessageView::TxSet(value) => Self::TxSet(value.into()),
-            StellarMessageView::GeneralizedTxSet(value) => Self::GeneralizedTxSet(value.into()),
-            StellarMessageView::Transaction(value) => Self::Transaction(value.into()),
-            StellarMessageView::TimeSlicedSurveyRequest(value) => {
-                Self::TimeSlicedSurveyRequest(value.into())
-            }
-            StellarMessageView::TimeSlicedSurveyResponse(value) => {
-                Self::TimeSlicedSurveyResponse(value.into())
-            }
-            StellarMessageView::TimeSlicedSurveyStartCollecting(value) => {
-                Self::TimeSlicedSurveyStartCollecting(value.into())
-            }
-            StellarMessageView::TimeSlicedSurveyStopCollecting(value) => {
-                Self::TimeSlicedSurveyStopCollecting(value.into())
-            }
-            StellarMessageView::GetScpQuorumset(value) => Self::GetScpQuorumset(value.clone()),
-            StellarMessageView::ScpQuorumset(value) => Self::ScpQuorumset(value.into()),
-            StellarMessageView::ScpMessage(value) => Self::ScpMessage(value.into()),
-            StellarMessageView::GetScpState(value) => Self::GetScpState(*value),
-            StellarMessageView::SendMore(value) => Self::SendMore(value.clone()),
-            StellarMessageView::SendMoreExtended(value) => Self::SendMoreExtended(value.clone()),
-            StellarMessageView::FloodAdvert(value) => Self::FloodAdvert(value.into()),
-            StellarMessageView::FloodDemand(value) => Self::FloodDemand(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -413,7 +437,7 @@ impl From<&StellarMessageView<'_>> for StellarMessage {
 impl From<StellarMessageView<'_>> for StellarMessage {
     #[must_use]
     fn from(v: StellarMessageView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

@@ -128,3 +128,11 @@ impl WriteXdr for ExtensionPoint {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for ExtensionPoint {
+    type Owned = ExtensionPoint;
+    fn into_owned(self) -> ExtensionPoint {
+        self
+    }
+}

@@ -45,3 +45,11 @@ impl WriteXdr for Curve25519Secret {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for Curve25519Secret {
+    type Owned = Curve25519Secret;
+    fn into_owned(self) -> Curve25519Secret {
+        self
+    }
+}

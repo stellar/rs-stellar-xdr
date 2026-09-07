@@ -53,3 +53,11 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
         })
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for LiquidityPoolConstantProductParameters {
+    type Owned = LiquidityPoolConstantProductParameters;
+    fn into_owned(self) -> LiquidityPoolConstantProductParameters {
+        self
+    }
+}

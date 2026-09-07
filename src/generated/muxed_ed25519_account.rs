@@ -75,3 +75,11 @@ impl<'de> serde::Deserialize<'de> for MuxedEd25519Account {
         }
     }
 }
+
+#[cfg(feature = "alloc")]
+impl IntoOwned for MuxedEd25519Account {
+    type Owned = MuxedEd25519Account;
+    fn into_owned(self) -> MuxedEd25519Account {
+        self
+    }
+}

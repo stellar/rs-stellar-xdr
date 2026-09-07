@@ -146,14 +146,22 @@ pub enum StoredTransactionSetView<'a> {
 }
 
 #[cfg(feature = "alloc")]
+impl IntoOwned for StoredTransactionSetView<'_> {
+    type Owned = StoredTransactionSet;
+    fn into_owned(self) -> StoredTransactionSet {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            StoredTransactionSetView::V0(value) => StoredTransactionSet::V0(value.into_owned()),
+            StoredTransactionSetView::V1(value) => StoredTransactionSet::V1(value.into_owned()),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<&StoredTransactionSetView<'_>> for StoredTransactionSet {
     #[must_use]
     fn from(v: &StoredTransactionSetView<'_>) -> Self {
-        #[allow(clippy::match_same_arms)]
-        match v {
-            StoredTransactionSetView::V0(value) => Self::V0(value.into()),
-            StoredTransactionSetView::V1(value) => Self::V1(value.into()),
-        }
+        v.clone().into_owned()
     }
 }
 
@@ -161,7 +169,7 @@ impl From<&StoredTransactionSetView<'_>> for StoredTransactionSet {
 impl From<StoredTransactionSetView<'_>> for StoredTransactionSet {
     #[must_use]
     fn from(v: StoredTransactionSetView<'_>) -> Self {
-        Self::from(&v)
+        v.into_owned()
     }
 }
 

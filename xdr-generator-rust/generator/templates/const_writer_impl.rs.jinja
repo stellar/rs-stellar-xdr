@@ -1,16 +1,105 @@
+{#- Const XDR encoding lives on `ConstWriter` rather than on the generated
+    types, but is emitted beside the type it serializes. The `const_writer`
+    module decides what each method does; this template renders it. #}
+
+{#- How a type is named in a doc comment. -#}
+{%- macro doc_name(d) -%}
+{%- if d.link %}[`{{ d.name }}`]{% else %}`{{ d.name }}`{% endif -%}
+{%- endmacro %}
+
+{#- The value `e` names, as the argument its writer method takes. A `match`
+    binding is already a reference, so it is dereferenced where the method takes
+    a value and passed as-is where it takes a reference; a place expression is
+    used or borrowed directly. -#}
+{%- macro arg(e) -%}
+{%- match e.pass -%}
+{%- when ConstPass::Value -%}{% if e.is_ref %}*{% endif %}{{ e.acc }}
+{%- when ConstPass::Ref -%}{% if !e.is_ref %}&{% endif %}{{ e.acc }}
+{%- when ConstPass::AsIs -%}{{ e.acc }}
+{%- when ConstPass::Slice -%}{{ e.acc }}.as_slice()
+{%- endmatch -%}
+{%- endmacro %}
+
+{#- The statement serializing `e`, inside a `while` loop for each fixed array
+    it is an element of. -#}
+{%- macro encode(e) %}
+{%- for l in e.loops %}
+        {
+            let mut {{ l.index }} = 0usize;
+            while {{ l.index }} < {{ l.len }} {
+{%- endfor %}
+        self.{{ e.method }}({% call arg(e) %});
+{%- for l in e.loops.iter().rev() %}
+                {{ l.index }} += 1;
+            }
+        }
+{%- endfor %}
+{%- endmacro %}
+
 {%- if !const_writer.methods.is_empty() %}
 
-{#- Const XDR encoding lives on `ConstWriter` rather than on the generated
-    types, but is emitted beside the type it serializes. #}
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
 {%- for m in const_writer.methods %}
 {% if let Some(cfg) = m.cfg %}
     #[cfg({{ cfg }})]
 {%- endif %}
-    /// {{ m.doc }}
+{%- match m.subject %}
+{%- when ConstSubject::Type(name) %}
+    /// Serializes a [`{{ name }}`], mirroring `<{{ name }} as WriteXdr>::write_xdr`.
+{%- when ConstSubject::Option with { inner, owned } %}
+    /// Serializes an optional {% call doc_name(inner) %}, mirroring `<{{ owned }} as WriteXdr>::write_xdr`.
+{%- when ConstSubject::Vec with { inner, elem } %}
+    /// Serializes a variable-length array of {% call doc_name(inner) %}, mirroring `<VecM<{{ elem }}, MAX> as WriteXdr>::write_xdr`.
+{%- endmatch %}
     pub const fn {{ m.name }}{{ m.generics }}(&mut self, v: {{ m.param_type }}) {
-        {{ m.body }}
+{%- match m.body %}
+{%- when ConstWriterBody::Struct(members) %}
+{%- for e in members %}
+{%- call encode(e) %}
+{%- endfor %}
+{%- when ConstWriterBody::Enum %}
+        self.write_i32(*v as i32);
+{%- when ConstWriterBody::Newtype(inner) %}
+{%- call encode(inner) %}
+{%- when ConstWriterBody::Union with { scrutinee, discriminant, arms } %}
+        let d = v.discriminant();
+{%- call encode(discriminant) %}
+        #[allow(clippy::match_same_arms)]
+        match v {
+{%- for arm in arms %}
+{%- if let Some(cfg) = arm.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+{%- if let Some(payload) = arm.payload %}
+            {{ scrutinee }}::{{ arm.case_name }}(value) => {
+{%- call encode(payload) %}
+            }
+{%- else %}
+            {{ scrutinee }}::{{ arm.case_name }} => {}
+{%- endif %}
+{%- endfor %}
+        }
+{%- when ConstWriterBody::Option(inner) %}
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+{%- call encode(inner) %}
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+{%- when ConstWriterBody::Vec(elem) %}
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+{%- call encode(elem) %}
+            i += 1;
+        }
+{%- endmatch %}
     }
 {%- endfor %}
 }

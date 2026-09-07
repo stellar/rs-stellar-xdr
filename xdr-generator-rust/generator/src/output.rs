@@ -59,19 +59,101 @@ pub struct ConstWriterOutput {
     pub methods: Vec<ConstWriterMethodOutput>,
 }
 
-/// One `ConstWriter::write_xdr_*` method.
+/// One `ConstWriter::write_*` method: what it serializes and how.
 pub struct ConstWriterMethodOutput {
     pub name: String,
     /// Generic parameters, e.g. `<const MAX: u32>` for the `VecM` methods.
     pub generics: String,
     /// The type of the value parameter, e.g. `&TransactionView<'_>`.
     pub param_type: String,
-    pub body: String,
     pub cfg: Option<String>,
-    pub doc: String,
     /// The module the method is emitted into: the one holding the type it
     /// serializes. `None` for a wrapper over a builtin, which has no type file.
     pub module: Option<String>,
+    /// What the method serializes, for its doc comment.
+    pub subject: ConstSubject,
+    pub body: ConstWriterBody,
+}
+
+/// What a `ConstWriter` method serializes.
+pub enum ConstSubject {
+    /// A type defined in the `.x` files, by Rust name.
+    Type(String),
+    /// An optional value; `owned` is the owned Rust type of the whole option.
+    Option { inner: ConstDocName, owned: String },
+    /// A variable-length array; `elem` is the owned Rust type of an element.
+    Vec { inner: ConstDocName, elem: String },
+}
+
+/// How a type is named in a generated doc comment.
+pub struct ConstDocName {
+    pub name: String,
+    /// Whether the name is a type from the `.x` files, and so an intra-doc
+    /// link, rather than a builtin shown as plain code.
+    pub link: bool,
+}
+
+/// The body of a `ConstWriter` method, by the shape of the type it serializes.
+pub enum ConstWriterBody {
+    /// A struct: each member in order.
+    Struct(Vec<ConstEncode>),
+    /// An enum: its discriminant value as an XDR int.
+    Enum,
+    /// A typedef newtype: its inner value.
+    Newtype(ConstEncode),
+    /// A union: its discriminant, then the payload of the selected arm.
+    Union {
+        /// The type matched on: the `View` form where the union owns heap data.
+        scrutinee: String,
+        discriminant: ConstEncode,
+        arms: Vec<ConstUnionArm>,
+    },
+    /// An `Option`: a presence flag, then the value when present.
+    Option(ConstEncode),
+    /// A `VecM`: its length, then each element.
+    Vec(ConstEncode),
+}
+
+pub struct ConstUnionArm {
+    pub cfg: Option<String>,
+    pub case_name: String,
+    /// The encoding of the arm's payload, bound by reference to `value`; `None`
+    /// for a void arm.
+    pub payload: Option<ConstEncode>,
+}
+
+/// One call to a `ConstWriter` method, serializing one value.
+pub struct ConstEncode {
+    /// The fixed-array loops the call sits inside, outermost first.
+    pub loops: Vec<ConstLoop>,
+    /// The expression naming the value: a place such as `v.foo` or `s[i]`, or
+    /// a `match` binding.
+    pub acc: String,
+    /// Whether `acc` is a binding that already holds a reference to the value.
+    pub is_ref: bool,
+    /// The `ConstWriter` method to call.
+    pub method: String,
+    /// How the method takes the value.
+    pub pass: ConstPass,
+}
+
+/// A `while` loop over a fixed-size array.
+pub struct ConstLoop {
+    pub index: String,
+    pub len: String,
+}
+
+/// How a `ConstWriter` method takes the value passed to it.
+pub enum ConstPass {
+    /// By value: the value is `Copy`.
+    Value,
+    /// By reference.
+    Ref,
+    /// As it is: the value is already a reference, the `View` form of a cyclic
+    /// type.
+    AsIs,
+    /// As the byte slice a `BytesMView`/`StringMView` exposes.
+    Slice,
 }
 
 pub enum DefinitionOutput {

@@ -21,10 +21,14 @@
 //! builtin scalar, which has no type file and so goes into the `const_writer`
 //! module.
 //!
-//! The emitted code produces the same bytes as the trait-based
-//! `WriteXdr::write_xdr` implementations of the owned types, expressed with
-//! only const-compatible operations: `while` loops instead of `for`, and direct
-//! calls to each concrete type's writer method instead of trait dispatch.
+//! This module decides what each method does: which writer method serializes
+//! each value, how the value is passed, and what wrappers are needed. It emits
+//! that as data ([`ConstWriterMethodOutput`]) and the
+//! `const_writer_impl.rs.jinja` template renders it as Rust. The rendered code
+//! produces the same bytes as the trait-based `WriteXdr::write_xdr`
+//! implementations of the owned types, expressed with only const-compatible
+//! operations: `while` loops instead of `for`, and direct calls to each
+//! concrete type's writer method instead of trait dispatch.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -33,7 +37,10 @@ use xdr_parser::ast::{Definition, Type, Union, UnionArm, XdrSpec};
 use xdr_parser::types::{is_builtin_type, TypeInfo};
 
 use crate::naming::{case_value, field_name, mod_name, type_name};
-use crate::output::{ConstWriterMethodOutput, ConstWriterOutput};
+use crate::output::{
+    ConstDocName, ConstEncode, ConstLoop, ConstPass, ConstSubject, ConstUnionArm, ConstWriterBody,
+    ConstWriterMethodOutput, ConstWriterOutput,
+};
 use crate::types::{const_view_base_type, const_view_type, type_ref};
 
 /// Build the `ConstWriter` methods for an entire spec.
@@ -72,10 +79,6 @@ pub(crate) fn build(
     ConstWriterOutput { methods }
 }
 
-/// Placeholder standing in for the union's Rust type in generated match arms,
-/// substituted once the owned-versus-`View` choice is known.
-const SCRUTINEE: &str = "__SCRUTINEE__";
-
 struct Collector<'a> {
     type_info: &'a TypeInfo,
     view_required: &'a HashSet<String>,
@@ -101,7 +104,7 @@ impl Collector<'_> {
     }
 
     /// Emit `f` with the loop depth increased, for code inside a loop body.
-    fn in_loop<F: FnOnce(&mut Self) -> String>(&mut self, f: F) -> String {
+    fn in_loop<F: FnOnce(&mut Self) -> ConstEncode>(&mut self, f: F) -> ConstEncode {
         self.loop_depth += 1;
         let out = f(self);
         self.loop_depth -= 1;
@@ -138,9 +141,11 @@ impl Collector<'_> {
                     Some(mod_name(name))
                 }
             }
-            Type::Optional(inner) | Type::Array { element_type: inner, .. } => {
-                self.owner_module(inner)
-            }
+            Type::Optional(inner)
+            | Type::Array {
+                element_type: inner,
+                ..
+            } => self.owner_module(inner),
             Type::VarArray { element_type, .. } => self.owner_module(element_type),
             _ => None,
         }
@@ -181,31 +186,40 @@ impl Collector<'_> {
         }
     }
 
-    /// The statements that serialize `acc`, a value of `type_`.
+    /// The call that serializes `acc`, a value of `type_`.
     ///
     /// `acc` is either a place expression (`is_ref == false`, e.g. `v.foo` or
     /// `s[i]`) or an identifier already bound to a reference (`is_ref == true`,
     /// e.g. the binding of a `match` arm). `parent` is the type being
     /// serialized, which decides whether a cyclic reference is wrapped.
-    fn encode(&mut self, type_: &Type, acc: &str, is_ref: bool, parent: Option<&str>) -> String {
+    fn encode(
+        &mut self,
+        type_: &Type,
+        acc: &str,
+        is_ref: bool,
+        parent: Option<&str>,
+    ) -> ConstEncode {
+        let call = |method: &str, pass: ConstPass| ConstEncode {
+            loops: Vec::new(),
+            acc: acc.to_string(),
+            is_ref,
+            method: method.to_string(),
+            pass,
+        };
         match type_ {
-            Type::Int => format!("self.write_i32({});", value(acc, is_ref)),
-            Type::UnsignedInt => format!("self.write_u32({});", value(acc, is_ref)),
-            Type::Hyper => format!("self.write_i64({});", value(acc, is_ref)),
-            Type::UnsignedHyper => format!("self.write_u64({});", value(acc, is_ref)),
-            Type::Bool => format!("self.write_bool({});", value(acc, is_ref)),
+            Type::Int => call("write_i32", ConstPass::Value),
+            Type::UnsignedInt => call("write_u32", ConstPass::Value),
+            Type::Hyper => call("write_i64", ConstPass::Value),
+            Type::UnsignedHyper => call("write_u64", ConstPass::Value),
+            Type::Bool => call("write_bool", ConstPass::Value),
             Type::Float | Type::Double => {
                 unimplemented!("const XDR serialization of float and double is not supported")
             }
-            Type::OpaqueFixed(_) => {
-                format!("self.write_fixed_opaque({});", reference(acc, is_ref))
-            }
+            Type::OpaqueFixed(_) => call("write_fixed_opaque", ConstPass::Ref),
             // The variable-length byte cases only ever occur inside a `View`
             // type, where the value is a borrowing `BytesMView`/`StringMView`,
             // each of which exposes a const `as_slice`.
-            Type::OpaqueVar(_) | Type::String(_) => {
-                format!("self.write_var_opaque({acc}.as_slice());")
-            }
+            Type::OpaqueVar(_) | Type::String(_) => call("write_var_opaque", ConstPass::Slice),
             Type::Ident(_) => {
                 if let Some(builtin) = self.type_info.resolve_typedef_to_builtin(type_) {
                     let builtin = builtin.clone();
@@ -216,25 +230,25 @@ impl Collector<'_> {
                 // as-is rather than borrowed again; a `match` binding of one is
                 // a double reference that auto-deref resolves at the call.
                 let view = const_view_type(type_, parent, self.type_info, self.view_required);
-                let arg = if view.starts_with('&') {
-                    acc.to_string()
+                let pass = if view.starts_with('&') {
+                    ConstPass::AsIs
                 } else {
-                    reference(acc, is_ref)
+                    ConstPass::Ref
                 };
-                format!("self.write_type_{}({arg});", self.suffix(type_))
+                call(&format!("write_type_{}", self.suffix(type_)), pass)
             }
             Type::Optional(_) => {
                 let (name, by_value) = self.need_option(type_, parent);
-                let arg = if by_value {
-                    value(acc, is_ref)
+                let pass = if by_value {
+                    ConstPass::Value
                 } else {
-                    reference(acc, is_ref)
+                    ConstPass::Ref
                 };
-                format!("self.{name}({arg});")
+                call(&name, pass)
             }
             Type::VarArray { .. } => {
                 let name = self.need_vec(type_);
-                format!("self.{name}({});", reference(acc, is_ref))
+                call(&name, ConstPass::Ref)
             }
             // A fixed array is a plain `[T; N]` in both the owned and `View`
             // forms, so it is walked inline rather than given a method: there
@@ -242,17 +256,18 @@ impl Collector<'_> {
             Type::Array { element_type, size } => {
                 let index = self.index_name();
                 let element_type = element_type.clone();
-                let acc = acc.to_string();
-                let idx = index.clone();
+                let elem_acc = format!("{acc}[{index}]");
                 // A container holds its elements by value, so an element is
                 // never a cyclic reference back to the enclosing type.
-                let elem = self.in_loop(|c| {
-                    c.encode(&element_type, &format!("{acc}[{idx}]"), false, None)
-                });
-                let len = self.type_info.size_to_literal(size);
-                format!(
-                    "{{ let mut {index} = 0usize; while {index} < {len} {{ {elem} {index} += 1; }} }}"
-                )
+                let mut elem = self.in_loop(|c| c.encode(&element_type, &elem_acc, false, None));
+                elem.loops.insert(
+                    0,
+                    ConstLoop {
+                        index,
+                        len: self.type_info.size_to_literal(size),
+                    },
+                );
+                elem
             }
         }
     }
@@ -269,20 +284,16 @@ impl Collector<'_> {
         // `Copy` words, so it is taken by value rather than by reference.
         let by_value = param.starts_with("Option<&");
         let marker = if by_value { "option_ref_" } else { "option_" };
-        let name = format!("write_{}{marker}{}", self.type_marker(inner), self.suffix(inner));
+        let name = format!(
+            "write_{}{marker}{}",
+            self.type_marker(inner),
+            self.suffix(inner)
+        );
 
         if !self.wrappers.contains_key(&name) {
             // Each wrapper is its own method, so its bindings start fresh.
             self.loop_depth = 0;
             let inner_encode = self.encode(inner, "v", true, parent);
-            let body = format!(
-                "match v {{ Some(v) => {{ self.write_u32(1); {inner_encode} }} None => {{ self.write_u32(0); }} }}"
-            );
-            let doc = format!(
-                "Serializes an optional {}, mirroring `<{} as WriteXdr>::write_xdr`.",
-                self.doc_name(inner),
-                self.owned_doc_type(type_, parent),
-            );
             self.wrappers.insert(
                 name.clone(),
                 ConstWriterMethodOutput {
@@ -293,10 +304,13 @@ impl Collector<'_> {
                     } else {
                         format!("&{param}")
                     },
-                    body,
                     cfg: self.wrapper_cfg(inner),
-                    doc,
                     module: self.owner_module(inner),
+                    subject: ConstSubject::Option {
+                        inner: self.doc_name(inner),
+                        owned: type_ref(type_, parent, self.type_info),
+                    },
+                    body: ConstWriterBody::Option(inner_encode),
                 },
             );
         }
@@ -321,30 +335,23 @@ impl Collector<'_> {
             // `VecMView` borrows its elements as one slice, so each element is
             // held by value and is never a cyclic reference.
             let elem = self.in_loop(|c| c.encode(&element_type, "s[i]", false, None));
-            let body = format!(
-                "let s = v.as_slice(); let len = s.len(); self.write_len(len); \
-                 let mut i = 0usize; while i < len {{ {elem} i += 1; }}"
-            );
             // The max length is a const parameter rather than a fixed size, so
             // one method serves every `VecM` of this element type whatever its
             // declared maximum.
-            let elem_ty =
-                const_view_base_type(&element_type, self.type_info, self.view_required);
-            let doc = format!(
-                "Serializes a variable-length array of {}, mirroring `<VecM<{}, MAX> as WriteXdr>::write_xdr`.",
-                self.doc_name(&element_type),
-                type_ref(&element_type, None, self.type_info),
-            );
+            let elem_ty = const_view_base_type(&element_type, self.type_info, self.view_required);
             self.wrappers.insert(
                 name.clone(),
                 ConstWriterMethodOutput {
                     name: name.clone(),
                     generics: "<const MAX: u32>".to_string(),
                     param_type: format!("&VecMView<'_, {elem_ty}, MAX>"),
-                    body,
                     cfg: self.wrapper_cfg(&element_type),
-                    doc,
                     module: self.owner_module(&element_type),
+                    subject: ConstSubject::Vec {
+                        inner: self.doc_name(&element_type),
+                        elem: type_ref(&element_type, None, self.type_info),
+                    },
+                    body: ConstWriterBody::Vec(elem),
                 },
             );
         }
@@ -362,26 +369,30 @@ impl Collector<'_> {
                     self.cfg_of(&type_name(name))
                 }
             }
-            Type::Optional(t) | Type::Array { element_type: t, .. } => self.wrapper_cfg(t),
+            Type::Optional(t)
+            | Type::Array {
+                element_type: t, ..
+            } => self.wrapper_cfg(t),
             Type::VarArray { element_type, .. } => self.wrapper_cfg(element_type),
             _ => None,
         }
     }
 
-    /// A prose name for a type, for the generated doc comment.
-    fn doc_name(&self, type_: &Type) -> String {
+    /// How a type is named in a generated doc comment: a link for a type from
+    /// the `.x` files, plain code for a builtin.
+    fn doc_name(&self, type_: &Type) -> ConstDocName {
         match type_ {
             Type::Ident(name) if self.type_info.resolve_typedef_to_builtin(type_).is_none() => {
-                format!("[`{}`]", type_name(name))
+                ConstDocName {
+                    name: type_name(name),
+                    link: true,
+                }
             }
-            _ => format!("`{}`", type_ref(type_, None, self.type_info)),
+            _ => ConstDocName {
+                name: type_ref(type_, None, self.type_info),
+                link: false,
+            },
         }
-    }
-
-    /// The owned Rust type a method's `View` parameter corresponds to, for the
-    /// generated doc comment.
-    fn owned_doc_type(&self, type_: &Type, parent: Option<&str>) -> String {
-        type_ref(type_, parent, self.type_info)
     }
 
     /// The method serializing one definition, or `None` for definitions that
@@ -396,19 +407,21 @@ impl Collector<'_> {
         let body = match def {
             Definition::Const(_) => return None,
             Definition::Typedef(t) if is_builtin_type(&t.type_) => return None,
-            Definition::Typedef(t) => self.encode(&t.type_, "v.0", false, None),
-            // An enum is encoded as its discriminant value, an XDR int.
-            Definition::Enum(_) => "self.write_i32(*v as i32);".to_string(),
+            Definition::Typedef(t) => {
+                ConstWriterBody::Newtype(self.encode(&t.type_, "v.0", false, None))
+            }
+            Definition::Enum(_) => ConstWriterBody::Enum,
             Definition::Struct(s) => {
                 let parent = name.clone();
-                s.members
-                    .iter()
-                    .map(|m| {
-                        let acc = format!("v.{}", field_name(&m.name));
-                        self.encode(&m.type_, &acc, false, Some(&parent))
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ")
+                ConstWriterBody::Struct(
+                    s.members
+                        .iter()
+                        .map(|m| {
+                            let acc = format!("v.{}", field_name(&m.name));
+                            self.encode(&m.type_, &acc, false, Some(&parent))
+                        })
+                        .collect(),
+                )
             }
             Definition::Union(u) => self.union_body(u, &name),
         };
@@ -422,24 +435,20 @@ impl Collector<'_> {
             format!("&{name}")
         };
 
-        let doc = format!(
-            "Serializes a [`{name}`], mirroring `<{name} as WriteXdr>::write_xdr`."
-        );
-
         Some(ConstWriterMethodOutput {
             name: format!("write_type_{}", name.to_snake_case()),
             generics: String::new(),
             param_type,
-            body,
             cfg,
-            doc,
             module: Some(mod_name(def.name())),
+            subject: ConstSubject::Type(name),
+            body,
         })
     }
 
     /// The body serializing a union: its discriminant, then the payload of the
     /// selected arm.
-    fn union_body(&mut self, u: &Union, name: &str) -> String {
+    fn union_body(&mut self, u: &Union, name: &str) -> ConstWriterBody {
         let discriminant_type = type_ref(&u.discriminant.type_, None, self.type_info);
         let discriminant_is_builtin = is_builtin_type(&u.discriminant.type_)
             || matches!(&u.discriminant.type_, Type::Ident(n) if {
@@ -458,11 +467,11 @@ impl Collector<'_> {
 
         // Both the owned and `View` forms expose a const `discriminant`, so the
         // body mirrors the owned type's `write_xdr`.
-        let d = self.encode(&u.discriminant.type_, "d", false, None);
+        let discriminant = self.encode(&u.discriminant.type_, "d", false, None);
 
         // The match scrutinee is the `View` form where the union owns heap
         // data, since that is the type the parameter holds.
-        let scrutinee_type = if self.view_required.contains(name) {
+        let scrutinee = if self.view_required.contains(name) {
             format!("{name}View")
         } else {
             name.to_string()
@@ -472,17 +481,21 @@ impl Collector<'_> {
             .arms
             .iter()
             .flat_map(|arm| {
-                self.union_arms(arm, name, &discriminant_type, discriminant_is_builtin, &prefix)
+                self.union_arms(
+                    arm,
+                    name,
+                    &discriminant_type,
+                    discriminant_is_builtin,
+                    &prefix,
+                )
             })
-            .collect::<Vec<_>>()
-            .join(" ");
+            .collect();
 
-        let body = format!(
-            "let d = v.discriminant(); {d} \
-             #[allow(clippy::match_same_arms)] \
-             match v {{ {arms} }}"
-        );
-        body.replace(SCRUTINEE, &scrutinee_type)
+        ConstWriterBody::Union {
+            scrutinee,
+            discriminant,
+            arms,
+        }
     }
 
     /// The match arms for one union arm, one per case value it covers.
@@ -493,7 +506,7 @@ impl Collector<'_> {
         discriminant_type: &str,
         discriminant_is_builtin: bool,
         prefix: &str,
-    ) -> Vec<String> {
+    ) -> Vec<ConstUnionArm> {
         arm.cases
             .iter()
             .map(|case| {
@@ -503,39 +516,15 @@ impl Collector<'_> {
                     &case.value,
                     prefix,
                 );
-                let cfg = arm
-                    .cfg
-                    .as_ref()
-                    .map(|c| format!("#[cfg({})] ", c.render()))
-                    .unwrap_or_default();
-                match &arm.type_ {
-                    Some(t) => {
-                        let inner = self.encode(t, "value", true, Some(parent));
-                        format!("{cfg}{SCRUTINEE}::{case_name}(value) => {{ {inner} }}")
-                    }
-                    None => format!("{cfg}{SCRUTINEE}::{case_name} => {{}}"),
+                ConstUnionArm {
+                    cfg: arm.cfg.as_ref().map(|c| c.render()),
+                    case_name,
+                    payload: arm
+                        .type_
+                        .as_ref()
+                        .map(|t| self.encode(t, "value", true, Some(parent))),
                 }
             })
             .collect()
-    }
-}
-
-/// `acc` as a by-value expression: a `match` binding is a reference, so it is
-/// dereferenced; a place expression is used as-is and copied.
-fn value(acc: &str, is_ref: bool) -> String {
-    if is_ref {
-        format!("*{acc}")
-    } else {
-        acc.to_string()
-    }
-}
-
-/// `acc` as a by-reference expression: a `match` binding already is one; a
-/// place expression is borrowed.
-fn reference(acc: &str, is_ref: bool) -> String {
-    if is_ref {
-        acc.to_string()
-    } else {
-        format!("&{acc}")
     }
 }

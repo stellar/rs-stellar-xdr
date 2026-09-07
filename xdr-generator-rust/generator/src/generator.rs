@@ -14,9 +14,9 @@ use crate::naming::{
 };
 use crate::options::RustOptions;
 use crate::output::{
-    ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput, ConstWriterTemplate,
-    CyclicBorrow,
-    ConstOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
+    ConstOutput, ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput,
+    ConstWriterTemplate, CyclicBorrow, DefinitionOutput, DefinitionTemplate, EnumOutput,
+    EnumStructMemberOutput,
     GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
     TypedefNewtypeOutput, UnionArmOutput, UnionOutput,

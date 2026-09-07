@@ -109,7 +109,7 @@ impl WriteXdr for ScSpecFunctionInputV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecFunctionInputV0View<'_> {
+impl ScSpecFunctionInputV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -148,10 +148,7 @@ impl ScSpecFunctionInputV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecFunctionInputV0`], mirroring `<ScSpecFunctionInputV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_function_input_v0(
-        &mut self,
-        v: &ScSpecFunctionInputV0View<'_>,
-    ) {
+    pub const fn write_type_sc_spec_function_input_v0(&mut self, v: &ScSpecFunctionInputV0Ref<'_>) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());
         self.write_type_sc_spec_type_def(&v.type_);
@@ -160,7 +157,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecFunctionInputV0`], mirroring `<VecM<ScSpecFunctionInputV0, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_function_input_v0<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScSpecFunctionInputV0View<'_>, MAX>,
+        v: &VecMRef<'_, ScSpecFunctionInputV0Ref<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

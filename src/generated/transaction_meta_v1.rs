@@ -97,7 +97,7 @@ impl WriteXdr for TransactionMetaV1Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionMetaV1View<'_> {
+impl TransactionMetaV1Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl TransactionMetaV1View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionMetaV1`], mirroring `<TransactionMetaV1 as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_meta_v1(&mut self, v: &TransactionMetaV1View<'_>) {
+    pub const fn write_type_transaction_meta_v1(&mut self, v: &TransactionMetaV1Ref<'_>) {
         self.write_type_ledger_entry_changes(&v.tx_changes);
         self.write_type_vec_operation_meta(&v.operations);
     }

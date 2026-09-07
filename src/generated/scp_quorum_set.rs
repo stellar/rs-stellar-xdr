@@ -104,7 +104,7 @@ impl WriteXdr for ScpQuorumSetRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpQuorumSetView<'_> {
+impl ScpQuorumSetRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +143,7 @@ impl ScpQuorumSetView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpQuorumSet`], mirroring `<ScpQuorumSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_quorum_set(&mut self, v: &ScpQuorumSetView<'_>) {
+    pub const fn write_type_scp_quorum_set(&mut self, v: &ScpQuorumSetRef<'_>) {
         self.write_u32(v.threshold);
         self.write_type_vec_node_id(&v.validators);
         self.write_type_vec_scp_quorum_set(&v.inner_sets);
@@ -152,7 +152,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScpQuorumSet`], mirroring `<VecM<ScpQuorumSet, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_scp_quorum_set<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScpQuorumSetView<'_>, MAX>,
+        v: &VecMRef<'_, ScpQuorumSetRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

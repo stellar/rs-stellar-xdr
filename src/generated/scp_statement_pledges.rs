@@ -257,7 +257,7 @@ impl WriteXdr for ScpStatementPledgesRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpStatementPledgesView<'_> {
+impl ScpStatementPledgesRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -296,21 +296,21 @@ impl ScpStatementPledgesView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementPledges`], mirroring `<ScpStatementPledges as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement_pledges(&mut self, v: &ScpStatementPledgesView<'_>) {
+    pub const fn write_type_scp_statement_pledges(&mut self, v: &ScpStatementPledgesRef<'_>) {
         let d = v.discriminant();
         self.write_type_scp_statement_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScpStatementPledgesView::Prepare(value) => {
+            ScpStatementPledgesRef::Prepare(value) => {
                 self.write_type_scp_statement_prepare(value);
             }
-            ScpStatementPledgesView::Confirm(value) => {
+            ScpStatementPledgesRef::Confirm(value) => {
                 self.write_type_scp_statement_confirm(value);
             }
-            ScpStatementPledgesView::Externalize(value) => {
+            ScpStatementPledgesRef::Externalize(value) => {
                 self.write_type_scp_statement_externalize(value);
             }
-            ScpStatementPledgesView::Nominate(value) => {
+            ScpStatementPledgesRef::Nominate(value) => {
                 self.write_type_scp_nomination(value);
             }
         }

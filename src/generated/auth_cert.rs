@@ -108,7 +108,7 @@ impl WriteXdr for AuthCertRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl AuthCertView<'_> {
+impl AuthCertRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -147,7 +147,7 @@ impl AuthCertView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AuthCert`], mirroring `<AuthCert as WriteXdr>::write_xdr`.
-    pub const fn write_type_auth_cert(&mut self, v: &AuthCertView<'_>) {
+    pub const fn write_type_auth_cert(&mut self, v: &AuthCertRef<'_>) {
         self.write_type_curve25519_public(&v.pubkey);
         self.write_u64(v.expiration);
         self.write_type_signature(&v.sig);

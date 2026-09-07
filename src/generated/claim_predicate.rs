@@ -281,7 +281,7 @@ impl WriteXdr for ClaimPredicateRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ClaimPredicateView<'_> {
+impl ClaimPredicateRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -320,25 +320,25 @@ impl ClaimPredicateView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ClaimPredicate`], mirroring `<ClaimPredicate as WriteXdr>::write_xdr`.
-    pub const fn write_type_claim_predicate(&mut self, v: &ClaimPredicateView<'_>) {
+    pub const fn write_type_claim_predicate(&mut self, v: &ClaimPredicateRef<'_>) {
         let d = v.discriminant();
         self.write_type_claim_predicate_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ClaimPredicateView::Unconditional => {}
-            ClaimPredicateView::And(value) => {
+            ClaimPredicateRef::Unconditional => {}
+            ClaimPredicateRef::And(value) => {
                 self.write_type_vec_claim_predicate(value);
             }
-            ClaimPredicateView::Or(value) => {
+            ClaimPredicateRef::Or(value) => {
                 self.write_type_vec_claim_predicate(value);
             }
-            ClaimPredicateView::Not(value) => {
+            ClaimPredicateRef::Not(value) => {
                 self.write_type_option_ref_claim_predicate(*value);
             }
-            ClaimPredicateView::BeforeAbsoluteTime(value) => {
+            ClaimPredicateRef::BeforeAbsoluteTime(value) => {
                 self.write_i64(*value);
             }
-            ClaimPredicateView::BeforeRelativeTime(value) => {
+            ClaimPredicateRef::BeforeRelativeTime(value) => {
                 self.write_i64(*value);
             }
         }
@@ -347,7 +347,7 @@ impl ConstWriter<'_> {
     /// Serializes an optional [`ClaimPredicate`], mirroring `<Option<Box<ClaimPredicate>> as WriteXdr>::write_xdr`.
     pub const fn write_type_option_ref_claim_predicate(
         &mut self,
-        v: Option<&'_ ClaimPredicateView<'_>>,
+        v: Option<&'_ ClaimPredicateRef<'_>>,
     ) {
         match v {
             Some(v) => {
@@ -363,7 +363,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ClaimPredicate`], mirroring `<VecM<ClaimPredicate, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_claim_predicate<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ClaimPredicateView<'_>, MAX>,
+        v: &VecMRef<'_, ClaimPredicateRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -153,7 +153,7 @@ impl WriteXdr for SetOptionsOpRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SetOptionsOpView<'_> {
+impl SetOptionsOpRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -192,7 +192,7 @@ impl SetOptionsOpView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SetOptionsOp`], mirroring `<SetOptionsOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_set_options_op(&mut self, v: &SetOptionsOpView<'_>) {
+    pub const fn write_type_set_options_op(&mut self, v: &SetOptionsOpRef<'_>) {
         self.write_type_option_account_id(&v.inflation_dest);
         self.write_option_u32(&v.clear_flags);
         self.write_option_u32(&v.set_flags);

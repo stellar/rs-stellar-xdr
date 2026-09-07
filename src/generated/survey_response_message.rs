@@ -118,7 +118,7 @@ impl WriteXdr for SurveyResponseMessageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SurveyResponseMessageView<'_> {
+impl SurveyResponseMessageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -157,7 +157,7 @@ impl SurveyResponseMessageView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SurveyResponseMessage`], mirroring `<SurveyResponseMessage as WriteXdr>::write_xdr`.
-    pub const fn write_type_survey_response_message(&mut self, v: &SurveyResponseMessageView<'_>) {
+    pub const fn write_type_survey_response_message(&mut self, v: &SurveyResponseMessageRef<'_>) {
         self.write_type_node_id(&v.surveyor_peer_id);
         self.write_type_node_id(&v.surveyed_peer_id);
         self.write_u32(v.ledger_num);

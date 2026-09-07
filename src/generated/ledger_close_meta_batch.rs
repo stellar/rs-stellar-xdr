@@ -109,7 +109,7 @@ impl WriteXdr for LedgerCloseMetaBatchRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseMetaBatchView<'_> {
+impl LedgerCloseMetaBatchRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -148,7 +148,7 @@ impl LedgerCloseMetaBatchView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseMetaBatch`], mirroring `<LedgerCloseMetaBatch as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_close_meta_batch(&mut self, v: &LedgerCloseMetaBatchView<'_>) {
+    pub const fn write_type_ledger_close_meta_batch(&mut self, v: &LedgerCloseMetaBatchRef<'_>) {
         self.write_u32(v.start_sequence);
         self.write_u32(v.end_sequence);
         self.write_type_vec_ledger_close_meta(&v.ledger_close_metas);

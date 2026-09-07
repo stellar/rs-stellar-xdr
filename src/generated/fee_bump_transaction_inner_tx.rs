@@ -191,7 +191,7 @@ impl WriteXdr for FeeBumpTransactionInnerTxRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl FeeBumpTransactionInnerTxView<'_> {
+impl FeeBumpTransactionInnerTxRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -232,13 +232,13 @@ impl ConstWriter<'_> {
     /// Serializes a [`FeeBumpTransactionInnerTx`], mirroring `<FeeBumpTransactionInnerTx as WriteXdr>::write_xdr`.
     pub const fn write_type_fee_bump_transaction_inner_tx(
         &mut self,
-        v: &FeeBumpTransactionInnerTxView<'_>,
+        v: &FeeBumpTransactionInnerTxRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            FeeBumpTransactionInnerTxView::Tx(value) => {
+            FeeBumpTransactionInnerTxRef::Tx(value) => {
                 self.write_type_transaction_v1_envelope(value);
             }
         }

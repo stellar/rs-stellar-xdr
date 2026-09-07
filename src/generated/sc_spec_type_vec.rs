@@ -90,7 +90,7 @@ impl WriteXdr for ScSpecTypeVecRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeVecView<'_> {
+impl ScSpecTypeVecRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +129,7 @@ impl ScSpecTypeVecView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeVec`], mirroring `<ScSpecTypeVec as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_vec(&mut self, v: &ScSpecTypeVecView<'_>) {
+    pub const fn write_type_sc_spec_type_vec(&mut self, v: &ScSpecTypeVecRef<'_>) {
         self.write_type_sc_spec_type_def(v.element_type);
     }
 }

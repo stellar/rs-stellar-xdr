@@ -119,7 +119,7 @@ impl WriteXdr for AccountEntryExtensionV2Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl AccountEntryExtensionV2View<'_> {
+impl AccountEntryExtensionV2Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -160,7 +160,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`AccountEntryExtensionV2`], mirroring `<AccountEntryExtensionV2 as WriteXdr>::write_xdr`.
     pub const fn write_type_account_entry_extension_v2(
         &mut self,
-        v: &AccountEntryExtensionV2View<'_>,
+        v: &AccountEntryExtensionV2Ref<'_>,
     ) {
         self.write_u32(v.num_sponsored);
         self.write_u32(v.num_sponsoring);

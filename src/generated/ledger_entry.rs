@@ -137,7 +137,7 @@ impl WriteXdr for LedgerEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerEntryView<'_> {
+impl LedgerEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -176,7 +176,7 @@ impl LedgerEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerEntry`], mirroring `<LedgerEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_entry(&mut self, v: &LedgerEntryView<'_>) {
+    pub const fn write_type_ledger_entry(&mut self, v: &LedgerEntryRef<'_>) {
         self.write_u32(v.last_modified_ledger_seq);
         self.write_type_ledger_entry_data(&v.data);
         self.write_type_ledger_entry_ext(&v.ext);
@@ -185,7 +185,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerEntry`], mirroring `<VecM<LedgerEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_entry<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, LedgerEntryView<'_>, MAX>,
+        v: &VecMRef<'_, LedgerEntryRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

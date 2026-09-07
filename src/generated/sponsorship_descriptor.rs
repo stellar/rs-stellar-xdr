@@ -115,7 +115,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SponsorshipDescriptor`], mirroring `<VecM<SponsorshipDescriptor, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sponsorship_descriptor<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, SponsorshipDescriptor, MAX>,
+        v: &VecMRef<'_, SponsorshipDescriptor, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

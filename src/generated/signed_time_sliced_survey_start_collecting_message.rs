@@ -101,7 +101,7 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SignedTimeSlicedSurveyStartCollectingMessageView<'_> {
+impl SignedTimeSlicedSurveyStartCollectingMessageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +142,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SignedTimeSlicedSurveyStartCollectingMessage`], mirroring `<SignedTimeSlicedSurveyStartCollectingMessage as WriteXdr>::write_xdr`.
     pub const fn write_type_signed_time_sliced_survey_start_collecting_message(
         &mut self,
-        v: &SignedTimeSlicedSurveyStartCollectingMessageView<'_>,
+        v: &SignedTimeSlicedSurveyStartCollectingMessageRef<'_>,
     ) {
         self.write_type_signature(&v.signature);
         self.write_type_time_sliced_survey_start_collecting_message(&v.start_collecting);

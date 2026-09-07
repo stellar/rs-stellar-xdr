@@ -93,7 +93,7 @@ impl WriteXdr for SorobanResourcesExtV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanResourcesExtV0View<'_> {
+impl SorobanResourcesExtV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -132,7 +132,7 @@ impl SorobanResourcesExtV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanResourcesExtV0`], mirroring `<SorobanResourcesExtV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_resources_ext_v0(&mut self, v: &SorobanResourcesExtV0View<'_>) {
+    pub const fn write_type_soroban_resources_ext_v0(&mut self, v: &SorobanResourcesExtV0Ref<'_>) {
         self.write_vec_u32(&v.archived_soroban_entries);
     }
 }

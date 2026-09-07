@@ -241,7 +241,7 @@ impl WriteXdr for LedgerEntryChangeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerEntryChangeView<'_> {
+impl LedgerEntryChangeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -280,24 +280,24 @@ impl LedgerEntryChangeView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerEntryChange`], mirroring `<LedgerEntryChange as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_entry_change(&mut self, v: &LedgerEntryChangeView<'_>) {
+    pub const fn write_type_ledger_entry_change(&mut self, v: &LedgerEntryChangeRef<'_>) {
         let d = v.discriminant();
         self.write_type_ledger_entry_change_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerEntryChangeView::Created(value) => {
+            LedgerEntryChangeRef::Created(value) => {
                 self.write_type_ledger_entry(value);
             }
-            LedgerEntryChangeView::Updated(value) => {
+            LedgerEntryChangeRef::Updated(value) => {
                 self.write_type_ledger_entry(value);
             }
-            LedgerEntryChangeView::Removed(value) => {
+            LedgerEntryChangeRef::Removed(value) => {
                 self.write_type_ledger_key(value);
             }
-            LedgerEntryChangeView::State(value) => {
+            LedgerEntryChangeRef::State(value) => {
                 self.write_type_ledger_entry(value);
             }
-            LedgerEntryChangeView::Restored(value) => {
+            LedgerEntryChangeRef::Restored(value) => {
                 self.write_type_ledger_entry(value);
             }
         }
@@ -306,7 +306,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerEntryChange`], mirroring `<VecM<LedgerEntryChange, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_entry_change<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, LedgerEntryChangeView<'_>, MAX>,
+        v: &VecMRef<'_, LedgerEntryChangeRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

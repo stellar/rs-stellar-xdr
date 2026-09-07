@@ -194,7 +194,7 @@ impl WriteXdr for AuthenticatedMessageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl AuthenticatedMessageView<'_> {
+impl AuthenticatedMessageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -233,12 +233,12 @@ impl AuthenticatedMessageView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AuthenticatedMessage`], mirroring `<AuthenticatedMessage as WriteXdr>::write_xdr`.
-    pub const fn write_type_authenticated_message(&mut self, v: &AuthenticatedMessageView<'_>) {
+    pub const fn write_type_authenticated_message(&mut self, v: &AuthenticatedMessageRef<'_>) {
         let d = v.discriminant();
         self.write_u32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            AuthenticatedMessageView::V0(value) => {
+            AuthenticatedMessageRef::V0(value) => {
                 self.write_type_authenticated_message_v0(value);
             }
         }

@@ -117,7 +117,7 @@ impl WriteXdr for SorobanTransactionMetaRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanTransactionMetaView<'_> {
+impl SorobanTransactionMetaRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -156,10 +156,7 @@ impl SorobanTransactionMetaView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionMeta`], mirroring `<SorobanTransactionMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_transaction_meta(
-        &mut self,
-        v: &SorobanTransactionMetaView<'_>,
-    ) {
+    pub const fn write_type_soroban_transaction_meta(&mut self, v: &SorobanTransactionMetaRef<'_>) {
         self.write_type_soroban_transaction_meta_ext(&v.ext);
         self.write_type_vec_contract_event(&v.events);
         self.write_type_sc_val(&v.return_value);
@@ -169,7 +166,7 @@ impl ConstWriter<'_> {
     /// Serializes an optional [`SorobanTransactionMeta`], mirroring `<Option<SorobanTransactionMeta> as WriteXdr>::write_xdr`.
     pub const fn write_type_option_soroban_transaction_meta(
         &mut self,
-        v: &Option<SorobanTransactionMetaView<'_>>,
+        v: &Option<SorobanTransactionMetaRef<'_>>,
     ) {
         match v {
             Some(v) => {

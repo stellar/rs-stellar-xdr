@@ -97,7 +97,7 @@ impl WriteXdr for InnerTransactionResultPairRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl InnerTransactionResultPairView<'_> {
+impl InnerTransactionResultPairRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`InnerTransactionResultPair`], mirroring `<InnerTransactionResultPair as WriteXdr>::write_xdr`.
     pub const fn write_type_inner_transaction_result_pair(
         &mut self,
-        v: &InnerTransactionResultPairView<'_>,
+        v: &InnerTransactionResultPairRef<'_>,
     ) {
         self.write_type_hash(&v.transaction_hash);
         self.write_type_inner_transaction_result(&v.result);

@@ -211,7 +211,7 @@ impl WriteXdr for LedgerCloseMetaRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseMetaView<'_> {
+impl LedgerCloseMetaRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -250,18 +250,18 @@ impl LedgerCloseMetaView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseMeta`], mirroring `<LedgerCloseMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_close_meta(&mut self, v: &LedgerCloseMetaView<'_>) {
+    pub const fn write_type_ledger_close_meta(&mut self, v: &LedgerCloseMetaRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerCloseMetaView::V0(value) => {
+            LedgerCloseMetaRef::V0(value) => {
                 self.write_type_ledger_close_meta_v0(value);
             }
-            LedgerCloseMetaView::V1(value) => {
+            LedgerCloseMetaRef::V1(value) => {
                 self.write_type_ledger_close_meta_v1(value);
             }
-            LedgerCloseMetaView::V2(value) => {
+            LedgerCloseMetaRef::V2(value) => {
                 self.write_type_ledger_close_meta_v2(value);
             }
         }
@@ -270,7 +270,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerCloseMeta`], mirroring `<VecM<LedgerCloseMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_close_meta<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, LedgerCloseMetaView<'_>, MAX>,
+        v: &VecMRef<'_, LedgerCloseMetaRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

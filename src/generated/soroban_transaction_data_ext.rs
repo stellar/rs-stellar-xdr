@@ -202,7 +202,7 @@ impl WriteXdr for SorobanTransactionDataExtRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanTransactionDataExtView<'_> {
+impl SorobanTransactionDataExtRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -243,14 +243,14 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionDataExt`], mirroring `<SorobanTransactionDataExt as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_transaction_data_ext(
         &mut self,
-        v: &SorobanTransactionDataExtView<'_>,
+        v: &SorobanTransactionDataExtRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanTransactionDataExtView::V0 => {}
-            SorobanTransactionDataExtView::V1(value) => {
+            SorobanTransactionDataExtRef::V0 => {}
+            SorobanTransactionDataExtRef::V1(value) => {
                 self.write_type_soroban_resources_ext_v0(value);
             }
         }

@@ -342,7 +342,7 @@ impl WriteXdr for ManageBuyOfferResultRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ManageBuyOfferResultView<'_> {
+impl ManageBuyOfferResultRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -381,26 +381,26 @@ impl ManageBuyOfferResultView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ManageBuyOfferResult`], mirroring `<ManageBuyOfferResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_manage_buy_offer_result(&mut self, v: &ManageBuyOfferResultView<'_>) {
+    pub const fn write_type_manage_buy_offer_result(&mut self, v: &ManageBuyOfferResultRef<'_>) {
         let d = v.discriminant();
         self.write_type_manage_buy_offer_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ManageBuyOfferResultView::Success(value) => {
+            ManageBuyOfferResultRef::Success(value) => {
                 self.write_type_manage_offer_success_result(value);
             }
-            ManageBuyOfferResultView::Malformed => {}
-            ManageBuyOfferResultView::SellNoTrust => {}
-            ManageBuyOfferResultView::BuyNoTrust => {}
-            ManageBuyOfferResultView::SellNotAuthorized => {}
-            ManageBuyOfferResultView::BuyNotAuthorized => {}
-            ManageBuyOfferResultView::LineFull => {}
-            ManageBuyOfferResultView::Underfunded => {}
-            ManageBuyOfferResultView::CrossSelf => {}
-            ManageBuyOfferResultView::SellNoIssuer => {}
-            ManageBuyOfferResultView::BuyNoIssuer => {}
-            ManageBuyOfferResultView::NotFound => {}
-            ManageBuyOfferResultView::LowReserve => {}
+            ManageBuyOfferResultRef::Malformed => {}
+            ManageBuyOfferResultRef::SellNoTrust => {}
+            ManageBuyOfferResultRef::BuyNoTrust => {}
+            ManageBuyOfferResultRef::SellNotAuthorized => {}
+            ManageBuyOfferResultRef::BuyNotAuthorized => {}
+            ManageBuyOfferResultRef::LineFull => {}
+            ManageBuyOfferResultRef::Underfunded => {}
+            ManageBuyOfferResultRef::CrossSelf => {}
+            ManageBuyOfferResultRef::SellNoIssuer => {}
+            ManageBuyOfferResultRef::BuyNoIssuer => {}
+            ManageBuyOfferResultRef::NotFound => {}
+            ManageBuyOfferResultRef::LowReserve => {}
         }
     }
 }

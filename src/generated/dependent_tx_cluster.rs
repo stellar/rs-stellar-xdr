@@ -145,7 +145,7 @@ impl WriteXdr for DependentTxClusterRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl DependentTxClusterView<'_> {
+impl DependentTxClusterRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +184,14 @@ impl DependentTxClusterView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DependentTxCluster`], mirroring `<DependentTxCluster as WriteXdr>::write_xdr`.
-    pub const fn write_type_dependent_tx_cluster(&mut self, v: &DependentTxClusterView<'_>) {
+    pub const fn write_type_dependent_tx_cluster(&mut self, v: &DependentTxClusterRef<'_>) {
         self.write_type_vec_transaction_envelope(&v.0);
     }
 
     /// Serializes a variable-length array of [`DependentTxCluster`], mirroring `<VecM<DependentTxCluster, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_dependent_tx_cluster<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, DependentTxClusterView<'_>, MAX>,
+        v: &VecMRef<'_, DependentTxClusterRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

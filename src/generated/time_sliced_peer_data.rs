@@ -97,7 +97,7 @@ impl WriteXdr for TimeSlicedPeerDataRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TimeSlicedPeerDataView<'_> {
+impl TimeSlicedPeerDataRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl TimeSlicedPeerDataView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TimeSlicedPeerData`], mirroring `<TimeSlicedPeerData as WriteXdr>::write_xdr`.
-    pub const fn write_type_time_sliced_peer_data(&mut self, v: &TimeSlicedPeerDataView<'_>) {
+    pub const fn write_type_time_sliced_peer_data(&mut self, v: &TimeSlicedPeerDataRef<'_>) {
         self.write_type_peer_stats(&v.peer_stats);
         self.write_u32(v.average_latency_ms);
     }
@@ -144,7 +144,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TimeSlicedPeerData`], mirroring `<VecM<TimeSlicedPeerData, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_time_sliced_peer_data<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, TimeSlicedPeerDataView<'_>, MAX>,
+        v: &VecMRef<'_, TimeSlicedPeerDataRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

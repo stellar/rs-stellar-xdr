@@ -507,7 +507,7 @@ impl WriteXdr for ScValRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScValView<'_> {
+impl ScValRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -546,81 +546,81 @@ impl ScValView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScVal`], mirroring `<ScVal as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_val(&mut self, v: &ScValView<'_>) {
+    pub const fn write_type_sc_val(&mut self, v: &ScValRef<'_>) {
         let d = v.discriminant();
         self.write_type_sc_val_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScValView::Bool(value) => {
+            ScValRef::Bool(value) => {
                 self.write_bool(*value);
             }
-            ScValView::Void => {}
-            ScValView::Error(value) => {
+            ScValRef::Void => {}
+            ScValRef::Error(value) => {
                 self.write_type_sc_error(value);
             }
-            ScValView::U32(value) => {
+            ScValRef::U32(value) => {
                 self.write_u32(*value);
             }
-            ScValView::I32(value) => {
+            ScValRef::I32(value) => {
                 self.write_i32(*value);
             }
-            ScValView::U64(value) => {
+            ScValRef::U64(value) => {
                 self.write_u64(*value);
             }
-            ScValView::I64(value) => {
+            ScValRef::I64(value) => {
                 self.write_i64(*value);
             }
-            ScValView::Timepoint(value) => {
+            ScValRef::Timepoint(value) => {
                 self.write_type_time_point(value);
             }
-            ScValView::Duration(value) => {
+            ScValRef::Duration(value) => {
                 self.write_type_duration(value);
             }
-            ScValView::U128(value) => {
+            ScValRef::U128(value) => {
                 self.write_type_u_int128_parts(value);
             }
-            ScValView::I128(value) => {
+            ScValRef::I128(value) => {
                 self.write_type_int128_parts(value);
             }
-            ScValView::U256(value) => {
+            ScValRef::U256(value) => {
                 self.write_type_u_int256_parts(value);
             }
-            ScValView::I256(value) => {
+            ScValRef::I256(value) => {
                 self.write_type_int256_parts(value);
             }
-            ScValView::Bytes(value) => {
+            ScValRef::Bytes(value) => {
                 self.write_type_sc_bytes(value);
             }
-            ScValView::String(value) => {
+            ScValRef::String(value) => {
                 self.write_type_sc_string(value);
             }
-            ScValView::Symbol(value) => {
+            ScValRef::Symbol(value) => {
                 self.write_type_sc_symbol(value);
             }
-            ScValView::Vec(value) => {
+            ScValRef::Vec(value) => {
                 self.write_type_option_sc_vec(value);
             }
-            ScValView::Map(value) => {
+            ScValRef::Map(value) => {
                 self.write_type_option_sc_map(value);
             }
-            ScValView::Address(value) => {
+            ScValRef::Address(value) => {
                 self.write_type_sc_address(value);
             }
-            ScValView::ContractInstance(value) => {
+            ScValRef::ContractInstance(value) => {
                 self.write_type_sc_contract_instance(value);
             }
-            ScValView::LedgerKeyContractInstance => {}
-            ScValView::LedgerKeyNonce(value) => {
+            ScValRef::LedgerKeyContractInstance => {}
+            ScValRef::LedgerKeyNonce(value) => {
                 self.write_type_sc_nonce_key(value);
             }
-            ScValView::ExecutableTag(value) => {
+            ScValRef::ExecutableTag(value) => {
                 self.write_type_sc_string(value);
             }
         }
     }
 
     /// Serializes an optional [`ScVal`], mirroring `<Option<ScVal> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_sc_val(&mut self, v: &Option<ScValView<'_>>) {
+    pub const fn write_type_option_sc_val(&mut self, v: &Option<ScValRef<'_>>) {
         match v {
             Some(v) => {
                 self.write_u32(1);
@@ -635,7 +635,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScVal`], mirroring `<VecM<ScVal, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_val<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScValView<'_>, MAX>,
+        v: &VecMRef<'_, ScValRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

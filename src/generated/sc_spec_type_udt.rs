@@ -90,7 +90,7 @@ impl WriteXdr for ScSpecTypeUdtRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeUdtView<'_> {
+impl ScSpecTypeUdtRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +129,7 @@ impl ScSpecTypeUdtView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeUdt`], mirroring `<ScSpecTypeUdt as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_udt(&mut self, v: &ScSpecTypeUdtView<'_>) {
+    pub const fn write_type_sc_spec_type_udt(&mut self, v: &ScSpecTypeUdtRef<'_>) {
         self.write_var_opaque(v.name.as_slice());
     }
 }

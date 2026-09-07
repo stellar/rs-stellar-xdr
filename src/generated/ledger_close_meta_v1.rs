@@ -169,7 +169,7 @@ impl WriteXdr for LedgerCloseMetaV1Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseMetaV1View<'_> {
+impl LedgerCloseMetaV1Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -208,7 +208,7 @@ impl LedgerCloseMetaV1View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseMetaV1`], mirroring `<LedgerCloseMetaV1 as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_close_meta_v1(&mut self, v: &LedgerCloseMetaV1View<'_>) {
+    pub const fn write_type_ledger_close_meta_v1(&mut self, v: &LedgerCloseMetaV1Ref<'_>) {
         self.write_type_ledger_close_meta_ext(&v.ext);
         self.write_type_ledger_header_history_entry(&v.ledger_header);
         self.write_type_generalized_transaction_set(&v.tx_set);

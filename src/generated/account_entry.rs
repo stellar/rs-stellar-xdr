@@ -172,7 +172,7 @@ impl WriteXdr for AccountEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl AccountEntryView<'_> {
+impl AccountEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -211,7 +211,7 @@ impl AccountEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AccountEntry`], mirroring `<AccountEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_account_entry(&mut self, v: &AccountEntryView<'_>) {
+    pub const fn write_type_account_entry(&mut self, v: &AccountEntryRef<'_>) {
         self.write_type_account_id(&v.account_id);
         self.write_i64(v.balance);
         self.write_type_sequence_number(&v.seq_num);

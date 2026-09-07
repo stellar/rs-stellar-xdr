@@ -97,7 +97,7 @@ impl WriteXdr for RevokeSponsorshipOpSignerRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl RevokeSponsorshipOpSignerView<'_> {
+impl RevokeSponsorshipOpSignerRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`RevokeSponsorshipOpSigner`], mirroring `<RevokeSponsorshipOpSigner as WriteXdr>::write_xdr`.
     pub const fn write_type_revoke_sponsorship_op_signer(
         &mut self,
-        v: &RevokeSponsorshipOpSignerView<'_>,
+        v: &RevokeSponsorshipOpSignerRef<'_>,
     ) {
         self.write_type_account_id(&v.account_id);
         self.write_type_signer_key(&v.signer_key);

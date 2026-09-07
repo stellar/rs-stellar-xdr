@@ -107,7 +107,7 @@ impl WriteXdr for ManageOfferSuccessResultRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ManageOfferSuccessResultView<'_> {
+impl ManageOfferSuccessResultRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -148,7 +148,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ManageOfferSuccessResult`], mirroring `<ManageOfferSuccessResult as WriteXdr>::write_xdr`.
     pub const fn write_type_manage_offer_success_result(
         &mut self,
-        v: &ManageOfferSuccessResultView<'_>,
+        v: &ManageOfferSuccessResultRef<'_>,
     ) {
         self.write_type_vec_claim_atom(&v.offers_claimed);
         self.write_type_manage_offer_success_result_offer(&v.offer);

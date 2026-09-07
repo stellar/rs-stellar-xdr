@@ -145,7 +145,7 @@ impl WriteXdr for ScBytesRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScBytesView<'_> {
+impl ScBytesRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl ScBytesView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScBytes`], mirroring `<ScBytes as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_bytes(&mut self, v: &ScBytesView<'_>) {
+    pub const fn write_type_sc_bytes(&mut self, v: &ScBytesRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

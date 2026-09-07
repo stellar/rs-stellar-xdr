@@ -199,7 +199,7 @@ impl WriteXdr for SurveyResponseBodyRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SurveyResponseBodyView<'_> {
+impl SurveyResponseBodyRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -238,12 +238,12 @@ impl SurveyResponseBodyView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SurveyResponseBody`], mirroring `<SurveyResponseBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_survey_response_body(&mut self, v: &SurveyResponseBodyView<'_>) {
+    pub const fn write_type_survey_response_body(&mut self, v: &SurveyResponseBodyRef<'_>) {
         let d = v.discriminant();
         self.write_type_survey_message_response_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SurveyResponseBodyView::SurveyTopologyResponseV2(value) => {
+            SurveyResponseBodyRef::SurveyTopologyResponseV2(value) => {
                 self.write_type_topology_response_body_v2(value);
             }
         }

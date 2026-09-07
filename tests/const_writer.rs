@@ -3,31 +3,30 @@
 //! Tests for the const XDR serializers, which live as `write_type_{type}`
 //! methods on `ConstWriter` rather than on the generated types. Each type keeps
 //! a thin `const_xdr_len`/`const_to_xdr` pair that wraps its writer method. A
-//! type that owns heap data is written through its borrowing `View` form; one
+//! type that owns heap data is written through its borrowing `Ref` form; one
 //! that owns none is written directly. Output is compared against the owned
 //! type's `to_xdr` (needs `std`).
 
 use stellar_xdr::{
-    AccountId, AlphaNum4, Asset, AssetCode4, BytesMView, ConstWriter, CreateAccountOp,
-    DataValueView, DecoratedSignatureView, Duration, ExtensionPoint, GeneralizedTransactionSetView,
-    Hash, LedgerBounds, LedgerCloseMeta, LedgerCloseMetaExt, LedgerCloseMetaExtV1,
-    LedgerCloseMetaV2View, LedgerCloseMetaView, LedgerCloseValueSignatureView,
-    LedgerEntryChangesView, LedgerFootprintView, LedgerHeaderExt, LedgerHeaderHistoryEntryExt,
-    LedgerHeaderHistoryEntryView, LedgerHeaderView, LedgerKeyContractCode, LedgerKeyTtl,
-    LedgerKeyView, LedgerScpMessagesView, LedgerUpgrade, Limits, ManageDataOpView,
-    ManageSellOfferOp, Memo, MemoType, MemoView, MuxedAccount, MuxedAccountMed25519, NodeId,
-    OperationBodyView, OperationView, PathPaymentStrictReceiveOpView, PaymentOp,
-    PreconditionsV2View, PreconditionsView, Price, PublicKey, ReadXdr, ScpHistoryEntryV0View,
-    ScpHistoryEntryView, ScpQuorumSetView, SequenceNumber, SetOptionsOpView, SignatureHint,
-    SignatureView, SignerKeyEd25519SignedPayloadView, SignerKeyView, SignerView,
-    SorobanResourcesExtV0View, SorobanResourcesView, SorobanTransactionDataExtView,
-    SorobanTransactionDataView, StellarValueExtView, StellarValueView, String32View, String64View,
-    StringMView, TimeBounds, TimePoint, TransactionEnvelope, TransactionEnvelopeView,
-    TransactionExtView, TransactionMetaView, TransactionPhaseView, TransactionResultExt,
-    TransactionResultMetaV1View, TransactionResultPairView, TransactionResultResultView,
-    TransactionResultView, TransactionSetV1View, TransactionV1EnvelopeView, TransactionView,
-    TxDemandVector, TxDemandVectorView, Uint256, UpgradeEntryMetaView, UpgradeTypeView, VecMView,
-    WriteXdr,
+    AccountId, AlphaNum4, Asset, AssetCode4, BytesMRef, ConstWriter, CreateAccountOp, DataValueRef,
+    DecoratedSignatureRef, Duration, ExtensionPoint, GeneralizedTransactionSetRef, Hash,
+    LedgerBounds, LedgerCloseMeta, LedgerCloseMetaExt, LedgerCloseMetaExtV1, LedgerCloseMetaRef,
+    LedgerCloseMetaV2Ref, LedgerCloseValueSignatureRef, LedgerEntryChangesRef, LedgerFootprintRef,
+    LedgerHeaderExt, LedgerHeaderHistoryEntryExt, LedgerHeaderHistoryEntryRef, LedgerHeaderRef,
+    LedgerKeyContractCode, LedgerKeyRef, LedgerKeyTtl, LedgerScpMessagesRef, LedgerUpgrade, Limits,
+    ManageDataOpRef, ManageSellOfferOp, Memo, MemoRef, MemoType, MuxedAccount,
+    MuxedAccountMed25519, NodeId, OperationBodyRef, OperationRef, PathPaymentStrictReceiveOpRef,
+    PaymentOp, PreconditionsRef, PreconditionsV2Ref, Price, PublicKey, ReadXdr, ScpHistoryEntryRef,
+    ScpHistoryEntryV0Ref, ScpQuorumSetRef, SequenceNumber, SetOptionsOpRef, SignatureHint,
+    SignatureRef, SignerKeyEd25519SignedPayloadRef, SignerKeyRef, SignerRef,
+    SorobanResourcesExtV0Ref, SorobanResourcesRef, SorobanTransactionDataExtRef,
+    SorobanTransactionDataRef, StellarValueExtRef, StellarValueRef, String32Ref, String64Ref,
+    StringMRef, TimeBounds, TimePoint, TransactionEnvelope, TransactionEnvelopeRef,
+    TransactionExtRef, TransactionMetaRef, TransactionPhaseRef, TransactionRef,
+    TransactionResultExt, TransactionResultMetaV1Ref, TransactionResultPairRef,
+    TransactionResultRef, TransactionResultResultRef, TransactionSetV1Ref,
+    TransactionV1EnvelopeRef, TxDemandVector, TxDemandVectorRef, Uint256, UpgradeEntryMetaRef,
+    UpgradeTypeRef, VecMRef, WriteXdr,
 };
 
 /// Serialize with `f`, measuring into an empty buffer and then filling a buffer
@@ -73,14 +72,14 @@ fn writes_owned_non_heap_types() {
 }
 
 #[test]
-fn writes_view_union_arms() {
-    // Union arms exercised through the borrowing MemoView: void, length-prefixed
+fn writes_ref_union_arms() {
+    // Union arms exercised through the borrowing MemoRef: void, length-prefixed
     // and padded string, scalar, and a fixed-opaque newtype.
-    let cases: [MemoView; 4] = [
-        MemoView::None,
-        MemoView::Text(StringMView::try_from_str("hello").unwrap()),
-        MemoView::Id(42),
-        MemoView::Hash(Hash([9u8; 32])),
+    let cases: [MemoRef; 4] = [
+        MemoRef::None,
+        MemoRef::Text(StringMRef::try_from_str("hello").unwrap()),
+        MemoRef::Id(42),
+        MemoRef::Hash(Hash([9u8; 32])),
     ];
     for m in cases {
         let owned: Memo = (&m).into();
@@ -93,11 +92,11 @@ fn writes_view_union_arms() {
 }
 
 #[test]
-fn writes_view_var_array() {
-    // A newtype over `VecM<Hash>`, written through its borrowing View form,
+fn writes_ref_var_array() {
+    // A newtype over `VecM<Hash>`, written through its borrowing Ref form,
     // built from a slice of fixed-size arrays.
     let hashes = [Hash([1u8; 32]), Hash([2u8; 32]), Hash([3u8; 32])];
-    let v = TxDemandVectorView(VecMView::try_from_slice(&hashes).unwrap());
+    let v = TxDemandVectorRef(VecMRef::try_from_slice(&hashes).unwrap());
     let owned: TxDemandVector = (&v).into();
     let bytes = to_xdr_via(|w| w.write_type_tx_demand_vector(&v));
     // 4-byte length prefix + 3 * 32 bytes = 100.
@@ -107,7 +106,7 @@ fn writes_view_var_array() {
 
 #[test]
 fn bytes_round_trip() {
-    let m = MemoView::Text(StringMView::try_from_str("round trip").unwrap());
+    let m = MemoRef::Text(StringMRef::try_from_str("round trip").unwrap());
     let owned: Memo = (&m).into();
     let bytes = to_xdr_via(|w| w.write_type_memo(&m));
     assert_eq!(Memo::from_xdr(&bytes, Limits::none()).unwrap(), owned);
@@ -116,7 +115,7 @@ fn bytes_round_trip() {
 // Compile-time serialization to a fixed array, the way a proc-macro would emit
 // it: size the array with `const_xdr_len`, then fill it with `const_to_xdr`.
 // Both wrap a `ConstWriter` around the type's `write_type_*` method. An owned
-// non-heap type and a borrowing View type are both serialized entirely in const
+// non-heap type and a borrowing Ref type are both serialized entirely in const
 // contexts.
 const TB: TimeBounds = TimeBounds {
     min_time: TimePoint(1),
@@ -125,10 +124,10 @@ const TB: TimeBounds = TimeBounds {
 const TB_LEN: usize = TB.const_xdr_len();
 const TB_XDR: [u8; TB_LEN] = TB.const_to_xdr::<TB_LEN>();
 
-// `StringMView::try_from_str` returns a `Result`, but its error is the
+// `StringMRef::try_from_str` returns a `Result`, but its error is the
 // drop-free `ErrorLengthExceedsMax`, so it can be unwrapped with `if let` in a
 // const context (`Result::unwrap` is not const).
-const MEMO: MemoView = MemoView::Text(if let Ok(v) = StringMView::try_from_str("hi") {
+const MEMO: MemoRef = MemoRef::Text(if let Ok(v) = StringMRef::try_from_str("hi") {
     v
 } else {
     panic!()
@@ -140,7 +139,7 @@ const MEMO_XDR: [u8; MEMO_LEN] = MEMO.const_to_xdr::<MEMO_LEN>();
 fn wrapper_matches_direct_writer_call() {
     // `const_to_xdr` is only a `ConstWriter` set up around the type's
     // `write_type_*` method, so the two must agree.
-    let m = MemoView::Text(StringMView::try_from_str("hello").unwrap());
+    let m = MemoRef::Text(StringMRef::try_from_str("hello").unwrap());
     assert_eq!(
         m.const_to_xdr::<16>().to_vec(),
         to_xdr_via(|w| w.write_type_memo(&m))
@@ -166,11 +165,11 @@ fn const_context() {
 /// to the streaming `write_xdr` of the equivalent owned value, and that the
 /// bytes decode back to that owned value.
 macro_rules! assert_const_matches_stream {
-    ($write:ident, $view:expr, $owned:ty) => {{
-        let view = $view;
-        let owned: $owned = (&view).into();
+    ($write:ident, $r:expr, $owned:ty) => {{
+        let r = $r;
+        let owned: $owned = (&r).into();
         let streamed = owned.to_xdr(Limits::none()).unwrap();
-        let bytes = to_xdr_via(|w| w.$write(&view));
+        let bytes = to_xdr_via(|w| w.$write(&r));
         assert_eq!(bytes, streamed, "const bytes != streamed bytes");
         assert_eq!(
             <$owned>::from_xdr(&bytes, Limits::none()).unwrap(),
@@ -180,13 +179,13 @@ macro_rules! assert_const_matches_stream {
     }};
 }
 
-/// Build a deeply-populated `TransactionEnvelopeView` exercising as many fields
+/// Build a deeply-populated `TransactionEnvelopeRef` exercising as many fields
 /// and operation arms as possible, and check its `const` serialization matches
 /// the owned type's streaming `write_xdr`.
 #[test]
 #[allow(clippy::too_many_lines)]
 fn const_transaction_envelope_matches_stream() {
-    // Borrowed leaf data, declared first so the View can reference it.
+    // Borrowed leaf data, declared first so the Ref can reference it.
     let sig_bytes = [3u8; 32];
     let signed_payload = [7u8; 20];
     let data_value_bytes = [1u8, 2, 3, 4, 5];
@@ -202,27 +201,27 @@ fn const_transaction_envelope_matches_stream() {
 
     // A mix of void, owned-payload, and borrowing-payload operation arms.
     let operations = [
-        OperationView {
+        OperationRef {
             source_account: Some(MuxedAccount::MuxedEd25519(MuxedAccountMed25519 {
                 id: 7,
                 ed25519: Uint256([4u8; 32]),
             })),
-            body: OperationBodyView::CreateAccount(CreateAccountOp {
+            body: OperationBodyRef::CreateAccount(CreateAccountOp {
                 destination: account(),
                 starting_balance: 100_000,
             }),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::Payment(PaymentOp {
+            body: OperationBodyRef::Payment(PaymentOp {
                 destination: MuxedAccount::Ed25519(Uint256([5u8; 32])),
                 asset: Asset::Native,
                 amount: 42,
             }),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::ManageSellOffer(ManageSellOfferOp {
+            body: OperationBodyRef::ManageSellOffer(ManageSellOfferOp {
                 selling: Asset::Native,
                 buying: Asset::CreditAlphanum4(AlphaNum4 {
                     asset_code: AssetCode4(*b"USD\0"),
@@ -233,20 +232,20 @@ fn const_transaction_envelope_matches_stream() {
                 offer_id: 0,
             }),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::PathPaymentStrictReceive(PathPaymentStrictReceiveOpView {
+            body: OperationBodyRef::PathPaymentStrictReceive(PathPaymentStrictReceiveOpRef {
                 send_asset: Asset::Native,
                 send_max: 10,
                 destination: MuxedAccount::Ed25519(Uint256([6u8; 32])),
                 dest_asset: Asset::Native,
                 dest_amount: 5,
-                path: VecMView::try_from_slice(&path_assets).unwrap(),
+                path: VecMRef::try_from_slice(&path_assets).unwrap(),
             }),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::SetOptions(SetOptionsOpView {
+            body: OperationBodyRef::SetOptions(SetOptionsOpRef {
                 inflation_dest: Some(account()),
                 clear_flags: Some(1),
                 set_flags: Some(2),
@@ -254,59 +253,59 @@ fn const_transaction_envelope_matches_stream() {
                 low_threshold: Some(4),
                 med_threshold: Some(5),
                 high_threshold: Some(6),
-                home_domain: Some(String32View(
-                    StringMView::try_from_str("example.com").unwrap(),
+                home_domain: Some(String32Ref(
+                    StringMRef::try_from_str("example.com").unwrap(),
                 )),
-                signer: Some(SignerView {
-                    key: SignerKeyView::Ed25519(Uint256([8u8; 32])),
+                signer: Some(SignerRef {
+                    key: SignerKeyRef::Ed25519(Uint256([8u8; 32])),
                     weight: 1,
                 }),
             }),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::ManageData(ManageDataOpView {
-                data_name: String64View(StringMView::try_from_str("data key").unwrap()),
-                data_value: Some(DataValueView(
-                    BytesMView::try_from_slice(&data_value_bytes).unwrap(),
+            body: OperationBodyRef::ManageData(ManageDataOpRef {
+                data_name: String64Ref(StringMRef::try_from_str("data key").unwrap()),
+                data_value: Some(DataValueRef(
+                    BytesMRef::try_from_slice(&data_value_bytes).unwrap(),
                 )),
             }),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::AccountMerge(MuxedAccount::Ed25519(Uint256([1u8; 32]))),
+            body: OperationBodyRef::AccountMerge(MuxedAccount::Ed25519(Uint256([1u8; 32]))),
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::Inflation,
+            body: OperationBodyRef::Inflation,
         },
-        OperationView {
+        OperationRef {
             source_account: None,
-            body: OperationBodyView::EndSponsoringFutureReserves,
+            body: OperationBodyRef::EndSponsoringFutureReserves,
         },
     ];
 
-    let extra_signers = [SignerKeyView::Ed25519SignedPayload(
-        SignerKeyEd25519SignedPayloadView {
+    let extra_signers = [SignerKeyRef::Ed25519SignedPayload(
+        SignerKeyEd25519SignedPayloadRef {
             ed25519: Uint256([9u8; 32]),
-            payload: BytesMView::try_from_slice(&signed_payload).unwrap(),
+            payload: BytesMRef::try_from_slice(&signed_payload).unwrap(),
         },
     )];
 
-    let signatures = [DecoratedSignatureView {
+    let signatures = [DecoratedSignatureRef {
         hint: SignatureHint([1, 2, 3, 4]),
-        signature: SignatureView(BytesMView::try_from_slice(&sig_bytes).unwrap()),
+        signature: SignatureRef(BytesMRef::try_from_slice(&sig_bytes).unwrap()),
     }];
 
-    let view = TransactionEnvelopeView::Tx(TransactionV1EnvelopeView {
-        tx: TransactionView {
+    let r = TransactionEnvelopeRef::Tx(TransactionV1EnvelopeRef {
+        tx: TransactionRef {
             source_account: MuxedAccount::MuxedEd25519(MuxedAccountMed25519 {
                 id: 99,
                 ed25519: Uint256([0u8; 32]),
             }),
             fee: 1234,
             seq_num: SequenceNumber(42),
-            cond: PreconditionsView::V2(PreconditionsV2View {
+            cond: PreconditionsRef::V2(PreconditionsV2Ref {
                 time_bounds: Some(TimeBounds {
                     min_time: TimePoint(1),
                     max_time: TimePoint(2),
@@ -318,18 +317,18 @@ fn const_transaction_envelope_matches_stream() {
                 min_seq_num: Some(SequenceNumber(5)),
                 min_seq_age: Duration(6),
                 min_seq_ledger_gap: 7,
-                extra_signers: VecMView::try_from_slice(&extra_signers).unwrap(),
+                extra_signers: VecMRef::try_from_slice(&extra_signers).unwrap(),
             }),
-            memo: MemoView::Text(StringMView::try_from_str("hello memo").unwrap()),
-            operations: VecMView::try_from_slice(&operations).unwrap(),
-            ext: TransactionExtView::V1(SorobanTransactionDataView {
-                ext: SorobanTransactionDataExtView::V1(SorobanResourcesExtV0View {
-                    archived_soroban_entries: VecMView::try_from_slice(&archived).unwrap(),
+            memo: MemoRef::Text(StringMRef::try_from_str("hello memo").unwrap()),
+            operations: VecMRef::try_from_slice(&operations).unwrap(),
+            ext: TransactionExtRef::V1(SorobanTransactionDataRef {
+                ext: SorobanTransactionDataExtRef::V1(SorobanResourcesExtV0Ref {
+                    archived_soroban_entries: VecMRef::try_from_slice(&archived).unwrap(),
                 }),
-                resources: SorobanResourcesView {
-                    footprint: LedgerFootprintView {
-                        read_only: VecMView::default(),
-                        read_write: VecMView::default(),
+                resources: SorobanResourcesRef {
+                    footprint: LedgerFootprintRef {
+                        read_only: VecMRef::default(),
+                        read_write: VecMRef::default(),
                     },
                     instructions: 100,
                     disk_read_bytes: 200,
@@ -338,13 +337,13 @@ fn const_transaction_envelope_matches_stream() {
                 resource_fee: 999,
             }),
         },
-        signatures: VecMView::try_from_slice(&signatures).unwrap(),
+        signatures: VecMRef::try_from_slice(&signatures).unwrap(),
     });
 
-    assert_const_matches_stream!(write_type_transaction_envelope, view, TransactionEnvelope);
+    assert_const_matches_stream!(write_type_transaction_envelope, r, TransactionEnvelope);
 }
 
-/// Build a deeply-populated `LedgerCloseMetaView` (the richest `V2` variant),
+/// Build a deeply-populated `LedgerCloseMetaRef` (the richest `V2` variant),
 /// with the top levels fully populated and the deepest sub-trees left minimal,
 /// and check its `const` serialization matches the owned streaming `write_xdr`.
 #[test]
@@ -356,22 +355,22 @@ fn const_ledger_close_meta_matches_stream() {
     let upgrade_b = [4u8, 5];
     let scp_sig = [7u8; 32];
     let upgrades = [
-        UpgradeTypeView(BytesMView::try_from_slice(&upgrade_a).unwrap()),
-        UpgradeTypeView(BytesMView::try_from_slice(&upgrade_b).unwrap()),
+        UpgradeTypeRef(BytesMRef::try_from_slice(&upgrade_a).unwrap()),
+        UpgradeTypeRef(BytesMRef::try_from_slice(&upgrade_b).unwrap()),
     ];
 
-    let ledger_header = LedgerHeaderHistoryEntryView {
+    let ledger_header = LedgerHeaderHistoryEntryRef {
         hash: Hash([1u8; 32]),
-        header: LedgerHeaderView {
+        header: LedgerHeaderRef {
             ledger_version: 21,
             previous_ledger_hash: Hash([2u8; 32]),
-            scp_value: StellarValueView {
+            scp_value: StellarValueRef {
                 tx_set_hash: Hash([3u8; 32]),
                 close_time: TimePoint(1_700_000_000),
-                upgrades: VecMView::try_from_slice(&upgrades).unwrap(),
-                ext: StellarValueExtView::Signed(LedgerCloseValueSignatureView {
+                upgrades: VecMRef::try_from_slice(&upgrades).unwrap(),
+                ext: StellarValueExtRef::Signed(LedgerCloseValueSignatureRef {
                     node_id: node(),
-                    signature: SignatureView(BytesMView::try_from_slice(&scp_sig).unwrap()),
+                    signature: SignatureRef(BytesMRef::try_from_slice(&scp_sig).unwrap()),
                 }),
             },
             tx_set_result_hash: Hash([4u8; 32]),
@@ -396,71 +395,71 @@ fn const_ledger_close_meta_matches_stream() {
     };
 
     // One transaction set phase (empty component list keeps the tx tree shallow).
-    let phases = [TransactionPhaseView::V0(VecMView::default())];
-    let tx_set = GeneralizedTransactionSetView::V1(TransactionSetV1View {
+    let phases = [TransactionPhaseRef::V0(VecMRef::default())];
+    let tx_set = GeneralizedTransactionSetRef::V1(TransactionSetV1Ref {
         previous_ledger_hash: Hash([10u8; 32]),
-        phases: VecMView::try_from_slice(&phases).unwrap(),
+        phases: VecMRef::try_from_slice(&phases).unwrap(),
     });
 
     // One tx-processing entry; the deep meta/change sub-trees are left empty.
-    let tx_processing = [TransactionResultMetaV1View {
+    let tx_processing = [TransactionResultMetaV1Ref {
         ext: ExtensionPoint::V0,
-        result: TransactionResultPairView {
+        result: TransactionResultPairRef {
             transaction_hash: Hash([11u8; 32]),
-            result: TransactionResultView {
+            result: TransactionResultRef {
                 fee_charged: 100,
-                result: TransactionResultResultView::TxSuccess(VecMView::default()),
+                result: TransactionResultResultRef::TxSuccess(VecMRef::default()),
                 ext: TransactionResultExt::V0,
             },
         },
-        fee_processing: LedgerEntryChangesView(VecMView::default()),
-        tx_apply_processing: TransactionMetaView::V0(VecMView::default()),
-        post_tx_apply_fee_processing: LedgerEntryChangesView(VecMView::default()),
+        fee_processing: LedgerEntryChangesRef(VecMRef::default()),
+        tx_apply_processing: TransactionMetaRef::V0(VecMRef::default()),
+        post_tx_apply_fee_processing: LedgerEntryChangesRef(VecMRef::default()),
     }];
 
-    let upgrades_processing = [UpgradeEntryMetaView {
+    let upgrades_processing = [UpgradeEntryMetaRef {
         upgrade: LedgerUpgrade::Version(21),
-        changes: LedgerEntryChangesView(VecMView::default()),
+        changes: LedgerEntryChangesRef(VecMRef::default()),
     }];
 
     // One SCP history entry with a quorum set.
     let validators = [node()];
-    let quorum_sets = [ScpQuorumSetView {
+    let quorum_sets = [ScpQuorumSetRef {
         threshold: 1,
-        validators: VecMView::try_from_slice(&validators).unwrap(),
-        inner_sets: VecMView::default(),
+        validators: VecMRef::try_from_slice(&validators).unwrap(),
+        inner_sets: VecMRef::default(),
     }];
-    let scp_info = [ScpHistoryEntryView::V0(ScpHistoryEntryV0View {
-        quorum_sets: VecMView::try_from_slice(&quorum_sets).unwrap(),
-        ledger_messages: LedgerScpMessagesView {
+    let scp_info = [ScpHistoryEntryRef::V0(ScpHistoryEntryV0Ref {
+        quorum_sets: VecMRef::try_from_slice(&quorum_sets).unwrap(),
+        ledger_messages: LedgerScpMessagesRef {
             ledger_seq: 1000,
-            messages: VecMView::default(),
+            messages: VecMRef::default(),
         },
     })];
 
     // A couple of simple owned-payload ledger-key arms.
     let evicted_keys = [
-        LedgerKeyView::Ttl(LedgerKeyTtl {
+        LedgerKeyRef::Ttl(LedgerKeyTtl {
             key_hash: Hash([12u8; 32]),
         }),
-        LedgerKeyView::ContractCode(LedgerKeyContractCode {
+        LedgerKeyRef::ContractCode(LedgerKeyContractCode {
             hash: Hash([13u8; 32]),
         }),
     ];
 
-    let view = LedgerCloseMetaView::V2(LedgerCloseMetaV2View {
+    let r = LedgerCloseMetaRef::V2(LedgerCloseMetaV2Ref {
         ext: LedgerCloseMetaExt::V1(LedgerCloseMetaExtV1 {
             ext: ExtensionPoint::V0,
             soroban_fee_write1_kb: 1234,
         }),
         ledger_header,
         tx_set,
-        tx_processing: VecMView::try_from_slice(&tx_processing).unwrap(),
-        upgrades_processing: VecMView::try_from_slice(&upgrades_processing).unwrap(),
-        scp_info: VecMView::try_from_slice(&scp_info).unwrap(),
+        tx_processing: VecMRef::try_from_slice(&tx_processing).unwrap(),
+        upgrades_processing: VecMRef::try_from_slice(&upgrades_processing).unwrap(),
+        scp_info: VecMRef::try_from_slice(&scp_info).unwrap(),
         total_byte_size_of_live_soroban_state: 9_999,
-        evicted_keys: VecMView::try_from_slice(&evicted_keys).unwrap(),
+        evicted_keys: VecMRef::try_from_slice(&evicted_keys).unwrap(),
     });
 
-    assert_const_matches_stream!(write_type_ledger_close_meta, view, LedgerCloseMeta);
+    assert_const_matches_stream!(write_type_ledger_close_meta, r, LedgerCloseMeta);
 }

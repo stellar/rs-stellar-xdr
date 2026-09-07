@@ -140,7 +140,7 @@ impl WriteXdr for ScpStatementRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpStatementView<'_> {
+impl ScpStatementRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -179,7 +179,7 @@ impl ScpStatementView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatement`], mirroring `<ScpStatement as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement(&mut self, v: &ScpStatementView<'_>) {
+    pub const fn write_type_scp_statement(&mut self, v: &ScpStatementRef<'_>) {
         self.write_type_node_id(&v.node_id);
         self.write_u64(v.slot_index);
         self.write_type_scp_statement_pledges(&v.pledges);

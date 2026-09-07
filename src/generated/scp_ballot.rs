@@ -97,7 +97,7 @@ impl WriteXdr for ScpBallotRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpBallotView<'_> {
+impl ScpBallotRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,13 +136,13 @@ impl ScpBallotView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpBallot`], mirroring `<ScpBallot as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_ballot(&mut self, v: &ScpBallotView<'_>) {
+    pub const fn write_type_scp_ballot(&mut self, v: &ScpBallotRef<'_>) {
         self.write_u32(v.counter);
         self.write_type_value(&v.value);
     }
 
     /// Serializes an optional [`ScpBallot`], mirroring `<Option<ScpBallot> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_scp_ballot(&mut self, v: &Option<ScpBallotView<'_>>) {
+    pub const fn write_type_option_scp_ballot(&mut self, v: &Option<ScpBallotRef<'_>>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

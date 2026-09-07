@@ -236,7 +236,7 @@ impl WriteXdr for SignerKeyRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SignerKeyView<'_> {
+impl SignerKeyRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -275,21 +275,21 @@ impl SignerKeyView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SignerKey`], mirroring `<SignerKey as WriteXdr>::write_xdr`.
-    pub const fn write_type_signer_key(&mut self, v: &SignerKeyView<'_>) {
+    pub const fn write_type_signer_key(&mut self, v: &SignerKeyRef<'_>) {
         let d = v.discriminant();
         self.write_type_signer_key_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SignerKeyView::Ed25519(value) => {
+            SignerKeyRef::Ed25519(value) => {
                 self.write_type_uint256(value);
             }
-            SignerKeyView::PreAuthTx(value) => {
+            SignerKeyRef::PreAuthTx(value) => {
                 self.write_type_uint256(value);
             }
-            SignerKeyView::HashX(value) => {
+            SignerKeyRef::HashX(value) => {
                 self.write_type_uint256(value);
             }
-            SignerKeyView::Ed25519SignedPayload(value) => {
+            SignerKeyRef::Ed25519SignedPayload(value) => {
                 self.write_type_signer_key_ed25519_signed_payload(value);
             }
         }
@@ -298,7 +298,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SignerKey`], mirroring `<VecM<SignerKey, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_signer_key<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, SignerKeyView<'_>, MAX>,
+        v: &VecMRef<'_, SignerKeyRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

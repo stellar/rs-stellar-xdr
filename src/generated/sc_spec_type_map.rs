@@ -97,7 +97,7 @@ impl WriteXdr for ScSpecTypeMapRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeMapView<'_> {
+impl ScSpecTypeMapRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ScSpecTypeMapView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeMap`], mirroring `<ScSpecTypeMap as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_map(&mut self, v: &ScSpecTypeMapView<'_>) {
+    pub const fn write_type_sc_spec_type_map(&mut self, v: &ScSpecTypeMapRef<'_>) {
         self.write_type_sc_spec_type_def(v.key_type);
         self.write_type_sc_spec_type_def(v.value_type);
     }

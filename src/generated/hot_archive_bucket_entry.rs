@@ -225,7 +225,7 @@ impl WriteXdr for HotArchiveBucketEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl HotArchiveBucketEntryView<'_> {
+impl HotArchiveBucketEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -264,18 +264,18 @@ impl HotArchiveBucketEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`HotArchiveBucketEntry`], mirroring `<HotArchiveBucketEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_hot_archive_bucket_entry(&mut self, v: &HotArchiveBucketEntryView<'_>) {
+    pub const fn write_type_hot_archive_bucket_entry(&mut self, v: &HotArchiveBucketEntryRef<'_>) {
         let d = v.discriminant();
         self.write_type_hot_archive_bucket_entry_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            HotArchiveBucketEntryView::Archived(value) => {
+            HotArchiveBucketEntryRef::Archived(value) => {
                 self.write_type_ledger_entry(value);
             }
-            HotArchiveBucketEntryView::Live(value) => {
+            HotArchiveBucketEntryRef::Live(value) => {
                 self.write_type_ledger_key(value);
             }
-            HotArchiveBucketEntryView::Metaentry(value) => {
+            HotArchiveBucketEntryRef::Metaentry(value) => {
                 self.write_type_bucket_metadata(value);
             }
         }

@@ -118,7 +118,7 @@ impl WriteXdr for DataEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl DataEntryView<'_> {
+impl DataEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -157,7 +157,7 @@ impl DataEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DataEntry`], mirroring `<DataEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_data_entry(&mut self, v: &DataEntryView<'_>) {
+    pub const fn write_type_data_entry(&mut self, v: &DataEntryRef<'_>) {
         self.write_type_account_id(&v.account_id);
         self.write_type_string64(&v.data_name);
         self.write_type_data_value(&v.data_value);

@@ -104,7 +104,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtErrorEnumCaseV0View<'_> {
+impl ScSpecUdtErrorEnumCaseV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +145,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtErrorEnumCaseV0`], mirroring `<ScSpecUdtErrorEnumCaseV0 as WriteXdr>::write_xdr`.
     pub const fn write_type_sc_spec_udt_error_enum_case_v0(
         &mut self,
-        v: &ScSpecUdtErrorEnumCaseV0View<'_>,
+        v: &ScSpecUdtErrorEnumCaseV0Ref<'_>,
     ) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());
@@ -155,7 +155,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecUdtErrorEnumCaseV0`], mirroring `<VecM<ScSpecUdtErrorEnumCaseV0, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_udt_error_enum_case_v0<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScSpecUdtErrorEnumCaseV0View<'_>, MAX>,
+        v: &VecMRef<'_, ScSpecUdtErrorEnumCaseV0Ref<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

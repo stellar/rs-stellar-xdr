@@ -104,7 +104,7 @@ impl WriteXdr for LedgerKeyContractDataRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerKeyContractDataView<'_> {
+impl LedgerKeyContractDataRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +143,7 @@ impl LedgerKeyContractDataView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerKeyContractData`], mirroring `<LedgerKeyContractData as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_key_contract_data(&mut self, v: &LedgerKeyContractDataView<'_>) {
+    pub const fn write_type_ledger_key_contract_data(&mut self, v: &LedgerKeyContractDataRef<'_>) {
         self.write_type_sc_address(&v.contract);
         self.write_type_sc_val(&v.key);
         self.write_type_contract_data_durability(&v.durability);

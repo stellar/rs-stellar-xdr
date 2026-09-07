@@ -56,33 +56,33 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
 }
 
 /// The Rust type that holds this XDR type in a const context: the borrowing
-/// `View` form where the type owns heap data, the owned type otherwise.
+/// `Ref` form where the type owns heap data, the owned type otherwise.
 ///
-/// The `'a` of the `View` types is rendered as `'_`, so the result is usable in
+/// The `'a` of the `Ref` types is rendered as `'_`, so the result is usable in
 /// a function signature. Mirrors [`type_ref`], including the reference wrapping
 /// applied where `parent_type` makes the type cyclic.
-pub(crate) fn const_view_type(
+pub(crate) fn const_ref_type(
     type_: &Type,
     parent_type: Option<&str>,
     type_info: &TypeInfo,
-    view_required: &HashSet<String>,
+    ref_required: &HashSet<String>,
 ) -> String {
     TypeMapping::new(type_, Some(type_info), parent_type)
-        .view_type_ref(view_required)
+        .ref_type(ref_required)
         .replace("'a", "'_")
 }
 
-/// As [`const_view_type`], but without the reference wrapping for cyclic types.
+/// As [`const_ref_type`], but without the reference wrapping for cyclic types.
 ///
-/// This is the form an element takes inside a container such as `VecMView`,
+/// This is the form an element takes inside a container such as `VecMRef`,
 /// which borrows its elements as a slice rather than individually.
-pub(crate) fn const_view_base_type(
+pub(crate) fn const_ref_base_type(
     type_: &Type,
     type_info: &TypeInfo,
-    view_required: &HashSet<String>,
+    ref_required: &HashSet<String>,
 ) -> String {
     TypeMapping::new(type_, Some(type_info), None)
-        .view_base_type_ref(view_required)
+        .ref_base_type(ref_required)
         .replace("'a", "'_")
 }
 

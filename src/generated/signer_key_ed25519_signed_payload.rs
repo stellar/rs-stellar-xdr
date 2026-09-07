@@ -128,7 +128,7 @@ impl WriteXdr for SignerKeyEd25519SignedPayloadRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SignerKeyEd25519SignedPayloadView<'_> {
+impl SignerKeyEd25519SignedPayloadRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -169,7 +169,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SignerKeyEd25519SignedPayload`], mirroring `<SignerKeyEd25519SignedPayload as WriteXdr>::write_xdr`.
     pub const fn write_type_signer_key_ed25519_signed_payload(
         &mut self,
-        v: &SignerKeyEd25519SignedPayloadView<'_>,
+        v: &SignerKeyEd25519SignedPayloadRef<'_>,
     ) {
         self.write_type_uint256(&v.ed25519);
         self.write_var_opaque(v.payload.as_slice());

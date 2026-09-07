@@ -508,7 +508,7 @@ impl WriteXdr for StellarMessageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl StellarMessageView<'_> {
+impl StellarMessageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -547,72 +547,72 @@ impl StellarMessageView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StellarMessage`], mirroring `<StellarMessage as WriteXdr>::write_xdr`.
-    pub const fn write_type_stellar_message(&mut self, v: &StellarMessageView<'_>) {
+    pub const fn write_type_stellar_message(&mut self, v: &StellarMessageRef<'_>) {
         let d = v.discriminant();
         self.write_type_message_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            StellarMessageView::ErrorMsg(value) => {
+            StellarMessageRef::ErrorMsg(value) => {
                 self.write_type_s_error(value);
             }
-            StellarMessageView::Hello(value) => {
+            StellarMessageRef::Hello(value) => {
                 self.write_type_hello(value);
             }
-            StellarMessageView::Auth(value) => {
+            StellarMessageRef::Auth(value) => {
                 self.write_type_auth(value);
             }
-            StellarMessageView::DontHave(value) => {
+            StellarMessageRef::DontHave(value) => {
                 self.write_type_dont_have(value);
             }
-            StellarMessageView::Peers(value) => {
+            StellarMessageRef::Peers(value) => {
                 self.write_type_vec_peer_address(value);
             }
-            StellarMessageView::GetTxSet(value) => {
+            StellarMessageRef::GetTxSet(value) => {
                 self.write_type_uint256(value);
             }
-            StellarMessageView::TxSet(value) => {
+            StellarMessageRef::TxSet(value) => {
                 self.write_type_transaction_set(value);
             }
-            StellarMessageView::GeneralizedTxSet(value) => {
+            StellarMessageRef::GeneralizedTxSet(value) => {
                 self.write_type_generalized_transaction_set(value);
             }
-            StellarMessageView::Transaction(value) => {
+            StellarMessageRef::Transaction(value) => {
                 self.write_type_transaction_envelope(value);
             }
-            StellarMessageView::TimeSlicedSurveyRequest(value) => {
+            StellarMessageRef::TimeSlicedSurveyRequest(value) => {
                 self.write_type_signed_time_sliced_survey_request_message(value);
             }
-            StellarMessageView::TimeSlicedSurveyResponse(value) => {
+            StellarMessageRef::TimeSlicedSurveyResponse(value) => {
                 self.write_type_signed_time_sliced_survey_response_message(value);
             }
-            StellarMessageView::TimeSlicedSurveyStartCollecting(value) => {
+            StellarMessageRef::TimeSlicedSurveyStartCollecting(value) => {
                 self.write_type_signed_time_sliced_survey_start_collecting_message(value);
             }
-            StellarMessageView::TimeSlicedSurveyStopCollecting(value) => {
+            StellarMessageRef::TimeSlicedSurveyStopCollecting(value) => {
                 self.write_type_signed_time_sliced_survey_stop_collecting_message(value);
             }
-            StellarMessageView::GetScpQuorumset(value) => {
+            StellarMessageRef::GetScpQuorumset(value) => {
                 self.write_type_uint256(value);
             }
-            StellarMessageView::ScpQuorumset(value) => {
+            StellarMessageRef::ScpQuorumset(value) => {
                 self.write_type_scp_quorum_set(value);
             }
-            StellarMessageView::ScpMessage(value) => {
+            StellarMessageRef::ScpMessage(value) => {
                 self.write_type_scp_envelope(value);
             }
-            StellarMessageView::GetScpState(value) => {
+            StellarMessageRef::GetScpState(value) => {
                 self.write_u32(*value);
             }
-            StellarMessageView::SendMore(value) => {
+            StellarMessageRef::SendMore(value) => {
                 self.write_type_send_more(value);
             }
-            StellarMessageView::SendMoreExtended(value) => {
+            StellarMessageRef::SendMoreExtended(value) => {
                 self.write_type_send_more_extended(value);
             }
-            StellarMessageView::FloodAdvert(value) => {
+            StellarMessageRef::FloodAdvert(value) => {
                 self.write_type_flood_advert(value);
             }
-            StellarMessageView::FloodDemand(value) => {
+            StellarMessageRef::FloodDemand(value) => {
                 self.write_type_flood_demand(value);
             }
         }

@@ -97,7 +97,7 @@ impl WriteXdr for LedgerScpMessagesRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerScpMessagesView<'_> {
+impl LedgerScpMessagesRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl LedgerScpMessagesView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerScpMessages`], mirroring `<LedgerScpMessages as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_scp_messages(&mut self, v: &LedgerScpMessagesView<'_>) {
+    pub const fn write_type_ledger_scp_messages(&mut self, v: &LedgerScpMessagesRef<'_>) {
         self.write_u32(v.ledger_seq);
         self.write_type_vec_scp_envelope(&v.messages);
     }

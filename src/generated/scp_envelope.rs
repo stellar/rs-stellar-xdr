@@ -97,7 +97,7 @@ impl WriteXdr for ScpEnvelopeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpEnvelopeView<'_> {
+impl ScpEnvelopeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ScpEnvelopeView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpEnvelope`], mirroring `<ScpEnvelope as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_envelope(&mut self, v: &ScpEnvelopeView<'_>) {
+    pub const fn write_type_scp_envelope(&mut self, v: &ScpEnvelopeRef<'_>) {
         self.write_type_scp_statement(&v.statement);
         self.write_type_signature(&v.signature);
     }
@@ -144,7 +144,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScpEnvelope`], mirroring `<VecM<ScpEnvelope, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_scp_envelope<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScpEnvelopeView<'_>, MAX>,
+        v: &VecMRef<'_, ScpEnvelopeRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

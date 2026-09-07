@@ -158,7 +158,7 @@ impl WriteXdr for OperationRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl OperationView<'_> {
+impl OperationRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -197,7 +197,7 @@ impl OperationView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Operation`], mirroring `<Operation as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation(&mut self, v: &OperationView<'_>) {
+    pub const fn write_type_operation(&mut self, v: &OperationRef<'_>) {
         self.write_type_option_muxed_account(&v.source_account);
         self.write_type_operation_body(&v.body);
     }
@@ -205,7 +205,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`Operation`], mirroring `<VecM<Operation, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, OperationView<'_>, MAX>,
+        v: &VecMRef<'_, OperationRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

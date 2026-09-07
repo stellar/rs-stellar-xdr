@@ -145,7 +145,7 @@ impl WriteXdr for EncryptedBodyRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl EncryptedBodyView<'_> {
+impl EncryptedBodyRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl EncryptedBodyView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`EncryptedBody`], mirroring `<EncryptedBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_encrypted_body(&mut self, v: &EncryptedBodyView<'_>) {
+    pub const fn write_type_encrypted_body(&mut self, v: &EncryptedBodyRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

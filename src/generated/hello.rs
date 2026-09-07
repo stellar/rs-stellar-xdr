@@ -146,7 +146,7 @@ impl WriteXdr for HelloRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl HelloView<'_> {
+impl HelloRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -185,7 +185,7 @@ impl HelloView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Hello`], mirroring `<Hello as WriteXdr>::write_xdr`.
-    pub const fn write_type_hello(&mut self, v: &HelloView<'_>) {
+    pub const fn write_type_hello(&mut self, v: &HelloRef<'_>) {
         self.write_u32(v.ledger_version);
         self.write_u32(v.overlay_version);
         self.write_u32(v.overlay_min_version);

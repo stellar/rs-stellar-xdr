@@ -104,7 +104,7 @@ impl WriteXdr for TopologyResponseBodyV2Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TopologyResponseBodyV2View<'_> {
+impl TopologyResponseBodyV2Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +145,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TopologyResponseBodyV2`], mirroring `<TopologyResponseBodyV2 as WriteXdr>::write_xdr`.
     pub const fn write_type_topology_response_body_v2(
         &mut self,
-        v: &TopologyResponseBodyV2View<'_>,
+        v: &TopologyResponseBodyV2Ref<'_>,
     ) {
         self.write_type_time_sliced_peer_data_list(&v.inbound_peers);
         self.write_type_time_sliced_peer_data_list(&v.outbound_peers);

@@ -200,7 +200,7 @@ impl WriteXdr for TransactionPhaseRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionPhaseView<'_> {
+impl TransactionPhaseRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,15 +239,15 @@ impl TransactionPhaseView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionPhase`], mirroring `<TransactionPhase as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_phase(&mut self, v: &TransactionPhaseView<'_>) {
+    pub const fn write_type_transaction_phase(&mut self, v: &TransactionPhaseRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionPhaseView::V0(value) => {
+            TransactionPhaseRef::V0(value) => {
                 self.write_type_vec_tx_set_component(value);
             }
-            TransactionPhaseView::V1(value) => {
+            TransactionPhaseRef::V1(value) => {
                 self.write_type_parallel_txs_component(value);
             }
         }
@@ -256,7 +256,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionPhase`], mirroring `<VecM<TransactionPhase, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_phase<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, TransactionPhaseView<'_>, MAX>,
+        v: &VecMRef<'_, TransactionPhaseRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -225,7 +225,7 @@ impl WriteXdr for StellarValueExtRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl StellarValueExtView<'_> {
+impl StellarValueExtRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -264,16 +264,16 @@ impl StellarValueExtView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StellarValueExt`], mirroring `<StellarValueExt as WriteXdr>::write_xdr`.
-    pub const fn write_type_stellar_value_ext(&mut self, v: &StellarValueExtView<'_>) {
+    pub const fn write_type_stellar_value_ext(&mut self, v: &StellarValueExtRef<'_>) {
         let d = v.discriminant();
         self.write_type_stellar_value_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            StellarValueExtView::Basic => {}
-            StellarValueExtView::Signed(value) => {
+            StellarValueExtRef::Basic => {}
+            StellarValueExtRef::Signed(value) => {
                 self.write_type_ledger_close_value_signature(value);
             }
-            StellarValueExtView::EmptyTxSet(value) => {
+            StellarValueExtRef::EmptyTxSet(value) => {
                 self.write_type_stellar_value_proposed_value(value);
             }
         }

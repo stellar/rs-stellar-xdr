@@ -200,7 +200,7 @@ impl WriteXdr for TransactionExtRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionExtView<'_> {
+impl TransactionExtRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,13 +239,13 @@ impl TransactionExtView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionExt`], mirroring `<TransactionExt as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_ext(&mut self, v: &TransactionExtView<'_>) {
+    pub const fn write_type_transaction_ext(&mut self, v: &TransactionExtRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionExtView::V0 => {}
-            TransactionExtView::V1(value) => {
+            TransactionExtRef::V0 => {}
+            TransactionExtRef::V1(value) => {
                 self.write_type_soroban_transaction_data(value);
             }
         }

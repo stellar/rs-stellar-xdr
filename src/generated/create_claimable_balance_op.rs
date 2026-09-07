@@ -108,7 +108,7 @@ impl WriteXdr for CreateClaimableBalanceOpRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl CreateClaimableBalanceOpView<'_> {
+impl CreateClaimableBalanceOpRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -149,7 +149,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`CreateClaimableBalanceOp`], mirroring `<CreateClaimableBalanceOp as WriteXdr>::write_xdr`.
     pub const fn write_type_create_claimable_balance_op(
         &mut self,
-        v: &CreateClaimableBalanceOpView<'_>,
+        v: &CreateClaimableBalanceOpRef<'_>,
     ) {
         self.write_type_asset(&v.asset);
         self.write_i64(v.amount);

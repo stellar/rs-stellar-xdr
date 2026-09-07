@@ -108,7 +108,7 @@ impl WriteXdr for AuthenticatedMessageV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl AuthenticatedMessageV0View<'_> {
+impl AuthenticatedMessageV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -147,10 +147,7 @@ impl AuthenticatedMessageV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AuthenticatedMessageV0`], mirroring `<AuthenticatedMessageV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_authenticated_message_v0(
-        &mut self,
-        v: &AuthenticatedMessageV0View<'_>,
-    ) {
+    pub const fn write_type_authenticated_message_v0(&mut self, v: &AuthenticatedMessageV0Ref<'_>) {
         self.write_u64(v.sequence);
         self.write_type_stellar_message(&v.message);
         self.write_type_hmac_sha256_mac(&v.mac);

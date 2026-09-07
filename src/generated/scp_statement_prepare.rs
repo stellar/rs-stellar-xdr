@@ -125,7 +125,7 @@ impl WriteXdr for ScpStatementPrepareRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpStatementPrepareView<'_> {
+impl ScpStatementPrepareRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -164,7 +164,7 @@ impl ScpStatementPrepareView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementPrepare`], mirroring `<ScpStatementPrepare as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement_prepare(&mut self, v: &ScpStatementPrepareView<'_>) {
+    pub const fn write_type_scp_statement_prepare(&mut self, v: &ScpStatementPrepareRef<'_>) {
         self.write_type_hash(&v.quorum_set_hash);
         self.write_type_scp_ballot(&v.ballot);
         self.write_type_option_scp_ballot(&v.prepared);

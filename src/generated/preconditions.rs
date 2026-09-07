@@ -215,7 +215,7 @@ impl WriteXdr for PreconditionsRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PreconditionsView<'_> {
+impl PreconditionsRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -254,16 +254,16 @@ impl PreconditionsView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Preconditions`], mirroring `<Preconditions as WriteXdr>::write_xdr`.
-    pub const fn write_type_preconditions(&mut self, v: &PreconditionsView<'_>) {
+    pub const fn write_type_preconditions(&mut self, v: &PreconditionsRef<'_>) {
         let d = v.discriminant();
         self.write_type_precondition_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PreconditionsView::None => {}
-            PreconditionsView::Time(value) => {
+            PreconditionsRef::None => {}
+            PreconditionsRef::Time(value) => {
                 self.write_type_time_bounds(value);
             }
-            PreconditionsView::V2(value) => {
+            PreconditionsRef::V2(value) => {
                 self.write_type_preconditions_v2(value);
             }
         }

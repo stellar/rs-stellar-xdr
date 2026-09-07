@@ -209,7 +209,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransactionRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionSignaturePayloadTaggedTransactionView<'_> {
+impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -250,16 +250,16 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionSignaturePayloadTaggedTransaction`], mirroring `<TransactionSignaturePayloadTaggedTransaction as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_signature_payload_tagged_transaction(
         &mut self,
-        v: &TransactionSignaturePayloadTaggedTransactionView<'_>,
+        v: &TransactionSignaturePayloadTaggedTransactionRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionSignaturePayloadTaggedTransactionView::Tx(value) => {
+            TransactionSignaturePayloadTaggedTransactionRef::Tx(value) => {
                 self.write_type_transaction(value);
             }
-            TransactionSignaturePayloadTaggedTransactionView::TxFeeBump(value) => {
+            TransactionSignaturePayloadTaggedTransactionRef::TxFeeBump(value) => {
                 self.write_type_fee_bump_transaction(value);
             }
         }

@@ -211,7 +211,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionCaseV0View<'_> {
+impl ScSpecUdtUnionCaseV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -250,15 +250,15 @@ impl ScSpecUdtUnionCaseV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtUnionCaseV0`], mirroring `<ScSpecUdtUnionCaseV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_udt_union_case_v0(&mut self, v: &ScSpecUdtUnionCaseV0View<'_>) {
+    pub const fn write_type_sc_spec_udt_union_case_v0(&mut self, v: &ScSpecUdtUnionCaseV0Ref<'_>) {
         let d = v.discriminant();
         self.write_type_sc_spec_udt_union_case_v0_kind(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecUdtUnionCaseV0View::VoidV0(value) => {
+            ScSpecUdtUnionCaseV0Ref::VoidV0(value) => {
                 self.write_type_sc_spec_udt_union_case_void_v0(value);
             }
-            ScSpecUdtUnionCaseV0View::TupleV0(value) => {
+            ScSpecUdtUnionCaseV0Ref::TupleV0(value) => {
                 self.write_type_sc_spec_udt_union_case_tuple_v0(value);
             }
         }
@@ -267,7 +267,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecUdtUnionCaseV0`], mirroring `<VecM<ScSpecUdtUnionCaseV0, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_udt_union_case_v0<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScSpecUdtUnionCaseV0View<'_>, MAX>,
+        v: &VecMRef<'_, ScSpecUdtUnionCaseV0Ref<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

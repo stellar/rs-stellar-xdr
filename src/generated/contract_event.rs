@@ -129,7 +129,7 @@ impl WriteXdr for ContractEventRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ContractEventView<'_> {
+impl ContractEventRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -168,7 +168,7 @@ impl ContractEventView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractEvent`], mirroring `<ContractEvent as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_event(&mut self, v: &ContractEventView<'_>) {
+    pub const fn write_type_contract_event(&mut self, v: &ContractEventRef<'_>) {
         self.write_type_extension_point(&v.ext);
         self.write_type_option_contract_id(&v.contract_id);
         self.write_type_contract_event_type(&v.type_);
@@ -178,7 +178,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ContractEvent`], mirroring `<VecM<ContractEvent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_contract_event<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ContractEventView<'_>, MAX>,
+        v: &VecMRef<'_, ContractEventRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

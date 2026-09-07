@@ -145,7 +145,7 @@ impl WriteXdr for String64Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl String64View<'_> {
+impl String64Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl String64View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`String64`], mirroring `<String64 as WriteXdr>::write_xdr`.
-    pub const fn write_type_string64(&mut self, v: &String64View<'_>) {
+    pub const fn write_type_string64(&mut self, v: &String64Ref<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

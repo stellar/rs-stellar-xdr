@@ -145,7 +145,7 @@ impl WriteXdr for UpgradeTypeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl UpgradeTypeView<'_> {
+impl UpgradeTypeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +184,14 @@ impl UpgradeTypeView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`UpgradeType`], mirroring `<UpgradeType as WriteXdr>::write_xdr`.
-    pub const fn write_type_upgrade_type(&mut self, v: &UpgradeTypeView<'_>) {
+    pub const fn write_type_upgrade_type(&mut self, v: &UpgradeTypeRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`UpgradeType`], mirroring `<VecM<UpgradeType, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_upgrade_type<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, UpgradeTypeView<'_>, MAX>,
+        v: &VecMRef<'_, UpgradeTypeRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

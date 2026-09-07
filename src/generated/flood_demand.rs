@@ -90,7 +90,7 @@ impl WriteXdr for FloodDemandRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl FloodDemandView<'_> {
+impl FloodDemandRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +129,7 @@ impl FloodDemandView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FloodDemand`], mirroring `<FloodDemand as WriteXdr>::write_xdr`.
-    pub const fn write_type_flood_demand(&mut self, v: &FloodDemandView<'_>) {
+    pub const fn write_type_flood_demand(&mut self, v: &FloodDemandRef<'_>) {
         self.write_type_tx_demand_vector(&v.tx_hashes);
     }
 }

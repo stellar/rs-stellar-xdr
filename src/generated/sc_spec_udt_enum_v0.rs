@@ -111,7 +111,7 @@ impl WriteXdr for ScSpecUdtEnumV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtEnumV0View<'_> {
+impl ScSpecUdtEnumV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -150,7 +150,7 @@ impl ScSpecUdtEnumV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtEnumV0`], mirroring `<ScSpecUdtEnumV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_udt_enum_v0(&mut self, v: &ScSpecUdtEnumV0View<'_>) {
+    pub const fn write_type_sc_spec_udt_enum_v0(&mut self, v: &ScSpecUdtEnumV0Ref<'_>) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.lib.as_slice());
         self.write_var_opaque(v.name.as_slice());

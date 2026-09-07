@@ -200,7 +200,7 @@ impl WriteXdr for StoredTransactionSetRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl StoredTransactionSetView<'_> {
+impl StoredTransactionSetRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,15 +239,15 @@ impl StoredTransactionSetView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StoredTransactionSet`], mirroring `<StoredTransactionSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_stored_transaction_set(&mut self, v: &StoredTransactionSetView<'_>) {
+    pub const fn write_type_stored_transaction_set(&mut self, v: &StoredTransactionSetRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            StoredTransactionSetView::V0(value) => {
+            StoredTransactionSetRef::V0(value) => {
                 self.write_type_transaction_set(value);
             }
-            StoredTransactionSetView::V1(value) => {
+            StoredTransactionSetRef::V1(value) => {
                 self.write_type_generalized_transaction_set(value);
             }
         }
@@ -256,7 +256,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`StoredTransactionSet`], mirroring `<VecM<StoredTransactionSet, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_stored_transaction_set<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, StoredTransactionSetView<'_>, MAX>,
+        v: &VecMRef<'_, StoredTransactionSetRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

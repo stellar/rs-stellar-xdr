@@ -212,7 +212,7 @@ impl WriteXdr for TransactionEnvelopeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionEnvelopeView<'_> {
+impl TransactionEnvelopeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -251,18 +251,18 @@ impl TransactionEnvelopeView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionEnvelope`], mirroring `<TransactionEnvelope as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_envelope(&mut self, v: &TransactionEnvelopeView<'_>) {
+    pub const fn write_type_transaction_envelope(&mut self, v: &TransactionEnvelopeRef<'_>) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionEnvelopeView::TxV0(value) => {
+            TransactionEnvelopeRef::TxV0(value) => {
                 self.write_type_transaction_v0_envelope(value);
             }
-            TransactionEnvelopeView::Tx(value) => {
+            TransactionEnvelopeRef::Tx(value) => {
                 self.write_type_transaction_v1_envelope(value);
             }
-            TransactionEnvelopeView::TxFeeBump(value) => {
+            TransactionEnvelopeRef::TxFeeBump(value) => {
                 self.write_type_fee_bump_transaction_envelope(value);
             }
         }
@@ -271,7 +271,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionEnvelope`], mirroring `<VecM<TransactionEnvelope, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_envelope<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, TransactionEnvelopeView<'_>, MAX>,
+        v: &VecMRef<'_, TransactionEnvelopeRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

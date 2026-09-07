@@ -97,7 +97,7 @@ impl WriteXdr for ManageDataOpRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ManageDataOpView<'_> {
+impl ManageDataOpRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ManageDataOpView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ManageDataOp`], mirroring `<ManageDataOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_manage_data_op(&mut self, v: &ManageDataOpView<'_>) {
+    pub const fn write_type_manage_data_op(&mut self, v: &ManageDataOpRef<'_>) {
         self.write_type_string64(&v.data_name);
         self.write_type_option_data_value(&v.data_value);
     }

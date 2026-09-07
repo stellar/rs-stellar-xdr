@@ -109,7 +109,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtStructFieldV0View<'_> {
+impl ScSpecUdtStructFieldV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -150,7 +150,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtStructFieldV0`], mirroring `<ScSpecUdtStructFieldV0 as WriteXdr>::write_xdr`.
     pub const fn write_type_sc_spec_udt_struct_field_v0(
         &mut self,
-        v: &ScSpecUdtStructFieldV0View<'_>,
+        v: &ScSpecUdtStructFieldV0Ref<'_>,
     ) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());
@@ -160,7 +160,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecUdtStructFieldV0`], mirroring `<VecM<ScSpecUdtStructFieldV0, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_udt_struct_field_v0<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScSpecUdtStructFieldV0View<'_>, MAX>,
+        v: &VecMRef<'_, ScSpecUdtStructFieldV0Ref<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

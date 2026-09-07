@@ -123,7 +123,7 @@ impl WriteXdr for SorobanTransactionDataRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanTransactionDataView<'_> {
+impl SorobanTransactionDataRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -162,10 +162,7 @@ impl SorobanTransactionDataView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionData`], mirroring `<SorobanTransactionData as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_transaction_data(
-        &mut self,
-        v: &SorobanTransactionDataView<'_>,
-    ) {
+    pub const fn write_type_soroban_transaction_data(&mut self, v: &SorobanTransactionDataRef<'_>) {
         self.write_type_soroban_transaction_data_ext(&v.ext);
         self.write_type_soroban_resources(&v.resources);
         self.write_i64(v.resource_fee);

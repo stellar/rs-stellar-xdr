@@ -145,7 +145,7 @@ impl WriteXdr for ParallelTxExecutionStageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ParallelTxExecutionStageView<'_> {
+impl ParallelTxExecutionStageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +186,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ParallelTxExecutionStage`], mirroring `<ParallelTxExecutionStage as WriteXdr>::write_xdr`.
     pub const fn write_type_parallel_tx_execution_stage(
         &mut self,
-        v: &ParallelTxExecutionStageView<'_>,
+        v: &ParallelTxExecutionStageRef<'_>,
     ) {
         self.write_type_vec_dependent_tx_cluster(&v.0);
     }
@@ -194,7 +194,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ParallelTxExecutionStage`], mirroring `<VecM<ParallelTxExecutionStage, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_parallel_tx_execution_stage<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ParallelTxExecutionStageView<'_>, MAX>,
+        v: &VecMRef<'_, ParallelTxExecutionStageRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

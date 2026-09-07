@@ -145,7 +145,7 @@ impl WriteXdr for ScStringRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScStringView<'_> {
+impl ScStringRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl ScStringView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScString`], mirroring `<ScString as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_string(&mut self, v: &ScStringView<'_>) {
+    pub const fn write_type_sc_string(&mut self, v: &ScStringRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

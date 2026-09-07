@@ -145,7 +145,7 @@ impl WriteXdr for String32Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl String32View<'_> {
+impl String32Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +184,12 @@ impl String32View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`String32`], mirroring `<String32 as WriteXdr>::write_xdr`.
-    pub const fn write_type_string32(&mut self, v: &String32View<'_>) {
+    pub const fn write_type_string32(&mut self, v: &String32Ref<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes an optional [`String32`], mirroring `<Option<String32> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_string32(&mut self, v: &Option<String32View<'_>>) {
+    pub const fn write_type_option_string32(&mut self, v: &Option<String32Ref<'_>>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

@@ -104,7 +104,7 @@ impl WriteXdr for SorobanDelegateSignatureRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanDelegateSignatureView<'_> {
+impl SorobanDelegateSignatureRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +145,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanDelegateSignature`], mirroring `<SorobanDelegateSignature as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_delegate_signature(
         &mut self,
-        v: &SorobanDelegateSignatureView<'_>,
+        v: &SorobanDelegateSignatureRef<'_>,
     ) {
         self.write_type_sc_address(&v.address);
         self.write_type_sc_val(&v.signature);
@@ -155,7 +155,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SorobanDelegateSignature`], mirroring `<VecM<SorobanDelegateSignature, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_soroban_delegate_signature<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, SorobanDelegateSignatureView<'_>, MAX>,
+        v: &VecMRef<'_, SorobanDelegateSignatureRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

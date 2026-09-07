@@ -145,7 +145,7 @@ impl WriteXdr for ScSymbolRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSymbolView<'_> {
+impl ScSymbolRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +184,14 @@ impl ScSymbolView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSymbol`], mirroring `<ScSymbol as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_symbol(&mut self, v: &ScSymbolView<'_>) {
+    pub const fn write_type_sc_symbol(&mut self, v: &ScSymbolRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`ScSymbol`], mirroring `<VecM<ScSymbol, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_symbol<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScSymbolView<'_>, MAX>,
+        v: &VecMRef<'_, ScSymbolRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

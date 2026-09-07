@@ -200,7 +200,7 @@ impl WriteXdr for AccountEntryExtRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl AccountEntryExtView<'_> {
+impl AccountEntryExtRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,13 +239,13 @@ impl AccountEntryExtView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AccountEntryExt`], mirroring `<AccountEntryExt as WriteXdr>::write_xdr`.
-    pub const fn write_type_account_entry_ext(&mut self, v: &AccountEntryExtView<'_>) {
+    pub const fn write_type_account_entry_ext(&mut self, v: &AccountEntryExtRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            AccountEntryExtView::V0 => {}
-            AccountEntryExtView::V1(value) => {
+            AccountEntryExtRef::V0 => {}
+            AccountEntryExtRef::V1(value) => {
                 self.write_type_account_entry_extension_v1(value);
             }
         }

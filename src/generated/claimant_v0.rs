@@ -97,7 +97,7 @@ impl WriteXdr for ClaimantV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ClaimantV0View<'_> {
+impl ClaimantV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ClaimantV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ClaimantV0`], mirroring `<ClaimantV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_claimant_v0(&mut self, v: &ClaimantV0View<'_>) {
+    pub const fn write_type_claimant_v0(&mut self, v: &ClaimantV0Ref<'_>) {
         self.write_type_account_id(&v.destination);
         self.write_type_claim_predicate(&v.predicate);
     }

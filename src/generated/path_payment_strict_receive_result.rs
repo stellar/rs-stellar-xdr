@@ -370,7 +370,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PathPaymentStrictReceiveResultView<'_> {
+impl PathPaymentStrictReceiveResultRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -411,29 +411,29 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictReceiveResult`], mirroring `<PathPaymentStrictReceiveResult as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_receive_result(
         &mut self,
-        v: &PathPaymentStrictReceiveResultView<'_>,
+        v: &PathPaymentStrictReceiveResultRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_type_path_payment_strict_receive_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PathPaymentStrictReceiveResultView::Success(value) => {
+            PathPaymentStrictReceiveResultRef::Success(value) => {
                 self.write_type_path_payment_strict_receive_result_success(value);
             }
-            PathPaymentStrictReceiveResultView::Malformed => {}
-            PathPaymentStrictReceiveResultView::Underfunded => {}
-            PathPaymentStrictReceiveResultView::SrcNoTrust => {}
-            PathPaymentStrictReceiveResultView::SrcNotAuthorized => {}
-            PathPaymentStrictReceiveResultView::NoDestination => {}
-            PathPaymentStrictReceiveResultView::NoTrust => {}
-            PathPaymentStrictReceiveResultView::NotAuthorized => {}
-            PathPaymentStrictReceiveResultView::LineFull => {}
-            PathPaymentStrictReceiveResultView::NoIssuer(value) => {
+            PathPaymentStrictReceiveResultRef::Malformed => {}
+            PathPaymentStrictReceiveResultRef::Underfunded => {}
+            PathPaymentStrictReceiveResultRef::SrcNoTrust => {}
+            PathPaymentStrictReceiveResultRef::SrcNotAuthorized => {}
+            PathPaymentStrictReceiveResultRef::NoDestination => {}
+            PathPaymentStrictReceiveResultRef::NoTrust => {}
+            PathPaymentStrictReceiveResultRef::NotAuthorized => {}
+            PathPaymentStrictReceiveResultRef::LineFull => {}
+            PathPaymentStrictReceiveResultRef::NoIssuer(value) => {
                 self.write_type_asset(value);
             }
-            PathPaymentStrictReceiveResultView::TooFewOffers => {}
-            PathPaymentStrictReceiveResultView::OfferCrossSelf => {}
-            PathPaymentStrictReceiveResultView::OverSendmax => {}
+            PathPaymentStrictReceiveResultRef::TooFewOffers => {}
+            PathPaymentStrictReceiveResultRef::OfferCrossSelf => {}
+            PathPaymentStrictReceiveResultRef::OverSendmax => {}
         }
     }
 }

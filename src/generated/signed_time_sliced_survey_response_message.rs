@@ -97,7 +97,7 @@ impl WriteXdr for SignedTimeSlicedSurveyResponseMessageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SignedTimeSlicedSurveyResponseMessageView<'_> {
+impl SignedTimeSlicedSurveyResponseMessageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SignedTimeSlicedSurveyResponseMessage`], mirroring `<SignedTimeSlicedSurveyResponseMessage as WriteXdr>::write_xdr`.
     pub const fn write_type_signed_time_sliced_survey_response_message(
         &mut self,
-        v: &SignedTimeSlicedSurveyResponseMessageView<'_>,
+        v: &SignedTimeSlicedSurveyResponseMessageRef<'_>,
     ) {
         self.write_type_signature(&v.response_signature);
         self.write_type_time_sliced_survey_response_message(&v.response);

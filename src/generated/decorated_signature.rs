@@ -97,7 +97,7 @@ impl WriteXdr for DecoratedSignatureRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl DecoratedSignatureView<'_> {
+impl DecoratedSignatureRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl DecoratedSignatureView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DecoratedSignature`], mirroring `<DecoratedSignature as WriteXdr>::write_xdr`.
-    pub const fn write_type_decorated_signature(&mut self, v: &DecoratedSignatureView<'_>) {
+    pub const fn write_type_decorated_signature(&mut self, v: &DecoratedSignatureRef<'_>) {
         self.write_type_signature_hint(&v.hint);
         self.write_type_signature(&v.signature);
     }
@@ -144,7 +144,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`DecoratedSignature`], mirroring `<VecM<DecoratedSignature, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_decorated_signature<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, DecoratedSignatureView<'_>, MAX>,
+        v: &VecMRef<'_, DecoratedSignatureRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

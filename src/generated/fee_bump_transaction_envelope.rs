@@ -99,7 +99,7 @@ impl WriteXdr for FeeBumpTransactionEnvelopeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl FeeBumpTransactionEnvelopeView<'_> {
+impl FeeBumpTransactionEnvelopeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -140,7 +140,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`FeeBumpTransactionEnvelope`], mirroring `<FeeBumpTransactionEnvelope as WriteXdr>::write_xdr`.
     pub const fn write_type_fee_bump_transaction_envelope(
         &mut self,
-        v: &FeeBumpTransactionEnvelopeView<'_>,
+        v: &FeeBumpTransactionEnvelopeRef<'_>,
     ) {
         self.write_type_fee_bump_transaction(&v.tx);
         self.write_type_vec_decorated_signature(&v.signatures);

@@ -149,7 +149,7 @@ impl WriteXdr for TransactionRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionView<'_> {
+impl TransactionRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -188,7 +188,7 @@ impl TransactionView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Transaction`], mirroring `<Transaction as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction(&mut self, v: &TransactionView<'_>) {
+    pub const fn write_type_transaction(&mut self, v: &TransactionRef<'_>) {
         self.write_type_muxed_account(&v.source_account);
         self.write_u32(v.fee);
         self.write_type_sequence_number(&v.seq_num);

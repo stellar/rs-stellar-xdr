@@ -97,7 +97,7 @@ impl WriteXdr for ScpHistoryEntryV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpHistoryEntryV0View<'_> {
+impl ScpHistoryEntryV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ScpHistoryEntryV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpHistoryEntryV0`], mirroring `<ScpHistoryEntryV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_history_entry_v0(&mut self, v: &ScpHistoryEntryV0View<'_>) {
+    pub const fn write_type_scp_history_entry_v0(&mut self, v: &ScpHistoryEntryV0Ref<'_>) {
         self.write_type_vec_scp_quorum_set(&v.quorum_sets);
         self.write_type_ledger_scp_messages(&v.ledger_messages);
     }

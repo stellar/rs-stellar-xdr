@@ -113,7 +113,7 @@ impl WriteXdr for TransactionHistoryEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionHistoryEntryView<'_> {
+impl TransactionHistoryEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -154,7 +154,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionHistoryEntry`], mirroring `<TransactionHistoryEntry as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_history_entry(
         &mut self,
-        v: &TransactionHistoryEntryView<'_>,
+        v: &TransactionHistoryEntryRef<'_>,
     ) {
         self.write_u32(v.ledger_seq);
         self.write_type_transaction_set(&v.tx_set);

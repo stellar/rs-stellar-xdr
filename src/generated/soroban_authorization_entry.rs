@@ -97,7 +97,7 @@ impl WriteXdr for SorobanAuthorizationEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanAuthorizationEntryView<'_> {
+impl SorobanAuthorizationEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizationEntry`], mirroring `<SorobanAuthorizationEntry as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorization_entry(
         &mut self,
-        v: &SorobanAuthorizationEntryView<'_>,
+        v: &SorobanAuthorizationEntryRef<'_>,
     ) {
         self.write_type_soroban_credentials(&v.credentials);
         self.write_type_soroban_authorized_invocation(&v.root_invocation);
@@ -147,7 +147,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SorobanAuthorizationEntry`], mirroring `<VecM<SorobanAuthorizationEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_soroban_authorization_entry<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, SorobanAuthorizationEntryView<'_>, MAX>,
+        v: &VecMRef<'_, SorobanAuthorizationEntryRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

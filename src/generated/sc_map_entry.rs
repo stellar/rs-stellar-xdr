@@ -97,7 +97,7 @@ impl WriteXdr for ScMapEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScMapEntryView<'_> {
+impl ScMapEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ScMapEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMapEntry`], mirroring `<ScMapEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_map_entry(&mut self, v: &ScMapEntryView<'_>) {
+    pub const fn write_type_sc_map_entry(&mut self, v: &ScMapEntryRef<'_>) {
         self.write_type_sc_val(&v.key);
         self.write_type_sc_val(&v.val);
     }
@@ -144,7 +144,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScMapEntry`], mirroring `<VecM<ScMapEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_map_entry<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScMapEntryView<'_>, MAX>,
+        v: &VecMRef<'_, ScMapEntryRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

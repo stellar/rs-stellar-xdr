@@ -137,7 +137,7 @@ impl WriteXdr for PathPaymentStrictSendOpRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PathPaymentStrictSendOpView<'_> {
+impl PathPaymentStrictSendOpRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -178,7 +178,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictSendOp`], mirroring `<PathPaymentStrictSendOp as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_send_op(
         &mut self,
-        v: &PathPaymentStrictSendOpView<'_>,
+        v: &PathPaymentStrictSendOpRef<'_>,
     ) {
         self.write_type_asset(&v.send_asset);
         self.write_i64(v.send_amount);

@@ -189,7 +189,7 @@ impl WriteXdr for ScMetaEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScMetaEntryView<'_> {
+impl ScMetaEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -228,12 +228,12 @@ impl ScMetaEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMetaEntry`], mirroring `<ScMetaEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_meta_entry(&mut self, v: &ScMetaEntryView<'_>) {
+    pub const fn write_type_sc_meta_entry(&mut self, v: &ScMetaEntryRef<'_>) {
         let d = v.discriminant();
         self.write_type_sc_meta_kind(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScMetaEntryView::ScMetaV0(value) => {
+            ScMetaEntryRef::ScMetaV0(value) => {
                 self.write_type_sc_meta_v0(value);
             }
         }

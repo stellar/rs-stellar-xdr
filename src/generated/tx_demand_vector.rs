@@ -145,7 +145,7 @@ impl WriteXdr for TxDemandVectorRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TxDemandVectorView<'_> {
+impl TxDemandVectorRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl TxDemandVectorView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TxDemandVector`], mirroring `<TxDemandVector as WriteXdr>::write_xdr`.
-    pub const fn write_type_tx_demand_vector(&mut self, v: &TxDemandVectorView<'_>) {
+    pub const fn write_type_tx_demand_vector(&mut self, v: &TxDemandVectorRef<'_>) {
         self.write_type_vec_hash(&v.0);
     }
 }

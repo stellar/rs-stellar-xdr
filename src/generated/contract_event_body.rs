@@ -193,7 +193,7 @@ impl WriteXdr for ContractEventBodyRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ContractEventBodyView<'_> {
+impl ContractEventBodyRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -232,12 +232,12 @@ impl ContractEventBodyView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractEventBody`], mirroring `<ContractEventBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_event_body(&mut self, v: &ContractEventBodyView<'_>) {
+    pub const fn write_type_contract_event_body(&mut self, v: &ContractEventBodyRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ContractEventBodyView::V0(value) => {
+            ContractEventBodyRef::V0(value) => {
                 self.write_type_contract_event_v0(value);
             }
         }

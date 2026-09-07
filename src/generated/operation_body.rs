@@ -605,7 +605,7 @@ impl WriteXdr for OperationBodyRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl OperationBodyView<'_> {
+impl OperationBodyRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -644,86 +644,86 @@ impl OperationBodyView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationBody`], mirroring `<OperationBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_body(&mut self, v: &OperationBodyView<'_>) {
+    pub const fn write_type_operation_body(&mut self, v: &OperationBodyRef<'_>) {
         let d = v.discriminant();
         self.write_type_operation_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationBodyView::CreateAccount(value) => {
+            OperationBodyRef::CreateAccount(value) => {
                 self.write_type_create_account_op(value);
             }
-            OperationBodyView::Payment(value) => {
+            OperationBodyRef::Payment(value) => {
                 self.write_type_payment_op(value);
             }
-            OperationBodyView::PathPaymentStrictReceive(value) => {
+            OperationBodyRef::PathPaymentStrictReceive(value) => {
                 self.write_type_path_payment_strict_receive_op(value);
             }
-            OperationBodyView::ManageSellOffer(value) => {
+            OperationBodyRef::ManageSellOffer(value) => {
                 self.write_type_manage_sell_offer_op(value);
             }
-            OperationBodyView::CreatePassiveSellOffer(value) => {
+            OperationBodyRef::CreatePassiveSellOffer(value) => {
                 self.write_type_create_passive_sell_offer_op(value);
             }
-            OperationBodyView::SetOptions(value) => {
+            OperationBodyRef::SetOptions(value) => {
                 self.write_type_set_options_op(value);
             }
-            OperationBodyView::ChangeTrust(value) => {
+            OperationBodyRef::ChangeTrust(value) => {
                 self.write_type_change_trust_op(value);
             }
-            OperationBodyView::AllowTrust(value) => {
+            OperationBodyRef::AllowTrust(value) => {
                 self.write_type_allow_trust_op(value);
             }
-            OperationBodyView::AccountMerge(value) => {
+            OperationBodyRef::AccountMerge(value) => {
                 self.write_type_muxed_account(value);
             }
-            OperationBodyView::Inflation => {}
-            OperationBodyView::ManageData(value) => {
+            OperationBodyRef::Inflation => {}
+            OperationBodyRef::ManageData(value) => {
                 self.write_type_manage_data_op(value);
             }
-            OperationBodyView::BumpSequence(value) => {
+            OperationBodyRef::BumpSequence(value) => {
                 self.write_type_bump_sequence_op(value);
             }
-            OperationBodyView::ManageBuyOffer(value) => {
+            OperationBodyRef::ManageBuyOffer(value) => {
                 self.write_type_manage_buy_offer_op(value);
             }
-            OperationBodyView::PathPaymentStrictSend(value) => {
+            OperationBodyRef::PathPaymentStrictSend(value) => {
                 self.write_type_path_payment_strict_send_op(value);
             }
-            OperationBodyView::CreateClaimableBalance(value) => {
+            OperationBodyRef::CreateClaimableBalance(value) => {
                 self.write_type_create_claimable_balance_op(value);
             }
-            OperationBodyView::ClaimClaimableBalance(value) => {
+            OperationBodyRef::ClaimClaimableBalance(value) => {
                 self.write_type_claim_claimable_balance_op(value);
             }
-            OperationBodyView::BeginSponsoringFutureReserves(value) => {
+            OperationBodyRef::BeginSponsoringFutureReserves(value) => {
                 self.write_type_begin_sponsoring_future_reserves_op(value);
             }
-            OperationBodyView::EndSponsoringFutureReserves => {}
-            OperationBodyView::RevokeSponsorship(value) => {
+            OperationBodyRef::EndSponsoringFutureReserves => {}
+            OperationBodyRef::RevokeSponsorship(value) => {
                 self.write_type_revoke_sponsorship_op(value);
             }
-            OperationBodyView::Clawback(value) => {
+            OperationBodyRef::Clawback(value) => {
                 self.write_type_clawback_op(value);
             }
-            OperationBodyView::ClawbackClaimableBalance(value) => {
+            OperationBodyRef::ClawbackClaimableBalance(value) => {
                 self.write_type_clawback_claimable_balance_op(value);
             }
-            OperationBodyView::SetTrustLineFlags(value) => {
+            OperationBodyRef::SetTrustLineFlags(value) => {
                 self.write_type_set_trust_line_flags_op(value);
             }
-            OperationBodyView::LiquidityPoolDeposit(value) => {
+            OperationBodyRef::LiquidityPoolDeposit(value) => {
                 self.write_type_liquidity_pool_deposit_op(value);
             }
-            OperationBodyView::LiquidityPoolWithdraw(value) => {
+            OperationBodyRef::LiquidityPoolWithdraw(value) => {
                 self.write_type_liquidity_pool_withdraw_op(value);
             }
-            OperationBodyView::InvokeHostFunction(value) => {
+            OperationBodyRef::InvokeHostFunction(value) => {
                 self.write_type_invoke_host_function_op(value);
             }
-            OperationBodyView::ExtendFootprintTtl(value) => {
+            OperationBodyRef::ExtendFootprintTtl(value) => {
                 self.write_type_extend_footprint_ttl_op(value);
             }
-            OperationBodyView::RestoreFootprint(value) => {
+            OperationBodyRef::RestoreFootprint(value) => {
                 self.write_type_restore_footprint_op(value);
             }
         }

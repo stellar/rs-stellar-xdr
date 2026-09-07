@@ -145,7 +145,7 @@ impl WriteXdr for ScVecRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScVecView<'_> {
+impl ScVecRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +184,12 @@ impl ScVecView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScVec`], mirroring `<ScVec as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_vec(&mut self, v: &ScVecView<'_>) {
+    pub const fn write_type_sc_vec(&mut self, v: &ScVecRef<'_>) {
         self.write_type_vec_sc_val(&v.0);
     }
 
     /// Serializes an optional [`ScVec`], mirroring `<Option<ScVec> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_sc_vec(&mut self, v: &Option<ScVecView<'_>>) {
+    pub const fn write_type_option_sc_vec(&mut self, v: &Option<ScVecRef<'_>>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

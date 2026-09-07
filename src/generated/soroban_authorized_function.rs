@@ -244,7 +244,7 @@ impl WriteXdr for SorobanAuthorizedFunctionRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanAuthorizedFunctionView<'_> {
+impl SorobanAuthorizedFunctionRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -285,19 +285,19 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizedFunction`], mirroring `<SorobanAuthorizedFunction as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorized_function(
         &mut self,
-        v: &SorobanAuthorizedFunctionView<'_>,
+        v: &SorobanAuthorizedFunctionRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_type_soroban_authorized_function_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanAuthorizedFunctionView::ContractFn(value) => {
+            SorobanAuthorizedFunctionRef::ContractFn(value) => {
                 self.write_type_invoke_contract_args(value);
             }
-            SorobanAuthorizedFunctionView::CreateContractHostFn(value) => {
+            SorobanAuthorizedFunctionRef::CreateContractHostFn(value) => {
                 self.write_type_create_contract_args(value);
             }
-            SorobanAuthorizedFunctionView::CreateContractV2HostFn(value) => {
+            SorobanAuthorizedFunctionRef::CreateContractV2HostFn(value) => {
                 self.write_type_create_contract_args_v2(value);
             }
         }

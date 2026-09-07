@@ -215,7 +215,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`Asset`], mirroring `<VecM<Asset, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_asset<const MAX: u32>(&mut self, v: &VecMView<'_, Asset, MAX>) {
+    pub const fn write_type_vec_asset<const MAX: u32>(&mut self, v: &VecMRef<'_, Asset, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

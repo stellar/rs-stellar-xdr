@@ -145,7 +145,7 @@ impl WriteXdr for ScMapRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScMapView<'_> {
+impl ScMapRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +184,12 @@ impl ScMapView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMap`], mirroring `<ScMap as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_map(&mut self, v: &ScMapView<'_>) {
+    pub const fn write_type_sc_map(&mut self, v: &ScMapRef<'_>) {
         self.write_type_vec_sc_map_entry(&v.0);
     }
 
     /// Serializes an optional [`ScMap`], mirroring `<Option<ScMap> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_sc_map(&mut self, v: &Option<ScMapView<'_>>) {
+    pub const fn write_type_option_sc_map(&mut self, v: &Option<ScMapRef<'_>>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

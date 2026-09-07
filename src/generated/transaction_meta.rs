@@ -233,7 +233,7 @@ impl WriteXdr for TransactionMetaRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionMetaView<'_> {
+impl TransactionMetaRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -272,24 +272,24 @@ impl TransactionMetaView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionMeta`], mirroring `<TransactionMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_meta(&mut self, v: &TransactionMetaView<'_>) {
+    pub const fn write_type_transaction_meta(&mut self, v: &TransactionMetaRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionMetaView::V0(value) => {
+            TransactionMetaRef::V0(value) => {
                 self.write_type_vec_operation_meta(value);
             }
-            TransactionMetaView::V1(value) => {
+            TransactionMetaRef::V1(value) => {
                 self.write_type_transaction_meta_v1(value);
             }
-            TransactionMetaView::V2(value) => {
+            TransactionMetaRef::V2(value) => {
                 self.write_type_transaction_meta_v2(value);
             }
-            TransactionMetaView::V3(value) => {
+            TransactionMetaRef::V3(value) => {
                 self.write_type_transaction_meta_v3(value);
             }
-            TransactionMetaView::V4(value) => {
+            TransactionMetaRef::V4(value) => {
                 self.write_type_transaction_meta_v4(value);
             }
         }

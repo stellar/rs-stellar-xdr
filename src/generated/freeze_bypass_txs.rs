@@ -89,7 +89,7 @@ impl WriteXdr for FreezeBypassTxsRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl FreezeBypassTxsView<'_> {
+impl FreezeBypassTxsRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -128,7 +128,7 @@ impl FreezeBypassTxsView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FreezeBypassTxs`], mirroring `<FreezeBypassTxs as WriteXdr>::write_xdr`.
-    pub const fn write_type_freeze_bypass_txs(&mut self, v: &FreezeBypassTxsView<'_>) {
+    pub const fn write_type_freeze_bypass_txs(&mut self, v: &FreezeBypassTxsRef<'_>) {
         self.write_type_vec_hash(&v.tx_hashes);
     }
 }

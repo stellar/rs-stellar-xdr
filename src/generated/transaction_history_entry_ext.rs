@@ -202,7 +202,7 @@ impl WriteXdr for TransactionHistoryEntryExtRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionHistoryEntryExtView<'_> {
+impl TransactionHistoryEntryExtRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -243,14 +243,14 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionHistoryEntryExt`], mirroring `<TransactionHistoryEntryExt as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_history_entry_ext(
         &mut self,
-        v: &TransactionHistoryEntryExtView<'_>,
+        v: &TransactionHistoryEntryExtRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionHistoryEntryExtView::V0 => {}
-            TransactionHistoryEntryExtView::V1(value) => {
+            TransactionHistoryEntryExtRef::V0 => {}
+            TransactionHistoryEntryExtRef::V1(value) => {
                 self.write_type_generalized_transaction_set(value);
             }
         }

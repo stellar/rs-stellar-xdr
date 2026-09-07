@@ -104,7 +104,7 @@ impl WriteXdr for TransactionResultMetaRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionResultMetaView<'_> {
+impl TransactionResultMetaRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +143,7 @@ impl TransactionResultMetaView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionResultMeta`], mirroring `<TransactionResultMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_result_meta(&mut self, v: &TransactionResultMetaView<'_>) {
+    pub const fn write_type_transaction_result_meta(&mut self, v: &TransactionResultMetaRef<'_>) {
         self.write_type_transaction_result_pair(&v.result);
         self.write_type_ledger_entry_changes(&v.fee_processing);
         self.write_type_transaction_meta(&v.tx_apply_processing);
@@ -152,7 +152,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionResultMeta`], mirroring `<VecM<TransactionResultMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_result_meta<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, TransactionResultMetaView<'_>, MAX>,
+        v: &VecMRef<'_, TransactionResultMetaRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -203,7 +203,7 @@ impl WriteXdr for InflationResultRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl InflationResultView<'_> {
+impl InflationResultRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -242,15 +242,15 @@ impl InflationResultView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`InflationResult`], mirroring `<InflationResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_inflation_result(&mut self, v: &InflationResultView<'_>) {
+    pub const fn write_type_inflation_result(&mut self, v: &InflationResultRef<'_>) {
         let d = v.discriminant();
         self.write_type_inflation_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            InflationResultView::Success(value) => {
+            InflationResultRef::Success(value) => {
                 self.write_type_vec_inflation_payout(value);
             }
-            InflationResultView::NotTime => {}
+            InflationResultRef::NotTime => {}
         }
     }
 }

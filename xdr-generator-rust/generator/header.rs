@@ -721,7 +721,7 @@ const fn padding(len: usize) -> &'static [u8] {
 ///
 /// The writers below are the primitives. Every type defined in the XDR files
 /// additionally has a generated `write_type_{type}` method on `ConstWriter`
-/// that serializes one value of that type, taking the type's borrowing `View`
+/// that serializes one value of that type, taking the type's borrowing `Ref`
 /// form where it owns heap data and the type itself otherwise; a type that
 /// appears wrapped gets `write_type_option_{type}` and `write_type_vec_{type}`
 /// alongside. The `type_` distinguishes them from these primitives, so a

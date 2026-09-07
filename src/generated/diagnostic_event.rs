@@ -97,7 +97,7 @@ impl WriteXdr for DiagnosticEventRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl DiagnosticEventView<'_> {
+impl DiagnosticEventRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl DiagnosticEventView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DiagnosticEvent`], mirroring `<DiagnosticEvent as WriteXdr>::write_xdr`.
-    pub const fn write_type_diagnostic_event(&mut self, v: &DiagnosticEventView<'_>) {
+    pub const fn write_type_diagnostic_event(&mut self, v: &DiagnosticEventRef<'_>) {
         self.write_bool(v.in_successful_contract_call);
         self.write_type_contract_event(&v.event);
     }
@@ -144,7 +144,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`DiagnosticEvent`], mirroring `<VecM<DiagnosticEvent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_diagnostic_event<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, DiagnosticEventView<'_>, MAX>,
+        v: &VecMRef<'_, DiagnosticEventRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

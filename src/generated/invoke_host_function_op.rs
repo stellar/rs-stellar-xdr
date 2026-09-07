@@ -99,7 +99,7 @@ impl WriteXdr for InvokeHostFunctionOpRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl InvokeHostFunctionOpView<'_> {
+impl InvokeHostFunctionOpRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl InvokeHostFunctionOpView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`InvokeHostFunctionOp`], mirroring `<InvokeHostFunctionOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_invoke_host_function_op(&mut self, v: &InvokeHostFunctionOpView<'_>) {
+    pub const fn write_type_invoke_host_function_op(&mut self, v: &InvokeHostFunctionOpRef<'_>) {
         self.write_type_host_function(&v.host_function);
         self.write_type_vec_soroban_authorization_entry(&v.auth);
     }

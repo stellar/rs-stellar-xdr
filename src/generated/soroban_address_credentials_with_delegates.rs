@@ -101,7 +101,7 @@ impl WriteXdr for SorobanAddressCredentialsWithDelegatesRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanAddressCredentialsWithDelegatesView<'_> {
+impl SorobanAddressCredentialsWithDelegatesRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +142,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAddressCredentialsWithDelegates`], mirroring `<SorobanAddressCredentialsWithDelegates as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_address_credentials_with_delegates(
         &mut self,
-        v: &SorobanAddressCredentialsWithDelegatesView<'_>,
+        v: &SorobanAddressCredentialsWithDelegatesRef<'_>,
     ) {
         self.write_type_soroban_address_credentials(&v.address_credentials);
         self.write_type_vec_soroban_delegate_signature(&v.delegates);

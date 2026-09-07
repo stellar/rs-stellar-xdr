@@ -145,7 +145,7 @@ impl WriteXdr for TimeSlicedPeerDataListRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TimeSlicedPeerDataListView<'_> {
+impl TimeSlicedPeerDataListRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +186,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TimeSlicedPeerDataList`], mirroring `<TimeSlicedPeerDataList as WriteXdr>::write_xdr`.
     pub const fn write_type_time_sliced_peer_data_list(
         &mut self,
-        v: &TimeSlicedPeerDataListView<'_>,
+        v: &TimeSlicedPeerDataListRef<'_>,
     ) {
         self.write_type_vec_time_sliced_peer_data(&v.0);
     }

@@ -207,7 +207,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`Hash`], mirroring `<VecM<Hash, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_hash<const MAX: u32>(&mut self, v: &VecMView<'_, Hash, MAX>) {
+    pub const fn write_type_vec_hash<const MAX: u32>(&mut self, v: &VecMRef<'_, Hash, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

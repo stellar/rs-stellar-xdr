@@ -217,7 +217,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ClaimAtom`], mirroring `<VecM<ClaimAtom, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_claim_atom<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ClaimAtom, MAX>,
+        v: &VecMRef<'_, ClaimAtom, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -104,7 +104,7 @@ impl WriteXdr for StoredDebugTransactionSetRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl StoredDebugTransactionSetView<'_> {
+impl StoredDebugTransactionSetRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +145,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`StoredDebugTransactionSet`], mirroring `<StoredDebugTransactionSet as WriteXdr>::write_xdr`.
     pub const fn write_type_stored_debug_transaction_set(
         &mut self,
-        v: &StoredDebugTransactionSetView<'_>,
+        v: &StoredDebugTransactionSetRef<'_>,
     ) {
         self.write_type_stored_transaction_set(&v.tx_set);
         self.write_u32(v.ledger_seq);

@@ -192,7 +192,7 @@ impl WriteXdr for GeneralizedTransactionSetRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl GeneralizedTransactionSetView<'_> {
+impl GeneralizedTransactionSetRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -233,13 +233,13 @@ impl ConstWriter<'_> {
     /// Serializes a [`GeneralizedTransactionSet`], mirroring `<GeneralizedTransactionSet as WriteXdr>::write_xdr`.
     pub const fn write_type_generalized_transaction_set(
         &mut self,
-        v: &GeneralizedTransactionSetView<'_>,
+        v: &GeneralizedTransactionSetRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            GeneralizedTransactionSetView::V1(value) => {
+            GeneralizedTransactionSetRef::V1(value) => {
                 self.write_type_transaction_set_v1(value);
             }
         }

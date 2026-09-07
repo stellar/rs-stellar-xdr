@@ -90,7 +90,7 @@ impl WriteXdr for ScSpecTypeOptionRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeOptionView<'_> {
+impl ScSpecTypeOptionRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +129,7 @@ impl ScSpecTypeOptionView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeOption`], mirroring `<ScSpecTypeOption as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_option(&mut self, v: &ScSpecTypeOptionView<'_>) {
+    pub const fn write_type_sc_spec_type_option(&mut self, v: &ScSpecTypeOptionRef<'_>) {
         self.write_type_sc_spec_type_def(v.value_type);
     }
 }

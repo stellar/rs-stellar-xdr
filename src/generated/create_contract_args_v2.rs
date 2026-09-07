@@ -105,7 +105,7 @@ impl WriteXdr for CreateContractArgsV2Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl CreateContractArgsV2View<'_> {
+impl CreateContractArgsV2Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -144,7 +144,7 @@ impl CreateContractArgsV2View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`CreateContractArgsV2`], mirroring `<CreateContractArgsV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_create_contract_args_v2(&mut self, v: &CreateContractArgsV2View<'_>) {
+    pub const fn write_type_create_contract_args_v2(&mut self, v: &CreateContractArgsV2Ref<'_>) {
         self.write_type_contract_id_preimage(&v.contract_id_preimage);
         self.write_type_contract_executable(&v.executable);
         self.write_type_vec_sc_val(&v.constructor_args);

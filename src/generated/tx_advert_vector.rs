@@ -145,7 +145,7 @@ impl WriteXdr for TxAdvertVectorRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TxAdvertVectorView<'_> {
+impl TxAdvertVectorRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl TxAdvertVectorView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TxAdvertVector`], mirroring `<TxAdvertVector as WriteXdr>::write_xdr`.
-    pub const fn write_type_tx_advert_vector(&mut self, v: &TxAdvertVectorView<'_>) {
+    pub const fn write_type_tx_advert_vector(&mut self, v: &TxAdvertVectorRef<'_>) {
         self.write_type_vec_hash(&v.0);
     }
 }

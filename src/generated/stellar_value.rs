@@ -134,7 +134,7 @@ impl WriteXdr for StellarValueRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl StellarValueView<'_> {
+impl StellarValueRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -173,7 +173,7 @@ impl StellarValueView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StellarValue`], mirroring `<StellarValue as WriteXdr>::write_xdr`.
-    pub const fn write_type_stellar_value(&mut self, v: &StellarValueView<'_>) {
+    pub const fn write_type_stellar_value(&mut self, v: &StellarValueRef<'_>) {
         self.write_type_hash(&v.tx_set_hash);
         self.write_type_time_point(&v.close_time);
         self.write_type_vec_upgrade_type(&v.upgrades);

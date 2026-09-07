@@ -248,7 +248,7 @@ impl WriteXdr for HostFunctionRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl HostFunctionView<'_> {
+impl HostFunctionRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -287,21 +287,21 @@ impl HostFunctionView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`HostFunction`], mirroring `<HostFunction as WriteXdr>::write_xdr`.
-    pub const fn write_type_host_function(&mut self, v: &HostFunctionView<'_>) {
+    pub const fn write_type_host_function(&mut self, v: &HostFunctionRef<'_>) {
         let d = v.discriminant();
         self.write_type_host_function_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            HostFunctionView::InvokeContract(value) => {
+            HostFunctionRef::InvokeContract(value) => {
                 self.write_type_invoke_contract_args(value);
             }
-            HostFunctionView::CreateContract(value) => {
+            HostFunctionRef::CreateContract(value) => {
                 self.write_type_create_contract_args(value);
             }
-            HostFunctionView::UploadContractWasm(value) => {
+            HostFunctionRef::UploadContractWasm(value) => {
                 self.write_var_opaque(value.as_slice());
             }
-            HostFunctionView::CreateContractV2(value) => {
+            HostFunctionRef::CreateContractV2(value) => {
                 self.write_type_create_contract_args_v2(value);
             }
         }

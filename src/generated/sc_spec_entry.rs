@@ -262,7 +262,7 @@ impl WriteXdr for ScSpecEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecEntryView<'_> {
+impl ScSpecEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -301,27 +301,27 @@ impl ScSpecEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecEntry`], mirroring `<ScSpecEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_entry(&mut self, v: &ScSpecEntryView<'_>) {
+    pub const fn write_type_sc_spec_entry(&mut self, v: &ScSpecEntryRef<'_>) {
         let d = v.discriminant();
         self.write_type_sc_spec_entry_kind(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecEntryView::FunctionV0(value) => {
+            ScSpecEntryRef::FunctionV0(value) => {
                 self.write_type_sc_spec_function_v0(value);
             }
-            ScSpecEntryView::UdtStructV0(value) => {
+            ScSpecEntryRef::UdtStructV0(value) => {
                 self.write_type_sc_spec_udt_struct_v0(value);
             }
-            ScSpecEntryView::UdtUnionV0(value) => {
+            ScSpecEntryRef::UdtUnionV0(value) => {
                 self.write_type_sc_spec_udt_union_v0(value);
             }
-            ScSpecEntryView::UdtEnumV0(value) => {
+            ScSpecEntryRef::UdtEnumV0(value) => {
                 self.write_type_sc_spec_udt_enum_v0(value);
             }
-            ScSpecEntryView::UdtErrorEnumV0(value) => {
+            ScSpecEntryRef::UdtErrorEnumV0(value) => {
                 self.write_type_sc_spec_udt_error_enum_v0(value);
             }
-            ScSpecEntryView::EventV0(value) => {
+            ScSpecEntryRef::EventV0(value) => {
                 self.write_type_sc_spec_event_v0(value);
             }
         }

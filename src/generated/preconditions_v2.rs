@@ -148,7 +148,7 @@ impl WriteXdr for PreconditionsV2Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PreconditionsV2View<'_> {
+impl PreconditionsV2Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -187,7 +187,7 @@ impl PreconditionsV2View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PreconditionsV2`], mirroring `<PreconditionsV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_preconditions_v2(&mut self, v: &PreconditionsV2View<'_>) {
+    pub const fn write_type_preconditions_v2(&mut self, v: &PreconditionsV2Ref<'_>) {
         self.write_type_option_time_bounds(&v.time_bounds);
         self.write_type_option_ledger_bounds(&v.ledger_bounds);
         self.write_type_option_sequence_number(&v.min_seq_num);

@@ -41,7 +41,7 @@ pub struct DefinitionTemplate {
 #[derive(Template)]
 #[template(path = "const_to_xdr.rs.jinja", escape = "none")]
 pub struct ConstToXdrTemplate {
-    /// The receiver the wrapper is implemented on, e.g. `MemoView<'_>`.
+    /// The receiver the wrapper is implemented on, e.g. `MemoRef<'_>`.
     pub recv: String,
     pub cfg: Option<String>,
     /// The `ConstWriter` method the wrapper calls.
@@ -64,7 +64,7 @@ pub struct ConstWriterMethodOutput {
     pub name: String,
     /// Generic parameters, e.g. `<const MAX: u32>` for the `VecM` methods.
     pub generics: String,
-    /// The type of the value parameter, e.g. `&TransactionView<'_>`.
+    /// The type of the value parameter, e.g. `&TransactionRef<'_>`.
     pub param_type: String,
     pub cfg: Option<String>,
     /// The module the method is emitted into: the one holding the type it
@@ -103,7 +103,7 @@ pub enum ConstWriterBody {
     Newtype(ConstEncode),
     /// A union: its discriminant, then the payload of the selected arm.
     Union {
-        /// The type matched on: the `View` form where the union owns heap data.
+        /// The type matched on: the `Ref` form where the union owns heap data.
         scrutinee: String,
         discriminant: ConstEncode,
         arms: Vec<ConstUnionArm>,
@@ -149,10 +149,10 @@ pub enum ConstPass {
     Value,
     /// By reference.
     Ref,
-    /// As it is: the value is already a reference, the `View` form of a cyclic
+    /// As it is: the value is already a reference, the `Ref` form of a cyclic
     /// type.
     AsIs,
-    /// As the byte slice a `BytesMView`/`StringMView` exposes.
+    /// As the byte slice a `BytesMRef`/`StringMRef` exposes.
     Slice,
 }
 

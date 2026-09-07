@@ -244,7 +244,7 @@ impl WriteXdr for SorobanCredentialsRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanCredentialsView<'_> {
+impl SorobanCredentialsRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -283,19 +283,19 @@ impl SorobanCredentialsView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanCredentials`], mirroring `<SorobanCredentials as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_credentials(&mut self, v: &SorobanCredentialsView<'_>) {
+    pub const fn write_type_soroban_credentials(&mut self, v: &SorobanCredentialsRef<'_>) {
         let d = v.discriminant();
         self.write_type_soroban_credentials_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanCredentialsView::SourceAccount => {}
-            SorobanCredentialsView::Address(value) => {
+            SorobanCredentialsRef::SourceAccount => {}
+            SorobanCredentialsRef::Address(value) => {
                 self.write_type_soroban_address_credentials(value);
             }
-            SorobanCredentialsView::AddressV2(value) => {
+            SorobanCredentialsRef::AddressV2(value) => {
                 self.write_type_soroban_address_credentials(value);
             }
-            SorobanCredentialsView::AddressWithDelegates(value) => {
+            SorobanCredentialsRef::AddressWithDelegates(value) => {
                 self.write_type_soroban_address_credentials_with_delegates(value);
             }
         }

@@ -145,7 +145,7 @@ impl WriteXdr for ValueRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ValueView<'_> {
+impl ValueRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +184,14 @@ impl ValueView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Value`], mirroring `<Value as WriteXdr>::write_xdr`.
-    pub const fn write_type_value(&mut self, v: &ValueView<'_>) {
+    pub const fn write_type_value(&mut self, v: &ValueRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`Value`], mirroring `<VecM<Value, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_value<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ValueView<'_>, MAX>,
+        v: &VecMRef<'_, ValueRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

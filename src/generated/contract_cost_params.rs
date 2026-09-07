@@ -147,7 +147,7 @@ impl WriteXdr for ContractCostParamsRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ContractCostParamsView<'_> {
+impl ContractCostParamsRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +186,7 @@ impl ContractCostParamsView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractCostParams`], mirroring `<ContractCostParams as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_cost_params(&mut self, v: &ContractCostParamsView<'_>) {
+    pub const fn write_type_contract_cost_params(&mut self, v: &ContractCostParamsRef<'_>) {
         self.write_type_vec_contract_cost_param_entry(&v.0);
     }
 }

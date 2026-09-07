@@ -145,7 +145,7 @@ impl WriteXdr for LedgerEntryChangesRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerEntryChangesView<'_> {
+impl LedgerEntryChangesRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +184,7 @@ impl LedgerEntryChangesView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerEntryChanges`], mirroring `<LedgerEntryChanges as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_entry_changes(&mut self, v: &LedgerEntryChangesView<'_>) {
+    pub const fn write_type_ledger_entry_changes(&mut self, v: &LedgerEntryChangesRef<'_>) {
         self.write_type_vec_ledger_entry_change(&v.0);
     }
 }

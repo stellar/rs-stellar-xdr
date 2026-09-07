@@ -106,7 +106,7 @@ impl WriteXdr for OperationMetaV2Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl OperationMetaV2View<'_> {
+impl OperationMetaV2Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +145,7 @@ impl OperationMetaV2View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationMetaV2`], mirroring `<OperationMetaV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_meta_v2(&mut self, v: &OperationMetaV2View<'_>) {
+    pub const fn write_type_operation_meta_v2(&mut self, v: &OperationMetaV2Ref<'_>) {
         self.write_type_extension_point(&v.ext);
         self.write_type_ledger_entry_changes(&v.changes);
         self.write_type_vec_contract_event(&v.events);
@@ -154,7 +154,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`OperationMetaV2`], mirroring `<VecM<OperationMetaV2, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation_meta_v2<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, OperationMetaV2View<'_>, MAX>,
+        v: &VecMRef<'_, OperationMetaV2Ref<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

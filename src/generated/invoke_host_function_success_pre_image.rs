@@ -97,7 +97,7 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl InvokeHostFunctionSuccessPreImageView<'_> {
+impl InvokeHostFunctionSuccessPreImageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`InvokeHostFunctionSuccessPreImage`], mirroring `<InvokeHostFunctionSuccessPreImage as WriteXdr>::write_xdr`.
     pub const fn write_type_invoke_host_function_success_pre_image(
         &mut self,
-        v: &InvokeHostFunctionSuccessPreImageView<'_>,
+        v: &InvokeHostFunctionSuccessPreImageRef<'_>,
     ) {
         self.write_type_sc_val(&v.return_value);
         self.write_type_vec_contract_event(&v.events);

@@ -101,7 +101,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TxSetComponentTxsMaybeDiscountedFeeView<'_> {
+impl TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +142,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TxSetComponentTxsMaybeDiscountedFee`], mirroring `<TxSetComponentTxsMaybeDiscountedFee as WriteXdr>::write_xdr`.
     pub const fn write_type_tx_set_component_txs_maybe_discounted_fee(
         &mut self,
-        v: &TxSetComponentTxsMaybeDiscountedFeeView<'_>,
+        v: &TxSetComponentTxsMaybeDiscountedFeeRef<'_>,
     ) {
         self.write_option_i64(&v.base_fee);
         self.write_type_vec_transaction_envelope(&v.txs);

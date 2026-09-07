@@ -189,7 +189,7 @@ impl WriteXdr for ScpHistoryEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpHistoryEntryView<'_> {
+impl ScpHistoryEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -228,12 +228,12 @@ impl ScpHistoryEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpHistoryEntry`], mirroring `<ScpHistoryEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_history_entry(&mut self, v: &ScpHistoryEntryView<'_>) {
+    pub const fn write_type_scp_history_entry(&mut self, v: &ScpHistoryEntryRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScpHistoryEntryView::V0(value) => {
+            ScpHistoryEntryRef::V0(value) => {
                 self.write_type_scp_history_entry_v0(value);
             }
         }
@@ -242,7 +242,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScpHistoryEntry`], mirroring `<VecM<ScpHistoryEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_scp_history_entry<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScpHistoryEntryView<'_>, MAX>,
+        v: &VecMRef<'_, ScpHistoryEntryRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

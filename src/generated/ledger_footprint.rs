@@ -97,7 +97,7 @@ impl WriteXdr for LedgerFootprintRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerFootprintView<'_> {
+impl LedgerFootprintRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl LedgerFootprintView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerFootprint`], mirroring `<LedgerFootprint as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_footprint(&mut self, v: &LedgerFootprintView<'_>) {
+    pub const fn write_type_ledger_footprint(&mut self, v: &LedgerFootprintRef<'_>) {
         self.write_type_vec_ledger_key(&v.read_only);
         self.write_type_vec_ledger_key(&v.read_write);
     }

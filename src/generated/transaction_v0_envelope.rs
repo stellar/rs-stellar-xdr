@@ -99,7 +99,7 @@ impl WriteXdr for TransactionV0EnvelopeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionV0EnvelopeView<'_> {
+impl TransactionV0EnvelopeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl TransactionV0EnvelopeView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionV0Envelope`], mirroring `<TransactionV0Envelope as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_v0_envelope(&mut self, v: &TransactionV0EnvelopeView<'_>) {
+    pub const fn write_type_transaction_v0_envelope(&mut self, v: &TransactionV0EnvelopeRef<'_>) {
         self.write_type_transaction_v0(&v.tx);
         self.write_type_vec_decorated_signature(&v.signatures);
     }

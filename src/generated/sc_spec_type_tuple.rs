@@ -90,7 +90,7 @@ impl WriteXdr for ScSpecTypeTupleRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeTupleView<'_> {
+impl ScSpecTypeTupleRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +129,7 @@ impl ScSpecTypeTupleView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeTuple`], mirroring `<ScSpecTypeTuple as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_tuple(&mut self, v: &ScSpecTypeTupleView<'_>) {
+    pub const fn write_type_sc_spec_type_tuple(&mut self, v: &ScSpecTypeTupleRef<'_>) {
         self.write_type_vec_sc_spec_type_def(&v.value_types);
     }
 }

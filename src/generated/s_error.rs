@@ -97,7 +97,7 @@ impl WriteXdr for SErrorRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SErrorView<'_> {
+impl SErrorRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl SErrorView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SError`], mirroring `<SError as WriteXdr>::write_xdr`.
-    pub const fn write_type_s_error(&mut self, v: &SErrorView<'_>) {
+    pub const fn write_type_s_error(&mut self, v: &SErrorRef<'_>) {
         self.write_type_error_code(&v.code);
         self.write_var_opaque(v.msg.as_slice());
     }

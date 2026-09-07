@@ -97,7 +97,7 @@ impl WriteXdr for UpgradeEntryMetaRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl UpgradeEntryMetaView<'_> {
+impl UpgradeEntryMetaRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl UpgradeEntryMetaView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`UpgradeEntryMeta`], mirroring `<UpgradeEntryMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_upgrade_entry_meta(&mut self, v: &UpgradeEntryMetaView<'_>) {
+    pub const fn write_type_upgrade_entry_meta(&mut self, v: &UpgradeEntryMetaRef<'_>) {
         self.write_type_ledger_upgrade(&v.upgrade);
         self.write_type_ledger_entry_changes(&v.changes);
     }
@@ -144,7 +144,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`UpgradeEntryMeta`], mirroring `<VecM<UpgradeEntryMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_upgrade_entry_meta<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, UpgradeEntryMetaView<'_>, MAX>,
+        v: &VecMRef<'_, UpgradeEntryMetaRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

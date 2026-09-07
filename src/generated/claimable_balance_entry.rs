@@ -138,7 +138,7 @@ impl WriteXdr for ClaimableBalanceEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ClaimableBalanceEntryView<'_> {
+impl ClaimableBalanceEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -177,7 +177,7 @@ impl ClaimableBalanceEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ClaimableBalanceEntry`], mirroring `<ClaimableBalanceEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_claimable_balance_entry(&mut self, v: &ClaimableBalanceEntryView<'_>) {
+    pub const fn write_type_claimable_balance_entry(&mut self, v: &ClaimableBalanceEntryRef<'_>) {
         self.write_type_claimable_balance_id(&v.balance_id);
         self.write_type_vec_claimant(&v.claimants);
         self.write_type_asset(&v.asset);

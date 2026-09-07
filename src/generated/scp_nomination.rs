@@ -104,7 +104,7 @@ impl WriteXdr for ScpNominationRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpNominationView<'_> {
+impl ScpNominationRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +143,7 @@ impl ScpNominationView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpNomination`], mirroring `<ScpNomination as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_nomination(&mut self, v: &ScpNominationView<'_>) {
+    pub const fn write_type_scp_nomination(&mut self, v: &ScpNominationRef<'_>) {
         self.write_type_hash(&v.quorum_set_hash);
         self.write_type_vec_value(&v.votes);
         self.write_type_vec_value(&v.accepted);

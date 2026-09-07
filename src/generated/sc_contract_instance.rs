@@ -96,7 +96,7 @@ impl WriteXdr for ScContractInstanceRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScContractInstanceView<'_> {
+impl ScContractInstanceRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +135,7 @@ impl ScContractInstanceView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScContractInstance`], mirroring `<ScContractInstance as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_contract_instance(&mut self, v: &ScContractInstanceView<'_>) {
+    pub const fn write_type_sc_contract_instance(&mut self, v: &ScContractInstanceRef<'_>) {
         self.write_type_contract_executable(&v.executable);
         self.write_type_option_sc_map(&v.storage);
     }

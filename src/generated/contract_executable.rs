@@ -219,7 +219,7 @@ impl WriteXdr for ContractExecutableRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ContractExecutableView<'_> {
+impl ContractExecutableRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -258,16 +258,16 @@ impl ContractExecutableView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractExecutable`], mirroring `<ContractExecutable as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_executable(&mut self, v: &ContractExecutableView<'_>) {
+    pub const fn write_type_contract_executable(&mut self, v: &ContractExecutableRef<'_>) {
         let d = v.discriminant();
         self.write_type_contract_executable_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ContractExecutableView::Wasm(value) => {
+            ContractExecutableRef::Wasm(value) => {
                 self.write_type_hash(value);
             }
-            ContractExecutableView::StellarAsset => {}
-            ContractExecutableView::ExternalRef(value) => {
+            ContractExecutableRef::StellarAsset => {}
+            ContractExecutableRef::ExternalRef(value) => {
                 self.write_type_contract_executable_external_ref(value);
             }
         }

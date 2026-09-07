@@ -294,7 +294,7 @@ impl WriteXdr for HashIdPreimageRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl HashIdPreimageView<'_> {
+impl HashIdPreimageRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -333,24 +333,24 @@ impl HashIdPreimageView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`HashIdPreimage`], mirroring `<HashIdPreimage as WriteXdr>::write_xdr`.
-    pub const fn write_type_hash_id_preimage(&mut self, v: &HashIdPreimageView<'_>) {
+    pub const fn write_type_hash_id_preimage(&mut self, v: &HashIdPreimageRef<'_>) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            HashIdPreimageView::OpId(value) => {
+            HashIdPreimageRef::OpId(value) => {
                 self.write_type_hash_id_preimage_operation_id(value);
             }
-            HashIdPreimageView::PoolRevokeOpId(value) => {
+            HashIdPreimageRef::PoolRevokeOpId(value) => {
                 self.write_type_hash_id_preimage_revoke_id(value);
             }
-            HashIdPreimageView::ContractId(value) => {
+            HashIdPreimageRef::ContractId(value) => {
                 self.write_type_hash_id_preimage_contract_id(value);
             }
-            HashIdPreimageView::SorobanAuthorization(value) => {
+            HashIdPreimageRef::SorobanAuthorization(value) => {
                 self.write_type_hash_id_preimage_soroban_authorization(value);
             }
-            HashIdPreimageView::SorobanAuthorizationWithAddress(value) => {
+            HashIdPreimageRef::SorobanAuthorizationWithAddress(value) => {
                 self.write_type_hash_id_preimage_soroban_authorization_with_address(value);
             }
         }

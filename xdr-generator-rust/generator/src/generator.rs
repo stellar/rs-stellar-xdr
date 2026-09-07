@@ -107,7 +107,7 @@ impl RustGenerator {
         for m in crate::const_writer::build(
             spec,
             &self.type_info,
-            &self.view_required,
+            &self.ref_required,
             &self.cfg_by_name(spec),
         )
         .methods
@@ -329,13 +329,13 @@ impl RustGenerator {
 
     /// Render the `const_xdr_len`/`const_to_xdr` wrapper for a definition.
     ///
-    /// The wrapper is implemented on the borrowing `View` form where the type
+    /// The wrapper is implemented on the borrowing `Ref` form where the type
     /// owns heap data and on the type itself otherwise, matching the receiver
     /// the type's `ConstWriter::write_type_*` method takes.
-    fn const_to_xdr(&self, name: &str, emit_view: bool, cfg: Option<&str>) -> String {
+    fn const_to_xdr(&self, name: &str, emit_ref: bool, cfg: Option<&str>) -> String {
         let template = ConstToXdrTemplate {
-            recv: if emit_view {
-                format!("{name}View<'_>")
+            recv: if emit_ref {
+                format!("{name}Ref<'_>")
             } else {
                 name.to_string()
             },
@@ -391,9 +391,9 @@ impl RustGenerator {
         StructOutput {
             const_to_xdr: self.const_to_xdr(
                 &name,
-                r.emit_view,
-                if r.emit_view {
-                    r.view_cfg.as_deref()
+                r.emit_ref,
+                if r.emit_ref {
+                    r.ref_cfg.as_deref()
                 } else {
                     cfg.as_deref()
                 },
@@ -429,7 +429,7 @@ impl RustGenerator {
             .collect();
 
         EnumOutput {
-            // An enum owns no heap data, so it never has a `View` form.
+            // An enum owns no heap data, so it never has a `Ref` form.
             const_to_xdr: self.const_to_xdr(&name, false, cfg.as_deref()),
             name,
             source_comment: source_comment(&e.source, "Enum"),
@@ -488,9 +488,9 @@ impl RustGenerator {
         UnionOutput {
             const_to_xdr: self.const_to_xdr(
                 &name,
-                r.emit_view,
-                if r.emit_view {
-                    r.view_cfg.as_deref()
+                r.emit_ref,
+                if r.emit_ref {
+                    r.ref_cfg.as_deref()
                 } else {
                     cfg.as_deref()
                 },
@@ -546,9 +546,9 @@ impl RustGenerator {
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
             const_to_xdr: self.const_to_xdr(
                 &name,
-                r.emit_view,
-                if r.emit_view {
-                    r.view_cfg.as_deref()
+                r.emit_ref,
+                if r.emit_ref {
+                    r.ref_cfg.as_deref()
                 } else {
                     cfg.as_deref()
                 },

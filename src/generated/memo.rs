@@ -245,7 +245,7 @@ impl WriteXdr for MemoRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl MemoView<'_> {
+impl MemoRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -284,22 +284,22 @@ impl MemoView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Memo`], mirroring `<Memo as WriteXdr>::write_xdr`.
-    pub const fn write_type_memo(&mut self, v: &MemoView<'_>) {
+    pub const fn write_type_memo(&mut self, v: &MemoRef<'_>) {
         let d = v.discriminant();
         self.write_type_memo_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            MemoView::None => {}
-            MemoView::Text(value) => {
+            MemoRef::None => {}
+            MemoRef::Text(value) => {
                 self.write_var_opaque(value.as_slice());
             }
-            MemoView::Id(value) => {
+            MemoRef::Id(value) => {
                 self.write_u64(*value);
             }
-            MemoView::Hash(value) => {
+            MemoRef::Hash(value) => {
                 self.write_type_hash(value);
             }
-            MemoView::Return(value) => {
+            MemoRef::Return(value) => {
                 self.write_type_hash(value);
             }
         }

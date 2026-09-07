@@ -115,7 +115,7 @@ impl WriteXdr for HashIdPreimageSorobanAuthorizationRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl HashIdPreimageSorobanAuthorizationView<'_> {
+impl HashIdPreimageSorobanAuthorizationRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -156,7 +156,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`HashIdPreimageSorobanAuthorization`], mirroring `<HashIdPreimageSorobanAuthorization as WriteXdr>::write_xdr`.
     pub const fn write_type_hash_id_preimage_soroban_authorization(
         &mut self,
-        v: &HashIdPreimageSorobanAuthorizationView<'_>,
+        v: &HashIdPreimageSorobanAuthorizationRef<'_>,
     ) {
         self.write_type_hash(&v.network_id);
         self.write_i64(v.nonce);

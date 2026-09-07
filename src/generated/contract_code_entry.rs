@@ -114,7 +114,7 @@ impl WriteXdr for ContractCodeEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ContractCodeEntryView<'_> {
+impl ContractCodeEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -153,7 +153,7 @@ impl ContractCodeEntryView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractCodeEntry`], mirroring `<ContractCodeEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_code_entry(&mut self, v: &ContractCodeEntryView<'_>) {
+    pub const fn write_type_contract_code_entry(&mut self, v: &ContractCodeEntryRef<'_>) {
         self.write_type_contract_code_entry_ext(&v.ext);
         self.write_type_hash(&v.hash);
         self.write_var_opaque(v.code.as_slice());

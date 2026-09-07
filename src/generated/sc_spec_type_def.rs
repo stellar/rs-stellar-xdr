@@ -500,7 +500,7 @@ impl WriteXdr for ScSpecTypeDefRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeDefView<'_> {
+impl ScSpecTypeDefRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -539,49 +539,49 @@ impl ScSpecTypeDefView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeDef`], mirroring `<ScSpecTypeDef as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_def(&mut self, v: &ScSpecTypeDefView<'_>) {
+    pub const fn write_type_sc_spec_type_def(&mut self, v: &ScSpecTypeDefRef<'_>) {
         let d = v.discriminant();
         self.write_type_sc_spec_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecTypeDefView::Val => {}
-            ScSpecTypeDefView::Bool => {}
-            ScSpecTypeDefView::Void => {}
-            ScSpecTypeDefView::Error => {}
-            ScSpecTypeDefView::U32 => {}
-            ScSpecTypeDefView::I32 => {}
-            ScSpecTypeDefView::U64 => {}
-            ScSpecTypeDefView::I64 => {}
-            ScSpecTypeDefView::Timepoint => {}
-            ScSpecTypeDefView::Duration => {}
-            ScSpecTypeDefView::U128 => {}
-            ScSpecTypeDefView::I128 => {}
-            ScSpecTypeDefView::U256 => {}
-            ScSpecTypeDefView::I256 => {}
-            ScSpecTypeDefView::Bytes => {}
-            ScSpecTypeDefView::String => {}
-            ScSpecTypeDefView::Symbol => {}
-            ScSpecTypeDefView::Address => {}
-            ScSpecTypeDefView::MuxedAddress => {}
-            ScSpecTypeDefView::Option(value) => {
+            ScSpecTypeDefRef::Val => {}
+            ScSpecTypeDefRef::Bool => {}
+            ScSpecTypeDefRef::Void => {}
+            ScSpecTypeDefRef::Error => {}
+            ScSpecTypeDefRef::U32 => {}
+            ScSpecTypeDefRef::I32 => {}
+            ScSpecTypeDefRef::U64 => {}
+            ScSpecTypeDefRef::I64 => {}
+            ScSpecTypeDefRef::Timepoint => {}
+            ScSpecTypeDefRef::Duration => {}
+            ScSpecTypeDefRef::U128 => {}
+            ScSpecTypeDefRef::I128 => {}
+            ScSpecTypeDefRef::U256 => {}
+            ScSpecTypeDefRef::I256 => {}
+            ScSpecTypeDefRef::Bytes => {}
+            ScSpecTypeDefRef::String => {}
+            ScSpecTypeDefRef::Symbol => {}
+            ScSpecTypeDefRef::Address => {}
+            ScSpecTypeDefRef::MuxedAddress => {}
+            ScSpecTypeDefRef::Option(value) => {
                 self.write_type_sc_spec_type_option(value);
             }
-            ScSpecTypeDefView::Result(value) => {
+            ScSpecTypeDefRef::Result(value) => {
                 self.write_type_sc_spec_type_result(value);
             }
-            ScSpecTypeDefView::Vec(value) => {
+            ScSpecTypeDefRef::Vec(value) => {
                 self.write_type_sc_spec_type_vec(value);
             }
-            ScSpecTypeDefView::Map(value) => {
+            ScSpecTypeDefRef::Map(value) => {
                 self.write_type_sc_spec_type_map(value);
             }
-            ScSpecTypeDefView::Tuple(value) => {
+            ScSpecTypeDefRef::Tuple(value) => {
                 self.write_type_sc_spec_type_tuple(value);
             }
-            ScSpecTypeDefView::BytesN(value) => {
+            ScSpecTypeDefRef::BytesN(value) => {
                 self.write_type_sc_spec_type_bytes_n(value);
             }
-            ScSpecTypeDefView::Udt(value) => {
+            ScSpecTypeDefRef::Udt(value) => {
                 self.write_type_sc_spec_type_udt(value);
             }
         }
@@ -590,7 +590,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecTypeDef`], mirroring `<VecM<ScSpecTypeDef, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_type_def<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ScSpecTypeDefView<'_>, MAX>,
+        v: &VecMRef<'_, ScSpecTypeDefRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

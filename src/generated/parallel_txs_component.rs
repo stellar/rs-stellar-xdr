@@ -104,7 +104,7 @@ impl WriteXdr for ParallelTxsComponentRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ParallelTxsComponentView<'_> {
+impl ParallelTxsComponentRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +143,7 @@ impl ParallelTxsComponentView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ParallelTxsComponent`], mirroring `<ParallelTxsComponent as WriteXdr>::write_xdr`.
-    pub const fn write_type_parallel_txs_component(&mut self, v: &ParallelTxsComponentView<'_>) {
+    pub const fn write_type_parallel_txs_component(&mut self, v: &ParallelTxsComponentRef<'_>) {
         self.write_option_i64(&v.base_fee);
         self.write_type_vec_parallel_tx_execution_stage(&v.execution_stages);
     }

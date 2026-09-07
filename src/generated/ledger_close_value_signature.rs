@@ -97,7 +97,7 @@ impl WriteXdr for LedgerCloseValueSignatureRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseValueSignatureView<'_> {
+impl LedgerCloseValueSignatureRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseValueSignature`], mirroring `<LedgerCloseValueSignature as WriteXdr>::write_xdr`.
     pub const fn write_type_ledger_close_value_signature(
         &mut self,
-        v: &LedgerCloseValueSignatureView<'_>,
+        v: &LedgerCloseValueSignatureRef<'_>,
     ) {
         self.write_type_node_id(&v.node_id);
         self.write_type_signature(&v.signature);

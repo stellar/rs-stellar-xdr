@@ -109,7 +109,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionCaseTupleV0View<'_> {
+impl ScSpecUdtUnionCaseTupleV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -150,7 +150,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtUnionCaseTupleV0`], mirroring `<ScSpecUdtUnionCaseTupleV0 as WriteXdr>::write_xdr`.
     pub const fn write_type_sc_spec_udt_union_case_tuple_v0(
         &mut self,
-        v: &ScSpecUdtUnionCaseTupleV0View<'_>,
+        v: &ScSpecUdtUnionCaseTupleV0Ref<'_>,
     ) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());

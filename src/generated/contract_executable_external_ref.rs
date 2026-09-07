@@ -96,7 +96,7 @@ impl WriteXdr for ContractExecutableExternalRefRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ContractExecutableExternalRefView<'_> {
+impl ContractExecutableExternalRefRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -137,7 +137,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ContractExecutableExternalRef`], mirroring `<ContractExecutableExternalRef as WriteXdr>::write_xdr`.
     pub const fn write_type_contract_executable_external_ref(
         &mut self,
-        v: &ContractExecutableExternalRefView<'_>,
+        v: &ContractExecutableExternalRefRef<'_>,
     ) {
         self.write_type_sc_address(&v.executable_owner);
         self.write_type_sc_string(&v.tag);

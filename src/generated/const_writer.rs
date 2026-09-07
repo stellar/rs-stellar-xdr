@@ -30,7 +30,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of `u32`, mirroring `<VecM<u32, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_vec_u32<const MAX: u32>(&mut self, v: &VecMView<'_, u32, MAX>) {
+    pub const fn write_vec_u32<const MAX: u32>(&mut self, v: &VecMRef<'_, u32, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);
@@ -42,7 +42,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of `u64`, mirroring `<VecM<u64, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_vec_u64<const MAX: u32>(&mut self, v: &VecMView<'_, u64, MAX>) {
+    pub const fn write_vec_u64<const MAX: u32>(&mut self, v: &VecMRef<'_, u64, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

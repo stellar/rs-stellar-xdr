@@ -89,7 +89,7 @@ impl WriteXdr for ConfigUpgradeSetRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ConfigUpgradeSetView<'_> {
+impl ConfigUpgradeSetRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -128,7 +128,7 @@ impl ConfigUpgradeSetView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ConfigUpgradeSet`], mirroring `<ConfigUpgradeSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_config_upgrade_set(&mut self, v: &ConfigUpgradeSetView<'_>) {
+    pub const fn write_type_config_upgrade_set(&mut self, v: &ConfigUpgradeSetRef<'_>) {
         self.write_type_vec_config_setting_entry(&v.updated_entry);
     }
 }

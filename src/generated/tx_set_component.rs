@@ -203,7 +203,7 @@ impl WriteXdr for TxSetComponentRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TxSetComponentView<'_> {
+impl TxSetComponentRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -242,12 +242,12 @@ impl TxSetComponentView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TxSetComponent`], mirroring `<TxSetComponent as WriteXdr>::write_xdr`.
-    pub const fn write_type_tx_set_component(&mut self, v: &TxSetComponentView<'_>) {
+    pub const fn write_type_tx_set_component(&mut self, v: &TxSetComponentRef<'_>) {
         let d = v.discriminant();
         self.write_type_tx_set_component_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TxSetComponentView::TxsetCompTxsMaybeDiscountedFee(value) => {
+            TxSetComponentRef::TxsetCompTxsMaybeDiscountedFee(value) => {
                 self.write_type_tx_set_component_txs_maybe_discounted_fee(value);
             }
         }
@@ -256,7 +256,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TxSetComponent`], mirroring `<VecM<TxSetComponent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_tx_set_component<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, TxSetComponentView<'_>, MAX>,
+        v: &VecMRef<'_, TxSetComponentRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

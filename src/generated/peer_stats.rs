@@ -242,7 +242,7 @@ impl WriteXdr for PeerStatsRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PeerStatsView<'_> {
+impl PeerStatsRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -281,7 +281,7 @@ impl PeerStatsView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PeerStats`], mirroring `<PeerStats as WriteXdr>::write_xdr`.
-    pub const fn write_type_peer_stats(&mut self, v: &PeerStatsView<'_>) {
+    pub const fn write_type_peer_stats(&mut self, v: &PeerStatsRef<'_>) {
         self.write_type_node_id(&v.id);
         self.write_var_opaque(v.version_str.as_slice());
         self.write_u64(v.messages_read);

@@ -323,7 +323,7 @@ impl WriteXdr for OperationResultRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl OperationResultView<'_> {
+impl OperationResultRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -362,27 +362,27 @@ impl OperationResultView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationResult`], mirroring `<OperationResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_result(&mut self, v: &OperationResultView<'_>) {
+    pub const fn write_type_operation_result(&mut self, v: &OperationResultRef<'_>) {
         let d = v.discriminant();
         self.write_type_operation_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationResultView::OpInner(value) => {
+            OperationResultRef::OpInner(value) => {
                 self.write_type_operation_result_tr(value);
             }
-            OperationResultView::OpBadAuth => {}
-            OperationResultView::OpNoAccount => {}
-            OperationResultView::OpNotSupported => {}
-            OperationResultView::OpTooManySubentries => {}
-            OperationResultView::OpExceededWorkLimit => {}
-            OperationResultView::OpTooManySponsoring => {}
+            OperationResultRef::OpBadAuth => {}
+            OperationResultRef::OpNoAccount => {}
+            OperationResultRef::OpNotSupported => {}
+            OperationResultRef::OpTooManySubentries => {}
+            OperationResultRef::OpExceededWorkLimit => {}
+            OperationResultRef::OpTooManySponsoring => {}
         }
     }
 
     /// Serializes a variable-length array of [`OperationResult`], mirroring `<VecM<OperationResult, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation_result<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, OperationResultView<'_>, MAX>,
+        v: &VecMRef<'_, OperationResultRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

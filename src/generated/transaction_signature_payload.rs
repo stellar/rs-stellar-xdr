@@ -105,7 +105,7 @@ impl WriteXdr for TransactionSignaturePayloadRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionSignaturePayloadView<'_> {
+impl TransactionSignaturePayloadRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -146,7 +146,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionSignaturePayload`], mirroring `<TransactionSignaturePayload as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_signature_payload(
         &mut self,
-        v: &TransactionSignaturePayloadView<'_>,
+        v: &TransactionSignaturePayloadRef<'_>,
     ) {
         self.write_type_hash(&v.network_id);
         self.write_type_transaction_signature_payload_tagged_transaction(&v.tagged_transaction);

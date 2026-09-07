@@ -145,7 +145,7 @@ impl WriteXdr for SorobanAuthorizationEntriesRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SorobanAuthorizationEntriesView<'_> {
+impl SorobanAuthorizationEntriesRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +186,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizationEntries`], mirroring `<SorobanAuthorizationEntries as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorization_entries(
         &mut self,
-        v: &SorobanAuthorizationEntriesView<'_>,
+        v: &SorobanAuthorizationEntriesRef<'_>,
     ) {
         self.write_type_vec_soroban_authorization_entry(&v.0);
     }

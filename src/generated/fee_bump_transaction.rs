@@ -125,7 +125,7 @@ impl WriteXdr for FeeBumpTransactionRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl FeeBumpTransactionView<'_> {
+impl FeeBumpTransactionRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -164,7 +164,7 @@ impl FeeBumpTransactionView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FeeBumpTransaction`], mirroring `<FeeBumpTransaction as WriteXdr>::write_xdr`.
-    pub const fn write_type_fee_bump_transaction(&mut self, v: &FeeBumpTransactionView<'_>) {
+    pub const fn write_type_fee_bump_transaction(&mut self, v: &FeeBumpTransactionRef<'_>) {
         self.write_type_muxed_account(&v.fee_source);
         self.write_i64(v.fee);
         self.write_type_fee_bump_transaction_inner_tx(&v.inner_tx);

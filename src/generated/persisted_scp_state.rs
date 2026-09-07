@@ -200,7 +200,7 @@ impl WriteXdr for PersistedScpStateRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PersistedScpStateView<'_> {
+impl PersistedScpStateRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,15 +239,15 @@ impl PersistedScpStateView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PersistedScpState`], mirroring `<PersistedScpState as WriteXdr>::write_xdr`.
-    pub const fn write_type_persisted_scp_state(&mut self, v: &PersistedScpStateView<'_>) {
+    pub const fn write_type_persisted_scp_state(&mut self, v: &PersistedScpStateRef<'_>) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PersistedScpStateView::V0(value) => {
+            PersistedScpStateRef::V0(value) => {
                 self.write_type_persisted_scp_state_v0(value);
             }
-            PersistedScpStateView::V1(value) => {
+            PersistedScpStateRef::V1(value) => {
                 self.write_type_persisted_scp_state_v1(value);
             }
         }

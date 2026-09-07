@@ -97,7 +97,7 @@ impl WriteXdr for ScMetaV0Ref<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScMetaV0View<'_> {
+impl ScMetaV0Ref<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +136,7 @@ impl ScMetaV0View<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMetaV0`], mirroring `<ScMetaV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_meta_v0(&mut self, v: &ScMetaV0View<'_>) {
+    pub const fn write_type_sc_meta_v0(&mut self, v: &ScMetaV0Ref<'_>) {
         self.write_var_opaque(v.key.as_slice());
         self.write_var_opaque(v.val.as_slice());
     }

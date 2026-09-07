@@ -97,7 +97,7 @@ impl WriteXdr for SignerRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SignerView<'_> {
+impl SignerRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,13 +136,13 @@ impl SignerView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Signer`], mirroring `<Signer as WriteXdr>::write_xdr`.
-    pub const fn write_type_signer(&mut self, v: &SignerView<'_>) {
+    pub const fn write_type_signer(&mut self, v: &SignerRef<'_>) {
         self.write_type_signer_key(&v.key);
         self.write_u32(v.weight);
     }
 
     /// Serializes an optional [`Signer`], mirroring `<Option<Signer> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_signer(&mut self, v: &Option<SignerView<'_>>) {
+    pub const fn write_type_option_signer(&mut self, v: &Option<SignerRef<'_>>) {
         match v {
             Some(v) => {
                 self.write_u32(1);
@@ -157,7 +157,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`Signer`], mirroring `<VecM<Signer, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_signer<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, SignerView<'_>, MAX>,
+        v: &VecMRef<'_, SignerRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

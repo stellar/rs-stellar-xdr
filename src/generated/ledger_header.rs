@@ -221,7 +221,7 @@ impl WriteXdr for LedgerHeaderRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerHeaderView<'_> {
+impl LedgerHeaderRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -260,7 +260,7 @@ impl LedgerHeaderView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerHeader`], mirroring `<LedgerHeader as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_header(&mut self, v: &LedgerHeaderView<'_>) {
+    pub const fn write_type_ledger_header(&mut self, v: &LedgerHeaderRef<'_>) {
         self.write_u32(v.ledger_version);
         self.write_type_hash(&v.previous_ledger_hash);
         self.write_type_stellar_value(&v.scp_value);

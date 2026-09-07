@@ -110,7 +110,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`InflationPayout`], mirroring `<VecM<InflationPayout, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_inflation_payout<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, InflationPayout, MAX>,
+        v: &VecMRef<'_, InflationPayout, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

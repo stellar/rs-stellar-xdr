@@ -193,7 +193,7 @@ impl WriteXdr for ClaimantRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ClaimantView<'_> {
+impl ClaimantRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -232,12 +232,12 @@ impl ClaimantView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Claimant`], mirroring `<Claimant as WriteXdr>::write_xdr`.
-    pub const fn write_type_claimant(&mut self, v: &ClaimantView<'_>) {
+    pub const fn write_type_claimant(&mut self, v: &ClaimantRef<'_>) {
         let d = v.discriminant();
         self.write_type_claimant_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ClaimantView::ClaimantTypeV0(value) => {
+            ClaimantRef::ClaimantTypeV0(value) => {
                 self.write_type_claimant_v0(value);
             }
         }
@@ -246,7 +246,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`Claimant`], mirroring `<VecM<Claimant, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_claimant<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, ClaimantView<'_>, MAX>,
+        v: &VecMRef<'_, ClaimantRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

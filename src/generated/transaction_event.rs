@@ -96,7 +96,7 @@ impl WriteXdr for TransactionEventRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl TransactionEventView<'_> {
+impl TransactionEventRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +135,7 @@ impl TransactionEventView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionEvent`], mirroring `<TransactionEvent as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_event(&mut self, v: &TransactionEventView<'_>) {
+    pub const fn write_type_transaction_event(&mut self, v: &TransactionEventRef<'_>) {
         self.write_type_transaction_event_stage(&v.stage);
         self.write_type_contract_event(&v.event);
     }
@@ -143,7 +143,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionEvent`], mirroring `<VecM<TransactionEvent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_event<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, TransactionEventView<'_>, MAX>,
+        v: &VecMRef<'_, TransactionEventRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

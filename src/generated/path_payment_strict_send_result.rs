@@ -363,7 +363,7 @@ impl WriteXdr for PathPaymentStrictSendResultRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PathPaymentStrictSendResultView<'_> {
+impl PathPaymentStrictSendResultRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -404,29 +404,29 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictSendResult`], mirroring `<PathPaymentStrictSendResult as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_send_result(
         &mut self,
-        v: &PathPaymentStrictSendResultView<'_>,
+        v: &PathPaymentStrictSendResultRef<'_>,
     ) {
         let d = v.discriminant();
         self.write_type_path_payment_strict_send_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PathPaymentStrictSendResultView::Success(value) => {
+            PathPaymentStrictSendResultRef::Success(value) => {
                 self.write_type_path_payment_strict_send_result_success(value);
             }
-            PathPaymentStrictSendResultView::Malformed => {}
-            PathPaymentStrictSendResultView::Underfunded => {}
-            PathPaymentStrictSendResultView::SrcNoTrust => {}
-            PathPaymentStrictSendResultView::SrcNotAuthorized => {}
-            PathPaymentStrictSendResultView::NoDestination => {}
-            PathPaymentStrictSendResultView::NoTrust => {}
-            PathPaymentStrictSendResultView::NotAuthorized => {}
-            PathPaymentStrictSendResultView::LineFull => {}
-            PathPaymentStrictSendResultView::NoIssuer(value) => {
+            PathPaymentStrictSendResultRef::Malformed => {}
+            PathPaymentStrictSendResultRef::Underfunded => {}
+            PathPaymentStrictSendResultRef::SrcNoTrust => {}
+            PathPaymentStrictSendResultRef::SrcNotAuthorized => {}
+            PathPaymentStrictSendResultRef::NoDestination => {}
+            PathPaymentStrictSendResultRef::NoTrust => {}
+            PathPaymentStrictSendResultRef::NotAuthorized => {}
+            PathPaymentStrictSendResultRef::LineFull => {}
+            PathPaymentStrictSendResultRef::NoIssuer(value) => {
                 self.write_type_asset(value);
             }
-            PathPaymentStrictSendResultView::TooFewOffers => {}
-            PathPaymentStrictSendResultView::OfferCrossSelf => {}
-            PathPaymentStrictSendResultView::UnderDestmin => {}
+            PathPaymentStrictSendResultRef::TooFewOffers => {}
+            PathPaymentStrictSendResultRef::OfferCrossSelf => {}
+            PathPaymentStrictSendResultRef::UnderDestmin => {}
         }
     }
 }

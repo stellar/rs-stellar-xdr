@@ -157,7 +157,7 @@ impl WriteXdr for SerializedBinaryFuseFilterRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl SerializedBinaryFuseFilterView<'_> {
+impl SerializedBinaryFuseFilterRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -198,7 +198,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SerializedBinaryFuseFilter`], mirroring `<SerializedBinaryFuseFilter as WriteXdr>::write_xdr`.
     pub const fn write_type_serialized_binary_fuse_filter(
         &mut self,
-        v: &SerializedBinaryFuseFilterView<'_>,
+        v: &SerializedBinaryFuseFilterRef<'_>,
     ) {
         self.write_type_binary_fuse_filter_type(&v.type_);
         self.write_type_short_hash_seed(&v.input_hash_seed);

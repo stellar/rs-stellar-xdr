@@ -213,7 +213,7 @@ impl WriteXdr for RevokeSponsorshipOpRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl RevokeSponsorshipOpView<'_> {
+impl RevokeSponsorshipOpRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -252,15 +252,15 @@ impl RevokeSponsorshipOpView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`RevokeSponsorshipOp`], mirroring `<RevokeSponsorshipOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_revoke_sponsorship_op(&mut self, v: &RevokeSponsorshipOpView<'_>) {
+    pub const fn write_type_revoke_sponsorship_op(&mut self, v: &RevokeSponsorshipOpRef<'_>) {
         let d = v.discriminant();
         self.write_type_revoke_sponsorship_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            RevokeSponsorshipOpView::LedgerEntry(value) => {
+            RevokeSponsorshipOpRef::LedgerEntry(value) => {
                 self.write_type_ledger_key(value);
             }
-            RevokeSponsorshipOpView::Signer(value) => {
+            RevokeSponsorshipOpRef::Signer(value) => {
                 self.write_type_revoke_sponsorship_op_signer(value);
             }
         }

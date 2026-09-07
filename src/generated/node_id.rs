@@ -110,7 +110,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`NodeId`], mirroring `<VecM<NodeId, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_node_id<const MAX: u32>(&mut self, v: &VecMView<'_, NodeId, MAX>) {
+    pub const fn write_type_vec_node_id<const MAX: u32>(&mut self, v: &VecMRef<'_, NodeId, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

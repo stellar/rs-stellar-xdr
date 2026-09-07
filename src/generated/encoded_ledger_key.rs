@@ -145,7 +145,7 @@ impl WriteXdr for EncodedLedgerKeyRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl EncodedLedgerKeyView<'_> {
+impl EncodedLedgerKeyRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +184,14 @@ impl EncodedLedgerKeyView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`EncodedLedgerKey`], mirroring `<EncodedLedgerKey as WriteXdr>::write_xdr`.
-    pub const fn write_type_encoded_ledger_key(&mut self, v: &EncodedLedgerKeyView<'_>) {
+    pub const fn write_type_encoded_ledger_key(&mut self, v: &EncodedLedgerKeyRef<'_>) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`EncodedLedgerKey`], mirroring `<VecM<EncodedLedgerKey, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_encoded_ledger_key<const MAX: u32>(
         &mut self,
-        v: &VecMView<'_, EncodedLedgerKeyView<'_>, MAX>,
+        v: &VecMRef<'_, EncodedLedgerKeyRef<'_>, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

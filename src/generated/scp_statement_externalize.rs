@@ -104,7 +104,7 @@ impl WriteXdr for ScpStatementExternalizeRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl ScpStatementExternalizeView<'_> {
+impl ScpStatementExternalizeRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +145,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementExternalize`], mirroring `<ScpStatementExternalize as WriteXdr>::write_xdr`.
     pub const fn write_type_scp_statement_externalize(
         &mut self,
-        v: &ScpStatementExternalizeView<'_>,
+        v: &ScpStatementExternalizeRef<'_>,
     ) {
         self.write_type_scp_ballot(&v.commit);
         self.write_u32(v.n_h);

@@ -97,7 +97,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccessRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl PathPaymentStrictReceiveResultSuccessView<'_> {
+impl PathPaymentStrictReceiveResultSuccessRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +138,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictReceiveResultSuccess`], mirroring `<PathPaymentStrictReceiveResultSuccess as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_receive_result_success(
         &mut self,
-        v: &PathPaymentStrictReceiveResultSuccessView<'_>,
+        v: &PathPaymentStrictReceiveResultSuccessRef<'_>,
     ) {
         self.write_type_vec_claim_atom(&v.offers);
         self.write_type_simple_payment_result(&v.last);

@@ -96,7 +96,7 @@ impl WriteXdr for FrozenLedgerKeysDeltaRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl FrozenLedgerKeysDeltaView<'_> {
+impl FrozenLedgerKeysDeltaRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +135,7 @@ impl FrozenLedgerKeysDeltaView<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FrozenLedgerKeysDelta`], mirroring `<FrozenLedgerKeysDelta as WriteXdr>::write_xdr`.
-    pub const fn write_type_frozen_ledger_keys_delta(&mut self, v: &FrozenLedgerKeysDeltaView<'_>) {
+    pub const fn write_type_frozen_ledger_keys_delta(&mut self, v: &FrozenLedgerKeysDeltaRef<'_>) {
         self.write_type_vec_encoded_ledger_key(&v.keys_to_freeze);
         self.write_type_vec_encoded_ledger_key(&v.keys_to_unfreeze);
     }

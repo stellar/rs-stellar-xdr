@@ -111,7 +111,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryRef<'_> {
 }
 
 #[cfg(feature = "const")]
-impl LedgerHeaderHistoryEntryView<'_> {
+impl LedgerHeaderHistoryEntryRef<'_> {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -152,7 +152,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`LedgerHeaderHistoryEntry`], mirroring `<LedgerHeaderHistoryEntry as WriteXdr>::write_xdr`.
     pub const fn write_type_ledger_header_history_entry(
         &mut self,
-        v: &LedgerHeaderHistoryEntryView<'_>,
+        v: &LedgerHeaderHistoryEntryRef<'_>,
     ) {
         self.write_type_hash(&v.hash);
         self.write_type_ledger_header(&v.header);

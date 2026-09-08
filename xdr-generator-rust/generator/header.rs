@@ -1431,13 +1431,13 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
 
             let mut vec = Vec::new();
             for _ in 0..len {
+                let t = T::read_xdr(r)?;
                 if vec.len() == vec.capacity() {
                     let cap = vec.capacity();
                     let next = if cap == 0 { 4 } else { cap.saturating_mul(2) };
                     let next = next.min(len as usize);
                     vec.reserve_exact(next - vec.len());
                 }
-                let t = T::read_xdr(r)?;
                 vec.push(t);
             }
 

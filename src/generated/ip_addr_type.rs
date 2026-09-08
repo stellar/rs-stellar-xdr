@@ -127,14 +127,6 @@ impl WriteXdr for IpAddrType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for IpAddrType {
-    type Owned = IpAddrType;
-    fn into_owned(self) -> IpAddrType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl IpAddrType {
     /// The exact XDR-encoded length of this value, in bytes.

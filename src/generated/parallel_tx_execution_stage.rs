@@ -108,44 +108,13 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     }
 }
 
-/// ParallelTxExecutionStageRef is a borrowing equivalent of [`ParallelTxExecutionStage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ParallelTxExecutionStageConst is a borrowing equivalent of [`ParallelTxExecutionStage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParallelTxExecutionStageRef<'a>(pub VecMRef<'a, DependentTxClusterRef<'a>>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ParallelTxExecutionStageRef<'_> {
-    type Owned = ParallelTxExecutionStage;
-    fn into_owned(self) -> ParallelTxExecutionStage {
-        ParallelTxExecutionStage(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ParallelTxExecutionStageRef<'_>> for ParallelTxExecutionStage {
-    #[must_use]
-    fn from(v: &ParallelTxExecutionStageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ParallelTxExecutionStageRef<'_>> for ParallelTxExecutionStage {
-    #[must_use]
-    fn from(v: ParallelTxExecutionStageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ParallelTxExecutionStageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct ParallelTxExecutionStageConst(pub VecMConst<DependentTxClusterConst>);
 
 #[cfg(feature = "const")]
-impl ParallelTxExecutionStageRef<'_> {
+impl ParallelTxExecutionStageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +155,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ParallelTxExecutionStage`], mirroring `<ParallelTxExecutionStage as WriteXdr>::write_xdr`.
     pub const fn write_type_parallel_tx_execution_stage(
         &mut self,
-        v: &ParallelTxExecutionStageRef<'_>,
+        v: &ParallelTxExecutionStageConst,
     ) {
         self.write_type_vec_dependent_tx_cluster(&v.0);
     }
@@ -194,7 +163,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ParallelTxExecutionStage`], mirroring `<VecM<ParallelTxExecutionStage, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_parallel_tx_execution_stage<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ParallelTxExecutionStageRef<'_>, MAX>,
+        v: &VecMConst<ParallelTxExecutionStageConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

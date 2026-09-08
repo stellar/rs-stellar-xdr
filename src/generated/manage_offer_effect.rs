@@ -135,14 +135,6 @@ impl WriteXdr for ManageOfferEffect {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageOfferEffect {
-    type Owned = ManageOfferEffect;
-    fn into_owned(self) -> ManageOfferEffect {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ManageOfferEffect {
     /// The exact XDR-encoded length of this value, in bytes.

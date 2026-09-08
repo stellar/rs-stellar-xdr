@@ -59,57 +59,17 @@ impl WriteXdr for LedgerCloseMetaBatch {
     }
 }
 
-/// LedgerCloseMetaBatchRef is a borrowing equivalent of [`LedgerCloseMetaBatch`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerCloseMetaBatchConst is a borrowing equivalent of [`LedgerCloseMetaBatch`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseMetaBatchRef<'a> {
+pub struct LedgerCloseMetaBatchConst {
     pub start_sequence: u32,
     pub end_sequence: u32,
-    pub ledger_close_metas: VecMRef<'a, LedgerCloseMetaRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaBatchRef<'_> {
-    type Owned = LedgerCloseMetaBatch;
-    fn into_owned(self) -> LedgerCloseMetaBatch {
-        LedgerCloseMetaBatch {
-            start_sequence: self.start_sequence.into_owned(),
-            end_sequence: self.end_sequence.into_owned(),
-            ledger_close_metas: self.ledger_close_metas.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
-    #[must_use]
-    fn from(v: &LedgerCloseMetaBatchRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaBatchRef<'_>> for LedgerCloseMetaBatch {
-    #[must_use]
-    fn from(v: LedgerCloseMetaBatchRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerCloseMetaBatchRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.start_sequence.write_xdr(w)?;
-            self.end_sequence.write_xdr(w)?;
-            self.ledger_close_metas.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub ledger_close_metas: VecMConst<LedgerCloseMetaConst>,
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseMetaBatchRef<'_> {
+impl LedgerCloseMetaBatchConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -148,7 +108,7 @@ impl LedgerCloseMetaBatchRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseMetaBatch`], mirroring `<LedgerCloseMetaBatch as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_close_meta_batch(&mut self, v: &LedgerCloseMetaBatchRef<'_>) {
+    pub const fn write_type_ledger_close_meta_batch(&mut self, v: &LedgerCloseMetaBatchConst) {
         self.write_u32(v.start_sequence);
         self.write_u32(v.end_sequence);
         self.write_type_vec_ledger_close_meta(&v.ledger_close_metas);

@@ -64,60 +64,18 @@ impl WriteXdr for SorobanTransactionMeta {
     }
 }
 
-/// SorobanTransactionMetaRef is a borrowing equivalent of [`SorobanTransactionMeta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanTransactionMetaConst is a borrowing equivalent of [`SorobanTransactionMeta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionMetaRef<'a> {
+pub struct SorobanTransactionMetaConst {
     pub ext: SorobanTransactionMetaExt,
-    pub events: VecMRef<'a, ContractEventRef<'a>>,
-    pub return_value: ScValRef<'a>,
-    pub diagnostic_events: VecMRef<'a, DiagnosticEventRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionMetaRef<'_> {
-    type Owned = SorobanTransactionMeta;
-    fn into_owned(self) -> SorobanTransactionMeta {
-        SorobanTransactionMeta {
-            ext: self.ext.into_owned(),
-            events: self.events.into_owned(),
-            return_value: self.return_value.into_owned(),
-            diagnostic_events: self.diagnostic_events.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
-    #[must_use]
-    fn from(v: &SorobanTransactionMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanTransactionMetaRef<'_>> for SorobanTransactionMeta {
-    #[must_use]
-    fn from(v: SorobanTransactionMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanTransactionMetaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.events.write_xdr(w)?;
-            self.return_value.write_xdr(w)?;
-            self.diagnostic_events.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub events: VecMConst<ContractEventConst>,
+    pub return_value: ScValConst,
+    pub diagnostic_events: VecMConst<DiagnosticEventConst>,
 }
 
 #[cfg(feature = "const")]
-impl SorobanTransactionMetaRef<'_> {
+impl SorobanTransactionMetaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -156,7 +114,7 @@ impl SorobanTransactionMetaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionMeta`], mirroring `<SorobanTransactionMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_transaction_meta(&mut self, v: &SorobanTransactionMetaRef<'_>) {
+    pub const fn write_type_soroban_transaction_meta(&mut self, v: &SorobanTransactionMetaConst) {
         self.write_type_soroban_transaction_meta_ext(&v.ext);
         self.write_type_vec_contract_event(&v.events);
         self.write_type_sc_val(&v.return_value);
@@ -166,7 +124,7 @@ impl ConstWriter<'_> {
     /// Serializes an optional [`SorobanTransactionMeta`], mirroring `<Option<SorobanTransactionMeta> as WriteXdr>::write_xdr`.
     pub const fn write_type_option_soroban_transaction_meta(
         &mut self,
-        v: &Option<SorobanTransactionMetaRef<'_>>,
+        v: &Option<SorobanTransactionMetaConst>,
     ) {
         match v {
             Some(v) => {

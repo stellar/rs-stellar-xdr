@@ -139,14 +139,6 @@ impl WriteXdr for MuxedAccount {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for MuxedAccount {
-    type Owned = MuxedAccount;
-    fn into_owned(self) -> MuxedAccount {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl MuxedAccount {
     /// The exact XDR-encoded length of this value, in bytes.

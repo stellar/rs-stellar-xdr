@@ -135,14 +135,6 @@ impl WriteXdr for ContractEventType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractEventType {
-    type Owned = ContractEventType;
-    fn into_owned(self) -> ContractEventType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ContractEventType {
     /// The exact XDR-encoded length of this value, in bytes.

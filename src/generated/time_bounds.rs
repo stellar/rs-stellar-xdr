@@ -50,14 +50,6 @@ impl WriteXdr for TimeBounds {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimeBounds {
-    type Owned = TimeBounds;
-    fn into_owned(self) -> TimeBounds {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TimeBounds {
     /// The exact XDR-encoded length of this value, in bytes.

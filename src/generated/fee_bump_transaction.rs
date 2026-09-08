@@ -72,60 +72,18 @@ impl WriteXdr for FeeBumpTransaction {
     }
 }
 
-/// FeeBumpTransactionRef is a borrowing equivalent of [`FeeBumpTransaction`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FeeBumpTransactionConst is a borrowing equivalent of [`FeeBumpTransaction`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FeeBumpTransactionRef<'a> {
+pub struct FeeBumpTransactionConst {
     pub fee_source: MuxedAccount,
     pub fee: i64,
-    pub inner_tx: FeeBumpTransactionInnerTxRef<'a>,
+    pub inner_tx: FeeBumpTransactionInnerTxConst,
     pub ext: FeeBumpTransactionExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionRef<'_> {
-    type Owned = FeeBumpTransaction;
-    fn into_owned(self) -> FeeBumpTransaction {
-        FeeBumpTransaction {
-            fee_source: self.fee_source.into_owned(),
-            fee: self.fee.into_owned(),
-            inner_tx: self.inner_tx.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
-    #[must_use]
-    fn from(v: &FeeBumpTransactionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionRef<'_>> for FeeBumpTransaction {
-    #[must_use]
-    fn from(v: FeeBumpTransactionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FeeBumpTransactionRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.fee_source.write_xdr(w)?;
-            self.fee.write_xdr(w)?;
-            self.inner_tx.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl FeeBumpTransactionRef<'_> {
+impl FeeBumpTransactionConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -164,7 +122,7 @@ impl FeeBumpTransactionRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FeeBumpTransaction`], mirroring `<FeeBumpTransaction as WriteXdr>::write_xdr`.
-    pub const fn write_type_fee_bump_transaction(&mut self, v: &FeeBumpTransactionRef<'_>) {
+    pub const fn write_type_fee_bump_transaction(&mut self, v: &FeeBumpTransactionConst) {
         self.write_type_muxed_account(&v.fee_source);
         self.write_i64(v.fee);
         self.write_type_fee_bump_transaction_inner_tx(&v.inner_tx);

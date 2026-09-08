@@ -180,54 +180,20 @@ impl WriteXdr for ScSpecEntry {
     }
 }
 
-/// ScSpecEntryRef is a borrowing equivalent of [`ScSpecEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecEntryConst is a borrowing equivalent of [`ScSpecEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecEntryRef<'a> {
-    FunctionV0(ScSpecFunctionV0Ref<'a>),
-    UdtStructV0(ScSpecUdtStructV0Ref<'a>),
-    UdtUnionV0(ScSpecUdtUnionV0Ref<'a>),
-    UdtEnumV0(ScSpecUdtEnumV0Ref<'a>),
-    UdtErrorEnumV0(ScSpecUdtErrorEnumV0Ref<'a>),
-    EventV0(ScSpecEventV0Ref<'a>),
+pub enum ScSpecEntryConst {
+    FunctionV0(ScSpecFunctionV0Const),
+    UdtStructV0(ScSpecUdtStructV0Const),
+    UdtUnionV0(ScSpecUdtUnionV0Const),
+    UdtEnumV0(ScSpecUdtEnumV0Const),
+    UdtErrorEnumV0(ScSpecUdtErrorEnumV0Const),
+    EventV0(ScSpecEventV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecEntryRef<'_> {
-    type Owned = ScSpecEntry;
-    fn into_owned(self) -> ScSpecEntry {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScSpecEntryRef::FunctionV0(value) => ScSpecEntry::FunctionV0(value.into_owned()),
-            ScSpecEntryRef::UdtStructV0(value) => ScSpecEntry::UdtStructV0(value.into_owned()),
-            ScSpecEntryRef::UdtUnionV0(value) => ScSpecEntry::UdtUnionV0(value.into_owned()),
-            ScSpecEntryRef::UdtEnumV0(value) => ScSpecEntry::UdtEnumV0(value.into_owned()),
-            ScSpecEntryRef::UdtErrorEnumV0(value) => {
-                ScSpecEntry::UdtErrorEnumV0(value.into_owned())
-            }
-            ScSpecEntryRef::EventV0(value) => ScSpecEntry::EventV0(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecEntryRef<'_>> for ScSpecEntry {
-    #[must_use]
-    fn from(v: &ScSpecEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecEntryRef<'_>> for ScSpecEntry {
-    #[must_use]
-    fn from(v: ScSpecEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScSpecEntryRef<'_> {
+impl ScSpecEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecEntryKind {
         #[allow(clippy::match_same_arms)]
@@ -242,27 +208,8 @@ impl ScSpecEntryRef<'_> {
     }
 }
 
-impl WriteXdr for ScSpecEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::FunctionV0(v) => v.write_xdr(w)?,
-                Self::UdtStructV0(v) => v.write_xdr(w)?,
-                Self::UdtUnionV0(v) => v.write_xdr(w)?,
-                Self::UdtEnumV0(v) => v.write_xdr(w)?,
-                Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
-                Self::EventV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScSpecEntryRef<'_> {
+impl ScSpecEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -301,27 +248,27 @@ impl ScSpecEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecEntry`], mirroring `<ScSpecEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_entry(&mut self, v: &ScSpecEntryRef<'_>) {
+    pub const fn write_type_sc_spec_entry(&mut self, v: &ScSpecEntryConst) {
         let d = v.discriminant();
         self.write_type_sc_spec_entry_kind(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecEntryRef::FunctionV0(value) => {
+            ScSpecEntryConst::FunctionV0(value) => {
                 self.write_type_sc_spec_function_v0(value);
             }
-            ScSpecEntryRef::UdtStructV0(value) => {
+            ScSpecEntryConst::UdtStructV0(value) => {
                 self.write_type_sc_spec_udt_struct_v0(value);
             }
-            ScSpecEntryRef::UdtUnionV0(value) => {
+            ScSpecEntryConst::UdtUnionV0(value) => {
                 self.write_type_sc_spec_udt_union_v0(value);
             }
-            ScSpecEntryRef::UdtEnumV0(value) => {
+            ScSpecEntryConst::UdtEnumV0(value) => {
                 self.write_type_sc_spec_udt_enum_v0(value);
             }
-            ScSpecEntryRef::UdtErrorEnumV0(value) => {
+            ScSpecEntryConst::UdtErrorEnumV0(value) => {
                 self.write_type_sc_spec_udt_error_enum_v0(value);
             }
-            ScSpecEntryRef::EventV0(value) => {
+            ScSpecEntryConst::EventV0(value) => {
                 self.write_type_sc_spec_event_v0(value);
             }
         }

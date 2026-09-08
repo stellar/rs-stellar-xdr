@@ -66,66 +66,20 @@ impl WriteXdr for ScSpecEventV0 {
     }
 }
 
-/// ScSpecEventV0Ref is a borrowing equivalent of [`ScSpecEventV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecEventV0Const is a borrowing equivalent of [`ScSpecEventV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecEventV0Ref<'a> {
-    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
-    pub lib: StringMRef<'a, 80>,
-    pub name: ScSymbolRef<'a>,
-    pub prefix_topics: VecMRef<'a, ScSymbolRef<'a>, 2>,
-    pub params: VecMRef<'a, ScSpecEventParamV0Ref<'a>>,
+pub struct ScSpecEventV0Const {
+    pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,
+    pub lib: StringMConst<80>,
+    pub name: ScSymbolConst,
+    pub prefix_topics: VecMConst<ScSymbolConst, 2>,
+    pub params: VecMConst<ScSpecEventParamV0Const>,
     pub data_format: ScSpecEventDataFormat,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecEventV0Ref<'_> {
-    type Owned = ScSpecEventV0;
-    fn into_owned(self) -> ScSpecEventV0 {
-        ScSpecEventV0 {
-            doc: self.doc.into_owned(),
-            lib: self.lib.into_owned(),
-            name: self.name.into_owned(),
-            prefix_topics: self.prefix_topics.into_owned(),
-            params: self.params.into_owned(),
-            data_format: self.data_format.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
-    #[must_use]
-    fn from(v: &ScSpecEventV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecEventV0Ref<'_>> for ScSpecEventV0 {
-    #[must_use]
-    fn from(v: ScSpecEventV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecEventV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.prefix_topics.write_xdr(w)?;
-            self.params.write_xdr(w)?;
-            self.data_format.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScSpecEventV0Ref<'_> {
+impl ScSpecEventV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -164,7 +118,7 @@ impl ScSpecEventV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecEventV0`], mirroring `<ScSpecEventV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_event_v0(&mut self, v: &ScSpecEventV0Ref<'_>) {
+    pub const fn write_type_sc_spec_event_v0(&mut self, v: &ScSpecEventV0Const) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.lib.as_slice());
         self.write_type_sc_symbol(&v.name);

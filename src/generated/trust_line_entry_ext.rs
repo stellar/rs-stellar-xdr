@@ -148,14 +148,6 @@ impl WriteXdr for TrustLineEntryExt {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TrustLineEntryExt {
-    type Owned = TrustLineEntryExt;
-    fn into_owned(self) -> TrustLineEntryExt {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TrustLineEntryExt {
     /// The exact XDR-encoded length of this value, in bytes.

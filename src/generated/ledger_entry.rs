@@ -87,57 +87,17 @@ impl WriteXdr for LedgerEntry {
     }
 }
 
-/// LedgerEntryRef is a borrowing equivalent of [`LedgerEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerEntryConst is a borrowing equivalent of [`LedgerEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerEntryRef<'a> {
+pub struct LedgerEntryConst {
     pub last_modified_ledger_seq: u32,
-    pub data: LedgerEntryDataRef<'a>,
+    pub data: LedgerEntryDataConst,
     pub ext: LedgerEntryExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryRef<'_> {
-    type Owned = LedgerEntry;
-    fn into_owned(self) -> LedgerEntry {
-        LedgerEntry {
-            last_modified_ledger_seq: self.last_modified_ledger_seq.into_owned(),
-            data: self.data.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerEntryRef<'_>> for LedgerEntry {
-    #[must_use]
-    fn from(v: &LedgerEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerEntryRef<'_>> for LedgerEntry {
-    #[must_use]
-    fn from(v: LedgerEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.last_modified_ledger_seq.write_xdr(w)?;
-            self.data.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerEntryRef<'_> {
+impl LedgerEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -176,7 +136,7 @@ impl LedgerEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerEntry`], mirroring `<LedgerEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_entry(&mut self, v: &LedgerEntryRef<'_>) {
+    pub const fn write_type_ledger_entry(&mut self, v: &LedgerEntryConst) {
         self.write_u32(v.last_modified_ledger_seq);
         self.write_type_ledger_entry_data(&v.data);
         self.write_type_ledger_entry_ext(&v.ext);
@@ -185,7 +145,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerEntry`], mirroring `<VecM<LedgerEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_entry<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, LedgerEntryRef<'_>, MAX>,
+        v: &VecMConst<LedgerEntryConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

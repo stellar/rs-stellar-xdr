@@ -88,14 +88,6 @@ impl WriteXdr for TimeSlicedNodeData {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedNodeData {
-    type Owned = TimeSlicedNodeData;
-    fn into_owned(self) -> TimeSlicedNodeData {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TimeSlicedNodeData {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -65,60 +65,18 @@ impl WriteXdr for DataEntry {
     }
 }
 
-/// DataEntryRef is a borrowing equivalent of [`DataEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// DataEntryConst is a borrowing equivalent of [`DataEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DataEntryRef<'a> {
+pub struct DataEntryConst {
     pub account_id: AccountId,
-    pub data_name: String64Ref<'a>,
-    pub data_value: DataValueRef<'a>,
+    pub data_name: String64Const,
+    pub data_value: DataValueConst,
     pub ext: DataEntryExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for DataEntryRef<'_> {
-    type Owned = DataEntry;
-    fn into_owned(self) -> DataEntry {
-        DataEntry {
-            account_id: self.account_id.into_owned(),
-            data_name: self.data_name.into_owned(),
-            data_value: self.data_value.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&DataEntryRef<'_>> for DataEntry {
-    #[must_use]
-    fn from(v: &DataEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<DataEntryRef<'_>> for DataEntry {
-    #[must_use]
-    fn from(v: DataEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for DataEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.account_id.write_xdr(w)?;
-            self.data_name.write_xdr(w)?;
-            self.data_value.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl DataEntryRef<'_> {
+impl DataEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -157,7 +115,7 @@ impl DataEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DataEntry`], mirroring `<DataEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_data_entry(&mut self, v: &DataEntryRef<'_>) {
+    pub const fn write_type_data_entry(&mut self, v: &DataEntryConst) {
         self.write_type_account_id(&v.account_id);
         self.write_type_string64(&v.data_name);
         self.write_type_data_value(&v.data_value);

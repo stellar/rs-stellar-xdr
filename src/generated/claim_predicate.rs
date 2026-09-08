@@ -195,58 +195,20 @@ impl WriteXdr for ClaimPredicate {
     }
 }
 
-/// ClaimPredicateRef is a borrowing equivalent of [`ClaimPredicate`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ClaimPredicateConst is a borrowing equivalent of [`ClaimPredicate`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ClaimPredicateRef<'a> {
+pub enum ClaimPredicateConst {
     Unconditional,
-    And(VecMRef<'a, ClaimPredicateRef<'a>, 2>),
-    Or(VecMRef<'a, ClaimPredicateRef<'a>, 2>),
-    Not(Option<&'a ClaimPredicateRef<'a>>),
+    And(VecMConst<ClaimPredicateConst, 2>),
+    Or(VecMConst<ClaimPredicateConst, 2>),
+    Not(Option<&'static ClaimPredicateConst>),
     BeforeAbsoluteTime(i64),
     BeforeRelativeTime(i64),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimPredicateRef<'_> {
-    type Owned = ClaimPredicate;
-    fn into_owned(self) -> ClaimPredicate {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ClaimPredicateRef::Unconditional => ClaimPredicate::Unconditional,
-            ClaimPredicateRef::And(value) => ClaimPredicate::And(value.into_owned()),
-            ClaimPredicateRef::Or(value) => ClaimPredicate::Or(value.into_owned()),
-            ClaimPredicateRef::Not(value) => {
-                ClaimPredicate::Not(value.map(|v| Box::new(v.into_owned())))
-            }
-            ClaimPredicateRef::BeforeAbsoluteTime(value) => {
-                ClaimPredicate::BeforeAbsoluteTime(value.into_owned())
-            }
-            ClaimPredicateRef::BeforeRelativeTime(value) => {
-                ClaimPredicate::BeforeRelativeTime(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ClaimPredicateRef<'_>> for ClaimPredicate {
-    #[must_use]
-    fn from(v: &ClaimPredicateRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ClaimPredicateRef<'_>> for ClaimPredicate {
-    #[must_use]
-    fn from(v: ClaimPredicateRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ClaimPredicateRef<'_> {
+impl ClaimPredicateConst {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimPredicateType {
         #[allow(clippy::match_same_arms)]
@@ -261,27 +223,8 @@ impl ClaimPredicateRef<'_> {
     }
 }
 
-impl WriteXdr for ClaimPredicateRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Unconditional => ().write_xdr(w)?,
-                Self::And(v) => v.write_xdr(w)?,
-                Self::Or(v) => v.write_xdr(w)?,
-                Self::Not(v) => v.write_xdr(w)?,
-                Self::BeforeAbsoluteTime(v) => v.write_xdr(w)?,
-                Self::BeforeRelativeTime(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ClaimPredicateRef<'_> {
+impl ClaimPredicateConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -320,25 +263,25 @@ impl ClaimPredicateRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ClaimPredicate`], mirroring `<ClaimPredicate as WriteXdr>::write_xdr`.
-    pub const fn write_type_claim_predicate(&mut self, v: &ClaimPredicateRef<'_>) {
+    pub const fn write_type_claim_predicate(&mut self, v: &ClaimPredicateConst) {
         let d = v.discriminant();
         self.write_type_claim_predicate_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ClaimPredicateRef::Unconditional => {}
-            ClaimPredicateRef::And(value) => {
+            ClaimPredicateConst::Unconditional => {}
+            ClaimPredicateConst::And(value) => {
                 self.write_type_vec_claim_predicate(value);
             }
-            ClaimPredicateRef::Or(value) => {
+            ClaimPredicateConst::Or(value) => {
                 self.write_type_vec_claim_predicate(value);
             }
-            ClaimPredicateRef::Not(value) => {
+            ClaimPredicateConst::Not(value) => {
                 self.write_type_option_ref_claim_predicate(*value);
             }
-            ClaimPredicateRef::BeforeAbsoluteTime(value) => {
+            ClaimPredicateConst::BeforeAbsoluteTime(value) => {
                 self.write_i64(*value);
             }
-            ClaimPredicateRef::BeforeRelativeTime(value) => {
+            ClaimPredicateConst::BeforeRelativeTime(value) => {
                 self.write_i64(*value);
             }
         }
@@ -347,7 +290,7 @@ impl ConstWriter<'_> {
     /// Serializes an optional [`ClaimPredicate`], mirroring `<Option<Box<ClaimPredicate>> as WriteXdr>::write_xdr`.
     pub const fn write_type_option_ref_claim_predicate(
         &mut self,
-        v: Option<&'_ ClaimPredicateRef<'_>>,
+        v: Option<&'static ClaimPredicateConst>,
     ) {
         match v {
             Some(v) => {
@@ -363,7 +306,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ClaimPredicate`], mirroring `<VecM<ClaimPredicate, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_claim_predicate<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ClaimPredicateRef<'_>, MAX>,
+        v: &VecMConst<ClaimPredicateConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

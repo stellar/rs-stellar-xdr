@@ -89,10 +89,10 @@ impl WriteXdr for SerializedBinaryFuseFilter {
     }
 }
 
-/// SerializedBinaryFuseFilterRef is a borrowing equivalent of [`SerializedBinaryFuseFilter`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SerializedBinaryFuseFilterConst is a borrowing equivalent of [`SerializedBinaryFuseFilter`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SerializedBinaryFuseFilterRef<'a> {
+pub struct SerializedBinaryFuseFilterConst {
     pub type_: BinaryFuseFilterType,
     pub input_hash_seed: ShortHashSeed,
     pub filter_seed: ShortHashSeed,
@@ -101,63 +101,11 @@ pub struct SerializedBinaryFuseFilterRef<'a> {
     pub segment_count: u32,
     pub segment_count_length: u32,
     pub fingerprint_length: u32,
-    pub fingerprints: BytesMRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SerializedBinaryFuseFilterRef<'_> {
-    type Owned = SerializedBinaryFuseFilter;
-    fn into_owned(self) -> SerializedBinaryFuseFilter {
-        SerializedBinaryFuseFilter {
-            type_: self.type_.into_owned(),
-            input_hash_seed: self.input_hash_seed.into_owned(),
-            filter_seed: self.filter_seed.into_owned(),
-            segment_length: self.segment_length.into_owned(),
-            segement_length_mask: self.segement_length_mask.into_owned(),
-            segment_count: self.segment_count.into_owned(),
-            segment_count_length: self.segment_count_length.into_owned(),
-            fingerprint_length: self.fingerprint_length.into_owned(),
-            fingerprints: self.fingerprints.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
-    #[must_use]
-    fn from(v: &SerializedBinaryFuseFilterRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SerializedBinaryFuseFilterRef<'_>> for SerializedBinaryFuseFilter {
-    #[must_use]
-    fn from(v: SerializedBinaryFuseFilterRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SerializedBinaryFuseFilterRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.type_.write_xdr(w)?;
-            self.input_hash_seed.write_xdr(w)?;
-            self.filter_seed.write_xdr(w)?;
-            self.segment_length.write_xdr(w)?;
-            self.segement_length_mask.write_xdr(w)?;
-            self.segment_count.write_xdr(w)?;
-            self.segment_count_length.write_xdr(w)?;
-            self.fingerprint_length.write_xdr(w)?;
-            self.fingerprints.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub fingerprints: BytesMConst,
 }
 
 #[cfg(feature = "const")]
-impl SerializedBinaryFuseFilterRef<'_> {
+impl SerializedBinaryFuseFilterConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -198,7 +146,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SerializedBinaryFuseFilter`], mirroring `<SerializedBinaryFuseFilter as WriteXdr>::write_xdr`.
     pub const fn write_type_serialized_binary_fuse_filter(
         &mut self,
-        v: &SerializedBinaryFuseFilterRef<'_>,
+        v: &SerializedBinaryFuseFilterConst,
     ) {
         self.write_type_binary_fuse_filter_type(&v.type_);
         self.write_type_short_hash_seed(&v.input_hash_seed);

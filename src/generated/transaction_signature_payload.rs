@@ -58,54 +58,16 @@ impl WriteXdr for TransactionSignaturePayload {
     }
 }
 
-/// TransactionSignaturePayloadRef is a borrowing equivalent of [`TransactionSignaturePayload`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionSignaturePayloadConst is a borrowing equivalent of [`TransactionSignaturePayload`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionSignaturePayloadRef<'a> {
+pub struct TransactionSignaturePayloadConst {
     pub network_id: Hash,
-    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionSignaturePayloadRef<'_> {
-    type Owned = TransactionSignaturePayload;
-    fn into_owned(self) -> TransactionSignaturePayload {
-        TransactionSignaturePayload {
-            network_id: self.network_id.into_owned(),
-            tagged_transaction: self.tagged_transaction.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
-    #[must_use]
-    fn from(v: &TransactionSignaturePayloadRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionSignaturePayloadRef<'_>> for TransactionSignaturePayload {
-    #[must_use]
-    fn from(v: TransactionSignaturePayloadRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionSignaturePayloadRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.network_id.write_xdr(w)?;
-            self.tagged_transaction.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub tagged_transaction: TransactionSignaturePayloadTaggedTransactionConst,
 }
 
 #[cfg(feature = "const")]
-impl TransactionSignaturePayloadRef<'_> {
+impl TransactionSignaturePayloadConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -146,7 +108,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionSignaturePayload`], mirroring `<TransactionSignaturePayload as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_signature_payload(
         &mut self,
-        v: &TransactionSignaturePayloadRef<'_>,
+        v: &TransactionSignaturePayloadConst,
     ) {
         self.write_type_hash(&v.network_id);
         self.write_type_transaction_signature_payload_tagged_transaction(&v.tagged_transaction);

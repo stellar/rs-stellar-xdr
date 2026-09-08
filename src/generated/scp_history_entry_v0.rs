@@ -50,54 +50,16 @@ impl WriteXdr for ScpHistoryEntryV0 {
     }
 }
 
-/// ScpHistoryEntryV0Ref is a borrowing equivalent of [`ScpHistoryEntryV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpHistoryEntryV0Const is a borrowing equivalent of [`ScpHistoryEntryV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpHistoryEntryV0Ref<'a> {
-    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
-    pub ledger_messages: LedgerScpMessagesRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpHistoryEntryV0Ref<'_> {
-    type Owned = ScpHistoryEntryV0;
-    fn into_owned(self) -> ScpHistoryEntryV0 {
-        ScpHistoryEntryV0 {
-            quorum_sets: self.quorum_sets.into_owned(),
-            ledger_messages: self.ledger_messages.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
-    #[must_use]
-    fn from(v: &ScpHistoryEntryV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpHistoryEntryV0Ref<'_>> for ScpHistoryEntryV0 {
-    #[must_use]
-    fn from(v: ScpHistoryEntryV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpHistoryEntryV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.quorum_sets.write_xdr(w)?;
-            self.ledger_messages.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScpHistoryEntryV0Const {
+    pub quorum_sets: VecMConst<ScpQuorumSetConst>,
+    pub ledger_messages: LedgerScpMessagesConst,
 }
 
 #[cfg(feature = "const")]
-impl ScpHistoryEntryV0Ref<'_> {
+impl ScpHistoryEntryV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ScpHistoryEntryV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpHistoryEntryV0`], mirroring `<ScpHistoryEntryV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_history_entry_v0(&mut self, v: &ScpHistoryEntryV0Ref<'_>) {
+    pub const fn write_type_scp_history_entry_v0(&mut self, v: &ScpHistoryEntryV0Const) {
         self.write_type_vec_scp_quorum_set(&v.quorum_sets);
         self.write_type_ledger_scp_messages(&v.ledger_messages);
     }

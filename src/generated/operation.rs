@@ -111,54 +111,16 @@ impl WriteXdr for Operation {
     }
 }
 
-/// OperationRef is a borrowing equivalent of [`Operation`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// OperationConst is a borrowing equivalent of [`Operation`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationRef<'a> {
+pub struct OperationConst {
     pub source_account: Option<MuxedAccount>,
-    pub body: OperationBodyRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationRef<'_> {
-    type Owned = Operation;
-    fn into_owned(self) -> Operation {
-        Operation {
-            source_account: self.source_account.into_owned(),
-            body: self.body.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&OperationRef<'_>> for Operation {
-    #[must_use]
-    fn from(v: &OperationRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<OperationRef<'_>> for Operation {
-    #[must_use]
-    fn from(v: OperationRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for OperationRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.source_account.write_xdr(w)?;
-            self.body.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub body: OperationBodyConst,
 }
 
 #[cfg(feature = "const")]
-impl OperationRef<'_> {
+impl OperationConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -197,7 +159,7 @@ impl OperationRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Operation`], mirroring `<Operation as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation(&mut self, v: &OperationRef<'_>) {
+    pub const fn write_type_operation(&mut self, v: &OperationConst) {
         self.write_type_option_muxed_account(&v.source_account);
         self.write_type_operation_body(&v.body);
     }
@@ -205,7 +167,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`Operation`], mirroring `<VecM<Operation, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, OperationRef<'_>, MAX>,
+        v: &VecMConst<OperationConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -108,44 +108,13 @@ impl AsRef<[u8]> for String32 {
     }
 }
 
-/// String32Ref is a borrowing equivalent of [`String32`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// String32Const is a borrowing equivalent of [`String32`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct String32Ref<'a>(pub StringMRef<'a, 32>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for String32Ref<'_> {
-    type Owned = String32;
-    fn into_owned(self) -> String32 {
-        String32(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&String32Ref<'_>> for String32 {
-    #[must_use]
-    fn from(v: &String32Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<String32Ref<'_>> for String32 {
-    #[must_use]
-    fn from(v: String32Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for String32Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct String32Const(pub StringMConst<32>);
 
 #[cfg(feature = "const")]
-impl String32Ref<'_> {
+impl String32Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +153,12 @@ impl String32Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`String32`], mirroring `<String32 as WriteXdr>::write_xdr`.
-    pub const fn write_type_string32(&mut self, v: &String32Ref<'_>) {
+    pub const fn write_type_string32(&mut self, v: &String32Const) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes an optional [`String32`], mirroring `<Option<String32> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_string32(&mut self, v: &Option<String32Ref<'_>>) {
+    pub const fn write_type_option_string32(&mut self, v: &Option<String32Const>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

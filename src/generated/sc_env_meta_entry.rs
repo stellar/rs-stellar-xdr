@@ -136,14 +136,6 @@ impl WriteXdr for ScEnvMetaEntry {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScEnvMetaEntry {
-    type Owned = ScEnvMetaEntry;
-    fn into_owned(self) -> ScEnvMetaEntry {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScEnvMetaEntry {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -143,14 +143,6 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BeginSponsoringFutureReservesResultCode {
-    type Owned = BeginSponsoringFutureReservesResultCode;
-    fn into_owned(self) -> BeginSponsoringFutureReservesResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl BeginSponsoringFutureReservesResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

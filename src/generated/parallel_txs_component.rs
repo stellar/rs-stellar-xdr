@@ -57,54 +57,16 @@ impl WriteXdr for ParallelTxsComponent {
     }
 }
 
-/// ParallelTxsComponentRef is a borrowing equivalent of [`ParallelTxsComponent`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ParallelTxsComponentConst is a borrowing equivalent of [`ParallelTxsComponent`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParallelTxsComponentRef<'a> {
+pub struct ParallelTxsComponentConst {
     pub base_fee: Option<i64>,
-    pub execution_stages: VecMRef<'a, ParallelTxExecutionStageRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ParallelTxsComponentRef<'_> {
-    type Owned = ParallelTxsComponent;
-    fn into_owned(self) -> ParallelTxsComponent {
-        ParallelTxsComponent {
-            base_fee: self.base_fee.into_owned(),
-            execution_stages: self.execution_stages.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
-    #[must_use]
-    fn from(v: &ParallelTxsComponentRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ParallelTxsComponentRef<'_>> for ParallelTxsComponent {
-    #[must_use]
-    fn from(v: ParallelTxsComponentRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ParallelTxsComponentRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.base_fee.write_xdr(w)?;
-            self.execution_stages.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub execution_stages: VecMConst<ParallelTxExecutionStageConst>,
 }
 
 #[cfg(feature = "const")]
-impl ParallelTxsComponentRef<'_> {
+impl ParallelTxsComponentConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +105,7 @@ impl ParallelTxsComponentRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ParallelTxsComponent`], mirroring `<ParallelTxsComponent as WriteXdr>::write_xdr`.
-    pub const fn write_type_parallel_txs_component(&mut self, v: &ParallelTxsComponentRef<'_>) {
+    pub const fn write_type_parallel_txs_component(&mut self, v: &ParallelTxsComponentConst) {
         self.write_option_i64(&v.base_fee);
         self.write_type_vec_parallel_tx_execution_stage(&v.execution_stages);
     }

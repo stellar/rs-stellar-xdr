@@ -62,14 +62,6 @@ impl WriteXdr for ConfigSettingScpTiming {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigSettingScpTiming {
-    type Owned = ConfigSettingScpTiming;
-    fn into_owned(self) -> ConfigSettingScpTiming {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ConfigSettingScpTiming {
     /// The exact XDR-encoded length of this value, in bytes.

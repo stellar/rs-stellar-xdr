@@ -82,63 +82,19 @@ impl WriteXdr for ClaimableBalanceEntry {
     }
 }
 
-/// ClaimableBalanceEntryRef is a borrowing equivalent of [`ClaimableBalanceEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ClaimableBalanceEntryConst is a borrowing equivalent of [`ClaimableBalanceEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ClaimableBalanceEntryRef<'a> {
+pub struct ClaimableBalanceEntryConst {
     pub balance_id: ClaimableBalanceId,
-    pub claimants: VecMRef<'a, ClaimantRef<'a>, 10>,
+    pub claimants: VecMConst<ClaimantConst, 10>,
     pub asset: Asset,
     pub amount: i64,
     pub ext: ClaimableBalanceEntryExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimableBalanceEntryRef<'_> {
-    type Owned = ClaimableBalanceEntry;
-    fn into_owned(self) -> ClaimableBalanceEntry {
-        ClaimableBalanceEntry {
-            balance_id: self.balance_id.into_owned(),
-            claimants: self.claimants.into_owned(),
-            asset: self.asset.into_owned(),
-            amount: self.amount.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ClaimableBalanceEntryRef<'_>> for ClaimableBalanceEntry {
-    #[must_use]
-    fn from(v: &ClaimableBalanceEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ClaimableBalanceEntryRef<'_>> for ClaimableBalanceEntry {
-    #[must_use]
-    fn from(v: ClaimableBalanceEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ClaimableBalanceEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.balance_id.write_xdr(w)?;
-            self.claimants.write_xdr(w)?;
-            self.asset.write_xdr(w)?;
-            self.amount.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ClaimableBalanceEntryRef<'_> {
+impl ClaimableBalanceEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -177,7 +133,7 @@ impl ClaimableBalanceEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ClaimableBalanceEntry`], mirroring `<ClaimableBalanceEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_claimable_balance_entry(&mut self, v: &ClaimableBalanceEntryRef<'_>) {
+    pub const fn write_type_claimable_balance_entry(&mut self, v: &ClaimableBalanceEntryConst) {
         self.write_type_claimable_balance_id(&v.balance_id);
         self.write_type_vec_claimant(&v.claimants);
         self.write_type_asset(&v.asset);

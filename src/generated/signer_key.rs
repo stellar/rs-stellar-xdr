@@ -162,50 +162,18 @@ impl WriteXdr for SignerKey {
     }
 }
 
-/// SignerKeyRef is a borrowing equivalent of [`SignerKey`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SignerKeyConst is a borrowing equivalent of [`SignerKey`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SignerKeyRef<'a> {
+pub enum SignerKeyConst {
     Ed25519(Uint256),
     PreAuthTx(Uint256),
     HashX(Uint256),
-    Ed25519SignedPayload(SignerKeyEd25519SignedPayloadRef<'a>),
+    Ed25519SignedPayload(SignerKeyEd25519SignedPayloadConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignerKeyRef<'_> {
-    type Owned = SignerKey;
-    fn into_owned(self) -> SignerKey {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            SignerKeyRef::Ed25519(value) => SignerKey::Ed25519(value.into_owned()),
-            SignerKeyRef::PreAuthTx(value) => SignerKey::PreAuthTx(value.into_owned()),
-            SignerKeyRef::HashX(value) => SignerKey::HashX(value.into_owned()),
-            SignerKeyRef::Ed25519SignedPayload(value) => {
-                SignerKey::Ed25519SignedPayload(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SignerKeyRef<'_>> for SignerKey {
-    #[must_use]
-    fn from(v: &SignerKeyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SignerKeyRef<'_>> for SignerKey {
-    #[must_use]
-    fn from(v: SignerKeyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl SignerKeyRef<'_> {
+impl SignerKeyConst {
     #[must_use]
     pub const fn discriminant(&self) -> SignerKeyType {
         #[allow(clippy::match_same_arms)]
@@ -218,25 +186,8 @@ impl SignerKeyRef<'_> {
     }
 }
 
-impl WriteXdr for SignerKeyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Ed25519(v) => v.write_xdr(w)?,
-                Self::PreAuthTx(v) => v.write_xdr(w)?,
-                Self::HashX(v) => v.write_xdr(w)?,
-                Self::Ed25519SignedPayload(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SignerKeyRef<'_> {
+impl SignerKeyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -275,21 +226,21 @@ impl SignerKeyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SignerKey`], mirroring `<SignerKey as WriteXdr>::write_xdr`.
-    pub const fn write_type_signer_key(&mut self, v: &SignerKeyRef<'_>) {
+    pub const fn write_type_signer_key(&mut self, v: &SignerKeyConst) {
         let d = v.discriminant();
         self.write_type_signer_key_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SignerKeyRef::Ed25519(value) => {
+            SignerKeyConst::Ed25519(value) => {
                 self.write_type_uint256(value);
             }
-            SignerKeyRef::PreAuthTx(value) => {
+            SignerKeyConst::PreAuthTx(value) => {
                 self.write_type_uint256(value);
             }
-            SignerKeyRef::HashX(value) => {
+            SignerKeyConst::HashX(value) => {
                 self.write_type_uint256(value);
             }
-            SignerKeyRef::Ed25519SignedPayload(value) => {
+            SignerKeyConst::Ed25519SignedPayload(value) => {
                 self.write_type_signer_key_ed25519_signed_payload(value);
             }
         }
@@ -298,7 +249,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SignerKey`], mirroring `<VecM<SignerKey, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_signer_key<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, SignerKeyRef<'_>, MAX>,
+        v: &VecMConst<SignerKeyConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

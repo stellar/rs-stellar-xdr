@@ -71,63 +71,19 @@ impl WriteXdr for LedgerCloseMetaV0 {
     }
 }
 
-/// LedgerCloseMetaV0Ref is a borrowing equivalent of [`LedgerCloseMetaV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerCloseMetaV0Const is a borrowing equivalent of [`LedgerCloseMetaV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseMetaV0Ref<'a> {
-    pub ledger_header: LedgerHeaderHistoryEntryRef<'a>,
-    pub tx_set: TransactionSetRef<'a>,
-    pub tx_processing: VecMRef<'a, TransactionResultMetaRef<'a>>,
-    pub upgrades_processing: VecMRef<'a, UpgradeEntryMetaRef<'a>>,
-    pub scp_info: VecMRef<'a, ScpHistoryEntryRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaV0Ref<'_> {
-    type Owned = LedgerCloseMetaV0;
-    fn into_owned(self) -> LedgerCloseMetaV0 {
-        LedgerCloseMetaV0 {
-            ledger_header: self.ledger_header.into_owned(),
-            tx_set: self.tx_set.into_owned(),
-            tx_processing: self.tx_processing.into_owned(),
-            upgrades_processing: self.upgrades_processing.into_owned(),
-            scp_info: self.scp_info.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
-    #[must_use]
-    fn from(v: &LedgerCloseMetaV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaV0Ref<'_>> for LedgerCloseMetaV0 {
-    #[must_use]
-    fn from(v: LedgerCloseMetaV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerCloseMetaV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_header.write_xdr(w)?;
-            self.tx_set.write_xdr(w)?;
-            self.tx_processing.write_xdr(w)?;
-            self.upgrades_processing.write_xdr(w)?;
-            self.scp_info.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct LedgerCloseMetaV0Const {
+    pub ledger_header: LedgerHeaderHistoryEntryConst,
+    pub tx_set: TransactionSetConst,
+    pub tx_processing: VecMConst<TransactionResultMetaConst>,
+    pub upgrades_processing: VecMConst<UpgradeEntryMetaConst>,
+    pub scp_info: VecMConst<ScpHistoryEntryConst>,
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseMetaV0Ref<'_> {
+impl LedgerCloseMetaV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -166,7 +122,7 @@ impl LedgerCloseMetaV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseMetaV0`], mirroring `<LedgerCloseMetaV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_close_meta_v0(&mut self, v: &LedgerCloseMetaV0Ref<'_>) {
+    pub const fn write_type_ledger_close_meta_v0(&mut self, v: &LedgerCloseMetaV0Const) {
         self.write_type_ledger_header_history_entry(&v.ledger_header);
         self.write_type_transaction_set(&v.tx_set);
         self.write_type_vec_transaction_result_meta(&v.tx_processing);

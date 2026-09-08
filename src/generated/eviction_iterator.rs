@@ -57,14 +57,6 @@ impl WriteXdr for EvictionIterator {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for EvictionIterator {
-    type Owned = EvictionIterator;
-    fn into_owned(self) -> EvictionIterator {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl EvictionIterator {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -50,14 +50,6 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigSettingContractParallelComputeV0 {
-    type Owned = ConfigSettingContractParallelComputeV0;
-    fn into_owned(self) -> ConfigSettingContractParallelComputeV0 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ConfigSettingContractParallelComputeV0 {
     /// The exact XDR-encoded length of this value, in bytes.

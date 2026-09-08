@@ -58,60 +58,18 @@ impl WriteXdr for ScSpecFunctionV0 {
     }
 }
 
-/// ScSpecFunctionV0Ref is a borrowing equivalent of [`ScSpecFunctionV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecFunctionV0Const is a borrowing equivalent of [`ScSpecFunctionV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecFunctionV0Ref<'a> {
-    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: ScSymbolRef<'a>,
-    pub inputs: VecMRef<'a, ScSpecFunctionInputV0Ref<'a>>,
-    pub outputs: VecMRef<'a, ScSpecTypeDefRef<'a>, 1>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecFunctionV0Ref<'_> {
-    type Owned = ScSpecFunctionV0;
-    fn into_owned(self) -> ScSpecFunctionV0 {
-        ScSpecFunctionV0 {
-            doc: self.doc.into_owned(),
-            name: self.name.into_owned(),
-            inputs: self.inputs.into_owned(),
-            outputs: self.outputs.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
-    #[must_use]
-    fn from(v: &ScSpecFunctionV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecFunctionV0Ref<'_>> for ScSpecFunctionV0 {
-    #[must_use]
-    fn from(v: ScSpecFunctionV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecFunctionV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.inputs.write_xdr(w)?;
-            self.outputs.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecFunctionV0Const {
+    pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,
+    pub name: ScSymbolConst,
+    pub inputs: VecMConst<ScSpecFunctionInputV0Const>,
+    pub outputs: VecMConst<ScSpecTypeDefConst, 1>,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecFunctionV0Ref<'_> {
+impl ScSpecFunctionV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -150,7 +108,7 @@ impl ScSpecFunctionV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecFunctionV0`], mirroring `<ScSpecFunctionV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_function_v0(&mut self, v: &ScSpecFunctionV0Ref<'_>) {
+    pub const fn write_type_sc_spec_function_v0(&mut self, v: &ScSpecFunctionV0Const) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_type_sc_symbol(&v.name);
         self.write_type_vec_sc_spec_function_input_v0(&v.inputs);

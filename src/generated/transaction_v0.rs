@@ -75,69 +75,21 @@ impl WriteXdr for TransactionV0 {
     }
 }
 
-/// TransactionV0Ref is a borrowing equivalent of [`TransactionV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionV0Const is a borrowing equivalent of [`TransactionV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionV0Ref<'a> {
+pub struct TransactionV0Const {
     pub source_account_ed25519: Uint256,
     pub fee: u32,
     pub seq_num: SequenceNumber,
     pub time_bounds: Option<TimeBounds>,
-    pub memo: MemoRef<'a>,
-    pub operations: VecMRef<'a, OperationRef<'a>, MAX_OPS_PER_TX>,
+    pub memo: MemoConst,
+    pub operations: VecMConst<OperationConst, MAX_OPS_PER_TX>,
     pub ext: TransactionV0Ext,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionV0Ref<'_> {
-    type Owned = TransactionV0;
-    fn into_owned(self) -> TransactionV0 {
-        TransactionV0 {
-            source_account_ed25519: self.source_account_ed25519.into_owned(),
-            fee: self.fee.into_owned(),
-            seq_num: self.seq_num.into_owned(),
-            time_bounds: self.time_bounds.into_owned(),
-            memo: self.memo.into_owned(),
-            operations: self.operations.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionV0Ref<'_>> for TransactionV0 {
-    #[must_use]
-    fn from(v: &TransactionV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionV0Ref<'_>> for TransactionV0 {
-    #[must_use]
-    fn from(v: TransactionV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.source_account_ed25519.write_xdr(w)?;
-            self.fee.write_xdr(w)?;
-            self.seq_num.write_xdr(w)?;
-            self.time_bounds.write_xdr(w)?;
-            self.memo.write_xdr(w)?;
-            self.operations.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionV0Ref<'_> {
+impl TransactionV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -176,7 +128,7 @@ impl TransactionV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionV0`], mirroring `<TransactionV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_v0(&mut self, v: &TransactionV0Ref<'_>) {
+    pub const fn write_type_transaction_v0(&mut self, v: &TransactionV0Const) {
         self.write_type_uint256(&v.source_account_ed25519);
         self.write_u32(v.fee);
         self.write_type_sequence_number(&v.seq_num);

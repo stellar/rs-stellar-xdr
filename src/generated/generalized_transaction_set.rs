@@ -130,44 +130,15 @@ impl WriteXdr for GeneralizedTransactionSet {
     }
 }
 
-/// GeneralizedTransactionSetRef is a borrowing equivalent of [`GeneralizedTransactionSet`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// GeneralizedTransactionSetConst is a borrowing equivalent of [`GeneralizedTransactionSet`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum GeneralizedTransactionSetRef<'a> {
-    V1(TransactionSetV1Ref<'a>),
+pub enum GeneralizedTransactionSetConst {
+    V1(TransactionSetV1Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for GeneralizedTransactionSetRef<'_> {
-    type Owned = GeneralizedTransactionSet;
-    fn into_owned(self) -> GeneralizedTransactionSet {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            GeneralizedTransactionSetRef::V1(value) => {
-                GeneralizedTransactionSet::V1(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
-    #[must_use]
-    fn from(v: &GeneralizedTransactionSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<GeneralizedTransactionSetRef<'_>> for GeneralizedTransactionSet {
-    #[must_use]
-    fn from(v: GeneralizedTransactionSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl GeneralizedTransactionSetRef<'_> {
+impl GeneralizedTransactionSetConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -177,22 +148,8 @@ impl GeneralizedTransactionSetRef<'_> {
     }
 }
 
-impl WriteXdr for GeneralizedTransactionSetRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl GeneralizedTransactionSetRef<'_> {
+impl GeneralizedTransactionSetConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -233,13 +190,13 @@ impl ConstWriter<'_> {
     /// Serializes a [`GeneralizedTransactionSet`], mirroring `<GeneralizedTransactionSet as WriteXdr>::write_xdr`.
     pub const fn write_type_generalized_transaction_set(
         &mut self,
-        v: &GeneralizedTransactionSetRef<'_>,
+        v: &GeneralizedTransactionSetConst,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            GeneralizedTransactionSetRef::V1(value) => {
+            GeneralizedTransactionSetConst::V1(value) => {
                 self.write_type_transaction_set_v1(value);
             }
         }

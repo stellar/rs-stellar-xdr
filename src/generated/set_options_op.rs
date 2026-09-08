@@ -85,10 +85,10 @@ impl WriteXdr for SetOptionsOp {
     }
 }
 
-/// SetOptionsOpRef is a borrowing equivalent of [`SetOptionsOp`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SetOptionsOpConst is a borrowing equivalent of [`SetOptionsOp`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SetOptionsOpRef<'a> {
+pub struct SetOptionsOpConst {
     pub inflation_dest: Option<AccountId>,
     pub clear_flags: Option<u32>,
     pub set_flags: Option<u32>,
@@ -96,64 +96,12 @@ pub struct SetOptionsOpRef<'a> {
     pub low_threshold: Option<u32>,
     pub med_threshold: Option<u32>,
     pub high_threshold: Option<u32>,
-    pub home_domain: Option<String32Ref<'a>>,
-    pub signer: Option<SignerRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SetOptionsOpRef<'_> {
-    type Owned = SetOptionsOp;
-    fn into_owned(self) -> SetOptionsOp {
-        SetOptionsOp {
-            inflation_dest: self.inflation_dest.into_owned(),
-            clear_flags: self.clear_flags.into_owned(),
-            set_flags: self.set_flags.into_owned(),
-            master_weight: self.master_weight.into_owned(),
-            low_threshold: self.low_threshold.into_owned(),
-            med_threshold: self.med_threshold.into_owned(),
-            high_threshold: self.high_threshold.into_owned(),
-            home_domain: self.home_domain.into_owned(),
-            signer: self.signer.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SetOptionsOpRef<'_>> for SetOptionsOp {
-    #[must_use]
-    fn from(v: &SetOptionsOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SetOptionsOpRef<'_>> for SetOptionsOp {
-    #[must_use]
-    fn from(v: SetOptionsOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SetOptionsOpRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.inflation_dest.write_xdr(w)?;
-            self.clear_flags.write_xdr(w)?;
-            self.set_flags.write_xdr(w)?;
-            self.master_weight.write_xdr(w)?;
-            self.low_threshold.write_xdr(w)?;
-            self.med_threshold.write_xdr(w)?;
-            self.high_threshold.write_xdr(w)?;
-            self.home_domain.write_xdr(w)?;
-            self.signer.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub home_domain: Option<String32Const>,
+    pub signer: Option<SignerConst>,
 }
 
 #[cfg(feature = "const")]
-impl SetOptionsOpRef<'_> {
+impl SetOptionsOpConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -192,7 +140,7 @@ impl SetOptionsOpRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SetOptionsOp`], mirroring `<SetOptionsOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_set_options_op(&mut self, v: &SetOptionsOpRef<'_>) {
+    pub const fn write_type_set_options_op(&mut self, v: &SetOptionsOpConst) {
         self.write_type_option_account_id(&v.inflation_dest);
         self.write_option_u32(&v.clear_flags);
         self.write_option_u32(&v.set_flags);

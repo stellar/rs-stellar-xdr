@@ -54,57 +54,17 @@ impl WriteXdr for LedgerKeyContractData {
     }
 }
 
-/// LedgerKeyContractDataRef is a borrowing equivalent of [`LedgerKeyContractData`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerKeyContractDataConst is a borrowing equivalent of [`LedgerKeyContractData`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerKeyContractDataRef<'a> {
+pub struct LedgerKeyContractDataConst {
     pub contract: ScAddress,
-    pub key: ScValRef<'a>,
+    pub key: ScValConst,
     pub durability: ContractDataDurability,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyContractDataRef<'_> {
-    type Owned = LedgerKeyContractData;
-    fn into_owned(self) -> LedgerKeyContractData {
-        LedgerKeyContractData {
-            contract: self.contract.into_owned(),
-            key: self.key.into_owned(),
-            durability: self.durability.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
-    #[must_use]
-    fn from(v: &LedgerKeyContractDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerKeyContractDataRef<'_>> for LedgerKeyContractData {
-    #[must_use]
-    fn from(v: LedgerKeyContractDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerKeyContractDataRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.contract.write_xdr(w)?;
-            self.key.write_xdr(w)?;
-            self.durability.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerKeyContractDataRef<'_> {
+impl LedgerKeyContractDataConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +103,7 @@ impl LedgerKeyContractDataRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerKeyContractData`], mirroring `<LedgerKeyContractData as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_key_contract_data(&mut self, v: &LedgerKeyContractDataRef<'_>) {
+    pub const fn write_type_ledger_key_contract_data(&mut self, v: &LedgerKeyContractDataConst) {
         self.write_type_sc_address(&v.contract);
         self.write_type_sc_val(&v.key);
         self.write_type_contract_data_durability(&v.durability);

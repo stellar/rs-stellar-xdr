@@ -161,14 +161,6 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SetTrustLineFlagsResultCode {
-    type Owned = SetTrustLineFlagsResultCode;
-    fn into_owned(self) -> SetTrustLineFlagsResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SetTrustLineFlagsResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -54,57 +54,17 @@ impl WriteXdr for TransactionResultMeta {
     }
 }
 
-/// TransactionResultMetaRef is a borrowing equivalent of [`TransactionResultMeta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionResultMetaConst is a borrowing equivalent of [`TransactionResultMeta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultMetaRef<'a> {
-    pub result: TransactionResultPairRef<'a>,
-    pub fee_processing: LedgerEntryChangesRef<'a>,
-    pub tx_apply_processing: TransactionMetaRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultMetaRef<'_> {
-    type Owned = TransactionResultMeta;
-    fn into_owned(self) -> TransactionResultMeta {
-        TransactionResultMeta {
-            result: self.result.into_owned(),
-            fee_processing: self.fee_processing.into_owned(),
-            tx_apply_processing: self.tx_apply_processing.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionResultMetaRef<'_>> for TransactionResultMeta {
-    #[must_use]
-    fn from(v: &TransactionResultMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionResultMetaRef<'_>> for TransactionResultMeta {
-    #[must_use]
-    fn from(v: TransactionResultMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionResultMetaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.result.write_xdr(w)?;
-            self.fee_processing.write_xdr(w)?;
-            self.tx_apply_processing.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct TransactionResultMetaConst {
+    pub result: TransactionResultPairConst,
+    pub fee_processing: LedgerEntryChangesConst,
+    pub tx_apply_processing: TransactionMetaConst,
 }
 
 #[cfg(feature = "const")]
-impl TransactionResultMetaRef<'_> {
+impl TransactionResultMetaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +103,7 @@ impl TransactionResultMetaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionResultMeta`], mirroring `<TransactionResultMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_result_meta(&mut self, v: &TransactionResultMetaRef<'_>) {
+    pub const fn write_type_transaction_result_meta(&mut self, v: &TransactionResultMetaConst) {
         self.write_type_transaction_result_pair(&v.result);
         self.write_type_ledger_entry_changes(&v.fee_processing);
         self.write_type_transaction_meta(&v.tx_apply_processing);
@@ -152,7 +112,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionResultMeta`], mirroring `<VecM<TransactionResultMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_result_meta<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TransactionResultMetaRef<'_>, MAX>,
+        v: &VecMConst<TransactionResultMetaConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

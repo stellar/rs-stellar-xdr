@@ -149,14 +149,6 @@ impl WriteXdr for ClaimAtom {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimAtom {
-    type Owned = ClaimAtom;
-    fn into_owned(self) -> ClaimAtom {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimAtom {
     /// The exact XDR-encoded length of this value, in bytes.
@@ -217,7 +209,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ClaimAtom`], mirroring `<VecM<ClaimAtom, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_claim_atom<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ClaimAtom, MAX>,
+        v: &VecMConst<ClaimAtom, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

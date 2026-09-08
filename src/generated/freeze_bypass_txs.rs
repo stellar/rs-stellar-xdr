@@ -45,51 +45,15 @@ impl WriteXdr for FreezeBypassTxs {
     }
 }
 
-/// FreezeBypassTxsRef is a borrowing equivalent of [`FreezeBypassTxs`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FreezeBypassTxsConst is a borrowing equivalent of [`FreezeBypassTxs`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FreezeBypassTxsRef<'a> {
-    pub tx_hashes: VecMRef<'a, Hash>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for FreezeBypassTxsRef<'_> {
-    type Owned = FreezeBypassTxs;
-    fn into_owned(self) -> FreezeBypassTxs {
-        FreezeBypassTxs {
-            tx_hashes: self.tx_hashes.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
-    #[must_use]
-    fn from(v: &FreezeBypassTxsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FreezeBypassTxsRef<'_>> for FreezeBypassTxs {
-    #[must_use]
-    fn from(v: FreezeBypassTxsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FreezeBypassTxsRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_hashes.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct FreezeBypassTxsConst {
+    pub tx_hashes: VecMConst<Hash>,
 }
 
 #[cfg(feature = "const")]
-impl FreezeBypassTxsRef<'_> {
+impl FreezeBypassTxsConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -128,7 +92,7 @@ impl FreezeBypassTxsRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FreezeBypassTxs`], mirroring `<FreezeBypassTxs as WriteXdr>::write_xdr`.
-    pub const fn write_type_freeze_bypass_txs(&mut self, v: &FreezeBypassTxsRef<'_>) {
+    pub const fn write_type_freeze_bypass_txs(&mut self, v: &FreezeBypassTxsConst) {
         self.write_type_vec_hash(&v.tx_hashes);
     }
 }

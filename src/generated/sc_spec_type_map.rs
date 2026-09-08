@@ -50,54 +50,16 @@ impl WriteXdr for ScSpecTypeMap {
     }
 }
 
-/// ScSpecTypeMapRef is a borrowing equivalent of [`ScSpecTypeMap`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeMapConst is a borrowing equivalent of [`ScSpecTypeMap`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeMapRef<'a> {
-    pub key_type: &'a ScSpecTypeDefRef<'a>,
-    pub value_type: &'a ScSpecTypeDefRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeMapRef<'_> {
-    type Owned = ScSpecTypeMap;
-    fn into_owned(self) -> ScSpecTypeMap {
-        ScSpecTypeMap {
-            key_type: Box::new(self.key_type.into_owned()),
-            value_type: Box::new(self.value_type.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeMapRef<'_>> for ScSpecTypeMap {
-    #[must_use]
-    fn from(v: &ScSpecTypeMapRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeMapRef<'_>> for ScSpecTypeMap {
-    #[must_use]
-    fn from(v: ScSpecTypeMapRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecTypeMapRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.key_type.write_xdr(w)?;
-            self.value_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecTypeMapConst {
+    pub key_type: &'static ScSpecTypeDefConst,
+    pub value_type: &'static ScSpecTypeDefConst,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeMapRef<'_> {
+impl ScSpecTypeMapConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ScSpecTypeMapRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeMap`], mirroring `<ScSpecTypeMap as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_map(&mut self, v: &ScSpecTypeMapRef<'_>) {
+    pub const fn write_type_sc_spec_type_map(&mut self, v: &ScSpecTypeMapConst) {
         self.write_type_sc_spec_type_def(v.key_type);
         self.write_type_sc_spec_type_def(v.value_type);
     }

@@ -101,78 +101,24 @@ impl WriteXdr for AccountEntry {
     }
 }
 
-/// AccountEntryRef is a borrowing equivalent of [`AccountEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AccountEntryConst is a borrowing equivalent of [`AccountEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryRef<'a> {
+pub struct AccountEntryConst {
     pub account_id: AccountId,
     pub balance: i64,
     pub seq_num: SequenceNumber,
     pub num_sub_entries: u32,
     pub inflation_dest: Option<AccountId>,
     pub flags: u32,
-    pub home_domain: String32Ref<'a>,
+    pub home_domain: String32Const,
     pub thresholds: Thresholds,
-    pub signers: VecMRef<'a, SignerRef<'a>, MAX_SIGNERS>,
-    pub ext: AccountEntryExtRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryRef<'_> {
-    type Owned = AccountEntry;
-    fn into_owned(self) -> AccountEntry {
-        AccountEntry {
-            account_id: self.account_id.into_owned(),
-            balance: self.balance.into_owned(),
-            seq_num: self.seq_num.into_owned(),
-            num_sub_entries: self.num_sub_entries.into_owned(),
-            inflation_dest: self.inflation_dest.into_owned(),
-            flags: self.flags.into_owned(),
-            home_domain: self.home_domain.into_owned(),
-            thresholds: self.thresholds.into_owned(),
-            signers: self.signers.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AccountEntryRef<'_>> for AccountEntry {
-    #[must_use]
-    fn from(v: &AccountEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AccountEntryRef<'_>> for AccountEntry {
-    #[must_use]
-    fn from(v: AccountEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for AccountEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.account_id.write_xdr(w)?;
-            self.balance.write_xdr(w)?;
-            self.seq_num.write_xdr(w)?;
-            self.num_sub_entries.write_xdr(w)?;
-            self.inflation_dest.write_xdr(w)?;
-            self.flags.write_xdr(w)?;
-            self.home_domain.write_xdr(w)?;
-            self.thresholds.write_xdr(w)?;
-            self.signers.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub signers: VecMConst<SignerConst, MAX_SIGNERS>,
+    pub ext: AccountEntryExtConst,
 }
 
 #[cfg(feature = "const")]
-impl AccountEntryRef<'_> {
+impl AccountEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -211,7 +157,7 @@ impl AccountEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AccountEntry`], mirroring `<AccountEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_account_entry(&mut self, v: &AccountEntryRef<'_>) {
+    pub const fn write_type_account_entry(&mut self, v: &AccountEntryConst) {
         self.write_type_account_id(&v.account_id);
         self.write_i64(v.balance);
         self.write_type_sequence_number(&v.seq_num);

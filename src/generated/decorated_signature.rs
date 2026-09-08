@@ -50,54 +50,16 @@ impl WriteXdr for DecoratedSignature {
     }
 }
 
-/// DecoratedSignatureRef is a borrowing equivalent of [`DecoratedSignature`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// DecoratedSignatureConst is a borrowing equivalent of [`DecoratedSignature`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DecoratedSignatureRef<'a> {
+pub struct DecoratedSignatureConst {
     pub hint: SignatureHint,
-    pub signature: SignatureRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for DecoratedSignatureRef<'_> {
-    type Owned = DecoratedSignature;
-    fn into_owned(self) -> DecoratedSignature {
-        DecoratedSignature {
-            hint: self.hint.into_owned(),
-            signature: self.signature.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&DecoratedSignatureRef<'_>> for DecoratedSignature {
-    #[must_use]
-    fn from(v: &DecoratedSignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<DecoratedSignatureRef<'_>> for DecoratedSignature {
-    #[must_use]
-    fn from(v: DecoratedSignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for DecoratedSignatureRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.hint.write_xdr(w)?;
-            self.signature.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub signature: SignatureConst,
 }
 
 #[cfg(feature = "const")]
-impl DecoratedSignatureRef<'_> {
+impl DecoratedSignatureConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl DecoratedSignatureRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DecoratedSignature`], mirroring `<DecoratedSignature as WriteXdr>::write_xdr`.
-    pub const fn write_type_decorated_signature(&mut self, v: &DecoratedSignatureRef<'_>) {
+    pub const fn write_type_decorated_signature(&mut self, v: &DecoratedSignatureConst) {
         self.write_type_signature_hint(&v.hint);
         self.write_type_signature(&v.signature);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`DecoratedSignature`], mirroring `<VecM<DecoratedSignature, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_decorated_signature<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, DecoratedSignatureRef<'_>, MAX>,
+        v: &VecMConst<DecoratedSignatureConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

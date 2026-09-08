@@ -62,63 +62,19 @@ impl WriteXdr for ContractDataEntry {
     }
 }
 
-/// ContractDataEntryRef is a borrowing equivalent of [`ContractDataEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractDataEntryConst is a borrowing equivalent of [`ContractDataEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractDataEntryRef<'a> {
+pub struct ContractDataEntryConst {
     pub ext: ExtensionPoint,
     pub contract: ScAddress,
-    pub key: ScValRef<'a>,
+    pub key: ScValConst,
     pub durability: ContractDataDurability,
-    pub val: ScValRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractDataEntryRef<'_> {
-    type Owned = ContractDataEntry;
-    fn into_owned(self) -> ContractDataEntry {
-        ContractDataEntry {
-            ext: self.ext.into_owned(),
-            contract: self.contract.into_owned(),
-            key: self.key.into_owned(),
-            durability: self.durability.into_owned(),
-            val: self.val.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractDataEntryRef<'_>> for ContractDataEntry {
-    #[must_use]
-    fn from(v: &ContractDataEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractDataEntryRef<'_>> for ContractDataEntry {
-    #[must_use]
-    fn from(v: ContractDataEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ContractDataEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.contract.write_xdr(w)?;
-            self.key.write_xdr(w)?;
-            self.durability.write_xdr(w)?;
-            self.val.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub val: ScValConst,
 }
 
 #[cfg(feature = "const")]
-impl ContractDataEntryRef<'_> {
+impl ContractDataEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -157,7 +113,7 @@ impl ContractDataEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractDataEntry`], mirroring `<ContractDataEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_data_entry(&mut self, v: &ContractDataEntryRef<'_>) {
+    pub const fn write_type_contract_data_entry(&mut self, v: &ContractDataEntryConst) {
         self.write_type_extension_point(&v.ext);
         self.write_type_sc_address(&v.contract);
         self.write_type_sc_val(&v.key);

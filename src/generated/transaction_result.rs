@@ -93,57 +93,17 @@ impl WriteXdr for TransactionResult {
     }
 }
 
-/// TransactionResultRef is a borrowing equivalent of [`TransactionResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionResultConst is a borrowing equivalent of [`TransactionResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultRef<'a> {
+pub struct TransactionResultConst {
     pub fee_charged: i64,
-    pub result: TransactionResultResultRef<'a>,
+    pub result: TransactionResultResultConst,
     pub ext: TransactionResultExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultRef<'_> {
-    type Owned = TransactionResult;
-    fn into_owned(self) -> TransactionResult {
-        TransactionResult {
-            fee_charged: self.fee_charged.into_owned(),
-            result: self.result.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionResultRef<'_>> for TransactionResult {
-    #[must_use]
-    fn from(v: &TransactionResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionResultRef<'_>> for TransactionResult {
-    #[must_use]
-    fn from(v: TransactionResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.fee_charged.write_xdr(w)?;
-            self.result.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionResultRef<'_> {
+impl TransactionResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -182,7 +142,7 @@ impl TransactionResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionResult`], mirroring `<TransactionResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_result(&mut self, v: &TransactionResultRef<'_>) {
+    pub const fn write_type_transaction_result(&mut self, v: &TransactionResultConst) {
         self.write_i64(v.fee_charged);
         self.write_type_transaction_result_result(&v.result);
         self.write_type_transaction_result_ext(&v.ext);

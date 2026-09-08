@@ -54,14 +54,6 @@ impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedSurveyStartCollectingMessage {
-    type Owned = TimeSlicedSurveyStartCollectingMessage;
-    fn into_owned(self) -> TimeSlicedSurveyStartCollectingMessage {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TimeSlicedSurveyStartCollectingMessage {
     /// The exact XDR-encoded length of this value, in bytes.

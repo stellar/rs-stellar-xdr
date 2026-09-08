@@ -66,66 +66,20 @@ impl WriteXdr for ScpStatementPrepare {
     }
 }
 
-/// ScpStatementPrepareRef is a borrowing equivalent of [`ScpStatementPrepare`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpStatementPrepareConst is a borrowing equivalent of [`ScpStatementPrepare`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementPrepareRef<'a> {
+pub struct ScpStatementPrepareConst {
     pub quorum_set_hash: Hash,
-    pub ballot: ScpBallotRef<'a>,
-    pub prepared: Option<ScpBallotRef<'a>>,
-    pub prepared_prime: Option<ScpBallotRef<'a>>,
+    pub ballot: ScpBallotConst,
+    pub prepared: Option<ScpBallotConst>,
+    pub prepared_prime: Option<ScpBallotConst>,
     pub n_c: u32,
     pub n_h: u32,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementPrepareRef<'_> {
-    type Owned = ScpStatementPrepare;
-    fn into_owned(self) -> ScpStatementPrepare {
-        ScpStatementPrepare {
-            quorum_set_hash: self.quorum_set_hash.into_owned(),
-            ballot: self.ballot.into_owned(),
-            prepared: self.prepared.into_owned(),
-            prepared_prime: self.prepared_prime.into_owned(),
-            n_c: self.n_c.into_owned(),
-            n_h: self.n_h.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
-    #[must_use]
-    fn from(v: &ScpStatementPrepareRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpStatementPrepareRef<'_>> for ScpStatementPrepare {
-    #[must_use]
-    fn from(v: ScpStatementPrepareRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpStatementPrepareRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.quorum_set_hash.write_xdr(w)?;
-            self.ballot.write_xdr(w)?;
-            self.prepared.write_xdr(w)?;
-            self.prepared_prime.write_xdr(w)?;
-            self.n_c.write_xdr(w)?;
-            self.n_h.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScpStatementPrepareRef<'_> {
+impl ScpStatementPrepareConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -164,7 +118,7 @@ impl ScpStatementPrepareRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementPrepare`], mirroring `<ScpStatementPrepare as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement_prepare(&mut self, v: &ScpStatementPrepareRef<'_>) {
+    pub const fn write_type_scp_statement_prepare(&mut self, v: &ScpStatementPrepareConst) {
         self.write_type_hash(&v.quorum_set_hash);
         self.write_type_scp_ballot(&v.ballot);
         self.write_type_option_scp_ballot(&v.prepared);

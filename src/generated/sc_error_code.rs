@@ -181,14 +181,6 @@ impl WriteXdr for ScErrorCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScErrorCode {
-    type Owned = ScErrorCode;
-    fn into_owned(self) -> ScErrorCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScErrorCode {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -157,14 +157,6 @@ impl WriteXdr for ClaimPredicateType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimPredicateType {
-    type Owned = ClaimPredicateType;
-    fn into_owned(self) -> ClaimPredicateType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimPredicateType {
     /// The exact XDR-encoded length of this value, in bytes.

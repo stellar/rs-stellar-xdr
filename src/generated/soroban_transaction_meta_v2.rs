@@ -51,54 +51,16 @@ impl WriteXdr for SorobanTransactionMetaV2 {
     }
 }
 
-/// SorobanTransactionMetaV2Ref is a borrowing equivalent of [`SorobanTransactionMetaV2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanTransactionMetaV2Const is a borrowing equivalent of [`SorobanTransactionMetaV2`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionMetaV2Ref<'a> {
+pub struct SorobanTransactionMetaV2Const {
     pub ext: SorobanTransactionMetaExt,
-    pub return_value: Option<ScValRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionMetaV2Ref<'_> {
-    type Owned = SorobanTransactionMetaV2;
-    fn into_owned(self) -> SorobanTransactionMetaV2 {
-        SorobanTransactionMetaV2 {
-            ext: self.ext.into_owned(),
-            return_value: self.return_value.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanTransactionMetaV2Ref<'_>> for SorobanTransactionMetaV2 {
-    #[must_use]
-    fn from(v: &SorobanTransactionMetaV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanTransactionMetaV2Ref<'_>> for SorobanTransactionMetaV2 {
-    #[must_use]
-    fn from(v: SorobanTransactionMetaV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanTransactionMetaV2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.return_value.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub return_value: Option<ScValConst>,
 }
 
 #[cfg(feature = "const")]
-impl SorobanTransactionMetaV2Ref<'_> {
+impl SorobanTransactionMetaV2Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -139,7 +101,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionMetaV2`], mirroring `<SorobanTransactionMetaV2 as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_transaction_meta_v2(
         &mut self,
-        v: &SorobanTransactionMetaV2Ref<'_>,
+        v: &SorobanTransactionMetaV2Const,
     ) {
         self.write_type_soroban_transaction_meta_ext(&v.ext);
         self.write_type_option_sc_val(&v.return_value);
@@ -148,7 +110,7 @@ impl ConstWriter<'_> {
     /// Serializes an optional [`SorobanTransactionMetaV2`], mirroring `<Option<SorobanTransactionMetaV2> as WriteXdr>::write_xdr`.
     pub const fn write_type_option_soroban_transaction_meta_v2(
         &mut self,
-        v: &Option<SorobanTransactionMetaV2Ref<'_>>,
+        v: &Option<SorobanTransactionMetaV2Const>,
     ) {
         match v {
             Some(v) => {

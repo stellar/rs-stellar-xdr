@@ -14,12 +14,10 @@ use crate::naming::{
 };
 use crate::options::RustOptions;
 use crate::output::{
-    ConstOutput, ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput,
-    CyclicBorrow, DefinitionOutput, DefinitionTemplate, EnumOutput,
-    EnumStructMemberOutput,
-    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
-    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
-    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
+    ConstOutput, ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput, DefinitionOutput,
+    DefinitionTemplate, EnumOutput, EnumStructMemberOutput, GeneratedTemplate, ModTemplate,
+    ModuleEntry, StructMemberOutput, StructOutput, TypeEnumDefinitionTemplate, TypeEnumEntry,
+    TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
 
@@ -28,9 +26,9 @@ pub struct RustGenerator {
     type_info: TypeInfo,
     /// Rust type names of generated types that directly or transitively
     /// contain heap-allocated data (`VecM`, `BytesM`, `StringM`, or `Box` for
-    /// cyclic references) under some cfg, and therefore have a borrowing `Ref`
-    /// form generated for them.
-    ref_required: HashSet<String>,
+    /// cyclic references) under some cfg, and therefore have a borrowing
+    /// `Const` form generated for them.
+    const_required: HashSet<String>,
     /// Per-definition borrow conditions, keyed by Rust type name and the
     /// definition's cfg, which distinguishes same-named `#ifdef`/`#else`
     /// branches from one another.
@@ -41,7 +39,7 @@ impl RustGenerator {
     pub fn new(spec: &XdrSpec, options: RustOptions) -> Self {
         let type_info = TypeInfo::build(spec, &type_name);
         let mut analysis = BorrowAnalysis::build(spec);
-        let ref_required = analysis.ref_required();
+        let const_required = analysis.const_required();
         let def_borrow = spec
             .all_definitions()
             .map(|def| {
@@ -52,19 +50,19 @@ impl RustGenerator {
         Self {
             options,
             type_info,
-            ref_required,
+            const_required,
             def_borrow,
         }
     }
 
-    /// How to emit the borrowing `Ref` form of a definition.
-    fn ref_emit_for(&self, name: &str, cfg: Option<&str>) -> RefEmit {
+    /// How to emit the borrowing `Const` form of a definition.
+    fn const_emit_for(&self, name: &str, cfg: Option<&str>) -> ConstEmit {
         let borrow = self
             .def_borrow
             .get(&(name.to_string(), cfg.map(ToString::to_string)))
             .copied()
             .unwrap_or(BorrowCfg::Never);
-        ref_emit(self.ref_required.contains(name), &borrow, cfg)
+        const_emit(self.const_required.contains(name), &borrow, cfg)
     }
 
     /// Generate Rust code from the spec and write it to the output file.
@@ -106,7 +104,7 @@ impl RustGenerator {
         for m in crate::const_writer::build(
             spec,
             &self.type_info,
-            &self.ref_required,
+            &self.const_required,
             &self.cfg_by_name(spec),
         )
         .methods
@@ -318,13 +316,13 @@ impl RustGenerator {
 
     /// Render the `const_xdr_len`/`const_to_xdr` wrapper for a definition.
     ///
-    /// The wrapper is implemented on the borrowing `Ref` form where the type
+    /// The wrapper is implemented on the borrowing `Const` form where the type
     /// owns heap data and on the type itself otherwise, matching the receiver
     /// the type's `ConstWriter::write_type_*` method takes.
-    fn const_to_xdr(&self, name: &str, emit_ref: bool, cfg: Option<&str>) -> String {
+    fn const_to_xdr(&self, name: &str, emit_const: bool, cfg: Option<&str>) -> String {
         let template = ConstToXdrTemplate {
-            recv: if emit_ref {
-                format!("{name}Ref<'_>")
+            recv: if emit_const {
+                format!("{name}Const")
             } else {
                 name.to_string()
             },
@@ -376,13 +374,13 @@ impl RustGenerator {
         } else {
             "Struct"
         };
-        let r = self.ref_emit_for(&name, cfg.as_deref());
+        let r = self.const_emit_for(&name, cfg.as_deref());
         StructOutput {
             const_to_xdr: self.const_to_xdr(
                 &name,
-                r.emit_ref,
-                if r.emit_ref {
-                    r.ref_cfg.as_deref()
+                r.emit_const,
+                if r.emit_const {
+                    r.const_cfg.as_deref()
                 } else {
                     cfg.as_deref()
                 },
@@ -393,8 +391,8 @@ impl RustGenerator {
             is_custom_str: custom_str,
             members,
             member_names,
-            emit_ref: r.emit_ref,
-            ref_cfg: r.ref_cfg,
+            emit_const: r.emit_const,
+            const_cfg: r.const_cfg,
             cfg,
         }
     }
@@ -418,7 +416,7 @@ impl RustGenerator {
             .collect();
 
         EnumOutput {
-            // An enum owns no heap data, so it never has a `Ref` form.
+            // An enum owns no heap data, so it never has a `Const` form.
             const_to_xdr: self.const_to_xdr(&name, false, cfg.as_deref()),
             name,
             source_comment: source_comment(&e.source, "Enum"),
@@ -472,14 +470,14 @@ impl RustGenerator {
             .first()
             .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
-        let r = self.ref_emit_for(&name, cfg.as_deref());
+        let r = self.const_emit_for(&name, cfg.as_deref());
 
         UnionOutput {
             const_to_xdr: self.const_to_xdr(
                 &name,
-                r.emit_ref,
-                if r.emit_ref {
-                    r.ref_cfg.as_deref()
+                r.emit_const,
+                if r.emit_const {
+                    r.const_cfg.as_deref()
                 } else {
                     cfg.as_deref()
                 },
@@ -490,8 +488,8 @@ impl RustGenerator {
             is_custom_str: custom_str,
             discriminant_type,
             arms,
-            emit_ref: r.emit_ref,
-            ref_cfg: r.ref_cfg,
+            emit_const: r.emit_const,
+            const_cfg: r.const_cfg,
             cfg,
             default_arm_cfg,
         }
@@ -521,7 +519,7 @@ impl RustGenerator {
             None,
             &self.type_info,
             custom_str,
-            &self.ref_required,
+            &self.const_required,
         );
 
         let size = match &t.type_ {
@@ -530,14 +528,14 @@ impl RustGenerator {
             _ => None,
         };
 
-        let r = self.ref_emit_for(&name, cfg.as_deref());
+        let r = self.const_emit_for(&name, cfg.as_deref());
 
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
             const_to_xdr: self.const_to_xdr(
                 &name,
-                r.emit_ref,
-                if r.emit_ref {
-                    r.ref_cfg.as_deref()
+                r.emit_const,
+                if r.emit_const {
+                    r.const_cfg.as_deref()
                 } else {
                     cfg.as_deref()
                 },
@@ -557,10 +555,9 @@ impl RustGenerator {
             custom_debug: is_fixed_opaque_type,
             custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
             custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-            emit_ref: r.emit_ref,
-            ref_cfg: r.ref_cfg,
-            ref_type: resolved.ref_type,
-            cyclic: resolved.cyclic,
+            emit_const: r.emit_const,
+            const_cfg: r.const_cfg,
+            const_type: resolved.const_type,
             cfg,
         })
     }
@@ -592,7 +589,7 @@ impl RustGenerator {
             Some(parent),
             &self.type_info,
             custom_str,
-            &self.ref_required,
+            &self.const_required,
         );
 
         StructMemberOutput {
@@ -601,8 +598,7 @@ impl RustGenerator {
             turbofish_type: resolved.turbofish_type,
             serde_as_type: resolved.serde_as_type,
             serde_rename,
-            ref_type: resolved.ref_type,
-            cyclic: resolved.cyclic,
+            const_type: resolved.const_type,
         }
     }
 
@@ -631,7 +627,7 @@ impl RustGenerator {
                         Some(parent),
                         &self.type_info,
                         custom_str,
-                        &self.ref_required,
+                        &self.const_required,
                     )
                 });
 
@@ -641,11 +637,7 @@ impl RustGenerator {
                     is_void: arm.type_.is_none(),
                     type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
                     turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
-                    ref_type: resolved.as_ref().map(|r| r.ref_type.clone()),
-                    // A void arm has no payload, so nothing to box.
-                    cyclic: resolved
-                        .as_ref()
-                        .map_or(CyclicBorrow::NotCyclic, |r| r.cyclic),
+                    const_type: resolved.as_ref().map(|r| r.const_type.clone()),
                     serde_as_type: resolved.and_then(|r| r.serde_as_type),
                     cfg: arm.cfg.as_ref().map(|c| c.render()),
                 }
@@ -658,13 +650,13 @@ impl RustGenerator {
 // Borrow analysis
 // =============================================================================
 
-/// Whether a type holds heap-allocated data, and so whether its `Ref` form
-/// would use its `'a` lifetime.
+/// Whether a type holds heap-allocated data, and so whether it gets a borrowing
+/// `Const` form.
 ///
 /// The distinction that matters is unconditional: only a type that borrows
-/// under every cfg gets a `Ref` form. One that borrows under some cfgs would
-/// need a cfg-gated `Ref`, which any unconditional container of it would name
-/// unconditionally and so reference where it does not exist.
+/// under every cfg gets a `Const` form. One that borrows under some cfgs would
+/// need a cfg-gated `Const`, which any unconditional container of it would
+/// name unconditionally and so reference where it does not exist.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum BorrowCfg {
     /// Holds no heap-allocated data under any cfg.
@@ -727,14 +719,14 @@ impl<'a> BorrowAnalysis<'a> {
         analysis
     }
 
-    /// The names that get a `Ref` form, i.e. that borrow under every cfg.
+    /// The names that get a `Const` form, i.e. that borrow under every cfg.
     ///
-    /// A name that only borrows under some cfgs is excluded. Its `Ref` form
+    /// A name that only borrows under some cfgs is excluded. Its `Const` form
     /// would have to be cfg-gated, and an always-borrowing type containing it
     /// names that form unconditionally, so the reference would dangle wherever
     /// the cfg is off. Excluding it leaves containers holding the owned type in
     /// that position, which is correct under every cfg.
-    fn ref_required(&self) -> HashSet<String> {
+    fn const_required(&self) -> HashSet<String> {
         self.by_name
             .iter()
             .filter(|(_, b)| **b == BorrowCfg::Always)
@@ -814,35 +806,35 @@ impl<'a> BorrowAnalysis<'a> {
     }
 }
 
-/// How a definition's borrowing `Ref` form is emitted.
+/// How a definition's borrowing `Const` form is emitted.
 ///
-/// A `{name}Ref<'a>` is emitted only where the definition borrows, so its `'a`
-/// is always used. Where it does not borrow, nothing is emitted: the owned type
-/// is already the whole value, and a heap-free type has nothing to borrow.
-struct RefEmit {
-    emit_ref: bool,
-    ref_cfg: Option<String>,
+/// A `{name}Const` is emitted only where the definition borrows. Where it does
+/// not borrow, nothing is emitted: the owned type is already the whole value,
+/// and a heap-free type has nothing to borrow.
+struct ConstEmit {
+    emit_const: bool,
+    const_cfg: Option<String>,
 }
 
-/// Decide how to emit the `Ref` form of one definition.
+/// Decide how to emit the `Const` form of one definition.
 ///
-/// `has_ref` is whether the type's name has a `Ref` form at all, and `borrow`
-/// is this definition's borrow condition excluding its own `def_cfg`.
-fn ref_emit(has_ref: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> RefEmit {
-    let mut emit = RefEmit {
-        emit_ref: false,
-        ref_cfg: None,
+/// `has_const` is whether the type's name has a `Const` form at all, and
+/// `borrow` is this definition's borrow condition excluding its own `def_cfg`.
+fn const_emit(has_const: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> ConstEmit {
+    let mut emit = ConstEmit {
+        emit_const: false,
+        const_cfg: None,
     };
-    if !has_ref {
+    if !has_const {
         return emit;
     }
     match borrow {
         // Nothing to borrow in this branch, or nothing to borrow under some
-        // cfg. Either way this definition emits no Ref form.
+        // cfg. Either way this definition emits no Const form.
         BorrowCfg::Never | BorrowCfg::Sometimes => {}
         BorrowCfg::Always => {
-            emit.emit_ref = true;
-            emit.ref_cfg = def_cfg.map(ToString::to_string);
+            emit.emit_const = true;
+            emit.const_cfg = def_cfg.map(ToString::to_string);
         }
     }
     emit

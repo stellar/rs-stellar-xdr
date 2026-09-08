@@ -66,63 +66,19 @@ impl WriteXdr for TransactionMetaV3 {
     }
 }
 
-/// TransactionMetaV3Ref is a borrowing equivalent of [`TransactionMetaV3`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionMetaV3Const is a borrowing equivalent of [`TransactionMetaV3`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionMetaV3Ref<'a> {
+pub struct TransactionMetaV3Const {
     pub ext: ExtensionPoint,
-    pub tx_changes_before: LedgerEntryChangesRef<'a>,
-    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
-    pub tx_changes_after: LedgerEntryChangesRef<'a>,
-    pub soroban_meta: Option<SorobanTransactionMetaRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionMetaV3Ref<'_> {
-    type Owned = TransactionMetaV3;
-    fn into_owned(self) -> TransactionMetaV3 {
-        TransactionMetaV3 {
-            ext: self.ext.into_owned(),
-            tx_changes_before: self.tx_changes_before.into_owned(),
-            operations: self.operations.into_owned(),
-            tx_changes_after: self.tx_changes_after.into_owned(),
-            soroban_meta: self.soroban_meta.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
-    #[must_use]
-    fn from(v: &TransactionMetaV3Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionMetaV3Ref<'_>> for TransactionMetaV3 {
-    #[must_use]
-    fn from(v: TransactionMetaV3Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionMetaV3Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.tx_changes_before.write_xdr(w)?;
-            self.operations.write_xdr(w)?;
-            self.tx_changes_after.write_xdr(w)?;
-            self.soroban_meta.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub tx_changes_before: LedgerEntryChangesConst,
+    pub operations: VecMConst<OperationMetaConst>,
+    pub tx_changes_after: LedgerEntryChangesConst,
+    pub soroban_meta: Option<SorobanTransactionMetaConst>,
 }
 
 #[cfg(feature = "const")]
-impl TransactionMetaV3Ref<'_> {
+impl TransactionMetaV3Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -161,7 +117,7 @@ impl TransactionMetaV3Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionMetaV3`], mirroring `<TransactionMetaV3 as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_meta_v3(&mut self, v: &TransactionMetaV3Ref<'_>) {
+    pub const fn write_type_transaction_meta_v3(&mut self, v: &TransactionMetaV3Const) {
         self.write_type_extension_point(&v.ext);
         self.write_type_ledger_entry_changes(&v.tx_changes_before);
         self.write_type_vec_operation_meta(&v.operations);

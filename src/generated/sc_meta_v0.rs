@@ -50,54 +50,16 @@ impl WriteXdr for ScMetaV0 {
     }
 }
 
-/// ScMetaV0Ref is a borrowing equivalent of [`ScMetaV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScMetaV0Const is a borrowing equivalent of [`ScMetaV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMetaV0Ref<'a> {
-    pub key: StringMRef<'a>,
-    pub val: StringMRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScMetaV0Ref<'_> {
-    type Owned = ScMetaV0;
-    fn into_owned(self) -> ScMetaV0 {
-        ScMetaV0 {
-            key: self.key.into_owned(),
-            val: self.val.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScMetaV0Ref<'_>> for ScMetaV0 {
-    #[must_use]
-    fn from(v: &ScMetaV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScMetaV0Ref<'_>> for ScMetaV0 {
-    #[must_use]
-    fn from(v: ScMetaV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScMetaV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.key.write_xdr(w)?;
-            self.val.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScMetaV0Const {
+    pub key: StringMConst,
+    pub val: StringMConst,
 }
 
 #[cfg(feature = "const")]
-impl ScMetaV0Ref<'_> {
+impl ScMetaV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ScMetaV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMetaV0`], mirroring `<ScMetaV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_meta_v0(&mut self, v: &ScMetaV0Ref<'_>) {
+    pub const fn write_type_sc_meta_v0(&mut self, v: &ScMetaV0Const) {
         self.write_var_opaque(v.key.as_slice());
         self.write_var_opaque(v.val.as_slice());
     }

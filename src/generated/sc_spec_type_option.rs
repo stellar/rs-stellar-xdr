@@ -46,51 +46,15 @@ impl WriteXdr for ScSpecTypeOption {
     }
 }
 
-/// ScSpecTypeOptionRef is a borrowing equivalent of [`ScSpecTypeOption`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeOptionConst is a borrowing equivalent of [`ScSpecTypeOption`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeOptionRef<'a> {
-    pub value_type: &'a ScSpecTypeDefRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeOptionRef<'_> {
-    type Owned = ScSpecTypeOption;
-    fn into_owned(self) -> ScSpecTypeOption {
-        ScSpecTypeOption {
-            value_type: Box::new(self.value_type.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
-    #[must_use]
-    fn from(v: &ScSpecTypeOptionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeOptionRef<'_>> for ScSpecTypeOption {
-    #[must_use]
-    fn from(v: ScSpecTypeOptionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecTypeOptionRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.value_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecTypeOptionConst {
+    pub value_type: &'static ScSpecTypeDefConst,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeOptionRef<'_> {
+impl ScSpecTypeOptionConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +93,7 @@ impl ScSpecTypeOptionRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeOption`], mirroring `<ScSpecTypeOption as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_option(&mut self, v: &ScSpecTypeOptionRef<'_>) {
+    pub const fn write_type_sc_spec_type_option(&mut self, v: &ScSpecTypeOptionConst) {
         self.write_type_sc_spec_type_def(v.value_type);
     }
 }

@@ -50,14 +50,6 @@ impl WriteXdr for ContractCodeEntryV1 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractCodeEntryV1 {
-    type Owned = ContractCodeEntryV1;
-    fn into_owned(self) -> ContractCodeEntryV1 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ContractCodeEntryV1 {
     /// The exact XDR-encoded length of this value, in bytes.

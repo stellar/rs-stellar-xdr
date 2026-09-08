@@ -50,54 +50,16 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
-/// DiagnosticEventRef is a borrowing equivalent of [`DiagnosticEvent`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// DiagnosticEventConst is a borrowing equivalent of [`DiagnosticEvent`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DiagnosticEventRef<'a> {
+pub struct DiagnosticEventConst {
     pub in_successful_contract_call: bool,
-    pub event: ContractEventRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for DiagnosticEventRef<'_> {
-    type Owned = DiagnosticEvent;
-    fn into_owned(self) -> DiagnosticEvent {
-        DiagnosticEvent {
-            in_successful_contract_call: self.in_successful_contract_call.into_owned(),
-            event: self.event.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&DiagnosticEventRef<'_>> for DiagnosticEvent {
-    #[must_use]
-    fn from(v: &DiagnosticEventRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<DiagnosticEventRef<'_>> for DiagnosticEvent {
-    #[must_use]
-    fn from(v: DiagnosticEventRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for DiagnosticEventRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.in_successful_contract_call.write_xdr(w)?;
-            self.event.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub event: ContractEventConst,
 }
 
 #[cfg(feature = "const")]
-impl DiagnosticEventRef<'_> {
+impl DiagnosticEventConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl DiagnosticEventRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DiagnosticEvent`], mirroring `<DiagnosticEvent as WriteXdr>::write_xdr`.
-    pub const fn write_type_diagnostic_event(&mut self, v: &DiagnosticEventRef<'_>) {
+    pub const fn write_type_diagnostic_event(&mut self, v: &DiagnosticEventConst) {
         self.write_bool(v.in_successful_contract_call);
         self.write_type_contract_event(&v.event);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`DiagnosticEvent`], mirroring `<VecM<DiagnosticEvent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_diagnostic_event<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, DiagnosticEventRef<'_>, MAX>,
+        v: &VecMConst<DiagnosticEventConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

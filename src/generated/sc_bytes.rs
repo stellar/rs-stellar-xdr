@@ -108,44 +108,13 @@ impl AsRef<[u8]> for ScBytes {
     }
 }
 
-/// ScBytesRef is a borrowing equivalent of [`ScBytes`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScBytesConst is a borrowing equivalent of [`ScBytes`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScBytesRef<'a>(pub BytesMRef<'a>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScBytesRef<'_> {
-    type Owned = ScBytes;
-    fn into_owned(self) -> ScBytes {
-        ScBytes(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScBytesRef<'_>> for ScBytes {
-    #[must_use]
-    fn from(v: &ScBytesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScBytesRef<'_>> for ScBytes {
-    #[must_use]
-    fn from(v: ScBytesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScBytesRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct ScBytesConst(pub BytesMConst);
 
 #[cfg(feature = "const")]
-impl ScBytesRef<'_> {
+impl ScBytesConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl ScBytesRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScBytes`], mirroring `<ScBytes as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_bytes(&mut self, v: &ScBytesRef<'_>) {
+    pub const fn write_type_sc_bytes(&mut self, v: &ScBytesConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

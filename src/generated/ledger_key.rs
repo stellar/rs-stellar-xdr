@@ -265,62 +265,24 @@ impl WriteXdr for LedgerKey {
     }
 }
 
-/// LedgerKeyRef is a borrowing equivalent of [`LedgerKey`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerKeyConst is a borrowing equivalent of [`LedgerKey`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerKeyRef<'a> {
+pub enum LedgerKeyConst {
     Account(LedgerKeyAccount),
     Trustline(LedgerKeyTrustLine),
     Offer(LedgerKeyOffer),
-    Data(LedgerKeyDataRef<'a>),
+    Data(LedgerKeyDataConst),
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
-    ContractData(LedgerKeyContractDataRef<'a>),
+    ContractData(LedgerKeyContractDataConst),
     ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
     Ttl(LedgerKeyTtl),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyRef<'_> {
-    type Owned = LedgerKey;
-    fn into_owned(self) -> LedgerKey {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            LedgerKeyRef::Account(value) => LedgerKey::Account(value.into_owned()),
-            LedgerKeyRef::Trustline(value) => LedgerKey::Trustline(value.into_owned()),
-            LedgerKeyRef::Offer(value) => LedgerKey::Offer(value.into_owned()),
-            LedgerKeyRef::Data(value) => LedgerKey::Data(value.into_owned()),
-            LedgerKeyRef::ClaimableBalance(value) => {
-                LedgerKey::ClaimableBalance(value.into_owned())
-            }
-            LedgerKeyRef::LiquidityPool(value) => LedgerKey::LiquidityPool(value.into_owned()),
-            LedgerKeyRef::ContractData(value) => LedgerKey::ContractData(value.into_owned()),
-            LedgerKeyRef::ContractCode(value) => LedgerKey::ContractCode(value.into_owned()),
-            LedgerKeyRef::ConfigSetting(value) => LedgerKey::ConfigSetting(value.into_owned()),
-            LedgerKeyRef::Ttl(value) => LedgerKey::Ttl(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerKeyRef<'_>> for LedgerKey {
-    #[must_use]
-    fn from(v: &LedgerKeyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerKeyRef<'_>> for LedgerKey {
-    #[must_use]
-    fn from(v: LedgerKeyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl LedgerKeyRef<'_> {
+impl LedgerKeyConst {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
@@ -339,31 +301,8 @@ impl LedgerKeyRef<'_> {
     }
 }
 
-impl WriteXdr for LedgerKeyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Account(v) => v.write_xdr(w)?,
-                Self::Trustline(v) => v.write_xdr(w)?,
-                Self::Offer(v) => v.write_xdr(w)?,
-                Self::Data(v) => v.write_xdr(w)?,
-                Self::ClaimableBalance(v) => v.write_xdr(w)?,
-                Self::LiquidityPool(v) => v.write_xdr(w)?,
-                Self::ContractData(v) => v.write_xdr(w)?,
-                Self::ContractCode(v) => v.write_xdr(w)?,
-                Self::ConfigSetting(v) => v.write_xdr(w)?,
-                Self::Ttl(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerKeyRef<'_> {
+impl LedgerKeyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -402,39 +341,39 @@ impl LedgerKeyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerKey`], mirroring `<LedgerKey as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_key(&mut self, v: &LedgerKeyRef<'_>) {
+    pub const fn write_type_ledger_key(&mut self, v: &LedgerKeyConst) {
         let d = v.discriminant();
         self.write_type_ledger_entry_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerKeyRef::Account(value) => {
+            LedgerKeyConst::Account(value) => {
                 self.write_type_ledger_key_account(value);
             }
-            LedgerKeyRef::Trustline(value) => {
+            LedgerKeyConst::Trustline(value) => {
                 self.write_type_ledger_key_trust_line(value);
             }
-            LedgerKeyRef::Offer(value) => {
+            LedgerKeyConst::Offer(value) => {
                 self.write_type_ledger_key_offer(value);
             }
-            LedgerKeyRef::Data(value) => {
+            LedgerKeyConst::Data(value) => {
                 self.write_type_ledger_key_data(value);
             }
-            LedgerKeyRef::ClaimableBalance(value) => {
+            LedgerKeyConst::ClaimableBalance(value) => {
                 self.write_type_ledger_key_claimable_balance(value);
             }
-            LedgerKeyRef::LiquidityPool(value) => {
+            LedgerKeyConst::LiquidityPool(value) => {
                 self.write_type_ledger_key_liquidity_pool(value);
             }
-            LedgerKeyRef::ContractData(value) => {
+            LedgerKeyConst::ContractData(value) => {
                 self.write_type_ledger_key_contract_data(value);
             }
-            LedgerKeyRef::ContractCode(value) => {
+            LedgerKeyConst::ContractCode(value) => {
                 self.write_type_ledger_key_contract_code(value);
             }
-            LedgerKeyRef::ConfigSetting(value) => {
+            LedgerKeyConst::ConfigSetting(value) => {
                 self.write_type_ledger_key_config_setting(value);
             }
-            LedgerKeyRef::Ttl(value) => {
+            LedgerKeyConst::Ttl(value) => {
                 self.write_type_ledger_key_ttl(value);
             }
         }
@@ -443,7 +382,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerKey`], mirroring `<VecM<LedgerKey, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_key<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, LedgerKeyRef<'_>, MAX>,
+        v: &VecMConst<LedgerKeyConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -83,14 +83,6 @@ impl WriteXdr for ClaimOfferAtomV0 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimOfferAtomV0 {
-    type Owned = ClaimOfferAtomV0;
-    fn into_owned(self) -> ClaimOfferAtomV0 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimOfferAtomV0 {
     /// The exact XDR-encoded length of this value, in bytes.

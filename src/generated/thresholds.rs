@@ -154,14 +154,6 @@ impl AsRef<[u8]> for Thresholds {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Thresholds {
-    type Owned = Thresholds;
-    fn into_owned(self) -> Thresholds {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Thresholds {
     /// The exact XDR-encoded length of this value, in bytes.

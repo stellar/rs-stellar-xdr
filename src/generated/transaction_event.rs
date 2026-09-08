@@ -49,54 +49,16 @@ impl WriteXdr for TransactionEvent {
     }
 }
 
-/// TransactionEventRef is a borrowing equivalent of [`TransactionEvent`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionEventConst is a borrowing equivalent of [`TransactionEvent`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionEventRef<'a> {
+pub struct TransactionEventConst {
     pub stage: TransactionEventStage,
-    pub event: ContractEventRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionEventRef<'_> {
-    type Owned = TransactionEvent;
-    fn into_owned(self) -> TransactionEvent {
-        TransactionEvent {
-            stage: self.stage.into_owned(),
-            event: self.event.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionEventRef<'_>> for TransactionEvent {
-    #[must_use]
-    fn from(v: &TransactionEventRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionEventRef<'_>> for TransactionEvent {
-    #[must_use]
-    fn from(v: TransactionEventRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionEventRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.stage.write_xdr(w)?;
-            self.event.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub event: ContractEventConst,
 }
 
 #[cfg(feature = "const")]
-impl TransactionEventRef<'_> {
+impl TransactionEventConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +97,7 @@ impl TransactionEventRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionEvent`], mirroring `<TransactionEvent as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_event(&mut self, v: &TransactionEventRef<'_>) {
+    pub const fn write_type_transaction_event(&mut self, v: &TransactionEventConst) {
         self.write_type_transaction_event_stage(&v.stage);
         self.write_type_contract_event(&v.event);
     }
@@ -143,7 +105,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionEvent`], mirroring `<VecM<TransactionEvent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_event<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TransactionEventRef<'_>, MAX>,
+        v: &VecMConst<TransactionEventConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

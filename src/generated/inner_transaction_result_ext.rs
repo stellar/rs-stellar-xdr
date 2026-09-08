@@ -129,14 +129,6 @@ impl WriteXdr for InnerTransactionResultExt {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for InnerTransactionResultExt {
-    type Owned = InnerTransactionResultExt;
-    fn into_owned(self) -> InnerTransactionResultExt {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl InnerTransactionResultExt {
     /// The exact XDR-encoded length of this value, in bytes.

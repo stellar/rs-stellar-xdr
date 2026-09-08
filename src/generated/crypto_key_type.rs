@@ -153,14 +153,6 @@ impl WriteXdr for CryptoKeyType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for CryptoKeyType {
-    type Owned = CryptoKeyType;
-    fn into_owned(self) -> CryptoKeyType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl CryptoKeyType {
     /// The exact XDR-encoded length of this value, in bytes.

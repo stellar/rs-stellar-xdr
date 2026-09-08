@@ -136,46 +136,16 @@ impl WriteXdr for SorobanTransactionDataExt {
     }
 }
 
-/// SorobanTransactionDataExtRef is a borrowing equivalent of [`SorobanTransactionDataExt`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanTransactionDataExtConst is a borrowing equivalent of [`SorobanTransactionDataExt`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanTransactionDataExtRef<'a> {
+pub enum SorobanTransactionDataExtConst {
     V0,
-    V1(SorobanResourcesExtV0Ref<'a>),
+    V1(SorobanResourcesExtV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionDataExtRef<'_> {
-    type Owned = SorobanTransactionDataExt;
-    fn into_owned(self) -> SorobanTransactionDataExt {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            SorobanTransactionDataExtRef::V0 => SorobanTransactionDataExt::V0,
-            SorobanTransactionDataExtRef::V1(value) => {
-                SorobanTransactionDataExt::V1(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
-    #[must_use]
-    fn from(v: &SorobanTransactionDataExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanTransactionDataExtRef<'_>> for SorobanTransactionDataExt {
-    #[must_use]
-    fn from(v: SorobanTransactionDataExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl SorobanTransactionDataExtRef<'_> {
+impl SorobanTransactionDataExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -186,23 +156,8 @@ impl SorobanTransactionDataExtRef<'_> {
     }
 }
 
-impl WriteXdr for SorobanTransactionDataExtRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0 => ().write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SorobanTransactionDataExtRef<'_> {
+impl SorobanTransactionDataExtConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -243,14 +198,14 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionDataExt`], mirroring `<SorobanTransactionDataExt as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_transaction_data_ext(
         &mut self,
-        v: &SorobanTransactionDataExtRef<'_>,
+        v: &SorobanTransactionDataExtConst,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanTransactionDataExtRef::V0 => {}
-            SorobanTransactionDataExtRef::V1(value) => {
+            SorobanTransactionDataExtConst::V0 => {}
+            SorobanTransactionDataExtConst::V1(value) => {
                 self.write_type_soroban_resources_ext_v0(value);
             }
         }

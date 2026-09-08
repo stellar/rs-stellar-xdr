@@ -59,14 +59,6 @@ impl WriteXdr for SetTrustLineFlagsOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SetTrustLineFlagsOp {
-    type Owned = SetTrustLineFlagsOp;
-    fn into_owned(self) -> SetTrustLineFlagsOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SetTrustLineFlagsOp {
     /// The exact XDR-encoded length of this value, in bytes.

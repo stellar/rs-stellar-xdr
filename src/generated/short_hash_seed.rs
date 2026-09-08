@@ -46,14 +46,6 @@ impl WriteXdr for ShortHashSeed {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ShortHashSeed {
-    type Owned = ShortHashSeed;
-    fn into_owned(self) -> ShortHashSeed {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ShortHashSeed {
     /// The exact XDR-encoded length of this value, in bytes.

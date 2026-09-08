@@ -50,54 +50,16 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     }
 }
 
-/// PathPaymentStrictReceiveResultSuccessRef is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PathPaymentStrictReceiveResultSuccessConst is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictReceiveResultSuccessRef<'a> {
-    pub offers: VecMRef<'a, ClaimAtom>,
+pub struct PathPaymentStrictReceiveResultSuccessConst {
+    pub offers: VecMConst<ClaimAtom>,
     pub last: SimplePaymentResult,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictReceiveResultSuccessRef<'_> {
-    type Owned = PathPaymentStrictReceiveResultSuccess;
-    fn into_owned(self) -> PathPaymentStrictReceiveResultSuccess {
-        PathPaymentStrictReceiveResultSuccess {
-            offers: self.offers.into_owned(),
-            last: self.last.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictReceiveResultSuccess {
-    #[must_use]
-    fn from(v: &PathPaymentStrictReceiveResultSuccessRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PathPaymentStrictReceiveResultSuccessRef<'_>> for PathPaymentStrictReceiveResultSuccess {
-    #[must_use]
-    fn from(v: PathPaymentStrictReceiveResultSuccessRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for PathPaymentStrictReceiveResultSuccessRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.offers.write_xdr(w)?;
-            self.last.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl PathPaymentStrictReceiveResultSuccessRef<'_> {
+impl PathPaymentStrictReceiveResultSuccessConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictReceiveResultSuccess`], mirroring `<PathPaymentStrictReceiveResultSuccess as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_receive_result_success(
         &mut self,
-        v: &PathPaymentStrictReceiveResultSuccessRef<'_>,
+        v: &PathPaymentStrictReceiveResultSuccessConst,
     ) {
         self.write_type_vec_claim_atom(&v.offers);
         self.write_type_simple_payment_result(&v.last);

@@ -130,14 +130,6 @@ impl WriteXdr for InflationResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for InflationResultCode {
-    type Owned = InflationResultCode;
-    fn into_owned(self) -> InflationResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl InflationResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

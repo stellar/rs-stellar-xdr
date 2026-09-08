@@ -92,57 +92,17 @@ impl WriteXdr for InnerTransactionResult {
     }
 }
 
-/// InnerTransactionResultRef is a borrowing equivalent of [`InnerTransactionResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// InnerTransactionResultConst is a borrowing equivalent of [`InnerTransactionResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InnerTransactionResultRef<'a> {
+pub struct InnerTransactionResultConst {
     pub fee_charged: i64,
-    pub result: InnerTransactionResultResultRef<'a>,
+    pub result: InnerTransactionResultResultConst,
     pub ext: InnerTransactionResultExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for InnerTransactionResultRef<'_> {
-    type Owned = InnerTransactionResult;
-    fn into_owned(self) -> InnerTransactionResult {
-        InnerTransactionResult {
-            fee_charged: self.fee_charged.into_owned(),
-            result: self.result.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&InnerTransactionResultRef<'_>> for InnerTransactionResult {
-    #[must_use]
-    fn from(v: &InnerTransactionResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<InnerTransactionResultRef<'_>> for InnerTransactionResult {
-    #[must_use]
-    fn from(v: InnerTransactionResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for InnerTransactionResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.fee_charged.write_xdr(w)?;
-            self.result.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl InnerTransactionResultRef<'_> {
+impl InnerTransactionResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -181,7 +141,7 @@ impl InnerTransactionResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`InnerTransactionResult`], mirroring `<InnerTransactionResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_inner_transaction_result(&mut self, v: &InnerTransactionResultRef<'_>) {
+    pub const fn write_type_inner_transaction_result(&mut self, v: &InnerTransactionResultConst) {
         self.write_i64(v.fee_charged);
         self.write_type_inner_transaction_result_result(&v.result);
         self.write_type_inner_transaction_result_ext(&v.ext);

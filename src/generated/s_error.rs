@@ -50,54 +50,16 @@ impl WriteXdr for SError {
     }
 }
 
-/// SErrorRef is a borrowing equivalent of [`SError`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SErrorConst is a borrowing equivalent of [`SError`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SErrorRef<'a> {
+pub struct SErrorConst {
     pub code: ErrorCode,
-    pub msg: StringMRef<'a, 100>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SErrorRef<'_> {
-    type Owned = SError;
-    fn into_owned(self) -> SError {
-        SError {
-            code: self.code.into_owned(),
-            msg: self.msg.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SErrorRef<'_>> for SError {
-    #[must_use]
-    fn from(v: &SErrorRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SErrorRef<'_>> for SError {
-    #[must_use]
-    fn from(v: SErrorRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SErrorRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.code.write_xdr(w)?;
-            self.msg.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub msg: StringMConst<100>,
 }
 
 #[cfg(feature = "const")]
-impl SErrorRef<'_> {
+impl SErrorConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl SErrorRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SError`], mirroring `<SError as WriteXdr>::write_xdr`.
-    pub const fn write_type_s_error(&mut self, v: &SErrorRef<'_>) {
+    pub const fn write_type_s_error(&mut self, v: &SErrorConst) {
         self.write_type_error_code(&v.code);
         self.write_var_opaque(v.msg.as_slice());
     }

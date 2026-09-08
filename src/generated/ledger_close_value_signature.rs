@@ -50,54 +50,16 @@ impl WriteXdr for LedgerCloseValueSignature {
     }
 }
 
-/// LedgerCloseValueSignatureRef is a borrowing equivalent of [`LedgerCloseValueSignature`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerCloseValueSignatureConst is a borrowing equivalent of [`LedgerCloseValueSignature`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerCloseValueSignatureRef<'a> {
+pub struct LedgerCloseValueSignatureConst {
     pub node_id: NodeId,
-    pub signature: SignatureRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseValueSignatureRef<'_> {
-    type Owned = LedgerCloseValueSignature;
-    fn into_owned(self) -> LedgerCloseValueSignature {
-        LedgerCloseValueSignature {
-            node_id: self.node_id.into_owned(),
-            signature: self.signature.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
-    #[must_use]
-    fn from(v: &LedgerCloseValueSignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerCloseValueSignatureRef<'_>> for LedgerCloseValueSignature {
-    #[must_use]
-    fn from(v: LedgerCloseValueSignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerCloseValueSignatureRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.node_id.write_xdr(w)?;
-            self.signature.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub signature: SignatureConst,
 }
 
 #[cfg(feature = "const")]
-impl LedgerCloseValueSignatureRef<'_> {
+impl LedgerCloseValueSignatureConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseValueSignature`], mirroring `<LedgerCloseValueSignature as WriteXdr>::write_xdr`.
     pub const fn write_type_ledger_close_value_signature(
         &mut self,
-        v: &LedgerCloseValueSignatureRef<'_>,
+        v: &LedgerCloseValueSignatureConst,
     ) {
         self.write_type_node_id(&v.node_id);
         self.write_type_signature(&v.signature);

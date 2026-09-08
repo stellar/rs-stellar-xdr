@@ -167,14 +167,6 @@ impl WriteXdr for AllowTrustResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AllowTrustResultCode {
-    type Owned = AllowTrustResultCode;
-    fn into_owned(self) -> AllowTrustResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AllowTrustResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

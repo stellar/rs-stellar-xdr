@@ -283,14 +283,6 @@ impl WriteXdr for OperationType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationType {
-    type Owned = OperationType;
-    fn into_owned(self) -> OperationType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl OperationType {
     /// The exact XDR-encoded length of this value, in bytes.

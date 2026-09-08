@@ -196,14 +196,6 @@ impl WriteXdr for AccountMergeResult {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountMergeResult {
-    type Owned = AccountMergeResult;
-    fn into_owned(self) -> AccountMergeResult {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AccountMergeResult {
     /// The exact XDR-encoded length of this value, in bytes.

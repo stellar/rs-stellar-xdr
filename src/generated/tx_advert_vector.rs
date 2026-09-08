@@ -108,44 +108,13 @@ impl AsRef<[Hash]> for TxAdvertVector {
     }
 }
 
-/// TxAdvertVectorRef is a borrowing equivalent of [`TxAdvertVector`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TxAdvertVectorConst is a borrowing equivalent of [`TxAdvertVector`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxAdvertVectorRef<'a>(pub VecMRef<'a, Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TxAdvertVectorRef<'_> {
-    type Owned = TxAdvertVector;
-    fn into_owned(self) -> TxAdvertVector {
-        TxAdvertVector(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TxAdvertVectorRef<'_>> for TxAdvertVector {
-    #[must_use]
-    fn from(v: &TxAdvertVectorRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TxAdvertVectorRef<'_>> for TxAdvertVector {
-    #[must_use]
-    fn from(v: TxAdvertVectorRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TxAdvertVectorRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct TxAdvertVectorConst(pub VecMConst<Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "const")]
-impl TxAdvertVectorRef<'_> {
+impl TxAdvertVectorConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl TxAdvertVectorRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TxAdvertVector`], mirroring `<TxAdvertVector as WriteXdr>::write_xdr`.
-    pub const fn write_type_tx_advert_vector(&mut self, v: &TxAdvertVectorRef<'_>) {
+    pub const fn write_type_tx_advert_vector(&mut self, v: &TxAdvertVectorConst) {
         self.write_type_vec_hash(&v.0);
     }
 }

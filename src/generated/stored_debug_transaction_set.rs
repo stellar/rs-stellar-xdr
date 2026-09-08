@@ -54,57 +54,17 @@ impl WriteXdr for StoredDebugTransactionSet {
     }
 }
 
-/// StoredDebugTransactionSetRef is a borrowing equivalent of [`StoredDebugTransactionSet`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// StoredDebugTransactionSetConst is a borrowing equivalent of [`StoredDebugTransactionSet`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StoredDebugTransactionSetRef<'a> {
-    pub tx_set: StoredTransactionSetRef<'a>,
+pub struct StoredDebugTransactionSetConst {
+    pub tx_set: StoredTransactionSetConst,
     pub ledger_seq: u32,
-    pub scp_value: StellarValueRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for StoredDebugTransactionSetRef<'_> {
-    type Owned = StoredDebugTransactionSet;
-    fn into_owned(self) -> StoredDebugTransactionSet {
-        StoredDebugTransactionSet {
-            tx_set: self.tx_set.into_owned(),
-            ledger_seq: self.ledger_seq.into_owned(),
-            scp_value: self.scp_value.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
-    #[must_use]
-    fn from(v: &StoredDebugTransactionSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<StoredDebugTransactionSetRef<'_>> for StoredDebugTransactionSet {
-    #[must_use]
-    fn from(v: StoredDebugTransactionSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for StoredDebugTransactionSetRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_set.write_xdr(w)?;
-            self.ledger_seq.write_xdr(w)?;
-            self.scp_value.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub scp_value: StellarValueConst,
 }
 
 #[cfg(feature = "const")]
-impl StoredDebugTransactionSetRef<'_> {
+impl StoredDebugTransactionSetConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +105,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`StoredDebugTransactionSet`], mirroring `<StoredDebugTransactionSet as WriteXdr>::write_xdr`.
     pub const fn write_type_stored_debug_transaction_set(
         &mut self,
-        v: &StoredDebugTransactionSetRef<'_>,
+        v: &StoredDebugTransactionSetConst,
     ) {
         self.write_type_stored_transaction_set(&v.tx_set);
         self.write_u32(v.ledger_seq);

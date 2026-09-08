@@ -66,60 +66,18 @@ impl WriteXdr for AccountEntryExtensionV2 {
     }
 }
 
-/// AccountEntryExtensionV2Ref is a borrowing equivalent of [`AccountEntryExtensionV2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AccountEntryExtensionV2Const is a borrowing equivalent of [`AccountEntryExtensionV2`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryExtensionV2Ref<'a> {
+pub struct AccountEntryExtensionV2Const {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
-    pub signer_sponsoring_i_ds: VecMRef<'a, SponsorshipDescriptor, MAX_SIGNERS>,
+    pub signer_sponsoring_i_ds: VecMConst<SponsorshipDescriptor, MAX_SIGNERS>,
     pub ext: AccountEntryExtensionV2Ext,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV2Ref<'_> {
-    type Owned = AccountEntryExtensionV2;
-    fn into_owned(self) -> AccountEntryExtensionV2 {
-        AccountEntryExtensionV2 {
-            num_sponsored: self.num_sponsored.into_owned(),
-            num_sponsoring: self.num_sponsoring.into_owned(),
-            signer_sponsoring_i_ds: self.signer_sponsoring_i_ds.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
-    #[must_use]
-    fn from(v: &AccountEntryExtensionV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV2Ref<'_>> for AccountEntryExtensionV2 {
-    #[must_use]
-    fn from(v: AccountEntryExtensionV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for AccountEntryExtensionV2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.num_sponsored.write_xdr(w)?;
-            self.num_sponsoring.write_xdr(w)?;
-            self.signer_sponsoring_i_ds.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl AccountEntryExtensionV2Ref<'_> {
+impl AccountEntryExtensionV2Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -160,7 +118,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`AccountEntryExtensionV2`], mirroring `<AccountEntryExtensionV2 as WriteXdr>::write_xdr`.
     pub const fn write_type_account_entry_extension_v2(
         &mut self,
-        v: &AccountEntryExtensionV2Ref<'_>,
+        v: &AccountEntryExtensionV2Const,
     ) {
         self.write_u32(v.num_sponsored);
         self.write_u32(v.num_sponsoring);

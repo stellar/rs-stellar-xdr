@@ -179,14 +179,6 @@ impl WriteXdr for InvokeHostFunctionResult {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for InvokeHostFunctionResult {
-    type Owned = InvokeHostFunctionResult;
-    fn into_owned(self) -> InvokeHostFunctionResult {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl InvokeHostFunctionResult {
     /// The exact XDR-encoded length of this value, in bytes.

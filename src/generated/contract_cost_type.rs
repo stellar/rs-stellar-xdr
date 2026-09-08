@@ -733,14 +733,6 @@ impl WriteXdr for ContractCostType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractCostType {
-    type Owned = ContractCostType;
-    fn into_owned(self) -> ContractCostType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ContractCostType {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -57,14 +57,6 @@ impl WriteXdr for NodeId {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for NodeId {
-    type Owned = NodeId;
-    fn into_owned(self) -> NodeId {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl NodeId {
     /// The exact XDR-encoded length of this value, in bytes.
@@ -110,7 +102,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`NodeId`], mirroring `<VecM<NodeId, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_node_id<const MAX: u32>(&mut self, v: &VecMRef<'_, NodeId, MAX>) {
+    pub const fn write_type_vec_node_id<const MAX: u32>(&mut self, v: &VecMConst<NodeId, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

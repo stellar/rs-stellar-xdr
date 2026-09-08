@@ -289,14 +289,6 @@ impl WriteXdr for ScValType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScValType {
-    type Owned = ScValType;
-    fn into_owned(self) -> ScValType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScValType {
     /// The exact XDR-encoded length of this value, in bytes.

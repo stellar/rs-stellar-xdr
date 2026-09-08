@@ -140,14 +140,6 @@ impl WriteXdr for AssetType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AssetType {
-    type Owned = AssetType;
-    fn into_owned(self) -> AssetType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AssetType {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -142,48 +142,17 @@ impl WriteXdr for TransactionEnvelope {
     }
 }
 
-/// TransactionEnvelopeRef is a borrowing equivalent of [`TransactionEnvelope`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionEnvelopeConst is a borrowing equivalent of [`TransactionEnvelope`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionEnvelopeRef<'a> {
-    TxV0(TransactionV0EnvelopeRef<'a>),
-    Tx(TransactionV1EnvelopeRef<'a>),
-    TxFeeBump(FeeBumpTransactionEnvelopeRef<'a>),
+pub enum TransactionEnvelopeConst {
+    TxV0(TransactionV0EnvelopeConst),
+    Tx(TransactionV1EnvelopeConst),
+    TxFeeBump(FeeBumpTransactionEnvelopeConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionEnvelopeRef<'_> {
-    type Owned = TransactionEnvelope;
-    fn into_owned(self) -> TransactionEnvelope {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionEnvelopeRef::TxV0(value) => TransactionEnvelope::TxV0(value.into_owned()),
-            TransactionEnvelopeRef::Tx(value) => TransactionEnvelope::Tx(value.into_owned()),
-            TransactionEnvelopeRef::TxFeeBump(value) => {
-                TransactionEnvelope::TxFeeBump(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionEnvelopeRef<'_>> for TransactionEnvelope {
-    #[must_use]
-    fn from(v: &TransactionEnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionEnvelopeRef<'_>> for TransactionEnvelope {
-    #[must_use]
-    fn from(v: TransactionEnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionEnvelopeRef<'_> {
+impl TransactionEnvelopeConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -195,24 +164,8 @@ impl TransactionEnvelopeRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionEnvelopeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::TxV0(v) => v.write_xdr(w)?,
-                Self::Tx(v) => v.write_xdr(w)?,
-                Self::TxFeeBump(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionEnvelopeRef<'_> {
+impl TransactionEnvelopeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -251,18 +204,18 @@ impl TransactionEnvelopeRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionEnvelope`], mirroring `<TransactionEnvelope as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_envelope(&mut self, v: &TransactionEnvelopeRef<'_>) {
+    pub const fn write_type_transaction_envelope(&mut self, v: &TransactionEnvelopeConst) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionEnvelopeRef::TxV0(value) => {
+            TransactionEnvelopeConst::TxV0(value) => {
                 self.write_type_transaction_v0_envelope(value);
             }
-            TransactionEnvelopeRef::Tx(value) => {
+            TransactionEnvelopeConst::Tx(value) => {
                 self.write_type_transaction_v1_envelope(value);
             }
-            TransactionEnvelopeRef::TxFeeBump(value) => {
+            TransactionEnvelopeConst::TxFeeBump(value) => {
                 self.write_type_fee_bump_transaction_envelope(value);
             }
         }
@@ -271,7 +224,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionEnvelope`], mirroring `<VecM<TransactionEnvelope, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_envelope<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TransactionEnvelopeRef<'_>, MAX>,
+        v: &VecMConst<TransactionEnvelopeConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

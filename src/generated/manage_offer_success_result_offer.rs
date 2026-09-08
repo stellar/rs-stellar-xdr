@@ -146,14 +146,6 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageOfferSuccessResultOffer {
-    type Owned = ManageOfferSuccessResultOffer;
-    fn into_owned(self) -> ManageOfferSuccessResultOffer {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ManageOfferSuccessResultOffer {
     /// The exact XDR-encoded length of this value, in bytes.

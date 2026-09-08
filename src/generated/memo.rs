@@ -169,50 +169,19 @@ impl WriteXdr for Memo {
     }
 }
 
-/// MemoRef is a borrowing equivalent of [`Memo`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// MemoConst is a borrowing equivalent of [`Memo`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum MemoRef<'a> {
+pub enum MemoConst {
     None,
-    Text(StringMRef<'a, 28>),
+    Text(StringMConst<28>),
     Id(u64),
     Hash(Hash),
     Return(Hash),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for MemoRef<'_> {
-    type Owned = Memo;
-    fn into_owned(self) -> Memo {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            MemoRef::None => Memo::None,
-            MemoRef::Text(value) => Memo::Text(value.into_owned()),
-            MemoRef::Id(value) => Memo::Id(value.into_owned()),
-            MemoRef::Hash(value) => Memo::Hash(value.into_owned()),
-            MemoRef::Return(value) => Memo::Return(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&MemoRef<'_>> for Memo {
-    #[must_use]
-    fn from(v: &MemoRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<MemoRef<'_>> for Memo {
-    #[must_use]
-    fn from(v: MemoRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl MemoRef<'_> {
+impl MemoConst {
     #[must_use]
     pub const fn discriminant(&self) -> MemoType {
         #[allow(clippy::match_same_arms)]
@@ -226,26 +195,8 @@ impl MemoRef<'_> {
     }
 }
 
-impl WriteXdr for MemoRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::None => ().write_xdr(w)?,
-                Self::Text(v) => v.write_xdr(w)?,
-                Self::Id(v) => v.write_xdr(w)?,
-                Self::Hash(v) => v.write_xdr(w)?,
-                Self::Return(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl MemoRef<'_> {
+impl MemoConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -284,22 +235,22 @@ impl MemoRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Memo`], mirroring `<Memo as WriteXdr>::write_xdr`.
-    pub const fn write_type_memo(&mut self, v: &MemoRef<'_>) {
+    pub const fn write_type_memo(&mut self, v: &MemoConst) {
         let d = v.discriminant();
         self.write_type_memo_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            MemoRef::None => {}
-            MemoRef::Text(value) => {
+            MemoConst::None => {}
+            MemoConst::Text(value) => {
                 self.write_var_opaque(value.as_slice());
             }
-            MemoRef::Id(value) => {
+            MemoConst::Id(value) => {
                 self.write_u64(*value);
             }
-            MemoRef::Hash(value) => {
+            MemoConst::Hash(value) => {
                 self.write_type_hash(value);
             }
-            MemoRef::Return(value) => {
+            MemoConst::Return(value) => {
                 self.write_type_hash(value);
             }
         }

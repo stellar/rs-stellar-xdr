@@ -136,14 +136,6 @@ impl WriteXdr for ClaimableBalanceEntryExt {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimableBalanceEntryExt {
-    type Owned = ClaimableBalanceEntryExt;
-    fn into_owned(self) -> ClaimableBalanceEntryExt {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimableBalanceEntryExt {
     /// The exact XDR-encoded length of this value, in bytes.

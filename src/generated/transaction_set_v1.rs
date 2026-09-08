@@ -50,54 +50,16 @@ impl WriteXdr for TransactionSetV1 {
     }
 }
 
-/// TransactionSetV1Ref is a borrowing equivalent of [`TransactionSetV1`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionSetV1Const is a borrowing equivalent of [`TransactionSetV1`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionSetV1Ref<'a> {
+pub struct TransactionSetV1Const {
     pub previous_ledger_hash: Hash,
-    pub phases: VecMRef<'a, TransactionPhaseRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionSetV1Ref<'_> {
-    type Owned = TransactionSetV1;
-    fn into_owned(self) -> TransactionSetV1 {
-        TransactionSetV1 {
-            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
-            phases: self.phases.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionSetV1Ref<'_>> for TransactionSetV1 {
-    #[must_use]
-    fn from(v: &TransactionSetV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionSetV1Ref<'_>> for TransactionSetV1 {
-    #[must_use]
-    fn from(v: TransactionSetV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionSetV1Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.previous_ledger_hash.write_xdr(w)?;
-            self.phases.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub phases: VecMConst<TransactionPhaseConst>,
 }
 
 #[cfg(feature = "const")]
-impl TransactionSetV1Ref<'_> {
+impl TransactionSetV1Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl TransactionSetV1Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionSetV1`], mirroring `<TransactionSetV1 as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_set_v1(&mut self, v: &TransactionSetV1Ref<'_>) {
+    pub const fn write_type_transaction_set_v1(&mut self, v: &TransactionSetV1Const) {
         self.write_type_hash(&v.previous_ledger_hash);
         self.write_type_vec_transaction_phase(&v.phases);
     }

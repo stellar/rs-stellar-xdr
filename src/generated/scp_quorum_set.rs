@@ -54,57 +54,17 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
-/// ScpQuorumSetRef is a borrowing equivalent of [`ScpQuorumSet`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpQuorumSetConst is a borrowing equivalent of [`ScpQuorumSet`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpQuorumSetRef<'a> {
+pub struct ScpQuorumSetConst {
     pub threshold: u32,
-    pub validators: VecMRef<'a, NodeId>,
-    pub inner_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpQuorumSetRef<'_> {
-    type Owned = ScpQuorumSet;
-    fn into_owned(self) -> ScpQuorumSet {
-        ScpQuorumSet {
-            threshold: self.threshold.into_owned(),
-            validators: self.validators.into_owned(),
-            inner_sets: self.inner_sets.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpQuorumSetRef<'_>> for ScpQuorumSet {
-    #[must_use]
-    fn from(v: &ScpQuorumSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpQuorumSetRef<'_>> for ScpQuorumSet {
-    #[must_use]
-    fn from(v: ScpQuorumSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpQuorumSetRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.threshold.write_xdr(w)?;
-            self.validators.write_xdr(w)?;
-            self.inner_sets.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub validators: VecMConst<NodeId>,
+    pub inner_sets: VecMConst<ScpQuorumSetConst>,
 }
 
 #[cfg(feature = "const")]
-impl ScpQuorumSetRef<'_> {
+impl ScpQuorumSetConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +103,7 @@ impl ScpQuorumSetRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpQuorumSet`], mirroring `<ScpQuorumSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_quorum_set(&mut self, v: &ScpQuorumSetRef<'_>) {
+    pub const fn write_type_scp_quorum_set(&mut self, v: &ScpQuorumSetConst) {
         self.write_u32(v.threshold);
         self.write_type_vec_node_id(&v.validators);
         self.write_type_vec_scp_quorum_set(&v.inner_sets);
@@ -152,7 +112,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScpQuorumSet`], mirroring `<VecM<ScpQuorumSet, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_scp_quorum_set<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScpQuorumSetRef<'_>, MAX>,
+        v: &VecMConst<ScpQuorumSetConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -168,56 +168,18 @@ impl WriteXdr for HostFunction {
     }
 }
 
-/// HostFunctionRef is a borrowing equivalent of [`HostFunction`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// HostFunctionConst is a borrowing equivalent of [`HostFunction`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HostFunctionRef<'a> {
-    InvokeContract(InvokeContractArgsRef<'a>),
-    CreateContract(CreateContractArgsRef<'a>),
-    UploadContractWasm(BytesMRef<'a>),
-    CreateContractV2(CreateContractArgsV2Ref<'a>),
+pub enum HostFunctionConst {
+    InvokeContract(InvokeContractArgsConst),
+    CreateContract(CreateContractArgsConst),
+    UploadContractWasm(BytesMConst),
+    CreateContractV2(CreateContractArgsV2Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for HostFunctionRef<'_> {
-    type Owned = HostFunction;
-    fn into_owned(self) -> HostFunction {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            HostFunctionRef::InvokeContract(value) => {
-                HostFunction::InvokeContract(value.into_owned())
-            }
-            HostFunctionRef::CreateContract(value) => {
-                HostFunction::CreateContract(value.into_owned())
-            }
-            HostFunctionRef::UploadContractWasm(value) => {
-                HostFunction::UploadContractWasm(value.into_owned())
-            }
-            HostFunctionRef::CreateContractV2(value) => {
-                HostFunction::CreateContractV2(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&HostFunctionRef<'_>> for HostFunction {
-    #[must_use]
-    fn from(v: &HostFunctionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<HostFunctionRef<'_>> for HostFunction {
-    #[must_use]
-    fn from(v: HostFunctionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl HostFunctionRef<'_> {
+impl HostFunctionConst {
     #[must_use]
     pub const fn discriminant(&self) -> HostFunctionType {
         #[allow(clippy::match_same_arms)]
@@ -230,25 +192,8 @@ impl HostFunctionRef<'_> {
     }
 }
 
-impl WriteXdr for HostFunctionRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::InvokeContract(v) => v.write_xdr(w)?,
-                Self::CreateContract(v) => v.write_xdr(w)?,
-                Self::UploadContractWasm(v) => v.write_xdr(w)?,
-                Self::CreateContractV2(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl HostFunctionRef<'_> {
+impl HostFunctionConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -287,21 +232,21 @@ impl HostFunctionRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`HostFunction`], mirroring `<HostFunction as WriteXdr>::write_xdr`.
-    pub const fn write_type_host_function(&mut self, v: &HostFunctionRef<'_>) {
+    pub const fn write_type_host_function(&mut self, v: &HostFunctionConst) {
         let d = v.discriminant();
         self.write_type_host_function_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            HostFunctionRef::InvokeContract(value) => {
+            HostFunctionConst::InvokeContract(value) => {
                 self.write_type_invoke_contract_args(value);
             }
-            HostFunctionRef::CreateContract(value) => {
+            HostFunctionConst::CreateContract(value) => {
                 self.write_type_create_contract_args(value);
             }
-            HostFunctionRef::UploadContractWasm(value) => {
+            HostFunctionConst::UploadContractWasm(value) => {
                 self.write_var_opaque(value.as_slice());
             }
-            HostFunctionRef::CreateContractV2(value) => {
+            HostFunctionConst::CreateContractV2(value) => {
                 self.write_type_create_contract_args_v2(value);
             }
         }

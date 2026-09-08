@@ -49,54 +49,16 @@ impl WriteXdr for ContractExecutableExternalRef {
     }
 }
 
-/// ContractExecutableExternalRefRef is a borrowing equivalent of [`ContractExecutableExternalRef`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractExecutableExternalRefConst is a borrowing equivalent of [`ContractExecutableExternalRef`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractExecutableExternalRefRef<'a> {
+pub struct ContractExecutableExternalRefConst {
     pub executable_owner: ScAddress,
-    pub tag: ScStringRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractExecutableExternalRefRef<'_> {
-    type Owned = ContractExecutableExternalRef;
-    fn into_owned(self) -> ContractExecutableExternalRef {
-        ContractExecutableExternalRef {
-            executable_owner: self.executable_owner.into_owned(),
-            tag: self.tag.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
-    #[must_use]
-    fn from(v: &ContractExecutableExternalRefRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractExecutableExternalRefRef<'_>> for ContractExecutableExternalRef {
-    #[must_use]
-    fn from(v: ContractExecutableExternalRefRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ContractExecutableExternalRefRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.executable_owner.write_xdr(w)?;
-            self.tag.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub tag: ScStringConst,
 }
 
 #[cfg(feature = "const")]
-impl ContractExecutableExternalRefRef<'_> {
+impl ContractExecutableExternalRefConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -137,7 +99,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ContractExecutableExternalRef`], mirroring `<ContractExecutableExternalRef as WriteXdr>::write_xdr`.
     pub const fn write_type_contract_executable_external_ref(
         &mut self,
-        v: &ContractExecutableExternalRefRef<'_>,
+        v: &ContractExecutableExternalRefConst,
     ) {
         self.write_type_sc_address(&v.executable_owner);
         self.write_type_sc_string(&v.tag);

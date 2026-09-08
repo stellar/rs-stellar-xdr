@@ -108,44 +108,13 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
     }
 }
 
-/// SorobanAuthorizationEntriesRef is a borrowing equivalent of [`SorobanAuthorizationEntries`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanAuthorizationEntriesConst is a borrowing equivalent of [`SorobanAuthorizationEntries`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizationEntriesRef<'a>(pub VecMRef<'a, SorobanAuthorizationEntryRef<'a>>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizationEntriesRef<'_> {
-    type Owned = SorobanAuthorizationEntries;
-    fn into_owned(self) -> SorobanAuthorizationEntries {
-        SorobanAuthorizationEntries(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
-    #[must_use]
-    fn from(v: &SorobanAuthorizationEntriesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanAuthorizationEntriesRef<'_>> for SorobanAuthorizationEntries {
-    #[must_use]
-    fn from(v: SorobanAuthorizationEntriesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanAuthorizationEntriesRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct SorobanAuthorizationEntriesConst(pub VecMConst<SorobanAuthorizationEntryConst>);
 
 #[cfg(feature = "const")]
-impl SorobanAuthorizationEntriesRef<'_> {
+impl SorobanAuthorizationEntriesConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +155,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizationEntries`], mirroring `<SorobanAuthorizationEntries as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorization_entries(
         &mut self,
-        v: &SorobanAuthorizationEntriesRef<'_>,
+        v: &SorobanAuthorizationEntriesConst,
     ) {
         self.write_type_vec_soroban_authorization_entry(&v.0);
     }

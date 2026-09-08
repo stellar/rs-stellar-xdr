@@ -224,70 +224,24 @@ impl WriteXdr for LedgerEntryData {
     }
 }
 
-/// LedgerEntryDataRef is a borrowing equivalent of [`LedgerEntryData`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerEntryDataConst is a borrowing equivalent of [`LedgerEntryData`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerEntryDataRef<'a> {
-    Account(AccountEntryRef<'a>),
+pub enum LedgerEntryDataConst {
+    Account(AccountEntryConst),
     Trustline(TrustLineEntry),
     Offer(OfferEntry),
-    Data(DataEntryRef<'a>),
-    ClaimableBalance(ClaimableBalanceEntryRef<'a>),
+    Data(DataEntryConst),
+    ClaimableBalance(ClaimableBalanceEntryConst),
     LiquidityPool(LiquidityPoolEntry),
-    ContractData(ContractDataEntryRef<'a>),
-    ContractCode(ContractCodeEntryRef<'a>),
-    ConfigSetting(ConfigSettingEntryRef<'a>),
+    ContractData(ContractDataEntryConst),
+    ContractCode(ContractCodeEntryConst),
+    ConfigSetting(ConfigSettingEntryConst),
     Ttl(TtlEntry),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryDataRef<'_> {
-    type Owned = LedgerEntryData;
-    fn into_owned(self) -> LedgerEntryData {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            LedgerEntryDataRef::Account(value) => LedgerEntryData::Account(value.into_owned()),
-            LedgerEntryDataRef::Trustline(value) => LedgerEntryData::Trustline(value.into_owned()),
-            LedgerEntryDataRef::Offer(value) => LedgerEntryData::Offer(value.into_owned()),
-            LedgerEntryDataRef::Data(value) => LedgerEntryData::Data(value.into_owned()),
-            LedgerEntryDataRef::ClaimableBalance(value) => {
-                LedgerEntryData::ClaimableBalance(value.into_owned())
-            }
-            LedgerEntryDataRef::LiquidityPool(value) => {
-                LedgerEntryData::LiquidityPool(value.into_owned())
-            }
-            LedgerEntryDataRef::ContractData(value) => {
-                LedgerEntryData::ContractData(value.into_owned())
-            }
-            LedgerEntryDataRef::ContractCode(value) => {
-                LedgerEntryData::ContractCode(value.into_owned())
-            }
-            LedgerEntryDataRef::ConfigSetting(value) => {
-                LedgerEntryData::ConfigSetting(value.into_owned())
-            }
-            LedgerEntryDataRef::Ttl(value) => LedgerEntryData::Ttl(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerEntryDataRef<'_>> for LedgerEntryData {
-    #[must_use]
-    fn from(v: &LedgerEntryDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerEntryDataRef<'_>> for LedgerEntryData {
-    #[must_use]
-    fn from(v: LedgerEntryDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl LedgerEntryDataRef<'_> {
+impl LedgerEntryDataConst {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
@@ -306,31 +260,8 @@ impl LedgerEntryDataRef<'_> {
     }
 }
 
-impl WriteXdr for LedgerEntryDataRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Account(v) => v.write_xdr(w)?,
-                Self::Trustline(v) => v.write_xdr(w)?,
-                Self::Offer(v) => v.write_xdr(w)?,
-                Self::Data(v) => v.write_xdr(w)?,
-                Self::ClaimableBalance(v) => v.write_xdr(w)?,
-                Self::LiquidityPool(v) => v.write_xdr(w)?,
-                Self::ContractData(v) => v.write_xdr(w)?,
-                Self::ContractCode(v) => v.write_xdr(w)?,
-                Self::ConfigSetting(v) => v.write_xdr(w)?,
-                Self::Ttl(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerEntryDataRef<'_> {
+impl LedgerEntryDataConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -369,39 +300,39 @@ impl LedgerEntryDataRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerEntryData`], mirroring `<LedgerEntryData as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_entry_data(&mut self, v: &LedgerEntryDataRef<'_>) {
+    pub const fn write_type_ledger_entry_data(&mut self, v: &LedgerEntryDataConst) {
         let d = v.discriminant();
         self.write_type_ledger_entry_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerEntryDataRef::Account(value) => {
+            LedgerEntryDataConst::Account(value) => {
                 self.write_type_account_entry(value);
             }
-            LedgerEntryDataRef::Trustline(value) => {
+            LedgerEntryDataConst::Trustline(value) => {
                 self.write_type_trust_line_entry(value);
             }
-            LedgerEntryDataRef::Offer(value) => {
+            LedgerEntryDataConst::Offer(value) => {
                 self.write_type_offer_entry(value);
             }
-            LedgerEntryDataRef::Data(value) => {
+            LedgerEntryDataConst::Data(value) => {
                 self.write_type_data_entry(value);
             }
-            LedgerEntryDataRef::ClaimableBalance(value) => {
+            LedgerEntryDataConst::ClaimableBalance(value) => {
                 self.write_type_claimable_balance_entry(value);
             }
-            LedgerEntryDataRef::LiquidityPool(value) => {
+            LedgerEntryDataConst::LiquidityPool(value) => {
                 self.write_type_liquidity_pool_entry(value);
             }
-            LedgerEntryDataRef::ContractData(value) => {
+            LedgerEntryDataConst::ContractData(value) => {
                 self.write_type_contract_data_entry(value);
             }
-            LedgerEntryDataRef::ContractCode(value) => {
+            LedgerEntryDataConst::ContractCode(value) => {
                 self.write_type_contract_code_entry(value);
             }
-            LedgerEntryDataRef::ConfigSetting(value) => {
+            LedgerEntryDataConst::ConfigSetting(value) => {
                 self.write_type_config_setting_entry(value);
             }
-            LedgerEntryDataRef::Ttl(value) => {
+            LedgerEntryDataConst::Ttl(value) => {
                 self.write_type_ttl_entry(value);
             }
         }

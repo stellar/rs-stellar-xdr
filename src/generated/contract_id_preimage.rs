@@ -145,14 +145,6 @@ impl WriteXdr for ContractIdPreimage {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractIdPreimage {
-    type Owned = ContractIdPreimage;
-    fn into_owned(self) -> ContractIdPreimage {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ContractIdPreimage {
     /// The exact XDR-encoded length of this value, in bytes.

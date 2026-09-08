@@ -50,54 +50,16 @@ impl WriteXdr for TransactionResultPair {
     }
 }
 
-/// TransactionResultPairRef is a borrowing equivalent of [`TransactionResultPair`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionResultPairConst is a borrowing equivalent of [`TransactionResultPair`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultPairRef<'a> {
+pub struct TransactionResultPairConst {
     pub transaction_hash: Hash,
-    pub result: TransactionResultRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultPairRef<'_> {
-    type Owned = TransactionResultPair;
-    fn into_owned(self) -> TransactionResultPair {
-        TransactionResultPair {
-            transaction_hash: self.transaction_hash.into_owned(),
-            result: self.result.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionResultPairRef<'_>> for TransactionResultPair {
-    #[must_use]
-    fn from(v: &TransactionResultPairRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionResultPairRef<'_>> for TransactionResultPair {
-    #[must_use]
-    fn from(v: TransactionResultPairRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionResultPairRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.transaction_hash.write_xdr(w)?;
-            self.result.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub result: TransactionResultConst,
 }
 
 #[cfg(feature = "const")]
-impl TransactionResultPairRef<'_> {
+impl TransactionResultPairConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl TransactionResultPairRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionResultPair`], mirroring `<TransactionResultPair as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_result_pair(&mut self, v: &TransactionResultPairRef<'_>) {
+    pub const fn write_type_transaction_result_pair(&mut self, v: &TransactionResultPairConst) {
         self.write_type_hash(&v.transaction_hash);
         self.write_type_transaction_result(&v.result);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionResultPair`], mirroring `<VecM<TransactionResultPair, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_result_pair<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TransactionResultPairRef<'_>, MAX>,
+        v: &VecMConst<TransactionResultPairConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

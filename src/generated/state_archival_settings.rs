@@ -103,14 +103,6 @@ impl WriteXdr for StateArchivalSettings {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for StateArchivalSettings {
-    type Owned = StateArchivalSettings;
-    fn into_owned(self) -> StateArchivalSettings {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl StateArchivalSettings {
     /// The exact XDR-encoded length of this value, in bytes.

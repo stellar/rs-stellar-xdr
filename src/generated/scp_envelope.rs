@@ -50,54 +50,16 @@ impl WriteXdr for ScpEnvelope {
     }
 }
 
-/// ScpEnvelopeRef is a borrowing equivalent of [`ScpEnvelope`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpEnvelopeConst is a borrowing equivalent of [`ScpEnvelope`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpEnvelopeRef<'a> {
-    pub statement: ScpStatementRef<'a>,
-    pub signature: SignatureRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpEnvelopeRef<'_> {
-    type Owned = ScpEnvelope;
-    fn into_owned(self) -> ScpEnvelope {
-        ScpEnvelope {
-            statement: self.statement.into_owned(),
-            signature: self.signature.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpEnvelopeRef<'_>> for ScpEnvelope {
-    #[must_use]
-    fn from(v: &ScpEnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpEnvelopeRef<'_>> for ScpEnvelope {
-    #[must_use]
-    fn from(v: ScpEnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpEnvelopeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.statement.write_xdr(w)?;
-            self.signature.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScpEnvelopeConst {
+    pub statement: ScpStatementConst,
+    pub signature: SignatureConst,
 }
 
 #[cfg(feature = "const")]
-impl ScpEnvelopeRef<'_> {
+impl ScpEnvelopeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ScpEnvelopeRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpEnvelope`], mirroring `<ScpEnvelope as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_envelope(&mut self, v: &ScpEnvelopeRef<'_>) {
+    pub const fn write_type_scp_envelope(&mut self, v: &ScpEnvelopeConst) {
         self.write_type_scp_statement(&v.statement);
         self.write_type_signature(&v.signature);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScpEnvelope`], mirroring `<VecM<ScpEnvelope, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_scp_envelope<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScpEnvelopeRef<'_>, MAX>,
+        v: &VecMConst<ScpEnvelopeConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

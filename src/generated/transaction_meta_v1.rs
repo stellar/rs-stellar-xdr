@@ -50,54 +50,16 @@ impl WriteXdr for TransactionMetaV1 {
     }
 }
 
-/// TransactionMetaV1Ref is a borrowing equivalent of [`TransactionMetaV1`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionMetaV1Const is a borrowing equivalent of [`TransactionMetaV1`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionMetaV1Ref<'a> {
-    pub tx_changes: LedgerEntryChangesRef<'a>,
-    pub operations: VecMRef<'a, OperationMetaRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionMetaV1Ref<'_> {
-    type Owned = TransactionMetaV1;
-    fn into_owned(self) -> TransactionMetaV1 {
-        TransactionMetaV1 {
-            tx_changes: self.tx_changes.into_owned(),
-            operations: self.operations.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionMetaV1Ref<'_>> for TransactionMetaV1 {
-    #[must_use]
-    fn from(v: &TransactionMetaV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionMetaV1Ref<'_>> for TransactionMetaV1 {
-    #[must_use]
-    fn from(v: TransactionMetaV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionMetaV1Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_changes.write_xdr(w)?;
-            self.operations.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct TransactionMetaV1Const {
+    pub tx_changes: LedgerEntryChangesConst,
+    pub operations: VecMConst<OperationMetaConst>,
 }
 
 #[cfg(feature = "const")]
-impl TransactionMetaV1Ref<'_> {
+impl TransactionMetaV1Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl TransactionMetaV1Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionMetaV1`], mirroring `<TransactionMetaV1 as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_meta_v1(&mut self, v: &TransactionMetaV1Ref<'_>) {
+    pub const fn write_type_transaction_meta_v1(&mut self, v: &TransactionMetaV1Const) {
         self.write_type_ledger_entry_changes(&v.tx_changes);
         self.write_type_vec_operation_meta(&v.operations);
     }

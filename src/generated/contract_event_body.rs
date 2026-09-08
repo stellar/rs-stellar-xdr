@@ -133,42 +133,15 @@ impl WriteXdr for ContractEventBody {
     }
 }
 
-/// ContractEventBodyRef is a borrowing equivalent of [`ContractEventBody`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractEventBodyConst is a borrowing equivalent of [`ContractEventBody`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ContractEventBodyRef<'a> {
-    V0(ContractEventV0Ref<'a>),
+pub enum ContractEventBodyConst {
+    V0(ContractEventV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractEventBodyRef<'_> {
-    type Owned = ContractEventBody;
-    fn into_owned(self) -> ContractEventBody {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ContractEventBodyRef::V0(value) => ContractEventBody::V0(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractEventBodyRef<'_>> for ContractEventBody {
-    #[must_use]
-    fn from(v: &ContractEventBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractEventBodyRef<'_>> for ContractEventBody {
-    #[must_use]
-    fn from(v: ContractEventBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ContractEventBodyRef<'_> {
+impl ContractEventBodyConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -178,22 +151,8 @@ impl ContractEventBodyRef<'_> {
     }
 }
 
-impl WriteXdr for ContractEventBodyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ContractEventBodyRef<'_> {
+impl ContractEventBodyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -232,12 +191,12 @@ impl ContractEventBodyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractEventBody`], mirroring `<ContractEventBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_event_body(&mut self, v: &ContractEventBodyRef<'_>) {
+    pub const fn write_type_contract_event_body(&mut self, v: &ContractEventBodyConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ContractEventBodyRef::V0(value) => {
+            ContractEventBodyConst::V0(value) => {
                 self.write_type_contract_event_v0(value);
             }
         }

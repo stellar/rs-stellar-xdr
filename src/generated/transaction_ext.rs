@@ -136,44 +136,16 @@ impl WriteXdr for TransactionExt {
     }
 }
 
-/// TransactionExtRef is a borrowing equivalent of [`TransactionExt`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionExtConst is a borrowing equivalent of [`TransactionExt`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionExtRef<'a> {
+pub enum TransactionExtConst {
     V0,
-    V1(SorobanTransactionDataRef<'a>),
+    V1(SorobanTransactionDataConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionExtRef<'_> {
-    type Owned = TransactionExt;
-    fn into_owned(self) -> TransactionExt {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionExtRef::V0 => TransactionExt::V0,
-            TransactionExtRef::V1(value) => TransactionExt::V1(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionExtRef<'_>> for TransactionExt {
-    #[must_use]
-    fn from(v: &TransactionExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionExtRef<'_>> for TransactionExt {
-    #[must_use]
-    fn from(v: TransactionExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionExtRef<'_> {
+impl TransactionExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,23 +156,8 @@ impl TransactionExtRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionExtRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0 => ().write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionExtRef<'_> {
+impl TransactionExtConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,13 +196,13 @@ impl TransactionExtRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionExt`], mirroring `<TransactionExt as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_ext(&mut self, v: &TransactionExtRef<'_>) {
+    pub const fn write_type_transaction_ext(&mut self, v: &TransactionExtConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionExtRef::V0 => {}
-            TransactionExtRef::V1(value) => {
+            TransactionExtConst::V0 => {}
+            TransactionExtConst::V1(value) => {
                 self.write_type_soroban_transaction_data(value);
             }
         }

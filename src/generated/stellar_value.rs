@@ -81,60 +81,18 @@ impl WriteXdr for StellarValue {
     }
 }
 
-/// StellarValueRef is a borrowing equivalent of [`StellarValue`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// StellarValueConst is a borrowing equivalent of [`StellarValue`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StellarValueRef<'a> {
+pub struct StellarValueConst {
     pub tx_set_hash: Hash,
     pub close_time: TimePoint,
-    pub upgrades: VecMRef<'a, UpgradeTypeRef<'a>, 6>,
-    pub ext: StellarValueExtRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueRef<'_> {
-    type Owned = StellarValue;
-    fn into_owned(self) -> StellarValue {
-        StellarValue {
-            tx_set_hash: self.tx_set_hash.into_owned(),
-            close_time: self.close_time.into_owned(),
-            upgrades: self.upgrades.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&StellarValueRef<'_>> for StellarValue {
-    #[must_use]
-    fn from(v: &StellarValueRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<StellarValueRef<'_>> for StellarValue {
-    #[must_use]
-    fn from(v: StellarValueRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for StellarValueRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_set_hash.write_xdr(w)?;
-            self.close_time.write_xdr(w)?;
-            self.upgrades.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub upgrades: VecMConst<UpgradeTypeConst, 6>,
+    pub ext: StellarValueExtConst,
 }
 
 #[cfg(feature = "const")]
-impl StellarValueRef<'_> {
+impl StellarValueConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -173,7 +131,7 @@ impl StellarValueRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StellarValue`], mirroring `<StellarValue as WriteXdr>::write_xdr`.
-    pub const fn write_type_stellar_value(&mut self, v: &StellarValueRef<'_>) {
+    pub const fn write_type_stellar_value(&mut self, v: &StellarValueConst) {
         self.write_type_hash(&v.tx_set_hash);
         self.write_type_time_point(&v.close_time);
         self.write_type_vec_upgrade_type(&v.upgrades);

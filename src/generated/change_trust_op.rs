@@ -56,14 +56,6 @@ impl WriteXdr for ChangeTrustOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ChangeTrustOp {
-    type Owned = ChangeTrustOp;
-    fn into_owned(self) -> ChangeTrustOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ChangeTrustOp {
     /// The exact XDR-encoded length of this value, in bytes.

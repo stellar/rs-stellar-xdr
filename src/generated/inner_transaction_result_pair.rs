@@ -50,54 +50,16 @@ impl WriteXdr for InnerTransactionResultPair {
     }
 }
 
-/// InnerTransactionResultPairRef is a borrowing equivalent of [`InnerTransactionResultPair`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// InnerTransactionResultPairConst is a borrowing equivalent of [`InnerTransactionResultPair`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InnerTransactionResultPairRef<'a> {
+pub struct InnerTransactionResultPairConst {
     pub transaction_hash: Hash,
-    pub result: InnerTransactionResultRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for InnerTransactionResultPairRef<'_> {
-    type Owned = InnerTransactionResultPair;
-    fn into_owned(self) -> InnerTransactionResultPair {
-        InnerTransactionResultPair {
-            transaction_hash: self.transaction_hash.into_owned(),
-            result: self.result.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&InnerTransactionResultPairRef<'_>> for InnerTransactionResultPair {
-    #[must_use]
-    fn from(v: &InnerTransactionResultPairRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<InnerTransactionResultPairRef<'_>> for InnerTransactionResultPair {
-    #[must_use]
-    fn from(v: InnerTransactionResultPairRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for InnerTransactionResultPairRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.transaction_hash.write_xdr(w)?;
-            self.result.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub result: InnerTransactionResultConst,
 }
 
 #[cfg(feature = "const")]
-impl InnerTransactionResultPairRef<'_> {
+impl InnerTransactionResultPairConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`InnerTransactionResultPair`], mirroring `<InnerTransactionResultPair as WriteXdr>::write_xdr`.
     pub const fn write_type_inner_transaction_result_pair(
         &mut self,
-        v: &InnerTransactionResultPairRef<'_>,
+        v: &InnerTransactionResultPairConst,
     ) {
         self.write_type_hash(&v.transaction_hash);
         self.write_type_inner_transaction_result(&v.result);

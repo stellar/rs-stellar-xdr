@@ -143,48 +143,16 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecUdtUnionCaseV0Const is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecUdtUnionCaseV0Ref<'a> {
-    VoidV0(ScSpecUdtUnionCaseVoidV0Ref<'a>),
-    TupleV0(ScSpecUdtUnionCaseTupleV0Ref<'a>),
+pub enum ScSpecUdtUnionCaseV0Const {
+    VoidV0(ScSpecUdtUnionCaseVoidV0Const),
+    TupleV0(ScSpecUdtUnionCaseTupleV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionCaseV0Ref<'_> {
-    type Owned = ScSpecUdtUnionCaseV0;
-    fn into_owned(self) -> ScSpecUdtUnionCaseV0 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScSpecUdtUnionCaseV0Ref::VoidV0(value) => {
-                ScSpecUdtUnionCaseV0::VoidV0(value.into_owned())
-            }
-            ScSpecUdtUnionCaseV0Ref::TupleV0(value) => {
-                ScSpecUdtUnionCaseV0::TupleV0(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
-    #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseV0Ref<'_>> for ScSpecUdtUnionCaseV0 {
-    #[must_use]
-    fn from(v: ScSpecUdtUnionCaseV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScSpecUdtUnionCaseV0Ref<'_> {
+impl ScSpecUdtUnionCaseV0Const {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
         #[allow(clippy::match_same_arms)]
@@ -195,23 +163,8 @@ impl ScSpecUdtUnionCaseV0Ref<'_> {
     }
 }
 
-impl WriteXdr for ScSpecUdtUnionCaseV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::VoidV0(v) => v.write_xdr(w)?,
-                Self::TupleV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionCaseV0Ref<'_> {
+impl ScSpecUdtUnionCaseV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -250,15 +203,15 @@ impl ScSpecUdtUnionCaseV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtUnionCaseV0`], mirroring `<ScSpecUdtUnionCaseV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_udt_union_case_v0(&mut self, v: &ScSpecUdtUnionCaseV0Ref<'_>) {
+    pub const fn write_type_sc_spec_udt_union_case_v0(&mut self, v: &ScSpecUdtUnionCaseV0Const) {
         let d = v.discriminant();
         self.write_type_sc_spec_udt_union_case_v0_kind(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecUdtUnionCaseV0Ref::VoidV0(value) => {
+            ScSpecUdtUnionCaseV0Const::VoidV0(value) => {
                 self.write_type_sc_spec_udt_union_case_void_v0(value);
             }
-            ScSpecUdtUnionCaseV0Ref::TupleV0(value) => {
+            ScSpecUdtUnionCaseV0Const::TupleV0(value) => {
                 self.write_type_sc_spec_udt_union_case_tuple_v0(value);
             }
         }
@@ -267,7 +220,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecUdtUnionCaseV0`], mirroring `<VecM<ScSpecUdtUnionCaseV0, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_udt_union_case_v0<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScSpecUdtUnionCaseV0Ref<'_>, MAX>,
+        v: &VecMConst<ScSpecUdtUnionCaseV0Const, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

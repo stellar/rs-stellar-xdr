@@ -50,14 +50,6 @@ impl WriteXdr for LedgerKeyTrustLine {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyTrustLine {
-    type Owned = LedgerKeyTrustLine;
-    fn into_owned(self) -> LedgerKeyTrustLine {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerKeyTrustLine {
     /// The exact XDR-encoded length of this value, in bytes.

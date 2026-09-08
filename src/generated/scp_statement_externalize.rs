@@ -54,57 +54,17 @@ impl WriteXdr for ScpStatementExternalize {
     }
 }
 
-/// ScpStatementExternalizeRef is a borrowing equivalent of [`ScpStatementExternalize`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpStatementExternalizeConst is a borrowing equivalent of [`ScpStatementExternalize`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementExternalizeRef<'a> {
-    pub commit: ScpBallotRef<'a>,
+pub struct ScpStatementExternalizeConst {
+    pub commit: ScpBallotConst,
     pub n_h: u32,
     pub commit_quorum_set_hash: Hash,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementExternalizeRef<'_> {
-    type Owned = ScpStatementExternalize;
-    fn into_owned(self) -> ScpStatementExternalize {
-        ScpStatementExternalize {
-            commit: self.commit.into_owned(),
-            n_h: self.n_h.into_owned(),
-            commit_quorum_set_hash: self.commit_quorum_set_hash.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
-    #[must_use]
-    fn from(v: &ScpStatementExternalizeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpStatementExternalizeRef<'_>> for ScpStatementExternalize {
-    #[must_use]
-    fn from(v: ScpStatementExternalizeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpStatementExternalizeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.commit.write_xdr(w)?;
-            self.n_h.write_xdr(w)?;
-            self.commit_quorum_set_hash.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScpStatementExternalizeRef<'_> {
+impl ScpStatementExternalizeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,10 +103,7 @@ impl ScpStatementExternalizeRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementExternalize`], mirroring `<ScpStatementExternalize as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement_externalize(
-        &mut self,
-        v: &ScpStatementExternalizeRef<'_>,
-    ) {
+    pub const fn write_type_scp_statement_externalize(&mut self, v: &ScpStatementExternalizeConst) {
         self.write_type_scp_ballot(&v.commit);
         self.write_u32(v.n_h);
         self.write_type_hash(&v.commit_quorum_set_hash);

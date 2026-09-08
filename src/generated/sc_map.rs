@@ -108,44 +108,13 @@ impl AsRef<[ScMapEntry]> for ScMap {
     }
 }
 
-/// ScMapRef is a borrowing equivalent of [`ScMap`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScMapConst is a borrowing equivalent of [`ScMap`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMapRef<'a>(pub VecMRef<'a, ScMapEntryRef<'a>>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScMapRef<'_> {
-    type Owned = ScMap;
-    fn into_owned(self) -> ScMap {
-        ScMap(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScMapRef<'_>> for ScMap {
-    #[must_use]
-    fn from(v: &ScMapRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScMapRef<'_>> for ScMap {
-    #[must_use]
-    fn from(v: ScMapRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScMapRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct ScMapConst(pub VecMConst<ScMapEntryConst>);
 
 #[cfg(feature = "const")]
-impl ScMapRef<'_> {
+impl ScMapConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +153,12 @@ impl ScMapRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMap`], mirroring `<ScMap as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_map(&mut self, v: &ScMapRef<'_>) {
+    pub const fn write_type_sc_map(&mut self, v: &ScMapConst) {
         self.write_type_vec_sc_map_entry(&v.0);
     }
 
     /// Serializes an optional [`ScMap`], mirroring `<Option<ScMap> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_sc_map(&mut self, v: &Option<ScMapRef<'_>>) {
+    pub const fn write_type_option_sc_map(&mut self, v: &Option<ScMapConst>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

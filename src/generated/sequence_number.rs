@@ -66,14 +66,6 @@ impl WriteXdr for SequenceNumber {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SequenceNumber {
-    type Owned = SequenceNumber;
-    fn into_owned(self) -> SequenceNumber {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SequenceNumber {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -142,14 +142,6 @@ impl WriteXdr for BucketEntryType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BucketEntryType {
-    type Owned = BucketEntryType;
-    fn into_owned(self) -> BucketEntryType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl BucketEntryType {
     /// The exact XDR-encoded length of this value, in bytes.

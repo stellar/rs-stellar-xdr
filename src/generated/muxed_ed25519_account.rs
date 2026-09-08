@@ -76,14 +76,6 @@ impl<'de> serde::Deserialize<'de> for MuxedEd25519Account {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for MuxedEd25519Account {
-    type Owned = MuxedEd25519Account;
-    fn into_owned(self) -> MuxedEd25519Account {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl MuxedEd25519Account {
     /// The exact XDR-encoded length of this value, in bytes.

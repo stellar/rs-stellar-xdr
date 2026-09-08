@@ -74,14 +74,6 @@ impl<'de> serde::Deserialize<'de> for Int128Parts {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Int128Parts {
-    type Owned = Int128Parts;
-    fn into_owned(self) -> Int128Parts {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Int128Parts {
     /// The exact XDR-encoded length of this value, in bytes.

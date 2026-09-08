@@ -50,54 +50,16 @@ impl WriteXdr for ScpBallot {
     }
 }
 
-/// ScpBallotRef is a borrowing equivalent of [`ScpBallot`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpBallotConst is a borrowing equivalent of [`ScpBallot`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpBallotRef<'a> {
+pub struct ScpBallotConst {
     pub counter: u32,
-    pub value: ValueRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpBallotRef<'_> {
-    type Owned = ScpBallot;
-    fn into_owned(self) -> ScpBallot {
-        ScpBallot {
-            counter: self.counter.into_owned(),
-            value: self.value.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpBallotRef<'_>> for ScpBallot {
-    #[must_use]
-    fn from(v: &ScpBallotRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpBallotRef<'_>> for ScpBallot {
-    #[must_use]
-    fn from(v: ScpBallotRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpBallotRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.counter.write_xdr(w)?;
-            self.value.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub value: ValueConst,
 }
 
 #[cfg(feature = "const")]
-impl ScpBallotRef<'_> {
+impl ScpBallotConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,13 +98,13 @@ impl ScpBallotRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpBallot`], mirroring `<ScpBallot as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_ballot(&mut self, v: &ScpBallotRef<'_>) {
+    pub const fn write_type_scp_ballot(&mut self, v: &ScpBallotConst) {
         self.write_u32(v.counter);
         self.write_type_value(&v.value);
     }
 
     /// Serializes an optional [`ScpBallot`], mirroring `<Option<ScpBallot> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_scp_ballot(&mut self, v: &Option<ScpBallotRef<'_>>) {
+    pub const fn write_type_option_scp_ballot(&mut self, v: &Option<ScpBallotConst>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

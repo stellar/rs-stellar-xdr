@@ -187,14 +187,6 @@ impl WriteXdr for EnvelopeType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for EnvelopeType {
-    type Owned = EnvelopeType;
-    fn into_owned(self) -> EnvelopeType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl EnvelopeType {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -62,63 +62,19 @@ impl WriteXdr for SurveyResponseMessage {
     }
 }
 
-/// SurveyResponseMessageRef is a borrowing equivalent of [`SurveyResponseMessage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SurveyResponseMessageConst is a borrowing equivalent of [`SurveyResponseMessage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SurveyResponseMessageRef<'a> {
+pub struct SurveyResponseMessageConst {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
     pub ledger_num: u32,
     pub command_type: SurveyMessageCommandType,
-    pub encrypted_body: EncryptedBodyRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SurveyResponseMessageRef<'_> {
-    type Owned = SurveyResponseMessage;
-    fn into_owned(self) -> SurveyResponseMessage {
-        SurveyResponseMessage {
-            surveyor_peer_id: self.surveyor_peer_id.into_owned(),
-            surveyed_peer_id: self.surveyed_peer_id.into_owned(),
-            ledger_num: self.ledger_num.into_owned(),
-            command_type: self.command_type.into_owned(),
-            encrypted_body: self.encrypted_body.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
-    #[must_use]
-    fn from(v: &SurveyResponseMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SurveyResponseMessageRef<'_>> for SurveyResponseMessage {
-    #[must_use]
-    fn from(v: SurveyResponseMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SurveyResponseMessageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.surveyor_peer_id.write_xdr(w)?;
-            self.surveyed_peer_id.write_xdr(w)?;
-            self.ledger_num.write_xdr(w)?;
-            self.command_type.write_xdr(w)?;
-            self.encrypted_body.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub encrypted_body: EncryptedBodyConst,
 }
 
 #[cfg(feature = "const")]
-impl SurveyResponseMessageRef<'_> {
+impl SurveyResponseMessageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -157,7 +113,7 @@ impl SurveyResponseMessageRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SurveyResponseMessage`], mirroring `<SurveyResponseMessage as WriteXdr>::write_xdr`.
-    pub const fn write_type_survey_response_message(&mut self, v: &SurveyResponseMessageRef<'_>) {
+    pub const fn write_type_survey_response_message(&mut self, v: &SurveyResponseMessageConst) {
         self.write_type_node_id(&v.surveyor_peer_id);
         self.write_type_node_id(&v.surveyed_peer_id);
         self.write_u32(v.ledger_num);

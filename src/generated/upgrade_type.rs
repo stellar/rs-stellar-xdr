@@ -108,44 +108,13 @@ impl AsRef<[u8]> for UpgradeType {
     }
 }
 
-/// UpgradeTypeRef is a borrowing equivalent of [`UpgradeType`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// UpgradeTypeConst is a borrowing equivalent of [`UpgradeType`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct UpgradeTypeRef<'a>(pub BytesMRef<'a, 128>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for UpgradeTypeRef<'_> {
-    type Owned = UpgradeType;
-    fn into_owned(self) -> UpgradeType {
-        UpgradeType(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&UpgradeTypeRef<'_>> for UpgradeType {
-    #[must_use]
-    fn from(v: &UpgradeTypeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<UpgradeTypeRef<'_>> for UpgradeType {
-    #[must_use]
-    fn from(v: UpgradeTypeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for UpgradeTypeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct UpgradeTypeConst(pub BytesMConst<128>);
 
 #[cfg(feature = "const")]
-impl UpgradeTypeRef<'_> {
+impl UpgradeTypeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +153,14 @@ impl UpgradeTypeRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`UpgradeType`], mirroring `<UpgradeType as WriteXdr>::write_xdr`.
-    pub const fn write_type_upgrade_type(&mut self, v: &UpgradeTypeRef<'_>) {
+    pub const fn write_type_upgrade_type(&mut self, v: &UpgradeTypeConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`UpgradeType`], mirroring `<VecM<UpgradeType, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_upgrade_type<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, UpgradeTypeRef<'_>, MAX>,
+        v: &VecMConst<UpgradeTypeConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

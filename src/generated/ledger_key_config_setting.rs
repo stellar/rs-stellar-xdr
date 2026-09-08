@@ -46,14 +46,6 @@ impl WriteXdr for LedgerKeyConfigSetting {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyConfigSetting {
-    type Owned = LedgerKeyConfigSetting;
-    fn into_owned(self) -> LedgerKeyConfigSetting {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerKeyConfigSetting {
     /// The exact XDR-encoded length of this value, in bytes.

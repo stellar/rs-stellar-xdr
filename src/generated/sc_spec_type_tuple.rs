@@ -46,51 +46,15 @@ impl WriteXdr for ScSpecTypeTuple {
     }
 }
 
-/// ScSpecTypeTupleRef is a borrowing equivalent of [`ScSpecTypeTuple`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeTupleConst is a borrowing equivalent of [`ScSpecTypeTuple`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeTupleRef<'a> {
-    pub value_types: VecMRef<'a, ScSpecTypeDefRef<'a>, 12>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeTupleRef<'_> {
-    type Owned = ScSpecTypeTuple;
-    fn into_owned(self) -> ScSpecTypeTuple {
-        ScSpecTypeTuple {
-            value_types: self.value_types.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
-    #[must_use]
-    fn from(v: &ScSpecTypeTupleRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeTupleRef<'_>> for ScSpecTypeTuple {
-    #[must_use]
-    fn from(v: ScSpecTypeTupleRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecTypeTupleRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.value_types.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecTypeTupleConst {
+    pub value_types: VecMConst<ScSpecTypeDefConst, 12>,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeTupleRef<'_> {
+impl ScSpecTypeTupleConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +93,7 @@ impl ScSpecTypeTupleRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeTuple`], mirroring `<ScSpecTypeTuple as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_tuple(&mut self, v: &ScSpecTypeTupleRef<'_>) {
+    pub const fn write_type_sc_spec_type_tuple(&mut self, v: &ScSpecTypeTupleConst) {
         self.write_type_vec_sc_spec_type_def(&v.value_types);
     }
 }

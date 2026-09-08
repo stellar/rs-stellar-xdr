@@ -188,14 +188,6 @@ impl WriteXdr for ScAddress {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScAddress {
-    type Owned = ScAddress;
-    fn into_owned(self) -> ScAddress {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScAddress {
     /// The exact XDR-encoded length of this value, in bytes.

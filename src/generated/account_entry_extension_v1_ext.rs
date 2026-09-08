@@ -136,46 +136,16 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
     }
 }
 
-/// AccountEntryExtensionV1ExtRef is a borrowing equivalent of [`AccountEntryExtensionV1Ext`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AccountEntryExtensionV1ExtConst is a borrowing equivalent of [`AccountEntryExtensionV1Ext`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AccountEntryExtensionV1ExtRef<'a> {
+pub enum AccountEntryExtensionV1ExtConst {
     V0,
-    V2(AccountEntryExtensionV2Ref<'a>),
+    V2(AccountEntryExtensionV2Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV1ExtRef<'_> {
-    type Owned = AccountEntryExtensionV1Ext;
-    fn into_owned(self) -> AccountEntryExtensionV1Ext {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            AccountEntryExtensionV1ExtRef::V0 => AccountEntryExtensionV1Ext::V0,
-            AccountEntryExtensionV1ExtRef::V2(value) => {
-                AccountEntryExtensionV1Ext::V2(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV1ExtRef<'_>> for AccountEntryExtensionV1Ext {
-    #[must_use]
-    fn from(v: &AccountEntryExtensionV1ExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV1ExtRef<'_>> for AccountEntryExtensionV1Ext {
-    #[must_use]
-    fn from(v: AccountEntryExtensionV1ExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl AccountEntryExtensionV1ExtRef<'_> {
+impl AccountEntryExtensionV1ExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -186,23 +156,8 @@ impl AccountEntryExtensionV1ExtRef<'_> {
     }
 }
 
-impl WriteXdr for AccountEntryExtensionV1ExtRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0 => ().write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl AccountEntryExtensionV1ExtRef<'_> {
+impl AccountEntryExtensionV1ExtConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -243,14 +198,14 @@ impl ConstWriter<'_> {
     /// Serializes a [`AccountEntryExtensionV1Ext`], mirroring `<AccountEntryExtensionV1Ext as WriteXdr>::write_xdr`.
     pub const fn write_type_account_entry_extension_v1_ext(
         &mut self,
-        v: &AccountEntryExtensionV1ExtRef<'_>,
+        v: &AccountEntryExtensionV1ExtConst,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            AccountEntryExtensionV1ExtRef::V0 => {}
-            AccountEntryExtensionV1ExtRef::V2(value) => {
+            AccountEntryExtensionV1ExtConst::V0 => {}
+            AccountEntryExtensionV1ExtConst::V2(value) => {
                 self.write_type_account_entry_extension_v2(value);
             }
         }

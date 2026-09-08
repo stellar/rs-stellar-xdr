@@ -163,14 +163,6 @@ impl WriteXdr for RestoreFootprintResult {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for RestoreFootprintResult {
-    type Owned = RestoreFootprintResult;
-    fn into_owned(self) -> RestoreFootprintResult {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl RestoreFootprintResult {
     /// The exact XDR-encoded length of this value, in bytes.

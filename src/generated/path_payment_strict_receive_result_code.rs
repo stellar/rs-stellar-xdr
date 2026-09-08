@@ -211,14 +211,6 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictReceiveResultCode {
-    type Owned = PathPaymentStrictReceiveResultCode;
-    fn into_owned(self) -> PathPaymentStrictReceiveResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl PathPaymentStrictReceiveResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

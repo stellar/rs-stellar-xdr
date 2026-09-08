@@ -50,54 +50,16 @@ impl WriteXdr for ScMapEntry {
     }
 }
 
-/// ScMapEntryRef is a borrowing equivalent of [`ScMapEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScMapEntryConst is a borrowing equivalent of [`ScMapEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMapEntryRef<'a> {
-    pub key: ScValRef<'a>,
-    pub val: ScValRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScMapEntryRef<'_> {
-    type Owned = ScMapEntry;
-    fn into_owned(self) -> ScMapEntry {
-        ScMapEntry {
-            key: self.key.into_owned(),
-            val: self.val.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScMapEntryRef<'_>> for ScMapEntry {
-    #[must_use]
-    fn from(v: &ScMapEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScMapEntryRef<'_>> for ScMapEntry {
-    #[must_use]
-    fn from(v: ScMapEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScMapEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.key.write_xdr(w)?;
-            self.val.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScMapEntryConst {
+    pub key: ScValConst,
+    pub val: ScValConst,
 }
 
 #[cfg(feature = "const")]
-impl ScMapEntryRef<'_> {
+impl ScMapEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ScMapEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMapEntry`], mirroring `<ScMapEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_map_entry(&mut self, v: &ScMapEntryRef<'_>) {
+    pub const fn write_type_sc_map_entry(&mut self, v: &ScMapEntryConst) {
         self.write_type_sc_val(&v.key);
         self.write_type_sc_val(&v.val);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScMapEntry`], mirroring `<VecM<ScMapEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_map_entry<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScMapEntryRef<'_>, MAX>,
+        v: &VecMConst<ScMapEntryConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

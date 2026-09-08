@@ -154,14 +154,6 @@ impl AsRef<[u8]> for SignatureHint {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignatureHint {
-    type Owned = SignatureHint;
-    fn into_owned(self) -> SignatureHint {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SignatureHint {
     /// The exact XDR-encoded length of this value, in bytes.

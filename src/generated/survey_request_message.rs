@@ -62,14 +62,6 @@ impl WriteXdr for SurveyRequestMessage {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SurveyRequestMessage {
-    type Owned = SurveyRequestMessage;
-    fn into_owned(self) -> SurveyRequestMessage {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SurveyRequestMessage {
     /// The exact XDR-encoded length of this value, in bytes.

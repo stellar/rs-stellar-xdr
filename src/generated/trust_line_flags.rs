@@ -144,14 +144,6 @@ impl WriteXdr for TrustLineFlags {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TrustLineFlags {
-    type Owned = TrustLineFlags;
-    fn into_owned(self) -> TrustLineFlags {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TrustLineFlags {
     /// The exact XDR-encoded length of this value, in bytes.

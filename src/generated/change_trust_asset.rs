@@ -160,14 +160,6 @@ impl WriteXdr for ChangeTrustAsset {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ChangeTrustAsset {
-    type Owned = ChangeTrustAsset;
-    fn into_owned(self) -> ChangeTrustAsset {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ChangeTrustAsset {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -140,14 +140,6 @@ impl WriteXdr for SignerKeyType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignerKeyType {
-    type Owned = SignerKeyType;
-    fn into_owned(self) -> SignerKeyType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SignerKeyType {
     /// The exact XDR-encoded length of this value, in bytes.

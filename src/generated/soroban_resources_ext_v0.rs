@@ -49,51 +49,15 @@ impl WriteXdr for SorobanResourcesExtV0 {
     }
 }
 
-/// SorobanResourcesExtV0Ref is a borrowing equivalent of [`SorobanResourcesExtV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanResourcesExtV0Const is a borrowing equivalent of [`SorobanResourcesExtV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanResourcesExtV0Ref<'a> {
-    pub archived_soroban_entries: VecMRef<'a, u32>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanResourcesExtV0Ref<'_> {
-    type Owned = SorobanResourcesExtV0;
-    fn into_owned(self) -> SorobanResourcesExtV0 {
-        SorobanResourcesExtV0 {
-            archived_soroban_entries: self.archived_soroban_entries.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanResourcesExtV0Ref<'_>> for SorobanResourcesExtV0 {
-    #[must_use]
-    fn from(v: &SorobanResourcesExtV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanResourcesExtV0Ref<'_>> for SorobanResourcesExtV0 {
-    #[must_use]
-    fn from(v: SorobanResourcesExtV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanResourcesExtV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.archived_soroban_entries.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct SorobanResourcesExtV0Const {
+    pub archived_soroban_entries: VecMConst<u32>,
 }
 
 #[cfg(feature = "const")]
-impl SorobanResourcesExtV0Ref<'_> {
+impl SorobanResourcesExtV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -132,7 +96,7 @@ impl SorobanResourcesExtV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanResourcesExtV0`], mirroring `<SorobanResourcesExtV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_resources_ext_v0(&mut self, v: &SorobanResourcesExtV0Ref<'_>) {
+    pub const fn write_type_soroban_resources_ext_v0(&mut self, v: &SorobanResourcesExtV0Const) {
         self.write_vec_u32(&v.archived_soroban_entries);
     }
 }

@@ -232,12 +232,12 @@ impl WriteXdr for ManageBuyOfferResult {
     }
 }
 
-/// ManageBuyOfferResultRef is a borrowing equivalent of [`ManageBuyOfferResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ManageBuyOfferResultConst is a borrowing equivalent of [`ManageBuyOfferResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ManageBuyOfferResultRef<'a> {
-    Success(ManageOfferSuccessResultRef<'a>),
+pub enum ManageBuyOfferResultConst {
+    Success(ManageOfferSuccessResultConst),
     Malformed,
     SellNoTrust,
     BuyNoTrust,
@@ -252,48 +252,7 @@ pub enum ManageBuyOfferResultRef<'a> {
     LowReserve,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageBuyOfferResultRef<'_> {
-    type Owned = ManageBuyOfferResult;
-    fn into_owned(self) -> ManageBuyOfferResult {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ManageBuyOfferResultRef::Success(value) => {
-                ManageBuyOfferResult::Success(value.into_owned())
-            }
-            ManageBuyOfferResultRef::Malformed => ManageBuyOfferResult::Malformed,
-            ManageBuyOfferResultRef::SellNoTrust => ManageBuyOfferResult::SellNoTrust,
-            ManageBuyOfferResultRef::BuyNoTrust => ManageBuyOfferResult::BuyNoTrust,
-            ManageBuyOfferResultRef::SellNotAuthorized => ManageBuyOfferResult::SellNotAuthorized,
-            ManageBuyOfferResultRef::BuyNotAuthorized => ManageBuyOfferResult::BuyNotAuthorized,
-            ManageBuyOfferResultRef::LineFull => ManageBuyOfferResult::LineFull,
-            ManageBuyOfferResultRef::Underfunded => ManageBuyOfferResult::Underfunded,
-            ManageBuyOfferResultRef::CrossSelf => ManageBuyOfferResult::CrossSelf,
-            ManageBuyOfferResultRef::SellNoIssuer => ManageBuyOfferResult::SellNoIssuer,
-            ManageBuyOfferResultRef::BuyNoIssuer => ManageBuyOfferResult::BuyNoIssuer,
-            ManageBuyOfferResultRef::NotFound => ManageBuyOfferResult::NotFound,
-            ManageBuyOfferResultRef::LowReserve => ManageBuyOfferResult::LowReserve,
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ManageBuyOfferResultRef<'_>> for ManageBuyOfferResult {
-    #[must_use]
-    fn from(v: &ManageBuyOfferResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ManageBuyOfferResultRef<'_>> for ManageBuyOfferResult {
-    #[must_use]
-    fn from(v: ManageBuyOfferResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ManageBuyOfferResultRef<'_> {
+impl ManageBuyOfferResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> ManageBuyOfferResultCode {
         #[allow(clippy::match_same_arms)]
@@ -315,34 +274,8 @@ impl ManageBuyOfferResultRef<'_> {
     }
 }
 
-impl WriteXdr for ManageBuyOfferResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Success(v) => v.write_xdr(w)?,
-                Self::Malformed => ().write_xdr(w)?,
-                Self::SellNoTrust => ().write_xdr(w)?,
-                Self::BuyNoTrust => ().write_xdr(w)?,
-                Self::SellNotAuthorized => ().write_xdr(w)?,
-                Self::BuyNotAuthorized => ().write_xdr(w)?,
-                Self::LineFull => ().write_xdr(w)?,
-                Self::Underfunded => ().write_xdr(w)?,
-                Self::CrossSelf => ().write_xdr(w)?,
-                Self::SellNoIssuer => ().write_xdr(w)?,
-                Self::BuyNoIssuer => ().write_xdr(w)?,
-                Self::NotFound => ().write_xdr(w)?,
-                Self::LowReserve => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ManageBuyOfferResultRef<'_> {
+impl ManageBuyOfferResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -381,26 +314,26 @@ impl ManageBuyOfferResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ManageBuyOfferResult`], mirroring `<ManageBuyOfferResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_manage_buy_offer_result(&mut self, v: &ManageBuyOfferResultRef<'_>) {
+    pub const fn write_type_manage_buy_offer_result(&mut self, v: &ManageBuyOfferResultConst) {
         let d = v.discriminant();
         self.write_type_manage_buy_offer_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ManageBuyOfferResultRef::Success(value) => {
+            ManageBuyOfferResultConst::Success(value) => {
                 self.write_type_manage_offer_success_result(value);
             }
-            ManageBuyOfferResultRef::Malformed => {}
-            ManageBuyOfferResultRef::SellNoTrust => {}
-            ManageBuyOfferResultRef::BuyNoTrust => {}
-            ManageBuyOfferResultRef::SellNotAuthorized => {}
-            ManageBuyOfferResultRef::BuyNotAuthorized => {}
-            ManageBuyOfferResultRef::LineFull => {}
-            ManageBuyOfferResultRef::Underfunded => {}
-            ManageBuyOfferResultRef::CrossSelf => {}
-            ManageBuyOfferResultRef::SellNoIssuer => {}
-            ManageBuyOfferResultRef::BuyNoIssuer => {}
-            ManageBuyOfferResultRef::NotFound => {}
-            ManageBuyOfferResultRef::LowReserve => {}
+            ManageBuyOfferResultConst::Malformed => {}
+            ManageBuyOfferResultConst::SellNoTrust => {}
+            ManageBuyOfferResultConst::BuyNoTrust => {}
+            ManageBuyOfferResultConst::SellNotAuthorized => {}
+            ManageBuyOfferResultConst::BuyNotAuthorized => {}
+            ManageBuyOfferResultConst::LineFull => {}
+            ManageBuyOfferResultConst::Underfunded => {}
+            ManageBuyOfferResultConst::CrossSelf => {}
+            ManageBuyOfferResultConst::SellNoIssuer => {}
+            ManageBuyOfferResultConst::BuyNoIssuer => {}
+            ManageBuyOfferResultConst::NotFound => {}
+            ManageBuyOfferResultConst::LowReserve => {}
         }
     }
 }

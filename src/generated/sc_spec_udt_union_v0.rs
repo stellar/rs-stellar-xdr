@@ -58,60 +58,18 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     }
 }
 
-/// ScSpecUdtUnionV0Ref is a borrowing equivalent of [`ScSpecUdtUnionV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecUdtUnionV0Const is a borrowing equivalent of [`ScSpecUdtUnionV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtUnionV0Ref<'a> {
-    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
-    pub lib: StringMRef<'a, 80>,
-    pub name: StringMRef<'a, 60>,
-    pub cases: VecMRef<'a, ScSpecUdtUnionCaseV0Ref<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionV0Ref<'_> {
-    type Owned = ScSpecUdtUnionV0;
-    fn into_owned(self) -> ScSpecUdtUnionV0 {
-        ScSpecUdtUnionV0 {
-            doc: self.doc.into_owned(),
-            lib: self.lib.into_owned(),
-            name: self.name.into_owned(),
-            cases: self.cases.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionV0Ref<'_>> for ScSpecUdtUnionV0 {
-    #[must_use]
-    fn from(v: &ScSpecUdtUnionV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionV0Ref<'_>> for ScSpecUdtUnionV0 {
-    #[must_use]
-    fn from(v: ScSpecUdtUnionV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecUdtUnionV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.cases.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecUdtUnionV0Const {
+    pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,
+    pub lib: StringMConst<80>,
+    pub name: StringMConst<60>,
+    pub cases: VecMConst<ScSpecUdtUnionCaseV0Const>,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionV0Ref<'_> {
+impl ScSpecUdtUnionV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -150,7 +108,7 @@ impl ScSpecUdtUnionV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtUnionV0`], mirroring `<ScSpecUdtUnionV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_udt_union_v0(&mut self, v: &ScSpecUdtUnionV0Ref<'_>) {
+    pub const fn write_type_sc_spec_udt_union_v0(&mut self, v: &ScSpecUdtUnionV0Const) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.lib.as_slice());
         self.write_var_opaque(v.name.as_slice());

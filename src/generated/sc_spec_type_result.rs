@@ -50,54 +50,16 @@ impl WriteXdr for ScSpecTypeResult {
     }
 }
 
-/// ScSpecTypeResultRef is a borrowing equivalent of [`ScSpecTypeResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeResultConst is a borrowing equivalent of [`ScSpecTypeResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeResultRef<'a> {
-    pub ok_type: &'a ScSpecTypeDefRef<'a>,
-    pub error_type: &'a ScSpecTypeDefRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeResultRef<'_> {
-    type Owned = ScSpecTypeResult;
-    fn into_owned(self) -> ScSpecTypeResult {
-        ScSpecTypeResult {
-            ok_type: Box::new(self.ok_type.into_owned()),
-            error_type: Box::new(self.error_type.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
-    #[must_use]
-    fn from(v: &ScSpecTypeResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeResultRef<'_>> for ScSpecTypeResult {
-    #[must_use]
-    fn from(v: ScSpecTypeResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecTypeResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ok_type.write_xdr(w)?;
-            self.error_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecTypeResultConst {
+    pub ok_type: &'static ScSpecTypeDefConst,
+    pub error_type: &'static ScSpecTypeDefConst,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeResultRef<'_> {
+impl ScSpecTypeResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ScSpecTypeResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeResult`], mirroring `<ScSpecTypeResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_result(&mut self, v: &ScSpecTypeResultRef<'_>) {
+    pub const fn write_type_sc_spec_type_result(&mut self, v: &ScSpecTypeResultConst) {
         self.write_type_sc_spec_type_def(v.ok_type);
         self.write_type_sc_spec_type_def(v.error_type);
     }

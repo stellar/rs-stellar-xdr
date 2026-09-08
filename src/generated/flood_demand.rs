@@ -46,51 +46,15 @@ impl WriteXdr for FloodDemand {
     }
 }
 
-/// FloodDemandRef is a borrowing equivalent of [`FloodDemand`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FloodDemandConst is a borrowing equivalent of [`FloodDemand`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FloodDemandRef<'a> {
-    pub tx_hashes: TxDemandVectorRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for FloodDemandRef<'_> {
-    type Owned = FloodDemand;
-    fn into_owned(self) -> FloodDemand {
-        FloodDemand {
-            tx_hashes: self.tx_hashes.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FloodDemandRef<'_>> for FloodDemand {
-    #[must_use]
-    fn from(v: &FloodDemandRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FloodDemandRef<'_>> for FloodDemand {
-    #[must_use]
-    fn from(v: FloodDemandRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FloodDemandRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_hashes.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct FloodDemandConst {
+    pub tx_hashes: TxDemandVectorConst,
 }
 
 #[cfg(feature = "const")]
-impl FloodDemandRef<'_> {
+impl FloodDemandConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +93,7 @@ impl FloodDemandRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FloodDemand`], mirroring `<FloodDemand as WriteXdr>::write_xdr`.
-    pub const fn write_type_flood_demand(&mut self, v: &FloodDemandRef<'_>) {
+    pub const fn write_type_flood_demand(&mut self, v: &FloodDemandConst) {
         self.write_type_tx_demand_vector(&v.tx_hashes);
     }
 }

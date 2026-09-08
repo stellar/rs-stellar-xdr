@@ -56,57 +56,17 @@ impl WriteXdr for OperationMetaV2 {
     }
 }
 
-/// OperationMetaV2Ref is a borrowing equivalent of [`OperationMetaV2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// OperationMetaV2Const is a borrowing equivalent of [`OperationMetaV2`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationMetaV2Ref<'a> {
+pub struct OperationMetaV2Const {
     pub ext: ExtensionPoint,
-    pub changes: LedgerEntryChangesRef<'a>,
-    pub events: VecMRef<'a, ContractEventRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationMetaV2Ref<'_> {
-    type Owned = OperationMetaV2;
-    fn into_owned(self) -> OperationMetaV2 {
-        OperationMetaV2 {
-            ext: self.ext.into_owned(),
-            changes: self.changes.into_owned(),
-            events: self.events.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&OperationMetaV2Ref<'_>> for OperationMetaV2 {
-    #[must_use]
-    fn from(v: &OperationMetaV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<OperationMetaV2Ref<'_>> for OperationMetaV2 {
-    #[must_use]
-    fn from(v: OperationMetaV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for OperationMetaV2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.changes.write_xdr(w)?;
-            self.events.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub changes: LedgerEntryChangesConst,
+    pub events: VecMConst<ContractEventConst>,
 }
 
 #[cfg(feature = "const")]
-impl OperationMetaV2Ref<'_> {
+impl OperationMetaV2Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +105,7 @@ impl OperationMetaV2Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationMetaV2`], mirroring `<OperationMetaV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_meta_v2(&mut self, v: &OperationMetaV2Ref<'_>) {
+    pub const fn write_type_operation_meta_v2(&mut self, v: &OperationMetaV2Const) {
         self.write_type_extension_point(&v.ext);
         self.write_type_ledger_entry_changes(&v.changes);
         self.write_type_vec_contract_event(&v.events);
@@ -154,7 +114,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`OperationMetaV2`], mirroring `<VecM<OperationMetaV2, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation_meta_v2<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, OperationMetaV2Ref<'_>, MAX>,
+        v: &VecMConst<OperationMetaV2Const, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

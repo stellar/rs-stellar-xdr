@@ -46,51 +46,15 @@ impl WriteXdr for TransactionResultSet {
     }
 }
 
-/// TransactionResultSetRef is a borrowing equivalent of [`TransactionResultSet`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionResultSetConst is a borrowing equivalent of [`TransactionResultSet`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionResultSetRef<'a> {
-    pub results: VecMRef<'a, TransactionResultPairRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultSetRef<'_> {
-    type Owned = TransactionResultSet;
-    fn into_owned(self) -> TransactionResultSet {
-        TransactionResultSet {
-            results: self.results.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionResultSetRef<'_>> for TransactionResultSet {
-    #[must_use]
-    fn from(v: &TransactionResultSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionResultSetRef<'_>> for TransactionResultSet {
-    #[must_use]
-    fn from(v: TransactionResultSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionResultSetRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.results.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct TransactionResultSetConst {
+    pub results: VecMConst<TransactionResultPairConst>,
 }
 
 #[cfg(feature = "const")]
-impl TransactionResultSetRef<'_> {
+impl TransactionResultSetConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +93,7 @@ impl TransactionResultSetRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionResultSet`], mirroring `<TransactionResultSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_result_set(&mut self, v: &TransactionResultSetRef<'_>) {
+    pub const fn write_type_transaction_result_set(&mut self, v: &TransactionResultSetConst) {
         self.write_type_vec_transaction_result_pair(&v.results);
     }
 }

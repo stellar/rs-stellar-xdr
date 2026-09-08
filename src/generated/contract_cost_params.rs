@@ -108,46 +108,15 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     }
 }
 
-/// ContractCostParamsRef is a borrowing equivalent of [`ContractCostParams`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractCostParamsConst is a borrowing equivalent of [`ContractCostParams`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractCostParamsRef<'a>(
-    pub VecMRef<'a, ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>,
+pub struct ContractCostParamsConst(
+    pub VecMConst<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>,
 );
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractCostParamsRef<'_> {
-    type Owned = ContractCostParams;
-    fn into_owned(self) -> ContractCostParams {
-        ContractCostParams(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractCostParamsRef<'_>> for ContractCostParams {
-    #[must_use]
-    fn from(v: &ContractCostParamsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractCostParamsRef<'_>> for ContractCostParams {
-    #[must_use]
-    fn from(v: ContractCostParamsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ContractCostParamsRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
 #[cfg(feature = "const")]
-impl ContractCostParamsRef<'_> {
+impl ContractCostParamsConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -186,7 +155,7 @@ impl ContractCostParamsRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractCostParams`], mirroring `<ContractCostParams as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_cost_params(&mut self, v: &ContractCostParamsRef<'_>) {
+    pub const fn write_type_contract_cost_params(&mut self, v: &ContractCostParamsConst) {
         self.write_type_vec_contract_cost_param_entry(&v.0);
     }
 }

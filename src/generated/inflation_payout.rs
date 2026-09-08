@@ -54,14 +54,6 @@ impl WriteXdr for InflationPayout {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for InflationPayout {
-    type Owned = InflationPayout;
-    fn into_owned(self) -> InflationPayout {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl InflationPayout {
     /// The exact XDR-encoded length of this value, in bytes.
@@ -110,7 +102,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`InflationPayout`], mirroring `<VecM<InflationPayout, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_inflation_payout<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, InflationPayout, MAX>,
+        v: &VecMConst<InflationPayout, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

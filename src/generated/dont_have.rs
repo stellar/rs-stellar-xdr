@@ -55,14 +55,6 @@ impl WriteXdr for DontHave {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for DontHave {
-    type Owned = DontHave;
-    fn into_owned(self) -> DontHave {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl DontHave {
     /// The exact XDR-encoded length of this value, in bytes.

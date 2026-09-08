@@ -136,44 +136,16 @@ impl WriteXdr for TransactionPhase {
     }
 }
 
-/// TransactionPhaseRef is a borrowing equivalent of [`TransactionPhase`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionPhaseConst is a borrowing equivalent of [`TransactionPhase`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionPhaseRef<'a> {
-    V0(VecMRef<'a, TxSetComponentRef<'a>>),
-    V1(ParallelTxsComponentRef<'a>),
+pub enum TransactionPhaseConst {
+    V0(VecMConst<TxSetComponentConst>),
+    V1(ParallelTxsComponentConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionPhaseRef<'_> {
-    type Owned = TransactionPhase;
-    fn into_owned(self) -> TransactionPhase {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionPhaseRef::V0(value) => TransactionPhase::V0(value.into_owned()),
-            TransactionPhaseRef::V1(value) => TransactionPhase::V1(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionPhaseRef<'_>> for TransactionPhase {
-    #[must_use]
-    fn from(v: &TransactionPhaseRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionPhaseRef<'_>> for TransactionPhase {
-    #[must_use]
-    fn from(v: TransactionPhaseRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionPhaseRef<'_> {
+impl TransactionPhaseConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,23 +156,8 @@ impl TransactionPhaseRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionPhaseRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionPhaseRef<'_> {
+impl TransactionPhaseConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,15 +196,15 @@ impl TransactionPhaseRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionPhase`], mirroring `<TransactionPhase as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_phase(&mut self, v: &TransactionPhaseRef<'_>) {
+    pub const fn write_type_transaction_phase(&mut self, v: &TransactionPhaseConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionPhaseRef::V0(value) => {
+            TransactionPhaseConst::V0(value) => {
                 self.write_type_vec_tx_set_component(value);
             }
-            TransactionPhaseRef::V1(value) => {
+            TransactionPhaseConst::V1(value) => {
                 self.write_type_parallel_txs_component(value);
             }
         }
@@ -256,7 +213,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TransactionPhase`], mirroring `<VecM<TransactionPhase, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_transaction_phase<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TransactionPhaseRef<'_>, MAX>,
+        v: &VecMConst<TransactionPhaseConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

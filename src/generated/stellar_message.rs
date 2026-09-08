@@ -342,106 +342,35 @@ impl WriteXdr for StellarMessage {
     }
 }
 
-/// StellarMessageRef is a borrowing equivalent of [`StellarMessage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// StellarMessageConst is a borrowing equivalent of [`StellarMessage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StellarMessageRef<'a> {
-    ErrorMsg(SErrorRef<'a>),
-    Hello(HelloRef<'a>),
+pub enum StellarMessageConst {
+    ErrorMsg(SErrorConst),
+    Hello(HelloConst),
     Auth(Auth),
     DontHave(DontHave),
-    Peers(VecMRef<'a, PeerAddress, 100>),
+    Peers(VecMConst<PeerAddress, 100>),
     GetTxSet(Uint256),
-    TxSet(TransactionSetRef<'a>),
-    GeneralizedTxSet(GeneralizedTransactionSetRef<'a>),
-    Transaction(TransactionEnvelopeRef<'a>),
-    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessageRef<'a>),
-    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessageRef<'a>),
-    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessageRef<'a>),
-    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessageRef<'a>),
+    TxSet(TransactionSetConst),
+    GeneralizedTxSet(GeneralizedTransactionSetConst),
+    Transaction(TransactionEnvelopeConst),
+    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessageConst),
+    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessageConst),
+    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessageConst),
+    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessageConst),
     GetScpQuorumset(Uint256),
-    ScpQuorumset(ScpQuorumSetRef<'a>),
-    ScpMessage(ScpEnvelopeRef<'a>),
+    ScpQuorumset(ScpQuorumSetConst),
+    ScpMessage(ScpEnvelopeConst),
     GetScpState(u32),
     SendMore(SendMore),
     SendMoreExtended(SendMoreExtended),
-    FloodAdvert(FloodAdvertRef<'a>),
-    FloodDemand(FloodDemandRef<'a>),
+    FloodAdvert(FloodAdvertConst),
+    FloodDemand(FloodDemandConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for StellarMessageRef<'_> {
-    type Owned = StellarMessage;
-    fn into_owned(self) -> StellarMessage {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            StellarMessageRef::ErrorMsg(value) => StellarMessage::ErrorMsg(value.into_owned()),
-            StellarMessageRef::Hello(value) => StellarMessage::Hello(value.into_owned()),
-            StellarMessageRef::Auth(value) => StellarMessage::Auth(value.into_owned()),
-            StellarMessageRef::DontHave(value) => StellarMessage::DontHave(value.into_owned()),
-            StellarMessageRef::Peers(value) => StellarMessage::Peers(value.into_owned()),
-            StellarMessageRef::GetTxSet(value) => StellarMessage::GetTxSet(value.into_owned()),
-            StellarMessageRef::TxSet(value) => StellarMessage::TxSet(value.into_owned()),
-            StellarMessageRef::GeneralizedTxSet(value) => {
-                StellarMessage::GeneralizedTxSet(value.into_owned())
-            }
-            StellarMessageRef::Transaction(value) => {
-                StellarMessage::Transaction(value.into_owned())
-            }
-            StellarMessageRef::TimeSlicedSurveyRequest(value) => {
-                StellarMessage::TimeSlicedSurveyRequest(value.into_owned())
-            }
-            StellarMessageRef::TimeSlicedSurveyResponse(value) => {
-                StellarMessage::TimeSlicedSurveyResponse(value.into_owned())
-            }
-            StellarMessageRef::TimeSlicedSurveyStartCollecting(value) => {
-                StellarMessage::TimeSlicedSurveyStartCollecting(value.into_owned())
-            }
-            StellarMessageRef::TimeSlicedSurveyStopCollecting(value) => {
-                StellarMessage::TimeSlicedSurveyStopCollecting(value.into_owned())
-            }
-            StellarMessageRef::GetScpQuorumset(value) => {
-                StellarMessage::GetScpQuorumset(value.into_owned())
-            }
-            StellarMessageRef::ScpQuorumset(value) => {
-                StellarMessage::ScpQuorumset(value.into_owned())
-            }
-            StellarMessageRef::ScpMessage(value) => StellarMessage::ScpMessage(value.into_owned()),
-            StellarMessageRef::GetScpState(value) => {
-                StellarMessage::GetScpState(value.into_owned())
-            }
-            StellarMessageRef::SendMore(value) => StellarMessage::SendMore(value.into_owned()),
-            StellarMessageRef::SendMoreExtended(value) => {
-                StellarMessage::SendMoreExtended(value.into_owned())
-            }
-            StellarMessageRef::FloodAdvert(value) => {
-                StellarMessage::FloodAdvert(value.into_owned())
-            }
-            StellarMessageRef::FloodDemand(value) => {
-                StellarMessage::FloodDemand(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&StellarMessageRef<'_>> for StellarMessage {
-    #[must_use]
-    fn from(v: &StellarMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<StellarMessageRef<'_>> for StellarMessage {
-    #[must_use]
-    fn from(v: StellarMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl StellarMessageRef<'_> {
+impl StellarMessageConst {
     #[must_use]
     pub const fn discriminant(&self) -> MessageType {
         #[allow(clippy::match_same_arms)]
@@ -473,42 +402,8 @@ impl StellarMessageRef<'_> {
     }
 }
 
-impl WriteXdr for StellarMessageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ErrorMsg(v) => v.write_xdr(w)?,
-                Self::Hello(v) => v.write_xdr(w)?,
-                Self::Auth(v) => v.write_xdr(w)?,
-                Self::DontHave(v) => v.write_xdr(w)?,
-                Self::Peers(v) => v.write_xdr(w)?,
-                Self::GetTxSet(v) => v.write_xdr(w)?,
-                Self::TxSet(v) => v.write_xdr(w)?,
-                Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
-                Self::Transaction(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyRequest(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyResponse(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyStartCollecting(v) => v.write_xdr(w)?,
-                Self::TimeSlicedSurveyStopCollecting(v) => v.write_xdr(w)?,
-                Self::GetScpQuorumset(v) => v.write_xdr(w)?,
-                Self::ScpQuorumset(v) => v.write_xdr(w)?,
-                Self::ScpMessage(v) => v.write_xdr(w)?,
-                Self::GetScpState(v) => v.write_xdr(w)?,
-                Self::SendMore(v) => v.write_xdr(w)?,
-                Self::SendMoreExtended(v) => v.write_xdr(w)?,
-                Self::FloodAdvert(v) => v.write_xdr(w)?,
-                Self::FloodDemand(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl StellarMessageRef<'_> {
+impl StellarMessageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -547,72 +442,72 @@ impl StellarMessageRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StellarMessage`], mirroring `<StellarMessage as WriteXdr>::write_xdr`.
-    pub const fn write_type_stellar_message(&mut self, v: &StellarMessageRef<'_>) {
+    pub const fn write_type_stellar_message(&mut self, v: &StellarMessageConst) {
         let d = v.discriminant();
         self.write_type_message_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            StellarMessageRef::ErrorMsg(value) => {
+            StellarMessageConst::ErrorMsg(value) => {
                 self.write_type_s_error(value);
             }
-            StellarMessageRef::Hello(value) => {
+            StellarMessageConst::Hello(value) => {
                 self.write_type_hello(value);
             }
-            StellarMessageRef::Auth(value) => {
+            StellarMessageConst::Auth(value) => {
                 self.write_type_auth(value);
             }
-            StellarMessageRef::DontHave(value) => {
+            StellarMessageConst::DontHave(value) => {
                 self.write_type_dont_have(value);
             }
-            StellarMessageRef::Peers(value) => {
+            StellarMessageConst::Peers(value) => {
                 self.write_type_vec_peer_address(value);
             }
-            StellarMessageRef::GetTxSet(value) => {
+            StellarMessageConst::GetTxSet(value) => {
                 self.write_type_uint256(value);
             }
-            StellarMessageRef::TxSet(value) => {
+            StellarMessageConst::TxSet(value) => {
                 self.write_type_transaction_set(value);
             }
-            StellarMessageRef::GeneralizedTxSet(value) => {
+            StellarMessageConst::GeneralizedTxSet(value) => {
                 self.write_type_generalized_transaction_set(value);
             }
-            StellarMessageRef::Transaction(value) => {
+            StellarMessageConst::Transaction(value) => {
                 self.write_type_transaction_envelope(value);
             }
-            StellarMessageRef::TimeSlicedSurveyRequest(value) => {
+            StellarMessageConst::TimeSlicedSurveyRequest(value) => {
                 self.write_type_signed_time_sliced_survey_request_message(value);
             }
-            StellarMessageRef::TimeSlicedSurveyResponse(value) => {
+            StellarMessageConst::TimeSlicedSurveyResponse(value) => {
                 self.write_type_signed_time_sliced_survey_response_message(value);
             }
-            StellarMessageRef::TimeSlicedSurveyStartCollecting(value) => {
+            StellarMessageConst::TimeSlicedSurveyStartCollecting(value) => {
                 self.write_type_signed_time_sliced_survey_start_collecting_message(value);
             }
-            StellarMessageRef::TimeSlicedSurveyStopCollecting(value) => {
+            StellarMessageConst::TimeSlicedSurveyStopCollecting(value) => {
                 self.write_type_signed_time_sliced_survey_stop_collecting_message(value);
             }
-            StellarMessageRef::GetScpQuorumset(value) => {
+            StellarMessageConst::GetScpQuorumset(value) => {
                 self.write_type_uint256(value);
             }
-            StellarMessageRef::ScpQuorumset(value) => {
+            StellarMessageConst::ScpQuorumset(value) => {
                 self.write_type_scp_quorum_set(value);
             }
-            StellarMessageRef::ScpMessage(value) => {
+            StellarMessageConst::ScpMessage(value) => {
                 self.write_type_scp_envelope(value);
             }
-            StellarMessageRef::GetScpState(value) => {
+            StellarMessageConst::GetScpState(value) => {
                 self.write_u32(*value);
             }
-            StellarMessageRef::SendMore(value) => {
+            StellarMessageConst::SendMore(value) => {
                 self.write_type_send_more(value);
             }
-            StellarMessageRef::SendMoreExtended(value) => {
+            StellarMessageConst::SendMoreExtended(value) => {
                 self.write_type_send_more_extended(value);
             }
-            StellarMessageRef::FloodAdvert(value) => {
+            StellarMessageConst::FloodAdvert(value) => {
                 self.write_type_flood_advert(value);
             }
-            StellarMessageRef::FloodDemand(value) => {
+            StellarMessageConst::FloodDemand(value) => {
                 self.write_type_flood_demand(value);
             }
         }

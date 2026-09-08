@@ -50,54 +50,16 @@ impl WriteXdr for SorobanAuthorizationEntry {
     }
 }
 
-/// SorobanAuthorizationEntryRef is a borrowing equivalent of [`SorobanAuthorizationEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanAuthorizationEntryConst is a borrowing equivalent of [`SorobanAuthorizationEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizationEntryRef<'a> {
-    pub credentials: SorobanCredentialsRef<'a>,
-    pub root_invocation: SorobanAuthorizedInvocationRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizationEntryRef<'_> {
-    type Owned = SorobanAuthorizationEntry;
-    fn into_owned(self) -> SorobanAuthorizationEntry {
-        SorobanAuthorizationEntry {
-            credentials: self.credentials.into_owned(),
-            root_invocation: self.root_invocation.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
-    #[must_use]
-    fn from(v: &SorobanAuthorizationEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanAuthorizationEntryRef<'_>> for SorobanAuthorizationEntry {
-    #[must_use]
-    fn from(v: SorobanAuthorizationEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanAuthorizationEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.credentials.write_xdr(w)?;
-            self.root_invocation.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct SorobanAuthorizationEntryConst {
+    pub credentials: SorobanCredentialsConst,
+    pub root_invocation: SorobanAuthorizedInvocationConst,
 }
 
 #[cfg(feature = "const")]
-impl SorobanAuthorizationEntryRef<'_> {
+impl SorobanAuthorizationEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizationEntry`], mirroring `<SorobanAuthorizationEntry as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorization_entry(
         &mut self,
-        v: &SorobanAuthorizationEntryRef<'_>,
+        v: &SorobanAuthorizationEntryConst,
     ) {
         self.write_type_soroban_credentials(&v.credentials);
         self.write_type_soroban_authorized_invocation(&v.root_invocation);
@@ -147,7 +109,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SorobanAuthorizationEntry`], mirroring `<VecM<SorobanAuthorizationEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_soroban_authorization_entry<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, SorobanAuthorizationEntryRef<'_>, MAX>,
+        v: &VecMConst<SorobanAuthorizationEntryConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

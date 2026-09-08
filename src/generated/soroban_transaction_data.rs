@@ -73,57 +73,17 @@ impl WriteXdr for SorobanTransactionData {
     }
 }
 
-/// SorobanTransactionDataRef is a borrowing equivalent of [`SorobanTransactionData`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanTransactionDataConst is a borrowing equivalent of [`SorobanTransactionData`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanTransactionDataRef<'a> {
-    pub ext: SorobanTransactionDataExtRef<'a>,
-    pub resources: SorobanResourcesRef<'a>,
+pub struct SorobanTransactionDataConst {
+    pub ext: SorobanTransactionDataExtConst,
+    pub resources: SorobanResourcesConst,
     pub resource_fee: i64,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanTransactionDataRef<'_> {
-    type Owned = SorobanTransactionData;
-    fn into_owned(self) -> SorobanTransactionData {
-        SorobanTransactionData {
-            ext: self.ext.into_owned(),
-            resources: self.resources.into_owned(),
-            resource_fee: self.resource_fee.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanTransactionDataRef<'_>> for SorobanTransactionData {
-    #[must_use]
-    fn from(v: &SorobanTransactionDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanTransactionDataRef<'_>> for SorobanTransactionData {
-    #[must_use]
-    fn from(v: SorobanTransactionDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanTransactionDataRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.resources.write_xdr(w)?;
-            self.resource_fee.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SorobanTransactionDataRef<'_> {
+impl SorobanTransactionDataConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -162,7 +122,7 @@ impl SorobanTransactionDataRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanTransactionData`], mirroring `<SorobanTransactionData as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_transaction_data(&mut self, v: &SorobanTransactionDataRef<'_>) {
+    pub const fn write_type_soroban_transaction_data(&mut self, v: &SorobanTransactionDataConst) {
         self.write_type_soroban_transaction_data_ext(&v.ext);
         self.write_type_soroban_resources(&v.resources);
         self.write_i64(v.resource_fee);

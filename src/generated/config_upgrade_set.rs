@@ -45,51 +45,15 @@ impl WriteXdr for ConfigUpgradeSet {
     }
 }
 
-/// ConfigUpgradeSetRef is a borrowing equivalent of [`ConfigUpgradeSet`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ConfigUpgradeSetConst is a borrowing equivalent of [`ConfigUpgradeSet`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ConfigUpgradeSetRef<'a> {
-    pub updated_entry: VecMRef<'a, ConfigSettingEntryRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigUpgradeSetRef<'_> {
-    type Owned = ConfigUpgradeSet;
-    fn into_owned(self) -> ConfigUpgradeSet {
-        ConfigUpgradeSet {
-            updated_entry: self.updated_entry.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
-    #[must_use]
-    fn from(v: &ConfigUpgradeSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ConfigUpgradeSetRef<'_>> for ConfigUpgradeSet {
-    #[must_use]
-    fn from(v: ConfigUpgradeSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ConfigUpgradeSetRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.updated_entry.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ConfigUpgradeSetConst {
+    pub updated_entry: VecMConst<ConfigSettingEntryConst>,
 }
 
 #[cfg(feature = "const")]
-impl ConfigUpgradeSetRef<'_> {
+impl ConfigUpgradeSetConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -128,7 +92,7 @@ impl ConfigUpgradeSetRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ConfigUpgradeSet`], mirroring `<ConfigUpgradeSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_config_upgrade_set(&mut self, v: &ConfigUpgradeSetRef<'_>) {
+    pub const fn write_type_config_upgrade_set(&mut self, v: &ConfigUpgradeSetConst) {
         self.write_type_vec_config_setting_entry(&v.updated_entry);
     }
 }

@@ -129,14 +129,6 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryExtensionV1Ext {
-    type Owned = LedgerEntryExtensionV1Ext;
-    fn into_owned(self) -> LedgerEntryExtensionV1Ext {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerEntryExtensionV1Ext {
     /// The exact XDR-encoded length of this value, in bytes.

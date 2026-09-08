@@ -41,7 +41,7 @@ pub struct DefinitionTemplate {
 #[derive(Template)]
 #[template(path = "const_to_xdr.rs.jinja", escape = "none")]
 pub struct ConstToXdrTemplate {
-    /// The receiver the wrapper is implemented on, e.g. `MemoRef<'_>`.
+    /// The receiver the wrapper is implemented on, e.g. `MemoConst`.
     pub recv: String,
     pub cfg: Option<String>,
     /// The `ConstWriter` method the wrapper calls.
@@ -58,7 +58,7 @@ pub struct ConstWriterMethodOutput {
     pub name: String,
     /// Generic parameters, e.g. `<const MAX: u32>` for the `VecM` methods.
     pub generics: String,
-    /// The type of the value parameter, e.g. `&TransactionRef<'_>`.
+    /// The type of the value parameter, e.g. `&TransactionConst`.
     pub param_type: String,
     pub cfg: Option<String>,
     /// The module the method is emitted into: the one holding the type it
@@ -97,7 +97,8 @@ pub enum ConstWriterBody {
     Enum,
     /// A union: its discriminant, then the payload of the selected arm.
     Union {
-        /// The type matched on: the `Ref` form where the union owns heap data.
+        /// The type matched on: the `Const` form where the union owns heap
+        /// data.
         scrutinee: String,
         discriminant: ConstEncode,
         arms: Vec<ConstUnionArm>,
@@ -143,10 +144,10 @@ pub enum ConstPass {
     Value,
     /// By reference.
     Ref,
-    /// As it is: the value is already a reference, the `Ref` form of a cyclic
-    /// type.
+    /// As it is: the value is already a reference, the `Const` form of a
+    /// cyclic type.
     AsIs,
-    /// As the byte slice a `BytesMRef`/`StringMRef` exposes.
+    /// As the byte slice a `BytesMConst`/`StringMConst` exposes.
     Slice,
 }
 
@@ -166,30 +167,14 @@ pub struct StructOutput {
     pub is_custom_str: bool,
     pub members: Vec<StructMemberOutput>,
     pub member_names: String,
-    /// True when this definition borrows and gets a real `{name}Ref<'a>`.
-    pub emit_ref: bool,
-    /// The full cfg for the real `Ref` struct, gating it to where it borrows.
-    pub ref_cfg: Option<String>,
+    /// True when this definition borrows and gets a real `{name}Const`.
+    pub emit_const: bool,
+    /// The full cfg for the real `Const` struct, gating it to where it
+    /// borrows.
+    pub const_cfg: Option<String>,
     pub cfg: Option<String>,
     /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
     pub const_to_xdr: String,
-}
-
-/// How a `Ref` field borrows to break a type cycle, and so how its conversion
-/// restores the `Box` the owned field holds.
-///
-/// A cycle has to be broken by indirection somewhere: the owned type uses a
-/// `Box` and the `Ref` a reference into data the caller already holds. Only
-/// these fields are boxed, so only their conversions add a `Box`.
-#[derive(Clone, Copy)]
-pub enum CyclicBorrow {
-    /// Not cyclic. The owned field holds the value itself.
-    NotCyclic,
-    /// The `Ref` holds `&'a T` where the owned field holds `Box<T>`.
-    Reference,
-    /// The `Ref` holds `Option<&'a T>` where the owned field holds
-    /// `Option<Box<T>>`.
-    OptionalReference,
 }
 
 pub struct StructMemberOutput {
@@ -200,10 +185,8 @@ pub struct StructMemberOutput {
     /// The correct SEP-51 JSON key when the Rust field name was keyword-escaped
     /// (e.g. `type_` -> JSON `type`). `None` when the name was not escaped.
     pub serde_rename: Option<String>,
-    /// The member's type in the borrowing `Ref` form of the parent type.
-    pub ref_type: String,
-    /// Whether the member borrows to break a cycle, and so needs boxing.
-    pub cyclic: CyclicBorrow,
+    /// The member's type in the borrowing `Const` form of the parent type.
+    pub const_type: String,
 }
 
 pub struct EnumOutput {
@@ -231,12 +214,12 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
-    /// True when a real `{name}Ref<'a>` enum is emitted, i.e. some arm borrows.
-    pub emit_ref: bool,
-    /// The full cfg for the real `Ref` enum. When every borrowing arm is behind
-    /// a cfg, this is the union's cfg combined with the disjunction of those
-    /// arm cfgs, so the enum only exists where its lifetime is actually used.
-    pub ref_cfg: Option<String>,
+    /// True when a real `{name}Const` enum is emitted, i.e. some arm borrows.
+    pub emit_const: bool,
+    /// The full cfg for the real `Const` enum. When every borrowing arm is
+    /// behind a cfg, this is the union's cfg combined with the disjunction of
+    /// those arm cfgs, so the enum only exists where it is actually needed.
+    pub const_cfg: Option<String>,
     pub cfg: Option<String>,
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
@@ -252,10 +235,9 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
-    /// The arm's payload type in the borrowing `Ref` form of the parent type.
-    pub ref_type: Option<String>,
-    /// Whether the payload borrows to break a cycle, and so needs boxing.
-    pub cyclic: CyclicBorrow,
+    /// The arm's payload type in the borrowing `Const` form of the parent
+    /// type.
+    pub const_type: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -282,14 +264,13 @@ pub struct TypedefNewtypeOutput {
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
-    /// True when this definition borrows and gets a real `{name}Ref<'a>`.
-    pub emit_ref: bool,
-    /// The full cfg for the real `Ref` newtype, gating it to where it borrows.
-    pub ref_cfg: Option<String>,
-    /// The inner type in the borrowing `Ref` form of the newtype.
-    pub ref_type: String,
-    /// Whether the inner value borrows to break a cycle, and so needs boxing.
-    pub cyclic: CyclicBorrow,
+    /// True when this definition borrows and gets a real `{name}Const`.
+    pub emit_const: bool,
+    /// The full cfg for the real `Const` newtype, gating it to where it
+    /// borrows.
+    pub const_cfg: Option<String>,
+    /// The inner type in the borrowing `Const` form of the newtype.
+    pub const_type: String,
     pub cfg: Option<String>,
     /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
     pub const_to_xdr: String,

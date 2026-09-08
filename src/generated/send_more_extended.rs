@@ -50,14 +50,6 @@ impl WriteXdr for SendMoreExtended {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SendMoreExtended {
-    type Owned = SendMoreExtended;
-    fn into_owned(self) -> SendMoreExtended {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SendMoreExtended {
     /// The exact XDR-encoded length of this value, in bytes.

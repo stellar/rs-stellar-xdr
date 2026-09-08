@@ -54,54 +54,16 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     }
 }
 
-/// TxSetComponentTxsMaybeDiscountedFeeRef is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TxSetComponentTxsMaybeDiscountedFeeConst is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxSetComponentTxsMaybeDiscountedFeeRef<'a> {
+pub struct TxSetComponentTxsMaybeDiscountedFeeConst {
     pub base_fee: Option<i64>,
-    pub txs: VecMRef<'a, TransactionEnvelopeRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
-    type Owned = TxSetComponentTxsMaybeDiscountedFee;
-    fn into_owned(self) -> TxSetComponentTxsMaybeDiscountedFee {
-        TxSetComponentTxsMaybeDiscountedFee {
-            base_fee: self.base_fee.into_owned(),
-            txs: self.txs.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
-    #[must_use]
-    fn from(v: &TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TxSetComponentTxsMaybeDiscountedFeeRef<'_>> for TxSetComponentTxsMaybeDiscountedFee {
-    #[must_use]
-    fn from(v: TxSetComponentTxsMaybeDiscountedFeeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.base_fee.write_xdr(w)?;
-            self.txs.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub txs: VecMConst<TransactionEnvelopeConst>,
 }
 
 #[cfg(feature = "const")]
-impl TxSetComponentTxsMaybeDiscountedFeeRef<'_> {
+impl TxSetComponentTxsMaybeDiscountedFeeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +104,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TxSetComponentTxsMaybeDiscountedFee`], mirroring `<TxSetComponentTxsMaybeDiscountedFee as WriteXdr>::write_xdr`.
     pub const fn write_type_tx_set_component_txs_maybe_discounted_fee(
         &mut self,
-        v: &TxSetComponentTxsMaybeDiscountedFeeRef<'_>,
+        v: &TxSetComponentTxsMaybeDiscountedFeeConst,
     ) {
         self.write_option_i64(&v.base_fee);
         self.write_type_vec_transaction_envelope(&v.txs);

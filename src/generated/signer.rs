@@ -50,54 +50,16 @@ impl WriteXdr for Signer {
     }
 }
 
-/// SignerRef is a borrowing equivalent of [`Signer`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SignerConst is a borrowing equivalent of [`Signer`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignerRef<'a> {
-    pub key: SignerKeyRef<'a>,
+pub struct SignerConst {
+    pub key: SignerKeyConst,
     pub weight: u32,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignerRef<'_> {
-    type Owned = Signer;
-    fn into_owned(self) -> Signer {
-        Signer {
-            key: self.key.into_owned(),
-            weight: self.weight.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SignerRef<'_>> for Signer {
-    #[must_use]
-    fn from(v: &SignerRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SignerRef<'_>> for Signer {
-    #[must_use]
-    fn from(v: SignerRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SignerRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.key.write_xdr(w)?;
-            self.weight.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SignerRef<'_> {
+impl SignerConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,13 +98,13 @@ impl SignerRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Signer`], mirroring `<Signer as WriteXdr>::write_xdr`.
-    pub const fn write_type_signer(&mut self, v: &SignerRef<'_>) {
+    pub const fn write_type_signer(&mut self, v: &SignerConst) {
         self.write_type_signer_key(&v.key);
         self.write_u32(v.weight);
     }
 
     /// Serializes an optional [`Signer`], mirroring `<Option<Signer> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_signer(&mut self, v: &Option<SignerRef<'_>>) {
+    pub const fn write_type_option_signer(&mut self, v: &Option<SignerConst>) {
         match v {
             Some(v) => {
                 self.write_u32(1);
@@ -155,10 +117,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`Signer`], mirroring `<VecM<Signer, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_signer<const MAX: u32>(
-        &mut self,
-        v: &VecMRef<'_, SignerRef<'_>, MAX>,
-    ) {
+    pub const fn write_type_vec_signer<const MAX: u32>(&mut self, v: &VecMConst<SignerConst, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

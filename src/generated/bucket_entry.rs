@@ -155,48 +155,18 @@ impl WriteXdr for BucketEntry {
     }
 }
 
-/// BucketEntryRef is a borrowing equivalent of [`BucketEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// BucketEntryConst is a borrowing equivalent of [`BucketEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum BucketEntryRef<'a> {
-    Liveentry(LedgerEntryRef<'a>),
-    Initentry(LedgerEntryRef<'a>),
-    Deadentry(LedgerKeyRef<'a>),
+pub enum BucketEntryConst {
+    Liveentry(LedgerEntryConst),
+    Initentry(LedgerEntryConst),
+    Deadentry(LedgerKeyConst),
     Metaentry(BucketMetadata),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BucketEntryRef<'_> {
-    type Owned = BucketEntry;
-    fn into_owned(self) -> BucketEntry {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            BucketEntryRef::Liveentry(value) => BucketEntry::Liveentry(value.into_owned()),
-            BucketEntryRef::Initentry(value) => BucketEntry::Initentry(value.into_owned()),
-            BucketEntryRef::Deadentry(value) => BucketEntry::Deadentry(value.into_owned()),
-            BucketEntryRef::Metaentry(value) => BucketEntry::Metaentry(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&BucketEntryRef<'_>> for BucketEntry {
-    #[must_use]
-    fn from(v: &BucketEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<BucketEntryRef<'_>> for BucketEntry {
-    #[must_use]
-    fn from(v: BucketEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl BucketEntryRef<'_> {
+impl BucketEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> BucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -209,25 +179,8 @@ impl BucketEntryRef<'_> {
     }
 }
 
-impl WriteXdr for BucketEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Liveentry(v) => v.write_xdr(w)?,
-                Self::Initentry(v) => v.write_xdr(w)?,
-                Self::Deadentry(v) => v.write_xdr(w)?,
-                Self::Metaentry(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl BucketEntryRef<'_> {
+impl BucketEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -266,21 +219,21 @@ impl BucketEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`BucketEntry`], mirroring `<BucketEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_bucket_entry(&mut self, v: &BucketEntryRef<'_>) {
+    pub const fn write_type_bucket_entry(&mut self, v: &BucketEntryConst) {
         let d = v.discriminant();
         self.write_type_bucket_entry_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            BucketEntryRef::Liveentry(value) => {
+            BucketEntryConst::Liveentry(value) => {
                 self.write_type_ledger_entry(value);
             }
-            BucketEntryRef::Initentry(value) => {
+            BucketEntryConst::Initentry(value) => {
                 self.write_type_ledger_entry(value);
             }
-            BucketEntryRef::Deadentry(value) => {
+            BucketEntryConst::Deadentry(value) => {
                 self.write_type_ledger_key(value);
             }
-            BucketEntryRef::Metaentry(value) => {
+            BucketEntryConst::Metaentry(value) => {
                 self.write_type_bucket_metadata(value);
             }
         }

@@ -50,54 +50,16 @@ impl WriteXdr for ManageDataOp {
     }
 }
 
-/// ManageDataOpRef is a borrowing equivalent of [`ManageDataOp`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ManageDataOpConst is a borrowing equivalent of [`ManageDataOp`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ManageDataOpRef<'a> {
-    pub data_name: String64Ref<'a>,
-    pub data_value: Option<DataValueRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageDataOpRef<'_> {
-    type Owned = ManageDataOp;
-    fn into_owned(self) -> ManageDataOp {
-        ManageDataOp {
-            data_name: self.data_name.into_owned(),
-            data_value: self.data_value.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ManageDataOpRef<'_>> for ManageDataOp {
-    #[must_use]
-    fn from(v: &ManageDataOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ManageDataOpRef<'_>> for ManageDataOp {
-    #[must_use]
-    fn from(v: ManageDataOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ManageDataOpRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.data_name.write_xdr(w)?;
-            self.data_value.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ManageDataOpConst {
+    pub data_name: String64Const,
+    pub data_value: Option<DataValueConst>,
 }
 
 #[cfg(feature = "const")]
-impl ManageDataOpRef<'_> {
+impl ManageDataOpConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ManageDataOpRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ManageDataOp`], mirroring `<ManageDataOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_manage_data_op(&mut self, v: &ManageDataOpRef<'_>) {
+    pub const fn write_type_manage_data_op(&mut self, v: &ManageDataOpConst) {
         self.write_type_string64(&v.data_name);
         self.write_type_option_data_value(&v.data_value);
     }

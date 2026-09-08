@@ -90,57 +90,17 @@ impl WriteXdr for ScpStatement {
     }
 }
 
-/// ScpStatementRef is a borrowing equivalent of [`ScpStatement`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpStatementConst is a borrowing equivalent of [`ScpStatement`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementRef<'a> {
+pub struct ScpStatementConst {
     pub node_id: NodeId,
     pub slot_index: u64,
-    pub pledges: ScpStatementPledgesRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementRef<'_> {
-    type Owned = ScpStatement;
-    fn into_owned(self) -> ScpStatement {
-        ScpStatement {
-            node_id: self.node_id.into_owned(),
-            slot_index: self.slot_index.into_owned(),
-            pledges: self.pledges.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpStatementRef<'_>> for ScpStatement {
-    #[must_use]
-    fn from(v: &ScpStatementRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpStatementRef<'_>> for ScpStatement {
-    #[must_use]
-    fn from(v: ScpStatementRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpStatementRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.node_id.write_xdr(w)?;
-            self.slot_index.write_xdr(w)?;
-            self.pledges.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub pledges: ScpStatementPledgesConst,
 }
 
 #[cfg(feature = "const")]
-impl ScpStatementRef<'_> {
+impl ScpStatementConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -179,7 +139,7 @@ impl ScpStatementRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatement`], mirroring `<ScpStatement as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement(&mut self, v: &ScpStatementRef<'_>) {
+    pub const fn write_type_scp_statement(&mut self, v: &ScpStatementConst) {
         self.write_type_node_id(&v.node_id);
         self.write_u64(v.slot_index);
         self.write_type_scp_statement_pledges(&v.pledges);

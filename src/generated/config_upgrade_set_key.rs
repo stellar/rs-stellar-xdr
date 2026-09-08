@@ -49,14 +49,6 @@ impl WriteXdr for ConfigUpgradeSetKey {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigUpgradeSetKey {
-    type Owned = ConfigUpgradeSetKey;
-    fn into_owned(self) -> ConfigUpgradeSetKey {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ConfigUpgradeSetKey {
     /// The exact XDR-encoded length of this value, in bytes.

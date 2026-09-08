@@ -140,14 +140,6 @@ impl WriteXdr for ScpStatementType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementType {
-    type Owned = ScpStatementType;
-    fn into_owned(self) -> ScpStatementType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScpStatementType {
     /// The exact XDR-encoded length of this value, in bytes.

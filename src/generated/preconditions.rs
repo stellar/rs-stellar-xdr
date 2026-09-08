@@ -147,46 +147,17 @@ impl WriteXdr for Preconditions {
     }
 }
 
-/// PreconditionsRef is a borrowing equivalent of [`Preconditions`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PreconditionsConst is a borrowing equivalent of [`Preconditions`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PreconditionsRef<'a> {
+pub enum PreconditionsConst {
     None,
     Time(TimeBounds),
-    V2(PreconditionsV2Ref<'a>),
+    V2(PreconditionsV2Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PreconditionsRef<'_> {
-    type Owned = Preconditions;
-    fn into_owned(self) -> Preconditions {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            PreconditionsRef::None => Preconditions::None,
-            PreconditionsRef::Time(value) => Preconditions::Time(value.into_owned()),
-            PreconditionsRef::V2(value) => Preconditions::V2(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PreconditionsRef<'_>> for Preconditions {
-    #[must_use]
-    fn from(v: &PreconditionsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PreconditionsRef<'_>> for Preconditions {
-    #[must_use]
-    fn from(v: PreconditionsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl PreconditionsRef<'_> {
+impl PreconditionsConst {
     #[must_use]
     pub const fn discriminant(&self) -> PreconditionType {
         #[allow(clippy::match_same_arms)]
@@ -198,24 +169,8 @@ impl PreconditionsRef<'_> {
     }
 }
 
-impl WriteXdr for PreconditionsRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::None => ().write_xdr(w)?,
-                Self::Time(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl PreconditionsRef<'_> {
+impl PreconditionsConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -254,16 +209,16 @@ impl PreconditionsRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Preconditions`], mirroring `<Preconditions as WriteXdr>::write_xdr`.
-    pub const fn write_type_preconditions(&mut self, v: &PreconditionsRef<'_>) {
+    pub const fn write_type_preconditions(&mut self, v: &PreconditionsConst) {
         let d = v.discriminant();
         self.write_type_precondition_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PreconditionsRef::None => {}
-            PreconditionsRef::Time(value) => {
+            PreconditionsConst::None => {}
+            PreconditionsConst::Time(value) => {
                 self.write_type_time_bounds(value);
             }
-            PreconditionsRef::V2(value) => {
+            PreconditionsConst::V2(value) => {
                 self.write_type_preconditions_v2(value);
             }
         }

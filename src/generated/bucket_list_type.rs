@@ -127,14 +127,6 @@ impl WriteXdr for BucketListType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BucketListType {
-    type Owned = BucketListType;
-    fn into_owned(self) -> BucketListType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl BucketListType {
     /// The exact XDR-encoded length of this value, in bytes.

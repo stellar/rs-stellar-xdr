@@ -104,14 +104,6 @@ impl AsRef<[u8]> for AssetCode4 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AssetCode4 {
-    type Owned = AssetCode4;
-    fn into_owned(self) -> AssetCode4 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AssetCode4 {
     /// The exact XDR-encoded length of this value, in bytes.

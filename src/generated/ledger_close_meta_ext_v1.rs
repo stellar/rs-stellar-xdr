@@ -54,14 +54,6 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaExtV1 {
-    type Owned = LedgerCloseMetaExtV1;
-    fn into_owned(self) -> LedgerCloseMetaExtV1 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerCloseMetaExtV1 {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -190,14 +190,6 @@ impl WriteXdr for SetOptionsResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SetOptionsResultCode {
-    type Owned = SetOptionsResultCode;
-    fn into_owned(self) -> SetOptionsResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SetOptionsResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

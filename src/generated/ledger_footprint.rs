@@ -50,54 +50,16 @@ impl WriteXdr for LedgerFootprint {
     }
 }
 
-/// LedgerFootprintRef is a borrowing equivalent of [`LedgerFootprint`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerFootprintConst is a borrowing equivalent of [`LedgerFootprint`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerFootprintRef<'a> {
-    pub read_only: VecMRef<'a, LedgerKeyRef<'a>>,
-    pub read_write: VecMRef<'a, LedgerKeyRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerFootprintRef<'_> {
-    type Owned = LedgerFootprint;
-    fn into_owned(self) -> LedgerFootprint {
-        LedgerFootprint {
-            read_only: self.read_only.into_owned(),
-            read_write: self.read_write.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerFootprintRef<'_>> for LedgerFootprint {
-    #[must_use]
-    fn from(v: &LedgerFootprintRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerFootprintRef<'_>> for LedgerFootprint {
-    #[must_use]
-    fn from(v: LedgerFootprintRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerFootprintRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.read_only.write_xdr(w)?;
-            self.read_write.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct LedgerFootprintConst {
+    pub read_only: VecMConst<LedgerKeyConst>,
+    pub read_write: VecMConst<LedgerKeyConst>,
 }
 
 #[cfg(feature = "const")]
-impl LedgerFootprintRef<'_> {
+impl LedgerFootprintConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl LedgerFootprintRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerFootprint`], mirroring `<LedgerFootprint as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_footprint(&mut self, v: &LedgerFootprintRef<'_>) {
+    pub const fn write_type_ledger_footprint(&mut self, v: &LedgerFootprintConst) {
         self.write_type_vec_ledger_key(&v.read_only);
         self.write_type_vec_ledger_key(&v.read_write);
     }

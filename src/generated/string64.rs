@@ -108,44 +108,13 @@ impl AsRef<[u8]> for String64 {
     }
 }
 
-/// String64Ref is a borrowing equivalent of [`String64`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// String64Const is a borrowing equivalent of [`String64`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct String64Ref<'a>(pub StringMRef<'a, 64>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for String64Ref<'_> {
-    type Owned = String64;
-    fn into_owned(self) -> String64 {
-        String64(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&String64Ref<'_>> for String64 {
-    #[must_use]
-    fn from(v: &String64Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<String64Ref<'_>> for String64 {
-    #[must_use]
-    fn from(v: String64Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for String64Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct String64Const(pub StringMConst<64>);
 
 #[cfg(feature = "const")]
-impl String64Ref<'_> {
+impl String64Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl String64Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`String64`], mirroring `<String64 as WriteXdr>::write_xdr`.
-    pub const fn write_type_string64(&mut self, v: &String64Ref<'_>) {
+    pub const fn write_type_string64(&mut self, v: &String64Const) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

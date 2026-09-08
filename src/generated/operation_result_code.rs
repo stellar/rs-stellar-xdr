@@ -164,14 +164,6 @@ impl WriteXdr for OperationResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationResultCode {
-    type Owned = OperationResultCode;
-    fn into_owned(self) -> OperationResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl OperationResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

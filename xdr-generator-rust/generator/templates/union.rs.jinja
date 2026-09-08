@@ -1,4 +1,3 @@
-{%- import "into_owned.rs.jinja" as into_owned %}
 /// {{ u.name }}{{ u.source_comment }}
 // union with discriminant {{ u.discriminant_type }}
 {%- if let Some(cfg) = u.cfg %}
@@ -227,16 +226,16 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
-{%- if u.emit_ref %}
+{%- if u.emit_const %}
 
-/// {{ u.name }}Ref is a borrowing equivalent of [`{{ u.name }}`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = u.ref_cfg %}
+/// {{ u.name }}Const is a borrowing equivalent of [`{{ u.name }}`] over `'static`
+/// data, for const XDR encoding.
+{%- if let Some(cfg) = u.const_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum {{ u.name }}Ref<'a> {
+pub enum {{ u.name }}Const {
 {%- for arm in u.arms %}
 {%- if let Some(cfg) = arm.cfg %}
     #[cfg({{ cfg }})]
@@ -244,67 +243,15 @@ pub enum {{ u.name }}Ref<'a> {
 {%- if arm.is_void %}
     {{ arm.case_name }},
 {%- else %}
-    {{ arm.case_name }}({{ arm.ref_type.as_ref().unwrap() }}),
+    {{ arm.case_name }}({{ arm.const_type.as_ref().unwrap() }}),
 {%- endif %}
 {%- endfor %}
 }
 
-{% if let Some(cfg) = u.ref_cfg -%}
+{% if let Some(cfg) = u.const_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
-#[cfg(feature = "alloc")]
-impl IntoOwned for {{ u.name }}Ref<'_> {
-    type Owned = {{ u.name }};
-    fn into_owned(self) -> {{ u.name }} {
-        #[allow(clippy::match_same_arms)]
-        match self {
-{%- for arm in u.arms %}
-{%- if let Some(cfg) = arm.cfg %}
-            #[cfg({{ cfg }})]
-{%- endif %}
-{%- if arm.is_void %}
-            {{ u.name }}Ref::{{ arm.case_name }} => {{ u.name }}::{{ arm.case_name }},
-{%- else %}
-{%- match arm.cyclic %}
-{%- when CyclicBorrow::NotCyclic %}
-            {{ u.name }}Ref::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.into_owned()),
-{%- when CyclicBorrow::Reference %}
-            {{ u.name }}Ref::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(Box::new(value.into_owned())),
-{%- when CyclicBorrow::OptionalReference %}
-            {{ u.name }}Ref::{{ arm.case_name }}(value) => {{ u.name }}::{{ arm.case_name }}(value.map(|v| Box::new(v.into_owned()))),
-{%- endmatch %}
-{%- endif %}
-{%- endfor %}
-        }
-    }
-}
-
-{% if let Some(cfg) = u.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl From<&{{ u.name }}Ref<'_>> for {{ u.name }} {
-    #[must_use]
-    fn from(v: &{{ u.name }}Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-{% if let Some(cfg) = u.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl From<{{ u.name }}Ref<'_>> for {{ u.name }} {
-    #[must_use]
-    fn from(v: {{ u.name }}Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-{% if let Some(cfg) = u.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-impl {{ u.name }}Ref<'_> {
+impl {{ u.name }}Const {
     #[must_use]
     pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
         #[allow(clippy::match_same_arms)]
@@ -322,35 +269,6 @@ impl {{ u.name }}Ref<'_> {
         }
     }
 }
-
-{% if let Some(cfg) = u.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-impl WriteXdr for {{ u.name }}Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-{%- for arm in u.arms %}
-{%- if let Some(cfg) = arm.cfg %}
-                #[cfg({{ cfg }})]
-{%- endif %}
-{%- if arm.is_void %}
-                Self::{{ arm.case_name }} => ().write_xdr(w)?,
-{%- else %}
-                Self::{{ arm.case_name }}(v) => v.write_xdr(w)?,
-{%- endif %}
-{%- endfor %}
-            };
-            Ok(())
-        })
-    }
-}
-{%- endif %}
-{%- if !u.emit_ref %}
-{% call into_owned::identity(u.name, u.cfg) %}
 {%- endif %}
 
 {{ u.const_to_xdr }}

@@ -50,14 +50,6 @@ impl WriteXdr for AlphaNum4 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AlphaNum4 {
-    type Owned = AlphaNum4;
-    fn into_owned(self) -> AlphaNum4 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AlphaNum4 {
     /// The exact XDR-encoded length of this value, in bytes.

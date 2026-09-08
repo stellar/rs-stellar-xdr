@@ -130,14 +130,6 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionCaseV0Kind {
-    type Owned = ScSpecUdtUnionCaseV0Kind;
-    fn into_owned(self) -> ScSpecUdtUnionCaseV0Kind {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScSpecUdtUnionCaseV0Kind {
     /// The exact XDR-encoded length of this value, in bytes.

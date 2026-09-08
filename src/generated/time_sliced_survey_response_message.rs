@@ -50,54 +50,16 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
     }
 }
 
-/// TimeSlicedSurveyResponseMessageRef is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TimeSlicedSurveyResponseMessageConst is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedSurveyResponseMessageRef<'a> {
-    pub response: SurveyResponseMessageRef<'a>,
+pub struct TimeSlicedSurveyResponseMessageConst {
+    pub response: SurveyResponseMessageConst,
     pub nonce: u32,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedSurveyResponseMessageRef<'_> {
-    type Owned = TimeSlicedSurveyResponseMessage;
-    fn into_owned(self) -> TimeSlicedSurveyResponseMessage {
-        TimeSlicedSurveyResponseMessage {
-            response: self.response.into_owned(),
-            nonce: self.nonce.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
-    #[must_use]
-    fn from(v: &TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TimeSlicedSurveyResponseMessageRef<'_>> for TimeSlicedSurveyResponseMessage {
-    #[must_use]
-    fn from(v: TimeSlicedSurveyResponseMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TimeSlicedSurveyResponseMessageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.response.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TimeSlicedSurveyResponseMessageRef<'_> {
+impl TimeSlicedSurveyResponseMessageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TimeSlicedSurveyResponseMessage`], mirroring `<TimeSlicedSurveyResponseMessage as WriteXdr>::write_xdr`.
     pub const fn write_type_time_sliced_survey_response_message(
         &mut self,
-        v: &TimeSlicedSurveyResponseMessageRef<'_>,
+        v: &TimeSlicedSurveyResponseMessageConst,
     ) {
         self.write_type_survey_response_message(&v.response);
         self.write_u32(v.nonce);

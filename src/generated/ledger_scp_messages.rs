@@ -50,54 +50,16 @@ impl WriteXdr for LedgerScpMessages {
     }
 }
 
-/// LedgerScpMessagesRef is a borrowing equivalent of [`LedgerScpMessages`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerScpMessagesConst is a borrowing equivalent of [`LedgerScpMessages`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerScpMessagesRef<'a> {
+pub struct LedgerScpMessagesConst {
     pub ledger_seq: u32,
-    pub messages: VecMRef<'a, ScpEnvelopeRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerScpMessagesRef<'_> {
-    type Owned = LedgerScpMessages;
-    fn into_owned(self) -> LedgerScpMessages {
-        LedgerScpMessages {
-            ledger_seq: self.ledger_seq.into_owned(),
-            messages: self.messages.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerScpMessagesRef<'_>> for LedgerScpMessages {
-    #[must_use]
-    fn from(v: &LedgerScpMessagesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerScpMessagesRef<'_>> for LedgerScpMessages {
-    #[must_use]
-    fn from(v: LedgerScpMessagesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerScpMessagesRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_seq.write_xdr(w)?;
-            self.messages.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub messages: VecMConst<ScpEnvelopeConst>,
 }
 
 #[cfg(feature = "const")]
-impl LedgerScpMessagesRef<'_> {
+impl LedgerScpMessagesConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl LedgerScpMessagesRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerScpMessages`], mirroring `<LedgerScpMessages as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_scp_messages(&mut self, v: &LedgerScpMessagesRef<'_>) {
+    pub const fn write_type_ledger_scp_messages(&mut self, v: &LedgerScpMessagesConst) {
         self.write_u32(v.ledger_seq);
         self.write_type_vec_scp_envelope(&v.messages);
     }

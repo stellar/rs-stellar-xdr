@@ -239,12 +239,12 @@ impl WriteXdr for OperationResult {
     }
 }
 
-/// OperationResultRef is a borrowing equivalent of [`OperationResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// OperationResultConst is a borrowing equivalent of [`OperationResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum OperationResultRef<'a> {
-    OpInner(OperationResultTrRef<'a>),
+pub enum OperationResultConst {
+    OpInner(OperationResultTrConst),
     OpBadAuth,
     OpNoAccount,
     OpNotSupported,
@@ -253,40 +253,7 @@ pub enum OperationResultRef<'a> {
     OpTooManySponsoring,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationResultRef<'_> {
-    type Owned = OperationResult;
-    fn into_owned(self) -> OperationResult {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            OperationResultRef::OpInner(value) => OperationResult::OpInner(value.into_owned()),
-            OperationResultRef::OpBadAuth => OperationResult::OpBadAuth,
-            OperationResultRef::OpNoAccount => OperationResult::OpNoAccount,
-            OperationResultRef::OpNotSupported => OperationResult::OpNotSupported,
-            OperationResultRef::OpTooManySubentries => OperationResult::OpTooManySubentries,
-            OperationResultRef::OpExceededWorkLimit => OperationResult::OpExceededWorkLimit,
-            OperationResultRef::OpTooManySponsoring => OperationResult::OpTooManySponsoring,
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&OperationResultRef<'_>> for OperationResult {
-    #[must_use]
-    fn from(v: &OperationResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<OperationResultRef<'_>> for OperationResult {
-    #[must_use]
-    fn from(v: OperationResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl OperationResultRef<'_> {
+impl OperationResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> OperationResultCode {
         #[allow(clippy::match_same_arms)]
@@ -302,28 +269,8 @@ impl OperationResultRef<'_> {
     }
 }
 
-impl WriteXdr for OperationResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::OpInner(v) => v.write_xdr(w)?,
-                Self::OpBadAuth => ().write_xdr(w)?,
-                Self::OpNoAccount => ().write_xdr(w)?,
-                Self::OpNotSupported => ().write_xdr(w)?,
-                Self::OpTooManySubentries => ().write_xdr(w)?,
-                Self::OpExceededWorkLimit => ().write_xdr(w)?,
-                Self::OpTooManySponsoring => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl OperationResultRef<'_> {
+impl OperationResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -362,27 +309,27 @@ impl OperationResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationResult`], mirroring `<OperationResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_result(&mut self, v: &OperationResultRef<'_>) {
+    pub const fn write_type_operation_result(&mut self, v: &OperationResultConst) {
         let d = v.discriminant();
         self.write_type_operation_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationResultRef::OpInner(value) => {
+            OperationResultConst::OpInner(value) => {
                 self.write_type_operation_result_tr(value);
             }
-            OperationResultRef::OpBadAuth => {}
-            OperationResultRef::OpNoAccount => {}
-            OperationResultRef::OpNotSupported => {}
-            OperationResultRef::OpTooManySubentries => {}
-            OperationResultRef::OpExceededWorkLimit => {}
-            OperationResultRef::OpTooManySponsoring => {}
+            OperationResultConst::OpBadAuth => {}
+            OperationResultConst::OpNoAccount => {}
+            OperationResultConst::OpNotSupported => {}
+            OperationResultConst::OpTooManySubentries => {}
+            OperationResultConst::OpExceededWorkLimit => {}
+            OperationResultConst::OpTooManySponsoring => {}
         }
     }
 
     /// Serializes a variable-length array of [`OperationResult`], mirroring `<VecM<OperationResult, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation_result<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, OperationResultRef<'_>, MAX>,
+        v: &VecMConst<OperationResultConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

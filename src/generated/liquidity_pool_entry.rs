@@ -65,14 +65,6 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LiquidityPoolEntry {
-    type Owned = LiquidityPoolEntry;
-    fn into_owned(self) -> LiquidityPoolEntry {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LiquidityPoolEntry {
     /// The exact XDR-encoded length of this value, in bytes.

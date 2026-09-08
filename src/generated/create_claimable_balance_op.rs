@@ -58,57 +58,17 @@ impl WriteXdr for CreateClaimableBalanceOp {
     }
 }
 
-/// CreateClaimableBalanceOpRef is a borrowing equivalent of [`CreateClaimableBalanceOp`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// CreateClaimableBalanceOpConst is a borrowing equivalent of [`CreateClaimableBalanceOp`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct CreateClaimableBalanceOpRef<'a> {
+pub struct CreateClaimableBalanceOpConst {
     pub asset: Asset,
     pub amount: i64,
-    pub claimants: VecMRef<'a, ClaimantRef<'a>, 10>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for CreateClaimableBalanceOpRef<'_> {
-    type Owned = CreateClaimableBalanceOp;
-    fn into_owned(self) -> CreateClaimableBalanceOp {
-        CreateClaimableBalanceOp {
-            asset: self.asset.into_owned(),
-            amount: self.amount.into_owned(),
-            claimants: self.claimants.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
-    #[must_use]
-    fn from(v: &CreateClaimableBalanceOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<CreateClaimableBalanceOpRef<'_>> for CreateClaimableBalanceOp {
-    #[must_use]
-    fn from(v: CreateClaimableBalanceOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for CreateClaimableBalanceOpRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.asset.write_xdr(w)?;
-            self.amount.write_xdr(w)?;
-            self.claimants.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub claimants: VecMConst<ClaimantConst, 10>,
 }
 
 #[cfg(feature = "const")]
-impl CreateClaimableBalanceOpRef<'_> {
+impl CreateClaimableBalanceOpConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -149,7 +109,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`CreateClaimableBalanceOp`], mirroring `<CreateClaimableBalanceOp as WriteXdr>::write_xdr`.
     pub const fn write_type_create_claimable_balance_op(
         &mut self,
-        v: &CreateClaimableBalanceOpRef<'_>,
+        v: &CreateClaimableBalanceOpConst,
     ) {
         self.write_type_asset(&v.asset);
         self.write_i64(v.amount);

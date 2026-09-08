@@ -46,14 +46,6 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClawbackClaimableBalanceOp {
-    type Owned = ClawbackClaimableBalanceOp;
-    fn into_owned(self) -> ClawbackClaimableBalanceOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClawbackClaimableBalanceOp {
     /// The exact XDR-encoded length of this value, in bytes.

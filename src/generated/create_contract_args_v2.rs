@@ -55,57 +55,17 @@ impl WriteXdr for CreateContractArgsV2 {
     }
 }
 
-/// CreateContractArgsV2Ref is a borrowing equivalent of [`CreateContractArgsV2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// CreateContractArgsV2Const is a borrowing equivalent of [`CreateContractArgsV2`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct CreateContractArgsV2Ref<'a> {
+pub struct CreateContractArgsV2Const {
     pub contract_id_preimage: ContractIdPreimage,
-    pub executable: ContractExecutableRef<'a>,
-    pub constructor_args: VecMRef<'a, ScValRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for CreateContractArgsV2Ref<'_> {
-    type Owned = CreateContractArgsV2;
-    fn into_owned(self) -> CreateContractArgsV2 {
-        CreateContractArgsV2 {
-            contract_id_preimage: self.contract_id_preimage.into_owned(),
-            executable: self.executable.into_owned(),
-            constructor_args: self.constructor_args.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
-    #[must_use]
-    fn from(v: &CreateContractArgsV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<CreateContractArgsV2Ref<'_>> for CreateContractArgsV2 {
-    #[must_use]
-    fn from(v: CreateContractArgsV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for CreateContractArgsV2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.contract_id_preimage.write_xdr(w)?;
-            self.executable.write_xdr(w)?;
-            self.constructor_args.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub executable: ContractExecutableConst,
+    pub constructor_args: VecMConst<ScValConst>,
 }
 
 #[cfg(feature = "const")]
-impl CreateContractArgsV2Ref<'_> {
+impl CreateContractArgsV2Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -144,7 +104,7 @@ impl CreateContractArgsV2Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`CreateContractArgsV2`], mirroring `<CreateContractArgsV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_create_contract_args_v2(&mut self, v: &CreateContractArgsV2Ref<'_>) {
+    pub const fn write_type_create_contract_args_v2(&mut self, v: &CreateContractArgsV2Const) {
         self.write_type_contract_id_preimage(&v.contract_id_preimage);
         self.write_type_contract_executable(&v.executable);
         self.write_type_vec_sc_val(&v.constructor_args);

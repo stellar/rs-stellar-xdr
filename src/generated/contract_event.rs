@@ -76,60 +76,18 @@ impl WriteXdr for ContractEvent {
     }
 }
 
-/// ContractEventRef is a borrowing equivalent of [`ContractEvent`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractEventConst is a borrowing equivalent of [`ContractEvent`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractEventRef<'a> {
+pub struct ContractEventConst {
     pub ext: ExtensionPoint,
     pub contract_id: Option<ContractId>,
     pub type_: ContractEventType,
-    pub body: ContractEventBodyRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractEventRef<'_> {
-    type Owned = ContractEvent;
-    fn into_owned(self) -> ContractEvent {
-        ContractEvent {
-            ext: self.ext.into_owned(),
-            contract_id: self.contract_id.into_owned(),
-            type_: self.type_.into_owned(),
-            body: self.body.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractEventRef<'_>> for ContractEvent {
-    #[must_use]
-    fn from(v: &ContractEventRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractEventRef<'_>> for ContractEvent {
-    #[must_use]
-    fn from(v: ContractEventRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ContractEventRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.contract_id.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
-            self.body.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub body: ContractEventBodyConst,
 }
 
 #[cfg(feature = "const")]
-impl ContractEventRef<'_> {
+impl ContractEventConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -168,7 +126,7 @@ impl ContractEventRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractEvent`], mirroring `<ContractEvent as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_event(&mut self, v: &ContractEventRef<'_>) {
+    pub const fn write_type_contract_event(&mut self, v: &ContractEventConst) {
         self.write_type_extension_point(&v.ext);
         self.write_type_option_contract_id(&v.contract_id);
         self.write_type_contract_event_type(&v.type_);
@@ -178,7 +136,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ContractEvent`], mirroring `<VecM<ContractEvent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_contract_event<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ContractEventRef<'_>, MAX>,
+        v: &VecMConst<ContractEventConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

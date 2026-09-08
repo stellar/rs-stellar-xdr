@@ -136,44 +136,16 @@ impl WriteXdr for PersistedScpState {
     }
 }
 
-/// PersistedScpStateRef is a borrowing equivalent of [`PersistedScpState`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PersistedScpStateConst is a borrowing equivalent of [`PersistedScpState`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PersistedScpStateRef<'a> {
-    V0(PersistedScpStateV0Ref<'a>),
-    V1(PersistedScpStateV1Ref<'a>),
+pub enum PersistedScpStateConst {
+    V0(PersistedScpStateV0Const),
+    V1(PersistedScpStateV1Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PersistedScpStateRef<'_> {
-    type Owned = PersistedScpState;
-    fn into_owned(self) -> PersistedScpState {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            PersistedScpStateRef::V0(value) => PersistedScpState::V0(value.into_owned()),
-            PersistedScpStateRef::V1(value) => PersistedScpState::V1(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PersistedScpStateRef<'_>> for PersistedScpState {
-    #[must_use]
-    fn from(v: &PersistedScpStateRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PersistedScpStateRef<'_>> for PersistedScpState {
-    #[must_use]
-    fn from(v: PersistedScpStateRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl PersistedScpStateRef<'_> {
+impl PersistedScpStateConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,23 +156,8 @@ impl PersistedScpStateRef<'_> {
     }
 }
 
-impl WriteXdr for PersistedScpStateRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl PersistedScpStateRef<'_> {
+impl PersistedScpStateConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,15 +196,15 @@ impl PersistedScpStateRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PersistedScpState`], mirroring `<PersistedScpState as WriteXdr>::write_xdr`.
-    pub const fn write_type_persisted_scp_state(&mut self, v: &PersistedScpStateRef<'_>) {
+    pub const fn write_type_persisted_scp_state(&mut self, v: &PersistedScpStateConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PersistedScpStateRef::V0(value) => {
+            PersistedScpStateConst::V0(value) => {
                 self.write_type_persisted_scp_state_v0(value);
             }
-            PersistedScpStateRef::V1(value) => {
+            PersistedScpStateConst::V1(value) => {
                 self.write_type_persisted_scp_state_v1(value);
             }
         }

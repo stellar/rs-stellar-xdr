@@ -78,66 +78,20 @@ impl WriteXdr for PathPaymentStrictSendOp {
     }
 }
 
-/// PathPaymentStrictSendOpRef is a borrowing equivalent of [`PathPaymentStrictSendOp`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PathPaymentStrictSendOpConst is a borrowing equivalent of [`PathPaymentStrictSendOp`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PathPaymentStrictSendOpRef<'a> {
+pub struct PathPaymentStrictSendOpConst {
     pub send_asset: Asset,
     pub send_amount: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
     pub dest_min: i64,
-    pub path: VecMRef<'a, Asset, 5>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictSendOpRef<'_> {
-    type Owned = PathPaymentStrictSendOp;
-    fn into_owned(self) -> PathPaymentStrictSendOp {
-        PathPaymentStrictSendOp {
-            send_asset: self.send_asset.into_owned(),
-            send_amount: self.send_amount.into_owned(),
-            destination: self.destination.into_owned(),
-            dest_asset: self.dest_asset.into_owned(),
-            dest_min: self.dest_min.into_owned(),
-            path: self.path.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
-    #[must_use]
-    fn from(v: &PathPaymentStrictSendOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PathPaymentStrictSendOpRef<'_>> for PathPaymentStrictSendOp {
-    #[must_use]
-    fn from(v: PathPaymentStrictSendOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for PathPaymentStrictSendOpRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.send_asset.write_xdr(w)?;
-            self.send_amount.write_xdr(w)?;
-            self.destination.write_xdr(w)?;
-            self.dest_asset.write_xdr(w)?;
-            self.dest_min.write_xdr(w)?;
-            self.path.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub path: VecMConst<Asset, 5>,
 }
 
 #[cfg(feature = "const")]
-impl PathPaymentStrictSendOpRef<'_> {
+impl PathPaymentStrictSendOpConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -178,7 +132,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictSendOp`], mirroring `<PathPaymentStrictSendOp as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_send_op(
         &mut self,
-        v: &PathPaymentStrictSendOpRef<'_>,
+        v: &PathPaymentStrictSendOpConst,
     ) {
         self.write_type_asset(&v.send_asset);
         self.write_i64(v.send_amount);

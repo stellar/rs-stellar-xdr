@@ -108,44 +108,13 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     }
 }
 
-/// DependentTxClusterRef is a borrowing equivalent of [`DependentTxCluster`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// DependentTxClusterConst is a borrowing equivalent of [`DependentTxCluster`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DependentTxClusterRef<'a>(pub VecMRef<'a, TransactionEnvelopeRef<'a>>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for DependentTxClusterRef<'_> {
-    type Owned = DependentTxCluster;
-    fn into_owned(self) -> DependentTxCluster {
-        DependentTxCluster(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&DependentTxClusterRef<'_>> for DependentTxCluster {
-    #[must_use]
-    fn from(v: &DependentTxClusterRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<DependentTxClusterRef<'_>> for DependentTxCluster {
-    #[must_use]
-    fn from(v: DependentTxClusterRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for DependentTxClusterRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct DependentTxClusterConst(pub VecMConst<TransactionEnvelopeConst>);
 
 #[cfg(feature = "const")]
-impl DependentTxClusterRef<'_> {
+impl DependentTxClusterConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +153,14 @@ impl DependentTxClusterRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DependentTxCluster`], mirroring `<DependentTxCluster as WriteXdr>::write_xdr`.
-    pub const fn write_type_dependent_tx_cluster(&mut self, v: &DependentTxClusterRef<'_>) {
+    pub const fn write_type_dependent_tx_cluster(&mut self, v: &DependentTxClusterConst) {
         self.write_type_vec_transaction_envelope(&v.0);
     }
 
     /// Serializes a variable-length array of [`DependentTxCluster`], mirroring `<VecM<DependentTxCluster, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_dependent_tx_cluster<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, DependentTxClusterRef<'_>, MAX>,
+        v: &VecMConst<DependentTxClusterConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

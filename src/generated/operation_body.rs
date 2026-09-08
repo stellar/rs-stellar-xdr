@@ -401,134 +401,41 @@ impl WriteXdr for OperationBody {
     }
 }
 
-/// OperationBodyRef is a borrowing equivalent of [`OperationBody`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// OperationBodyConst is a borrowing equivalent of [`OperationBody`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum OperationBodyRef<'a> {
+pub enum OperationBodyConst {
     CreateAccount(CreateAccountOp),
     Payment(PaymentOp),
-    PathPaymentStrictReceive(PathPaymentStrictReceiveOpRef<'a>),
+    PathPaymentStrictReceive(PathPaymentStrictReceiveOpConst),
     ManageSellOffer(ManageSellOfferOp),
     CreatePassiveSellOffer(CreatePassiveSellOfferOp),
-    SetOptions(SetOptionsOpRef<'a>),
+    SetOptions(SetOptionsOpConst),
     ChangeTrust(ChangeTrustOp),
     AllowTrust(AllowTrustOp),
     AccountMerge(MuxedAccount),
     Inflation,
-    ManageData(ManageDataOpRef<'a>),
+    ManageData(ManageDataOpConst),
     BumpSequence(BumpSequenceOp),
     ManageBuyOffer(ManageBuyOfferOp),
-    PathPaymentStrictSend(PathPaymentStrictSendOpRef<'a>),
-    CreateClaimableBalance(CreateClaimableBalanceOpRef<'a>),
+    PathPaymentStrictSend(PathPaymentStrictSendOpConst),
+    CreateClaimableBalance(CreateClaimableBalanceOpConst),
     ClaimClaimableBalance(ClaimClaimableBalanceOp),
     BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOp),
     EndSponsoringFutureReserves,
-    RevokeSponsorship(RevokeSponsorshipOpRef<'a>),
+    RevokeSponsorship(RevokeSponsorshipOpConst),
     Clawback(ClawbackOp),
     ClawbackClaimableBalance(ClawbackClaimableBalanceOp),
     SetTrustLineFlags(SetTrustLineFlagsOp),
     LiquidityPoolDeposit(LiquidityPoolDepositOp),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
-    InvokeHostFunction(InvokeHostFunctionOpRef<'a>),
+    InvokeHostFunction(InvokeHostFunctionOpConst),
     ExtendFootprintTtl(ExtendFootprintTtlOp),
     RestoreFootprint(RestoreFootprintOp),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationBodyRef<'_> {
-    type Owned = OperationBody;
-    fn into_owned(self) -> OperationBody {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            OperationBodyRef::CreateAccount(value) => {
-                OperationBody::CreateAccount(value.into_owned())
-            }
-            OperationBodyRef::Payment(value) => OperationBody::Payment(value.into_owned()),
-            OperationBodyRef::PathPaymentStrictReceive(value) => {
-                OperationBody::PathPaymentStrictReceive(value.into_owned())
-            }
-            OperationBodyRef::ManageSellOffer(value) => {
-                OperationBody::ManageSellOffer(value.into_owned())
-            }
-            OperationBodyRef::CreatePassiveSellOffer(value) => {
-                OperationBody::CreatePassiveSellOffer(value.into_owned())
-            }
-            OperationBodyRef::SetOptions(value) => OperationBody::SetOptions(value.into_owned()),
-            OperationBodyRef::ChangeTrust(value) => OperationBody::ChangeTrust(value.into_owned()),
-            OperationBodyRef::AllowTrust(value) => OperationBody::AllowTrust(value.into_owned()),
-            OperationBodyRef::AccountMerge(value) => {
-                OperationBody::AccountMerge(value.into_owned())
-            }
-            OperationBodyRef::Inflation => OperationBody::Inflation,
-            OperationBodyRef::ManageData(value) => OperationBody::ManageData(value.into_owned()),
-            OperationBodyRef::BumpSequence(value) => {
-                OperationBody::BumpSequence(value.into_owned())
-            }
-            OperationBodyRef::ManageBuyOffer(value) => {
-                OperationBody::ManageBuyOffer(value.into_owned())
-            }
-            OperationBodyRef::PathPaymentStrictSend(value) => {
-                OperationBody::PathPaymentStrictSend(value.into_owned())
-            }
-            OperationBodyRef::CreateClaimableBalance(value) => {
-                OperationBody::CreateClaimableBalance(value.into_owned())
-            }
-            OperationBodyRef::ClaimClaimableBalance(value) => {
-                OperationBody::ClaimClaimableBalance(value.into_owned())
-            }
-            OperationBodyRef::BeginSponsoringFutureReserves(value) => {
-                OperationBody::BeginSponsoringFutureReserves(value.into_owned())
-            }
-            OperationBodyRef::EndSponsoringFutureReserves => {
-                OperationBody::EndSponsoringFutureReserves
-            }
-            OperationBodyRef::RevokeSponsorship(value) => {
-                OperationBody::RevokeSponsorship(value.into_owned())
-            }
-            OperationBodyRef::Clawback(value) => OperationBody::Clawback(value.into_owned()),
-            OperationBodyRef::ClawbackClaimableBalance(value) => {
-                OperationBody::ClawbackClaimableBalance(value.into_owned())
-            }
-            OperationBodyRef::SetTrustLineFlags(value) => {
-                OperationBody::SetTrustLineFlags(value.into_owned())
-            }
-            OperationBodyRef::LiquidityPoolDeposit(value) => {
-                OperationBody::LiquidityPoolDeposit(value.into_owned())
-            }
-            OperationBodyRef::LiquidityPoolWithdraw(value) => {
-                OperationBody::LiquidityPoolWithdraw(value.into_owned())
-            }
-            OperationBodyRef::InvokeHostFunction(value) => {
-                OperationBody::InvokeHostFunction(value.into_owned())
-            }
-            OperationBodyRef::ExtendFootprintTtl(value) => {
-                OperationBody::ExtendFootprintTtl(value.into_owned())
-            }
-            OperationBodyRef::RestoreFootprint(value) => {
-                OperationBody::RestoreFootprint(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&OperationBodyRef<'_>> for OperationBody {
-    #[must_use]
-    fn from(v: &OperationBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<OperationBodyRef<'_>> for OperationBody {
-    #[must_use]
-    fn from(v: OperationBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl OperationBodyRef<'_> {
+impl OperationBodyConst {
     #[must_use]
     pub const fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
@@ -564,48 +471,8 @@ impl OperationBodyRef<'_> {
     }
 }
 
-impl WriteXdr for OperationBodyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::CreateAccount(v) => v.write_xdr(w)?,
-                Self::Payment(v) => v.write_xdr(w)?,
-                Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
-                Self::ManageSellOffer(v) => v.write_xdr(w)?,
-                Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
-                Self::SetOptions(v) => v.write_xdr(w)?,
-                Self::ChangeTrust(v) => v.write_xdr(w)?,
-                Self::AllowTrust(v) => v.write_xdr(w)?,
-                Self::AccountMerge(v) => v.write_xdr(w)?,
-                Self::Inflation => ().write_xdr(w)?,
-                Self::ManageData(v) => v.write_xdr(w)?,
-                Self::BumpSequence(v) => v.write_xdr(w)?,
-                Self::ManageBuyOffer(v) => v.write_xdr(w)?,
-                Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
-                Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
-                Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
-                Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
-                Self::EndSponsoringFutureReserves => ().write_xdr(w)?,
-                Self::RevokeSponsorship(v) => v.write_xdr(w)?,
-                Self::Clawback(v) => v.write_xdr(w)?,
-                Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
-                Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
-                Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
-                Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
-                Self::InvokeHostFunction(v) => v.write_xdr(w)?,
-                Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
-                Self::RestoreFootprint(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl OperationBodyRef<'_> {
+impl OperationBodyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -644,86 +511,86 @@ impl OperationBodyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationBody`], mirroring `<OperationBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_body(&mut self, v: &OperationBodyRef<'_>) {
+    pub const fn write_type_operation_body(&mut self, v: &OperationBodyConst) {
         let d = v.discriminant();
         self.write_type_operation_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            OperationBodyRef::CreateAccount(value) => {
+            OperationBodyConst::CreateAccount(value) => {
                 self.write_type_create_account_op(value);
             }
-            OperationBodyRef::Payment(value) => {
+            OperationBodyConst::Payment(value) => {
                 self.write_type_payment_op(value);
             }
-            OperationBodyRef::PathPaymentStrictReceive(value) => {
+            OperationBodyConst::PathPaymentStrictReceive(value) => {
                 self.write_type_path_payment_strict_receive_op(value);
             }
-            OperationBodyRef::ManageSellOffer(value) => {
+            OperationBodyConst::ManageSellOffer(value) => {
                 self.write_type_manage_sell_offer_op(value);
             }
-            OperationBodyRef::CreatePassiveSellOffer(value) => {
+            OperationBodyConst::CreatePassiveSellOffer(value) => {
                 self.write_type_create_passive_sell_offer_op(value);
             }
-            OperationBodyRef::SetOptions(value) => {
+            OperationBodyConst::SetOptions(value) => {
                 self.write_type_set_options_op(value);
             }
-            OperationBodyRef::ChangeTrust(value) => {
+            OperationBodyConst::ChangeTrust(value) => {
                 self.write_type_change_trust_op(value);
             }
-            OperationBodyRef::AllowTrust(value) => {
+            OperationBodyConst::AllowTrust(value) => {
                 self.write_type_allow_trust_op(value);
             }
-            OperationBodyRef::AccountMerge(value) => {
+            OperationBodyConst::AccountMerge(value) => {
                 self.write_type_muxed_account(value);
             }
-            OperationBodyRef::Inflation => {}
-            OperationBodyRef::ManageData(value) => {
+            OperationBodyConst::Inflation => {}
+            OperationBodyConst::ManageData(value) => {
                 self.write_type_manage_data_op(value);
             }
-            OperationBodyRef::BumpSequence(value) => {
+            OperationBodyConst::BumpSequence(value) => {
                 self.write_type_bump_sequence_op(value);
             }
-            OperationBodyRef::ManageBuyOffer(value) => {
+            OperationBodyConst::ManageBuyOffer(value) => {
                 self.write_type_manage_buy_offer_op(value);
             }
-            OperationBodyRef::PathPaymentStrictSend(value) => {
+            OperationBodyConst::PathPaymentStrictSend(value) => {
                 self.write_type_path_payment_strict_send_op(value);
             }
-            OperationBodyRef::CreateClaimableBalance(value) => {
+            OperationBodyConst::CreateClaimableBalance(value) => {
                 self.write_type_create_claimable_balance_op(value);
             }
-            OperationBodyRef::ClaimClaimableBalance(value) => {
+            OperationBodyConst::ClaimClaimableBalance(value) => {
                 self.write_type_claim_claimable_balance_op(value);
             }
-            OperationBodyRef::BeginSponsoringFutureReserves(value) => {
+            OperationBodyConst::BeginSponsoringFutureReserves(value) => {
                 self.write_type_begin_sponsoring_future_reserves_op(value);
             }
-            OperationBodyRef::EndSponsoringFutureReserves => {}
-            OperationBodyRef::RevokeSponsorship(value) => {
+            OperationBodyConst::EndSponsoringFutureReserves => {}
+            OperationBodyConst::RevokeSponsorship(value) => {
                 self.write_type_revoke_sponsorship_op(value);
             }
-            OperationBodyRef::Clawback(value) => {
+            OperationBodyConst::Clawback(value) => {
                 self.write_type_clawback_op(value);
             }
-            OperationBodyRef::ClawbackClaimableBalance(value) => {
+            OperationBodyConst::ClawbackClaimableBalance(value) => {
                 self.write_type_clawback_claimable_balance_op(value);
             }
-            OperationBodyRef::SetTrustLineFlags(value) => {
+            OperationBodyConst::SetTrustLineFlags(value) => {
                 self.write_type_set_trust_line_flags_op(value);
             }
-            OperationBodyRef::LiquidityPoolDeposit(value) => {
+            OperationBodyConst::LiquidityPoolDeposit(value) => {
                 self.write_type_liquidity_pool_deposit_op(value);
             }
-            OperationBodyRef::LiquidityPoolWithdraw(value) => {
+            OperationBodyConst::LiquidityPoolWithdraw(value) => {
                 self.write_type_liquidity_pool_withdraw_op(value);
             }
-            OperationBodyRef::InvokeHostFunction(value) => {
+            OperationBodyConst::InvokeHostFunction(value) => {
                 self.write_type_invoke_host_function_op(value);
             }
-            OperationBodyRef::ExtendFootprintTtl(value) => {
+            OperationBodyConst::ExtendFootprintTtl(value) => {
                 self.write_type_extend_footprint_ttl_op(value);
             }
-            OperationBodyRef::RestoreFootprint(value) => {
+            OperationBodyConst::RestoreFootprint(value) => {
                 self.write_type_restore_footprint_op(value);
             }
         }

@@ -63,60 +63,18 @@ impl WriteXdr for SorobanResources {
     }
 }
 
-/// SorobanResourcesRef is a borrowing equivalent of [`SorobanResources`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanResourcesConst is a borrowing equivalent of [`SorobanResources`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanResourcesRef<'a> {
-    pub footprint: LedgerFootprintRef<'a>,
+pub struct SorobanResourcesConst {
+    pub footprint: LedgerFootprintConst,
     pub instructions: u32,
     pub disk_read_bytes: u32,
     pub write_bytes: u32,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanResourcesRef<'_> {
-    type Owned = SorobanResources;
-    fn into_owned(self) -> SorobanResources {
-        SorobanResources {
-            footprint: self.footprint.into_owned(),
-            instructions: self.instructions.into_owned(),
-            disk_read_bytes: self.disk_read_bytes.into_owned(),
-            write_bytes: self.write_bytes.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanResourcesRef<'_>> for SorobanResources {
-    #[must_use]
-    fn from(v: &SorobanResourcesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanResourcesRef<'_>> for SorobanResources {
-    #[must_use]
-    fn from(v: SorobanResourcesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanResourcesRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.footprint.write_xdr(w)?;
-            self.instructions.write_xdr(w)?;
-            self.disk_read_bytes.write_xdr(w)?;
-            self.write_bytes.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SorobanResourcesRef<'_> {
+impl SorobanResourcesConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -155,7 +113,7 @@ impl SorobanResourcesRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanResources`], mirroring `<SorobanResources as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_resources(&mut self, v: &SorobanResourcesRef<'_>) {
+    pub const fn write_type_soroban_resources(&mut self, v: &SorobanResourcesConst) {
         self.write_type_ledger_footprint(&v.footprint);
         self.write_u32(v.instructions);
         self.write_u32(v.disk_read_bytes);

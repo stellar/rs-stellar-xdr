@@ -50,58 +50,16 @@ impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyStopCollectingMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SignedTimeSlicedSurveyStopCollectingMessageConst is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyStopCollectingMessageRef<'a> {
-    pub signature: SignatureRef<'a>,
+pub struct SignedTimeSlicedSurveyStopCollectingMessageConst {
+    pub signature: SignatureConst,
     pub stop_collecting: TimeSlicedSurveyStopCollectingMessage,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignedTimeSlicedSurveyStopCollectingMessageRef<'_> {
-    type Owned = SignedTimeSlicedSurveyStopCollectingMessage;
-    fn into_owned(self) -> SignedTimeSlicedSurveyStopCollectingMessage {
-        SignedTimeSlicedSurveyStopCollectingMessage {
-            signature: self.signature.into_owned(),
-            stop_collecting: self.stop_collecting.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
-    for SignedTimeSlicedSurveyStopCollectingMessage
-{
-    #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyStopCollectingMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyStopCollectingMessageRef<'_>>
-    for SignedTimeSlicedSurveyStopCollectingMessage
-{
-    #[must_use]
-    fn from(v: SignedTimeSlicedSurveyStopCollectingMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.signature.write_xdr(w)?;
-            self.stop_collecting.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SignedTimeSlicedSurveyStopCollectingMessageRef<'_> {
+impl SignedTimeSlicedSurveyStopCollectingMessageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SignedTimeSlicedSurveyStopCollectingMessage`], mirroring `<SignedTimeSlicedSurveyStopCollectingMessage as WriteXdr>::write_xdr`.
     pub const fn write_type_signed_time_sliced_survey_stop_collecting_message(
         &mut self,
-        v: &SignedTimeSlicedSurveyStopCollectingMessageRef<'_>,
+        v: &SignedTimeSlicedSurveyStopCollectingMessageConst,
     ) {
         self.write_type_signature(&v.signature);
         self.write_type_time_sliced_survey_stop_collecting_message(&v.stop_collecting);

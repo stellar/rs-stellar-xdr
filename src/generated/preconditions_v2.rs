@@ -89,66 +89,20 @@ impl WriteXdr for PreconditionsV2 {
     }
 }
 
-/// PreconditionsV2Ref is a borrowing equivalent of [`PreconditionsV2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PreconditionsV2Const is a borrowing equivalent of [`PreconditionsV2`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PreconditionsV2Ref<'a> {
+pub struct PreconditionsV2Const {
     pub time_bounds: Option<TimeBounds>,
     pub ledger_bounds: Option<LedgerBounds>,
     pub min_seq_num: Option<SequenceNumber>,
     pub min_seq_age: Duration,
     pub min_seq_ledger_gap: u32,
-    pub extra_signers: VecMRef<'a, SignerKeyRef<'a>, 2>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for PreconditionsV2Ref<'_> {
-    type Owned = PreconditionsV2;
-    fn into_owned(self) -> PreconditionsV2 {
-        PreconditionsV2 {
-            time_bounds: self.time_bounds.into_owned(),
-            ledger_bounds: self.ledger_bounds.into_owned(),
-            min_seq_num: self.min_seq_num.into_owned(),
-            min_seq_age: self.min_seq_age.into_owned(),
-            min_seq_ledger_gap: self.min_seq_ledger_gap.into_owned(),
-            extra_signers: self.extra_signers.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PreconditionsV2Ref<'_>> for PreconditionsV2 {
-    #[must_use]
-    fn from(v: &PreconditionsV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PreconditionsV2Ref<'_>> for PreconditionsV2 {
-    #[must_use]
-    fn from(v: PreconditionsV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for PreconditionsV2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.time_bounds.write_xdr(w)?;
-            self.ledger_bounds.write_xdr(w)?;
-            self.min_seq_num.write_xdr(w)?;
-            self.min_seq_age.write_xdr(w)?;
-            self.min_seq_ledger_gap.write_xdr(w)?;
-            self.extra_signers.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub extra_signers: VecMConst<SignerKeyConst, 2>,
 }
 
 #[cfg(feature = "const")]
-impl PreconditionsV2Ref<'_> {
+impl PreconditionsV2Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -187,7 +141,7 @@ impl PreconditionsV2Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PreconditionsV2`], mirroring `<PreconditionsV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_preconditions_v2(&mut self, v: &PreconditionsV2Ref<'_>) {
+    pub const fn write_type_preconditions_v2(&mut self, v: &PreconditionsV2Const) {
         self.write_type_option_time_bounds(&v.time_bounds);
         self.write_type_option_ledger_bounds(&v.ledger_bounds);
         self.write_type_option_sequence_number(&v.min_seq_num);

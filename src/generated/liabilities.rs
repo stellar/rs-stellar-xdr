@@ -58,14 +58,6 @@ impl WriteXdr for Liabilities {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Liabilities {
-    type Owned = Liabilities;
-    fn into_owned(self) -> Liabilities {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Liabilities {
     /// The exact XDR-encoded length of this value, in bytes.

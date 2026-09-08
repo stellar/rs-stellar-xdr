@@ -50,54 +50,16 @@ impl WriteXdr for TimeSlicedPeerData {
     }
 }
 
-/// TimeSlicedPeerDataRef is a borrowing equivalent of [`TimeSlicedPeerData`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TimeSlicedPeerDataConst is a borrowing equivalent of [`TimeSlicedPeerData`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedPeerDataRef<'a> {
-    pub peer_stats: PeerStatsRef<'a>,
+pub struct TimeSlicedPeerDataConst {
+    pub peer_stats: PeerStatsConst,
     pub average_latency_ms: u32,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedPeerDataRef<'_> {
-    type Owned = TimeSlicedPeerData;
-    fn into_owned(self) -> TimeSlicedPeerData {
-        TimeSlicedPeerData {
-            peer_stats: self.peer_stats.into_owned(),
-            average_latency_ms: self.average_latency_ms.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
-    #[must_use]
-    fn from(v: &TimeSlicedPeerDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TimeSlicedPeerDataRef<'_>> for TimeSlicedPeerData {
-    #[must_use]
-    fn from(v: TimeSlicedPeerDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TimeSlicedPeerDataRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.peer_stats.write_xdr(w)?;
-            self.average_latency_ms.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TimeSlicedPeerDataRef<'_> {
+impl TimeSlicedPeerDataConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl TimeSlicedPeerDataRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TimeSlicedPeerData`], mirroring `<TimeSlicedPeerData as WriteXdr>::write_xdr`.
-    pub const fn write_type_time_sliced_peer_data(&mut self, v: &TimeSlicedPeerDataRef<'_>) {
+    pub const fn write_type_time_sliced_peer_data(&mut self, v: &TimeSlicedPeerDataConst) {
         self.write_type_peer_stats(&v.peer_stats);
         self.write_u32(v.average_latency_ms);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TimeSlicedPeerData`], mirroring `<VecM<TimeSlicedPeerData, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_time_sliced_peer_data<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TimeSlicedPeerDataRef<'_>, MAX>,
+        v: &VecMConst<TimeSlicedPeerDataConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

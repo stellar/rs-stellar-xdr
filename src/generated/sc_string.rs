@@ -108,44 +108,13 @@ impl AsRef<[u8]> for ScString {
     }
 }
 
-/// ScStringRef is a borrowing equivalent of [`ScString`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScStringConst is a borrowing equivalent of [`ScString`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScStringRef<'a>(pub StringMRef<'a>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScStringRef<'_> {
-    type Owned = ScString;
-    fn into_owned(self) -> ScString {
-        ScString(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScStringRef<'_>> for ScString {
-    #[must_use]
-    fn from(v: &ScStringRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScStringRef<'_>> for ScString {
-    #[must_use]
-    fn from(v: ScStringRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScStringRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct ScStringConst(pub StringMConst);
 
 #[cfg(feature = "const")]
-impl ScStringRef<'_> {
+impl ScStringConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl ScStringRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScString`], mirroring `<ScString as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_string(&mut self, v: &ScStringRef<'_>) {
+    pub const fn write_type_sc_string(&mut self, v: &ScStringConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

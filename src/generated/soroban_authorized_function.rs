@@ -168,52 +168,17 @@ impl WriteXdr for SorobanAuthorizedFunction {
     }
 }
 
-/// SorobanAuthorizedFunctionRef is a borrowing equivalent of [`SorobanAuthorizedFunction`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanAuthorizedFunctionConst is a borrowing equivalent of [`SorobanAuthorizedFunction`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanAuthorizedFunctionRef<'a> {
-    ContractFn(InvokeContractArgsRef<'a>),
-    CreateContractHostFn(CreateContractArgsRef<'a>),
-    CreateContractV2HostFn(CreateContractArgsV2Ref<'a>),
+pub enum SorobanAuthorizedFunctionConst {
+    ContractFn(InvokeContractArgsConst),
+    CreateContractHostFn(CreateContractArgsConst),
+    CreateContractV2HostFn(CreateContractArgsV2Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizedFunctionRef<'_> {
-    type Owned = SorobanAuthorizedFunction;
-    fn into_owned(self) -> SorobanAuthorizedFunction {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            SorobanAuthorizedFunctionRef::ContractFn(value) => {
-                SorobanAuthorizedFunction::ContractFn(value.into_owned())
-            }
-            SorobanAuthorizedFunctionRef::CreateContractHostFn(value) => {
-                SorobanAuthorizedFunction::CreateContractHostFn(value.into_owned())
-            }
-            SorobanAuthorizedFunctionRef::CreateContractV2HostFn(value) => {
-                SorobanAuthorizedFunction::CreateContractV2HostFn(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
-    #[must_use]
-    fn from(v: &SorobanAuthorizedFunctionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanAuthorizedFunctionRef<'_>> for SorobanAuthorizedFunction {
-    #[must_use]
-    fn from(v: SorobanAuthorizedFunctionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl SorobanAuthorizedFunctionRef<'_> {
+impl SorobanAuthorizedFunctionConst {
     #[must_use]
     pub const fn discriminant(&self) -> SorobanAuthorizedFunctionType {
         #[allow(clippy::match_same_arms)]
@@ -227,24 +192,8 @@ impl SorobanAuthorizedFunctionRef<'_> {
     }
 }
 
-impl WriteXdr for SorobanAuthorizedFunctionRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ContractFn(v) => v.write_xdr(w)?,
-                Self::CreateContractHostFn(v) => v.write_xdr(w)?,
-                Self::CreateContractV2HostFn(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SorobanAuthorizedFunctionRef<'_> {
+impl SorobanAuthorizedFunctionConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -285,19 +234,19 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizedFunction`], mirroring `<SorobanAuthorizedFunction as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorized_function(
         &mut self,
-        v: &SorobanAuthorizedFunctionRef<'_>,
+        v: &SorobanAuthorizedFunctionConst,
     ) {
         let d = v.discriminant();
         self.write_type_soroban_authorized_function_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanAuthorizedFunctionRef::ContractFn(value) => {
+            SorobanAuthorizedFunctionConst::ContractFn(value) => {
                 self.write_type_invoke_contract_args(value);
             }
-            SorobanAuthorizedFunctionRef::CreateContractHostFn(value) => {
+            SorobanAuthorizedFunctionConst::CreateContractHostFn(value) => {
                 self.write_type_create_contract_args(value);
             }
-            SorobanAuthorizedFunctionRef::CreateContractV2HostFn(value) => {
+            SorobanAuthorizedFunctionConst::CreateContractV2HostFn(value) => {
                 self.write_type_create_contract_args_v2(value);
             }
         }

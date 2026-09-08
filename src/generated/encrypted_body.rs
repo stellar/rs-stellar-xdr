@@ -108,44 +108,13 @@ impl AsRef<[u8]> for EncryptedBody {
     }
 }
 
-/// EncryptedBodyRef is a borrowing equivalent of [`EncryptedBody`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// EncryptedBodyConst is a borrowing equivalent of [`EncryptedBody`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EncryptedBodyRef<'a>(pub BytesMRef<'a, 64000>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for EncryptedBodyRef<'_> {
-    type Owned = EncryptedBody;
-    fn into_owned(self) -> EncryptedBody {
-        EncryptedBody(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&EncryptedBodyRef<'_>> for EncryptedBody {
-    #[must_use]
-    fn from(v: &EncryptedBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<EncryptedBodyRef<'_>> for EncryptedBody {
-    #[must_use]
-    fn from(v: EncryptedBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for EncryptedBodyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct EncryptedBodyConst(pub BytesMConst<64000>);
 
 #[cfg(feature = "const")]
-impl EncryptedBodyRef<'_> {
+impl EncryptedBodyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl EncryptedBodyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`EncryptedBody`], mirroring `<EncryptedBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_encrypted_body(&mut self, v: &EncryptedBodyRef<'_>) {
+    pub const fn write_type_encrypted_body(&mut self, v: &EncryptedBodyConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

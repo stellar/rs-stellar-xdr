@@ -145,14 +145,6 @@ impl WriteXdr for HostFunctionType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for HostFunctionType {
-    type Owned = HostFunctionType;
-    fn into_owned(self) -> HostFunctionType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl HostFunctionType {
     /// The exact XDR-encoded length of this value, in bytes.

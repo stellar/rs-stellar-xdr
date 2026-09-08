@@ -139,14 +139,6 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizedFunctionType {
-    type Owned = SorobanAuthorizedFunctionType;
-    fn into_owned(self) -> SorobanAuthorizedFunctionType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SorobanAuthorizedFunctionType {
     /// The exact XDR-encoded length of this value, in bytes.

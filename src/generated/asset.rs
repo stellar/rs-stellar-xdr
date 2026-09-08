@@ -151,14 +151,6 @@ impl WriteXdr for Asset {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Asset {
-    type Owned = Asset;
-    fn into_owned(self) -> Asset {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Asset {
     /// The exact XDR-encoded length of this value, in bytes.
@@ -215,7 +207,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`Asset`], mirroring `<VecM<Asset, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_asset<const MAX: u32>(&mut self, v: &VecMRef<'_, Asset, MAX>) {
+    pub const fn write_type_vec_asset<const MAX: u32>(&mut self, v: &VecMConst<Asset, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

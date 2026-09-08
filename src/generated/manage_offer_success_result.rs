@@ -60,54 +60,16 @@ impl WriteXdr for ManageOfferSuccessResult {
     }
 }
 
-/// ManageOfferSuccessResultRef is a borrowing equivalent of [`ManageOfferSuccessResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ManageOfferSuccessResultConst is a borrowing equivalent of [`ManageOfferSuccessResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ManageOfferSuccessResultRef<'a> {
-    pub offers_claimed: VecMRef<'a, ClaimAtom>,
+pub struct ManageOfferSuccessResultConst {
+    pub offers_claimed: VecMConst<ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageOfferSuccessResultRef<'_> {
-    type Owned = ManageOfferSuccessResult;
-    fn into_owned(self) -> ManageOfferSuccessResult {
-        ManageOfferSuccessResult {
-            offers_claimed: self.offers_claimed.into_owned(),
-            offer: self.offer.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
-    #[must_use]
-    fn from(v: &ManageOfferSuccessResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ManageOfferSuccessResultRef<'_>> for ManageOfferSuccessResult {
-    #[must_use]
-    fn from(v: ManageOfferSuccessResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ManageOfferSuccessResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.offers_claimed.write_xdr(w)?;
-            self.offer.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ManageOfferSuccessResultRef<'_> {
+impl ManageOfferSuccessResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -148,7 +110,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ManageOfferSuccessResult`], mirroring `<ManageOfferSuccessResult as WriteXdr>::write_xdr`.
     pub const fn write_type_manage_offer_success_result(
         &mut self,
-        v: &ManageOfferSuccessResultRef<'_>,
+        v: &ManageOfferSuccessResultConst,
     ) {
         self.write_type_vec_claim_atom(&v.offers_claimed);
         self.write_type_manage_offer_success_result_offer(&v.offer);

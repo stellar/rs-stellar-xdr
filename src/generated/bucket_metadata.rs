@@ -60,14 +60,6 @@ impl WriteXdr for BucketMetadata {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BucketMetadata {
-    type Owned = BucketMetadata;
-    fn into_owned(self) -> BucketMetadata {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl BucketMetadata {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -123,14 +123,6 @@ impl WriteXdr for ClaimantType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimantType {
-    type Owned = ClaimantType;
-    fn into_owned(self) -> ClaimantType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimantType {
     /// The exact XDR-encoded length of this value, in bytes.

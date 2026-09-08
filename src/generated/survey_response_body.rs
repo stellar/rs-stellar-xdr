@@ -135,44 +135,15 @@ impl WriteXdr for SurveyResponseBody {
     }
 }
 
-/// SurveyResponseBodyRef is a borrowing equivalent of [`SurveyResponseBody`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SurveyResponseBodyConst is a borrowing equivalent of [`SurveyResponseBody`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SurveyResponseBodyRef<'a> {
-    SurveyTopologyResponseV2(TopologyResponseBodyV2Ref<'a>),
+pub enum SurveyResponseBodyConst {
+    SurveyTopologyResponseV2(TopologyResponseBodyV2Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SurveyResponseBodyRef<'_> {
-    type Owned = SurveyResponseBody;
-    fn into_owned(self) -> SurveyResponseBody {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            SurveyResponseBodyRef::SurveyTopologyResponseV2(value) => {
-                SurveyResponseBody::SurveyTopologyResponseV2(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SurveyResponseBodyRef<'_>> for SurveyResponseBody {
-    #[must_use]
-    fn from(v: &SurveyResponseBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SurveyResponseBodyRef<'_>> for SurveyResponseBody {
-    #[must_use]
-    fn from(v: SurveyResponseBodyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl SurveyResponseBodyRef<'_> {
+impl SurveyResponseBodyConst {
     #[must_use]
     pub const fn discriminant(&self) -> SurveyMessageResponseType {
         #[allow(clippy::match_same_arms)]
@@ -184,22 +155,8 @@ impl SurveyResponseBodyRef<'_> {
     }
 }
 
-impl WriteXdr for SurveyResponseBodyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::SurveyTopologyResponseV2(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SurveyResponseBodyRef<'_> {
+impl SurveyResponseBodyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -238,12 +195,12 @@ impl SurveyResponseBodyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SurveyResponseBody`], mirroring `<SurveyResponseBody as WriteXdr>::write_xdr`.
-    pub const fn write_type_survey_response_body(&mut self, v: &SurveyResponseBodyRef<'_>) {
+    pub const fn write_type_survey_response_body(&mut self, v: &SurveyResponseBodyConst) {
         let d = v.discriminant();
         self.write_type_survey_message_response_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SurveyResponseBodyRef::SurveyTopologyResponseV2(value) => {
+            SurveyResponseBodyConst::SurveyTopologyResponseV2(value) => {
                 self.write_type_topology_response_body_v2(value);
             }
         }

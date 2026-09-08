@@ -154,14 +154,6 @@ impl WriteXdr for ClawbackResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClawbackResultCode {
-    type Owned = ClawbackResultCode;
-    fn into_owned(self) -> ClawbackResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClawbackResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

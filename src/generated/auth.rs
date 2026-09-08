@@ -46,14 +46,6 @@ impl WriteXdr for Auth {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Auth {
-    type Owned = Auth;
-    fn into_owned(self) -> Auth {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Auth {
     /// The exact XDR-encoded length of this value, in bytes.

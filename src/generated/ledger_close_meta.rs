@@ -143,46 +143,17 @@ impl WriteXdr for LedgerCloseMeta {
     }
 }
 
-/// LedgerCloseMetaRef is a borrowing equivalent of [`LedgerCloseMeta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerCloseMetaConst is a borrowing equivalent of [`LedgerCloseMeta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerCloseMetaRef<'a> {
-    V0(LedgerCloseMetaV0Ref<'a>),
-    V1(LedgerCloseMetaV1Ref<'a>),
-    V2(LedgerCloseMetaV2Ref<'a>),
+pub enum LedgerCloseMetaConst {
+    V0(LedgerCloseMetaV0Const),
+    V1(LedgerCloseMetaV1Const),
+    V2(LedgerCloseMetaV2Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerCloseMetaRef<'_> {
-    type Owned = LedgerCloseMeta;
-    fn into_owned(self) -> LedgerCloseMeta {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            LedgerCloseMetaRef::V0(value) => LedgerCloseMeta::V0(value.into_owned()),
-            LedgerCloseMetaRef::V1(value) => LedgerCloseMeta::V1(value.into_owned()),
-            LedgerCloseMetaRef::V2(value) => LedgerCloseMeta::V2(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerCloseMetaRef<'_>> for LedgerCloseMeta {
-    #[must_use]
-    fn from(v: &LedgerCloseMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerCloseMetaRef<'_>> for LedgerCloseMeta {
-    #[must_use]
-    fn from(v: LedgerCloseMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl LedgerCloseMetaRef<'_> {
+impl LedgerCloseMetaConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -194,24 +165,8 @@ impl LedgerCloseMetaRef<'_> {
     }
 }
 
-impl WriteXdr for LedgerCloseMetaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerCloseMetaRef<'_> {
+impl LedgerCloseMetaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -250,18 +205,18 @@ impl LedgerCloseMetaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerCloseMeta`], mirroring `<LedgerCloseMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_close_meta(&mut self, v: &LedgerCloseMetaRef<'_>) {
+    pub const fn write_type_ledger_close_meta(&mut self, v: &LedgerCloseMetaConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerCloseMetaRef::V0(value) => {
+            LedgerCloseMetaConst::V0(value) => {
                 self.write_type_ledger_close_meta_v0(value);
             }
-            LedgerCloseMetaRef::V1(value) => {
+            LedgerCloseMetaConst::V1(value) => {
                 self.write_type_ledger_close_meta_v1(value);
             }
-            LedgerCloseMetaRef::V2(value) => {
+            LedgerCloseMetaConst::V2(value) => {
                 self.write_type_ledger_close_meta_v2(value);
             }
         }
@@ -270,7 +225,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerCloseMeta`], mirroring `<VecM<LedgerCloseMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_close_meta<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, LedgerCloseMetaRef<'_>, MAX>,
+        v: &VecMConst<LedgerCloseMetaConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

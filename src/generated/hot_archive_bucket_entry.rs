@@ -151,52 +151,17 @@ impl WriteXdr for HotArchiveBucketEntry {
     }
 }
 
-/// HotArchiveBucketEntryRef is a borrowing equivalent of [`HotArchiveBucketEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// HotArchiveBucketEntryConst is a borrowing equivalent of [`HotArchiveBucketEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HotArchiveBucketEntryRef<'a> {
-    Archived(LedgerEntryRef<'a>),
-    Live(LedgerKeyRef<'a>),
+pub enum HotArchiveBucketEntryConst {
+    Archived(LedgerEntryConst),
+    Live(LedgerKeyConst),
     Metaentry(BucketMetadata),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for HotArchiveBucketEntryRef<'_> {
-    type Owned = HotArchiveBucketEntry;
-    fn into_owned(self) -> HotArchiveBucketEntry {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            HotArchiveBucketEntryRef::Archived(value) => {
-                HotArchiveBucketEntry::Archived(value.into_owned())
-            }
-            HotArchiveBucketEntryRef::Live(value) => {
-                HotArchiveBucketEntry::Live(value.into_owned())
-            }
-            HotArchiveBucketEntryRef::Metaentry(value) => {
-                HotArchiveBucketEntry::Metaentry(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
-    #[must_use]
-    fn from(v: &HotArchiveBucketEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<HotArchiveBucketEntryRef<'_>> for HotArchiveBucketEntry {
-    #[must_use]
-    fn from(v: HotArchiveBucketEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl HotArchiveBucketEntryRef<'_> {
+impl HotArchiveBucketEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> HotArchiveBucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -208,24 +173,8 @@ impl HotArchiveBucketEntryRef<'_> {
     }
 }
 
-impl WriteXdr for HotArchiveBucketEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Archived(v) => v.write_xdr(w)?,
-                Self::Live(v) => v.write_xdr(w)?,
-                Self::Metaentry(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl HotArchiveBucketEntryRef<'_> {
+impl HotArchiveBucketEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -264,18 +213,18 @@ impl HotArchiveBucketEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`HotArchiveBucketEntry`], mirroring `<HotArchiveBucketEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_hot_archive_bucket_entry(&mut self, v: &HotArchiveBucketEntryRef<'_>) {
+    pub const fn write_type_hot_archive_bucket_entry(&mut self, v: &HotArchiveBucketEntryConst) {
         let d = v.discriminant();
         self.write_type_hot_archive_bucket_entry_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            HotArchiveBucketEntryRef::Archived(value) => {
+            HotArchiveBucketEntryConst::Archived(value) => {
                 self.write_type_ledger_entry(value);
             }
-            HotArchiveBucketEntryRef::Live(value) => {
+            HotArchiveBucketEntryConst::Live(value) => {
                 self.write_type_ledger_key(value);
             }
-            HotArchiveBucketEntryRef::Metaentry(value) => {
+            HotArchiveBucketEntryConst::Metaentry(value) => {
                 self.write_type_bucket_metadata(value);
             }
         }

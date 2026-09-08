@@ -46,14 +46,6 @@ impl WriteXdr for LedgerKeyClaimableBalance {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyClaimableBalance {
-    type Owned = LedgerKeyClaimableBalance;
-    fn into_owned(self) -> LedgerKeyClaimableBalance {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerKeyClaimableBalance {
     /// The exact XDR-encoded length of this value, in bytes.

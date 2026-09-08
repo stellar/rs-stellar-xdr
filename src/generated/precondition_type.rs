@@ -135,14 +135,6 @@ impl WriteXdr for PreconditionType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PreconditionType {
-    type Owned = PreconditionType;
-    fn into_owned(self) -> PreconditionType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl PreconditionType {
     /// The exact XDR-encoded length of this value, in bytes.

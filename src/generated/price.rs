@@ -50,14 +50,6 @@ impl WriteXdr for Price {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Price {
-    type Owned = Price;
-    fn into_owned(self) -> Price {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Price {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -128,14 +128,6 @@ impl WriteXdr for PublicKey {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PublicKey {
-    type Owned = PublicKey;
-    fn into_owned(self) -> PublicKey {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl PublicKey {
     /// The exact XDR-encoded length of this value, in bytes.

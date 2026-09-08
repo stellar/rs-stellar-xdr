@@ -95,14 +95,6 @@ impl WriteXdr for OfferEntry {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for OfferEntry {
-    type Owned = OfferEntry;
-    fn into_owned(self) -> OfferEntry {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl OfferEntry {
     /// The exact XDR-encoded length of this value, in bytes.

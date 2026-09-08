@@ -46,14 +46,6 @@ impl WriteXdr for HmacSha256Key {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for HmacSha256Key {
-    type Owned = HmacSha256Key;
-    fn into_owned(self) -> HmacSha256Key {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl HmacSha256Key {
     /// The exact XDR-encoded length of this value, in bytes.

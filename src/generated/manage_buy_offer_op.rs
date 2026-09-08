@@ -73,14 +73,6 @@ impl WriteXdr for ManageBuyOfferOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageBuyOfferOp {
-    type Owned = ManageBuyOfferOp;
-    fn into_owned(self) -> ManageBuyOfferOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ManageBuyOfferOp {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -50,14 +50,6 @@ impl WriteXdr for LedgerBounds {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerBounds {
-    type Owned = LedgerBounds;
-    fn into_owned(self) -> LedgerBounds {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerBounds {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -52,54 +52,16 @@ impl WriteXdr for TransactionV0Envelope {
     }
 }
 
-/// TransactionV0EnvelopeRef is a borrowing equivalent of [`TransactionV0Envelope`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionV0EnvelopeConst is a borrowing equivalent of [`TransactionV0Envelope`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionV0EnvelopeRef<'a> {
-    pub tx: TransactionV0Ref<'a>,
-    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionV0EnvelopeRef<'_> {
-    type Owned = TransactionV0Envelope;
-    fn into_owned(self) -> TransactionV0Envelope {
-        TransactionV0Envelope {
-            tx: self.tx.into_owned(),
-            signatures: self.signatures.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionV0EnvelopeRef<'_>> for TransactionV0Envelope {
-    #[must_use]
-    fn from(v: &TransactionV0EnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionV0EnvelopeRef<'_>> for TransactionV0Envelope {
-    #[must_use]
-    fn from(v: TransactionV0EnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionV0EnvelopeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx.write_xdr(w)?;
-            self.signatures.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct TransactionV0EnvelopeConst {
+    pub tx: TransactionV0Const,
+    pub signatures: VecMConst<DecoratedSignatureConst, 20>,
 }
 
 #[cfg(feature = "const")]
-impl TransactionV0EnvelopeRef<'_> {
+impl TransactionV0EnvelopeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl TransactionV0EnvelopeRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionV0Envelope`], mirroring `<TransactionV0Envelope as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_v0_envelope(&mut self, v: &TransactionV0EnvelopeRef<'_>) {
+    pub const fn write_type_transaction_v0_envelope(&mut self, v: &TransactionV0EnvelopeConst) {
         self.write_type_transaction_v0(&v.tx);
         self.write_type_vec_decorated_signature(&v.signatures);
     }

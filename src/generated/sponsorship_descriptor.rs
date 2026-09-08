@@ -60,14 +60,6 @@ impl WriteXdr for SponsorshipDescriptor {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SponsorshipDescriptor {
-    type Owned = SponsorshipDescriptor;
-    fn into_owned(self) -> SponsorshipDescriptor {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SponsorshipDescriptor {
     /// The exact XDR-encoded length of this value, in bytes.
@@ -115,7 +107,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SponsorshipDescriptor`], mirroring `<VecM<SponsorshipDescriptor, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sponsorship_descriptor<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, SponsorshipDescriptor, MAX>,
+        v: &VecMConst<SponsorshipDescriptor, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

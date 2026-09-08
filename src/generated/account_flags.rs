@@ -155,14 +155,6 @@ impl WriteXdr for AccountFlags {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountFlags {
-    type Owned = AccountFlags;
-    fn into_owned(self) -> AccountFlags {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AccountFlags {
     /// The exact XDR-encoded length of this value, in bytes.

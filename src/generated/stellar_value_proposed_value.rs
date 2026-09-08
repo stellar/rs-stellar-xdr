@@ -58,60 +58,18 @@ impl WriteXdr for StellarValueProposedValue {
     }
 }
 
-/// StellarValueProposedValueRef is a borrowing equivalent of [`StellarValueProposedValue`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// StellarValueProposedValueConst is a borrowing equivalent of [`StellarValueProposedValue`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StellarValueProposedValueRef<'a> {
+pub struct StellarValueProposedValueConst {
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,
     pub previous_ledger_version: u32,
-    pub lc_value_signature: LedgerCloseValueSignatureRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueProposedValueRef<'_> {
-    type Owned = StellarValueProposedValue;
-    fn into_owned(self) -> StellarValueProposedValue {
-        StellarValueProposedValue {
-            tx_set_hash: self.tx_set_hash.into_owned(),
-            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
-            previous_ledger_version: self.previous_ledger_version.into_owned(),
-            lc_value_signature: self.lc_value_signature.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
-    #[must_use]
-    fn from(v: &StellarValueProposedValueRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<StellarValueProposedValueRef<'_>> for StellarValueProposedValue {
-    #[must_use]
-    fn from(v: StellarValueProposedValueRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for StellarValueProposedValueRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx_set_hash.write_xdr(w)?;
-            self.previous_ledger_hash.write_xdr(w)?;
-            self.previous_ledger_version.write_xdr(w)?;
-            self.lc_value_signature.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub lc_value_signature: LedgerCloseValueSignatureConst,
 }
 
 #[cfg(feature = "const")]
-impl StellarValueProposedValueRef<'_> {
+impl StellarValueProposedValueConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -152,7 +110,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`StellarValueProposedValue`], mirroring `<StellarValueProposedValue as WriteXdr>::write_xdr`.
     pub const fn write_type_stellar_value_proposed_value(
         &mut self,
-        v: &StellarValueProposedValueRef<'_>,
+        v: &StellarValueProposedValueConst,
     ) {
         self.write_type_hash(&v.tx_set_hash);
         self.write_type_hash(&v.previous_ledger_hash);

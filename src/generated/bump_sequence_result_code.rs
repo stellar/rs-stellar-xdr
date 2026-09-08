@@ -132,14 +132,6 @@ impl WriteXdr for BumpSequenceResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BumpSequenceResultCode {
-    type Owned = BumpSequenceResultCode;
-    fn into_owned(self) -> BumpSequenceResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl BumpSequenceResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

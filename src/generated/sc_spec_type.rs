@@ -283,14 +283,6 @@ impl WriteXdr for ScSpecType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecType {
-    type Owned = ScSpecType;
-    fn into_owned(self) -> ScSpecType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScSpecType {
     /// The exact XDR-encoded length of this value, in bytes.

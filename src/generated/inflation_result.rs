@@ -139,44 +139,16 @@ impl WriteXdr for InflationResult {
     }
 }
 
-/// InflationResultRef is a borrowing equivalent of [`InflationResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// InflationResultConst is a borrowing equivalent of [`InflationResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum InflationResultRef<'a> {
-    Success(VecMRef<'a, InflationPayout>),
+pub enum InflationResultConst {
+    Success(VecMConst<InflationPayout>),
     NotTime,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for InflationResultRef<'_> {
-    type Owned = InflationResult;
-    fn into_owned(self) -> InflationResult {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            InflationResultRef::Success(value) => InflationResult::Success(value.into_owned()),
-            InflationResultRef::NotTime => InflationResult::NotTime,
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&InflationResultRef<'_>> for InflationResult {
-    #[must_use]
-    fn from(v: &InflationResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<InflationResultRef<'_>> for InflationResult {
-    #[must_use]
-    fn from(v: InflationResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl InflationResultRef<'_> {
+impl InflationResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> InflationResultCode {
         #[allow(clippy::match_same_arms)]
@@ -187,23 +159,8 @@ impl InflationResultRef<'_> {
     }
 }
 
-impl WriteXdr for InflationResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Success(v) => v.write_xdr(w)?,
-                Self::NotTime => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl InflationResultRef<'_> {
+impl InflationResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -242,15 +199,15 @@ impl InflationResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`InflationResult`], mirroring `<InflationResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_inflation_result(&mut self, v: &InflationResultRef<'_>) {
+    pub const fn write_type_inflation_result(&mut self, v: &InflationResultConst) {
         let d = v.discriminant();
         self.write_type_inflation_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            InflationResultRef::Success(value) => {
+            InflationResultConst::Success(value) => {
                 self.write_type_vec_inflation_payout(value);
             }
-            InflationResultRef::NotTime => {}
+            InflationResultConst::NotTime => {}
         }
     }
 }

@@ -45,51 +45,15 @@ impl WriteXdr for FrozenLedgerKeys {
     }
 }
 
-/// FrozenLedgerKeysRef is a borrowing equivalent of [`FrozenLedgerKeys`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FrozenLedgerKeysConst is a borrowing equivalent of [`FrozenLedgerKeys`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FrozenLedgerKeysRef<'a> {
-    pub keys: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for FrozenLedgerKeysRef<'_> {
-    type Owned = FrozenLedgerKeys;
-    fn into_owned(self) -> FrozenLedgerKeys {
-        FrozenLedgerKeys {
-            keys: self.keys.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FrozenLedgerKeysRef<'_>> for FrozenLedgerKeys {
-    #[must_use]
-    fn from(v: &FrozenLedgerKeysRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FrozenLedgerKeysRef<'_>> for FrozenLedgerKeys {
-    #[must_use]
-    fn from(v: FrozenLedgerKeysRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FrozenLedgerKeysRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.keys.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct FrozenLedgerKeysConst {
+    pub keys: VecMConst<EncodedLedgerKeyConst>,
 }
 
 #[cfg(feature = "const")]
-impl FrozenLedgerKeysRef<'_> {
+impl FrozenLedgerKeysConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -128,7 +92,7 @@ impl FrozenLedgerKeysRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FrozenLedgerKeys`], mirroring `<FrozenLedgerKeys as WriteXdr>::write_xdr`.
-    pub const fn write_type_frozen_ledger_keys(&mut self, v: &FrozenLedgerKeysRef<'_>) {
+    pub const fn write_type_frozen_ledger_keys(&mut self, v: &FrozenLedgerKeysConst) {
         self.write_type_vec_encoded_ledger_key(&v.keys);
     }
 }

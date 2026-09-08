@@ -129,42 +129,15 @@ impl WriteXdr for ScMetaEntry {
     }
 }
 
-/// ScMetaEntryRef is a borrowing equivalent of [`ScMetaEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScMetaEntryConst is a borrowing equivalent of [`ScMetaEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScMetaEntryRef<'a> {
-    ScMetaV0(ScMetaV0Ref<'a>),
+pub enum ScMetaEntryConst {
+    ScMetaV0(ScMetaV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScMetaEntryRef<'_> {
-    type Owned = ScMetaEntry;
-    fn into_owned(self) -> ScMetaEntry {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScMetaEntryRef::ScMetaV0(value) => ScMetaEntry::ScMetaV0(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScMetaEntryRef<'_>> for ScMetaEntry {
-    #[must_use]
-    fn from(v: &ScMetaEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScMetaEntryRef<'_>> for ScMetaEntry {
-    #[must_use]
-    fn from(v: ScMetaEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScMetaEntryRef<'_> {
+impl ScMetaEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScMetaKind {
         #[allow(clippy::match_same_arms)]
@@ -174,22 +147,8 @@ impl ScMetaEntryRef<'_> {
     }
 }
 
-impl WriteXdr for ScMetaEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ScMetaV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScMetaEntryRef<'_> {
+impl ScMetaEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -228,12 +187,12 @@ impl ScMetaEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScMetaEntry`], mirroring `<ScMetaEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_meta_entry(&mut self, v: &ScMetaEntryRef<'_>) {
+    pub const fn write_type_sc_meta_entry(&mut self, v: &ScMetaEntryConst) {
         let d = v.discriminant();
         self.write_type_sc_meta_kind(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScMetaEntryRef::ScMetaV0(value) => {
+            ScMetaEntryConst::ScMetaV0(value) => {
                 self.write_type_sc_meta_v0(value);
             }
         }

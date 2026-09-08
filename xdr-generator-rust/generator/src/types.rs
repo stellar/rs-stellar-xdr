@@ -4,7 +4,6 @@ use xdr_parser::ast::{Size, Type};
 use xdr_parser::types::TypeInfo;
 
 use crate::naming::{const_name, type_name};
-use crate::output::CyclicBorrow;
 
 /// All resolved Rust type strings for an XDR type, computed together.
 pub struct ResolvedType {
@@ -12,26 +11,23 @@ pub struct ResolvedType {
     pub turbofish_type: String,
     pub serde_as_type: Option<String>,
     pub element_type: String,
-    /// The Rust type used in the borrowing `Ref` variant of the containing
-    /// type, e.g. `VecMRef<'a, OperationRef<'a>, 100>` for `VecM<Operation, 100>`.
-    pub ref_type: String,
-    /// Whether the `Ref` form borrows to break a cycle, and so whether the
-    /// conversion to the owned form has to restore a `Box`.
-    pub cyclic: CyclicBorrow,
+    /// The Rust type used in the borrowing `Const` variant of the containing
+    /// type, e.g. `VecMConst<OperationConst, 100>` for `VecM<Operation, 100>`.
+    pub const_type: String,
 }
 
 /// Resolve all Rust type information for an XDR type in one call.
 ///
 /// When `custom_str` is true, `serde_as_type` is forced to `None`.
 ///
-/// `ref_required` is the set of Rust type names that have a borrowing `Ref`
-/// variant.
+/// `const_required` is the set of Rust type names that have a borrowing
+/// `Const` variant.
 pub(crate) fn resolve_type(
     type_: &Type,
     parent: Option<&str>,
     type_info: &TypeInfo,
     custom_str: bool,
-    ref_required: &HashSet<String>,
+    const_required: &HashSet<String>,
 ) -> ResolvedType {
     let m = TypeMapping::new(type_, Some(type_info), parent);
     ResolvedType {
@@ -39,8 +35,7 @@ pub(crate) fn resolve_type(
         turbofish_type: m.turbofish_type(),
         serde_as_type: if custom_str { None } else { m.serde_as_type() },
         element_type: m.element_type(),
-        ref_type: m.ref_type(ref_required),
-        cyclic: m.cyclic_borrow(),
+        const_type: m.const_type(const_required),
     }
 }
 
@@ -56,34 +51,30 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
 }
 
 /// The Rust type that holds this XDR type in a const context: the borrowing
-/// `Ref` form where the type owns heap data, the owned type otherwise.
+/// `Const` form where the type owns heap data, the owned type otherwise.
 ///
-/// The `'a` of the `Ref` types is rendered as `'_`, so the result is usable in
-/// a function signature. Mirrors [`type_ref`], including the reference wrapping
-/// applied where `parent_type` makes the type cyclic.
-pub(crate) fn const_ref_type(
+/// Mirrors [`type_ref`], including the reference wrapping applied where
+/// `parent_type` makes the type cyclic.
+pub(crate) fn const_type(
     type_: &Type,
     parent_type: Option<&str>,
     type_info: &TypeInfo,
-    ref_required: &HashSet<String>,
+    const_required: &HashSet<String>,
 ) -> String {
-    TypeMapping::new(type_, Some(type_info), parent_type)
-        .ref_type(ref_required)
-        .replace("'a", "'_")
+    TypeMapping::new(type_, Some(type_info), parent_type).const_type(const_required)
 }
 
-/// As [`const_ref_type`], but without the reference wrapping for cyclic types.
+/// As [`const_type`], but without the reference wrapping for cyclic
+/// types.
 ///
-/// This is the form an element takes inside a container such as `VecMRef`,
+/// This is the form an element takes inside a container such as `VecMConst`,
 /// which borrows its elements as a slice rather than individually.
-pub(crate) fn const_ref_base_type(
+pub(crate) fn const_base_type(
     type_: &Type,
     type_info: &TypeInfo,
-    ref_required: &HashSet<String>,
+    const_required: &HashSet<String>,
 ) -> String {
-    TypeMapping::new(type_, Some(type_info), None)
-        .ref_base_type(ref_required)
-        .replace("'a", "'_")
+    TypeMapping::new(type_, Some(type_info), None).const_base_type(const_required)
 }
 
 /// Convert a Size to a Rust `u32` const generic argument, as used by
@@ -218,13 +209,14 @@ impl<'a> TypeMapping<'a> {
         }
     }
 
-    /// The Rust type used for this XDR type in a borrowing `Ref` type,
+    /// The Rust type used for this XDR type in a borrowing `Const` type,
     /// without the reference wrapping applied for cyclic types.
     ///
     /// Mirrors `base_type_ref`, mapping heap-owning types to their borrowing
-    /// equivalents: `VecM` to `VecMRef`, `BytesM` to `BytesMRef`, `StringM` to
-    /// `StringMRef`, and idents of types with a `Ref` variant to that variant.
-    fn ref_base_type(&self, ref_required: &HashSet<String>) -> String {
+    /// equivalents: `VecM` to `VecMConst`, `BytesM` to `BytesMConst`,
+    /// `StringM` to `StringMConst`, and idents of types with a `Const`
+    /// variant to that variant.
+    fn const_base_type(&self, const_required: &HashSet<String>) -> String {
         match self.type_ {
             Type::Int
             | Type::UnsignedInt
@@ -235,23 +227,23 @@ impl<'a> TypeMapping<'a> {
             | Type::Bool
             | Type::OpaqueFixed(_) => self.base_type_ref(),
             Type::OpaqueVar(max) => match max {
-                Some(size) => format!("BytesMRef<'a, {}>", size_to_u32_string(size)),
-                None => "BytesMRef<'a>".to_string(),
+                Some(size) => format!("BytesMConst<{}>", size_to_u32_string(size)),
+                None => "BytesMConst".to_string(),
             },
             Type::String(max) => match max {
-                Some(size) => format!("StringMRef<'a, {}>", size_to_u32_string(size)),
-                None => "StringMRef<'a>".to_string(),
+                Some(size) => format!("StringMConst<{}>", size_to_u32_string(size)),
+                None => "StringMConst".to_string(),
             },
             Type::Ident(_) => {
                 if let Some(ti) = self.type_info {
                     if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
-                        return self.child(builtin).ref_base_type(ref_required);
+                        return self.child(builtin).const_base_type(const_required);
                     }
                 }
                 if let Type::Ident(name) = self.type_ {
                     let name = type_name(name);
-                    if ref_required.contains(&name) {
-                        format!("{name}Ref<'a>")
+                    if const_required.contains(&name) {
+                        format!("{name}Const")
                     } else {
                         name
                     }
@@ -262,13 +254,13 @@ impl<'a> TypeMapping<'a> {
             Type::Optional(inner) => {
                 format!(
                     "Option<{}>",
-                    self.child(inner).ref_base_type(ref_required)
+                    self.child(inner).const_base_type(const_required)
                 )
             }
             Type::Array { element_type, size } => {
                 format!(
                     "[{}; {}]",
-                    self.child(element_type).ref_base_type(ref_required),
+                    self.child(element_type).const_base_type(const_required),
                     size_to_usize_string(size)
                 )
             }
@@ -276,39 +268,21 @@ impl<'a> TypeMapping<'a> {
                 element_type,
                 max_size,
             } => {
-                let elem = self.child(element_type).ref_base_type(ref_required);
+                let elem = self.child(element_type).const_base_type(const_required);
                 match max_size {
-                    Some(size) => format!("VecMRef<'a, {elem}, {}>", size_to_u32_string(size)),
-                    None => format!("VecMRef<'a, {elem}>"),
+                    Some(size) => format!("VecMConst<{elem}, {}>", size_to_u32_string(size)),
+                    None => format!("VecMConst<{elem}>"),
                 }
             }
         }
     }
 
-    /// How the `Ref` form of this type breaks a cycle, if it does.
-    ///
-    /// Mirrors the cyclic branching of [`Self::ref_type`] and
-    /// [`Self::type_ref`]: those decide where a `&'a` and a `Box` appear, and
-    /// this reports it so the conversion between the two forms can restore the
-    /// `Box`. A cyclic array or `VecM` is already indirect, so neither form
-    /// wraps it and there is nothing to restore.
-    fn cyclic_borrow(&self) -> CyclicBorrow {
-        if !self.is_cyclic() {
-            return CyclicBorrow::NotCyclic;
-        }
-        match self.type_ {
-            Type::Optional(_) => CyclicBorrow::OptionalReference,
-            Type::Array { .. } | Type::VarArray { .. } => CyclicBorrow::NotCyclic,
-            _ => CyclicBorrow::Reference,
-        }
-    }
-
-    /// The Rust type used for this XDR type in a borrowing `Ref` type.
+    /// The Rust type used for this XDR type in a borrowing `Const` type.
     ///
     /// Mirrors `type_ref`: where the owned type wraps cyclic references in
-    /// `Box`, the `Ref` type uses a plain reference instead.
-    fn ref_type(&self, ref_required: &HashSet<String>) -> String {
-        let base = self.ref_base_type(ref_required);
+    /// `Box`, the `Const` type uses a plain reference instead.
+    fn const_type(&self, const_required: &HashSet<String>) -> String {
+        let base = self.const_base_type(const_required);
 
         if !self.is_cyclic() {
             return base;
@@ -316,11 +290,11 @@ impl<'a> TypeMapping<'a> {
 
         match self.type_ {
             Type::Optional(inner) => {
-                let inner_ref = self.child(inner).ref_base_type(ref_required);
-                format!("Option<&'a {inner_ref}>")
+                let inner = self.child(inner).const_base_type(const_required);
+                format!("Option<&'static {inner}>")
             }
             Type::Array { .. } | Type::VarArray { .. } => base,
-            _ => format!("&'a {base}"),
+            _ => format!("&'static {base}"),
         }
     }
 

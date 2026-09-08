@@ -64,57 +64,17 @@ impl WriteXdr for ContractCodeEntry {
     }
 }
 
-/// ContractCodeEntryRef is a borrowing equivalent of [`ContractCodeEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractCodeEntryConst is a borrowing equivalent of [`ContractCodeEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractCodeEntryRef<'a> {
+pub struct ContractCodeEntryConst {
     pub ext: ContractCodeEntryExt,
     pub hash: Hash,
-    pub code: BytesMRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractCodeEntryRef<'_> {
-    type Owned = ContractCodeEntry;
-    fn into_owned(self) -> ContractCodeEntry {
-        ContractCodeEntry {
-            ext: self.ext.into_owned(),
-            hash: self.hash.into_owned(),
-            code: self.code.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractCodeEntryRef<'_>> for ContractCodeEntry {
-    #[must_use]
-    fn from(v: &ContractCodeEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractCodeEntryRef<'_>> for ContractCodeEntry {
-    #[must_use]
-    fn from(v: ContractCodeEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ContractCodeEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.hash.write_xdr(w)?;
-            self.code.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub code: BytesMConst,
 }
 
 #[cfg(feature = "const")]
-impl ContractCodeEntryRef<'_> {
+impl ContractCodeEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -153,7 +113,7 @@ impl ContractCodeEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractCodeEntry`], mirroring `<ContractCodeEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_code_entry(&mut self, v: &ContractCodeEntryRef<'_>) {
+    pub const fn write_type_contract_code_entry(&mut self, v: &ContractCodeEntryConst) {
         self.write_type_contract_code_entry_ext(&v.ext);
         self.write_type_hash(&v.hash);
         self.write_var_opaque(v.code.as_slice());

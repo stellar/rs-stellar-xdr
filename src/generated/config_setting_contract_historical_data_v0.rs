@@ -50,14 +50,6 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigSettingContractHistoricalDataV0 {
-    type Owned = ConfigSettingContractHistoricalDataV0;
-    fn into_owned(self) -> ConfigSettingContractHistoricalDataV0 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ConfigSettingContractHistoricalDataV0 {
     /// The exact XDR-encoded length of this value, in bytes.

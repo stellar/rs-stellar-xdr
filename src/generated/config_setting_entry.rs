@@ -363,124 +363,35 @@ impl WriteXdr for ConfigSettingEntry {
     }
 }
 
-/// ConfigSettingEntryRef is a borrowing equivalent of [`ConfigSettingEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ConfigSettingEntryConst is a borrowing equivalent of [`ConfigSettingEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ConfigSettingEntryRef<'a> {
+pub enum ConfigSettingEntryConst {
     ContractMaxSizeBytes(u32),
     ContractComputeV0(ConfigSettingContractComputeV0),
     ContractLedgerCostV0(ConfigSettingContractLedgerCostV0),
     ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0),
     ContractEventsV0(ConfigSettingContractEventsV0),
     ContractBandwidthV0(ConfigSettingContractBandwidthV0),
-    ContractCostParamsCpuInstructions(ContractCostParamsRef<'a>),
-    ContractCostParamsMemoryBytes(ContractCostParamsRef<'a>),
+    ContractCostParamsCpuInstructions(ContractCostParamsConst),
+    ContractCostParamsMemoryBytes(ContractCostParamsConst),
     ContractDataKeySizeBytes(u32),
     ContractDataEntrySizeBytes(u32),
     StateArchival(StateArchivalSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
-    LiveSorobanStateSizeWindow(VecMRef<'a, u64>),
+    LiveSorobanStateSizeWindow(VecMConst<u64>),
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
     ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
     ScpTiming(ConfigSettingScpTiming),
-    FrozenLedgerKeys(FrozenLedgerKeysRef<'a>),
-    FrozenLedgerKeysDelta(FrozenLedgerKeysDeltaRef<'a>),
-    FreezeBypassTxs(FreezeBypassTxsRef<'a>),
-    FreezeBypassTxsDelta(FreezeBypassTxsDeltaRef<'a>),
+    FrozenLedgerKeys(FrozenLedgerKeysConst),
+    FrozenLedgerKeysDelta(FrozenLedgerKeysDeltaConst),
+    FreezeBypassTxs(FreezeBypassTxsConst),
+    FreezeBypassTxsDelta(FreezeBypassTxsDeltaConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigSettingEntryRef<'_> {
-    type Owned = ConfigSettingEntry;
-    fn into_owned(self) -> ConfigSettingEntry {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ConfigSettingEntryRef::ContractMaxSizeBytes(value) => {
-                ConfigSettingEntry::ContractMaxSizeBytes(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractComputeV0(value) => {
-                ConfigSettingEntry::ContractComputeV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractLedgerCostV0(value) => {
-                ConfigSettingEntry::ContractLedgerCostV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractHistoricalDataV0(value) => {
-                ConfigSettingEntry::ContractHistoricalDataV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractEventsV0(value) => {
-                ConfigSettingEntry::ContractEventsV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractBandwidthV0(value) => {
-                ConfigSettingEntry::ContractBandwidthV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractCostParamsCpuInstructions(value) => {
-                ConfigSettingEntry::ContractCostParamsCpuInstructions(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractCostParamsMemoryBytes(value) => {
-                ConfigSettingEntry::ContractCostParamsMemoryBytes(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractDataKeySizeBytes(value) => {
-                ConfigSettingEntry::ContractDataKeySizeBytes(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractDataEntrySizeBytes(value) => {
-                ConfigSettingEntry::ContractDataEntrySizeBytes(value.into_owned())
-            }
-            ConfigSettingEntryRef::StateArchival(value) => {
-                ConfigSettingEntry::StateArchival(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractExecutionLanes(value) => {
-                ConfigSettingEntry::ContractExecutionLanes(value.into_owned())
-            }
-            ConfigSettingEntryRef::LiveSorobanStateSizeWindow(value) => {
-                ConfigSettingEntry::LiveSorobanStateSizeWindow(value.into_owned())
-            }
-            ConfigSettingEntryRef::EvictionIterator(value) => {
-                ConfigSettingEntry::EvictionIterator(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractParallelComputeV0(value) => {
-                ConfigSettingEntry::ContractParallelComputeV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ContractLedgerCostExtV0(value) => {
-                ConfigSettingEntry::ContractLedgerCostExtV0(value.into_owned())
-            }
-            ConfigSettingEntryRef::ScpTiming(value) => {
-                ConfigSettingEntry::ScpTiming(value.into_owned())
-            }
-            ConfigSettingEntryRef::FrozenLedgerKeys(value) => {
-                ConfigSettingEntry::FrozenLedgerKeys(value.into_owned())
-            }
-            ConfigSettingEntryRef::FrozenLedgerKeysDelta(value) => {
-                ConfigSettingEntry::FrozenLedgerKeysDelta(value.into_owned())
-            }
-            ConfigSettingEntryRef::FreezeBypassTxs(value) => {
-                ConfigSettingEntry::FreezeBypassTxs(value.into_owned())
-            }
-            ConfigSettingEntryRef::FreezeBypassTxsDelta(value) => {
-                ConfigSettingEntry::FreezeBypassTxsDelta(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ConfigSettingEntryRef<'_>> for ConfigSettingEntry {
-    #[must_use]
-    fn from(v: &ConfigSettingEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ConfigSettingEntryRef<'_>> for ConfigSettingEntry {
-    #[must_use]
-    fn from(v: ConfigSettingEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ConfigSettingEntryRef<'_> {
+impl ConfigSettingEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> ConfigSettingId {
         #[allow(clippy::match_same_arms)]
@@ -514,42 +425,8 @@ impl ConfigSettingEntryRef<'_> {
     }
 }
 
-impl WriteXdr for ConfigSettingEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ContractMaxSizeBytes(v) => v.write_xdr(w)?,
-                Self::ContractComputeV0(v) => v.write_xdr(w)?,
-                Self::ContractLedgerCostV0(v) => v.write_xdr(w)?,
-                Self::ContractHistoricalDataV0(v) => v.write_xdr(w)?,
-                Self::ContractEventsV0(v) => v.write_xdr(w)?,
-                Self::ContractBandwidthV0(v) => v.write_xdr(w)?,
-                Self::ContractCostParamsCpuInstructions(v) => v.write_xdr(w)?,
-                Self::ContractCostParamsMemoryBytes(v) => v.write_xdr(w)?,
-                Self::ContractDataKeySizeBytes(v) => v.write_xdr(w)?,
-                Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
-                Self::StateArchival(v) => v.write_xdr(w)?,
-                Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
-                Self::LiveSorobanStateSizeWindow(v) => v.write_xdr(w)?,
-                Self::EvictionIterator(v) => v.write_xdr(w)?,
-                Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
-                Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
-                Self::ScpTiming(v) => v.write_xdr(w)?,
-                Self::FrozenLedgerKeys(v) => v.write_xdr(w)?,
-                Self::FrozenLedgerKeysDelta(v) => v.write_xdr(w)?,
-                Self::FreezeBypassTxs(v) => v.write_xdr(w)?,
-                Self::FreezeBypassTxsDelta(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ConfigSettingEntryRef<'_> {
+impl ConfigSettingEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -588,72 +465,72 @@ impl ConfigSettingEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ConfigSettingEntry`], mirroring `<ConfigSettingEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_config_setting_entry(&mut self, v: &ConfigSettingEntryRef<'_>) {
+    pub const fn write_type_config_setting_entry(&mut self, v: &ConfigSettingEntryConst) {
         let d = v.discriminant();
         self.write_type_config_setting_id(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ConfigSettingEntryRef::ContractMaxSizeBytes(value) => {
+            ConfigSettingEntryConst::ContractMaxSizeBytes(value) => {
                 self.write_u32(*value);
             }
-            ConfigSettingEntryRef::ContractComputeV0(value) => {
+            ConfigSettingEntryConst::ContractComputeV0(value) => {
                 self.write_type_config_setting_contract_compute_v0(value);
             }
-            ConfigSettingEntryRef::ContractLedgerCostV0(value) => {
+            ConfigSettingEntryConst::ContractLedgerCostV0(value) => {
                 self.write_type_config_setting_contract_ledger_cost_v0(value);
             }
-            ConfigSettingEntryRef::ContractHistoricalDataV0(value) => {
+            ConfigSettingEntryConst::ContractHistoricalDataV0(value) => {
                 self.write_type_config_setting_contract_historical_data_v0(value);
             }
-            ConfigSettingEntryRef::ContractEventsV0(value) => {
+            ConfigSettingEntryConst::ContractEventsV0(value) => {
                 self.write_type_config_setting_contract_events_v0(value);
             }
-            ConfigSettingEntryRef::ContractBandwidthV0(value) => {
+            ConfigSettingEntryConst::ContractBandwidthV0(value) => {
                 self.write_type_config_setting_contract_bandwidth_v0(value);
             }
-            ConfigSettingEntryRef::ContractCostParamsCpuInstructions(value) => {
+            ConfigSettingEntryConst::ContractCostParamsCpuInstructions(value) => {
                 self.write_type_contract_cost_params(value);
             }
-            ConfigSettingEntryRef::ContractCostParamsMemoryBytes(value) => {
+            ConfigSettingEntryConst::ContractCostParamsMemoryBytes(value) => {
                 self.write_type_contract_cost_params(value);
             }
-            ConfigSettingEntryRef::ContractDataKeySizeBytes(value) => {
+            ConfigSettingEntryConst::ContractDataKeySizeBytes(value) => {
                 self.write_u32(*value);
             }
-            ConfigSettingEntryRef::ContractDataEntrySizeBytes(value) => {
+            ConfigSettingEntryConst::ContractDataEntrySizeBytes(value) => {
                 self.write_u32(*value);
             }
-            ConfigSettingEntryRef::StateArchival(value) => {
+            ConfigSettingEntryConst::StateArchival(value) => {
                 self.write_type_state_archival_settings(value);
             }
-            ConfigSettingEntryRef::ContractExecutionLanes(value) => {
+            ConfigSettingEntryConst::ContractExecutionLanes(value) => {
                 self.write_type_config_setting_contract_execution_lanes_v0(value);
             }
-            ConfigSettingEntryRef::LiveSorobanStateSizeWindow(value) => {
+            ConfigSettingEntryConst::LiveSorobanStateSizeWindow(value) => {
                 self.write_vec_u64(value);
             }
-            ConfigSettingEntryRef::EvictionIterator(value) => {
+            ConfigSettingEntryConst::EvictionIterator(value) => {
                 self.write_type_eviction_iterator(value);
             }
-            ConfigSettingEntryRef::ContractParallelComputeV0(value) => {
+            ConfigSettingEntryConst::ContractParallelComputeV0(value) => {
                 self.write_type_config_setting_contract_parallel_compute_v0(value);
             }
-            ConfigSettingEntryRef::ContractLedgerCostExtV0(value) => {
+            ConfigSettingEntryConst::ContractLedgerCostExtV0(value) => {
                 self.write_type_config_setting_contract_ledger_cost_ext_v0(value);
             }
-            ConfigSettingEntryRef::ScpTiming(value) => {
+            ConfigSettingEntryConst::ScpTiming(value) => {
                 self.write_type_config_setting_scp_timing(value);
             }
-            ConfigSettingEntryRef::FrozenLedgerKeys(value) => {
+            ConfigSettingEntryConst::FrozenLedgerKeys(value) => {
                 self.write_type_frozen_ledger_keys(value);
             }
-            ConfigSettingEntryRef::FrozenLedgerKeysDelta(value) => {
+            ConfigSettingEntryConst::FrozenLedgerKeysDelta(value) => {
                 self.write_type_frozen_ledger_keys_delta(value);
             }
-            ConfigSettingEntryRef::FreezeBypassTxs(value) => {
+            ConfigSettingEntryConst::FreezeBypassTxs(value) => {
                 self.write_type_freeze_bypass_txs(value);
             }
-            ConfigSettingEntryRef::FreezeBypassTxsDelta(value) => {
+            ConfigSettingEntryConst::FreezeBypassTxsDelta(value) => {
                 self.write_type_freeze_bypass_txs_delta(value);
             }
         }
@@ -662,7 +539,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ConfigSettingEntry`], mirroring `<VecM<ConfigSettingEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_config_setting_entry<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ConfigSettingEntryRef<'_>, MAX>,
+        v: &VecMConst<ConfigSettingEntryConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

@@ -157,50 +157,19 @@ impl WriteXdr for TransactionMeta {
     }
 }
 
-/// TransactionMetaRef is a borrowing equivalent of [`TransactionMeta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionMetaConst is a borrowing equivalent of [`TransactionMeta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionMetaRef<'a> {
-    V0(VecMRef<'a, OperationMetaRef<'a>>),
-    V1(TransactionMetaV1Ref<'a>),
-    V2(TransactionMetaV2Ref<'a>),
-    V3(TransactionMetaV3Ref<'a>),
-    V4(TransactionMetaV4Ref<'a>),
+pub enum TransactionMetaConst {
+    V0(VecMConst<OperationMetaConst>),
+    V1(TransactionMetaV1Const),
+    V2(TransactionMetaV2Const),
+    V3(TransactionMetaV3Const),
+    V4(TransactionMetaV4Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionMetaRef<'_> {
-    type Owned = TransactionMeta;
-    fn into_owned(self) -> TransactionMeta {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionMetaRef::V0(value) => TransactionMeta::V0(value.into_owned()),
-            TransactionMetaRef::V1(value) => TransactionMeta::V1(value.into_owned()),
-            TransactionMetaRef::V2(value) => TransactionMeta::V2(value.into_owned()),
-            TransactionMetaRef::V3(value) => TransactionMeta::V3(value.into_owned()),
-            TransactionMetaRef::V4(value) => TransactionMeta::V4(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionMetaRef<'_>> for TransactionMeta {
-    #[must_use]
-    fn from(v: &TransactionMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionMetaRef<'_>> for TransactionMeta {
-    #[must_use]
-    fn from(v: TransactionMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionMetaRef<'_> {
+impl TransactionMetaConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -214,26 +183,8 @@ impl TransactionMetaRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionMetaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
-                Self::V3(v) => v.write_xdr(w)?,
-                Self::V4(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionMetaRef<'_> {
+impl TransactionMetaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -272,24 +223,24 @@ impl TransactionMetaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionMeta`], mirroring `<TransactionMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_meta(&mut self, v: &TransactionMetaRef<'_>) {
+    pub const fn write_type_transaction_meta(&mut self, v: &TransactionMetaConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionMetaRef::V0(value) => {
+            TransactionMetaConst::V0(value) => {
                 self.write_type_vec_operation_meta(value);
             }
-            TransactionMetaRef::V1(value) => {
+            TransactionMetaConst::V1(value) => {
                 self.write_type_transaction_meta_v1(value);
             }
-            TransactionMetaRef::V2(value) => {
+            TransactionMetaConst::V2(value) => {
                 self.write_type_transaction_meta_v2(value);
             }
-            TransactionMetaRef::V3(value) => {
+            TransactionMetaConst::V3(value) => {
                 self.write_type_transaction_meta_v3(value);
             }
-            TransactionMetaRef::V4(value) => {
+            TransactionMetaConst::V4(value) => {
                 self.write_type_transaction_meta_v4(value);
             }
         }

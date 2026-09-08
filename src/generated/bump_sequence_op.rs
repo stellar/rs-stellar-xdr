@@ -46,14 +46,6 @@ impl WriteXdr for BumpSequenceOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for BumpSequenceOp {
-    type Owned = BumpSequenceOp;
-    fn into_owned(self) -> BumpSequenceOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl BumpSequenceOp {
     /// The exact XDR-encoded length of this value, in bytes.

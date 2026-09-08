@@ -108,44 +108,13 @@ impl AsRef<[ScVal]> for ScVec {
     }
 }
 
-/// ScVecRef is a borrowing equivalent of [`ScVec`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScVecConst is a borrowing equivalent of [`ScVec`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScVecRef<'a>(pub VecMRef<'a, ScValRef<'a>>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScVecRef<'_> {
-    type Owned = ScVec;
-    fn into_owned(self) -> ScVec {
-        ScVec(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScVecRef<'_>> for ScVec {
-    #[must_use]
-    fn from(v: &ScVecRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScVecRef<'_>> for ScVec {
-    #[must_use]
-    fn from(v: ScVecRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScVecRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct ScVecConst(pub VecMConst<ScValConst>);
 
 #[cfg(feature = "const")]
-impl ScVecRef<'_> {
+impl ScVecConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +153,12 @@ impl ScVecRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScVec`], mirroring `<ScVec as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_vec(&mut self, v: &ScVecRef<'_>) {
+    pub const fn write_type_sc_vec(&mut self, v: &ScVecConst) {
         self.write_type_vec_sc_val(&v.0);
     }
 
     /// Serializes an optional [`ScVec`], mirroring `<Option<ScVec> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_sc_vec(&mut self, v: &Option<ScVecRef<'_>>) {
+    pub const fn write_type_option_sc_vec(&mut self, v: &Option<ScVecConst>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

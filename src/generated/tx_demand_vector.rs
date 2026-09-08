@@ -108,44 +108,13 @@ impl AsRef<[Hash]> for TxDemandVector {
     }
 }
 
-/// TxDemandVectorRef is a borrowing equivalent of [`TxDemandVector`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TxDemandVectorConst is a borrowing equivalent of [`TxDemandVector`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TxDemandVectorRef<'a>(pub VecMRef<'a, Hash, TX_DEMAND_VECTOR_MAX_SIZE>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TxDemandVectorRef<'_> {
-    type Owned = TxDemandVector;
-    fn into_owned(self) -> TxDemandVector {
-        TxDemandVector(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TxDemandVectorRef<'_>> for TxDemandVector {
-    #[must_use]
-    fn from(v: &TxDemandVectorRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TxDemandVectorRef<'_>> for TxDemandVector {
-    #[must_use]
-    fn from(v: TxDemandVectorRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TxDemandVectorRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct TxDemandVectorConst(pub VecMConst<Hash, TX_DEMAND_VECTOR_MAX_SIZE>);
 
 #[cfg(feature = "const")]
-impl TxDemandVectorRef<'_> {
+impl TxDemandVectorConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl TxDemandVectorRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TxDemandVector`], mirroring `<TxDemandVector as WriteXdr>::write_xdr`.
-    pub const fn write_type_tx_demand_vector(&mut self, v: &TxDemandVectorRef<'_>) {
+    pub const fn write_type_tx_demand_vector(&mut self, v: &TxDemandVectorConst) {
         self.write_type_vec_hash(&v.0);
     }
 }

@@ -54,57 +54,17 @@ impl WriteXdr for ScpNomination {
     }
 }
 
-/// ScpNominationRef is a borrowing equivalent of [`ScpNomination`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpNominationConst is a borrowing equivalent of [`ScpNomination`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpNominationRef<'a> {
+pub struct ScpNominationConst {
     pub quorum_set_hash: Hash,
-    pub votes: VecMRef<'a, ValueRef<'a>>,
-    pub accepted: VecMRef<'a, ValueRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpNominationRef<'_> {
-    type Owned = ScpNomination;
-    fn into_owned(self) -> ScpNomination {
-        ScpNomination {
-            quorum_set_hash: self.quorum_set_hash.into_owned(),
-            votes: self.votes.into_owned(),
-            accepted: self.accepted.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpNominationRef<'_>> for ScpNomination {
-    #[must_use]
-    fn from(v: &ScpNominationRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpNominationRef<'_>> for ScpNomination {
-    #[must_use]
-    fn from(v: ScpNominationRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpNominationRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.quorum_set_hash.write_xdr(w)?;
-            self.votes.write_xdr(w)?;
-            self.accepted.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub votes: VecMConst<ValueConst>,
+    pub accepted: VecMConst<ValueConst>,
 }
 
 #[cfg(feature = "const")]
-impl ScpNominationRef<'_> {
+impl ScpNominationConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +103,7 @@ impl ScpNominationRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpNomination`], mirroring `<ScpNomination as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_nomination(&mut self, v: &ScpNominationRef<'_>) {
+    pub const fn write_type_scp_nomination(&mut self, v: &ScpNominationConst) {
         self.write_type_hash(&v.quorum_set_hash);
         self.write_type_vec_value(&v.votes);
         self.write_type_vec_value(&v.accepted);

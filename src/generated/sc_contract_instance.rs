@@ -49,54 +49,16 @@ impl WriteXdr for ScContractInstance {
     }
 }
 
-/// ScContractInstanceRef is a borrowing equivalent of [`ScContractInstance`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScContractInstanceConst is a borrowing equivalent of [`ScContractInstance`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScContractInstanceRef<'a> {
-    pub executable: ContractExecutableRef<'a>,
-    pub storage: Option<ScMapRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScContractInstanceRef<'_> {
-    type Owned = ScContractInstance;
-    fn into_owned(self) -> ScContractInstance {
-        ScContractInstance {
-            executable: self.executable.into_owned(),
-            storage: self.storage.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScContractInstanceRef<'_>> for ScContractInstance {
-    #[must_use]
-    fn from(v: &ScContractInstanceRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScContractInstanceRef<'_>> for ScContractInstance {
-    #[must_use]
-    fn from(v: ScContractInstanceRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScContractInstanceRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.executable.write_xdr(w)?;
-            self.storage.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScContractInstanceConst {
+    pub executable: ContractExecutableConst,
+    pub storage: Option<ScMapConst>,
 }
 
 #[cfg(feature = "const")]
-impl ScContractInstanceRef<'_> {
+impl ScContractInstanceConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +97,7 @@ impl ScContractInstanceRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScContractInstance`], mirroring `<ScContractInstance as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_contract_instance(&mut self, v: &ScContractInstanceRef<'_>) {
+    pub const fn write_type_sc_contract_instance(&mut self, v: &ScContractInstanceConst) {
         self.write_type_contract_executable(&v.executable);
         self.write_type_option_sc_map(&v.storage);
     }

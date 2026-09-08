@@ -166,14 +166,6 @@ impl WriteXdr for ManageDataResult {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ManageDataResult {
-    type Owned = ManageDataResult;
-    fn into_owned(self) -> ManageDataResult {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ManageDataResult {
     /// The exact XDR-encoded length of this value, in bytes.

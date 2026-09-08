@@ -50,54 +50,16 @@ impl WriteXdr for ContractEventV0 {
     }
 }
 
-/// ContractEventV0Ref is a borrowing equivalent of [`ContractEventV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractEventV0Const is a borrowing equivalent of [`ContractEventV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ContractEventV0Ref<'a> {
-    pub topics: VecMRef<'a, ScValRef<'a>>,
-    pub data: ScValRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractEventV0Ref<'_> {
-    type Owned = ContractEventV0;
-    fn into_owned(self) -> ContractEventV0 {
-        ContractEventV0 {
-            topics: self.topics.into_owned(),
-            data: self.data.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractEventV0Ref<'_>> for ContractEventV0 {
-    #[must_use]
-    fn from(v: &ContractEventV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractEventV0Ref<'_>> for ContractEventV0 {
-    #[must_use]
-    fn from(v: ContractEventV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ContractEventV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.topics.write_xdr(w)?;
-            self.data.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ContractEventV0Const {
+    pub topics: VecMConst<ScValConst>,
+    pub data: ScValConst,
 }
 
 #[cfg(feature = "const")]
-impl ContractEventV0Ref<'_> {
+impl ContractEventV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ContractEventV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractEventV0`], mirroring `<ContractEventV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_event_v0(&mut self, v: &ContractEventV0Ref<'_>) {
+    pub const fn write_type_contract_event_v0(&mut self, v: &ContractEventV0Const) {
         self.write_type_vec_sc_val(&v.topics);
         self.write_type_sc_val(&v.data);
     }

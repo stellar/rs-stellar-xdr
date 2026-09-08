@@ -163,14 +163,6 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimClaimableBalanceResultCode {
-    type Owned = ClaimClaimableBalanceResultCode;
-    fn into_owned(self) -> ClaimClaimableBalanceResultCode {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimClaimableBalanceResultCode {
     /// The exact XDR-encoded length of this value, in bytes.

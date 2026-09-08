@@ -108,44 +108,13 @@ impl AsRef<[u8]> for ScSymbol {
     }
 }
 
-/// ScSymbolRef is a borrowing equivalent of [`ScSymbol`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSymbolConst is a borrowing equivalent of [`ScSymbol`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSymbolRef<'a>(pub StringMRef<'a, SCSYMBOL_LIMIT>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSymbolRef<'_> {
-    type Owned = ScSymbol;
-    fn into_owned(self) -> ScSymbol {
-        ScSymbol(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSymbolRef<'_>> for ScSymbol {
-    #[must_use]
-    fn from(v: &ScSymbolRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSymbolRef<'_>> for ScSymbol {
-    #[must_use]
-    fn from(v: ScSymbolRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSymbolRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct ScSymbolConst(pub StringMConst<SCSYMBOL_LIMIT>);
 
 #[cfg(feature = "const")]
-impl ScSymbolRef<'_> {
+impl ScSymbolConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +153,14 @@ impl ScSymbolRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSymbol`], mirroring `<ScSymbol as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_symbol(&mut self, v: &ScSymbolRef<'_>) {
+    pub const fn write_type_sc_symbol(&mut self, v: &ScSymbolConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`ScSymbol`], mirroring `<VecM<ScSymbol, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_symbol<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScSymbolRef<'_>, MAX>,
+        v: &VecMConst<ScSymbolConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

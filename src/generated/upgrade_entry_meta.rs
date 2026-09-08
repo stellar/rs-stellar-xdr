@@ -50,54 +50,16 @@ impl WriteXdr for UpgradeEntryMeta {
     }
 }
 
-/// UpgradeEntryMetaRef is a borrowing equivalent of [`UpgradeEntryMeta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// UpgradeEntryMetaConst is a borrowing equivalent of [`UpgradeEntryMeta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct UpgradeEntryMetaRef<'a> {
+pub struct UpgradeEntryMetaConst {
     pub upgrade: LedgerUpgrade,
-    pub changes: LedgerEntryChangesRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for UpgradeEntryMetaRef<'_> {
-    type Owned = UpgradeEntryMeta;
-    fn into_owned(self) -> UpgradeEntryMeta {
-        UpgradeEntryMeta {
-            upgrade: self.upgrade.into_owned(),
-            changes: self.changes.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&UpgradeEntryMetaRef<'_>> for UpgradeEntryMeta {
-    #[must_use]
-    fn from(v: &UpgradeEntryMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<UpgradeEntryMetaRef<'_>> for UpgradeEntryMeta {
-    #[must_use]
-    fn from(v: UpgradeEntryMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for UpgradeEntryMetaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.upgrade.write_xdr(w)?;
-            self.changes.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub changes: LedgerEntryChangesConst,
 }
 
 #[cfg(feature = "const")]
-impl UpgradeEntryMetaRef<'_> {
+impl UpgradeEntryMetaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl UpgradeEntryMetaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`UpgradeEntryMeta`], mirroring `<UpgradeEntryMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_upgrade_entry_meta(&mut self, v: &UpgradeEntryMetaRef<'_>) {
+    pub const fn write_type_upgrade_entry_meta(&mut self, v: &UpgradeEntryMetaConst) {
         self.write_type_ledger_upgrade(&v.upgrade);
         self.write_type_ledger_entry_changes(&v.changes);
     }
@@ -144,7 +106,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`UpgradeEntryMeta`], mirroring `<VecM<UpgradeEntryMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_upgrade_entry_meta<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, UpgradeEntryMetaRef<'_>, MAX>,
+        v: &VecMConst<UpgradeEntryMetaConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

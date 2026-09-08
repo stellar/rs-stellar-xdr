@@ -50,54 +50,16 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     }
 }
 
-/// InvokeHostFunctionSuccessPreImageRef is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// InvokeHostFunctionSuccessPreImageConst is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeHostFunctionSuccessPreImageRef<'a> {
-    pub return_value: ScValRef<'a>,
-    pub events: VecMRef<'a, ContractEventRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for InvokeHostFunctionSuccessPreImageRef<'_> {
-    type Owned = InvokeHostFunctionSuccessPreImage;
-    fn into_owned(self) -> InvokeHostFunctionSuccessPreImage {
-        InvokeHostFunctionSuccessPreImage {
-            return_value: self.return_value.into_owned(),
-            events: self.events.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
-    #[must_use]
-    fn from(v: &InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<InvokeHostFunctionSuccessPreImageRef<'_>> for InvokeHostFunctionSuccessPreImage {
-    #[must_use]
-    fn from(v: InvokeHostFunctionSuccessPreImageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for InvokeHostFunctionSuccessPreImageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.return_value.write_xdr(w)?;
-            self.events.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct InvokeHostFunctionSuccessPreImageConst {
+    pub return_value: ScValConst,
+    pub events: VecMConst<ContractEventConst>,
 }
 
 #[cfg(feature = "const")]
-impl InvokeHostFunctionSuccessPreImageRef<'_> {
+impl InvokeHostFunctionSuccessPreImageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`InvokeHostFunctionSuccessPreImage`], mirroring `<InvokeHostFunctionSuccessPreImage as WriteXdr>::write_xdr`.
     pub const fn write_type_invoke_host_function_success_pre_image(
         &mut self,
-        v: &InvokeHostFunctionSuccessPreImageRef<'_>,
+        v: &InvokeHostFunctionSuccessPreImageConst,
     ) {
         self.write_type_sc_val(&v.return_value);
         self.write_type_vec_contract_event(&v.events);

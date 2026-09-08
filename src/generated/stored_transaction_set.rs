@@ -136,44 +136,16 @@ impl WriteXdr for StoredTransactionSet {
     }
 }
 
-/// StoredTransactionSetRef is a borrowing equivalent of [`StoredTransactionSet`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// StoredTransactionSetConst is a borrowing equivalent of [`StoredTransactionSet`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StoredTransactionSetRef<'a> {
-    V0(TransactionSetRef<'a>),
-    V1(GeneralizedTransactionSetRef<'a>),
+pub enum StoredTransactionSetConst {
+    V0(TransactionSetConst),
+    V1(GeneralizedTransactionSetConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for StoredTransactionSetRef<'_> {
-    type Owned = StoredTransactionSet;
-    fn into_owned(self) -> StoredTransactionSet {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            StoredTransactionSetRef::V0(value) => StoredTransactionSet::V0(value.into_owned()),
-            StoredTransactionSetRef::V1(value) => StoredTransactionSet::V1(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&StoredTransactionSetRef<'_>> for StoredTransactionSet {
-    #[must_use]
-    fn from(v: &StoredTransactionSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<StoredTransactionSetRef<'_>> for StoredTransactionSet {
-    #[must_use]
-    fn from(v: StoredTransactionSetRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl StoredTransactionSetRef<'_> {
+impl StoredTransactionSetConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -184,23 +156,8 @@ impl StoredTransactionSetRef<'_> {
     }
 }
 
-impl WriteXdr for StoredTransactionSetRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl StoredTransactionSetRef<'_> {
+impl StoredTransactionSetConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -239,15 +196,15 @@ impl StoredTransactionSetRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StoredTransactionSet`], mirroring `<StoredTransactionSet as WriteXdr>::write_xdr`.
-    pub const fn write_type_stored_transaction_set(&mut self, v: &StoredTransactionSetRef<'_>) {
+    pub const fn write_type_stored_transaction_set(&mut self, v: &StoredTransactionSetConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            StoredTransactionSetRef::V0(value) => {
+            StoredTransactionSetConst::V0(value) => {
                 self.write_type_transaction_set(value);
             }
-            StoredTransactionSetRef::V1(value) => {
+            StoredTransactionSetConst::V1(value) => {
                 self.write_type_generalized_transaction_set(value);
             }
         }
@@ -256,7 +213,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`StoredTransactionSet`], mirroring `<VecM<StoredTransactionSet, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_stored_transaction_set<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, StoredTransactionSetRef<'_>, MAX>,
+        v: &VecMConst<StoredTransactionSetConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

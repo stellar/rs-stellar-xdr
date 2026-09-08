@@ -135,14 +135,6 @@ impl WriteXdr for ClaimAtomType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimAtomType {
-    type Owned = ClaimAtomType;
-    fn into_owned(self) -> ClaimAtomType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimAtomType {
     /// The exact XDR-encoded length of this value, in bytes.

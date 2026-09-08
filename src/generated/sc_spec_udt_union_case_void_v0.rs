@@ -50,54 +50,16 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseVoidV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseVoidV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecUdtUnionCaseVoidV0Const is a borrowing equivalent of [`ScSpecUdtUnionCaseVoidV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtUnionCaseVoidV0Ref<'a> {
-    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: StringMRef<'a, 60>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionCaseVoidV0Ref<'_> {
-    type Owned = ScSpecUdtUnionCaseVoidV0;
-    fn into_owned(self) -> ScSpecUdtUnionCaseVoidV0 {
-        ScSpecUdtUnionCaseVoidV0 {
-            doc: self.doc.into_owned(),
-            name: self.name.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseVoidV0Ref<'_>> for ScSpecUdtUnionCaseVoidV0 {
-    #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseVoidV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseVoidV0Ref<'_>> for ScSpecUdtUnionCaseVoidV0 {
-    #[must_use]
-    fn from(v: ScSpecUdtUnionCaseVoidV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecUdtUnionCaseVoidV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecUdtUnionCaseVoidV0Const {
+    pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,
+    pub name: StringMConst<60>,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionCaseVoidV0Ref<'_> {
+impl ScSpecUdtUnionCaseVoidV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtUnionCaseVoidV0`], mirroring `<ScSpecUdtUnionCaseVoidV0 as WriteXdr>::write_xdr`.
     pub const fn write_type_sc_spec_udt_union_case_void_v0(
         &mut self,
-        v: &ScSpecUdtUnionCaseVoidV0Ref<'_>,
+        v: &ScSpecUdtUnionCaseVoidV0Const,
     ) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());

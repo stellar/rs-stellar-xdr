@@ -50,54 +50,16 @@ impl WriteXdr for LedgerKeyData {
     }
 }
 
-/// LedgerKeyDataRef is a borrowing equivalent of [`LedgerKeyData`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerKeyDataConst is a borrowing equivalent of [`LedgerKeyData`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerKeyDataRef<'a> {
+pub struct LedgerKeyDataConst {
     pub account_id: AccountId,
-    pub data_name: String64Ref<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyDataRef<'_> {
-    type Owned = LedgerKeyData;
-    fn into_owned(self) -> LedgerKeyData {
-        LedgerKeyData {
-            account_id: self.account_id.into_owned(),
-            data_name: self.data_name.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerKeyDataRef<'_>> for LedgerKeyData {
-    #[must_use]
-    fn from(v: &LedgerKeyDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerKeyDataRef<'_>> for LedgerKeyData {
-    #[must_use]
-    fn from(v: LedgerKeyDataRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerKeyDataRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.account_id.write_xdr(w)?;
-            self.data_name.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub data_name: String64Const,
 }
 
 #[cfg(feature = "const")]
-impl LedgerKeyDataRef<'_> {
+impl LedgerKeyDataConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl LedgerKeyDataRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerKeyData`], mirroring `<LedgerKeyData as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_key_data(&mut self, v: &LedgerKeyDataRef<'_>) {
+    pub const fn write_type_ledger_key_data(&mut self, v: &LedgerKeyDataConst) {
         self.write_type_account_id(&v.account_id);
         self.write_type_string64(&v.data_name);
     }

@@ -296,15 +296,15 @@ impl WriteXdr for TransactionResultResult {
     }
 }
 
-/// TransactionResultResultRef is a borrowing equivalent of [`TransactionResultResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionResultResultConst is a borrowing equivalent of [`TransactionResultResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionResultResultRef<'a> {
-    TxFeeBumpInnerSuccess(InnerTransactionResultPairRef<'a>),
-    TxFeeBumpInnerFailed(InnerTransactionResultPairRef<'a>),
-    TxSuccess(VecMRef<'a, OperationResultRef<'a>>),
-    TxFailed(VecMRef<'a, OperationResultRef<'a>>),
+pub enum TransactionResultResultConst {
+    TxFeeBumpInnerSuccess(InnerTransactionResultPairConst),
+    TxFeeBumpInnerFailed(InnerTransactionResultPairConst),
+    TxSuccess(VecMConst<OperationResultConst>),
+    TxFailed(VecMConst<OperationResultConst>),
     TxTooEarly,
     TxTooLate,
     TxMissingOperation,
@@ -323,75 +323,7 @@ pub enum TransactionResultResultRef<'a> {
     TxFrozenKeyAccessed,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionResultResultRef<'_> {
-    type Owned = TransactionResultResult;
-    fn into_owned(self) -> TransactionResultResult {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionResultResultRef::TxFeeBumpInnerSuccess(value) => {
-                TransactionResultResult::TxFeeBumpInnerSuccess(value.into_owned())
-            }
-            TransactionResultResultRef::TxFeeBumpInnerFailed(value) => {
-                TransactionResultResult::TxFeeBumpInnerFailed(value.into_owned())
-            }
-            TransactionResultResultRef::TxSuccess(value) => {
-                TransactionResultResult::TxSuccess(value.into_owned())
-            }
-            TransactionResultResultRef::TxFailed(value) => {
-                TransactionResultResult::TxFailed(value.into_owned())
-            }
-            TransactionResultResultRef::TxTooEarly => TransactionResultResult::TxTooEarly,
-            TransactionResultResultRef::TxTooLate => TransactionResultResult::TxTooLate,
-            TransactionResultResultRef::TxMissingOperation => {
-                TransactionResultResult::TxMissingOperation
-            }
-            TransactionResultResultRef::TxBadSeq => TransactionResultResult::TxBadSeq,
-            TransactionResultResultRef::TxBadAuth => TransactionResultResult::TxBadAuth,
-            TransactionResultResultRef::TxInsufficientBalance => {
-                TransactionResultResult::TxInsufficientBalance
-            }
-            TransactionResultResultRef::TxNoAccount => TransactionResultResult::TxNoAccount,
-            TransactionResultResultRef::TxInsufficientFee => {
-                TransactionResultResult::TxInsufficientFee
-            }
-            TransactionResultResultRef::TxBadAuthExtra => TransactionResultResult::TxBadAuthExtra,
-            TransactionResultResultRef::TxInternalError => TransactionResultResult::TxInternalError,
-            TransactionResultResultRef::TxNotSupported => TransactionResultResult::TxNotSupported,
-            TransactionResultResultRef::TxBadSponsorship => {
-                TransactionResultResult::TxBadSponsorship
-            }
-            TransactionResultResultRef::TxBadMinSeqAgeOrGap => {
-                TransactionResultResult::TxBadMinSeqAgeOrGap
-            }
-            TransactionResultResultRef::TxMalformed => TransactionResultResult::TxMalformed,
-            TransactionResultResultRef::TxSorobanInvalid => {
-                TransactionResultResult::TxSorobanInvalid
-            }
-            TransactionResultResultRef::TxFrozenKeyAccessed => {
-                TransactionResultResult::TxFrozenKeyAccessed
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionResultResultRef<'_>> for TransactionResultResult {
-    #[must_use]
-    fn from(v: &TransactionResultResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionResultResultRef<'_>> for TransactionResultResult {
-    #[must_use]
-    fn from(v: TransactionResultResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionResultResultRef<'_> {
+impl TransactionResultResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
@@ -420,41 +352,8 @@ impl TransactionResultResultRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionResultResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::TxFeeBumpInnerSuccess(v) => v.write_xdr(w)?,
-                Self::TxFeeBumpInnerFailed(v) => v.write_xdr(w)?,
-                Self::TxSuccess(v) => v.write_xdr(w)?,
-                Self::TxFailed(v) => v.write_xdr(w)?,
-                Self::TxTooEarly => ().write_xdr(w)?,
-                Self::TxTooLate => ().write_xdr(w)?,
-                Self::TxMissingOperation => ().write_xdr(w)?,
-                Self::TxBadSeq => ().write_xdr(w)?,
-                Self::TxBadAuth => ().write_xdr(w)?,
-                Self::TxInsufficientBalance => ().write_xdr(w)?,
-                Self::TxNoAccount => ().write_xdr(w)?,
-                Self::TxInsufficientFee => ().write_xdr(w)?,
-                Self::TxBadAuthExtra => ().write_xdr(w)?,
-                Self::TxInternalError => ().write_xdr(w)?,
-                Self::TxNotSupported => ().write_xdr(w)?,
-                Self::TxBadSponsorship => ().write_xdr(w)?,
-                Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
-                Self::TxMalformed => ().write_xdr(w)?,
-                Self::TxSorobanInvalid => ().write_xdr(w)?,
-                Self::TxFrozenKeyAccessed => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionResultResultRef<'_> {
+impl TransactionResultResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -493,42 +392,39 @@ impl TransactionResultResultRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TransactionResultResult`], mirroring `<TransactionResultResult as WriteXdr>::write_xdr`.
-    pub const fn write_type_transaction_result_result(
-        &mut self,
-        v: &TransactionResultResultRef<'_>,
-    ) {
+    pub const fn write_type_transaction_result_result(&mut self, v: &TransactionResultResultConst) {
         let d = v.discriminant();
         self.write_type_transaction_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionResultResultRef::TxFeeBumpInnerSuccess(value) => {
+            TransactionResultResultConst::TxFeeBumpInnerSuccess(value) => {
                 self.write_type_inner_transaction_result_pair(value);
             }
-            TransactionResultResultRef::TxFeeBumpInnerFailed(value) => {
+            TransactionResultResultConst::TxFeeBumpInnerFailed(value) => {
                 self.write_type_inner_transaction_result_pair(value);
             }
-            TransactionResultResultRef::TxSuccess(value) => {
+            TransactionResultResultConst::TxSuccess(value) => {
                 self.write_type_vec_operation_result(value);
             }
-            TransactionResultResultRef::TxFailed(value) => {
+            TransactionResultResultConst::TxFailed(value) => {
                 self.write_type_vec_operation_result(value);
             }
-            TransactionResultResultRef::TxTooEarly => {}
-            TransactionResultResultRef::TxTooLate => {}
-            TransactionResultResultRef::TxMissingOperation => {}
-            TransactionResultResultRef::TxBadSeq => {}
-            TransactionResultResultRef::TxBadAuth => {}
-            TransactionResultResultRef::TxInsufficientBalance => {}
-            TransactionResultResultRef::TxNoAccount => {}
-            TransactionResultResultRef::TxInsufficientFee => {}
-            TransactionResultResultRef::TxBadAuthExtra => {}
-            TransactionResultResultRef::TxInternalError => {}
-            TransactionResultResultRef::TxNotSupported => {}
-            TransactionResultResultRef::TxBadSponsorship => {}
-            TransactionResultResultRef::TxBadMinSeqAgeOrGap => {}
-            TransactionResultResultRef::TxMalformed => {}
-            TransactionResultResultRef::TxSorobanInvalid => {}
-            TransactionResultResultRef::TxFrozenKeyAccessed => {}
+            TransactionResultResultConst::TxTooEarly => {}
+            TransactionResultResultConst::TxTooLate => {}
+            TransactionResultResultConst::TxMissingOperation => {}
+            TransactionResultResultConst::TxBadSeq => {}
+            TransactionResultResultConst::TxBadAuth => {}
+            TransactionResultResultConst::TxInsufficientBalance => {}
+            TransactionResultResultConst::TxNoAccount => {}
+            TransactionResultResultConst::TxInsufficientFee => {}
+            TransactionResultResultConst::TxBadAuthExtra => {}
+            TransactionResultResultConst::TxInternalError => {}
+            TransactionResultResultConst::TxNotSupported => {}
+            TransactionResultResultConst::TxBadSponsorship => {}
+            TransactionResultResultConst::TxBadMinSeqAgeOrGap => {}
+            TransactionResultResultConst::TxMalformed => {}
+            TransactionResultResultConst::TxSorobanInvalid => {}
+            TransactionResultResultConst::TxFrozenKeyAccessed => {}
         }
     }
 }

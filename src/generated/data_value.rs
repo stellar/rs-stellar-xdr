@@ -108,44 +108,13 @@ impl AsRef<[u8]> for DataValue {
     }
 }
 
-/// DataValueRef is a borrowing equivalent of [`DataValue`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// DataValueConst is a borrowing equivalent of [`DataValue`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DataValueRef<'a>(pub BytesMRef<'a, 64>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for DataValueRef<'_> {
-    type Owned = DataValue;
-    fn into_owned(self) -> DataValue {
-        DataValue(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&DataValueRef<'_>> for DataValue {
-    #[must_use]
-    fn from(v: &DataValueRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<DataValueRef<'_>> for DataValue {
-    #[must_use]
-    fn from(v: DataValueRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for DataValueRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct DataValueConst(pub BytesMConst<64>);
 
 #[cfg(feature = "const")]
-impl DataValueRef<'_> {
+impl DataValueConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,12 +153,12 @@ impl DataValueRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`DataValue`], mirroring `<DataValue as WriteXdr>::write_xdr`.
-    pub const fn write_type_data_value(&mut self, v: &DataValueRef<'_>) {
+    pub const fn write_type_data_value(&mut self, v: &DataValueConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes an optional [`DataValue`], mirroring `<Option<DataValue> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_data_value(&mut self, v: &Option<DataValueRef<'_>>) {
+    pub const fn write_type_option_data_value(&mut self, v: &Option<DataValueConst>) {
         match v {
             Some(v) => {
                 self.write_u32(1);

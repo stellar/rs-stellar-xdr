@@ -58,14 +58,6 @@ impl WriteXdr for PaymentOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PaymentOp {
-    type Owned = PaymentOp;
-    fn into_owned(self) -> PaymentOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl PaymentOp {
     /// The exact XDR-encoded length of this value, in bytes.

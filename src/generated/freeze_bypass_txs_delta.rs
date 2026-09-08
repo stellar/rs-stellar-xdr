@@ -49,54 +49,16 @@ impl WriteXdr for FreezeBypassTxsDelta {
     }
 }
 
-/// FreezeBypassTxsDeltaRef is a borrowing equivalent of [`FreezeBypassTxsDelta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FreezeBypassTxsDeltaConst is a borrowing equivalent of [`FreezeBypassTxsDelta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FreezeBypassTxsDeltaRef<'a> {
-    pub add_txs: VecMRef<'a, Hash>,
-    pub remove_txs: VecMRef<'a, Hash>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for FreezeBypassTxsDeltaRef<'_> {
-    type Owned = FreezeBypassTxsDelta;
-    fn into_owned(self) -> FreezeBypassTxsDelta {
-        FreezeBypassTxsDelta {
-            add_txs: self.add_txs.into_owned(),
-            remove_txs: self.remove_txs.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FreezeBypassTxsDeltaRef<'_>> for FreezeBypassTxsDelta {
-    #[must_use]
-    fn from(v: &FreezeBypassTxsDeltaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FreezeBypassTxsDeltaRef<'_>> for FreezeBypassTxsDelta {
-    #[must_use]
-    fn from(v: FreezeBypassTxsDeltaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FreezeBypassTxsDeltaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.add_txs.write_xdr(w)?;
-            self.remove_txs.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct FreezeBypassTxsDeltaConst {
+    pub add_txs: VecMConst<Hash>,
+    pub remove_txs: VecMConst<Hash>,
 }
 
 #[cfg(feature = "const")]
-impl FreezeBypassTxsDeltaRef<'_> {
+impl FreezeBypassTxsDeltaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +97,7 @@ impl FreezeBypassTxsDeltaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FreezeBypassTxsDelta`], mirroring `<FreezeBypassTxsDelta as WriteXdr>::write_xdr`.
-    pub const fn write_type_freeze_bypass_txs_delta(&mut self, v: &FreezeBypassTxsDeltaRef<'_>) {
+    pub const fn write_type_freeze_bypass_txs_delta(&mut self, v: &FreezeBypassTxsDeltaConst) {
         self.write_type_vec_hash(&v.add_txs);
         self.write_type_vec_hash(&v.remove_txs);
     }

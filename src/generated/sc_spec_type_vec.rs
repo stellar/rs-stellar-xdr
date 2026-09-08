@@ -46,51 +46,15 @@ impl WriteXdr for ScSpecTypeVec {
     }
 }
 
-/// ScSpecTypeVecRef is a borrowing equivalent of [`ScSpecTypeVec`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeVecConst is a borrowing equivalent of [`ScSpecTypeVec`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeVecRef<'a> {
-    pub element_type: &'a ScSpecTypeDefRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeVecRef<'_> {
-    type Owned = ScSpecTypeVec;
-    fn into_owned(self) -> ScSpecTypeVec {
-        ScSpecTypeVec {
-            element_type: Box::new(self.element_type.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeVecRef<'_>> for ScSpecTypeVec {
-    #[must_use]
-    fn from(v: &ScSpecTypeVecRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeVecRef<'_>> for ScSpecTypeVec {
-    #[must_use]
-    fn from(v: ScSpecTypeVecRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecTypeVecRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.element_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecTypeVecConst {
+    pub element_type: &'static ScSpecTypeDefConst,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeVecRef<'_> {
+impl ScSpecTypeVecConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +93,7 @@ impl ScSpecTypeVecRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeVec`], mirroring `<ScSpecTypeVec as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_vec(&mut self, v: &ScSpecTypeVecRef<'_>) {
+    pub const fn write_type_sc_spec_type_vec(&mut self, v: &ScSpecTypeVecConst) {
         self.write_type_sc_spec_type_def(v.element_type);
     }
 }

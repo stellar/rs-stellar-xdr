@@ -129,44 +129,15 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     }
 }
 
-/// FeeBumpTransactionInnerTxRef is a borrowing equivalent of [`FeeBumpTransactionInnerTx`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FeeBumpTransactionInnerTxConst is a borrowing equivalent of [`FeeBumpTransactionInnerTx`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum FeeBumpTransactionInnerTxRef<'a> {
-    Tx(TransactionV1EnvelopeRef<'a>),
+pub enum FeeBumpTransactionInnerTxConst {
+    Tx(TransactionV1EnvelopeConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionInnerTxRef<'_> {
-    type Owned = FeeBumpTransactionInnerTx;
-    fn into_owned(self) -> FeeBumpTransactionInnerTx {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            FeeBumpTransactionInnerTxRef::Tx(value) => {
-                FeeBumpTransactionInnerTx::Tx(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
-    #[must_use]
-    fn from(v: &FeeBumpTransactionInnerTxRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionInnerTxRef<'_>> for FeeBumpTransactionInnerTx {
-    #[must_use]
-    fn from(v: FeeBumpTransactionInnerTxRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl FeeBumpTransactionInnerTxRef<'_> {
+impl FeeBumpTransactionInnerTxConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -176,22 +147,8 @@ impl FeeBumpTransactionInnerTxRef<'_> {
     }
 }
 
-impl WriteXdr for FeeBumpTransactionInnerTxRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Tx(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl FeeBumpTransactionInnerTxRef<'_> {
+impl FeeBumpTransactionInnerTxConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -232,13 +189,13 @@ impl ConstWriter<'_> {
     /// Serializes a [`FeeBumpTransactionInnerTx`], mirroring `<FeeBumpTransactionInnerTx as WriteXdr>::write_xdr`.
     pub const fn write_type_fee_bump_transaction_inner_tx(
         &mut self,
-        v: &FeeBumpTransactionInnerTxRef<'_>,
+        v: &FeeBumpTransactionInnerTxConst,
     ) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            FeeBumpTransactionInnerTxRef::Tx(value) => {
+            FeeBumpTransactionInnerTxConst::Tx(value) => {
                 self.write_type_transaction_v1_envelope(value);
             }
         }

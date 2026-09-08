@@ -49,54 +49,16 @@ impl WriteXdr for FrozenLedgerKeysDelta {
     }
 }
 
-/// FrozenLedgerKeysDeltaRef is a borrowing equivalent of [`FrozenLedgerKeysDelta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FrozenLedgerKeysDeltaConst is a borrowing equivalent of [`FrozenLedgerKeysDelta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FrozenLedgerKeysDeltaRef<'a> {
-    pub keys_to_freeze: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
-    pub keys_to_unfreeze: VecMRef<'a, EncodedLedgerKeyRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for FrozenLedgerKeysDeltaRef<'_> {
-    type Owned = FrozenLedgerKeysDelta;
-    fn into_owned(self) -> FrozenLedgerKeysDelta {
-        FrozenLedgerKeysDelta {
-            keys_to_freeze: self.keys_to_freeze.into_owned(),
-            keys_to_unfreeze: self.keys_to_unfreeze.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FrozenLedgerKeysDeltaRef<'_>> for FrozenLedgerKeysDelta {
-    #[must_use]
-    fn from(v: &FrozenLedgerKeysDeltaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FrozenLedgerKeysDeltaRef<'_>> for FrozenLedgerKeysDelta {
-    #[must_use]
-    fn from(v: FrozenLedgerKeysDeltaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FrozenLedgerKeysDeltaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.keys_to_freeze.write_xdr(w)?;
-            self.keys_to_unfreeze.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct FrozenLedgerKeysDeltaConst {
+    pub keys_to_freeze: VecMConst<EncodedLedgerKeyConst>,
+    pub keys_to_unfreeze: VecMConst<EncodedLedgerKeyConst>,
 }
 
 #[cfg(feature = "const")]
-impl FrozenLedgerKeysDeltaRef<'_> {
+impl FrozenLedgerKeysDeltaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -135,7 +97,7 @@ impl FrozenLedgerKeysDeltaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`FrozenLedgerKeysDelta`], mirroring `<FrozenLedgerKeysDelta as WriteXdr>::write_xdr`.
-    pub const fn write_type_frozen_ledger_keys_delta(&mut self, v: &FrozenLedgerKeysDeltaRef<'_>) {
+    pub const fn write_type_frozen_ledger_keys_delta(&mut self, v: &FrozenLedgerKeysDeltaConst) {
         self.write_type_vec_encoded_ledger_key(&v.keys_to_freeze);
         self.write_type_vec_encoded_ledger_key(&v.keys_to_unfreeze);
     }

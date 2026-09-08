@@ -53,57 +53,17 @@ impl WriteXdr for InvokeContractArgs {
     }
 }
 
-/// InvokeContractArgsRef is a borrowing equivalent of [`InvokeContractArgs`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// InvokeContractArgsConst is a borrowing equivalent of [`InvokeContractArgs`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeContractArgsRef<'a> {
+pub struct InvokeContractArgsConst {
     pub contract_address: ScAddress,
-    pub function_name: ScSymbolRef<'a>,
-    pub args: VecMRef<'a, ScValRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for InvokeContractArgsRef<'_> {
-    type Owned = InvokeContractArgs;
-    fn into_owned(self) -> InvokeContractArgs {
-        InvokeContractArgs {
-            contract_address: self.contract_address.into_owned(),
-            function_name: self.function_name.into_owned(),
-            args: self.args.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&InvokeContractArgsRef<'_>> for InvokeContractArgs {
-    #[must_use]
-    fn from(v: &InvokeContractArgsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<InvokeContractArgsRef<'_>> for InvokeContractArgs {
-    #[must_use]
-    fn from(v: InvokeContractArgsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for InvokeContractArgsRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.contract_address.write_xdr(w)?;
-            self.function_name.write_xdr(w)?;
-            self.args.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub function_name: ScSymbolConst,
+    pub args: VecMConst<ScValConst>,
 }
 
 #[cfg(feature = "const")]
-impl InvokeContractArgsRef<'_> {
+impl InvokeContractArgsConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +102,7 @@ impl InvokeContractArgsRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`InvokeContractArgs`], mirroring `<InvokeContractArgs as WriteXdr>::write_xdr`.
-    pub const fn write_type_invoke_contract_args(&mut self, v: &InvokeContractArgsRef<'_>) {
+    pub const fn write_type_invoke_contract_args(&mut self, v: &InvokeContractArgsConst) {
         self.write_type_sc_address(&v.contract_address);
         self.write_type_sc_symbol(&v.function_name);
         self.write_type_vec_sc_val(&v.args);

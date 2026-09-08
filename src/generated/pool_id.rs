@@ -57,14 +57,6 @@ impl WriteXdr for PoolId {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PoolId {
-    type Owned = PoolId;
-    fn into_owned(self) -> PoolId {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl PoolId {
     /// The exact XDR-encoded length of this value, in bytes.

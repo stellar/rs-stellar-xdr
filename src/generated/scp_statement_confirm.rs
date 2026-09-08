@@ -62,63 +62,19 @@ impl WriteXdr for ScpStatementConfirm {
     }
 }
 
-/// ScpStatementConfirmRef is a borrowing equivalent of [`ScpStatementConfirm`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpStatementConfirmConst is a borrowing equivalent of [`ScpStatementConfirm`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScpStatementConfirmRef<'a> {
-    pub ballot: ScpBallotRef<'a>,
+pub struct ScpStatementConfirmConst {
+    pub ballot: ScpBallotConst,
     pub n_prepared: u32,
     pub n_commit: u32,
     pub n_h: u32,
     pub quorum_set_hash: Hash,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementConfirmRef<'_> {
-    type Owned = ScpStatementConfirm;
-    fn into_owned(self) -> ScpStatementConfirm {
-        ScpStatementConfirm {
-            ballot: self.ballot.into_owned(),
-            n_prepared: self.n_prepared.into_owned(),
-            n_commit: self.n_commit.into_owned(),
-            n_h: self.n_h.into_owned(),
-            quorum_set_hash: self.quorum_set_hash.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
-    #[must_use]
-    fn from(v: &ScpStatementConfirmRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpStatementConfirmRef<'_>> for ScpStatementConfirm {
-    #[must_use]
-    fn from(v: ScpStatementConfirmRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScpStatementConfirmRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ballot.write_xdr(w)?;
-            self.n_prepared.write_xdr(w)?;
-            self.n_commit.write_xdr(w)?;
-            self.n_h.write_xdr(w)?;
-            self.quorum_set_hash.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScpStatementConfirmRef<'_> {
+impl ScpStatementConfirmConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -157,7 +113,7 @@ impl ScpStatementConfirmRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementConfirm`], mirroring `<ScpStatementConfirm as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement_confirm(&mut self, v: &ScpStatementConfirmRef<'_>) {
+    pub const fn write_type_scp_statement_confirm(&mut self, v: &ScpStatementConfirmConst) {
         self.write_type_scp_ballot(&v.ballot);
         self.write_u32(v.n_prepared);
         self.write_u32(v.n_commit);

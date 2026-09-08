@@ -145,14 +145,6 @@ impl WriteXdr for MemoType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for MemoType {
-    type Owned = MemoType;
-    fn into_owned(self) -> MemoType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl MemoType {
     /// The exact XDR-encoded length of this value, in bytes.

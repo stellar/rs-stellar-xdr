@@ -166,14 +166,6 @@ impl WriteXdr for CreateAccountResult {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for CreateAccountResult {
-    type Owned = CreateAccountResult;
-    fn into_owned(self) -> CreateAccountResult {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl CreateAccountResult {
     /// The exact XDR-encoded length of this value, in bytes.

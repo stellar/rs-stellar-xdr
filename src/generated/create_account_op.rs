@@ -54,14 +54,6 @@ impl WriteXdr for CreateAccountOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for CreateAccountOp {
-    type Owned = CreateAccountOp;
-    fn into_owned(self) -> CreateAccountOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl CreateAccountOp {
     /// The exact XDR-encoded length of this value, in bytes.

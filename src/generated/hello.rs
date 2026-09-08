@@ -78,75 +78,23 @@ impl WriteXdr for Hello {
     }
 }
 
-/// HelloRef is a borrowing equivalent of [`Hello`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// HelloConst is a borrowing equivalent of [`Hello`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HelloRef<'a> {
+pub struct HelloConst {
     pub ledger_version: u32,
     pub overlay_version: u32,
     pub overlay_min_version: u32,
     pub network_id: Hash,
-    pub version_str: StringMRef<'a, 100>,
+    pub version_str: StringMConst<100>,
     pub listening_port: i32,
     pub peer_id: NodeId,
-    pub cert: AuthCertRef<'a>,
+    pub cert: AuthCertConst,
     pub nonce: Uint256,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for HelloRef<'_> {
-    type Owned = Hello;
-    fn into_owned(self) -> Hello {
-        Hello {
-            ledger_version: self.ledger_version.into_owned(),
-            overlay_version: self.overlay_version.into_owned(),
-            overlay_min_version: self.overlay_min_version.into_owned(),
-            network_id: self.network_id.into_owned(),
-            version_str: self.version_str.into_owned(),
-            listening_port: self.listening_port.into_owned(),
-            peer_id: self.peer_id.into_owned(),
-            cert: self.cert.into_owned(),
-            nonce: self.nonce.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&HelloRef<'_>> for Hello {
-    #[must_use]
-    fn from(v: &HelloRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<HelloRef<'_>> for Hello {
-    #[must_use]
-    fn from(v: HelloRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for HelloRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_version.write_xdr(w)?;
-            self.overlay_version.write_xdr(w)?;
-            self.overlay_min_version.write_xdr(w)?;
-            self.network_id.write_xdr(w)?;
-            self.version_str.write_xdr(w)?;
-            self.listening_port.write_xdr(w)?;
-            self.peer_id.write_xdr(w)?;
-            self.cert.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl HelloRef<'_> {
+impl HelloConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -185,7 +133,7 @@ impl HelloRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Hello`], mirroring `<Hello as WriteXdr>::write_xdr`.
-    pub const fn write_type_hello(&mut self, v: &HelloRef<'_>) {
+    pub const fn write_type_hello(&mut self, v: &HelloConst) {
         self.write_u32(v.ledger_version);
         self.write_u32(v.overlay_version);
         self.write_u32(v.overlay_min_version);

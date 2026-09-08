@@ -108,44 +108,13 @@ impl AsRef<[u8]> for EncodedLedgerKey {
     }
 }
 
-/// EncodedLedgerKeyRef is a borrowing equivalent of [`EncodedLedgerKey`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// EncodedLedgerKeyConst is a borrowing equivalent of [`EncodedLedgerKey`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EncodedLedgerKeyRef<'a>(pub BytesMRef<'a>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for EncodedLedgerKeyRef<'_> {
-    type Owned = EncodedLedgerKey;
-    fn into_owned(self) -> EncodedLedgerKey {
-        EncodedLedgerKey(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&EncodedLedgerKeyRef<'_>> for EncodedLedgerKey {
-    #[must_use]
-    fn from(v: &EncodedLedgerKeyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<EncodedLedgerKeyRef<'_>> for EncodedLedgerKey {
-    #[must_use]
-    fn from(v: EncodedLedgerKeyRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for EncodedLedgerKeyRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct EncodedLedgerKeyConst(pub BytesMConst);
 
 #[cfg(feature = "const")]
-impl EncodedLedgerKeyRef<'_> {
+impl EncodedLedgerKeyConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,14 +153,14 @@ impl EncodedLedgerKeyRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`EncodedLedgerKey`], mirroring `<EncodedLedgerKey as WriteXdr>::write_xdr`.
-    pub const fn write_type_encoded_ledger_key(&mut self, v: &EncodedLedgerKeyRef<'_>) {
+    pub const fn write_type_encoded_ledger_key(&mut self, v: &EncodedLedgerKeyConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 
     /// Serializes a variable-length array of [`EncodedLedgerKey`], mirroring `<VecM<EncodedLedgerKey, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_encoded_ledger_key<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, EncodedLedgerKeyRef<'_>, MAX>,
+        v: &VecMConst<EncodedLedgerKeyConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

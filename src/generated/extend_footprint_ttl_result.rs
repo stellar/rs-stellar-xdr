@@ -163,14 +163,6 @@ impl WriteXdr for ExtendFootprintTtlResult {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ExtendFootprintTtlResult {
-    type Owned = ExtendFootprintTtlResult;
-    fn into_owned(self) -> ExtendFootprintTtlResult {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ExtendFootprintTtlResult {
     /// The exact XDR-encoded length of this value, in bytes.

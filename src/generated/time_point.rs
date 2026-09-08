@@ -66,14 +66,6 @@ impl WriteXdr for TimePoint {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimePoint {
-    type Owned = TimePoint;
-    fn into_owned(self) -> TimePoint {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TimePoint {
     /// The exact XDR-encoded length of this value, in bytes.

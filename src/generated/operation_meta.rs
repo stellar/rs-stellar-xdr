@@ -46,51 +46,15 @@ impl WriteXdr for OperationMeta {
     }
 }
 
-/// OperationMetaRef is a borrowing equivalent of [`OperationMeta`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// OperationMetaConst is a borrowing equivalent of [`OperationMeta`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperationMetaRef<'a> {
-    pub changes: LedgerEntryChangesRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for OperationMetaRef<'_> {
-    type Owned = OperationMeta;
-    fn into_owned(self) -> OperationMeta {
-        OperationMeta {
-            changes: self.changes.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&OperationMetaRef<'_>> for OperationMeta {
-    #[must_use]
-    fn from(v: &OperationMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<OperationMetaRef<'_>> for OperationMeta {
-    #[must_use]
-    fn from(v: OperationMetaRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for OperationMetaRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.changes.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct OperationMetaConst {
+    pub changes: LedgerEntryChangesConst,
 }
 
 #[cfg(feature = "const")]
-impl OperationMetaRef<'_> {
+impl OperationMetaConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,14 +93,14 @@ impl OperationMetaRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`OperationMeta`], mirroring `<OperationMeta as WriteXdr>::write_xdr`.
-    pub const fn write_type_operation_meta(&mut self, v: &OperationMetaRef<'_>) {
+    pub const fn write_type_operation_meta(&mut self, v: &OperationMetaConst) {
         self.write_type_ledger_entry_changes(&v.changes);
     }
 
     /// Serializes a variable-length array of [`OperationMeta`], mirroring `<VecM<OperationMeta, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_operation_meta<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, OperationMetaRef<'_>, MAX>,
+        v: &VecMConst<OperationMetaConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

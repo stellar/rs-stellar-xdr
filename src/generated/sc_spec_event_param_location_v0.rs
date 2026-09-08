@@ -130,14 +130,6 @@ impl WriteXdr for ScSpecEventParamLocationV0 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecEventParamLocationV0 {
-    type Owned = ScSpecEventParamLocationV0;
-    fn into_owned(self) -> ScSpecEventParamLocationV0 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScSpecEventParamLocationV0 {
     /// The exact XDR-encoded length of this value, in bytes.

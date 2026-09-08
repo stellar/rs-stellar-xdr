@@ -130,14 +130,6 @@ impl WriteXdr for RevokeSponsorshipType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for RevokeSponsorshipType {
-    type Owned = RevokeSponsorshipType;
-    fn into_owned(self) -> RevokeSponsorshipType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl RevokeSponsorshipType {
     /// The exact XDR-encoded length of this value, in bytes.

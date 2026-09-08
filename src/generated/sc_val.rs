@@ -359,11 +359,11 @@ impl WriteXdr for ScVal {
     }
 }
 
-/// ScValRef is a borrowing equivalent of [`ScVal`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScValConst is a borrowing equivalent of [`ScVal`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScValRef<'a> {
+pub enum ScValConst {
     Bool(bool),
     Void,
     Error(ScError),
@@ -377,68 +377,19 @@ pub enum ScValRef<'a> {
     I128(Int128Parts),
     U256(UInt256Parts),
     I256(Int256Parts),
-    Bytes(ScBytesRef<'a>),
-    String(ScStringRef<'a>),
-    Symbol(ScSymbolRef<'a>),
-    Vec(Option<ScVecRef<'a>>),
-    Map(Option<ScMapRef<'a>>),
+    Bytes(ScBytesConst),
+    String(ScStringConst),
+    Symbol(ScSymbolConst),
+    Vec(Option<ScVecConst>),
+    Map(Option<ScMapConst>),
     Address(ScAddress),
-    ContractInstance(ScContractInstanceRef<'a>),
+    ContractInstance(ScContractInstanceConst),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    ExecutableTag(ScStringRef<'a>),
+    ExecutableTag(ScStringConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScValRef<'_> {
-    type Owned = ScVal;
-    fn into_owned(self) -> ScVal {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScValRef::Bool(value) => ScVal::Bool(value.into_owned()),
-            ScValRef::Void => ScVal::Void,
-            ScValRef::Error(value) => ScVal::Error(value.into_owned()),
-            ScValRef::U32(value) => ScVal::U32(value.into_owned()),
-            ScValRef::I32(value) => ScVal::I32(value.into_owned()),
-            ScValRef::U64(value) => ScVal::U64(value.into_owned()),
-            ScValRef::I64(value) => ScVal::I64(value.into_owned()),
-            ScValRef::Timepoint(value) => ScVal::Timepoint(value.into_owned()),
-            ScValRef::Duration(value) => ScVal::Duration(value.into_owned()),
-            ScValRef::U128(value) => ScVal::U128(value.into_owned()),
-            ScValRef::I128(value) => ScVal::I128(value.into_owned()),
-            ScValRef::U256(value) => ScVal::U256(value.into_owned()),
-            ScValRef::I256(value) => ScVal::I256(value.into_owned()),
-            ScValRef::Bytes(value) => ScVal::Bytes(value.into_owned()),
-            ScValRef::String(value) => ScVal::String(value.into_owned()),
-            ScValRef::Symbol(value) => ScVal::Symbol(value.into_owned()),
-            ScValRef::Vec(value) => ScVal::Vec(value.into_owned()),
-            ScValRef::Map(value) => ScVal::Map(value.into_owned()),
-            ScValRef::Address(value) => ScVal::Address(value.into_owned()),
-            ScValRef::ContractInstance(value) => ScVal::ContractInstance(value.into_owned()),
-            ScValRef::LedgerKeyContractInstance => ScVal::LedgerKeyContractInstance,
-            ScValRef::LedgerKeyNonce(value) => ScVal::LedgerKeyNonce(value.into_owned()),
-            ScValRef::ExecutableTag(value) => ScVal::ExecutableTag(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScValRef<'_>> for ScVal {
-    #[must_use]
-    fn from(v: &ScValRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScValRef<'_>> for ScVal {
-    #[must_use]
-    fn from(v: ScValRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScValRef<'_> {
+impl ScValConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
@@ -470,44 +421,8 @@ impl ScValRef<'_> {
     }
 }
 
-impl WriteXdr for ScValRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Bool(v) => v.write_xdr(w)?,
-                Self::Void => ().write_xdr(w)?,
-                Self::Error(v) => v.write_xdr(w)?,
-                Self::U32(v) => v.write_xdr(w)?,
-                Self::I32(v) => v.write_xdr(w)?,
-                Self::U64(v) => v.write_xdr(w)?,
-                Self::I64(v) => v.write_xdr(w)?,
-                Self::Timepoint(v) => v.write_xdr(w)?,
-                Self::Duration(v) => v.write_xdr(w)?,
-                Self::U128(v) => v.write_xdr(w)?,
-                Self::I128(v) => v.write_xdr(w)?,
-                Self::U256(v) => v.write_xdr(w)?,
-                Self::I256(v) => v.write_xdr(w)?,
-                Self::Bytes(v) => v.write_xdr(w)?,
-                Self::String(v) => v.write_xdr(w)?,
-                Self::Symbol(v) => v.write_xdr(w)?,
-                Self::Vec(v) => v.write_xdr(w)?,
-                Self::Map(v) => v.write_xdr(w)?,
-                Self::Address(v) => v.write_xdr(w)?,
-                Self::ContractInstance(v) => v.write_xdr(w)?,
-                Self::LedgerKeyContractInstance => ().write_xdr(w)?,
-                Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-                Self::ExecutableTag(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScValRef<'_> {
+impl ScValConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -546,81 +461,81 @@ impl ScValRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScVal`], mirroring `<ScVal as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_val(&mut self, v: &ScValRef<'_>) {
+    pub const fn write_type_sc_val(&mut self, v: &ScValConst) {
         let d = v.discriminant();
         self.write_type_sc_val_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScValRef::Bool(value) => {
+            ScValConst::Bool(value) => {
                 self.write_bool(*value);
             }
-            ScValRef::Void => {}
-            ScValRef::Error(value) => {
+            ScValConst::Void => {}
+            ScValConst::Error(value) => {
                 self.write_type_sc_error(value);
             }
-            ScValRef::U32(value) => {
+            ScValConst::U32(value) => {
                 self.write_u32(*value);
             }
-            ScValRef::I32(value) => {
+            ScValConst::I32(value) => {
                 self.write_i32(*value);
             }
-            ScValRef::U64(value) => {
+            ScValConst::U64(value) => {
                 self.write_u64(*value);
             }
-            ScValRef::I64(value) => {
+            ScValConst::I64(value) => {
                 self.write_i64(*value);
             }
-            ScValRef::Timepoint(value) => {
+            ScValConst::Timepoint(value) => {
                 self.write_type_time_point(value);
             }
-            ScValRef::Duration(value) => {
+            ScValConst::Duration(value) => {
                 self.write_type_duration(value);
             }
-            ScValRef::U128(value) => {
+            ScValConst::U128(value) => {
                 self.write_type_u_int128_parts(value);
             }
-            ScValRef::I128(value) => {
+            ScValConst::I128(value) => {
                 self.write_type_int128_parts(value);
             }
-            ScValRef::U256(value) => {
+            ScValConst::U256(value) => {
                 self.write_type_u_int256_parts(value);
             }
-            ScValRef::I256(value) => {
+            ScValConst::I256(value) => {
                 self.write_type_int256_parts(value);
             }
-            ScValRef::Bytes(value) => {
+            ScValConst::Bytes(value) => {
                 self.write_type_sc_bytes(value);
             }
-            ScValRef::String(value) => {
+            ScValConst::String(value) => {
                 self.write_type_sc_string(value);
             }
-            ScValRef::Symbol(value) => {
+            ScValConst::Symbol(value) => {
                 self.write_type_sc_symbol(value);
             }
-            ScValRef::Vec(value) => {
+            ScValConst::Vec(value) => {
                 self.write_type_option_sc_vec(value);
             }
-            ScValRef::Map(value) => {
+            ScValConst::Map(value) => {
                 self.write_type_option_sc_map(value);
             }
-            ScValRef::Address(value) => {
+            ScValConst::Address(value) => {
                 self.write_type_sc_address(value);
             }
-            ScValRef::ContractInstance(value) => {
+            ScValConst::ContractInstance(value) => {
                 self.write_type_sc_contract_instance(value);
             }
-            ScValRef::LedgerKeyContractInstance => {}
-            ScValRef::LedgerKeyNonce(value) => {
+            ScValConst::LedgerKeyContractInstance => {}
+            ScValConst::LedgerKeyNonce(value) => {
                 self.write_type_sc_nonce_key(value);
             }
-            ScValRef::ExecutableTag(value) => {
+            ScValConst::ExecutableTag(value) => {
                 self.write_type_sc_string(value);
             }
         }
     }
 
     /// Serializes an optional [`ScVal`], mirroring `<Option<ScVal> as WriteXdr>::write_xdr`.
-    pub const fn write_type_option_sc_val(&mut self, v: &Option<ScValRef<'_>>) {
+    pub const fn write_type_option_sc_val(&mut self, v: &Option<ScValConst>) {
         match v {
             Some(v) => {
                 self.write_u32(1);
@@ -633,10 +548,7 @@ impl ConstWriter<'_> {
     }
 
     /// Serializes a variable-length array of [`ScVal`], mirroring `<VecM<ScVal, MAX> as WriteXdr>::write_xdr`.
-    pub const fn write_type_vec_sc_val<const MAX: u32>(
-        &mut self,
-        v: &VecMRef<'_, ScValRef<'_>, MAX>,
-    ) {
+    pub const fn write_type_vec_sc_val<const MAX: u32>(&mut self, v: &VecMConst<ScValConst, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);

@@ -210,56 +210,19 @@ impl WriteXdr for HashIdPreimage {
     }
 }
 
-/// HashIdPreimageRef is a borrowing equivalent of [`HashIdPreimage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// HashIdPreimageConst is a borrowing equivalent of [`HashIdPreimage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum HashIdPreimageRef<'a> {
+pub enum HashIdPreimageConst {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractId(HashIdPreimageContractId),
-    SorobanAuthorization(HashIdPreimageSorobanAuthorizationRef<'a>),
-    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressRef<'a>),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorizationConst),
+    SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for HashIdPreimageRef<'_> {
-    type Owned = HashIdPreimage;
-    fn into_owned(self) -> HashIdPreimage {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            HashIdPreimageRef::OpId(value) => HashIdPreimage::OpId(value.into_owned()),
-            HashIdPreimageRef::PoolRevokeOpId(value) => {
-                HashIdPreimage::PoolRevokeOpId(value.into_owned())
-            }
-            HashIdPreimageRef::ContractId(value) => HashIdPreimage::ContractId(value.into_owned()),
-            HashIdPreimageRef::SorobanAuthorization(value) => {
-                HashIdPreimage::SorobanAuthorization(value.into_owned())
-            }
-            HashIdPreimageRef::SorobanAuthorizationWithAddress(value) => {
-                HashIdPreimage::SorobanAuthorizationWithAddress(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&HashIdPreimageRef<'_>> for HashIdPreimage {
-    #[must_use]
-    fn from(v: &HashIdPreimageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<HashIdPreimageRef<'_>> for HashIdPreimage {
-    #[must_use]
-    fn from(v: HashIdPreimageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl HashIdPreimageRef<'_> {
+impl HashIdPreimageConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -275,26 +238,8 @@ impl HashIdPreimageRef<'_> {
     }
 }
 
-impl WriteXdr for HashIdPreimageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::OpId(v) => v.write_xdr(w)?,
-                Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
-                Self::ContractId(v) => v.write_xdr(w)?,
-                Self::SorobanAuthorization(v) => v.write_xdr(w)?,
-                Self::SorobanAuthorizationWithAddress(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl HashIdPreimageRef<'_> {
+impl HashIdPreimageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -333,24 +278,24 @@ impl HashIdPreimageRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`HashIdPreimage`], mirroring `<HashIdPreimage as WriteXdr>::write_xdr`.
-    pub const fn write_type_hash_id_preimage(&mut self, v: &HashIdPreimageRef<'_>) {
+    pub const fn write_type_hash_id_preimage(&mut self, v: &HashIdPreimageConst) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            HashIdPreimageRef::OpId(value) => {
+            HashIdPreimageConst::OpId(value) => {
                 self.write_type_hash_id_preimage_operation_id(value);
             }
-            HashIdPreimageRef::PoolRevokeOpId(value) => {
+            HashIdPreimageConst::PoolRevokeOpId(value) => {
                 self.write_type_hash_id_preimage_revoke_id(value);
             }
-            HashIdPreimageRef::ContractId(value) => {
+            HashIdPreimageConst::ContractId(value) => {
                 self.write_type_hash_id_preimage_contract_id(value);
             }
-            HashIdPreimageRef::SorobanAuthorization(value) => {
+            HashIdPreimageConst::SorobanAuthorization(value) => {
                 self.write_type_hash_id_preimage_soroban_authorization(value);
             }
-            HashIdPreimageRef::SorobanAuthorizationWithAddress(value) => {
+            HashIdPreimageConst::SorobanAuthorizationWithAddress(value) => {
                 self.write_type_hash_id_preimage_soroban_authorization_with_address(value);
             }
         }

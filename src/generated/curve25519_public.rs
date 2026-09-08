@@ -46,14 +46,6 @@ impl WriteXdr for Curve25519Public {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Curve25519Public {
-    type Owned = Curve25519Public;
-    fn into_owned(self) -> Curve25519Public {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Curve25519Public {
     /// The exact XDR-encoded length of this value, in bytes.

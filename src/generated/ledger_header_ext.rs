@@ -136,14 +136,6 @@ impl WriteXdr for LedgerHeaderExt {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerHeaderExt {
-    type Owned = LedgerHeaderExt;
-    fn into_owned(self) -> LedgerHeaderExt {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerHeaderExt {
     /// The exact XDR-encoded length of this value, in bytes.

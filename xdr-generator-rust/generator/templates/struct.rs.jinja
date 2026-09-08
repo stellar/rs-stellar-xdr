@@ -1,4 +1,3 @@
-{%- import "into_owned.rs.jinja" as into_owned %}
 /// {{ s.name }}{{ s.source_comment }}
 {%- if let Some(cfg) = s.cfg %}
 #[cfg({{ cfg }})]
@@ -105,81 +104,19 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     }
 }
 {%- endif %}
-{%- if s.emit_ref %}
+{%- if s.emit_const %}
 
-/// {{ s.name }}Ref is a borrowing equivalent of [`{{ s.name }}`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
-{%- if let Some(cfg) = s.ref_cfg %}
+/// {{ s.name }}Const is a borrowing equivalent of [`{{ s.name }}`] over `'static`
+/// data, for const XDR encoding.
+{%- if let Some(cfg) = s.const_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct {{ s.name }}Ref<'a> {
+pub struct {{ s.name }}Const {
 {%- for m in s.members %}
-    pub {{ m.name }}: {{ m.ref_type }},
+    pub {{ m.name }}: {{ m.const_type }},
 {%- endfor %}
 }
-
-{% if let Some(cfg) = s.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl IntoOwned for {{ s.name }}Ref<'_> {
-    type Owned = {{ s.name }};
-    fn into_owned(self) -> {{ s.name }} {
-        {{ s.name }} {
-{%- for m in s.members %}
-{%- match m.cyclic %}
-{%- when CyclicBorrow::NotCyclic %}
-            {{ m.name }}: self.{{ m.name }}.into_owned(),
-{%- when CyclicBorrow::Reference %}
-            {{ m.name }}: Box::new(self.{{ m.name }}.into_owned()),
-{%- when CyclicBorrow::OptionalReference %}
-            {{ m.name }}: self.{{ m.name }}.map(|v| Box::new(v.into_owned())),
-{%- endmatch %}
-{%- endfor %}
-        }
-    }
-}
-
-{% if let Some(cfg) = s.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl From<&{{ s.name }}Ref<'_>> for {{ s.name }} {
-    #[must_use]
-    fn from(v: &{{ s.name }}Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-{% if let Some(cfg) = s.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-#[cfg(feature = "alloc")]
-impl From<{{ s.name }}Ref<'_>> for {{ s.name }} {
-    #[must_use]
-    fn from(v: {{ s.name }}Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-{% if let Some(cfg) = s.ref_cfg -%}
-#[cfg({{ cfg }})]
-{% endif -%}
-impl WriteXdr for {{ s.name }}Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-{%- for m in s.members %}
-            self.{{ m.name }}.write_xdr(w)?;
-{%- endfor %}
-            Ok(())
-        })
-    }
-}
-{%- endif %}
-{%- if !s.emit_ref %}
-{% call into_owned::identity(s.name, s.cfg) %}
 {%- endif %}
 
 {{ s.const_to_xdr }}

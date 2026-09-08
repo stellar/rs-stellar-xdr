@@ -46,14 +46,6 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerKeyLiquidityPool {
-    type Owned = LedgerKeyLiquidityPool;
-    fn into_owned(self) -> LedgerKeyLiquidityPool {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerKeyLiquidityPool {
     /// The exact XDR-encoded length of this value, in bytes.

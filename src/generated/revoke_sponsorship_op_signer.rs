@@ -50,54 +50,16 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
     }
 }
 
-/// RevokeSponsorshipOpSignerRef is a borrowing equivalent of [`RevokeSponsorshipOpSigner`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// RevokeSponsorshipOpSignerConst is a borrowing equivalent of [`RevokeSponsorshipOpSigner`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct RevokeSponsorshipOpSignerRef<'a> {
+pub struct RevokeSponsorshipOpSignerConst {
     pub account_id: AccountId,
-    pub signer_key: SignerKeyRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for RevokeSponsorshipOpSignerRef<'_> {
-    type Owned = RevokeSponsorshipOpSigner;
-    fn into_owned(self) -> RevokeSponsorshipOpSigner {
-        RevokeSponsorshipOpSigner {
-            account_id: self.account_id.into_owned(),
-            signer_key: self.signer_key.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
-    #[must_use]
-    fn from(v: &RevokeSponsorshipOpSignerRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<RevokeSponsorshipOpSignerRef<'_>> for RevokeSponsorshipOpSigner {
-    #[must_use]
-    fn from(v: RevokeSponsorshipOpSignerRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for RevokeSponsorshipOpSignerRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.account_id.write_xdr(w)?;
-            self.signer_key.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub signer_key: SignerKeyConst,
 }
 
 #[cfg(feature = "const")]
-impl RevokeSponsorshipOpSignerRef<'_> {
+impl RevokeSponsorshipOpSignerConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`RevokeSponsorshipOpSigner`], mirroring `<RevokeSponsorshipOpSigner as WriteXdr>::write_xdr`.
     pub const fn write_type_revoke_sponsorship_op_signer(
         &mut self,
-        v: &RevokeSponsorshipOpSignerRef<'_>,
+        v: &RevokeSponsorshipOpSignerConst,
     ) {
         self.write_type_account_id(&v.account_id);
         self.write_type_signer_key(&v.signer_key);

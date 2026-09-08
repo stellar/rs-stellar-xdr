@@ -50,54 +50,16 @@ impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     }
 }
 
-/// SignedTimeSlicedSurveyRequestMessageRef is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SignedTimeSlicedSurveyRequestMessageConst is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignedTimeSlicedSurveyRequestMessageRef<'a> {
-    pub request_signature: SignatureRef<'a>,
+pub struct SignedTimeSlicedSurveyRequestMessageConst {
+    pub request_signature: SignatureConst,
     pub request: TimeSlicedSurveyRequestMessage,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignedTimeSlicedSurveyRequestMessageRef<'_> {
-    type Owned = SignedTimeSlicedSurveyRequestMessage;
-    fn into_owned(self) -> SignedTimeSlicedSurveyRequestMessage {
-        SignedTimeSlicedSurveyRequestMessage {
-            request_signature: self.request_signature.into_owned(),
-            request: self.request.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
-    #[must_use]
-    fn from(v: &SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SignedTimeSlicedSurveyRequestMessageRef<'_>> for SignedTimeSlicedSurveyRequestMessage {
-    #[must_use]
-    fn from(v: SignedTimeSlicedSurveyRequestMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SignedTimeSlicedSurveyRequestMessageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.request_signature.write_xdr(w)?;
-            self.request.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SignedTimeSlicedSurveyRequestMessageRef<'_> {
+impl SignedTimeSlicedSurveyRequestMessageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SignedTimeSlicedSurveyRequestMessage`], mirroring `<SignedTimeSlicedSurveyRequestMessage as WriteXdr>::write_xdr`.
     pub const fn write_type_signed_time_sliced_survey_request_message(
         &mut self,
-        v: &SignedTimeSlicedSurveyRequestMessageRef<'_>,
+        v: &SignedTimeSlicedSurveyRequestMessageConst,
     ) {
         self.write_type_signature(&v.request_signature);
         self.write_type_time_sliced_survey_request_message(&v.request);

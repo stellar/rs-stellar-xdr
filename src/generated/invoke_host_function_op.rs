@@ -52,54 +52,16 @@ impl WriteXdr for InvokeHostFunctionOp {
     }
 }
 
-/// InvokeHostFunctionOpRef is a borrowing equivalent of [`InvokeHostFunctionOp`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// InvokeHostFunctionOpConst is a borrowing equivalent of [`InvokeHostFunctionOp`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct InvokeHostFunctionOpRef<'a> {
-    pub host_function: HostFunctionRef<'a>,
-    pub auth: VecMRef<'a, SorobanAuthorizationEntryRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for InvokeHostFunctionOpRef<'_> {
-    type Owned = InvokeHostFunctionOp;
-    fn into_owned(self) -> InvokeHostFunctionOp {
-        InvokeHostFunctionOp {
-            host_function: self.host_function.into_owned(),
-            auth: self.auth.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
-    #[must_use]
-    fn from(v: &InvokeHostFunctionOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<InvokeHostFunctionOpRef<'_>> for InvokeHostFunctionOp {
-    #[must_use]
-    fn from(v: InvokeHostFunctionOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for InvokeHostFunctionOpRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.host_function.write_xdr(w)?;
-            self.auth.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct InvokeHostFunctionOpConst {
+    pub host_function: HostFunctionConst,
+    pub auth: VecMConst<SorobanAuthorizationEntryConst>,
 }
 
 #[cfg(feature = "const")]
-impl InvokeHostFunctionOpRef<'_> {
+impl InvokeHostFunctionOpConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl InvokeHostFunctionOpRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`InvokeHostFunctionOp`], mirroring `<InvokeHostFunctionOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_invoke_host_function_op(&mut self, v: &InvokeHostFunctionOpRef<'_>) {
+    pub const fn write_type_invoke_host_function_op(&mut self, v: &InvokeHostFunctionOpConst) {
         self.write_type_host_function(&v.host_function);
         self.write_type_vec_soroban_authorization_entry(&v.auth);
     }

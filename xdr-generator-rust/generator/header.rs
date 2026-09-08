@@ -166,7 +166,7 @@ impl fmt::Display for Error {
     }
 }
 
-/// The error returned by the borrowing `Ref` types' `try_from_slice` and
+/// The error returned by the borrowing `Const` types' `try_from_slice` and
 /// `try_from_str` constructors when the input length exceeds the type's `MAX`.
 ///
 /// Unlike [`Error`] it is `Copy` and free of any destructor, so a
@@ -721,7 +721,7 @@ const fn padding(len: usize) -> &'static [u8] {
 ///
 /// The writers below are the primitives. Every type defined in the XDR files
 /// additionally has a generated `write_type_{type}` method on `ConstWriter`
-/// that serializes one value of that type, taking the type's borrowing `Ref`
+/// that serializes one value of that type, taking the type's borrowing `Const`
 /// form where it owns heap data and the type itself otherwise; a type that
 /// appears wrapped gets `write_type_option_{type}` and `write_type_vec_{type}`
 /// alongside. The `type_` distinguishes them from these primitives, so a
@@ -920,7 +920,7 @@ impl<'a> ConstWriter<'a> {
 
     /// Serializes a variable-length array of `i32`, mirroring `<VecM<i32, MAX>
     /// as WriteXdr>::write_xdr`.
-    pub const fn write_vec_i32<const MAX: u32>(&mut self, v: &VecMRef<'_, i32, MAX>) {
+    pub const fn write_vec_i32<const MAX: u32>(&mut self, v: &VecMConst<i32, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);
@@ -933,7 +933,7 @@ impl<'a> ConstWriter<'a> {
 
     /// Serializes a variable-length array of `u32`, mirroring `<VecM<u32, MAX>
     /// as WriteXdr>::write_xdr`.
-    pub const fn write_vec_u32<const MAX: u32>(&mut self, v: &VecMRef<'_, u32, MAX>) {
+    pub const fn write_vec_u32<const MAX: u32>(&mut self, v: &VecMConst<u32, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);
@@ -946,7 +946,7 @@ impl<'a> ConstWriter<'a> {
 
     /// Serializes a variable-length array of `i64`, mirroring `<VecM<i64, MAX>
     /// as WriteXdr>::write_xdr`.
-    pub const fn write_vec_i64<const MAX: u32>(&mut self, v: &VecMRef<'_, i64, MAX>) {
+    pub const fn write_vec_i64<const MAX: u32>(&mut self, v: &VecMConst<i64, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);
@@ -959,7 +959,7 @@ impl<'a> ConstWriter<'a> {
 
     /// Serializes a variable-length array of `u64`, mirroring `<VecM<u64, MAX>
     /// as WriteXdr>::write_xdr`.
-    pub const fn write_vec_u64<const MAX: u32>(&mut self, v: &VecMRef<'_, u64, MAX>) {
+    pub const fn write_vec_u64<const MAX: u32>(&mut self, v: &VecMConst<u64, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);
@@ -972,7 +972,7 @@ impl<'a> ConstWriter<'a> {
 
     /// Serializes a variable-length array of `bool`, mirroring `<VecM<bool, MAX>
     /// as WriteXdr>::write_xdr`.
-    pub const fn write_vec_bool<const MAX: u32>(&mut self, v: &VecMRef<'_, bool, MAX>) {
+    pub const fn write_vec_bool<const MAX: u32>(&mut self, v: &VecMConst<bool, MAX>) {
         let s = v.as_slice();
         let len = s.len();
         self.write_len(len);
@@ -1775,162 +1775,29 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     }
 }
 
-// IntoOwned -----------------------------------------------------------------------
-
-/// Conversion from the borrowing `Ref` form of a value to its owned form.
-///
-/// This is an internal building block, not part of the public API: it exists so
-/// the generated conversions can be written field by field without knowing what
-/// each field holds. Convert a `Ref` to its owned form with [`From`]/[`Into`],
-/// which every `Ref` implements, or with [`VecMRef::to_vecm`],
-/// [`BytesMRef::to_bytesm`] and [`StringMRef::to_stringm`] for the runtime
-/// types.
-///
-/// Every generated type implements it. A type with a `Ref` converts from that
-/// `Ref` to the owned type. A heap-free type has no `Ref`, appears as itself
-/// inside the `Ref`s that contain it, and converts to itself. The runtime
-/// types that appear inside `Ref`s implement it too: [`VecMRef`],
-/// [`BytesMRef`] and [`StringMRef`] convert to [`VecM`], [`BytesM`] and
-/// [`StringM`], and `Option`s and arrays convert element-wise.
-///
-/// Where a `Ref` holds a reference to break a type cycle, the owned type holds
-/// a `Box`. That is a property of those fields rather than of references in
-/// general, so this trait says nothing about it: the generated conversion wraps
-/// them in `Box::new` itself.
-///
-/// The conversion consumes the value, so the generated code moves each field
-/// out of the `Ref` instead of cloning it. A borrowed value converts too,
-/// through the impl for `&T`; that impl clones, and the clone is shallow
-/// because a `Ref` holds slices and heap-free values. The conversion
-/// allocates, so it is only available with the `alloc` feature.
-#[cfg(feature = "alloc")]
-pub(crate) trait IntoOwned {
-    /// The owned form of this type.
-    type Owned;
-
-    /// Converts to the owned form, cloning borrowed data.
-    #[must_use]
-    fn into_owned(self) -> Self::Owned;
-}
-
-/// Converts a borrowed value by cloning it first, so `&T` converts wherever
-/// `T` does.
-///
-/// This is what lets the generated conversions be written the same way whether
-/// they hold a `Ref` or a reference to one, and it puts the only clone of a
-/// `Ref` in the crate here, rather than at every call site that starts from a
-/// reference.
-#[cfg(feature = "alloc")]
-impl<T: IntoOwned + Clone> IntoOwned for &T {
-    type Owned = T::Owned;
-    fn into_owned(self) -> Self::Owned {
-        self.clone().into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for bool {
-    type Owned = bool;
-    fn into_owned(self) -> bool {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for u8 {
-    type Owned = u8;
-    fn into_owned(self) -> u8 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for i32 {
-    type Owned = i32;
-    fn into_owned(self) -> i32 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for u32 {
-    type Owned = u32;
-    fn into_owned(self) -> u32 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for i64 {
-    type Owned = i64;
-    fn into_owned(self) -> i64 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for u64 {
-    type Owned = u64;
-    fn into_owned(self) -> u64 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for f32 {
-    type Owned = f32;
-    fn into_owned(self) -> f32 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for f64 {
-    type Owned = f64;
-    fn into_owned(self) -> f64 {
-        self
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<T: IntoOwned> IntoOwned for Option<T> {
-    type Owned = Option<T::Owned>;
-    fn into_owned(self) -> Self::Owned {
-        self.map(IntoOwned::into_owned)
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<T: IntoOwned, const N: usize> IntoOwned for [T; N] {
-    type Owned = [T::Owned; N];
-    fn into_owned(self) -> Self::Owned {
-        self.map(IntoOwned::into_owned)
-    }
-}
-
-// VecMRef ------------------------------------------------------------------------
+// VecMConst ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`VecM`] that wraps a slice instead of owning a
 /// `Vec`, enforcing the same maximum length `MAX` at construction.
 ///
-/// Usable in const contexts to build values of the generated `Ref` types from
-/// slices of fixed-size arrays, without heap allocation.
+/// Usable in const contexts to build values of the generated `Const` types
+/// from slices of fixed-size arrays, without heap allocation.
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct VecMRef<'a, T, const MAX: u32 = { u32::MAX }>(&'a [T]);
+pub struct VecMConst<T: 'static, const MAX: u32 = { u32::MAX }>(&'static [T]);
 
 // Copy and Clone are implemented manually because the derived impls would
 // require `T: Copy`/`T: Clone`, and the wrapped `&[T]` is copyable for any
 // `T`.
-impl<T, const MAX: u32> Copy for VecMRef<'_, T, MAX> {}
+impl<T, const MAX: u32> Copy for VecMConst<T, MAX> {}
 
 #[allow(clippy::expl_impl_clone_on_copy)]
-impl<T, const MAX: u32> Clone for VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> Clone for VecMConst<T, MAX> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<T, const MAX: u32> Deref for VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> Deref for VecMConst<T, MAX> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -1938,16 +1805,16 @@ impl<T, const MAX: u32> Deref for VecMRef<'_, T, MAX> {
     }
 }
 
-impl<T, const MAX: u32> Default for VecMRef<'_, T, MAX> {
+impl<T, const MAX: u32> Default for VecMConst<T, MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
+impl<T, const MAX: u32> VecMConst<T, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `VecMRef` from the given slice, erroring if the length of
+    /// Constructs a `VecMConst` from the given slice, erroring if the length of
     /// the slice exceeds `MAX`.
     ///
     /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
@@ -1956,7 +1823,7 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
     /// ### Errors
     ///
     /// If the length of the slice exceeds `MAX`.
-    pub const fn try_from_slice(v: &'a [T]) -> Result<Self, ErrorLengthExceedsMax> {
+    pub const fn try_from_slice(v: &'static [T]) -> Result<Self, ErrorLengthExceedsMax> {
         if v.len() <= Self::MAX_LEN {
             Ok(Self(v))
         } else {
@@ -1964,7 +1831,7 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
         }
     }
 
-    /// Constructs a `VecMRef` from the given slice, panicking if the length of
+    /// Constructs a `VecMConst` from the given slice, panicking if the length of
     /// the slice exceeds `MAX`.
     ///
     /// Usable in const contexts, where an over-length slice is a compile-time
@@ -1974,7 +1841,7 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
     ///
     /// If the length of the slice exceeds `MAX`.
     #[must_use]
-    pub const fn try_from_slice_or_panic(v: &'a [T]) -> Self {
+    pub const fn try_from_slice_or_panic(v: &'static [T]) -> Self {
         match Self::try_from_slice(v) {
             Ok(r) => r,
             Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
@@ -1988,7 +1855,7 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
     }
 
     #[must_use]
-    pub const fn as_slice(&self) -> &'a [T] {
+    pub const fn as_slice(&self) -> &'static [T] {
         self.0
     }
 
@@ -2002,87 +1869,24 @@ impl<'a, T, const MAX: u32> VecMRef<'a, T, MAX> {
         self.0.is_empty()
     }
 
-    pub fn iter(&self) -> slice::Iter<'a, T> {
+    pub fn iter(&self) -> slice::Iter<'static, T> {
         self.0.iter()
     }
 }
 
-impl<'a, T, const MAX: u32> core::iter::IntoIterator for &VecMRef<'a, T, MAX> {
-    type Item = &'a T;
-    type IntoIter = slice::Iter<'a, T>;
+impl<T, const MAX: u32> core::iter::IntoIterator for &VecMConst<T, MAX> {
+    type Item = &'static T;
+    type IntoIter = slice::Iter<'static, T>;
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
-#[cfg(feature = "alloc")]
-impl<T: Clone, const MAX: u32> VecMRef<'_, T, MAX> {
-    /// Converts to an owned [`VecM`], converting each element from its
-    /// borrowing form `T` to its owned form `U` via [`From`]. When the element
-    /// does not borrow, `T` and `U` are the same type and the reflexive
-    /// [`From`] simply clones.
-    #[must_use]
-    pub fn to_vecm<U: From<T>>(&self) -> VecM<U, MAX> {
-        VecM(self.0.iter().cloned().map(U::from).collect())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<T: IntoOwned + Clone, const MAX: u32> IntoOwned for VecMRef<'_, T, MAX> {
-    type Owned = VecM<T::Owned, MAX>;
-    fn into_owned(self) -> Self::Owned {
-        VecM(self.0.iter().map(IntoOwned::into_owned).collect())
-    }
-}
-
-impl<'a, T, const MAX: u32> TryFrom<&'a [T]> for VecMRef<'a, T, MAX> {
+impl<T, const MAX: u32> TryFrom<&'static [T]> for VecMConst<T, MAX> {
     type Error = Error;
 
-    fn try_from(v: &'a [T]) -> Result<Self, Error> {
+    fn try_from(v: &'static [T]) -> Result<Self, Error> {
         Ok(Self::try_from_slice(v)?)
-    }
-}
-
-impl<'a, T, const MAX: u32> From<&'a VecM<T, MAX>> for VecMRef<'a, T, MAX> {
-    #[must_use]
-    fn from(v: &'a VecM<T, MAX>) -> Self {
-        Self(<VecM<T, MAX> as AsRef<[T]>>::as_ref(v))
-    }
-}
-
-impl<const MAX: u32> WriteXdr for VecMRef<'_, u8, MAX> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-            len.write_xdr(w)?;
-
-            w.consume_len(self.len())?;
-            let padding = pad_len(self.len());
-            w.consume_len(padding)?;
-
-            w.write_all(self.0)?;
-
-            w.write_all(&[0u8; 3][..padding])?;
-
-            Ok(())
-        })
-    }
-}
-
-impl<T: WriteXdr, const MAX: u32> WriteXdr for VecMRef<'_, T, MAX> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-            len.write_xdr(w)?;
-
-            for t in self.0 {
-                t.write_xdr(w)?;
-            }
-
-            Ok(())
-        })
     }
 }
 
@@ -2490,17 +2294,17 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     }
 }
 
-// BytesMRef ------------------------------------------------------------------------
+// BytesMConst ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`BytesM`] that wraps a byte slice instead of
 /// owning a `Vec`, enforcing the same maximum length `MAX` at construction.
 ///
-/// Usable in const contexts to build values of the generated `Ref` types from
+/// Usable in const contexts to build values of the generated `Const` types from
 /// slices of fixed-size arrays, without heap allocation.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BytesMRef<'a, const MAX: u32 = { u32::MAX }>(&'a [u8]);
+pub struct BytesMConst<const MAX: u32 = { u32::MAX }>(&'static [u8]);
 
-impl<const MAX: u32> core::fmt::Display for BytesMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Display for BytesMConst<MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for b in self.0 {
             write!(f, "{b:02x}")?;
@@ -2509,9 +2313,9 @@ impl<const MAX: u32> core::fmt::Display for BytesMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Debug for BytesMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Debug for BytesMConst<MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "BytesMRef(")?;
+        write!(f, "BytesMConst(")?;
         for b in self.0 {
             write!(f, "{b:02x}")?;
         }
@@ -2520,7 +2324,7 @@ impl<const MAX: u32> core::fmt::Debug for BytesMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Deref for BytesMRef<'_, MAX> {
+impl<const MAX: u32> Deref for BytesMConst<MAX> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -2528,16 +2332,16 @@ impl<const MAX: u32> Deref for BytesMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Default for BytesMRef<'_, MAX> {
+impl<const MAX: u32> Default for BytesMConst<MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
+impl<const MAX: u32> BytesMConst<MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `BytesMRef` from the given slice, erroring if the length
+    /// Constructs a `BytesMConst` from the given slice, erroring if the length
     /// of the slice exceeds `MAX`.
     ///
     /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
@@ -2546,7 +2350,7 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
     /// ### Errors
     ///
     /// If the length of the slice exceeds `MAX`.
-    pub const fn try_from_slice(v: &'a [u8]) -> Result<Self, ErrorLengthExceedsMax> {
+    pub const fn try_from_slice(v: &'static [u8]) -> Result<Self, ErrorLengthExceedsMax> {
         if v.len() <= Self::MAX_LEN {
             Ok(Self(v))
         } else {
@@ -2554,7 +2358,7 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
         }
     }
 
-    /// Constructs a `BytesMRef` from the given slice, panicking if the length
+    /// Constructs a `BytesMConst` from the given slice, panicking if the length
     /// of the slice exceeds `MAX`.
     ///
     /// Usable in const contexts, where an over-length slice is a compile-time
@@ -2564,7 +2368,7 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
     ///
     /// If the length of the slice exceeds `MAX`.
     #[must_use]
-    pub const fn try_from_slice_or_panic(v: &'a [u8]) -> Self {
+    pub const fn try_from_slice_or_panic(v: &'static [u8]) -> Self {
         match Self::try_from_slice(v) {
             Ok(r) => r,
             Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
@@ -2578,7 +2382,7 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
     }
 
     #[must_use]
-    pub const fn as_slice(&self) -> &'a [u8] {
+    pub const fn as_slice(&self) -> &'static [u8] {
         self.0
     }
 
@@ -2593,55 +2397,11 @@ impl<'a, const MAX: u32> BytesMRef<'a, MAX> {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl<const MAX: u32> BytesMRef<'_, MAX> {
-    /// Converts to an owned [`BytesM`], cloning the bytes.
-    #[must_use]
-    pub fn to_bytesm(&self) -> BytesM<MAX> {
-        BytesM(self.0.to_vec())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<const MAX: u32> IntoOwned for BytesMRef<'_, MAX> {
-    type Owned = BytesM<MAX>;
-    fn into_owned(self) -> Self::Owned {
-        self.to_bytesm()
-    }
-}
-
-impl<'a, const MAX: u32> TryFrom<&'a [u8]> for BytesMRef<'a, MAX> {
+impl<const MAX: u32> TryFrom<&'static [u8]> for BytesMConst<MAX> {
     type Error = Error;
 
-    fn try_from(v: &'a [u8]) -> Result<Self, Error> {
+    fn try_from(v: &'static [u8]) -> Result<Self, Error> {
         Ok(Self::try_from_slice(v)?)
-    }
-}
-
-impl<'a, const MAX: u32> From<&'a BytesM<MAX>> for BytesMRef<'a, MAX> {
-    #[must_use]
-    fn from(v: &'a BytesM<MAX>) -> Self {
-        Self(<BytesM<MAX> as AsRef<[u8]>>::as_ref(v))
-    }
-}
-
-impl<const MAX: u32> WriteXdr for BytesMRef<'_, MAX> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-            len.write_xdr(w)?;
-
-            w.consume_len(self.len())?;
-            let padding = pad_len(self.len());
-            w.consume_len(padding)?;
-
-            w.write_all(self.0)?;
-
-            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
-
-            Ok(())
-        })
     }
 }
 
@@ -3048,17 +2808,17 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
     }
 }
 
-// StringMRef ------------------------------------------------------------------------
+// StringMConst ------------------------------------------------------------------------
 
 /// A borrowing equivalent of [`StringM`] that wraps a byte slice instead of
 /// owning a `Vec`, enforcing the same maximum length `MAX` at construction.
 ///
-/// Usable in const contexts to build values of the generated `Ref` types from
+/// Usable in const contexts to build values of the generated `Const` types from
 /// slices of fixed-size arrays or string literals, without heap allocation.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StringMRef<'a, const MAX: u32 = { u32::MAX }>(&'a [u8]);
+pub struct StringMConst<const MAX: u32 = { u32::MAX }>(&'static [u8]);
 
-impl<const MAX: u32> core::fmt::Display for StringMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Display for StringMConst<MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for b in escape_bytes::Escape::new(self.0) {
             write!(f, "{}", b as char)?;
@@ -3067,9 +2827,9 @@ impl<const MAX: u32> core::fmt::Display for StringMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Debug for StringMRef<'_, MAX> {
+impl<const MAX: u32> core::fmt::Debug for StringMConst<MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "StringMRef(")?;
+        write!(f, "StringMConst(")?;
         for b in escape_bytes::Escape::new(self.0) {
             write!(f, "{}", b as char)?;
         }
@@ -3078,7 +2838,7 @@ impl<const MAX: u32> core::fmt::Debug for StringMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Deref for StringMRef<'_, MAX> {
+impl<const MAX: u32> Deref for StringMConst<MAX> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -3086,16 +2846,16 @@ impl<const MAX: u32> Deref for StringMRef<'_, MAX> {
     }
 }
 
-impl<const MAX: u32> Default for StringMRef<'_, MAX> {
+impl<const MAX: u32> Default for StringMConst<MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<'a, const MAX: u32> StringMRef<'a, MAX> {
+impl<const MAX: u32> StringMConst<MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
-    /// Constructs a `StringMRef` from the given slice, erroring if the length
+    /// Constructs a `StringMConst` from the given slice, erroring if the length
     /// of the slice exceeds `MAX`.
     ///
     /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
@@ -3104,7 +2864,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
     /// ### Errors
     ///
     /// If the length of the slice exceeds `MAX`.
-    pub const fn try_from_slice(v: &'a [u8]) -> Result<Self, ErrorLengthExceedsMax> {
+    pub const fn try_from_slice(v: &'static [u8]) -> Result<Self, ErrorLengthExceedsMax> {
         if v.len() <= Self::MAX_LEN {
             Ok(Self(v))
         } else {
@@ -3112,7 +2872,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
         }
     }
 
-    /// Constructs a `StringMRef` from the given slice, panicking if the length
+    /// Constructs a `StringMConst` from the given slice, panicking if the length
     /// of the slice exceeds `MAX`.
     ///
     /// Usable in const contexts, where an over-length slice is a compile-time
@@ -3122,14 +2882,14 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
     ///
     /// If the length of the slice exceeds `MAX`.
     #[must_use]
-    pub const fn try_from_slice_or_panic(v: &'a [u8]) -> Self {
+    pub const fn try_from_slice_or_panic(v: &'static [u8]) -> Self {
         match Self::try_from_slice(v) {
             Ok(r) => r,
             Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
         }
     }
 
-    /// Constructs a `StringMRef` from the UTF-8 bytes of the given str,
+    /// Constructs a `StringMConst` from the UTF-8 bytes of the given str,
     /// erroring if the length of the str exceeds `MAX`.
     ///
     /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
@@ -3138,11 +2898,11 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
     /// ### Errors
     ///
     /// If the length of the str exceeds `MAX`.
-    pub const fn try_from_str(s: &'a str) -> Result<Self, ErrorLengthExceedsMax> {
+    pub const fn try_from_str(s: &'static str) -> Result<Self, ErrorLengthExceedsMax> {
         Self::try_from_slice(s.as_bytes())
     }
 
-    /// Constructs a `StringMRef` from the UTF-8 bytes of the given str,
+    /// Constructs a `StringMConst` from the UTF-8 bytes of the given str,
     /// panicking if the length of the str exceeds `MAX`.
     ///
     /// Usable in const contexts, where an over-length str is a compile-time
@@ -3152,7 +2912,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
     ///
     /// If the length of the str exceeds `MAX`.
     #[must_use]
-    pub const fn try_from_str_or_panic(s: &'a str) -> Self {
+    pub const fn try_from_str_or_panic(s: &'static str) -> Self {
         Self::try_from_slice_or_panic(s.as_bytes())
     }
 
@@ -3163,7 +2923,7 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
     }
 
     #[must_use]
-    pub const fn as_slice(&self) -> &'a [u8] {
+    pub const fn as_slice(&self) -> &'static [u8] {
         self.0
     }
 
@@ -3178,63 +2938,19 @@ impl<'a, const MAX: u32> StringMRef<'a, MAX> {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl<const MAX: u32> StringMRef<'_, MAX> {
-    /// Converts to an owned [`StringM`], cloning the bytes.
-    #[must_use]
-    pub fn to_stringm(&self) -> StringM<MAX> {
-        StringM(self.0.to_vec())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<const MAX: u32> IntoOwned for StringMRef<'_, MAX> {
-    type Owned = StringM<MAX>;
-    fn into_owned(self) -> Self::Owned {
-        self.to_stringm()
-    }
-}
-
-impl<'a, const MAX: u32> TryFrom<&'a [u8]> for StringMRef<'a, MAX> {
+impl<const MAX: u32> TryFrom<&'static [u8]> for StringMConst<MAX> {
     type Error = Error;
 
-    fn try_from(v: &'a [u8]) -> Result<Self, Error> {
+    fn try_from(v: &'static [u8]) -> Result<Self, Error> {
         Ok(Self::try_from_slice(v)?)
     }
 }
 
-impl<'a, const MAX: u32> TryFrom<&'a str> for StringMRef<'a, MAX> {
+impl<const MAX: u32> TryFrom<&'static str> for StringMConst<MAX> {
     type Error = Error;
 
-    fn try_from(s: &'a str) -> Result<Self, Error> {
+    fn try_from(s: &'static str) -> Result<Self, Error> {
         Ok(Self::try_from_str(s)?)
-    }
-}
-
-impl<'a, const MAX: u32> From<&'a StringM<MAX>> for StringMRef<'a, MAX> {
-    #[must_use]
-    fn from(v: &'a StringM<MAX>) -> Self {
-        Self(<StringM<MAX> as AsRef<[u8]>>::as_ref(v))
-    }
-}
-
-impl<const MAX: u32> WriteXdr for StringMRef<'_, MAX> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-            len.write_xdr(w)?;
-
-            w.consume_len(self.len())?;
-            let padding = pad_len(self.len());
-            w.consume_len(padding)?;
-
-            w.write_all(self.0)?;
-
-            w.write_all(&[0u8; 3][..padding])?;
-
-            Ok(())
-        })
     }
 }
 

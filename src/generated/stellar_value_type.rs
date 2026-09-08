@@ -135,14 +135,6 @@ impl WriteXdr for StellarValueType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueType {
-    type Owned = StellarValueType;
-    fn into_owned(self) -> StellarValueType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl StellarValueType {
     /// The exact XDR-encoded length of this value, in bytes.

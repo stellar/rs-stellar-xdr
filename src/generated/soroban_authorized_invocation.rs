@@ -50,54 +50,16 @@ impl WriteXdr for SorobanAuthorizedInvocation {
     }
 }
 
-/// SorobanAuthorizedInvocationRef is a borrowing equivalent of [`SorobanAuthorizedInvocation`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanAuthorizedInvocationConst is a borrowing equivalent of [`SorobanAuthorizedInvocation`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAuthorizedInvocationRef<'a> {
-    pub function: SorobanAuthorizedFunctionRef<'a>,
-    pub sub_invocations: VecMRef<'a, SorobanAuthorizedInvocationRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAuthorizedInvocationRef<'_> {
-    type Owned = SorobanAuthorizedInvocation;
-    fn into_owned(self) -> SorobanAuthorizedInvocation {
-        SorobanAuthorizedInvocation {
-            function: self.function.into_owned(),
-            sub_invocations: self.sub_invocations.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
-    #[must_use]
-    fn from(v: &SorobanAuthorizedInvocationRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanAuthorizedInvocationRef<'_>> for SorobanAuthorizedInvocation {
-    #[must_use]
-    fn from(v: SorobanAuthorizedInvocationRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanAuthorizedInvocationRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.function.write_xdr(w)?;
-            self.sub_invocations.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct SorobanAuthorizedInvocationConst {
+    pub function: SorobanAuthorizedFunctionConst,
+    pub sub_invocations: VecMConst<SorobanAuthorizedInvocationConst>,
 }
 
 #[cfg(feature = "const")]
-impl SorobanAuthorizedInvocationRef<'_> {
+impl SorobanAuthorizedInvocationConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -138,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAuthorizedInvocation`], mirroring `<SorobanAuthorizedInvocation as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_authorized_invocation(
         &mut self,
-        v: &SorobanAuthorizedInvocationRef<'_>,
+        v: &SorobanAuthorizedInvocationConst,
     ) {
         self.write_type_soroban_authorized_function(&v.function);
         self.write_type_vec_soroban_authorized_invocation(&v.sub_invocations);
@@ -147,7 +109,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SorobanAuthorizedInvocation`], mirroring `<VecM<SorobanAuthorizedInvocation, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_soroban_authorized_invocation<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, SorobanAuthorizedInvocationRef<'_>, MAX>,
+        v: &VecMConst<SorobanAuthorizedInvocationConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

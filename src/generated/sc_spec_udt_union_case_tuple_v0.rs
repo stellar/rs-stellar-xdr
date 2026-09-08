@@ -59,57 +59,17 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     }
 }
 
-/// ScSpecUdtUnionCaseTupleV0Ref is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecUdtUnionCaseTupleV0Const is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtUnionCaseTupleV0Ref<'a> {
-    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: StringMRef<'a, 60>,
-    pub type_: VecMRef<'a, ScSpecTypeDefRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtUnionCaseTupleV0Ref<'_> {
-    type Owned = ScSpecUdtUnionCaseTupleV0;
-    fn into_owned(self) -> ScSpecUdtUnionCaseTupleV0 {
-        ScSpecUdtUnionCaseTupleV0 {
-            doc: self.doc.into_owned(),
-            name: self.name.into_owned(),
-            type_: self.type_.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
-    #[must_use]
-    fn from(v: &ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecUdtUnionCaseTupleV0Ref<'_>> for ScSpecUdtUnionCaseTupleV0 {
-    #[must_use]
-    fn from(v: ScSpecUdtUnionCaseTupleV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecUdtUnionCaseTupleV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.type_.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecUdtUnionCaseTupleV0Const {
+    pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,
+    pub name: StringMConst<60>,
+    pub type_: VecMConst<ScSpecTypeDefConst>,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecUdtUnionCaseTupleV0Ref<'_> {
+impl ScSpecUdtUnionCaseTupleV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -150,7 +110,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtUnionCaseTupleV0`], mirroring `<ScSpecUdtUnionCaseTupleV0 as WriteXdr>::write_xdr`.
     pub const fn write_type_sc_spec_udt_union_case_tuple_v0(
         &mut self,
-        v: &ScSpecUdtUnionCaseTupleV0Ref<'_>,
+        v: &ScSpecUdtUnionCaseTupleV0Const,
     ) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());

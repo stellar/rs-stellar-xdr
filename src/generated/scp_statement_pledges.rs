@@ -177,56 +177,18 @@ impl WriteXdr for ScpStatementPledges {
     }
 }
 
-/// ScpStatementPledgesRef is a borrowing equivalent of [`ScpStatementPledges`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpStatementPledgesConst is a borrowing equivalent of [`ScpStatementPledges`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScpStatementPledgesRef<'a> {
-    Prepare(ScpStatementPrepareRef<'a>),
-    Confirm(ScpStatementConfirmRef<'a>),
-    Externalize(ScpStatementExternalizeRef<'a>),
-    Nominate(ScpNominationRef<'a>),
+pub enum ScpStatementPledgesConst {
+    Prepare(ScpStatementPrepareConst),
+    Confirm(ScpStatementConfirmConst),
+    Externalize(ScpStatementExternalizeConst),
+    Nominate(ScpNominationConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpStatementPledgesRef<'_> {
-    type Owned = ScpStatementPledges;
-    fn into_owned(self) -> ScpStatementPledges {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScpStatementPledgesRef::Prepare(value) => {
-                ScpStatementPledges::Prepare(value.into_owned())
-            }
-            ScpStatementPledgesRef::Confirm(value) => {
-                ScpStatementPledges::Confirm(value.into_owned())
-            }
-            ScpStatementPledgesRef::Externalize(value) => {
-                ScpStatementPledges::Externalize(value.into_owned())
-            }
-            ScpStatementPledgesRef::Nominate(value) => {
-                ScpStatementPledges::Nominate(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpStatementPledgesRef<'_>> for ScpStatementPledges {
-    #[must_use]
-    fn from(v: &ScpStatementPledgesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpStatementPledgesRef<'_>> for ScpStatementPledges {
-    #[must_use]
-    fn from(v: ScpStatementPledgesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScpStatementPledgesRef<'_> {
+impl ScpStatementPledgesConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScpStatementType {
         #[allow(clippy::match_same_arms)]
@@ -239,25 +201,8 @@ impl ScpStatementPledgesRef<'_> {
     }
 }
 
-impl WriteXdr for ScpStatementPledgesRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Prepare(v) => v.write_xdr(w)?,
-                Self::Confirm(v) => v.write_xdr(w)?,
-                Self::Externalize(v) => v.write_xdr(w)?,
-                Self::Nominate(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScpStatementPledgesRef<'_> {
+impl ScpStatementPledgesConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -296,21 +241,21 @@ impl ScpStatementPledgesRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpStatementPledges`], mirroring `<ScpStatementPledges as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_statement_pledges(&mut self, v: &ScpStatementPledgesRef<'_>) {
+    pub const fn write_type_scp_statement_pledges(&mut self, v: &ScpStatementPledgesConst) {
         let d = v.discriminant();
         self.write_type_scp_statement_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScpStatementPledgesRef::Prepare(value) => {
+            ScpStatementPledgesConst::Prepare(value) => {
                 self.write_type_scp_statement_prepare(value);
             }
-            ScpStatementPledgesRef::Confirm(value) => {
+            ScpStatementPledgesConst::Confirm(value) => {
                 self.write_type_scp_statement_confirm(value);
             }
-            ScpStatementPledgesRef::Externalize(value) => {
+            ScpStatementPledgesConst::Externalize(value) => {
                 self.write_type_scp_statement_externalize(value);
             }
-            ScpStatementPledgesRef::Nominate(value) => {
+            ScpStatementPledgesConst::Nominate(value) => {
                 self.write_type_scp_nomination(value);
             }
         }

@@ -129,14 +129,6 @@ impl WriteXdr for FeeBumpTransactionExt {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionExt {
-    type Owned = FeeBumpTransactionExt;
-    fn into_owned(self) -> FeeBumpTransactionExt {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl FeeBumpTransactionExt {
     /// The exact XDR-encoded length of this value, in bytes.

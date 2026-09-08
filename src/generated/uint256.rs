@@ -154,14 +154,6 @@ impl AsRef<[u8]> for Uint256 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Uint256 {
-    type Owned = Uint256;
-    fn into_owned(self) -> Uint256 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Uint256 {
     /// The exact XDR-encoded length of this value, in bytes.

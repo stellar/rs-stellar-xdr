@@ -108,44 +108,13 @@ impl AsRef<[u8]> for Signature {
     }
 }
 
-/// SignatureRef is a borrowing equivalent of [`Signature`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SignatureConst is a borrowing equivalent of [`Signature`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignatureRef<'a>(pub BytesMRef<'a, 64>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignatureRef<'_> {
-    type Owned = Signature;
-    fn into_owned(self) -> Signature {
-        Signature(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SignatureRef<'_>> for Signature {
-    #[must_use]
-    fn from(v: &SignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SignatureRef<'_>> for Signature {
-    #[must_use]
-    fn from(v: SignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SignatureRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct SignatureConst(pub BytesMConst<64>);
 
 #[cfg(feature = "const")]
-impl SignatureRef<'_> {
+impl SignatureConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,7 +153,7 @@ impl SignatureRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Signature`], mirroring `<Signature as WriteXdr>::write_xdr`.
-    pub const fn write_type_signature(&mut self, v: &SignatureRef<'_>) {
+    pub const fn write_type_signature(&mut self, v: &SignatureConst) {
         self.write_var_opaque(v.0.as_slice());
     }
 }

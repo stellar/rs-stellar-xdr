@@ -123,14 +123,6 @@ impl WriteXdr for ScMetaKind {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScMetaKind {
-    type Owned = ScMetaKind;
-    fn into_owned(self) -> ScMetaKind {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ScMetaKind {
     /// The exact XDR-encoded length of this value, in bytes.

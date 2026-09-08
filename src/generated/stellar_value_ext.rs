@@ -155,48 +155,17 @@ impl WriteXdr for StellarValueExt {
     }
 }
 
-/// StellarValueExtRef is a borrowing equivalent of [`StellarValueExt`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// StellarValueExtConst is a borrowing equivalent of [`StellarValueExt`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum StellarValueExtRef<'a> {
+pub enum StellarValueExtConst {
     Basic,
-    Signed(LedgerCloseValueSignatureRef<'a>),
-    EmptyTxSet(StellarValueProposedValueRef<'a>),
+    Signed(LedgerCloseValueSignatureConst),
+    EmptyTxSet(StellarValueProposedValueConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for StellarValueExtRef<'_> {
-    type Owned = StellarValueExt;
-    fn into_owned(self) -> StellarValueExt {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            StellarValueExtRef::Basic => StellarValueExt::Basic,
-            StellarValueExtRef::Signed(value) => StellarValueExt::Signed(value.into_owned()),
-            StellarValueExtRef::EmptyTxSet(value) => {
-                StellarValueExt::EmptyTxSet(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&StellarValueExtRef<'_>> for StellarValueExt {
-    #[must_use]
-    fn from(v: &StellarValueExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<StellarValueExtRef<'_>> for StellarValueExt {
-    #[must_use]
-    fn from(v: StellarValueExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl StellarValueExtRef<'_> {
+impl StellarValueExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> StellarValueType {
         #[allow(clippy::match_same_arms)]
@@ -208,24 +177,8 @@ impl StellarValueExtRef<'_> {
     }
 }
 
-impl WriteXdr for StellarValueExtRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Basic => ().write_xdr(w)?,
-                Self::Signed(v) => v.write_xdr(w)?,
-                Self::EmptyTxSet(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl StellarValueExtRef<'_> {
+impl StellarValueExtConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -264,16 +217,16 @@ impl StellarValueExtRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`StellarValueExt`], mirroring `<StellarValueExt as WriteXdr>::write_xdr`.
-    pub const fn write_type_stellar_value_ext(&mut self, v: &StellarValueExtRef<'_>) {
+    pub const fn write_type_stellar_value_ext(&mut self, v: &StellarValueExtConst) {
         let d = v.discriminant();
         self.write_type_stellar_value_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            StellarValueExtRef::Basic => {}
-            StellarValueExtRef::Signed(value) => {
+            StellarValueExtConst::Basic => {}
+            StellarValueExtConst::Signed(value) => {
                 self.write_type_ledger_close_value_signature(value);
             }
-            StellarValueExtRef::EmptyTxSet(value) => {
+            StellarValueExtConst::EmptyTxSet(value) => {
                 self.write_type_stellar_value_proposed_value(value);
             }
         }

@@ -50,14 +50,6 @@ impl WriteXdr for TtlEntry {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TtlEntry {
-    type Owned = TtlEntry;
-    fn into_owned(self) -> TtlEntry {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TtlEntry {
     /// The exact XDR-encoded length of this value, in bytes.

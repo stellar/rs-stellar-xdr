@@ -156,12 +156,12 @@ impl WriteXdr for PeerStats {
     }
 }
 
-/// PeerStatsRef is a borrowing equivalent of [`PeerStats`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PeerStatsConst is a borrowing equivalent of [`PeerStats`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PeerStatsRef<'a> {
+pub struct PeerStatsConst {
     pub id: NodeId,
-    pub version_str: StringMRef<'a, 100>,
+    pub version_str: StringMConst<100>,
     pub messages_read: u64,
     pub messages_written: u64,
     pub bytes_read: u64,
@@ -177,72 +177,8 @@ pub struct PeerStatsRef<'a> {
     pub duplicate_fetch_message_recv: u64,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PeerStatsRef<'_> {
-    type Owned = PeerStats;
-    fn into_owned(self) -> PeerStats {
-        PeerStats {
-            id: self.id.into_owned(),
-            version_str: self.version_str.into_owned(),
-            messages_read: self.messages_read.into_owned(),
-            messages_written: self.messages_written.into_owned(),
-            bytes_read: self.bytes_read.into_owned(),
-            bytes_written: self.bytes_written.into_owned(),
-            seconds_connected: self.seconds_connected.into_owned(),
-            unique_flood_bytes_recv: self.unique_flood_bytes_recv.into_owned(),
-            duplicate_flood_bytes_recv: self.duplicate_flood_bytes_recv.into_owned(),
-            unique_fetch_bytes_recv: self.unique_fetch_bytes_recv.into_owned(),
-            duplicate_fetch_bytes_recv: self.duplicate_fetch_bytes_recv.into_owned(),
-            unique_flood_message_recv: self.unique_flood_message_recv.into_owned(),
-            duplicate_flood_message_recv: self.duplicate_flood_message_recv.into_owned(),
-            unique_fetch_message_recv: self.unique_fetch_message_recv.into_owned(),
-            duplicate_fetch_message_recv: self.duplicate_fetch_message_recv.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PeerStatsRef<'_>> for PeerStats {
-    #[must_use]
-    fn from(v: &PeerStatsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PeerStatsRef<'_>> for PeerStats {
-    #[must_use]
-    fn from(v: PeerStatsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for PeerStatsRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.id.write_xdr(w)?;
-            self.version_str.write_xdr(w)?;
-            self.messages_read.write_xdr(w)?;
-            self.messages_written.write_xdr(w)?;
-            self.bytes_read.write_xdr(w)?;
-            self.bytes_written.write_xdr(w)?;
-            self.seconds_connected.write_xdr(w)?;
-            self.unique_flood_bytes_recv.write_xdr(w)?;
-            self.duplicate_flood_bytes_recv.write_xdr(w)?;
-            self.unique_fetch_bytes_recv.write_xdr(w)?;
-            self.duplicate_fetch_bytes_recv.write_xdr(w)?;
-            self.unique_flood_message_recv.write_xdr(w)?;
-            self.duplicate_flood_message_recv.write_xdr(w)?;
-            self.unique_fetch_message_recv.write_xdr(w)?;
-            self.duplicate_fetch_message_recv.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl PeerStatsRef<'_> {
+impl PeerStatsConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -281,7 +217,7 @@ impl PeerStatsRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PeerStats`], mirroring `<PeerStats as WriteXdr>::write_xdr`.
-    pub const fn write_type_peer_stats(&mut self, v: &PeerStatsRef<'_>) {
+    pub const fn write_type_peer_stats(&mut self, v: &PeerStatsConst) {
         self.write_type_node_id(&v.id);
         self.write_var_opaque(v.version_str.as_slice());
         self.write_u64(v.messages_read);

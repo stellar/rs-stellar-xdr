@@ -58,57 +58,17 @@ impl WriteXdr for AuthenticatedMessageV0 {
     }
 }
 
-/// AuthenticatedMessageV0Ref is a borrowing equivalent of [`AuthenticatedMessageV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AuthenticatedMessageV0Const is a borrowing equivalent of [`AuthenticatedMessageV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AuthenticatedMessageV0Ref<'a> {
+pub struct AuthenticatedMessageV0Const {
     pub sequence: u64,
-    pub message: StellarMessageRef<'a>,
+    pub message: StellarMessageConst,
     pub mac: HmacSha256Mac,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AuthenticatedMessageV0Ref<'_> {
-    type Owned = AuthenticatedMessageV0;
-    fn into_owned(self) -> AuthenticatedMessageV0 {
-        AuthenticatedMessageV0 {
-            sequence: self.sequence.into_owned(),
-            message: self.message.into_owned(),
-            mac: self.mac.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
-    #[must_use]
-    fn from(v: &AuthenticatedMessageV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AuthenticatedMessageV0Ref<'_>> for AuthenticatedMessageV0 {
-    #[must_use]
-    fn from(v: AuthenticatedMessageV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for AuthenticatedMessageV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.sequence.write_xdr(w)?;
-            self.message.write_xdr(w)?;
-            self.mac.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl AuthenticatedMessageV0Ref<'_> {
+impl AuthenticatedMessageV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -147,7 +107,7 @@ impl AuthenticatedMessageV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AuthenticatedMessageV0`], mirroring `<AuthenticatedMessageV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_authenticated_message_v0(&mut self, v: &AuthenticatedMessageV0Ref<'_>) {
+    pub const fn write_type_authenticated_message_v0(&mut self, v: &AuthenticatedMessageV0Const) {
         self.write_u64(v.sequence);
         self.write_type_stellar_message(&v.message);
         self.write_type_hmac_sha256_mac(&v.mac);

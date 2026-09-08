@@ -63,14 +63,6 @@ impl WriteXdr for ContractCostParamEntry {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractCostParamEntry {
-    type Owned = ContractCostParamEntry;
-    fn into_owned(self) -> ContractCostParamEntry {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ContractCostParamEntry {
     /// The exact XDR-encoded length of this value, in bytes.
@@ -120,7 +112,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ContractCostParamEntry`], mirroring `<VecM<ContractCostParamEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_contract_cost_param_entry<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ContractCostParamEntry, MAX>,
+        v: &VecMConst<ContractCostParamEntry, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

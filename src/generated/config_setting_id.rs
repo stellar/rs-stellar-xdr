@@ -247,14 +247,6 @@ impl WriteXdr for ConfigSettingId {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ConfigSettingId {
-    type Owned = ConfigSettingId;
-    fn into_owned(self) -> ConfigSettingId {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ConfigSettingId {
     /// The exact XDR-encoded length of this value, in bytes.

@@ -145,14 +145,6 @@ impl WriteXdr for LedgerEntryChangeType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryChangeType {
-    type Owned = LedgerEntryChangeType;
-    fn into_owned(self) -> LedgerEntryChangeType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl LedgerEntryChangeType {
     /// The exact XDR-encoded length of this value, in bytes.

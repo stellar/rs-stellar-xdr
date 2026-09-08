@@ -60,14 +60,6 @@ impl WriteXdr for AccountEntryExtensionV3 {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV3 {
-    type Owned = AccountEntryExtensionV3;
-    fn into_owned(self) -> AccountEntryExtensionV3 {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl AccountEntryExtensionV3 {
     /// The exact XDR-encoded length of this value, in bytes.

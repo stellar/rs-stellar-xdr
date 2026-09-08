@@ -136,14 +136,6 @@ impl WriteXdr for PeerAddressIp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PeerAddressIp {
-    type Owned = PeerAddressIp;
-    fn into_owned(self) -> PeerAddressIp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl PeerAddressIp {
     /// The exact XDR-encoded length of this value, in bytes.

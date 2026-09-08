@@ -129,42 +129,15 @@ impl WriteXdr for ScpHistoryEntry {
     }
 }
 
-/// ScpHistoryEntryRef is a borrowing equivalent of [`ScpHistoryEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScpHistoryEntryConst is a borrowing equivalent of [`ScpHistoryEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScpHistoryEntryRef<'a> {
-    V0(ScpHistoryEntryV0Ref<'a>),
+pub enum ScpHistoryEntryConst {
+    V0(ScpHistoryEntryV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScpHistoryEntryRef<'_> {
-    type Owned = ScpHistoryEntry;
-    fn into_owned(self) -> ScpHistoryEntry {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScpHistoryEntryRef::V0(value) => ScpHistoryEntry::V0(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
-    #[must_use]
-    fn from(v: &ScpHistoryEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScpHistoryEntryRef<'_>> for ScpHistoryEntry {
-    #[must_use]
-    fn from(v: ScpHistoryEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScpHistoryEntryRef<'_> {
+impl ScpHistoryEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -174,22 +147,8 @@ impl ScpHistoryEntryRef<'_> {
     }
 }
 
-impl WriteXdr for ScpHistoryEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScpHistoryEntryRef<'_> {
+impl ScpHistoryEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -228,12 +187,12 @@ impl ScpHistoryEntryRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScpHistoryEntry`], mirroring `<ScpHistoryEntry as WriteXdr>::write_xdr`.
-    pub const fn write_type_scp_history_entry(&mut self, v: &ScpHistoryEntryRef<'_>) {
+    pub const fn write_type_scp_history_entry(&mut self, v: &ScpHistoryEntryConst) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScpHistoryEntryRef::V0(value) => {
+            ScpHistoryEntryConst::V0(value) => {
                 self.write_type_scp_history_entry_v0(value);
             }
         }
@@ -242,7 +201,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScpHistoryEntry`], mirroring `<VecM<ScpHistoryEntry, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_scp_history_entry<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScpHistoryEntryRef<'_>, MAX>,
+        v: &VecMConst<ScpHistoryEntryConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

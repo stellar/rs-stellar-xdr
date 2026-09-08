@@ -166,54 +166,18 @@ impl WriteXdr for SorobanCredentials {
     }
 }
 
-/// SorobanCredentialsRef is a borrowing equivalent of [`SorobanCredentials`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanCredentialsConst is a borrowing equivalent of [`SorobanCredentials`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum SorobanCredentialsRef<'a> {
+pub enum SorobanCredentialsConst {
     SourceAccount,
-    Address(SorobanAddressCredentialsRef<'a>),
-    AddressV2(SorobanAddressCredentialsRef<'a>),
-    AddressWithDelegates(SorobanAddressCredentialsWithDelegatesRef<'a>),
+    Address(SorobanAddressCredentialsConst),
+    AddressV2(SorobanAddressCredentialsConst),
+    AddressWithDelegates(SorobanAddressCredentialsWithDelegatesConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanCredentialsRef<'_> {
-    type Owned = SorobanCredentials;
-    fn into_owned(self) -> SorobanCredentials {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            SorobanCredentialsRef::SourceAccount => SorobanCredentials::SourceAccount,
-            SorobanCredentialsRef::Address(value) => {
-                SorobanCredentials::Address(value.into_owned())
-            }
-            SorobanCredentialsRef::AddressV2(value) => {
-                SorobanCredentials::AddressV2(value.into_owned())
-            }
-            SorobanCredentialsRef::AddressWithDelegates(value) => {
-                SorobanCredentials::AddressWithDelegates(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanCredentialsRef<'_>> for SorobanCredentials {
-    #[must_use]
-    fn from(v: &SorobanCredentialsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanCredentialsRef<'_>> for SorobanCredentials {
-    #[must_use]
-    fn from(v: SorobanCredentialsRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl SorobanCredentialsRef<'_> {
+impl SorobanCredentialsConst {
     #[must_use]
     pub const fn discriminant(&self) -> SorobanCredentialsType {
         #[allow(clippy::match_same_arms)]
@@ -226,25 +190,8 @@ impl SorobanCredentialsRef<'_> {
     }
 }
 
-impl WriteXdr for SorobanCredentialsRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::SourceAccount => ().write_xdr(w)?,
-                Self::Address(v) => v.write_xdr(w)?,
-                Self::AddressV2(v) => v.write_xdr(w)?,
-                Self::AddressWithDelegates(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl SorobanCredentialsRef<'_> {
+impl SorobanCredentialsConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -283,19 +230,19 @@ impl SorobanCredentialsRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`SorobanCredentials`], mirroring `<SorobanCredentials as WriteXdr>::write_xdr`.
-    pub const fn write_type_soroban_credentials(&mut self, v: &SorobanCredentialsRef<'_>) {
+    pub const fn write_type_soroban_credentials(&mut self, v: &SorobanCredentialsConst) {
         let d = v.discriminant();
         self.write_type_soroban_credentials_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            SorobanCredentialsRef::SourceAccount => {}
-            SorobanCredentialsRef::Address(value) => {
+            SorobanCredentialsConst::SourceAccount => {}
+            SorobanCredentialsConst::Address(value) => {
                 self.write_type_soroban_address_credentials(value);
             }
-            SorobanCredentialsRef::AddressV2(value) => {
+            SorobanCredentialsConst::AddressV2(value) => {
                 self.write_type_soroban_address_credentials(value);
             }
-            SorobanCredentialsRef::AddressWithDelegates(value) => {
+            SorobanCredentialsConst::AddressWithDelegates(value) => {
                 self.write_type_soroban_address_credentials_with_delegates(value);
             }
         }

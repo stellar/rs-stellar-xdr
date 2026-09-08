@@ -139,44 +139,15 @@ impl WriteXdr for TxSetComponent {
     }
 }
 
-/// TxSetComponentRef is a borrowing equivalent of [`TxSetComponent`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TxSetComponentConst is a borrowing equivalent of [`TxSetComponent`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TxSetComponentRef<'a> {
-    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeRef<'a>),
+pub enum TxSetComponentConst {
+    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TxSetComponentRef<'_> {
-    type Owned = TxSetComponent;
-    fn into_owned(self) -> TxSetComponent {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TxSetComponentRef::TxsetCompTxsMaybeDiscountedFee(value) => {
-                TxSetComponent::TxsetCompTxsMaybeDiscountedFee(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TxSetComponentRef<'_>> for TxSetComponent {
-    #[must_use]
-    fn from(v: &TxSetComponentRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TxSetComponentRef<'_>> for TxSetComponent {
-    #[must_use]
-    fn from(v: TxSetComponentRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TxSetComponentRef<'_> {
+impl TxSetComponentConst {
     #[must_use]
     pub const fn discriminant(&self) -> TxSetComponentType {
         #[allow(clippy::match_same_arms)]
@@ -188,22 +159,8 @@ impl TxSetComponentRef<'_> {
     }
 }
 
-impl WriteXdr for TxSetComponentRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::TxsetCompTxsMaybeDiscountedFee(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TxSetComponentRef<'_> {
+impl TxSetComponentConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -242,12 +199,12 @@ impl TxSetComponentRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TxSetComponent`], mirroring `<TxSetComponent as WriteXdr>::write_xdr`.
-    pub const fn write_type_tx_set_component(&mut self, v: &TxSetComponentRef<'_>) {
+    pub const fn write_type_tx_set_component(&mut self, v: &TxSetComponentConst) {
         let d = v.discriminant();
         self.write_type_tx_set_component_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TxSetComponentRef::TxsetCompTxsMaybeDiscountedFee(value) => {
+            TxSetComponentConst::TxsetCompTxsMaybeDiscountedFee(value) => {
                 self.write_type_tx_set_component_txs_maybe_discounted_fee(value);
             }
         }
@@ -256,7 +213,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`TxSetComponent`], mirroring `<VecM<TxSetComponent, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_tx_set_component<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, TxSetComponentRef<'_>, MAX>,
+        v: &VecMConst<TxSetComponentConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

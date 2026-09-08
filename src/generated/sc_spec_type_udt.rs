@@ -46,51 +46,15 @@ impl WriteXdr for ScSpecTypeUdt {
     }
 }
 
-/// ScSpecTypeUdtRef is a borrowing equivalent of [`ScSpecTypeUdt`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeUdtConst is a borrowing equivalent of [`ScSpecTypeUdt`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecTypeUdtRef<'a> {
-    pub name: StringMRef<'a, 60>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeUdtRef<'_> {
-    type Owned = ScSpecTypeUdt;
-    fn into_owned(self) -> ScSpecTypeUdt {
-        ScSpecTypeUdt {
-            name: self.name.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
-    #[must_use]
-    fn from(v: &ScSpecTypeUdtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeUdtRef<'_>> for ScSpecTypeUdt {
-    #[must_use]
-    fn from(v: ScSpecTypeUdtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecTypeUdtRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.name.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct ScSpecTypeUdtConst {
+    pub name: StringMConst<60>,
 }
 
 #[cfg(feature = "const")]
-impl ScSpecTypeUdtRef<'_> {
+impl ScSpecTypeUdtConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -129,7 +93,7 @@ impl ScSpecTypeUdtRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeUdt`], mirroring `<ScSpecTypeUdt as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_udt(&mut self, v: &ScSpecTypeUdtRef<'_>) {
+    pub const fn write_type_sc_spec_type_udt(&mut self, v: &ScSpecTypeUdtConst) {
         self.write_var_opaque(v.name.as_slice());
     }
 }

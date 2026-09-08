@@ -126,14 +126,6 @@ impl WriteXdr for ClaimableBalanceFlags {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimableBalanceFlags {
-    type Owned = ClaimableBalanceFlags;
-    fn into_owned(self) -> ClaimableBalanceFlags {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ClaimableBalanceFlags {
     /// The exact XDR-encoded length of this value, in bytes.

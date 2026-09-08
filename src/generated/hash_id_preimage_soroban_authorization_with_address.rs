@@ -66,67 +66,19 @@ impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddress {
     }
 }
 
-/// HashIdPreimageSorobanAuthorizationWithAddressRef is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// HashIdPreimageSorobanAuthorizationWithAddressConst is a borrowing equivalent of [`HashIdPreimageSorobanAuthorizationWithAddress`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HashIdPreimageSorobanAuthorizationWithAddressRef<'a> {
+pub struct HashIdPreimageSorobanAuthorizationWithAddressConst {
     pub network_id: Hash,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
     pub address: ScAddress,
-    pub invocation: SorobanAuthorizedInvocationRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
-    type Owned = HashIdPreimageSorobanAuthorizationWithAddress;
-    fn into_owned(self) -> HashIdPreimageSorobanAuthorizationWithAddress {
-        HashIdPreimageSorobanAuthorizationWithAddress {
-            network_id: self.network_id.into_owned(),
-            nonce: self.nonce.into_owned(),
-            signature_expiration_ledger: self.signature_expiration_ledger.into_owned(),
-            address: self.address.into_owned(),
-            invocation: self.invocation.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
-    for HashIdPreimageSorobanAuthorizationWithAddress
-{
-    #[must_use]
-    fn from(v: &HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<HashIdPreimageSorobanAuthorizationWithAddressRef<'_>>
-    for HashIdPreimageSorobanAuthorizationWithAddress
-{
-    #[must_use]
-    fn from(v: HashIdPreimageSorobanAuthorizationWithAddressRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.network_id.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            self.signature_expiration_ledger.write_xdr(w)?;
-            self.address.write_xdr(w)?;
-            self.invocation.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub invocation: SorobanAuthorizedInvocationConst,
 }
 
 #[cfg(feature = "const")]
-impl HashIdPreimageSorobanAuthorizationWithAddressRef<'_> {
+impl HashIdPreimageSorobanAuthorizationWithAddressConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -167,7 +119,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`HashIdPreimageSorobanAuthorizationWithAddress`], mirroring `<HashIdPreimageSorobanAuthorizationWithAddress as WriteXdr>::write_xdr`.
     pub const fn write_type_hash_id_preimage_soroban_authorization_with_address(
         &mut self,
-        v: &HashIdPreimageSorobanAuthorizationWithAddressRef<'_>,
+        v: &HashIdPreimageSorobanAuthorizationWithAddressConst,
     ) {
         self.write_type_hash(&v.network_id);
         self.write_i64(v.nonce);

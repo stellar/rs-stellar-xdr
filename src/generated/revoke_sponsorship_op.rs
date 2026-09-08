@@ -145,48 +145,16 @@ impl WriteXdr for RevokeSponsorshipOp {
     }
 }
 
-/// RevokeSponsorshipOpRef is a borrowing equivalent of [`RevokeSponsorshipOp`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// RevokeSponsorshipOpConst is a borrowing equivalent of [`RevokeSponsorshipOp`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum RevokeSponsorshipOpRef<'a> {
-    LedgerEntry(LedgerKeyRef<'a>),
-    Signer(RevokeSponsorshipOpSignerRef<'a>),
+pub enum RevokeSponsorshipOpConst {
+    LedgerEntry(LedgerKeyConst),
+    Signer(RevokeSponsorshipOpSignerConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for RevokeSponsorshipOpRef<'_> {
-    type Owned = RevokeSponsorshipOp;
-    fn into_owned(self) -> RevokeSponsorshipOp {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            RevokeSponsorshipOpRef::LedgerEntry(value) => {
-                RevokeSponsorshipOp::LedgerEntry(value.into_owned())
-            }
-            RevokeSponsorshipOpRef::Signer(value) => {
-                RevokeSponsorshipOp::Signer(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
-    #[must_use]
-    fn from(v: &RevokeSponsorshipOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<RevokeSponsorshipOpRef<'_>> for RevokeSponsorshipOp {
-    #[must_use]
-    fn from(v: RevokeSponsorshipOpRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl RevokeSponsorshipOpRef<'_> {
+impl RevokeSponsorshipOpConst {
     #[must_use]
     pub const fn discriminant(&self) -> RevokeSponsorshipType {
         #[allow(clippy::match_same_arms)]
@@ -197,23 +165,8 @@ impl RevokeSponsorshipOpRef<'_> {
     }
 }
 
-impl WriteXdr for RevokeSponsorshipOpRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::LedgerEntry(v) => v.write_xdr(w)?,
-                Self::Signer(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl RevokeSponsorshipOpRef<'_> {
+impl RevokeSponsorshipOpConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -252,15 +205,15 @@ impl RevokeSponsorshipOpRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`RevokeSponsorshipOp`], mirroring `<RevokeSponsorshipOp as WriteXdr>::write_xdr`.
-    pub const fn write_type_revoke_sponsorship_op(&mut self, v: &RevokeSponsorshipOpRef<'_>) {
+    pub const fn write_type_revoke_sponsorship_op(&mut self, v: &RevokeSponsorshipOpConst) {
         let d = v.discriminant();
         self.write_type_revoke_sponsorship_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            RevokeSponsorshipOpRef::LedgerEntry(value) => {
+            RevokeSponsorshipOpConst::LedgerEntry(value) => {
                 self.write_type_ledger_key(value);
             }
-            RevokeSponsorshipOpRef::Signer(value) => {
+            RevokeSponsorshipOpConst::Signer(value) => {
                 self.write_type_revoke_sponsorship_op_signer(value);
             }
         }

@@ -54,57 +54,17 @@ impl WriteXdr for SorobanDelegateSignature {
     }
 }
 
-/// SorobanDelegateSignatureRef is a borrowing equivalent of [`SorobanDelegateSignature`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanDelegateSignatureConst is a borrowing equivalent of [`SorobanDelegateSignature`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanDelegateSignatureRef<'a> {
+pub struct SorobanDelegateSignatureConst {
     pub address: ScAddress,
-    pub signature: ScValRef<'a>,
-    pub nested_delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanDelegateSignatureRef<'_> {
-    type Owned = SorobanDelegateSignature;
-    fn into_owned(self) -> SorobanDelegateSignature {
-        SorobanDelegateSignature {
-            address: self.address.into_owned(),
-            signature: self.signature.into_owned(),
-            nested_delegates: self.nested_delegates.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
-    #[must_use]
-    fn from(v: &SorobanDelegateSignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanDelegateSignatureRef<'_>> for SorobanDelegateSignature {
-    #[must_use]
-    fn from(v: SorobanDelegateSignatureRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanDelegateSignatureRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.address.write_xdr(w)?;
-            self.signature.write_xdr(w)?;
-            self.nested_delegates.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub signature: ScValConst,
+    pub nested_delegates: VecMConst<SorobanDelegateSignatureConst>,
 }
 
 #[cfg(feature = "const")]
-impl SorobanDelegateSignatureRef<'_> {
+impl SorobanDelegateSignatureConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -145,7 +105,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanDelegateSignature`], mirroring `<SorobanDelegateSignature as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_delegate_signature(
         &mut self,
-        v: &SorobanDelegateSignatureRef<'_>,
+        v: &SorobanDelegateSignatureConst,
     ) {
         self.write_type_sc_address(&v.address);
         self.write_type_sc_val(&v.signature);
@@ -155,7 +115,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`SorobanDelegateSignature`], mirroring `<VecM<SorobanDelegateSignature, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_soroban_delegate_signature<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, SorobanDelegateSignatureRef<'_>, MAX>,
+        v: &VecMConst<SorobanDelegateSignatureConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

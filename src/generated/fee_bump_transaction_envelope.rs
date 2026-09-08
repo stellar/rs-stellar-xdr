@@ -52,54 +52,16 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
     }
 }
 
-/// FeeBumpTransactionEnvelopeRef is a borrowing equivalent of [`FeeBumpTransactionEnvelope`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// FeeBumpTransactionEnvelopeConst is a borrowing equivalent of [`FeeBumpTransactionEnvelope`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FeeBumpTransactionEnvelopeRef<'a> {
-    pub tx: FeeBumpTransactionRef<'a>,
-    pub signatures: VecMRef<'a, DecoratedSignatureRef<'a>, 20>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for FeeBumpTransactionEnvelopeRef<'_> {
-    type Owned = FeeBumpTransactionEnvelope;
-    fn into_owned(self) -> FeeBumpTransactionEnvelope {
-        FeeBumpTransactionEnvelope {
-            tx: self.tx.into_owned(),
-            signatures: self.signatures.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&FeeBumpTransactionEnvelopeRef<'_>> for FeeBumpTransactionEnvelope {
-    #[must_use]
-    fn from(v: &FeeBumpTransactionEnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<FeeBumpTransactionEnvelopeRef<'_>> for FeeBumpTransactionEnvelope {
-    #[must_use]
-    fn from(v: FeeBumpTransactionEnvelopeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for FeeBumpTransactionEnvelopeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.tx.write_xdr(w)?;
-            self.signatures.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct FeeBumpTransactionEnvelopeConst {
+    pub tx: FeeBumpTransactionConst,
+    pub signatures: VecMConst<DecoratedSignatureConst, 20>,
 }
 
 #[cfg(feature = "const")]
-impl FeeBumpTransactionEnvelopeRef<'_> {
+impl FeeBumpTransactionEnvelopeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -140,7 +102,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`FeeBumpTransactionEnvelope`], mirroring `<FeeBumpTransactionEnvelope as WriteXdr>::write_xdr`.
     pub const fn write_type_fee_bump_transaction_envelope(
         &mut self,
-        v: &FeeBumpTransactionEnvelopeRef<'_>,
+        v: &FeeBumpTransactionEnvelopeConst,
     ) {
         self.write_type_fee_bump_transaction(&v.tx);
         self.write_type_vec_decorated_signature(&v.signatures);

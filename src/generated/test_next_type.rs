@@ -50,15 +50,6 @@ impl WriteXdr for TestNextType {
 }
 
 #[cfg(feature = "test_feature")]
-#[cfg(feature = "alloc")]
-impl IntoOwned for TestNextType {
-    type Owned = TestNextType;
-    fn into_owned(self) -> TestNextType {
-        self
-    }
-}
-
-#[cfg(feature = "test_feature")]
 #[cfg(feature = "const")]
 impl TestNextType {
     /// The exact XDR-encoded length of this value, in bytes.

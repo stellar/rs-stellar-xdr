@@ -145,14 +145,6 @@ impl WriteXdr for SorobanCredentialsType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanCredentialsType {
-    type Owned = SorobanCredentialsType;
-    fn into_owned(self) -> SorobanCredentialsType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl SorobanCredentialsType {
     /// The exact XDR-encoded length of this value, in bytes.

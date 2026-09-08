@@ -50,54 +50,16 @@ impl WriteXdr for ClaimantV0 {
     }
 }
 
-/// ClaimantV0Ref is a borrowing equivalent of [`ClaimantV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ClaimantV0Const is a borrowing equivalent of [`ClaimantV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ClaimantV0Ref<'a> {
+pub struct ClaimantV0Const {
     pub destination: AccountId,
-    pub predicate: ClaimPredicateRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimantV0Ref<'_> {
-    type Owned = ClaimantV0;
-    fn into_owned(self) -> ClaimantV0 {
-        ClaimantV0 {
-            destination: self.destination.into_owned(),
-            predicate: self.predicate.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ClaimantV0Ref<'_>> for ClaimantV0 {
-    #[must_use]
-    fn from(v: &ClaimantV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ClaimantV0Ref<'_>> for ClaimantV0 {
-    #[must_use]
-    fn from(v: ClaimantV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ClaimantV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.destination.write_xdr(w)?;
-            self.predicate.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub predicate: ClaimPredicateConst,
 }
 
 #[cfg(feature = "const")]
-impl ClaimantV0Ref<'_> {
+impl ClaimantV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -136,7 +98,7 @@ impl ClaimantV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ClaimantV0`], mirroring `<ClaimantV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_claimant_v0(&mut self, v: &ClaimantV0Ref<'_>) {
+    pub const fn write_type_claimant_v0(&mut self, v: &ClaimantV0Const) {
         self.write_type_account_id(&v.destination);
         self.write_type_claim_predicate(&v.predicate);
     }

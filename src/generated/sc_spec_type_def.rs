@@ -340,11 +340,11 @@ impl WriteXdr for ScSpecTypeDef {
     }
 }
 
-/// ScSpecTypeDefRef is a borrowing equivalent of [`ScSpecTypeDef`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecTypeDefConst is a borrowing equivalent of [`ScSpecTypeDef`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ScSpecTypeDefRef<'a> {
+pub enum ScSpecTypeDefConst {
     Val,
     Bool,
     Void,
@@ -364,68 +364,16 @@ pub enum ScSpecTypeDefRef<'a> {
     Symbol,
     Address,
     MuxedAddress,
-    Option(&'a ScSpecTypeOptionRef<'a>),
-    Result(&'a ScSpecTypeResultRef<'a>),
-    Vec(&'a ScSpecTypeVecRef<'a>),
-    Map(&'a ScSpecTypeMapRef<'a>),
-    Tuple(&'a ScSpecTypeTupleRef<'a>),
+    Option(&'static ScSpecTypeOptionConst),
+    Result(&'static ScSpecTypeResultConst),
+    Vec(&'static ScSpecTypeVecConst),
+    Map(&'static ScSpecTypeMapConst),
+    Tuple(&'static ScSpecTypeTupleConst),
     BytesN(ScSpecTypeBytesN),
-    Udt(ScSpecTypeUdtRef<'a>),
+    Udt(ScSpecTypeUdtConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecTypeDefRef<'_> {
-    type Owned = ScSpecTypeDef;
-    fn into_owned(self) -> ScSpecTypeDef {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ScSpecTypeDefRef::Val => ScSpecTypeDef::Val,
-            ScSpecTypeDefRef::Bool => ScSpecTypeDef::Bool,
-            ScSpecTypeDefRef::Void => ScSpecTypeDef::Void,
-            ScSpecTypeDefRef::Error => ScSpecTypeDef::Error,
-            ScSpecTypeDefRef::U32 => ScSpecTypeDef::U32,
-            ScSpecTypeDefRef::I32 => ScSpecTypeDef::I32,
-            ScSpecTypeDefRef::U64 => ScSpecTypeDef::U64,
-            ScSpecTypeDefRef::I64 => ScSpecTypeDef::I64,
-            ScSpecTypeDefRef::Timepoint => ScSpecTypeDef::Timepoint,
-            ScSpecTypeDefRef::Duration => ScSpecTypeDef::Duration,
-            ScSpecTypeDefRef::U128 => ScSpecTypeDef::U128,
-            ScSpecTypeDefRef::I128 => ScSpecTypeDef::I128,
-            ScSpecTypeDefRef::U256 => ScSpecTypeDef::U256,
-            ScSpecTypeDefRef::I256 => ScSpecTypeDef::I256,
-            ScSpecTypeDefRef::Bytes => ScSpecTypeDef::Bytes,
-            ScSpecTypeDefRef::String => ScSpecTypeDef::String,
-            ScSpecTypeDefRef::Symbol => ScSpecTypeDef::Symbol,
-            ScSpecTypeDefRef::Address => ScSpecTypeDef::Address,
-            ScSpecTypeDefRef::MuxedAddress => ScSpecTypeDef::MuxedAddress,
-            ScSpecTypeDefRef::Option(value) => ScSpecTypeDef::Option(Box::new(value.into_owned())),
-            ScSpecTypeDefRef::Result(value) => ScSpecTypeDef::Result(Box::new(value.into_owned())),
-            ScSpecTypeDefRef::Vec(value) => ScSpecTypeDef::Vec(Box::new(value.into_owned())),
-            ScSpecTypeDefRef::Map(value) => ScSpecTypeDef::Map(Box::new(value.into_owned())),
-            ScSpecTypeDefRef::Tuple(value) => ScSpecTypeDef::Tuple(Box::new(value.into_owned())),
-            ScSpecTypeDefRef::BytesN(value) => ScSpecTypeDef::BytesN(value.into_owned()),
-            ScSpecTypeDefRef::Udt(value) => ScSpecTypeDef::Udt(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
-    #[must_use]
-    fn from(v: &ScSpecTypeDefRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecTypeDefRef<'_>> for ScSpecTypeDef {
-    #[must_use]
-    fn from(v: ScSpecTypeDefRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ScSpecTypeDefRef<'_> {
+impl ScSpecTypeDefConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecType {
         #[allow(clippy::match_same_arms)]
@@ -460,47 +408,8 @@ impl ScSpecTypeDefRef<'_> {
     }
 }
 
-impl WriteXdr for ScSpecTypeDefRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Val => ().write_xdr(w)?,
-                Self::Bool => ().write_xdr(w)?,
-                Self::Void => ().write_xdr(w)?,
-                Self::Error => ().write_xdr(w)?,
-                Self::U32 => ().write_xdr(w)?,
-                Self::I32 => ().write_xdr(w)?,
-                Self::U64 => ().write_xdr(w)?,
-                Self::I64 => ().write_xdr(w)?,
-                Self::Timepoint => ().write_xdr(w)?,
-                Self::Duration => ().write_xdr(w)?,
-                Self::U128 => ().write_xdr(w)?,
-                Self::I128 => ().write_xdr(w)?,
-                Self::U256 => ().write_xdr(w)?,
-                Self::I256 => ().write_xdr(w)?,
-                Self::Bytes => ().write_xdr(w)?,
-                Self::String => ().write_xdr(w)?,
-                Self::Symbol => ().write_xdr(w)?,
-                Self::Address => ().write_xdr(w)?,
-                Self::MuxedAddress => ().write_xdr(w)?,
-                Self::Option(v) => v.write_xdr(w)?,
-                Self::Result(v) => v.write_xdr(w)?,
-                Self::Vec(v) => v.write_xdr(w)?,
-                Self::Map(v) => v.write_xdr(w)?,
-                Self::Tuple(v) => v.write_xdr(w)?,
-                Self::BytesN(v) => v.write_xdr(w)?,
-                Self::Udt(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScSpecTypeDefRef<'_> {
+impl ScSpecTypeDefConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -539,49 +448,49 @@ impl ScSpecTypeDefRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecTypeDef`], mirroring `<ScSpecTypeDef as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_type_def(&mut self, v: &ScSpecTypeDefRef<'_>) {
+    pub const fn write_type_sc_spec_type_def(&mut self, v: &ScSpecTypeDefConst) {
         let d = v.discriminant();
         self.write_type_sc_spec_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ScSpecTypeDefRef::Val => {}
-            ScSpecTypeDefRef::Bool => {}
-            ScSpecTypeDefRef::Void => {}
-            ScSpecTypeDefRef::Error => {}
-            ScSpecTypeDefRef::U32 => {}
-            ScSpecTypeDefRef::I32 => {}
-            ScSpecTypeDefRef::U64 => {}
-            ScSpecTypeDefRef::I64 => {}
-            ScSpecTypeDefRef::Timepoint => {}
-            ScSpecTypeDefRef::Duration => {}
-            ScSpecTypeDefRef::U128 => {}
-            ScSpecTypeDefRef::I128 => {}
-            ScSpecTypeDefRef::U256 => {}
-            ScSpecTypeDefRef::I256 => {}
-            ScSpecTypeDefRef::Bytes => {}
-            ScSpecTypeDefRef::String => {}
-            ScSpecTypeDefRef::Symbol => {}
-            ScSpecTypeDefRef::Address => {}
-            ScSpecTypeDefRef::MuxedAddress => {}
-            ScSpecTypeDefRef::Option(value) => {
+            ScSpecTypeDefConst::Val => {}
+            ScSpecTypeDefConst::Bool => {}
+            ScSpecTypeDefConst::Void => {}
+            ScSpecTypeDefConst::Error => {}
+            ScSpecTypeDefConst::U32 => {}
+            ScSpecTypeDefConst::I32 => {}
+            ScSpecTypeDefConst::U64 => {}
+            ScSpecTypeDefConst::I64 => {}
+            ScSpecTypeDefConst::Timepoint => {}
+            ScSpecTypeDefConst::Duration => {}
+            ScSpecTypeDefConst::U128 => {}
+            ScSpecTypeDefConst::I128 => {}
+            ScSpecTypeDefConst::U256 => {}
+            ScSpecTypeDefConst::I256 => {}
+            ScSpecTypeDefConst::Bytes => {}
+            ScSpecTypeDefConst::String => {}
+            ScSpecTypeDefConst::Symbol => {}
+            ScSpecTypeDefConst::Address => {}
+            ScSpecTypeDefConst::MuxedAddress => {}
+            ScSpecTypeDefConst::Option(value) => {
                 self.write_type_sc_spec_type_option(value);
             }
-            ScSpecTypeDefRef::Result(value) => {
+            ScSpecTypeDefConst::Result(value) => {
                 self.write_type_sc_spec_type_result(value);
             }
-            ScSpecTypeDefRef::Vec(value) => {
+            ScSpecTypeDefConst::Vec(value) => {
                 self.write_type_sc_spec_type_vec(value);
             }
-            ScSpecTypeDefRef::Map(value) => {
+            ScSpecTypeDefConst::Map(value) => {
                 self.write_type_sc_spec_type_map(value);
             }
-            ScSpecTypeDefRef::Tuple(value) => {
+            ScSpecTypeDefConst::Tuple(value) => {
                 self.write_type_sc_spec_type_tuple(value);
             }
-            ScSpecTypeDefRef::BytesN(value) => {
+            ScSpecTypeDefConst::BytesN(value) => {
                 self.write_type_sc_spec_type_bytes_n(value);
             }
-            ScSpecTypeDefRef::Udt(value) => {
+            ScSpecTypeDefConst::Udt(value) => {
                 self.write_type_sc_spec_type_udt(value);
             }
         }
@@ -590,7 +499,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecTypeDef`], mirroring `<VecM<ScSpecTypeDef, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_type_def<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScSpecTypeDefRef<'_>, MAX>,
+        v: &VecMConst<ScSpecTypeDefConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

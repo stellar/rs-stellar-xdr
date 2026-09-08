@@ -240,12 +240,12 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
     }
 }
 
-/// PathPaymentStrictReceiveResultRef is a borrowing equivalent of [`PathPaymentStrictReceiveResult`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PathPaymentStrictReceiveResultConst is a borrowing equivalent of [`PathPaymentStrictReceiveResult`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum PathPaymentStrictReceiveResultRef<'a> {
-    Success(PathPaymentStrictReceiveResultSuccessRef<'a>),
+pub enum PathPaymentStrictReceiveResultConst {
+    Success(PathPaymentStrictReceiveResultSuccessConst),
     Malformed,
     Underfunded,
     SrcNoTrust,
@@ -260,68 +260,7 @@ pub enum PathPaymentStrictReceiveResultRef<'a> {
     OverSendmax,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for PathPaymentStrictReceiveResultRef<'_> {
-    type Owned = PathPaymentStrictReceiveResult;
-    fn into_owned(self) -> PathPaymentStrictReceiveResult {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            PathPaymentStrictReceiveResultRef::Success(value) => {
-                PathPaymentStrictReceiveResult::Success(value.into_owned())
-            }
-            PathPaymentStrictReceiveResultRef::Malformed => {
-                PathPaymentStrictReceiveResult::Malformed
-            }
-            PathPaymentStrictReceiveResultRef::Underfunded => {
-                PathPaymentStrictReceiveResult::Underfunded
-            }
-            PathPaymentStrictReceiveResultRef::SrcNoTrust => {
-                PathPaymentStrictReceiveResult::SrcNoTrust
-            }
-            PathPaymentStrictReceiveResultRef::SrcNotAuthorized => {
-                PathPaymentStrictReceiveResult::SrcNotAuthorized
-            }
-            PathPaymentStrictReceiveResultRef::NoDestination => {
-                PathPaymentStrictReceiveResult::NoDestination
-            }
-            PathPaymentStrictReceiveResultRef::NoTrust => PathPaymentStrictReceiveResult::NoTrust,
-            PathPaymentStrictReceiveResultRef::NotAuthorized => {
-                PathPaymentStrictReceiveResult::NotAuthorized
-            }
-            PathPaymentStrictReceiveResultRef::LineFull => PathPaymentStrictReceiveResult::LineFull,
-            PathPaymentStrictReceiveResultRef::NoIssuer(value) => {
-                PathPaymentStrictReceiveResult::NoIssuer(value.into_owned())
-            }
-            PathPaymentStrictReceiveResultRef::TooFewOffers => {
-                PathPaymentStrictReceiveResult::TooFewOffers
-            }
-            PathPaymentStrictReceiveResultRef::OfferCrossSelf => {
-                PathPaymentStrictReceiveResult::OfferCrossSelf
-            }
-            PathPaymentStrictReceiveResultRef::OverSendmax => {
-                PathPaymentStrictReceiveResult::OverSendmax
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PathPaymentStrictReceiveResultRef<'_>> for PathPaymentStrictReceiveResult {
-    #[must_use]
-    fn from(v: &PathPaymentStrictReceiveResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PathPaymentStrictReceiveResultRef<'_>> for PathPaymentStrictReceiveResult {
-    #[must_use]
-    fn from(v: PathPaymentStrictReceiveResultRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl PathPaymentStrictReceiveResultRef<'_> {
+impl PathPaymentStrictReceiveResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         #[allow(clippy::match_same_arms)]
@@ -343,34 +282,8 @@ impl PathPaymentStrictReceiveResultRef<'_> {
     }
 }
 
-impl WriteXdr for PathPaymentStrictReceiveResultRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Success(v) => v.write_xdr(w)?,
-                Self::Malformed => ().write_xdr(w)?,
-                Self::Underfunded => ().write_xdr(w)?,
-                Self::SrcNoTrust => ().write_xdr(w)?,
-                Self::SrcNotAuthorized => ().write_xdr(w)?,
-                Self::NoDestination => ().write_xdr(w)?,
-                Self::NoTrust => ().write_xdr(w)?,
-                Self::NotAuthorized => ().write_xdr(w)?,
-                Self::LineFull => ().write_xdr(w)?,
-                Self::NoIssuer(v) => v.write_xdr(w)?,
-                Self::TooFewOffers => ().write_xdr(w)?,
-                Self::OfferCrossSelf => ().write_xdr(w)?,
-                Self::OverSendmax => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl PathPaymentStrictReceiveResultRef<'_> {
+impl PathPaymentStrictReceiveResultConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -411,29 +324,29 @@ impl ConstWriter<'_> {
     /// Serializes a [`PathPaymentStrictReceiveResult`], mirroring `<PathPaymentStrictReceiveResult as WriteXdr>::write_xdr`.
     pub const fn write_type_path_payment_strict_receive_result(
         &mut self,
-        v: &PathPaymentStrictReceiveResultRef<'_>,
+        v: &PathPaymentStrictReceiveResultConst,
     ) {
         let d = v.discriminant();
         self.write_type_path_payment_strict_receive_result_code(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PathPaymentStrictReceiveResultRef::Success(value) => {
+            PathPaymentStrictReceiveResultConst::Success(value) => {
                 self.write_type_path_payment_strict_receive_result_success(value);
             }
-            PathPaymentStrictReceiveResultRef::Malformed => {}
-            PathPaymentStrictReceiveResultRef::Underfunded => {}
-            PathPaymentStrictReceiveResultRef::SrcNoTrust => {}
-            PathPaymentStrictReceiveResultRef::SrcNotAuthorized => {}
-            PathPaymentStrictReceiveResultRef::NoDestination => {}
-            PathPaymentStrictReceiveResultRef::NoTrust => {}
-            PathPaymentStrictReceiveResultRef::NotAuthorized => {}
-            PathPaymentStrictReceiveResultRef::LineFull => {}
-            PathPaymentStrictReceiveResultRef::NoIssuer(value) => {
+            PathPaymentStrictReceiveResultConst::Malformed => {}
+            PathPaymentStrictReceiveResultConst::Underfunded => {}
+            PathPaymentStrictReceiveResultConst::SrcNoTrust => {}
+            PathPaymentStrictReceiveResultConst::SrcNotAuthorized => {}
+            PathPaymentStrictReceiveResultConst::NoDestination => {}
+            PathPaymentStrictReceiveResultConst::NoTrust => {}
+            PathPaymentStrictReceiveResultConst::NotAuthorized => {}
+            PathPaymentStrictReceiveResultConst::LineFull => {}
+            PathPaymentStrictReceiveResultConst::NoIssuer(value) => {
                 self.write_type_asset(value);
             }
-            PathPaymentStrictReceiveResultRef::TooFewOffers => {}
-            PathPaymentStrictReceiveResultRef::OfferCrossSelf => {}
-            PathPaymentStrictReceiveResultRef::OverSendmax => {}
+            PathPaymentStrictReceiveResultConst::TooFewOffers => {}
+            PathPaymentStrictReceiveResultConst::OfferCrossSelf => {}
+            PathPaymentStrictReceiveResultConst::OverSendmax => {}
         }
     }
 }

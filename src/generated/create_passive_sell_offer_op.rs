@@ -62,14 +62,6 @@ impl WriteXdr for CreatePassiveSellOfferOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for CreatePassiveSellOfferOp {
-    type Owned = CreatePassiveSellOfferOp;
-    fn into_owned(self) -> CreatePassiveSellOfferOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl CreatePassiveSellOfferOp {
     /// The exact XDR-encoded length of this value, in bytes.

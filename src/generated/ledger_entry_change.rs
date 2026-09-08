@@ -163,52 +163,19 @@ impl WriteXdr for LedgerEntryChange {
     }
 }
 
-/// LedgerEntryChangeRef is a borrowing equivalent of [`LedgerEntryChange`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerEntryChangeConst is a borrowing equivalent of [`LedgerEntryChange`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum LedgerEntryChangeRef<'a> {
-    Created(LedgerEntryRef<'a>),
-    Updated(LedgerEntryRef<'a>),
-    Removed(LedgerKeyRef<'a>),
-    State(LedgerEntryRef<'a>),
-    Restored(LedgerEntryRef<'a>),
+pub enum LedgerEntryChangeConst {
+    Created(LedgerEntryConst),
+    Updated(LedgerEntryConst),
+    Removed(LedgerKeyConst),
+    State(LedgerEntryConst),
+    Restored(LedgerEntryConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerEntryChangeRef<'_> {
-    type Owned = LedgerEntryChange;
-    fn into_owned(self) -> LedgerEntryChange {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            LedgerEntryChangeRef::Created(value) => LedgerEntryChange::Created(value.into_owned()),
-            LedgerEntryChangeRef::Updated(value) => LedgerEntryChange::Updated(value.into_owned()),
-            LedgerEntryChangeRef::Removed(value) => LedgerEntryChange::Removed(value.into_owned()),
-            LedgerEntryChangeRef::State(value) => LedgerEntryChange::State(value.into_owned()),
-            LedgerEntryChangeRef::Restored(value) => {
-                LedgerEntryChange::Restored(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerEntryChangeRef<'_>> for LedgerEntryChange {
-    #[must_use]
-    fn from(v: &LedgerEntryChangeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerEntryChangeRef<'_>> for LedgerEntryChange {
-    #[must_use]
-    fn from(v: LedgerEntryChangeRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl LedgerEntryChangeRef<'_> {
+impl LedgerEntryChangeConst {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryChangeType {
         #[allow(clippy::match_same_arms)]
@@ -222,26 +189,8 @@ impl LedgerEntryChangeRef<'_> {
     }
 }
 
-impl WriteXdr for LedgerEntryChangeRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Created(v) => v.write_xdr(w)?,
-                Self::Updated(v) => v.write_xdr(w)?,
-                Self::Removed(v) => v.write_xdr(w)?,
-                Self::State(v) => v.write_xdr(w)?,
-                Self::Restored(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerEntryChangeRef<'_> {
+impl LedgerEntryChangeConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -280,24 +229,24 @@ impl LedgerEntryChangeRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerEntryChange`], mirroring `<LedgerEntryChange as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_entry_change(&mut self, v: &LedgerEntryChangeRef<'_>) {
+    pub const fn write_type_ledger_entry_change(&mut self, v: &LedgerEntryChangeConst) {
         let d = v.discriminant();
         self.write_type_ledger_entry_change_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            LedgerEntryChangeRef::Created(value) => {
+            LedgerEntryChangeConst::Created(value) => {
                 self.write_type_ledger_entry(value);
             }
-            LedgerEntryChangeRef::Updated(value) => {
+            LedgerEntryChangeConst::Updated(value) => {
                 self.write_type_ledger_entry(value);
             }
-            LedgerEntryChangeRef::Removed(value) => {
+            LedgerEntryChangeConst::Removed(value) => {
                 self.write_type_ledger_key(value);
             }
-            LedgerEntryChangeRef::State(value) => {
+            LedgerEntryChangeConst::State(value) => {
                 self.write_type_ledger_entry(value);
             }
-            LedgerEntryChangeRef::Restored(value) => {
+            LedgerEntryChangeConst::Restored(value) => {
                 self.write_type_ledger_entry(value);
             }
         }
@@ -306,7 +255,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`LedgerEntryChange`], mirroring `<VecM<LedgerEntryChange, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_ledger_entry_change<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, LedgerEntryChangeRef<'_>, MAX>,
+        v: &VecMConst<LedgerEntryChangeConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

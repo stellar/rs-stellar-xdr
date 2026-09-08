@@ -50,58 +50,16 @@ impl WriteXdr for SorobanAddressCredentialsWithDelegates {
     }
 }
 
-/// SorobanAddressCredentialsWithDelegatesRef is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SorobanAddressCredentialsWithDelegatesConst is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SorobanAddressCredentialsWithDelegatesRef<'a> {
-    pub address_credentials: SorobanAddressCredentialsRef<'a>,
-    pub delegates: VecMRef<'a, SorobanDelegateSignatureRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SorobanAddressCredentialsWithDelegatesRef<'_> {
-    type Owned = SorobanAddressCredentialsWithDelegates;
-    fn into_owned(self) -> SorobanAddressCredentialsWithDelegates {
-        SorobanAddressCredentialsWithDelegates {
-            address_credentials: self.address_credentials.into_owned(),
-            delegates: self.delegates.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SorobanAddressCredentialsWithDelegatesRef<'_>>
-    for SorobanAddressCredentialsWithDelegates
-{
-    #[must_use]
-    fn from(v: &SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SorobanAddressCredentialsWithDelegatesRef<'_>>
-    for SorobanAddressCredentialsWithDelegates
-{
-    #[must_use]
-    fn from(v: SorobanAddressCredentialsWithDelegatesRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SorobanAddressCredentialsWithDelegatesRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.address_credentials.write_xdr(w)?;
-            self.delegates.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct SorobanAddressCredentialsWithDelegatesConst {
+    pub address_credentials: SorobanAddressCredentialsConst,
+    pub delegates: VecMConst<SorobanDelegateSignatureConst>,
 }
 
 #[cfg(feature = "const")]
-impl SorobanAddressCredentialsWithDelegatesRef<'_> {
+impl SorobanAddressCredentialsWithDelegatesConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -142,7 +100,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SorobanAddressCredentialsWithDelegates`], mirroring `<SorobanAddressCredentialsWithDelegates as WriteXdr>::write_xdr`.
     pub const fn write_type_soroban_address_credentials_with_delegates(
         &mut self,
-        v: &SorobanAddressCredentialsWithDelegatesRef<'_>,
+        v: &SorobanAddressCredentialsWithDelegatesConst,
     ) {
         self.write_type_soroban_address_credentials(&v.address_credentials);
         self.write_type_vec_soroban_delegate_signature(&v.delegates);

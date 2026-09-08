@@ -135,13 +135,13 @@ impl WriteXdr for LedgerHeader {
     }
 }
 
-/// LedgerHeaderRef is a borrowing equivalent of [`LedgerHeader`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// LedgerHeaderConst is a borrowing equivalent of [`LedgerHeader`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerHeaderRef<'a> {
+pub struct LedgerHeaderConst {
     pub ledger_version: u32,
     pub previous_ledger_hash: Hash,
-    pub scp_value: StellarValueRef<'a>,
+    pub scp_value: StellarValueConst,
     pub tx_set_result_hash: Hash,
     pub bucket_list_hash: Hash,
     pub ledger_seq: u32,
@@ -156,72 +156,8 @@ pub struct LedgerHeaderRef<'a> {
     pub ext: LedgerHeaderExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for LedgerHeaderRef<'_> {
-    type Owned = LedgerHeader;
-    fn into_owned(self) -> LedgerHeader {
-        LedgerHeader {
-            ledger_version: self.ledger_version.into_owned(),
-            previous_ledger_hash: self.previous_ledger_hash.into_owned(),
-            scp_value: self.scp_value.into_owned(),
-            tx_set_result_hash: self.tx_set_result_hash.into_owned(),
-            bucket_list_hash: self.bucket_list_hash.into_owned(),
-            ledger_seq: self.ledger_seq.into_owned(),
-            total_coins: self.total_coins.into_owned(),
-            fee_pool: self.fee_pool.into_owned(),
-            inflation_seq: self.inflation_seq.into_owned(),
-            id_pool: self.id_pool.into_owned(),
-            base_fee: self.base_fee.into_owned(),
-            base_reserve: self.base_reserve.into_owned(),
-            max_tx_set_size: self.max_tx_set_size.into_owned(),
-            skip_list: self.skip_list.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&LedgerHeaderRef<'_>> for LedgerHeader {
-    #[must_use]
-    fn from(v: &LedgerHeaderRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<LedgerHeaderRef<'_>> for LedgerHeader {
-    #[must_use]
-    fn from(v: LedgerHeaderRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for LedgerHeaderRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_version.write_xdr(w)?;
-            self.previous_ledger_hash.write_xdr(w)?;
-            self.scp_value.write_xdr(w)?;
-            self.tx_set_result_hash.write_xdr(w)?;
-            self.bucket_list_hash.write_xdr(w)?;
-            self.ledger_seq.write_xdr(w)?;
-            self.total_coins.write_xdr(w)?;
-            self.fee_pool.write_xdr(w)?;
-            self.inflation_seq.write_xdr(w)?;
-            self.id_pool.write_xdr(w)?;
-            self.base_fee.write_xdr(w)?;
-            self.base_reserve.write_xdr(w)?;
-            self.max_tx_set_size.write_xdr(w)?;
-            self.skip_list.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl LedgerHeaderRef<'_> {
+impl LedgerHeaderConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -260,7 +196,7 @@ impl LedgerHeaderRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`LedgerHeader`], mirroring `<LedgerHeader as WriteXdr>::write_xdr`.
-    pub const fn write_type_ledger_header(&mut self, v: &LedgerHeaderRef<'_>) {
+    pub const fn write_type_ledger_header(&mut self, v: &LedgerHeaderConst) {
         self.write_u32(v.ledger_version);
         self.write_type_hash(&v.previous_ledger_hash);
         self.write_type_stellar_value(&v.scp_value);

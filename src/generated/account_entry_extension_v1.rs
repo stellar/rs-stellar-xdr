@@ -58,54 +58,16 @@ impl WriteXdr for AccountEntryExtensionV1 {
     }
 }
 
-/// AccountEntryExtensionV1Ref is a borrowing equivalent of [`AccountEntryExtensionV1`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AccountEntryExtensionV1Const is a borrowing equivalent of [`AccountEntryExtensionV1`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AccountEntryExtensionV1Ref<'a> {
+pub struct AccountEntryExtensionV1Const {
     pub liabilities: Liabilities,
-    pub ext: AccountEntryExtensionV1ExtRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for AccountEntryExtensionV1Ref<'_> {
-    type Owned = AccountEntryExtensionV1;
-    fn into_owned(self) -> AccountEntryExtensionV1 {
-        AccountEntryExtensionV1 {
-            liabilities: self.liabilities.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
-    #[must_use]
-    fn from(v: &AccountEntryExtensionV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AccountEntryExtensionV1Ref<'_>> for AccountEntryExtensionV1 {
-    #[must_use]
-    fn from(v: AccountEntryExtensionV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for AccountEntryExtensionV1Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.liabilities.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub ext: AccountEntryExtensionV1ExtConst,
 }
 
 #[cfg(feature = "const")]
-impl AccountEntryExtensionV1Ref<'_> {
+impl AccountEntryExtensionV1Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -146,7 +108,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`AccountEntryExtensionV1`], mirroring `<AccountEntryExtensionV1 as WriteXdr>::write_xdr`.
     pub const fn write_type_account_entry_extension_v1(
         &mut self,
-        v: &AccountEntryExtensionV1Ref<'_>,
+        v: &AccountEntryExtensionV1Const,
     ) {
         self.write_type_liabilities(&v.liabilities);
         self.write_type_account_entry_extension_v1_ext(&v.ext);

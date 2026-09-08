@@ -133,42 +133,15 @@ impl WriteXdr for Claimant {
     }
 }
 
-/// ClaimantRef is a borrowing equivalent of [`Claimant`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ClaimantConst is a borrowing equivalent of [`Claimant`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ClaimantRef<'a> {
-    ClaimantTypeV0(ClaimantV0Ref<'a>),
+pub enum ClaimantConst {
+    ClaimantTypeV0(ClaimantV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ClaimantRef<'_> {
-    type Owned = Claimant;
-    fn into_owned(self) -> Claimant {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ClaimantRef::ClaimantTypeV0(value) => Claimant::ClaimantTypeV0(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ClaimantRef<'_>> for Claimant {
-    #[must_use]
-    fn from(v: &ClaimantRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ClaimantRef<'_>> for Claimant {
-    #[must_use]
-    fn from(v: ClaimantRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ClaimantRef<'_> {
+impl ClaimantConst {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimantType {
         #[allow(clippy::match_same_arms)]
@@ -178,22 +151,8 @@ impl ClaimantRef<'_> {
     }
 }
 
-impl WriteXdr for ClaimantRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ClaimantTypeV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ClaimantRef<'_> {
+impl ClaimantConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -232,12 +191,12 @@ impl ClaimantRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`Claimant`], mirroring `<Claimant as WriteXdr>::write_xdr`.
-    pub const fn write_type_claimant(&mut self, v: &ClaimantRef<'_>) {
+    pub const fn write_type_claimant(&mut self, v: &ClaimantConst) {
         let d = v.discriminant();
         self.write_type_claimant_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ClaimantRef::ClaimantTypeV0(value) => {
+            ClaimantConst::ClaimantTypeV0(value) => {
                 self.write_type_claimant_v0(value);
             }
         }
@@ -246,7 +205,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`Claimant`], mirroring `<VecM<Claimant, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_claimant<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ClaimantRef<'_>, MAX>,
+        v: &VecMConst<ClaimantConst, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

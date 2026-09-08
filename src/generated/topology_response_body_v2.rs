@@ -54,57 +54,17 @@ impl WriteXdr for TopologyResponseBodyV2 {
     }
 }
 
-/// TopologyResponseBodyV2Ref is a borrowing equivalent of [`TopologyResponseBodyV2`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TopologyResponseBodyV2Const is a borrowing equivalent of [`TopologyResponseBodyV2`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TopologyResponseBodyV2Ref<'a> {
-    pub inbound_peers: TimeSlicedPeerDataListRef<'a>,
-    pub outbound_peers: TimeSlicedPeerDataListRef<'a>,
+pub struct TopologyResponseBodyV2Const {
+    pub inbound_peers: TimeSlicedPeerDataListConst,
+    pub outbound_peers: TimeSlicedPeerDataListConst,
     pub node_data: TimeSlicedNodeData,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TopologyResponseBodyV2Ref<'_> {
-    type Owned = TopologyResponseBodyV2;
-    fn into_owned(self) -> TopologyResponseBodyV2 {
-        TopologyResponseBodyV2 {
-            inbound_peers: self.inbound_peers.into_owned(),
-            outbound_peers: self.outbound_peers.into_owned(),
-            node_data: self.node_data.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
-    #[must_use]
-    fn from(v: &TopologyResponseBodyV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TopologyResponseBodyV2Ref<'_>> for TopologyResponseBodyV2 {
-    #[must_use]
-    fn from(v: TopologyResponseBodyV2Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TopologyResponseBodyV2Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.inbound_peers.write_xdr(w)?;
-            self.outbound_peers.write_xdr(w)?;
-            self.node_data.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TopologyResponseBodyV2Ref<'_> {
+impl TopologyResponseBodyV2Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,10 +103,7 @@ impl TopologyResponseBodyV2Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TopologyResponseBodyV2`], mirroring `<TopologyResponseBodyV2 as WriteXdr>::write_xdr`.
-    pub const fn write_type_topology_response_body_v2(
-        &mut self,
-        v: &TopologyResponseBodyV2Ref<'_>,
-    ) {
+    pub const fn write_type_topology_response_body_v2(&mut self, v: &TopologyResponseBodyV2Const) {
         self.write_type_time_sliced_peer_data_list(&v.inbound_peers);
         self.write_type_time_sliced_peer_data_list(&v.outbound_peers);
         self.write_type_time_sliced_node_data(&v.node_data);

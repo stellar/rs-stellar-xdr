@@ -125,14 +125,6 @@ impl WriteXdr for TxSetComponentType {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TxSetComponentType {
-    type Owned = TxSetComponentType;
-    fn into_owned(self) -> TxSetComponentType {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl TxSetComponentType {
     /// The exact XDR-encoded length of this value, in bytes.

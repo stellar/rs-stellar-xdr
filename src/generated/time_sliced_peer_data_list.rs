@@ -108,44 +108,13 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     }
 }
 
-/// TimeSlicedPeerDataListRef is a borrowing equivalent of [`TimeSlicedPeerDataList`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TimeSlicedPeerDataListConst is a borrowing equivalent of [`TimeSlicedPeerDataList`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TimeSlicedPeerDataListRef<'a>(pub VecMRef<'a, TimeSlicedPeerDataRef<'a>, 25>);
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for TimeSlicedPeerDataListRef<'_> {
-    type Owned = TimeSlicedPeerDataList;
-    fn into_owned(self) -> TimeSlicedPeerDataList {
-        TimeSlicedPeerDataList(self.0.into_owned())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TimeSlicedPeerDataListRef<'_>> for TimeSlicedPeerDataList {
-    #[must_use]
-    fn from(v: &TimeSlicedPeerDataListRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TimeSlicedPeerDataListRef<'_>> for TimeSlicedPeerDataList {
-    #[must_use]
-    fn from(v: TimeSlicedPeerDataListRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TimeSlicedPeerDataListRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
+pub struct TimeSlicedPeerDataListConst(pub VecMConst<TimeSlicedPeerDataConst, 25>);
 
 #[cfg(feature = "const")]
-impl TimeSlicedPeerDataListRef<'_> {
+impl TimeSlicedPeerDataListConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -184,10 +153,7 @@ impl TimeSlicedPeerDataListRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`TimeSlicedPeerDataList`], mirroring `<TimeSlicedPeerDataList as WriteXdr>::write_xdr`.
-    pub const fn write_type_time_sliced_peer_data_list(
-        &mut self,
-        v: &TimeSlicedPeerDataListRef<'_>,
-    ) {
+    pub const fn write_type_time_sliced_peer_data_list(&mut self, v: &TimeSlicedPeerDataListConst) {
         self.write_type_vec_time_sliced_peer_data(&v.0);
     }
 }

@@ -58,57 +58,17 @@ impl WriteXdr for AuthCert {
     }
 }
 
-/// AuthCertRef is a borrowing equivalent of [`AuthCert`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AuthCertConst is a borrowing equivalent of [`AuthCert`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AuthCertRef<'a> {
+pub struct AuthCertConst {
     pub pubkey: Curve25519Public,
     pub expiration: u64,
-    pub sig: SignatureRef<'a>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for AuthCertRef<'_> {
-    type Owned = AuthCert;
-    fn into_owned(self) -> AuthCert {
-        AuthCert {
-            pubkey: self.pubkey.into_owned(),
-            expiration: self.expiration.into_owned(),
-            sig: self.sig.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AuthCertRef<'_>> for AuthCert {
-    #[must_use]
-    fn from(v: &AuthCertRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AuthCertRef<'_>> for AuthCert {
-    #[must_use]
-    fn from(v: AuthCertRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for AuthCertRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.pubkey.write_xdr(w)?;
-            self.expiration.write_xdr(w)?;
-            self.sig.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub sig: SignatureConst,
 }
 
 #[cfg(feature = "const")]
-impl AuthCertRef<'_> {
+impl AuthCertConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -147,7 +107,7 @@ impl AuthCertRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AuthCert`], mirroring `<AuthCert as WriteXdr>::write_xdr`.
-    pub const fn write_type_auth_cert(&mut self, v: &AuthCertRef<'_>) {
+    pub const fn write_type_auth_cert(&mut self, v: &AuthCertConst) {
         self.write_type_curve25519_public(&v.pubkey);
         self.write_u64(v.expiration);
         self.write_type_signature(&v.sig);

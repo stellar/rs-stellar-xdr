@@ -81,54 +81,16 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
     }
 }
 
-/// SignerKeyEd25519SignedPayloadRef is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// SignerKeyEd25519SignedPayloadConst is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SignerKeyEd25519SignedPayloadRef<'a> {
+pub struct SignerKeyEd25519SignedPayloadConst {
     pub ed25519: Uint256,
-    pub payload: BytesMRef<'a, 64>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for SignerKeyEd25519SignedPayloadRef<'_> {
-    type Owned = SignerKeyEd25519SignedPayload;
-    fn into_owned(self) -> SignerKeyEd25519SignedPayload {
-        SignerKeyEd25519SignedPayload {
-            ed25519: self.ed25519.into_owned(),
-            payload: self.payload.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
-    #[must_use]
-    fn from(v: &SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SignerKeyEd25519SignedPayloadRef<'_>> for SignerKeyEd25519SignedPayload {
-    #[must_use]
-    fn from(v: SignerKeyEd25519SignedPayloadRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for SignerKeyEd25519SignedPayloadRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ed25519.write_xdr(w)?;
-            self.payload.write_xdr(w)?;
-            Ok(())
-        })
-    }
+    pub payload: BytesMConst<64>,
 }
 
 #[cfg(feature = "const")]
-impl SignerKeyEd25519SignedPayloadRef<'_> {
+impl SignerKeyEd25519SignedPayloadConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -169,7 +131,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`SignerKeyEd25519SignedPayload`], mirroring `<SignerKeyEd25519SignedPayload as WriteXdr>::write_xdr`.
     pub const fn write_type_signer_key_ed25519_signed_payload(
         &mut self,
-        v: &SignerKeyEd25519SignedPayloadRef<'_>,
+        v: &SignerKeyEd25519SignedPayloadConst,
     ) {
         self.write_type_uint256(&v.ed25519);
         self.write_var_opaque(v.payload.as_slice());

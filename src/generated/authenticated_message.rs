@@ -134,42 +134,15 @@ impl WriteXdr for AuthenticatedMessage {
     }
 }
 
-/// AuthenticatedMessageRef is a borrowing equivalent of [`AuthenticatedMessage`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// AuthenticatedMessageConst is a borrowing equivalent of [`AuthenticatedMessage`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum AuthenticatedMessageRef<'a> {
-    V0(AuthenticatedMessageV0Ref<'a>),
+pub enum AuthenticatedMessageConst {
+    V0(AuthenticatedMessageV0Const),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for AuthenticatedMessageRef<'_> {
-    type Owned = AuthenticatedMessage;
-    fn into_owned(self) -> AuthenticatedMessage {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            AuthenticatedMessageRef::V0(value) => AuthenticatedMessage::V0(value.into_owned()),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
-    #[must_use]
-    fn from(v: &AuthenticatedMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<AuthenticatedMessageRef<'_>> for AuthenticatedMessage {
-    #[must_use]
-    fn from(v: AuthenticatedMessageRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl AuthenticatedMessageRef<'_> {
+impl AuthenticatedMessageConst {
     #[must_use]
     pub const fn discriminant(&self) -> u32 {
         #[allow(clippy::match_same_arms)]
@@ -179,22 +152,8 @@ impl AuthenticatedMessageRef<'_> {
     }
 }
 
-impl WriteXdr for AuthenticatedMessageRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl AuthenticatedMessageRef<'_> {
+impl AuthenticatedMessageConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -233,12 +192,12 @@ impl AuthenticatedMessageRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`AuthenticatedMessage`], mirroring `<AuthenticatedMessage as WriteXdr>::write_xdr`.
-    pub const fn write_type_authenticated_message(&mut self, v: &AuthenticatedMessageRef<'_>) {
+    pub const fn write_type_authenticated_message(&mut self, v: &AuthenticatedMessageConst) {
         let d = v.discriminant();
         self.write_u32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            AuthenticatedMessageRef::V0(value) => {
+            AuthenticatedMessageConst::V0(value) => {
                 self.write_type_authenticated_message_v0(value);
             }
         }

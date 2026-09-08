@@ -51,54 +51,16 @@ impl WriteXdr for PersistedScpStateV1 {
     }
 }
 
-/// PersistedScpStateV1Ref is a borrowing equivalent of [`PersistedScpStateV1`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// PersistedScpStateV1Const is a borrowing equivalent of [`PersistedScpStateV1`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PersistedScpStateV1Ref<'a> {
-    pub scp_envelopes: VecMRef<'a, ScpEnvelopeRef<'a>>,
-    pub quorum_sets: VecMRef<'a, ScpQuorumSetRef<'a>>,
-}
-
-#[cfg(feature = "alloc")]
-impl IntoOwned for PersistedScpStateV1Ref<'_> {
-    type Owned = PersistedScpStateV1;
-    fn into_owned(self) -> PersistedScpStateV1 {
-        PersistedScpStateV1 {
-            scp_envelopes: self.scp_envelopes.into_owned(),
-            quorum_sets: self.quorum_sets.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
-    #[must_use]
-    fn from(v: &PersistedScpStateV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<PersistedScpStateV1Ref<'_>> for PersistedScpStateV1 {
-    #[must_use]
-    fn from(v: PersistedScpStateV1Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for PersistedScpStateV1Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.scp_envelopes.write_xdr(w)?;
-            self.quorum_sets.write_xdr(w)?;
-            Ok(())
-        })
-    }
+pub struct PersistedScpStateV1Const {
+    pub scp_envelopes: VecMConst<ScpEnvelopeConst>,
+    pub quorum_sets: VecMConst<ScpQuorumSetConst>,
 }
 
 #[cfg(feature = "const")]
-impl PersistedScpStateV1Ref<'_> {
+impl PersistedScpStateV1Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -137,7 +99,7 @@ impl PersistedScpStateV1Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`PersistedScpStateV1`], mirroring `<PersistedScpStateV1 as WriteXdr>::write_xdr`.
-    pub const fn write_type_persisted_scp_state_v1(&mut self, v: &PersistedScpStateV1Ref<'_>) {
+    pub const fn write_type_persisted_scp_state_v1(&mut self, v: &PersistedScpStateV1Const) {
         self.write_type_vec_scp_envelope(&v.scp_envelopes);
         self.write_type_vec_scp_quorum_set(&v.quorum_sets);
     }

@@ -50,14 +50,6 @@ impl WriteXdr for ExtendFootprintTtlOp {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ExtendFootprintTtlOp {
-    type Owned = ExtendFootprintTtlOp;
-    fn into_owned(self) -> ExtendFootprintTtlOp {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl ExtendFootprintTtlOp {
     /// The exact XDR-encoded length of this value, in bytes.

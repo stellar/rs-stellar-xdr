@@ -149,48 +149,17 @@ impl WriteXdr for ContractExecutable {
     }
 }
 
-/// ContractExecutableRef is a borrowing equivalent of [`ContractExecutable`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ContractExecutableConst is a borrowing equivalent of [`ContractExecutable`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum ContractExecutableRef<'a> {
+pub enum ContractExecutableConst {
     Wasm(Hash),
     StellarAsset,
-    ExternalRef(ContractExecutableExternalRefRef<'a>),
+    ExternalRef(ContractExecutableExternalRefConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ContractExecutableRef<'_> {
-    type Owned = ContractExecutable;
-    fn into_owned(self) -> ContractExecutable {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            ContractExecutableRef::Wasm(value) => ContractExecutable::Wasm(value.into_owned()),
-            ContractExecutableRef::StellarAsset => ContractExecutable::StellarAsset,
-            ContractExecutableRef::ExternalRef(value) => {
-                ContractExecutable::ExternalRef(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ContractExecutableRef<'_>> for ContractExecutable {
-    #[must_use]
-    fn from(v: &ContractExecutableRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ContractExecutableRef<'_>> for ContractExecutable {
-    #[must_use]
-    fn from(v: ContractExecutableRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl ContractExecutableRef<'_> {
+impl ContractExecutableConst {
     #[must_use]
     pub const fn discriminant(&self) -> ContractExecutableType {
         #[allow(clippy::match_same_arms)]
@@ -202,24 +171,8 @@ impl ContractExecutableRef<'_> {
     }
 }
 
-impl WriteXdr for ContractExecutableRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Wasm(v) => v.write_xdr(w)?,
-                Self::StellarAsset => ().write_xdr(w)?,
-                Self::ExternalRef(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ContractExecutableRef<'_> {
+impl ContractExecutableConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -258,16 +211,16 @@ impl ContractExecutableRef<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ContractExecutable`], mirroring `<ContractExecutable as WriteXdr>::write_xdr`.
-    pub const fn write_type_contract_executable(&mut self, v: &ContractExecutableRef<'_>) {
+    pub const fn write_type_contract_executable(&mut self, v: &ContractExecutableConst) {
         let d = v.discriminant();
         self.write_type_contract_executable_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            ContractExecutableRef::Wasm(value) => {
+            ContractExecutableConst::Wasm(value) => {
                 self.write_type_hash(value);
             }
-            ContractExecutableRef::StellarAsset => {}
-            ContractExecutableRef::ExternalRef(value) => {
+            ContractExecutableConst::StellarAsset => {}
+            ContractExecutableConst::ExternalRef(value) => {
                 self.write_type_contract_executable_external_ref(value);
             }
         }

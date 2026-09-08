@@ -54,57 +54,17 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
     }
 }
 
-/// ScSpecUdtEnumCaseV0Ref is a borrowing equivalent of [`ScSpecUdtEnumCaseV0`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// ScSpecUdtEnumCaseV0Const is a borrowing equivalent of [`ScSpecUdtEnumCaseV0`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScSpecUdtEnumCaseV0Ref<'a> {
-    pub doc: StringMRef<'a, SC_SPEC_DOC_LIMIT>,
-    pub name: StringMRef<'a, 60>,
+pub struct ScSpecUdtEnumCaseV0Const {
+    pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,
+    pub name: StringMConst<60>,
     pub value: u32,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for ScSpecUdtEnumCaseV0Ref<'_> {
-    type Owned = ScSpecUdtEnumCaseV0;
-    fn into_owned(self) -> ScSpecUdtEnumCaseV0 {
-        ScSpecUdtEnumCaseV0 {
-            doc: self.doc.into_owned(),
-            name: self.name.into_owned(),
-            value: self.value.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&ScSpecUdtEnumCaseV0Ref<'_>> for ScSpecUdtEnumCaseV0 {
-    #[must_use]
-    fn from(v: &ScSpecUdtEnumCaseV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScSpecUdtEnumCaseV0Ref<'_>> for ScSpecUdtEnumCaseV0 {
-    #[must_use]
-    fn from(v: ScSpecUdtEnumCaseV0Ref<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for ScSpecUdtEnumCaseV0Ref<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.value.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl ScSpecUdtEnumCaseV0Ref<'_> {
+impl ScSpecUdtEnumCaseV0Const {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -143,7 +103,7 @@ impl ScSpecUdtEnumCaseV0Ref<'_> {
 #[cfg(feature = "const")]
 impl ConstWriter<'_> {
     /// Serializes a [`ScSpecUdtEnumCaseV0`], mirroring `<ScSpecUdtEnumCaseV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_udt_enum_case_v0(&mut self, v: &ScSpecUdtEnumCaseV0Ref<'_>) {
+    pub const fn write_type_sc_spec_udt_enum_case_v0(&mut self, v: &ScSpecUdtEnumCaseV0Const) {
         self.write_var_opaque(v.doc.as_slice());
         self.write_var_opaque(v.name.as_slice());
         self.write_u32(v.value);
@@ -152,7 +112,7 @@ impl ConstWriter<'_> {
     /// Serializes a variable-length array of [`ScSpecUdtEnumCaseV0`], mirroring `<VecM<ScSpecUdtEnumCaseV0, MAX> as WriteXdr>::write_xdr`.
     pub const fn write_type_vec_sc_spec_udt_enum_case_v0<const MAX: u32>(
         &mut self,
-        v: &VecMRef<'_, ScSpecUdtEnumCaseV0Ref<'_>, MAX>,
+        v: &VecMConst<ScSpecUdtEnumCaseV0Const, MAX>,
     ) {
         let s = v.as_slice();
         let len = s.len();

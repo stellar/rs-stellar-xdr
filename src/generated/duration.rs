@@ -66,14 +66,6 @@ impl WriteXdr for Duration {
     }
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for Duration {
-    type Owned = Duration;
-    fn into_owned(self) -> Duration {
-        self
-    }
-}
-
 #[cfg(feature = "const")]
 impl Duration {
     /// The exact XDR-encoded length of this value, in bytes.

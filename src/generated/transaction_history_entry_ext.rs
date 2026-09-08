@@ -136,46 +136,16 @@ impl WriteXdr for TransactionHistoryEntryExt {
     }
 }
 
-/// TransactionHistoryEntryExtRef is a borrowing equivalent of [`TransactionHistoryEntryExt`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionHistoryEntryExtConst is a borrowing equivalent of [`TransactionHistoryEntryExt`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionHistoryEntryExtRef<'a> {
+pub enum TransactionHistoryEntryExtConst {
     V0,
-    V1(GeneralizedTransactionSetRef<'a>),
+    V1(GeneralizedTransactionSetConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionHistoryEntryExtRef<'_> {
-    type Owned = TransactionHistoryEntryExt;
-    fn into_owned(self) -> TransactionHistoryEntryExt {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionHistoryEntryExtRef::V0 => TransactionHistoryEntryExt::V0,
-            TransactionHistoryEntryExtRef::V1(value) => {
-                TransactionHistoryEntryExt::V1(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
-    #[must_use]
-    fn from(v: &TransactionHistoryEntryExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionHistoryEntryExtRef<'_>> for TransactionHistoryEntryExt {
-    #[must_use]
-    fn from(v: TransactionHistoryEntryExtRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionHistoryEntryExtRef<'_> {
+impl TransactionHistoryEntryExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -186,23 +156,8 @@ impl TransactionHistoryEntryExtRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionHistoryEntryExtRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0 => ().write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionHistoryEntryExtRef<'_> {
+impl TransactionHistoryEntryExtConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -243,14 +198,14 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionHistoryEntryExt`], mirroring `<TransactionHistoryEntryExt as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_history_entry_ext(
         &mut self,
-        v: &TransactionHistoryEntryExtRef<'_>,
+        v: &TransactionHistoryEntryExtConst,
     ) {
         let d = v.discriminant();
         self.write_i32(d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionHistoryEntryExtRef::V0 => {}
-            TransactionHistoryEntryExtRef::V1(value) => {
+            TransactionHistoryEntryExtConst::V0 => {}
+            TransactionHistoryEntryExtConst::V1(value) => {
                 self.write_type_generalized_transaction_set(value);
             }
         }

@@ -137,52 +137,16 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     }
 }
 
-/// TransactionSignaturePayloadTaggedTransactionRef is a borrowing equivalent of [`TransactionSignaturePayloadTaggedTransaction`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionSignaturePayloadTaggedTransactionConst is a borrowing equivalent of [`TransactionSignaturePayloadTaggedTransaction`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
-pub enum TransactionSignaturePayloadTaggedTransactionRef<'a> {
-    Tx(TransactionRef<'a>),
-    TxFeeBump(FeeBumpTransactionRef<'a>),
+pub enum TransactionSignaturePayloadTaggedTransactionConst {
+    Tx(TransactionConst),
+    TxFeeBump(FeeBumpTransactionConst),
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionSignaturePayloadTaggedTransactionRef<'_> {
-    type Owned = TransactionSignaturePayloadTaggedTransaction;
-    fn into_owned(self) -> TransactionSignaturePayloadTaggedTransaction {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            TransactionSignaturePayloadTaggedTransactionRef::Tx(value) => {
-                TransactionSignaturePayloadTaggedTransaction::Tx(value.into_owned())
-            }
-            TransactionSignaturePayloadTaggedTransactionRef::TxFeeBump(value) => {
-                TransactionSignaturePayloadTaggedTransaction::TxFeeBump(value.into_owned())
-            }
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionSignaturePayloadTaggedTransactionRef<'_>>
-    for TransactionSignaturePayloadTaggedTransaction
-{
-    #[must_use]
-    fn from(v: &TransactionSignaturePayloadTaggedTransactionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionSignaturePayloadTaggedTransactionRef<'_>>
-    for TransactionSignaturePayloadTaggedTransaction
-{
-    #[must_use]
-    fn from(v: TransactionSignaturePayloadTaggedTransactionRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
+impl TransactionSignaturePayloadTaggedTransactionConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -193,23 +157,8 @@ impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
     }
 }
 
-impl WriteXdr for TransactionSignaturePayloadTaggedTransactionRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Tx(v) => v.write_xdr(w)?,
-                Self::TxFeeBump(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionSignaturePayloadTaggedTransactionRef<'_> {
+impl TransactionSignaturePayloadTaggedTransactionConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -250,16 +199,16 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionSignaturePayloadTaggedTransaction`], mirroring `<TransactionSignaturePayloadTaggedTransaction as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_signature_payload_tagged_transaction(
         &mut self,
-        v: &TransactionSignaturePayloadTaggedTransactionRef<'_>,
+        v: &TransactionSignaturePayloadTaggedTransactionConst,
     ) {
         let d = v.discriminant();
         self.write_type_envelope_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            TransactionSignaturePayloadTaggedTransactionRef::Tx(value) => {
+            TransactionSignaturePayloadTaggedTransactionConst::Tx(value) => {
                 self.write_type_transaction(value);
             }
-            TransactionSignaturePayloadTaggedTransactionRef::TxFeeBump(value) => {
+            TransactionSignaturePayloadTaggedTransactionConst::TxFeeBump(value) => {
                 self.write_type_fee_bump_transaction(value);
             }
         }

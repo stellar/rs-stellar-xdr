@@ -61,57 +61,17 @@ impl WriteXdr for TransactionHistoryResultEntry {
     }
 }
 
-/// TransactionHistoryResultEntryRef is a borrowing equivalent of [`TransactionHistoryResultEntry`], usable in
-/// const contexts and convertible to the owned type via [`From`]/[`Into`].
+/// TransactionHistoryResultEntryConst is a borrowing equivalent of [`TransactionHistoryResultEntry`] over `'static`
+/// data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TransactionHistoryResultEntryRef<'a> {
+pub struct TransactionHistoryResultEntryConst {
     pub ledger_seq: u32,
-    pub tx_result_set: TransactionResultSetRef<'a>,
+    pub tx_result_set: TransactionResultSetConst,
     pub ext: TransactionHistoryResultEntryExt,
 }
 
-#[cfg(feature = "alloc")]
-impl IntoOwned for TransactionHistoryResultEntryRef<'_> {
-    type Owned = TransactionHistoryResultEntry;
-    fn into_owned(self) -> TransactionHistoryResultEntry {
-        TransactionHistoryResultEntry {
-            ledger_seq: self.ledger_seq.into_owned(),
-            tx_result_set: self.tx_result_set.into_owned(),
-            ext: self.ext.into_owned(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<&TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntry {
-    #[must_use]
-    fn from(v: &TransactionHistoryResultEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TransactionHistoryResultEntryRef<'_>> for TransactionHistoryResultEntry {
-    #[must_use]
-    fn from(v: TransactionHistoryResultEntryRef<'_>) -> Self {
-        v.into_owned()
-    }
-}
-
-impl WriteXdr for TransactionHistoryResultEntryRef<'_> {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        w.with_limited_depth(|w| {
-            self.ledger_seq.write_xdr(w)?;
-            self.tx_result_set.write_xdr(w)?;
-            self.ext.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 #[cfg(feature = "const")]
-impl TransactionHistoryResultEntryRef<'_> {
+impl TransactionHistoryResultEntryConst {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -152,7 +112,7 @@ impl ConstWriter<'_> {
     /// Serializes a [`TransactionHistoryResultEntry`], mirroring `<TransactionHistoryResultEntry as WriteXdr>::write_xdr`.
     pub const fn write_type_transaction_history_result_entry(
         &mut self,
-        v: &TransactionHistoryResultEntryRef<'_>,
+        v: &TransactionHistoryResultEntryConst,
     ) {
         self.write_u32(v.ledger_seq);
         self.write_type_transaction_result_set(&v.tx_result_set);

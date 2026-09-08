@@ -7,4 +7,4 @@ use super::*;
 /// const TX_DEMAND_VECTOR_MAX_SIZE = 1000;
 /// ```
 ///
-pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
+pub const TX_DEMAND_VECTOR_MAX_SIZE: u32 = 1000;

@@ -90,12 +90,11 @@ pub struct ConstDocName {
 
 /// The body of a `ConstWriter` method, by the shape of the type it serializes.
 pub enum ConstWriterBody {
-    /// A struct: each member in order.
+    /// A struct: each member in order. A typedef newtype is one of these with
+    /// a single member, its inner value.
     Struct(Vec<ConstEncode>),
     /// An enum: its discriminant value as an XDR int.
     Enum,
-    /// A typedef newtype: its inner value.
-    Newtype(ConstEncode),
     /// A union: its discriminant, then the payload of the selected arm.
     Union {
         /// The type matched on: the `Ref` form where the union owns heap data.

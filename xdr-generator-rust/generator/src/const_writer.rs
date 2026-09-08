@@ -422,7 +422,7 @@ impl Collector<'_> {
             Definition::Const(_) => return None,
             Definition::Typedef(t) if is_builtin_type(&t.type_) => return None,
             Definition::Typedef(t) => {
-                ConstWriterBody::Newtype(self.encode(&t.type_, "v.0", false, None))
+                ConstWriterBody::Struct(vec![self.encode(&t.type_, "v.0", false, None)])
             }
             Definition::Enum(_) => ConstWriterBody::Enum,
             Definition::Struct(s) => {

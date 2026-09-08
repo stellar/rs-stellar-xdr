@@ -293,10 +293,10 @@ impl Collector<'_> {
         // A wrapper over a builtin scalar is written by hand on `ConstWriter`,
         // beside the scalar serializer it calls, so it is named but not
         // generated.
-        if self.owner_module(inner).is_none() {
+        let Some(module) = self.owner_module(inner) else {
             assert_hand_written(&name);
             return (name, by_value);
-        }
+        };
 
         if !self.wrappers.contains_key(&name) {
             // Each wrapper is its own method, so its bindings start fresh.
@@ -313,7 +313,7 @@ impl Collector<'_> {
                         format!("&{param}")
                     },
                     cfg: self.wrapper_cfg(inner),
-                    module: self.owner_module(inner),
+                    module,
                     subject: ConstSubject::Option {
                         inner: self.doc_name(inner),
                         owned: type_ref(type_, parent, self.type_info),
@@ -337,10 +337,10 @@ impl Collector<'_> {
         );
 
         // As for options, a wrapper over a builtin scalar is hand-written.
-        if self.owner_module(element_type).is_none() {
+        let Some(module) = self.owner_module(element_type) else {
             assert_hand_written(&name);
             return name;
-        }
+        };
 
         if !self.wrappers.contains_key(&name) {
             // Each wrapper is its own method, so its bindings start fresh.
@@ -360,7 +360,7 @@ impl Collector<'_> {
                     generics: "<const MAX: u32>".to_string(),
                     param_type: format!("&VecMRef<'_, {elem_ty}, MAX>"),
                     cfg: self.wrapper_cfg(&element_type),
-                    module: self.owner_module(&element_type),
+                    module,
                     subject: ConstSubject::Vec {
                         inner: self.doc_name(&element_type),
                         elem: type_ref(&element_type, None, self.type_info),
@@ -454,7 +454,7 @@ impl Collector<'_> {
             generics: String::new(),
             param_type,
             cfg,
-            module: Some(mod_name(def.name())),
+            module: mod_name(def.name()),
             subject: ConstSubject::Type(name),
             body,
         })

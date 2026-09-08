@@ -48,12 +48,6 @@ pub struct ConstToXdrTemplate {
     pub write_fn: String,
 }
 
-#[derive(Template)]
-#[template(path = "const_writer.rs.jinja", escape = "none")]
-pub struct ConstWriterTemplate {
-    pub const_writer: ConstWriterOutput,
-}
-
 /// The `ConstWriter` methods that serialize each generated type.
 pub struct ConstWriterOutput {
     pub methods: Vec<ConstWriterMethodOutput>,
@@ -68,8 +62,9 @@ pub struct ConstWriterMethodOutput {
     pub param_type: String,
     pub cfg: Option<String>,
     /// The module the method is emitted into: the one holding the type it
-    /// serializes. `None` for a wrapper over a builtin, which has no type file.
-    pub module: Option<String>,
+    /// serializes. Every method has one, because a wrapper over a builtin has
+    /// no type file and so is hand-written on `ConstWriter` instead.
+    pub module: String,
     /// What the method serializes, for its doc comment.
     pub subject: ConstSubject,
     pub body: ConstWriterBody,

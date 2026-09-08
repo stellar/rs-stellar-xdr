@@ -15,7 +15,7 @@ use crate::naming::{
 use crate::options::RustOptions;
 use crate::output::{
     ConstOutput, ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput,
-    ConstWriterTemplate, CyclicBorrow, DefinitionOutput, DefinitionTemplate, EnumOutput,
+    CyclicBorrow, DefinitionOutput, DefinitionTemplate, EnumOutput,
     EnumStructMemberOutput,
     GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
@@ -103,7 +103,6 @@ impl RustGenerator {
         // const-only surface of its own.
         let mut const_methods_by_module: HashMap<String, Vec<ConstWriterMethodOutput>> =
             HashMap::new();
-        let mut const_methods_residual: Vec<ConstWriterMethodOutput> = Vec::new();
         for m in crate::const_writer::build(
             spec,
             &self.type_info,
@@ -112,12 +111,10 @@ impl RustGenerator {
         )
         .methods
         {
-            match m.module.clone() {
-                Some(module) => const_methods_by_module.entry(module).or_default().push(m),
-                // A wrapper over a builtin scalar has no type of its own, so no
-                // file to live beside.
-                None => const_methods_residual.push(m),
-            }
+            const_methods_by_module
+                .entry(m.module.clone())
+                .or_default()
+                .push(m);
         }
 
         // Write each definition (or group of definitions) to its own file.
@@ -134,22 +131,14 @@ impl RustGenerator {
             std::fs::write(&file_path, &rendered)?;
         }
 
-        // Anything with no type file of its own, plus any method whose module
-        // was not among the definition files, lands in one residual module.
-        const_methods_residual.extend(const_methods_by_module.into_values().flatten());
-        const_methods_residual.sort_by(|a, b| a.name.cmp(&b.name));
-        if !const_methods_residual.is_empty() {
-            let template = ConstWriterTemplate {
-                const_writer: ConstWriterOutput {
-                    methods: const_methods_residual,
-                },
-            };
-            let rendered = template.render()?;
-            std::fs::write(output_dir.join("const_writer.rs"), &rendered)?;
-            modules.push(ModuleEntry {
-                mod_name: "const_writer".to_string(),
-            });
-        }
+        // Every method names the module of the type it serializes, and every
+        // definition is grouped into a file under that same name, so the loop
+        // above has placed them all.
+        assert!(
+            const_methods_by_module.is_empty(),
+            "const writer methods name modules with no definition file: {:?}",
+            const_methods_by_module.keys().collect::<Vec<_>>()
+        );
 
         let type_variant_enum = self.generate_type_enum(spec);
         let type_enum_template = TypeEnumDefinitionTemplate { type_variant_enum };

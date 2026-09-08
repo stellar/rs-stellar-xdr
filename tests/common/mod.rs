@@ -1,17 +1,11 @@
-//! The transaction envelope fixture shared by the `Ref` tests and, on the
-//! const-serialization side, by the const writer tests.
+//! A significantly complex TransactionEnvelope structure that covers every
+//! shape the generator emits: nested structs, both union kinds with void,
+//! scalar, fixed-opaque and heap arms, a heap-free struct used directly where
+//! it has no `Ref`, a cyclic field where the `Ref` borrows and the owned form
+//! boxes, `Option` in both states, `VecM` of `Ref`s and of heap-free values, an
+//! empty `VecM`, `StringM`, `BytesM`, and u32/u64/ i64 scalars.
 //!
-//! [`xdr_ref`] and [`owned`] are the same value written twice, independently:
-//! one as a `const` `Ref`, one as a hand-built owned value. Neither is derived
-//! from the other, so a bug in the conversion between them cannot hide in a
-//! test that compares the two.
-//!
-//! Between them they cover every shape the generator emits: nested structs,
-//! both union kinds with void, scalar, fixed-opaque and heap arms, a heap-free
-//! struct used directly where it has no `Ref`, a cyclic field where the `Ref`
-//! borrows and the owned form boxes, `Option` in both states, `VecM` of `Ref`s
-//! and of heap-free values, an empty `VecM`, `StringM`, `BytesM`, and u32/u64/
-//! i64 scalars.
+//! The ref and owned values are identical.
 
 use stellar_xdr::{
     AccountId, AlphaNum4, Asset, AssetCode4, BytesMRef, ClaimPredicate, ClaimPredicateRef,
@@ -31,7 +25,7 @@ use stellar_xdr::{
 };
 
 #[allow(clippy::too_many_lines)]
-pub const fn xdr_ref() -> TransactionEnvelopeRef<'static> {
+pub const fn tx_env_ref() -> TransactionEnvelopeRef<'static> {
     TransactionEnvelopeRef::Tx(TransactionV1EnvelopeRef {
         tx: TransactionRef {
             source_account: MuxedAccount::MuxedEd25519(MuxedAccountMed25519 {
@@ -155,7 +149,7 @@ pub const fn xdr_ref() -> TransactionEnvelopeRef<'static> {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn owned() -> TransactionEnvelope {
+pub fn tx_env_owned() -> TransactionEnvelope {
     TransactionEnvelope::Tx(TransactionV1Envelope {
         tx: Transaction {
             source_account: MuxedAccount::MuxedEd25519(MuxedAccountMed25519 {

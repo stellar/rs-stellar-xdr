@@ -5,7 +5,7 @@ use stellar_xdr::{BytesMRef, ErrorLengthExceedsMax, StringMRef, VecMRef};
 #[cfg(feature = "alloc")]
 mod common;
 #[cfg(feature = "alloc")]
-use common::{owned, xdr_ref};
+use common::{tx_env_owned, tx_env_ref};
 #[cfg(feature = "alloc")]
 use stellar_xdr::{TransactionEnvelope, TransactionEnvelopeRef};
 
@@ -95,21 +95,21 @@ fn refs_default() {
 #[test]
 fn ref_converts_to_owned() {
     // A ref and owned value that are identically defined.
-    let r: TransactionEnvelopeRef = const { xdr_ref() };
-    let owned: TransactionEnvelope = owned();
+    let r: TransactionEnvelopeRef = const { tx_env_ref() };
+    let o: TransactionEnvelope = tx_env_owned();
 
-    assert_eq!(TransactionEnvelope::from(&r), owned);
+    assert_eq!(TransactionEnvelope::from(&r), o);
 }
 
 #[cfg(feature = "std")]
 #[test]
 fn ref_and_owned_encode_same() {
     // A ref and owned value that are identically defined.
-    let r: TransactionEnvelopeRef = const { xdr_ref() };
-    let owned: TransactionEnvelope = owned();
+    let r: TransactionEnvelopeRef = const { tx_env_ref() };
+    let o: TransactionEnvelope = tx_env_owned();
 
     // Ref and owned encode to the same XDR.
-    let ref_xdr = r.to_xdr(Limits::none()).unwrap();
-    let owned_xdr = owned.to_xdr(Limits::none()).unwrap();
-    assert_eq!(ref_xdr, owned_xdr);
+    let r_xdr = r.to_xdr(Limits::none()).unwrap();
+    let o_xdr = o.to_xdr(Limits::none()).unwrap();
+    assert_eq!(r_xdr, o_xdr);
 }

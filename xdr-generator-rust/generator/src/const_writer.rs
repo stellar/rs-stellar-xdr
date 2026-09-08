@@ -290,6 +290,14 @@ impl Collector<'_> {
             self.suffix(inner)
         );
 
+        // A wrapper over a builtin scalar is written by hand on `ConstWriter`,
+        // beside the scalar serializer it calls, so it is named but not
+        // generated.
+        if self.owner_module(inner).is_none() {
+            assert_hand_written(&name);
+            return (name, by_value);
+        }
+
         if !self.wrappers.contains_key(&name) {
             // Each wrapper is its own method, so its bindings start fresh.
             self.loop_depth = 0;
@@ -327,6 +335,12 @@ impl Collector<'_> {
             self.type_marker(element_type),
             self.suffix(element_type)
         );
+
+        // As for options, a wrapper over a builtin scalar is hand-written.
+        if self.owner_module(element_type).is_none() {
+            assert_hand_written(&name);
+            return name;
+        }
 
         if !self.wrappers.contains_key(&name) {
             // Each wrapper is its own method, so its bindings start fresh.
@@ -527,4 +541,33 @@ impl Collector<'_> {
             })
             .collect()
     }
+}
+
+/// Check that a wrapper over a builtin scalar is one `ConstWriter` defines by
+/// hand.
+///
+/// The hand-written set covers the scalars `ConstWriter` can serialize. A
+/// wrapper over `opaque`, `string` or a fixed array would also have no file to
+/// live in, and the XDR has never needed one; fail at generation time rather
+/// than emit a call to a method that does not exist.
+fn assert_hand_written(name: &str) {
+    const HAND_WRITTEN: &[&str] = &[
+        "write_option_i32",
+        "write_option_u32",
+        "write_option_i64",
+        "write_option_u64",
+        "write_option_bool",
+        "write_vec_i32",
+        "write_vec_u32",
+        "write_vec_i64",
+        "write_vec_u64",
+        "write_vec_bool",
+    ];
+    assert!(
+        HAND_WRITTEN.contains(&name),
+        "`{name}` wraps a builtin scalar, so it has no generated file to live \
+         in, but `ConstWriter` does not define it. Write it by hand in \
+         xdr-generator-rust/generator/header.rs beside the other \
+         `write_option_`/`write_vec_` methods."
+    );
 }

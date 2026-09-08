@@ -840,6 +840,148 @@ impl<'a> ConstWriter<'a> {
         self.write_bytes(data);
         self.write_bytes(padding(n));
     }
+
+    // The `Option` and `VecM` serializers below are the ones whose inner type
+    // is a builtin scalar. They are written by hand, beside the scalar
+    // serializers they call, because they have no generated type to sit with:
+    // the generator emits a wrapper into the file of the type it wraps, and a
+    // scalar has no file. Wrappers over `opaque`, `string` and defined types
+    // are still generated.
+
+    /// Serializes an optional `i32`, mirroring `<Option<i32> as
+    /// WriteXdr>::write_xdr`.
+    pub const fn write_option_i32(&mut self, v: &Option<i32>) {
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+                self.write_i32(*v);
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+    }
+
+    /// Serializes an optional `u32`, mirroring `<Option<u32> as
+    /// WriteXdr>::write_xdr`.
+    pub const fn write_option_u32(&mut self, v: &Option<u32>) {
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+                self.write_u32(*v);
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+    }
+
+    /// Serializes an optional `i64`, mirroring `<Option<i64> as
+    /// WriteXdr>::write_xdr`.
+    pub const fn write_option_i64(&mut self, v: &Option<i64>) {
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+                self.write_i64(*v);
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+    }
+
+    /// Serializes an optional `u64`, mirroring `<Option<u64> as
+    /// WriteXdr>::write_xdr`.
+    pub const fn write_option_u64(&mut self, v: &Option<u64>) {
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+                self.write_u64(*v);
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+    }
+
+    /// Serializes an optional `bool`, mirroring `<Option<bool> as
+    /// WriteXdr>::write_xdr`.
+    pub const fn write_option_bool(&mut self, v: &Option<bool>) {
+        match v {
+            Some(v) => {
+                self.write_u32(1);
+                self.write_bool(*v);
+            }
+            None => {
+                self.write_u32(0);
+            }
+        }
+    }
+
+    /// Serializes a variable-length array of `i32`, mirroring `<VecM<i32, MAX>
+    /// as WriteXdr>::write_xdr`.
+    pub const fn write_vec_i32<const MAX: u32>(&mut self, v: &VecMRef<'_, i32, MAX>) {
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+            self.write_i32(s[i]);
+            i += 1;
+        }
+    }
+
+    /// Serializes a variable-length array of `u32`, mirroring `<VecM<u32, MAX>
+    /// as WriteXdr>::write_xdr`.
+    pub const fn write_vec_u32<const MAX: u32>(&mut self, v: &VecMRef<'_, u32, MAX>) {
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+            self.write_u32(s[i]);
+            i += 1;
+        }
+    }
+
+    /// Serializes a variable-length array of `i64`, mirroring `<VecM<i64, MAX>
+    /// as WriteXdr>::write_xdr`.
+    pub const fn write_vec_i64<const MAX: u32>(&mut self, v: &VecMRef<'_, i64, MAX>) {
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+            self.write_i64(s[i]);
+            i += 1;
+        }
+    }
+
+    /// Serializes a variable-length array of `u64`, mirroring `<VecM<u64, MAX>
+    /// as WriteXdr>::write_xdr`.
+    pub const fn write_vec_u64<const MAX: u32>(&mut self, v: &VecMRef<'_, u64, MAX>) {
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+            self.write_u64(s[i]);
+            i += 1;
+        }
+    }
+
+    /// Serializes a variable-length array of `bool`, mirroring `<VecM<bool, MAX>
+    /// as WriteXdr>::write_xdr`.
+    pub const fn write_vec_bool<const MAX: u32>(&mut self, v: &VecMRef<'_, bool, MAX>) {
+        let s = v.as_slice();
+        let len = s.len();
+        self.write_len(len);
+        let mut i = 0usize;
+        while i < len {
+            self.write_bool(s[i]);
+            i += 1;
+        }
+    }
 }
 
 impl ReadXdr for i32 {

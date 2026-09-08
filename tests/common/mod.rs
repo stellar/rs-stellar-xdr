@@ -1,4 +1,4 @@
-//! A significantly complex TransactionEnvelope structure that covers every
+//! A significantly complex `TransactionEnvelope` structure that covers every
 //! shape the generator emits: nested structs, both union kinds with void,
 //! scalar, fixed-opaque and heap arms, a heap-free struct used directly where
 //! it has no `Ref`, a cyclic field where the `Ref` borrows and the owned form

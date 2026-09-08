@@ -217,11 +217,10 @@ pub const MAX_SIZE: u32 = 100;"#,
 }
 
 #[test]
-fn test_no_const_form_when_only_one_ifdef_branch_borrows() {
-    // Foo holds heap data only in the FEATURE_X branch, so it borrows under
-    // some cfgs but not all. A cfg-gated FooConst would be named
-    // unconditionally by any always-borrowing type holding a Foo, so no Const
-    // form is emitted.
+fn test_const_form_for_both_ifdef_branches() {
+    // Foo holds heap data only in the FEATURE_X branch. Both branches get a
+    // FooConst, each gated like its definition, so the name resolves under
+    // every cfg; the heap-free branch mirrors the owned fields.
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -231,11 +230,26 @@ fn test_no_const_form_when_only_one_ifdef_branch_borrows() {
         #endif
     "#,
     );
-    assert_not_contains(&output, "FooConst");
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FooConst {
+    pub s: StringMConst<10>,
+}"#,
+    );
+    assert_contains(
+        &output,
+        r#"#[cfg(not(feature = "feature_x"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FooConst {
+    pub y: i32,
+}"#,
+    );
 }
 
 #[test]
-fn test_no_const_form_when_only_one_ifdef_branch_borrows_typedef() {
+fn test_const_form_for_both_ifdef_branches_typedef() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -245,11 +259,22 @@ fn test_no_const_form_when_only_one_ifdef_branch_borrows_typedef() {
         #endif
     "#,
     );
-    assert_not_contains(&output, "FooConst");
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FooConst(pub StringMConst<10>);"#,
+    );
+    assert_contains(
+        &output,
+        r#"#[cfg(not(feature = "feature_x"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FooConst(pub [u8; 4]);"#,
+    );
 }
 
 #[test]
-fn test_no_const_form_when_only_one_ifdef_branch_borrows_union() {
+fn test_const_form_for_both_ifdef_branches_union() {
     let output = generate_from_xdr(
         r#"
         #ifdef FEATURE_X
@@ -259,13 +284,33 @@ fn test_no_const_form_when_only_one_ifdef_branch_borrows_union() {
         #endif
     "#,
     );
-    assert_not_contains(&output, "FooConst");
+    assert_contains(
+        &output,
+        r#"#[cfg(feature = "feature_x")]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum FooConst {
+    #[cfg(feature = "feature_x")]
+    V0(StringMConst<10>),
+}"#,
+    );
+    assert_contains(
+        &output,
+        r#"#[cfg(not(feature = "feature_x"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum FooConst {
+    #[cfg(not(feature = "feature_x"))]
+    V0(i32),
+}"#,
+    );
 }
 
 #[test]
-fn test_no_const_form_when_only_a_cfg_gated_arm_borrows() {
-    // The union's only heap sits behind a cfg-gated arm, so it borrows under
-    // some cfgs but not all and gets no Const form.
+fn test_const_form_when_only_a_cfg_gated_arm_borrows() {
+    // The union's only heap sits behind a cfg-gated arm. The Const form is
+    // emitted unconditionally with the arm gated inside it, so the arm's
+    // payload is the borrowing StringMConst wherever the cfg turns it on.
     let output = generate_from_xdr(
         r#"
         union Foo switch (int v) {
@@ -276,16 +321,22 @@ fn test_no_const_form_when_only_a_cfg_gated_arm_borrows() {
         };
     "#,
     );
-    assert_not_contains(&output, "FooConst");
+    assert_contains(
+        &output,
+        r#"pub enum FooConst {
+    V0(i32),
+    #[cfg(feature = "feature_x")]
+    V1(StringMConst<10>),
+}"#,
+    );
 }
 
 #[test]
-fn test_cfg_conditional_heap_leaves_containing_types_owned() {
-    // Exec borrows only via its cfg-gated arm, so neither it nor OnlyExec —
-    // whose sole heap comes from Exec — gets a Const form. Parent has heap of
-    // its own, so it does, and holds the owned Exec in that position. That
-    // compiles whether or not the feature is on, which a cfg-gated ExecConst
-    // named by the unconditional ParentConst would not.
+fn test_cfg_gated_heap_gets_a_const_form() {
+    // Exec borrows only via its cfg-gated arm, so types holding an Exec name
+    // ExecConst in that position under every cfg. Leaving the owned Exec there
+    // would not compile with the feature on: serializing it reaches a
+    // Vec-backed StringM from a const fn.
     let output = generate_from_xdr(
         r#"
         union Exec switch (int type)
@@ -301,14 +352,20 @@ fn test_cfg_conditional_heap_leaves_containing_types_owned() {
         struct Parent { Exec exec; string label<32>; };
     "#,
     );
-    assert_not_contains(&output, "ExecConst");
-    assert_not_contains(&output, "OnlyExecConst");
     assert_contains(
         &output,
         r#"#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ParentConst {
-    pub exec: Exec,
+    pub exec: ExecConst,
     pub label: StringMConst<32>,
+}"#,
+    );
+    assert_contains(
+        &output,
+        r#"#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OnlyExecConst {
+    pub exec: ExecConst,
+    pub n: i32,
 }"#,
     );
 }

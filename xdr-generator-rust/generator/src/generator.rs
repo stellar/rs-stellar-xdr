@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use askama::Template;
 use xdr_parser::ast::{
-    CfgExpr, Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm, XdrSpec,
+    Const, Definition, Enum, Struct, StructMember, Type, Typedef, Union, UnionArm, XdrSpec,
 };
 use xdr_parser::lexer::IntBase;
 use xdr_parser::types::{is_builtin_type, is_fixed_array, is_fixed_opaque, is_var_array, TypeInfo};
@@ -29,40 +29,35 @@ pub struct RustGenerator {
     /// cyclic references) under some cfg, and therefore have a borrowing
     /// `Const` form generated for them.
     const_required: HashSet<String>,
-    /// Per-definition borrow conditions, keyed by Rust type name and the
-    /// definition's cfg, which distinguishes same-named `#ifdef`/`#else`
-    /// branches from one another.
-    def_borrow: HashMap<(String, Option<String>), BorrowCfg>,
 }
 
 impl RustGenerator {
     pub fn new(spec: &XdrSpec, options: RustOptions) -> Self {
         let type_info = TypeInfo::build(spec, &type_name);
-        let mut analysis = BorrowAnalysis::build(spec);
-        let const_required = analysis.const_required();
-        let def_borrow = spec
-            .all_definitions()
-            .map(|def| {
-                let key = (type_name(def.name()), def.cfg().map(CfgExpr::render));
-                (key, analysis.of_def(def))
-            })
-            .collect();
+        let const_required = BorrowAnalysis::build(spec).const_required();
         Self {
             options,
             type_info,
             const_required,
-            def_borrow,
         }
     }
 
     /// How to emit the borrowing `Const` form of a definition.
+    ///
+    /// Every definition of a name that needs a `Const` form emits one, gated
+    /// by that definition's own cfg, so the name resolves under every cfg a
+    /// container can name it under. A branch that holds no heap data mirrors
+    /// the owned fields.
     fn const_emit_for(&self, name: &str, cfg: Option<&str>) -> ConstEmit {
-        let borrow = self
-            .def_borrow
-            .get(&(name.to_string(), cfg.map(ToString::to_string)))
-            .copied()
-            .unwrap_or(BorrowCfg::Never);
-        const_emit(self.const_required.contains(name), &borrow, cfg)
+        let emit_const = self.const_required.contains(name);
+        ConstEmit {
+            emit_const,
+            const_cfg: if emit_const {
+                cfg.map(ToString::to_string)
+            } else {
+                None
+            },
+        }
     }
 
     /// Generate Rust code from the spec and write it to the output file.
@@ -376,15 +371,7 @@ impl RustGenerator {
         };
         let r = self.const_emit_for(&name, cfg.as_deref());
         StructOutput {
-            const_to_xdr: self.const_to_xdr(
-                &name,
-                r.emit_const,
-                if r.emit_const {
-                    r.const_cfg.as_deref()
-                } else {
-                    cfg.as_deref()
-                },
-            ),
+            const_to_xdr: self.const_to_xdr(&name, r.emit_const, cfg.as_deref()),
             name,
             source_comment: source_comment(&s.source, type_kind),
             has_default: !custom_default,
@@ -473,15 +460,7 @@ impl RustGenerator {
         let r = self.const_emit_for(&name, cfg.as_deref());
 
         UnionOutput {
-            const_to_xdr: self.const_to_xdr(
-                &name,
-                r.emit_const,
-                if r.emit_const {
-                    r.const_cfg.as_deref()
-                } else {
-                    cfg.as_deref()
-                },
-            ),
+            const_to_xdr: self.const_to_xdr(&name, r.emit_const, cfg.as_deref()),
             name,
             source_comment: source_comment(&u.source, type_kind),
             has_default: !custom_default,
@@ -531,15 +510,7 @@ impl RustGenerator {
         let r = self.const_emit_for(&name, cfg.as_deref());
 
         DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
-            const_to_xdr: self.const_to_xdr(
-                &name,
-                r.emit_const,
-                if r.emit_const {
-                    r.const_cfg.as_deref()
-                } else {
-                    cfg.as_deref()
-                },
-            ),
+            const_to_xdr: self.const_to_xdr(&name, r.emit_const, cfg.as_deref()),
             name: name.clone(),
             source_comment: source_comment(&t.source, "Typedef"),
             has_default: !custom_default,
@@ -650,50 +621,12 @@ impl RustGenerator {
 // Borrow analysis
 // =============================================================================
 
-/// Whether a type holds heap-allocated data, and so whether it gets a borrowing
-/// `Const` form.
-///
-/// The distinction that matters is unconditional: only a type that borrows
-/// under every cfg gets a `Const` form. One that borrows under some cfgs would
-/// need a cfg-gated `Const`, which any unconditional container of it would
-/// name unconditionally and so reference where it does not exist.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum BorrowCfg {
-    /// Holds no heap-allocated data under any cfg.
-    Never,
-    /// Holds heap-allocated data under every cfg.
-    Always,
-    /// Holds heap-allocated data only under some cfgs, because it sits behind a
-    /// cfg-gated union arm or is reached through a type that does.
-    Sometimes,
-}
-
-impl BorrowCfg {
-    fn or(self, other: BorrowCfg) -> BorrowCfg {
-        match (self, other) {
-            (BorrowCfg::Always, _) | (_, BorrowCfg::Always) => BorrowCfg::Always,
-            (BorrowCfg::Never, o) | (o, BorrowCfg::Never) => o,
-            (BorrowCfg::Sometimes, BorrowCfg::Sometimes) => BorrowCfg::Sometimes,
-        }
-    }
-
-    /// Restrict to also require `cfg`, as for a cfg-gated union arm.
-    fn and_cfg(self, cfg: Option<&str>) -> BorrowCfg {
-        if cfg.is_none() {
-            return self;
-        }
-        match self {
-            BorrowCfg::Never => BorrowCfg::Never,
-            BorrowCfg::Always | BorrowCfg::Sometimes => BorrowCfg::Sometimes,
-        }
-    }
-}
-
 /// Borrow analysis over a whole spec, resolving type references by name.
 struct BorrowAnalysis<'a> {
     defs_by_name: HashMap<String, Vec<&'a Definition>>,
-    /// Memoized per-name results, keyed by Rust type name.
-    by_name: HashMap<String, BorrowCfg>,
+    /// Whether each name holds heap data under some cfg, keyed by Rust type
+    /// name and memoized.
+    by_name: HashMap<String, bool>,
     /// Names currently being resolved, for cycle detection.
     stack: HashSet<String>,
 }
@@ -719,78 +652,72 @@ impl<'a> BorrowAnalysis<'a> {
         analysis
     }
 
-    /// The names that get a `Const` form, i.e. that borrow under every cfg.
+    /// The names that get a `Const` form, i.e. that hold heap data under some
+    /// cfg.
     ///
-    /// A name that only borrows under some cfgs is excluded. Its `Const` form
-    /// would have to be cfg-gated, and an always-borrowing type containing it
-    /// names that form unconditionally, so the reference would dangle wherever
-    /// the cfg is off. Excluding it leaves containers holding the owned type in
-    /// that position, which is correct under every cfg.
+    /// A name whose heap data sits only behind a cfg is included. It has to be:
+    /// a container naming it does so unconditionally, and the owned type in
+    /// that position cannot be built or serialized in a const context wherever
+    /// the cfg turns its heap data on.
     fn const_required(&self) -> HashSet<String> {
         self.by_name
             .iter()
-            .filter(|(_, b)| **b == BorrowCfg::Always)
+            .filter(|(_, borrows)| **borrows)
             .map(|(n, _)| n.clone())
             .collect()
     }
 
-    /// The borrow condition for a name, across all of its cfg branches.
+    /// Whether a name holds heap data under any of its cfg branches.
     ///
     /// A name already on the stack indicates a reference cycle. Valid XDR
     /// breaks cycles with optional or variable-length types, both of which the
     /// generator maps to heap allocations (`Box` or `VecM`), so a type on a
     /// cycle always borrows.
-    fn of_name(&mut self, name: &str) -> BorrowCfg {
+    fn of_name(&mut self, name: &str) -> bool {
         if let Some(b) = self.by_name.get(name) {
             return *b;
         }
         if self.stack.contains(name) {
-            return BorrowCfg::Always;
+            return true;
         }
         let Some(defs) = self.defs_by_name.get(name).cloned() else {
-            return BorrowCfg::Never;
+            return false;
         };
         self.stack.insert(name.to_string());
-        let mut borrow = BorrowCfg::Never;
-        for def in defs {
-            let def_cfg = def.cfg().map(CfgExpr::render);
-            borrow = borrow.or(self.of_def(def).and_cfg(def_cfg.as_deref()));
-        }
+        let borrows = defs
+            .into_iter()
+            .fold(false, |acc, def| acc | self.of_def(def));
         self.stack.remove(name);
-        self.by_name.insert(name.to_string(), borrow);
-        borrow
+        self.by_name.insert(name.to_string(), borrows);
+        borrows
     }
 
-    /// The borrow condition contributed by a single definition, excluding the
-    /// definition's own cfg, which callers apply where the type is emitted.
-    fn of_def(&mut self, def: &Definition) -> BorrowCfg {
-        let def_cfg = def.cfg().map(CfgExpr::render);
+    /// Whether a single definition holds heap data. A cfg-gated union arm
+    /// counts: the `Const` form is emitted under every cfg, with the arm gated
+    /// inside it.
+    ///
+    /// The folds below use `|` rather than `||` so the walk visits every
+    /// member instead of stopping at the first that borrows, leaving what the
+    /// analysis memoizes independent of member order.
+    fn of_def(&mut self, def: &Definition) -> bool {
         match def {
             Definition::Struct(s) => s
                 .members
                 .iter()
-                .fold(BorrowCfg::Never, |acc, m| acc.or(self.of_type(&m.type_))),
-            Definition::Union(u) => u.arms.iter().fold(BorrowCfg::Never, |acc, arm| {
-                let Some(t) = arm.type_.as_ref() else {
-                    return acc;
-                };
-                // An arm cfg equal to the definition's own cfg adds no further
-                // condition, since the definition is already gated on it.
-                let arm_cfg = arm
-                    .cfg
-                    .as_ref()
-                    .map(CfgExpr::render)
-                    .filter(|c| Some(c) != def_cfg.as_ref());
-                acc.or(self.of_type(t).and_cfg(arm_cfg.as_deref()))
-            }),
+                .fold(false, |acc, m| acc | self.of_type(&m.type_)),
+            Definition::Union(u) => u
+                .arms
+                .iter()
+                .filter_map(|arm| arm.type_.as_ref())
+                .fold(false, |acc, t| acc | self.of_type(t)),
             Definition::Typedef(t) => self.of_type(&t.type_),
-            Definition::Enum(_) | Definition::Const(_) => BorrowCfg::Never,
+            Definition::Enum(_) | Definition::Const(_) => false,
         }
     }
 
-    fn of_type(&mut self, type_: &Type) -> BorrowCfg {
+    fn of_type(&mut self, type_: &Type) -> bool {
         match type_ {
-            Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } => BorrowCfg::Always,
+            Type::OpaqueVar(_) | Type::String(_) | Type::VarArray { .. } => true,
             Type::Int
             | Type::UnsignedInt
             | Type::Hyper
@@ -798,7 +725,7 @@ impl<'a> BorrowAnalysis<'a> {
             | Type::Float
             | Type::Double
             | Type::Bool
-            | Type::OpaqueFixed(_) => BorrowCfg::Never,
+            | Type::OpaqueFixed(_) => false,
             Type::Ident(name) => self.of_name(&type_name(name)),
             Type::Optional(inner) => self.of_type(inner),
             Type::Array { element_type, .. } => self.of_type(element_type),
@@ -808,34 +735,10 @@ impl<'a> BorrowAnalysis<'a> {
 
 /// How a definition's borrowing `Const` form is emitted.
 ///
-/// A `{name}Const` is emitted only where the definition borrows. Where it does
-/// not borrow, nothing is emitted: the owned type is already the whole value,
-/// and a heap-free type has nothing to borrow.
+/// A `{name}Const` is emitted for every definition of a name that holds heap
+/// data under some cfg. A name that holds none under any cfg gets nothing: the
+/// owned type is already the whole value, and there is nothing to borrow.
 struct ConstEmit {
     emit_const: bool,
     const_cfg: Option<String>,
-}
-
-/// Decide how to emit the `Const` form of one definition.
-///
-/// `has_const` is whether the type's name has a `Const` form at all, and
-/// `borrow` is this definition's borrow condition excluding its own `def_cfg`.
-fn const_emit(has_const: bool, borrow: &BorrowCfg, def_cfg: Option<&str>) -> ConstEmit {
-    let mut emit = ConstEmit {
-        emit_const: false,
-        const_cfg: None,
-    };
-    if !has_const {
-        return emit;
-    }
-    match borrow {
-        // Nothing to borrow in this branch, or nothing to borrow under some
-        // cfg. Either way this definition emits no Const form.
-        BorrowCfg::Never | BorrowCfg::Sometimes => {}
-        BorrowCfg::Always => {
-            emit.emit_const = true;
-            emit.const_cfg = def_cfg.map(ToString::to_string);
-        }
-    }
-    emit
 }

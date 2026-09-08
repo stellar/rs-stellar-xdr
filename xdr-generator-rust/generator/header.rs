@@ -1434,10 +1434,13 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
                 let t = T::read_xdr(r)?;
                 if vec.len() == vec.capacity() {
                     let cap = vec.capacity();
-                    // Mirror Vec's own minimum non-zero capacity, which is a
-                    // single element for elements larger than 1024 bytes.
-                    let first = if size_of::<T>() > 1024 { 1 } else { 4 };
-                    let next = if cap == 0 { first } else { cap.saturating_mul(2) };
+                    let next = if cap == 0 {
+                        // Mirror Vec's own minimum non-zero capacity, which is
+                        // a single element for elements larger than 1024 bytes.
+                        const { if size_of::<T>() > 1024 { 1 } else { 4 } }
+                    } else {
+                        cap.saturating_mul(2)
+                    };
                     let next = next.min(len as usize);
                     vec.reserve_exact(next - vec.len());
                 }

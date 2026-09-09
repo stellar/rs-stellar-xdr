@@ -7,4 +7,4 @@ use super::*;
 /// const CONTRACT_COST_COUNT_LIMIT = 1024;
 /// ```
 ///
-pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
+pub const CONTRACT_COST_COUNT_LIMIT: u32 = 1024;

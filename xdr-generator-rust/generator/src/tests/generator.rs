@@ -205,6 +205,6 @@ fn test_ifdef_generates_cfg_on_const() {
     assert_contains(
         &output,
         r#"#[cfg(feature = "feature_x")]
-pub const MAX_SIZE: u64 = 100;"#,
+pub const MAX_SIZE: u32 = 100;"#,
     );
 }

@@ -7,4 +7,4 @@ use super::*;
 /// const MAX_SIGNERS = 20;
 /// ```
 ///
-pub const MAX_SIGNERS: u64 = 20;
+pub const MAX_SIGNERS: u32 = 20;

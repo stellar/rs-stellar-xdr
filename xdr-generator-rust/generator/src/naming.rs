@@ -11,6 +11,11 @@ pub(crate) fn mod_name(name: &str) -> String {
     escape_type_name(name).to_snake_case()
 }
 
+/// Convert an XDR name to a Rust constant name (`SCREAMING_SNAKE_CASE`).
+pub(crate) fn const_name(name: &str) -> String {
+    field_name(name).to_uppercase()
+}
+
 /// Convert an XDR name to a Rust field name (`snake_case`).
 pub(crate) fn field_name(name: &str) -> String {
     let snake = name.to_snake_case();

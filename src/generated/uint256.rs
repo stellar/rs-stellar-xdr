@@ -68,8 +68,8 @@ impl schemars::JsonSchema for Uint256 {
             );
             let string = *schema.string.unwrap_or_default().clone();
             schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: 32_u32.checked_mul(2).map(Some).unwrap_or_default(),
-                min_length: 32_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                max_length: u32::checked_mul(32, 2).map(Some).unwrap_or_default(),
+                min_length: u32::checked_mul(32, 2).map(Some).unwrap_or_default(),
                 ..string
             }));
             schema.into()

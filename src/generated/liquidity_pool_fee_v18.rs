@@ -7,4 +7,4 @@ use super::*;
 /// const LIQUIDITY_POOL_FEE_V18 = 30;
 /// ```
 ///
-pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
+pub const LIQUIDITY_POOL_FEE_V18: u32 = 30;

@@ -60,20 +60,6 @@ impl RustGenerator {
         }
     }
 
-    /// Generate Rust code from the spec and write it to the output file.
-    #[allow(dead_code)]
-    pub fn generate_to_file(
-        &self,
-        spec: &XdrSpec,
-        output: &std::path::PathBuf,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let header = include_str!("../header.rs");
-        let template = self.generate(spec, header);
-        let rendered = template.render()?;
-        std::fs::write(output, rendered)?;
-        Ok(())
-    }
-
     /// Generate Rust code from the spec and write each definition to its own
     /// file inside `output_dir`, plus a module file that ties them together.
     ///

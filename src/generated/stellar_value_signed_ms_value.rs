@@ -1,18 +1,17 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecUdtStructV0 is an XDR Struct defined as:
+/// StellarValueSignedMsValue is an XDR NestedStruct defined as:
 ///
 /// ```text
-/// struct SCSpecUDTStructV0
-/// {
-///     string doc<SC_SPEC_DOC_LIMIT>;
-///     string lib<80>;
-///     string name<SC_SPEC_TYPE_NAME_LIMIT>;
-///     SCSpecUDTStructFieldV0 fields<>;
-/// };
+/// struct
+///         {
+///             TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000
+///             LedgerCloseValueSignature lcValueSignature;
+///         }
 /// ```
 ///
+#[cfg(feature = "ms_close_time")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -24,35 +23,31 @@ use super::*;
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ScSpecUdtStructV0 {
-    pub doc: StringM<SC_SPEC_DOC_LIMIT>,
-    pub lib: StringM<80>,
-    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
-    pub fields: VecM<ScSpecUdtStructFieldV0>,
+pub struct StellarValueSignedMsValue {
+    pub close_time_ms: TimePointMilliseconds,
+    pub lc_value_signature: LedgerCloseValueSignature,
 }
 
-impl ReadXdr for ScSpecUdtStructV0 {
+#[cfg(feature = "ms_close_time")]
+impl ReadXdr for StellarValueSignedMsValue {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<SC_SPEC_DOC_LIMIT>::read_xdr(r)?,
-                lib: StringM::<80>::read_xdr(r)?,
-                name: StringM::<SC_SPEC_TYPE_NAME_LIMIT>::read_xdr(r)?,
-                fields: VecM::<ScSpecUdtStructFieldV0>::read_xdr(r)?,
+                close_time_ms: TimePointMilliseconds::read_xdr(r)?,
+                lc_value_signature: LedgerCloseValueSignature::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for ScSpecUdtStructV0 {
+#[cfg(feature = "ms_close_time")]
+impl WriteXdr for StellarValueSignedMsValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            self.doc.write_xdr(w)?;
-            self.lib.write_xdr(w)?;
-            self.name.write_xdr(w)?;
-            self.fields.write_xdr(w)?;
+            self.close_time_ms.write_xdr(w)?;
+            self.lc_value_signature.write_xdr(w)?;
             Ok(())
         })
     }

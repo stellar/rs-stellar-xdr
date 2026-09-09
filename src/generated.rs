@@ -39,7 +39,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract-spec.x",
-        "f0655f82e0a28a79e067c02f427cc709db1e4323a50c9b85f730f812b9612dbd",
+        "38910bfa0f616916659db405c37e8c63ac7e0b46ce1bf10bd53b5fafc4f599fe",
     ),
     (
         "xdr/Stellar-contract.x",
@@ -4237,6 +4237,9 @@ pub use sc_meta_entry::*;
 mod sc_spec_doc_limit;
 #[allow(unused_imports)]
 pub use sc_spec_doc_limit::*;
+mod sc_spec_type_name_limit;
+#[allow(unused_imports)]
+pub use sc_spec_type_name_limit::*;
 mod sc_spec_type;
 #[allow(unused_imports)]
 pub use sc_spec_type::*;
@@ -4705,6 +4708,12 @@ pub use ledger_close_value_signature::*;
 mod stellar_value_proposed_value;
 #[allow(unused_imports)]
 pub use stellar_value_proposed_value::*;
+mod stellar_value_signed_ms_value;
+#[allow(unused_imports)]
+pub use stellar_value_signed_ms_value::*;
+mod stellar_value_proposed_ms_value;
+#[allow(unused_imports)]
+pub use stellar_value_proposed_ms_value::*;
 mod stellar_value_ext;
 #[allow(unused_imports)]
 pub use stellar_value_ext::*;
@@ -5524,6 +5533,9 @@ pub use time_point::*;
 mod duration;
 #[allow(unused_imports)]
 pub use duration::*;
+mod time_point_milliseconds;
+#[allow(unused_imports)]
+pub use time_point_milliseconds::*;
 mod extension_point;
 #[allow(unused_imports)]
 pub use extension_point::*;

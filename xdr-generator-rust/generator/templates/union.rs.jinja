@@ -226,4 +226,49 @@ impl WriteXdr for {{ u.name }} {
         })
     }
 }
+{%- if u.emit_const %}
 
+/// {{ u.name }}Const is a borrowing equivalent of [`{{ u.name }}`] over `'static`
+/// data, for const XDR encoding.
+{%- if let Some(cfg) = u.const_cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum {{ u.name }}Const {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+    #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+    {{ arm.case_name }},
+{%- else %}
+    {{ arm.case_name }}({{ arm.const_type.as_ref().unwrap() }}),
+{%- endif %}
+{%- endfor %}
+}
+
+{% if let Some(cfg) = u.const_cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+impl {{ u.name }}Const {
+    #[must_use]
+    pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
+        #[allow(clippy::match_same_arms)]
+        match self {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+            Self::{{ arm.case_name }} => {{ arm.case_value }},
+{%- else %}
+            Self::{{ arm.case_name }}(_) => {{ arm.case_value }},
+{%- endif %}
+{%- endfor %}
+        }
+    }
+}
+{%- endif %}
+
+{{ u.const_to_xdr }}

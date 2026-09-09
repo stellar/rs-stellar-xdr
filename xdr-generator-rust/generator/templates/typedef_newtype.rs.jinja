@@ -296,4 +296,15 @@ impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     }
 }
 {%- endif %}
+{%- if t.emit_const %}
 
+/// {{ t.name }}Const is a borrowing equivalent of [`{{ t.name }}`] over `'static`
+/// data, for const XDR encoding.
+{%- if let Some(cfg) = t.const_cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct {{ t.name }}Const(pub {{ t.const_type }});
+{%- endif %}
+
+{{ t.const_to_xdr }}

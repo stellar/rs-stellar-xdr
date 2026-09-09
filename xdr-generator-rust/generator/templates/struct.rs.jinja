@@ -104,4 +104,19 @@ impl<'de> serde::Deserialize<'de> for {{ s.name }} {
     }
 }
 {%- endif %}
+{%- if s.emit_const %}
 
+/// {{ s.name }}Const is a borrowing equivalent of [`{{ s.name }}`] over `'static`
+/// data, for const XDR encoding.
+{%- if let Some(cfg) = s.const_cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct {{ s.name }}Const {
+{%- for m in s.members %}
+    pub {{ m.name }}: {{ m.const_type }},
+{%- endfor %}
+}
+{%- endif %}
+
+{{ s.const_to_xdr }}

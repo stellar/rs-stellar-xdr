@@ -54,10 +54,10 @@ fn test_simple() {
 
 #[test]
 fn test_comments() {
-    let input = r#"
+    let input = r"
         // line comment
         struct /* block comment */ Foo { };
-        "#;
+        ";
     let lexer = Lexer::new(input);
     let (spanned_tokens, _) = lexer.tokenize_with_spans().unwrap();
     let tokens: Vec<Token> = spanned_tokens.into_iter().map(|st| st.token).collect();

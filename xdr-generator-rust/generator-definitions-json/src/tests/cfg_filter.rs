@@ -70,11 +70,11 @@ fn test_def_without_cfg_has_no_cfg() {
 #[test]
 fn test_def_cfg_evaluates_correctly() {
     let spec = parse(
-        r#"
+        r"
         #ifdef NEXT
         struct Foo { int x; };
         #endif
-    "#,
+    ",
     );
     let cfg = spec.definitions[0].cfg().unwrap();
     assert!(cfg.evaluate(&feature_set(&["next"])));
@@ -88,34 +88,37 @@ fn test_def_cfg_evaluates_correctly() {
 #[test]
 fn test_filter_spec_default_drops_all_gated_definitions() {
     let mut spec = parse(
-        r#"
+        r"
         struct Always { int x; };
         #ifdef NEXT
         struct OnlyNext { int y; };
         #endif
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&[]));
-    let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
+    let names: Vec<&str> = spec
+        .definitions
+        .iter()
+        .map(xdr_parser::ast::Definition::name)
+        .collect();
     assert_eq!(names, vec!["Always"]);
 }
 
 #[test]
 fn test_filter_spec_default_drops_gated_union_arms() {
     let mut spec = parse(
-        r#"
+        r"
         union U switch (int v) {
             case 0: int a;
             #ifdef NEXT
             case 1: int b;
             #endif
         };
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&[]));
-    let u = match &spec.definitions[0] {
-        Definition::Union(u) => u,
-        _ => panic!("expected Union"),
+    let Definition::Union(u) = &spec.definitions[0] else {
+        panic!("expected Union")
     };
     assert_eq!(u.arms.len(), 1);
 }
@@ -127,41 +130,49 @@ fn test_filter_spec_default_drops_gated_union_arms() {
 #[test]
 fn test_filter_spec_removes_gated_definitions() {
     let mut spec = parse(
-        r#"
+        r"
         struct Always { int x; };
         #ifdef NEXT
         struct OnlyNext { int y; };
         #endif
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["other"]));
-    let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
+    let names: Vec<&str> = spec
+        .definitions
+        .iter()
+        .map(xdr_parser::ast::Definition::name)
+        .collect();
     assert_eq!(names, vec!["Always"]);
 }
 
 #[test]
 fn test_filter_spec_keeps_matching_definitions() {
     let mut spec = parse(
-        r#"
+        r"
         struct Always { int x; };
         #ifdef NEXT
         struct OnlyNext { int y; };
         #endif
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["next"]));
-    let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
+    let names: Vec<&str> = spec
+        .definitions
+        .iter()
+        .map(xdr_parser::ast::Definition::name)
+        .collect();
     assert_eq!(names, vec!["Always", "OnlyNext"]);
 }
 
 #[test]
 fn test_filter_spec_clears_cfg_on_surviving_definitions() {
     let mut spec = parse(
-        r#"
+        r"
         #ifdef NEXT
         struct Foo { int x; };
         #endif
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["next"]));
     assert!(spec.definitions[0].cfg().is_none());
@@ -176,7 +187,7 @@ fn test_filter_spec_removes_gated_union_arms() {
     // Both the enum member and union arm are cfg-gated, so filtering
     // removes both and the union remains complete.
     let mut spec = parse(
-        r#"
+        r"
         enum E {
             A = 0,
             #ifdef NEXT
@@ -191,12 +202,11 @@ fn test_filter_spec_removes_gated_union_arms() {
                 int b;
             #endif
         };
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["other"]));
-    let u = match &spec.definitions[1] {
-        Definition::Union(u) => u,
-        _ => panic!("expected Union"),
+    let Definition::Union(u) = &spec.definitions[1] else {
+        panic!("expected Union")
     };
     assert_eq!(u.arms.len(), 1);
     assert!(u.arms[0].cfg.is_none());
@@ -205,7 +215,7 @@ fn test_filter_spec_removes_gated_union_arms() {
 #[test]
 fn test_filter_spec_keeps_matching_union_arms() {
     let mut spec = parse(
-        r#"
+        r"
         enum E {
             A = 0,
             #ifdef NEXT
@@ -220,12 +230,11 @@ fn test_filter_spec_keeps_matching_union_arms() {
                 int b;
             #endif
         };
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["next"]));
-    let u = match &spec.definitions[1] {
-        Definition::Union(u) => u,
-        _ => panic!("expected Union"),
+    let Definition::Union(u) = &spec.definitions[1] else {
+        panic!("expected Union")
     };
     assert_eq!(u.arms.len(), 2);
     // All cfg annotations cleared.
@@ -239,7 +248,7 @@ fn test_filter_spec_keeps_matching_union_arms() {
 #[test]
 fn test_filter_spec_removes_gated_enum_members() {
     let mut spec = parse(
-        r#"
+        r"
         enum Color {
             RED = 0,
             #ifdef NEXT
@@ -247,12 +256,11 @@ fn test_filter_spec_removes_gated_enum_members() {
             #endif
             BLUE = 2
         };
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["other"]));
-    let e = match &spec.definitions[0] {
-        Definition::Enum(e) => e,
-        _ => panic!("expected Enum"),
+    let Definition::Enum(e) = &spec.definitions[0] else {
+        panic!("expected Enum")
     };
     let values: Vec<i32> = e.members.iter().map(|m| m.value).collect();
     assert_eq!(values, vec![0, 2]);
@@ -266,16 +274,20 @@ fn test_filter_spec_removes_gated_enum_members() {
 #[test]
 fn test_filter_spec_ifdef_else_keeps_correct_branch() {
     let mut spec = parse(
-        r#"
+        r"
         #ifdef NEXT
         struct Foo { int x; };
         #else
         struct Foo { int x; int y; };
         #endif
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["next"]));
-    let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
+    let names: Vec<&str> = spec
+        .definitions
+        .iter()
+        .map(xdr_parser::ast::Definition::name)
+        .collect();
     assert_eq!(names, vec!["Foo"]);
     if let Definition::Struct(s) = &spec.definitions[0] {
         assert_eq!(s.members.len(), 1); // The #ifdef branch has 1 member.
@@ -287,16 +299,20 @@ fn test_filter_spec_ifdef_else_keeps_correct_branch() {
 #[test]
 fn test_filter_spec_ifdef_else_keeps_else_branch() {
     let mut spec = parse(
-        r#"
+        r"
         #ifdef NEXT
         struct Foo { int x; };
         #else
         struct Foo { int x; int y; };
         #endif
-    "#,
+    ",
     );
     filter_spec(&mut spec, &feature_set(&["other"]));
-    let names: Vec<&str> = spec.definitions.iter().map(|d| d.name()).collect();
+    let names: Vec<&str> = spec
+        .definitions
+        .iter()
+        .map(xdr_parser::ast::Definition::name)
+        .collect();
     assert_eq!(names, vec!["Foo"]);
     if let Definition::Struct(s) = &spec.definitions[0] {
         assert_eq!(s.members.len(), 2); // The #else branch has 2 members.

@@ -31,6 +31,22 @@ impl RustGenerator {
         Self { options, type_info }
     }
 
+    /// Generate Rust code from the spec and write each definition to its own
+    /// file inside `output_dir`, plus a module file that ties them together.
+    pub fn generate_to_dir(
+        &self,
+        spec: &XdrSpec,
+        module_file: &std::path::Path,
+        output_dir: &std::path::Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // Ensure the output directory exists.
+        std::fs::create_dir_all(output_dir)?;
+
+        self.generate_files(spec, module_file, output_dir, |path, contents| {
+            std::fs::write(path, contents)
+        })
+    }
+
     /// Generate Rust code from the spec and hand each output file to `write`
     /// as a path and its contents.
     ///
@@ -78,22 +94,6 @@ impl RustGenerator {
         write(module_file, &rendered)?;
 
         Ok(())
-    }
-
-    /// Generate Rust code from the spec and write each definition to its own
-    /// file inside `output_dir`, plus a module file that ties them together.
-    pub fn generate_to_dir(
-        &self,
-        spec: &XdrSpec,
-        module_file: &std::path::Path,
-        output_dir: &std::path::Path,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        // Ensure the output directory exists.
-        std::fs::create_dir_all(output_dir)?;
-
-        self.generate_files(spec, module_file, output_dir, |path, contents| {
-            std::fs::write(path, contents)
-        })
     }
 
     /// Generate module entries and grouped definitions for per-file output.

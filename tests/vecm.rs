@@ -91,3 +91,20 @@ fn into_iter_for_loop() {
     }
     assert_eq!(sum, 60);
 }
+
+#[test]
+fn decode_capacity_does_not_exceed_len() {
+    for len in [0u32, 1, 2, 3, 4, 5, 8, 9, 16, 17, 33, 65] {
+        let mut data = len.to_be_bytes().to_vec();
+        for i in 0..len {
+            data.extend_from_slice(&i.to_be_bytes());
+        }
+        let v = VecM::<u32>::from_xdr(&data, Limits::none()).unwrap();
+        assert_eq!(v.len(), len as usize);
+        assert_eq!(
+            v.capacity(),
+            len as usize,
+            "len {len}: reserved capacity should not exceed the encoded length"
+        );
+    }
+}

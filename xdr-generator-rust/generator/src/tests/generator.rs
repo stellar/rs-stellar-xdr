@@ -11,8 +11,6 @@ fn generate_from_xdr(xdr: &str) -> String {
         no_display_fromstr: HashSet::new(),
     };
     let generator = RustGenerator::new(&spec, options);
-    // Render through the path that writes the crate, so the tests see what is
-    // actually generated.
     let files = generator.render_files(&spec).unwrap();
     files
         .into_iter()

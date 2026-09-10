@@ -365,6 +365,7 @@ impl WriteXdr for ConfigSettingEntry {
 
 /// ConfigSettingEntryConst is a borrowing equivalent of [`ConfigSettingEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ConfigSettingEntryConst {
@@ -391,6 +392,7 @@ pub enum ConfigSettingEntryConst {
     FreezeBypassTxsDelta(FreezeBypassTxsDeltaConst),
 }
 
+#[cfg(feature = "const")]
 impl ConfigSettingEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> ConfigSettingId {

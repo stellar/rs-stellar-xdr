@@ -60,6 +60,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 
 /// ScSpecUdtUnionV0Const is a borrowing equivalent of [`ScSpecUdtUnionV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtUnionV0Const {
     pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,

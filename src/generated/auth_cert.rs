@@ -60,6 +60,7 @@ impl WriteXdr for AuthCert {
 
 /// AuthCertConst is a borrowing equivalent of [`AuthCert`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AuthCertConst {
     pub pubkey: Curve25519Public,

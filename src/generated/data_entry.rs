@@ -67,6 +67,7 @@ impl WriteXdr for DataEntry {
 
 /// DataEntryConst is a borrowing equivalent of [`DataEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DataEntryConst {
     pub account_id: AccountId,

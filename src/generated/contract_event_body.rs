@@ -135,12 +135,14 @@ impl WriteXdr for ContractEventBody {
 
 /// ContractEventBodyConst is a borrowing equivalent of [`ContractEventBody`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractEventBodyConst {
     V0(ContractEventV0Const),
 }
 
+#[cfg(feature = "const")]
 impl ContractEventBodyConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

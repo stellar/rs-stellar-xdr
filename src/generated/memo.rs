@@ -171,6 +171,7 @@ impl WriteXdr for Memo {
 
 /// MemoConst is a borrowing equivalent of [`Memo`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum MemoConst {
@@ -181,6 +182,7 @@ pub enum MemoConst {
     Return(Hash),
 }
 
+#[cfg(feature = "const")]
 impl MemoConst {
     #[must_use]
     pub const fn discriminant(&self) -> MemoType {

@@ -61,6 +61,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
 
 /// ScSpecUdtUnionCaseTupleV0Const is a borrowing equivalent of [`ScSpecUdtUnionCaseTupleV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtUnionCaseTupleV0Const {
     pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,

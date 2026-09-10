@@ -132,12 +132,14 @@ impl WriteXdr for GeneralizedTransactionSet {
 
 /// GeneralizedTransactionSetConst is a borrowing equivalent of [`GeneralizedTransactionSet`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSetConst {
     V1(TransactionSetV1Const),
 }
 
+#[cfg(feature = "const")]
 impl GeneralizedTransactionSetConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

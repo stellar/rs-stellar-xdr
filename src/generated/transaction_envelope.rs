@@ -144,6 +144,7 @@ impl WriteXdr for TransactionEnvelope {
 
 /// TransactionEnvelopeConst is a borrowing equivalent of [`TransactionEnvelope`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionEnvelopeConst {
@@ -152,6 +153,7 @@ pub enum TransactionEnvelopeConst {
     TxFeeBump(FeeBumpTransactionEnvelopeConst),
 }
 
+#[cfg(feature = "const")]
 impl TransactionEnvelopeConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {

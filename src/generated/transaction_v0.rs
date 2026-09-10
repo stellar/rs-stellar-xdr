@@ -77,6 +77,7 @@ impl WriteXdr for TransactionV0 {
 
 /// TransactionV0Const is a borrowing equivalent of [`TransactionV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionV0Const {
     pub source_account_ed25519: Uint256,

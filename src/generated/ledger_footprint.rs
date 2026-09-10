@@ -52,6 +52,7 @@ impl WriteXdr for LedgerFootprint {
 
 /// LedgerFootprintConst is a borrowing equivalent of [`LedgerFootprint`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerFootprintConst {
     pub read_only: VecMConst<LedgerKeyConst>,

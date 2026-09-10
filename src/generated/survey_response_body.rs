@@ -137,12 +137,14 @@ impl WriteXdr for SurveyResponseBody {
 
 /// SurveyResponseBodyConst is a borrowing equivalent of [`SurveyResponseBody`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBodyConst {
     SurveyTopologyResponseV2(TopologyResponseBodyV2Const),
 }
 
+#[cfg(feature = "const")]
 impl SurveyResponseBodyConst {
     #[must_use]
     pub const fn discriminant(&self) -> SurveyMessageResponseType {

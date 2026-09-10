@@ -241,6 +241,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 
 /// PathPaymentStrictSendResultConst is a borrowing equivalent of [`PathPaymentStrictSendResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictSendResultConst {
@@ -259,6 +260,7 @@ pub enum PathPaymentStrictSendResultConst {
     UnderDestmin,
 }
 
+#[cfg(feature = "const")]
 impl PathPaymentStrictSendResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> PathPaymentStrictSendResultCode {

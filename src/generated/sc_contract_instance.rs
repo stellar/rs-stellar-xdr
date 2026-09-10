@@ -51,6 +51,7 @@ impl WriteXdr for ScContractInstance {
 
 /// ScContractInstanceConst is a borrowing equivalent of [`ScContractInstance`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScContractInstanceConst {
     pub executable: ContractExecutableConst,

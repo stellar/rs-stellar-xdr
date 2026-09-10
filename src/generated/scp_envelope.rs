@@ -52,6 +52,7 @@ impl WriteXdr for ScpEnvelope {
 
 /// ScpEnvelopeConst is a borrowing equivalent of [`ScpEnvelope`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpEnvelopeConst {
     pub statement: ScpStatementConst,

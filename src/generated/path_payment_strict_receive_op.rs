@@ -80,6 +80,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 
 /// PathPaymentStrictReceiveOpConst is a borrowing equivalent of [`PathPaymentStrictReceiveOp`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PathPaymentStrictReceiveOpConst {
     pub send_asset: Asset,

@@ -110,6 +110,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 
 /// LedgerEntryChangesConst is a borrowing equivalent of [`LedgerEntryChanges`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerEntryChangesConst(pub VecMConst<LedgerEntryChangeConst>);
 

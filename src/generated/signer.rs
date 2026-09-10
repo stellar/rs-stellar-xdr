@@ -52,6 +52,7 @@ impl WriteXdr for Signer {
 
 /// SignerConst is a borrowing equivalent of [`Signer`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignerConst {
     pub key: SignerKeyConst,

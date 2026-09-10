@@ -60,6 +60,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
 
 /// ScSpecUdtStructV0Const is a borrowing equivalent of [`ScSpecUdtStructV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtStructV0Const {
     pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,

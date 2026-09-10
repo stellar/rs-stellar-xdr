@@ -52,6 +52,7 @@ impl WriteXdr for TransactionSetV1 {
 
 /// TransactionSetV1Const is a borrowing equivalent of [`TransactionSetV1`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionSetV1Const {
     pub previous_ledger_hash: Hash,

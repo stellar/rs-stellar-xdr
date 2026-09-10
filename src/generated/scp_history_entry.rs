@@ -131,12 +131,14 @@ impl WriteXdr for ScpHistoryEntry {
 
 /// ScpHistoryEntryConst is a borrowing equivalent of [`ScpHistoryEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntryConst {
     V0(ScpHistoryEntryV0Const),
 }
 
+#[cfg(feature = "const")]
 impl ScpHistoryEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

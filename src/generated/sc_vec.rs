@@ -110,6 +110,7 @@ impl AsRef<[ScVal]> for ScVec {
 
 /// ScVecConst is a borrowing equivalent of [`ScVec`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScVecConst(pub VecMConst<ScValConst>);
 

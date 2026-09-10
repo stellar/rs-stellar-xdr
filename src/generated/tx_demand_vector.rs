@@ -110,6 +110,7 @@ impl AsRef<[Hash]> for TxDemandVector {
 
 /// TxDemandVectorConst is a borrowing equivalent of [`TxDemandVector`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxDemandVectorConst(pub VecMConst<Hash, TX_DEMAND_VECTOR_MAX_SIZE>);
 

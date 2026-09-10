@@ -52,6 +52,7 @@ impl WriteXdr for ScSpecTypeMap {
 
 /// ScSpecTypeMapConst is a borrowing equivalent of [`ScSpecTypeMap`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecTypeMapConst {
     pub key_type: &'static ScSpecTypeDefConst,

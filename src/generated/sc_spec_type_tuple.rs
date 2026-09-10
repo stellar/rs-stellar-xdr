@@ -48,6 +48,7 @@ impl WriteXdr for ScSpecTypeTuple {
 
 /// ScSpecTypeTupleConst is a borrowing equivalent of [`ScSpecTypeTuple`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecTypeTupleConst {
     pub value_types: VecMConst<ScSpecTypeDefConst, 12>,

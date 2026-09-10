@@ -52,6 +52,7 @@ impl WriteXdr for ContractEventV0 {
 
 /// ContractEventV0Const is a borrowing equivalent of [`ContractEventV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractEventV0Const {
     pub topics: VecMConst<ScValConst>,

@@ -139,6 +139,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 
 /// TransactionSignaturePayloadTaggedTransactionConst is a borrowing equivalent of [`TransactionSignaturePayloadTaggedTransaction`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionSignaturePayloadTaggedTransactionConst {
@@ -146,6 +147,7 @@ pub enum TransactionSignaturePayloadTaggedTransactionConst {
     TxFeeBump(FeeBumpTransactionConst),
 }
 
+#[cfg(feature = "const")]
 impl TransactionSignaturePayloadTaggedTransactionConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {

@@ -56,6 +56,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 
 /// TxSetComponentTxsMaybeDiscountedFeeConst is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxSetComponentTxsMaybeDiscountedFeeConst {
     pub base_fee: Option<i64>,

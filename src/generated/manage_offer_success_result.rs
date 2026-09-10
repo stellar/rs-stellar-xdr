@@ -62,6 +62,7 @@ impl WriteXdr for ManageOfferSuccessResult {
 
 /// ManageOfferSuccessResultConst is a borrowing equivalent of [`ManageOfferSuccessResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ManageOfferSuccessResultConst {
     pub offers_claimed: VecMConst<ClaimAtom>,

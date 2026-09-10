@@ -52,6 +52,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 
 /// RevokeSponsorshipOpSignerConst is a borrowing equivalent of [`RevokeSponsorshipOpSigner`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RevokeSponsorshipOpSignerConst {
     pub account_id: AccountId,

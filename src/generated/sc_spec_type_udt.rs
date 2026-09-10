@@ -48,6 +48,7 @@ impl WriteXdr for ScSpecTypeUdt {
 
 /// ScSpecTypeUdtConst is a borrowing equivalent of [`ScSpecTypeUdt`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecTypeUdtConst {
     pub name: StringMConst<60>,

@@ -91,6 +91,7 @@ impl WriteXdr for PreconditionsV2 {
 
 /// PreconditionsV2Const is a borrowing equivalent of [`PreconditionsV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PreconditionsV2Const {
     pub time_bounds: Option<TimeBounds>,

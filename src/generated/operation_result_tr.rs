@@ -407,6 +407,7 @@ impl WriteXdr for OperationResultTr {
 
 /// OperationResultTrConst is a borrowing equivalent of [`OperationResultTr`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResultTrConst {
@@ -439,6 +440,7 @@ pub enum OperationResultTrConst {
     RestoreFootprint(RestoreFootprintResult),
 }
 
+#[cfg(feature = "const")]
 impl OperationResultTrConst {
     #[must_use]
     pub const fn discriminant(&self) -> OperationType {

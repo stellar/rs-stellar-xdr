@@ -137,6 +137,7 @@ impl WriteXdr for LedgerHeader {
 
 /// LedgerHeaderConst is a borrowing equivalent of [`LedgerHeader`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerHeaderConst {
     pub ledger_version: u32,

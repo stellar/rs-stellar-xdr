@@ -52,6 +52,7 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
 
 /// InvokeHostFunctionSuccessPreImageConst is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InvokeHostFunctionSuccessPreImageConst {
     pub return_value: ScValConst,

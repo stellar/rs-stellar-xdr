@@ -361,6 +361,7 @@ impl WriteXdr for ScVal {
 
 /// ScValConst is a borrowing equivalent of [`ScVal`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScValConst {
@@ -389,6 +390,7 @@ pub enum ScValConst {
     ExecutableTag(ScStringConst),
 }
 
+#[cfg(feature = "const")]
 impl ScValConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScValType {

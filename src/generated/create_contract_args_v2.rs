@@ -57,6 +57,7 @@ impl WriteXdr for CreateContractArgsV2 {
 
 /// CreateContractArgsV2Const is a borrowing equivalent of [`CreateContractArgsV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CreateContractArgsV2Const {
     pub contract_id_preimage: ContractIdPreimage,

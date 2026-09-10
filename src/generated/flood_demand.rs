@@ -48,6 +48,7 @@ impl WriteXdr for FloodDemand {
 
 /// FloodDemandConst is a borrowing equivalent of [`FloodDemand`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FloodDemandConst {
     pub tx_hashes: TxDemandVectorConst,

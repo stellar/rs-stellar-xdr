@@ -54,6 +54,7 @@ impl WriteXdr for TransactionV1Envelope {
 
 /// TransactionV1EnvelopeConst is a borrowing equivalent of [`TransactionV1Envelope`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionV1EnvelopeConst {
     pub tx: TransactionConst,

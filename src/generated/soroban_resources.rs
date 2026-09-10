@@ -65,6 +65,7 @@ impl WriteXdr for SorobanResources {
 
 /// SorobanResourcesConst is a borrowing equivalent of [`SorobanResources`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanResourcesConst {
     pub footprint: LedgerFootprintConst,

@@ -145,6 +145,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 
 /// ScSpecUdtUnionCaseV0Const is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecUdtUnionCaseV0Const {
@@ -152,6 +153,7 @@ pub enum ScSpecUdtUnionCaseV0Const {
     TupleV0(ScSpecUdtUnionCaseTupleV0Const),
 }
 
+#[cfg(feature = "const")]
 impl ScSpecUdtUnionCaseV0Const {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {

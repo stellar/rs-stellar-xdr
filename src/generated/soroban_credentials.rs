@@ -168,6 +168,7 @@ impl WriteXdr for SorobanCredentials {
 
 /// SorobanCredentialsConst is a borrowing equivalent of [`SorobanCredentials`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanCredentialsConst {
@@ -177,6 +178,7 @@ pub enum SorobanCredentialsConst {
     AddressWithDelegates(SorobanAddressCredentialsWithDelegatesConst),
 }
 
+#[cfg(feature = "const")]
 impl SorobanCredentialsConst {
     #[must_use]
     pub const fn discriminant(&self) -> SorobanCredentialsType {

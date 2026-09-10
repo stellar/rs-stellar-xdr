@@ -113,6 +113,7 @@ impl WriteXdr for Operation {
 
 /// OperationConst is a borrowing equivalent of [`Operation`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct OperationConst {
     pub source_account: Option<MuxedAccount>,

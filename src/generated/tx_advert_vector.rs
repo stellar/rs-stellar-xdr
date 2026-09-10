@@ -110,6 +110,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
 
 /// TxAdvertVectorConst is a borrowing equivalent of [`TxAdvertVector`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxAdvertVectorConst(pub VecMConst<Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 

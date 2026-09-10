@@ -58,6 +58,7 @@ impl WriteXdr for TransactionMetaV2 {
 
 /// TransactionMetaV2Const is a borrowing equivalent of [`TransactionMetaV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionMetaV2Const {
     pub tx_changes_before: LedgerEntryChangesConst,

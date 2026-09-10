@@ -52,6 +52,7 @@ impl WriteXdr for SorobanAuthorizationEntry {
 
 /// SorobanAuthorizationEntryConst is a borrowing equivalent of [`SorobanAuthorizationEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanAuthorizationEntryConst {
     pub credentials: SorobanCredentialsConst,

@@ -56,6 +56,7 @@ impl WriteXdr for ScpQuorumSet {
 
 /// ScpQuorumSetConst is a borrowing equivalent of [`ScpQuorumSet`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpQuorumSetConst {
     pub threshold: u32,

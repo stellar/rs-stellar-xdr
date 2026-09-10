@@ -342,6 +342,7 @@ impl WriteXdr for ScSpecTypeDef {
 
 /// ScSpecTypeDefConst is a borrowing equivalent of [`ScSpecTypeDef`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecTypeDefConst {
@@ -373,6 +374,7 @@ pub enum ScSpecTypeDefConst {
     Udt(ScSpecTypeUdtConst),
 }
 
+#[cfg(feature = "const")]
 impl ScSpecTypeDefConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecType {

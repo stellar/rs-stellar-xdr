@@ -60,6 +60,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
 
 /// AuthenticatedMessageV0Const is a borrowing equivalent of [`AuthenticatedMessageV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AuthenticatedMessageV0Const {
     pub sequence: u64,

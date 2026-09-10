@@ -344,6 +344,7 @@ impl WriteXdr for StellarMessage {
 
 /// StellarMessageConst is a borrowing equivalent of [`StellarMessage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarMessageConst {
@@ -370,6 +371,7 @@ pub enum StellarMessageConst {
     FloodDemand(FloodDemandConst),
 }
 
+#[cfg(feature = "const")]
 impl StellarMessageConst {
     #[must_use]
     pub const fn discriminant(&self) -> MessageType {

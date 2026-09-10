@@ -64,6 +64,7 @@ impl WriteXdr for SurveyResponseMessage {
 
 /// SurveyResponseMessageConst is a borrowing equivalent of [`SurveyResponseMessage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SurveyResponseMessageConst {
     pub surveyor_peer_id: NodeId,

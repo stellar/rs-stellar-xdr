@@ -170,6 +170,7 @@ impl WriteXdr for SorobanAuthorizedFunction {
 
 /// SorobanAuthorizedFunctionConst is a borrowing equivalent of [`SorobanAuthorizedFunction`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanAuthorizedFunctionConst {
@@ -178,6 +179,7 @@ pub enum SorobanAuthorizedFunctionConst {
     CreateContractV2HostFn(CreateContractArgsV2Const),
 }
 
+#[cfg(feature = "const")]
 impl SorobanAuthorizedFunctionConst {
     #[must_use]
     pub const fn discriminant(&self) -> SorobanAuthorizedFunctionType {

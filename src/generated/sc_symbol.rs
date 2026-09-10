@@ -110,6 +110,7 @@ impl AsRef<[u8]> for ScSymbol {
 
 /// ScSymbolConst is a borrowing equivalent of [`ScSymbol`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSymbolConst(pub StringMConst<SCSYMBOL_LIMIT>);
 

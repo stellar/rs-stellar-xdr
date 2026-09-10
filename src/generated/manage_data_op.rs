@@ -52,6 +52,7 @@ impl WriteXdr for ManageDataOp {
 
 /// ManageDataOpConst is a borrowing equivalent of [`ManageDataOp`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ManageDataOpConst {
     pub data_name: String64Const,

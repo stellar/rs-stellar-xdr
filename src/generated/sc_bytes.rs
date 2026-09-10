@@ -110,6 +110,7 @@ impl AsRef<[u8]> for ScBytes {
 
 /// ScBytesConst is a borrowing equivalent of [`ScBytes`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScBytesConst(pub BytesMConst);
 

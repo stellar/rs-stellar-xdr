@@ -52,6 +52,7 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 
 /// SorobanAuthorizedInvocationConst is a borrowing equivalent of [`SorobanAuthorizedInvocation`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanAuthorizedInvocationConst {
     pub function: SorobanAuthorizedFunctionConst,

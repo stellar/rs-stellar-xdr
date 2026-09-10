@@ -52,6 +52,7 @@ impl WriteXdr for ScpBallot {
 
 /// ScpBallotConst is a borrowing equivalent of [`ScpBallot`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpBallotConst {
     pub counter: u32,

@@ -56,6 +56,7 @@ impl WriteXdr for StoredDebugTransactionSet {
 
 /// StoredDebugTransactionSetConst is a borrowing equivalent of [`StoredDebugTransactionSet`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StoredDebugTransactionSetConst {
     pub tx_set: StoredTransactionSetConst,

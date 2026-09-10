@@ -52,6 +52,7 @@ impl WriteXdr for LedgerCloseValueSignature {
 
 /// LedgerCloseValueSignatureConst is a borrowing equivalent of [`LedgerCloseValueSignature`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseValueSignatureConst {
     pub node_id: NodeId,

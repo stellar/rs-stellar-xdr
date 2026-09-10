@@ -87,6 +87,7 @@ impl WriteXdr for SetOptionsOp {
 
 /// SetOptionsOpConst is a borrowing equivalent of [`SetOptionsOp`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SetOptionsOpConst {
     pub inflation_dest: Option<AccountId>,

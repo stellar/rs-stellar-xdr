@@ -52,6 +52,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 
 /// PathPaymentStrictSendResultSuccessConst is a borrowing equivalent of [`PathPaymentStrictSendResultSuccess`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PathPaymentStrictSendResultSuccessConst {
     pub offers: VecMConst<ClaimAtom>,

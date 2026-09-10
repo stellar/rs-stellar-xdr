@@ -94,6 +94,7 @@ impl WriteXdr for InnerTransactionResult {
 
 /// InnerTransactionResultConst is a borrowing equivalent of [`InnerTransactionResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InnerTransactionResultConst {
     pub fee_charged: i64,

@@ -110,6 +110,7 @@ impl AsRef<[u8]> for String32 {
 
 /// String32Const is a borrowing equivalent of [`String32`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct String32Const(pub StringMConst<32>);
 

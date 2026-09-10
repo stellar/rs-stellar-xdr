@@ -233,6 +233,7 @@ impl WriteXdr for {{ u.name }} {
 {%- if let Some(cfg) = u.const_cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum {{ u.name }}Const {
@@ -251,6 +252,7 @@ pub enum {{ u.name }}Const {
 {% if let Some(cfg) = u.const_cfg -%}
 #[cfg({{ cfg }})]
 {% endif -%}
+#[cfg(feature = "const")]
 impl {{ u.name }}Const {
     #[must_use]
     pub const fn discriminant(&self) -> {{ u.discriminant_type }} {

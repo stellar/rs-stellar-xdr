@@ -165,6 +165,7 @@ impl WriteXdr for LedgerEntryChange {
 
 /// LedgerEntryChangeConst is a borrowing equivalent of [`LedgerEntryChange`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChangeConst {
@@ -175,6 +176,7 @@ pub enum LedgerEntryChangeConst {
     Restored(LedgerEntryConst),
 }
 
+#[cfg(feature = "const")]
 impl LedgerEntryChangeConst {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryChangeType {

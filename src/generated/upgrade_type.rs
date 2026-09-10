@@ -110,6 +110,7 @@ impl AsRef<[u8]> for UpgradeType {
 
 /// UpgradeTypeConst is a borrowing equivalent of [`UpgradeType`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UpgradeTypeConst(pub BytesMConst<128>);
 

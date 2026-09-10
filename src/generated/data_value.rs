@@ -110,6 +110,7 @@ impl AsRef<[u8]> for DataValue {
 
 /// DataValueConst is a borrowing equivalent of [`DataValue`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DataValueConst(pub BytesMConst<64>);
 

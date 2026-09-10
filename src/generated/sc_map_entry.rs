@@ -52,6 +52,7 @@ impl WriteXdr for ScMapEntry {
 
 /// ScMapEntryConst is a borrowing equivalent of [`ScMapEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScMapEntryConst {
     pub key: ScValConst,

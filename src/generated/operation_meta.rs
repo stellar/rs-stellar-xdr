@@ -48,6 +48,7 @@ impl WriteXdr for OperationMeta {
 
 /// OperationMetaConst is a borrowing equivalent of [`OperationMeta`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct OperationMetaConst {
     pub changes: LedgerEntryChangesConst,

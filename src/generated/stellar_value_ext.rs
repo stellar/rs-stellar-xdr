@@ -157,6 +157,7 @@ impl WriteXdr for StellarValueExt {
 
 /// StellarValueExtConst is a borrowing equivalent of [`StellarValueExt`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarValueExtConst {
@@ -165,6 +166,7 @@ pub enum StellarValueExtConst {
     EmptyTxSet(StellarValueProposedValueConst),
 }
 
+#[cfg(feature = "const")]
 impl StellarValueExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> StellarValueType {

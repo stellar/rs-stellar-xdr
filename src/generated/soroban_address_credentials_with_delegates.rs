@@ -52,6 +52,7 @@ impl WriteXdr for SorobanAddressCredentialsWithDelegates {
 
 /// SorobanAddressCredentialsWithDelegatesConst is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanAddressCredentialsWithDelegatesConst {
     pub address_credentials: SorobanAddressCredentialsConst,

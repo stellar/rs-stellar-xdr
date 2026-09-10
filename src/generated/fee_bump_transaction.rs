@@ -74,6 +74,7 @@ impl WriteXdr for FeeBumpTransaction {
 
 /// FeeBumpTransactionConst is a borrowing equivalent of [`FeeBumpTransaction`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FeeBumpTransactionConst {
     pub fee_source: MuxedAccount,

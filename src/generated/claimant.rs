@@ -135,12 +135,14 @@ impl WriteXdr for Claimant {
 
 /// ClaimantConst is a borrowing equivalent of [`Claimant`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimantConst {
     ClaimantTypeV0(ClaimantV0Const),
 }
 
+#[cfg(feature = "const")]
 impl ClaimantConst {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimantType {

@@ -136,12 +136,14 @@ impl WriteXdr for AuthenticatedMessage {
 
 /// AuthenticatedMessageConst is a borrowing equivalent of [`AuthenticatedMessage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthenticatedMessageConst {
     V0(AuthenticatedMessageV0Const),
 }
 
+#[cfg(feature = "const")]
 impl AuthenticatedMessageConst {
     #[must_use]
     pub const fn discriminant(&self) -> u32 {

@@ -52,6 +52,7 @@ impl WriteXdr for TransactionResultPair {
 
 /// TransactionResultPairConst is a borrowing equivalent of [`TransactionResultPair`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionResultPairConst {
     pub transaction_hash: Hash,

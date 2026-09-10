@@ -403,6 +403,7 @@ impl WriteXdr for OperationBody {
 
 /// OperationBodyConst is a borrowing equivalent of [`OperationBody`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationBodyConst {
@@ -435,6 +436,7 @@ pub enum OperationBodyConst {
     RestoreFootprint(RestoreFootprintOp),
 }
 
+#[cfg(feature = "const")]
 impl OperationBodyConst {
     #[must_use]
     pub const fn discriminant(&self) -> OperationType {

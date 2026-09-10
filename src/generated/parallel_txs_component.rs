@@ -59,6 +59,7 @@ impl WriteXdr for ParallelTxsComponent {
 
 /// ParallelTxsComponentConst is a borrowing equivalent of [`ParallelTxsComponent`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ParallelTxsComponentConst {
     pub base_fee: Option<i64>,

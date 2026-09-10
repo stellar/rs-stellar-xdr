@@ -60,6 +60,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
 
 /// CreateClaimableBalanceOpConst is a borrowing equivalent of [`CreateClaimableBalanceOp`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CreateClaimableBalanceOpConst {
     pub asset: Asset,

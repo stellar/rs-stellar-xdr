@@ -52,6 +52,7 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
 
 /// TimeSlicedSurveyResponseMessageConst is a borrowing equivalent of [`TimeSlicedSurveyResponseMessage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TimeSlicedSurveyResponseMessageConst {
     pub response: SurveyResponseMessageConst,

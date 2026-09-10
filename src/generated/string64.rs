@@ -110,6 +110,7 @@ impl AsRef<[u8]> for String64 {
 
 /// String64Const is a borrowing equivalent of [`String64`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct String64Const(pub StringMConst<64>);
 

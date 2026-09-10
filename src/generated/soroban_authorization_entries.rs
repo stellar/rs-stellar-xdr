@@ -110,6 +110,7 @@ impl AsRef<[SorobanAuthorizationEntry]> for SorobanAuthorizationEntries {
 
 /// SorobanAuthorizationEntriesConst is a borrowing equivalent of [`SorobanAuthorizationEntries`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanAuthorizationEntriesConst(pub VecMConst<SorobanAuthorizationEntryConst>);
 

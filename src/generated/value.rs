@@ -110,6 +110,7 @@ impl AsRef<[u8]> for Value {
 
 /// ValueConst is a borrowing equivalent of [`Value`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ValueConst(pub BytesMConst);
 

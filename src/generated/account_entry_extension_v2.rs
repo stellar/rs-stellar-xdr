@@ -68,6 +68,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
 
 /// AccountEntryExtensionV2Const is a borrowing equivalent of [`AccountEntryExtensionV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AccountEntryExtensionV2Const {
     pub num_sponsored: u32,

@@ -52,6 +52,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
 
 /// ScpHistoryEntryV0Const is a borrowing equivalent of [`ScpHistoryEntryV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpHistoryEntryV0Const {
     pub quorum_sets: VecMConst<ScpQuorumSetConst>,

@@ -241,6 +241,7 @@ impl WriteXdr for OperationResult {
 
 /// OperationResultConst is a borrowing equivalent of [`OperationResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResultConst {
@@ -253,6 +254,7 @@ pub enum OperationResultConst {
     OpTooManySponsoring,
 }
 
+#[cfg(feature = "const")]
 impl OperationResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> OperationResultCode {

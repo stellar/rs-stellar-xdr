@@ -131,12 +131,14 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 
 /// FeeBumpTransactionInnerTxConst is a borrowing equivalent of [`FeeBumpTransactionInnerTx`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTxConst {
     Tx(TransactionV1EnvelopeConst),
 }
 
+#[cfg(feature = "const")]
 impl FeeBumpTransactionInnerTxConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {

@@ -51,6 +51,7 @@ impl WriteXdr for FrozenLedgerKeysDelta {
 
 /// FrozenLedgerKeysDeltaConst is a borrowing equivalent of [`FrozenLedgerKeysDelta`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FrozenLedgerKeysDeltaConst {
     pub keys_to_freeze: VecMConst<EncodedLedgerKeyConst>,

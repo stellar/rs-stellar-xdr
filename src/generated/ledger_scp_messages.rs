@@ -52,6 +52,7 @@ impl WriteXdr for LedgerScpMessages {
 
 /// LedgerScpMessagesConst is a borrowing equivalent of [`LedgerScpMessages`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerScpMessagesConst {
     pub ledger_seq: u32,

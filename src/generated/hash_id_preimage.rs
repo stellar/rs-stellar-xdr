@@ -212,6 +212,7 @@ impl WriteXdr for HashIdPreimage {
 
 /// HashIdPreimageConst is a borrowing equivalent of [`HashIdPreimage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum HashIdPreimageConst {
@@ -222,6 +223,7 @@ pub enum HashIdPreimageConst {
     SorobanAuthorizationWithAddress(HashIdPreimageSorobanAuthorizationWithAddressConst),
 }
 
+#[cfg(feature = "const")]
 impl HashIdPreimageConst {
     #[must_use]
     pub const fn discriminant(&self) -> EnvelopeType {

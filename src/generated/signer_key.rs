@@ -164,6 +164,7 @@ impl WriteXdr for SignerKey {
 
 /// SignerKeyConst is a borrowing equivalent of [`SignerKey`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKeyConst {
@@ -173,6 +174,7 @@ pub enum SignerKeyConst {
     Ed25519SignedPayload(SignerKeyEd25519SignedPayloadConst),
 }
 
+#[cfg(feature = "const")]
 impl SignerKeyConst {
     #[must_use]
     pub const fn discriminant(&self) -> SignerKeyType {

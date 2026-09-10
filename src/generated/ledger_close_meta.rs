@@ -145,6 +145,7 @@ impl WriteXdr for LedgerCloseMeta {
 
 /// LedgerCloseMetaConst is a borrowing equivalent of [`LedgerCloseMeta`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMetaConst {
@@ -153,6 +154,7 @@ pub enum LedgerCloseMetaConst {
     V2(LedgerCloseMetaV2Const),
 }
 
+#[cfg(feature = "const")]
 impl LedgerCloseMetaConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

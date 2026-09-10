@@ -54,6 +54,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 
 /// FeeBumpTransactionEnvelopeConst is a borrowing equivalent of [`FeeBumpTransactionEnvelope`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FeeBumpTransactionEnvelopeConst {
     pub tx: FeeBumpTransactionConst,

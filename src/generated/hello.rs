@@ -80,6 +80,7 @@ impl WriteXdr for Hello {
 
 /// HelloConst is a borrowing equivalent of [`Hello`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct HelloConst {
     pub ledger_version: u32,

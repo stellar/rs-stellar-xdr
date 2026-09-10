@@ -56,6 +56,7 @@ impl WriteXdr for ScpNomination {
 
 /// ScpNominationConst is a borrowing equivalent of [`ScpNomination`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpNominationConst {
     pub quorum_set_hash: Hash,

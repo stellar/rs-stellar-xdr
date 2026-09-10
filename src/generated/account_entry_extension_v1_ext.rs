@@ -138,6 +138,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 
 /// AccountEntryExtensionV1ExtConst is a borrowing equivalent of [`AccountEntryExtensionV1Ext`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1ExtConst {
@@ -145,6 +146,7 @@ pub enum AccountEntryExtensionV1ExtConst {
     V2(AccountEntryExtensionV2Const),
 }
 
+#[cfg(feature = "const")]
 impl AccountEntryExtensionV1ExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

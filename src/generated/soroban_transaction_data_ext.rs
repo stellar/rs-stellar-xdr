@@ -138,6 +138,7 @@ impl WriteXdr for SorobanTransactionDataExt {
 
 /// SorobanTransactionDataExtConst is a borrowing equivalent of [`SorobanTransactionDataExt`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanTransactionDataExtConst {
@@ -145,6 +146,7 @@ pub enum SorobanTransactionDataExtConst {
     V1(SorobanResourcesExtV0Const),
 }
 
+#[cfg(feature = "const")]
 impl SorobanTransactionDataExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

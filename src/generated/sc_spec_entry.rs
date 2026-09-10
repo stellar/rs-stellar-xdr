@@ -182,6 +182,7 @@ impl WriteXdr for ScSpecEntry {
 
 /// ScSpecEntryConst is a borrowing equivalent of [`ScSpecEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecEntryConst {
@@ -193,6 +194,7 @@ pub enum ScSpecEntryConst {
     EventV0(ScSpecEventV0Const),
 }
 
+#[cfg(feature = "const")]
 impl ScSpecEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScSpecEntryKind {

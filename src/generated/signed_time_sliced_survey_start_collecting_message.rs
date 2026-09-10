@@ -52,6 +52,7 @@ impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
 
 /// SignedTimeSlicedSurveyStartCollectingMessageConst is a borrowing equivalent of [`SignedTimeSlicedSurveyStartCollectingMessage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignedTimeSlicedSurveyStartCollectingMessageConst {
     pub signature: SignatureConst,

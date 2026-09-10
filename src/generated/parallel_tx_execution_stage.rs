@@ -110,6 +110,7 @@ impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
 
 /// ParallelTxExecutionStageConst is a borrowing equivalent of [`ParallelTxExecutionStage`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ParallelTxExecutionStageConst(pub VecMConst<DependentTxClusterConst>);
 

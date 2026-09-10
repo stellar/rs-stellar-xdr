@@ -278,6 +278,7 @@ impl WriteXdr for InnerTransactionResultResult {
 
 /// InnerTransactionResultResultConst is a borrowing equivalent of [`InnerTransactionResultResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultResultConst {
@@ -301,6 +302,7 @@ pub enum InnerTransactionResultResultConst {
     TxFrozenKeyAccessed,
 }
 
+#[cfg(feature = "const")]
 impl InnerTransactionResultResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> TransactionResultCode {

@@ -110,6 +110,7 @@ impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
 
 /// DependentTxClusterConst is a borrowing equivalent of [`DependentTxCluster`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DependentTxClusterConst(pub VecMConst<TransactionEnvelopeConst>);
 

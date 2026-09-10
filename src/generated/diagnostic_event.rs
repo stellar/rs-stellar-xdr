@@ -52,6 +52,7 @@ impl WriteXdr for DiagnosticEvent {
 
 /// DiagnosticEventConst is a borrowing equivalent of [`DiagnosticEvent`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DiagnosticEventConst {
     pub in_successful_contract_call: bool,

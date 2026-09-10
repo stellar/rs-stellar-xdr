@@ -95,6 +95,7 @@ impl WriteXdr for TransactionResult {
 
 /// TransactionResultConst is a borrowing equivalent of [`TransactionResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionResultConst {
     pub fee_charged: i64,

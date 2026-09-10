@@ -51,6 +51,7 @@ impl WriteXdr for TransactionEvent {
 
 /// TransactionEventConst is a borrowing equivalent of [`TransactionEvent`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionEventConst {
     pub stage: TransactionEventStage,

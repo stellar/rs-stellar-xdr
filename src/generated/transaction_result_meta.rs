@@ -56,6 +56,7 @@ impl WriteXdr for TransactionResultMeta {
 
 /// TransactionResultMetaConst is a borrowing equivalent of [`TransactionResultMeta`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionResultMetaConst {
     pub result: TransactionResultPairConst,

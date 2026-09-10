@@ -131,12 +131,14 @@ impl WriteXdr for ScMetaEntry {
 
 /// ScMetaEntryConst is a borrowing equivalent of [`ScMetaEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScMetaEntryConst {
     ScMetaV0(ScMetaV0Const),
 }
 
+#[cfg(feature = "const")]
 impl ScMetaEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScMetaKind {

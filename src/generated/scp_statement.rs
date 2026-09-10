@@ -92,6 +92,7 @@ impl WriteXdr for ScpStatement {
 
 /// ScpStatementConst is a borrowing equivalent of [`ScpStatement`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpStatementConst {
     pub node_id: NodeId,

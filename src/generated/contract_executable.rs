@@ -151,6 +151,7 @@ impl WriteXdr for ContractExecutable {
 
 /// ContractExecutableConst is a borrowing equivalent of [`ContractExecutable`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractExecutableConst {
@@ -159,6 +160,7 @@ pub enum ContractExecutableConst {
     ExternalRef(ContractExecutableExternalRefConst),
 }
 
+#[cfg(feature = "const")]
 impl ContractExecutableConst {
     #[must_use]
     pub const fn discriminant(&self) -> ContractExecutableType {

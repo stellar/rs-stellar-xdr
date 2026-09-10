@@ -60,6 +60,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
 
 /// ScSpecUdtErrorEnumV0Const is a borrowing equivalent of [`ScSpecUdtErrorEnumV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtErrorEnumV0Const {
     pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,

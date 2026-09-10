@@ -73,6 +73,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 
 /// LedgerCloseMetaV0Const is a borrowing equivalent of [`LedgerCloseMetaV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaV0Const {
     pub ledger_header: LedgerHeaderHistoryEntryConst,

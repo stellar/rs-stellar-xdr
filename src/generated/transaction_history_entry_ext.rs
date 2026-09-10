@@ -138,6 +138,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
 
 /// TransactionHistoryEntryExtConst is a borrowing equivalent of [`TransactionHistoryEntryExt`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExtConst {
@@ -145,6 +146,7 @@ pub enum TransactionHistoryEntryExtConst {
     V1(GeneralizedTransactionSetConst),
 }
 
+#[cfg(feature = "const")]
 impl TransactionHistoryEntryExtConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

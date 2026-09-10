@@ -83,6 +83,7 @@ impl WriteXdr for StellarValue {
 
 /// StellarValueConst is a borrowing equivalent of [`StellarValue`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StellarValueConst {
     pub tx_set_hash: Hash,

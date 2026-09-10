@@ -170,6 +170,7 @@ impl WriteXdr for HostFunction {
 
 /// HostFunctionConst is a borrowing equivalent of [`HostFunction`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum HostFunctionConst {
@@ -179,6 +180,7 @@ pub enum HostFunctionConst {
     CreateContractV2(CreateContractArgsV2Const),
 }
 
+#[cfg(feature = "const")]
 impl HostFunctionConst {
     #[must_use]
     pub const fn discriminant(&self) -> HostFunctionType {

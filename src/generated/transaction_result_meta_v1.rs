@@ -66,6 +66,7 @@ impl WriteXdr for TransactionResultMetaV1 {
 
 /// TransactionResultMetaV1Const is a borrowing equivalent of [`TransactionResultMetaV1`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionResultMetaV1Const {
     pub ext: ExtensionPoint,

@@ -52,6 +52,7 @@ impl WriteXdr for UpgradeEntryMeta {
 
 /// UpgradeEntryMetaConst is a borrowing equivalent of [`UpgradeEntryMeta`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UpgradeEntryMetaConst {
     pub upgrade: LedgerUpgrade,

@@ -95,6 +95,7 @@ impl WriteXdr for LedgerCloseMetaV2 {
 
 /// LedgerCloseMetaV2Const is a borrowing equivalent of [`LedgerCloseMetaV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaV2Const {
     pub ext: LedgerCloseMetaExt,

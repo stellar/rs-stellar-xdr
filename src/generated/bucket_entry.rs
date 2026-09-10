@@ -157,6 +157,7 @@ impl WriteXdr for BucketEntry {
 
 /// BucketEntryConst is a borrowing equivalent of [`BucketEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketEntryConst {
@@ -166,6 +167,7 @@ pub enum BucketEntryConst {
     Metaentry(BucketMetadata),
 }
 
+#[cfg(feature = "const")]
 impl BucketEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> BucketEntryType {

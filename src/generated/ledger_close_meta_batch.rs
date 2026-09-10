@@ -61,6 +61,7 @@ impl WriteXdr for LedgerCloseMetaBatch {
 
 /// LedgerCloseMetaBatchConst is a borrowing equivalent of [`LedgerCloseMetaBatch`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerCloseMetaBatchConst {
     pub start_sequence: u32,

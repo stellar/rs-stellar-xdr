@@ -48,6 +48,7 @@ impl WriteXdr for FloodAdvert {
 
 /// FloodAdvertConst is a borrowing equivalent of [`FloodAdvert`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FloodAdvertConst {
     pub tx_hashes: TxAdvertVectorConst,

@@ -226,6 +226,7 @@ impl WriteXdr for LedgerEntryData {
 
 /// LedgerEntryDataConst is a borrowing equivalent of [`LedgerEntryData`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryDataConst {
@@ -241,6 +242,7 @@ pub enum LedgerEntryDataConst {
     Ttl(TtlEntry),
 }
 
+#[cfg(feature = "const")]
 impl LedgerEntryDataConst {
     #[must_use]
     pub const fn discriminant(&self) -> LedgerEntryType {

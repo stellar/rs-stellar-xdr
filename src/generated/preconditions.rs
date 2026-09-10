@@ -149,6 +149,7 @@ impl WriteXdr for Preconditions {
 
 /// PreconditionsConst is a borrowing equivalent of [`Preconditions`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum PreconditionsConst {
@@ -157,6 +158,7 @@ pub enum PreconditionsConst {
     V2(PreconditionsV2Const),
 }
 
+#[cfg(feature = "const")]
 impl PreconditionsConst {
     #[must_use]
     pub const fn discriminant(&self) -> PreconditionType {

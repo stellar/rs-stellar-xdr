@@ -234,6 +234,7 @@ impl WriteXdr for ManageBuyOfferResult {
 
 /// ManageBuyOfferResultConst is a borrowing equivalent of [`ManageBuyOfferResult`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageBuyOfferResultConst {
@@ -252,6 +253,7 @@ pub enum ManageBuyOfferResultConst {
     LowReserve,
 }
 
+#[cfg(feature = "const")]
 impl ManageBuyOfferResultConst {
     #[must_use]
     pub const fn discriminant(&self) -> ManageBuyOfferResultCode {

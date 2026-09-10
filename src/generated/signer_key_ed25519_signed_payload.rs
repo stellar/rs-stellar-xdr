@@ -83,6 +83,7 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
 
 /// SignerKeyEd25519SignedPayloadConst is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignerKeyEd25519SignedPayloadConst {
     pub ed25519: Uint256,

@@ -56,6 +56,7 @@ impl WriteXdr for LedgerKeyContractData {
 
 /// LedgerKeyContractDataConst is a borrowing equivalent of [`LedgerKeyContractData`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerKeyContractDataConst {
     pub contract: ScAddress,

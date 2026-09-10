@@ -179,6 +179,7 @@ impl WriteXdr for ScpStatementPledges {
 
 /// ScpStatementPledgesConst is a borrowing equivalent of [`ScpStatementPledges`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledgesConst {
@@ -188,6 +189,7 @@ pub enum ScpStatementPledgesConst {
     Nominate(ScpNominationConst),
 }
 
+#[cfg(feature = "const")]
 impl ScpStatementPledgesConst {
     #[must_use]
     pub const fn discriminant(&self) -> ScpStatementType {

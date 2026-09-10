@@ -52,6 +52,7 @@ impl WriteXdr for ScMetaV0 {
 
 /// ScMetaV0Const is a borrowing equivalent of [`ScMetaV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScMetaV0Const {
     pub key: StringMConst,

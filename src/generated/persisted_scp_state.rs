@@ -138,6 +138,7 @@ impl WriteXdr for PersistedScpState {
 
 /// PersistedScpStateConst is a borrowing equivalent of [`PersistedScpState`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum PersistedScpStateConst {
@@ -145,6 +146,7 @@ pub enum PersistedScpStateConst {
     V1(PersistedScpStateV1Const),
 }
 
+#[cfg(feature = "const")]
 impl PersistedScpStateConst {
     #[must_use]
     pub const fn discriminant(&self) -> i32 {

@@ -110,6 +110,7 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
 
 /// TimeSlicedPeerDataListConst is a borrowing equivalent of [`TimeSlicedPeerDataList`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TimeSlicedPeerDataListConst(pub VecMConst<TimeSlicedPeerDataConst, 25>);
 

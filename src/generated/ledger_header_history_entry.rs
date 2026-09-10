@@ -63,6 +63,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 
 /// LedgerHeaderHistoryEntryConst is a borrowing equivalent of [`LedgerHeaderHistoryEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerHeaderHistoryEntryConst {
     pub hash: Hash,

@@ -56,6 +56,7 @@ impl WriteXdr for TopologyResponseBodyV2 {
 
 /// TopologyResponseBodyV2Const is a borrowing equivalent of [`TopologyResponseBodyV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TopologyResponseBodyV2Const {
     pub inbound_peers: TimeSlicedPeerDataListConst,

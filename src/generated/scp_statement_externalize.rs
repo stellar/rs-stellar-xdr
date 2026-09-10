@@ -56,6 +56,7 @@ impl WriteXdr for ScpStatementExternalize {
 
 /// ScpStatementExternalizeConst is a borrowing equivalent of [`ScpStatementExternalize`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpStatementExternalizeConst {
     pub commit: ScpBallotConst,

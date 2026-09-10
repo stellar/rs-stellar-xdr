@@ -147,6 +147,7 @@ impl WriteXdr for RevokeSponsorshipOp {
 
 /// RevokeSponsorshipOpConst is a borrowing equivalent of [`RevokeSponsorshipOp`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipOpConst {
@@ -154,6 +155,7 @@ pub enum RevokeSponsorshipOpConst {
     Signer(RevokeSponsorshipOpSignerConst),
 }
 
+#[cfg(feature = "const")]
 impl RevokeSponsorshipOpConst {
     #[must_use]
     pub const fn discriminant(&self) -> RevokeSponsorshipType {

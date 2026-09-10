@@ -55,6 +55,7 @@ impl WriteXdr for InvokeContractArgs {
 
 /// InvokeContractArgsConst is a borrowing equivalent of [`InvokeContractArgs`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InvokeContractArgsConst {
     pub contract_address: ScAddress,

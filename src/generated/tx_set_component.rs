@@ -141,12 +141,14 @@ impl WriteXdr for TxSetComponent {
 
 /// TxSetComponentConst is a borrowing equivalent of [`TxSetComponent`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum TxSetComponentConst {
     TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFeeConst),
 }
 
+#[cfg(feature = "const")]
 impl TxSetComponentConst {
     #[must_use]
     pub const fn discriminant(&self) -> TxSetComponentType {

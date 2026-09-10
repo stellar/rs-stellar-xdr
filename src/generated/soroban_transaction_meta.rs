@@ -66,6 +66,7 @@ impl WriteXdr for SorobanTransactionMeta {
 
 /// SorobanTransactionMetaConst is a borrowing equivalent of [`SorobanTransactionMeta`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanTransactionMetaConst {
     pub ext: SorobanTransactionMetaExt,

@@ -54,6 +54,7 @@ impl WriteXdr for InvokeHostFunctionOp {
 
 /// InvokeHostFunctionOpConst is a borrowing equivalent of [`InvokeHostFunctionOp`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InvokeHostFunctionOpConst {
     pub host_function: HostFunctionConst,

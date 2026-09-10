@@ -47,6 +47,7 @@ impl WriteXdr for ConfigUpgradeSet {
 
 /// ConfigUpgradeSetConst is a borrowing equivalent of [`ConfigUpgradeSet`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConfigUpgradeSetConst {
     pub updated_entry: VecMConst<ConfigSettingEntryConst>,

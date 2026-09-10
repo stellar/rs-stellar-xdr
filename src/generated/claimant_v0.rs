@@ -52,6 +52,7 @@ impl WriteXdr for ClaimantV0 {
 
 /// ClaimantV0Const is a borrowing equivalent of [`ClaimantV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ClaimantV0Const {
     pub destination: AccountId,

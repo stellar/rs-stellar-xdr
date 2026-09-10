@@ -47,6 +47,7 @@ impl WriteXdr for FreezeBypassTxs {
 
 /// FreezeBypassTxsConst is a borrowing equivalent of [`FreezeBypassTxs`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FreezeBypassTxsConst {
     pub tx_hashes: VecMConst<Hash>,

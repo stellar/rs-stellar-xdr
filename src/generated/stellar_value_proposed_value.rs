@@ -60,6 +60,7 @@ impl WriteXdr for StellarValueProposedValue {
 
 /// StellarValueProposedValueConst is a borrowing equivalent of [`StellarValueProposedValue`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StellarValueProposedValueConst {
     pub tx_set_hash: Hash,

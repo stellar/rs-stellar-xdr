@@ -110,6 +110,7 @@ impl AsRef<[u8]> for EncodedLedgerKey {
 
 /// EncodedLedgerKeyConst is a borrowing equivalent of [`EncodedLedgerKey`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EncodedLedgerKeyConst(pub BytesMConst);
 

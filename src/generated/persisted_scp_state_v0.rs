@@ -56,6 +56,7 @@ impl WriteXdr for PersistedScpStateV0 {
 
 /// PersistedScpStateV0Const is a borrowing equivalent of [`PersistedScpStateV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PersistedScpStateV0Const {
     pub scp_envelopes: VecMConst<ScpEnvelopeConst>,

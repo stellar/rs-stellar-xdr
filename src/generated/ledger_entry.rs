@@ -89,6 +89,7 @@ impl WriteXdr for LedgerEntry {
 
 /// LedgerEntryConst is a borrowing equivalent of [`LedgerEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerEntryConst {
     pub last_modified_ledger_seq: u32,

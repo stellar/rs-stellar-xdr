@@ -110,6 +110,7 @@ impl AsRef<[u8]> for Signature {
 
 /// SignatureConst is a borrowing equivalent of [`Signature`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignatureConst(pub BytesMConst<64>);
 

@@ -52,6 +52,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 
 /// ScSpecUdtUnionCaseVoidV0Const is a borrowing equivalent of [`ScSpecUdtUnionCaseVoidV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecUdtUnionCaseVoidV0Const {
     pub doc: StringMConst<SC_SPEC_DOC_LIMIT>,

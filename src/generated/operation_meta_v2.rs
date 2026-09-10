@@ -58,6 +58,7 @@ impl WriteXdr for OperationMetaV2 {
 
 /// OperationMetaV2Const is a borrowing equivalent of [`OperationMetaV2`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct OperationMetaV2Const {
     pub ext: ExtensionPoint,

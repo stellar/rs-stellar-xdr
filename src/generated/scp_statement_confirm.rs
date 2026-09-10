@@ -64,6 +64,7 @@ impl WriteXdr for ScpStatementConfirm {
 
 /// ScpStatementConfirmConst is a borrowing equivalent of [`ScpStatementConfirm`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpStatementConfirmConst {
     pub ballot: ScpBallotConst,

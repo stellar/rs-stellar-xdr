@@ -68,6 +68,7 @@ impl WriteXdr for ScpStatementPrepare {
 
 /// ScpStatementPrepareConst is a borrowing equivalent of [`ScpStatementPrepare`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpStatementPrepareConst {
     pub quorum_set_hash: Hash,

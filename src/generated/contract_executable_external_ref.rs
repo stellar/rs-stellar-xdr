@@ -51,6 +51,7 @@ impl WriteXdr for ContractExecutableExternalRef {
 
 /// ContractExecutableExternalRefConst is a borrowing equivalent of [`ContractExecutableExternalRef`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractExecutableExternalRefConst {
     pub executable_owner: ScAddress,

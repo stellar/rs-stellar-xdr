@@ -153,6 +153,7 @@ impl WriteXdr for HotArchiveBucketEntry {
 
 /// HotArchiveBucketEntryConst is a borrowing equivalent of [`HotArchiveBucketEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum HotArchiveBucketEntryConst {
@@ -161,6 +162,7 @@ pub enum HotArchiveBucketEntryConst {
     Metaentry(BucketMetadata),
 }
 
+#[cfg(feature = "const")]
 impl HotArchiveBucketEntryConst {
     #[must_use]
     pub const fn discriminant(&self) -> HotArchiveBucketEntryType {

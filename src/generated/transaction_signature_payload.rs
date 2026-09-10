@@ -60,6 +60,7 @@ impl WriteXdr for TransactionSignaturePayload {
 
 /// TransactionSignaturePayloadConst is a borrowing equivalent of [`TransactionSignaturePayload`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionSignaturePayloadConst {
     pub network_id: Hash,

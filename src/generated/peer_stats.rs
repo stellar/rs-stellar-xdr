@@ -158,6 +158,7 @@ impl WriteXdr for PeerStats {
 
 /// PeerStatsConst is a borrowing equivalent of [`PeerStats`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PeerStatsConst {
     pub id: NodeId,

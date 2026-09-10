@@ -64,6 +64,7 @@ impl WriteXdr for ContractDataEntry {
 
 /// ContractDataEntryConst is a borrowing equivalent of [`ContractDataEntry`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractDataEntryConst {
     pub ext: ExtensionPoint,

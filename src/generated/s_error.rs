@@ -52,6 +52,7 @@ impl WriteXdr for SError {
 
 /// SErrorConst is a borrowing equivalent of [`SError`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SErrorConst {
     pub code: ErrorCode,

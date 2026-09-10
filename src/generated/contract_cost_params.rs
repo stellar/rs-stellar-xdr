@@ -110,6 +110,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 
 /// ContractCostParamsConst is a borrowing equivalent of [`ContractCostParams`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractCostParamsConst(
     pub VecMConst<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>,

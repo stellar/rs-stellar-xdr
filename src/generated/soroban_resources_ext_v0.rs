@@ -51,6 +51,7 @@ impl WriteXdr for SorobanResourcesExtV0 {
 
 /// SorobanResourcesExtV0Const is a borrowing equivalent of [`SorobanResourcesExtV0`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SorobanResourcesExtV0Const {
     pub archived_soroban_entries: VecMConst<u32>,

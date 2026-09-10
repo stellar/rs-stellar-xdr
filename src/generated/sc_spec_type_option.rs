@@ -48,6 +48,7 @@ impl WriteXdr for ScSpecTypeOption {
 
 /// ScSpecTypeOptionConst is a borrowing equivalent of [`ScSpecTypeOption`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScSpecTypeOptionConst {
     pub value_type: &'static ScSpecTypeDefConst,

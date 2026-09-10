@@ -110,6 +110,7 @@ impl AsRef<[u8]> for EncryptedBody {
 
 /// EncryptedBodyConst is a borrowing equivalent of [`EncryptedBody`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EncryptedBodyConst(pub BytesMConst<64000>);
 

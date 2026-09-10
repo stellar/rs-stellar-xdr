@@ -110,6 +110,7 @@ impl AsRef<[u8]> for ScString {
 
 /// ScStringConst is a borrowing equivalent of [`ScString`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScStringConst(pub StringMConst);
 

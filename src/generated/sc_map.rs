@@ -110,6 +110,7 @@ impl AsRef<[ScMapEntry]> for ScMap {
 
 /// ScMapConst is a borrowing equivalent of [`ScMap`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScMapConst(pub VecMConst<ScMapEntryConst>);
 

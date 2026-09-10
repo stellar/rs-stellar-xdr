@@ -197,6 +197,7 @@ impl WriteXdr for ClaimPredicate {
 
 /// ClaimPredicateConst is a borrowing equivalent of [`ClaimPredicate`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicateConst {
@@ -208,6 +209,7 @@ pub enum ClaimPredicateConst {
     BeforeRelativeTime(i64),
 }
 
+#[cfg(feature = "const")]
 impl ClaimPredicateConst {
     #[must_use]
     pub const fn discriminant(&self) -> ClaimPredicateType {

@@ -52,6 +52,7 @@ impl WriteXdr for DecoratedSignature {
 
 /// DecoratedSignatureConst is a borrowing equivalent of [`DecoratedSignature`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DecoratedSignatureConst {
     pub hint: SignatureHint,

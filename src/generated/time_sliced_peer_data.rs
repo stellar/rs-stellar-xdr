@@ -52,6 +52,7 @@ impl WriteXdr for TimeSlicedPeerData {
 
 /// TimeSlicedPeerDataConst is a borrowing equivalent of [`TimeSlicedPeerData`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TimeSlicedPeerDataConst {
     pub peer_stats: PeerStatsConst,

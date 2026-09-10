@@ -64,6 +64,7 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
 
 /// HashIdPreimageSorobanAuthorizationConst is a borrowing equivalent of [`HashIdPreimageSorobanAuthorization`] over `'static`
 /// data, for const XDR encoding.
+#[cfg(feature = "const")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct HashIdPreimageSorobanAuthorizationConst {
     pub network_id: Hash,

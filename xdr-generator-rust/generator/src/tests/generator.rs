@@ -11,15 +11,14 @@ fn generate_from_xdr(xdr: &str) -> String {
         no_display_fromstr: HashSet::new(),
     };
     let generator = RustGenerator::new(&spec, options);
-    // Render through the same path that writes the crate, so the tests see
-    // what is actually generated.
-    let rendered = generator.render(&spec, "// header\n").unwrap();
-    let mut output = rendered.module_file;
-    for (_, contents) in rendered.files {
-        output.push('\n');
-        output.push_str(&contents);
-    }
-    output
+    // Render through the path that writes the crate, so the tests see what is
+    // actually generated.
+    let files = generator.render_files(&spec).unwrap();
+    files
+        .into_iter()
+        .map(|(_, contents)| contents)
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn assert_contains(output: &str, expected: &str) {

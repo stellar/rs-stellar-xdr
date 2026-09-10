@@ -20,14 +20,6 @@ use crate::output::{
 };
 use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
 
-/// Every file of the generated output, rendered but not yet written.
-pub(crate) struct Rendered {
-    /// The module file's contents, e.g. what is written to `src/generated.rs`.
-    pub module_file: String,
-    /// One `(module name, contents)` pair per file in the output directory.
-    pub files: Vec<(String, String)>,
-}
-
 pub struct RustGenerator {
     options: RustOptions,
     type_info: TypeInfo,
@@ -39,14 +31,15 @@ impl RustGenerator {
         Self { options, type_info }
     }
 
-    /// Render every output file without writing any: the module file's
-    /// contents, and one `(module name, contents)` pair per definition file.
-    pub(crate) fn render(&self, spec: &XdrSpec, header: &str) -> Result<Rendered, askama::Error> {
-        let (mut modules, definitions) = self.generate_modules(spec);
+    /// Render every generated file as a `(module name, contents)` pair, in
+    /// the order the module file lists them.
+    pub(crate) fn render_files(
+        &self,
+        spec: &XdrSpec,
+    ) -> Result<Vec<(String, String)>, askama::Error> {
+        let (modules, definitions) = self.generate_modules(spec);
 
-        // Each definition, or group of definitions sharing a name across
-        // `#ifdef`/`#else` branches, gets its own file.
-        let mut files: Vec<(String, String)> = Vec::new();
+        let mut files = Vec::new();
         for (module, defs) in modules.iter().zip(definitions) {
             let template = DefinitionTemplate { definitions: defs };
             files.push((module.mod_name.clone(), template.render()?));
@@ -56,25 +49,8 @@ impl RustGenerator {
             type_variant_enum: self.generate_type_enum(spec),
         };
         files.push(("type_enum".to_string(), type_enum_template.render()?));
-        modules.push(ModuleEntry {
-            mod_name: "type_enum".to_string(),
-        });
 
-        let xdr_files_sha256: Vec<(String, String)> = spec
-            .files
-            .iter()
-            .map(|f| (f.name.clone(), f.sha256.clone()))
-            .collect();
-        let mod_template = ModTemplate {
-            xdr_files_sha256,
-            header: header.to_string(),
-            modules,
-        };
-
-        Ok(Rendered {
-            module_file: mod_template.render()?,
-            files,
-        })
+        Ok(files)
     }
 
     /// Generate Rust code from the spec and write each definition to its own
@@ -88,13 +64,36 @@ impl RustGenerator {
         module_file: &std::path::Path,
         output_dir: &std::path::Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let rendered = self.render(spec, include_str!("../header.rs"))?;
+        let header = include_str!("../header.rs");
+        let files = self.render_files(spec)?;
 
+        // Ensure the output directory exists.
         std::fs::create_dir_all(output_dir)?;
-        for (mod_name, contents) in &rendered.files {
+
+        // Write each definition (or group of definitions) to its own file.
+        for (mod_name, contents) in &files {
             std::fs::write(output_dir.join(format!("{mod_name}.rs")), contents)?;
         }
-        std::fs::write(module_file, &rendered.module_file)?;
+
+        // Write module file.
+        let xdr_files_sha256: Vec<(String, String)> = spec
+            .files
+            .iter()
+            .map(|f| (f.name.clone(), f.sha256.clone()))
+            .collect();
+
+        let mod_template = ModTemplate {
+            xdr_files_sha256,
+            header: header.to_string(),
+            modules: files
+                .iter()
+                .map(|(mod_name, _)| ModuleEntry {
+                    mod_name: mod_name.clone(),
+                })
+                .collect(),
+        };
+        let rendered = mod_template.render()?;
+        std::fs::write(module_file, &rendered)?;
 
         Ok(())
     }

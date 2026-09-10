@@ -1,4 +1,3 @@
-use askama::Template;
 use std::collections::HashSet;
 
 use crate::generator::RustGenerator;
@@ -12,8 +11,15 @@ fn generate_from_xdr(xdr: &str) -> String {
         no_display_fromstr: HashSet::new(),
     };
     let generator = RustGenerator::new(&spec, options);
-    let template = generator.generate(&spec, "// header\n");
-    template.render().unwrap()
+    // Render through the same path that writes the crate, so the tests see
+    // what is actually generated.
+    let rendered = generator.render(&spec, "// header\n").unwrap();
+    let mut output = rendered.module_file;
+    for (_, contents) in rendered.files {
+        output.push('\n');
+        output.push_str(&contents);
+    }
+    output
 }
 
 fn assert_contains(output: &str, expected: &str) {

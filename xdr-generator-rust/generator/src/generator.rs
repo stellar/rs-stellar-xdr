@@ -14,9 +14,9 @@ use crate::naming::{
 use crate::options::RustOptions;
 use crate::output::{
     ConstOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
-    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
-    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
-    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
+    ModTemplate, ModuleEntry, StructMemberOutput, StructOutput, TypeEnumDefinitionTemplate,
+    TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput, UnionArmOutput,
+    UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
 
@@ -33,33 +33,47 @@ impl RustGenerator {
 
     /// Generate Rust code from the spec and write each definition to its own
     /// file inside `output_dir`, plus a module file that ties them together.
-    ///
-    /// `module_file` is the path to the module file (e.g. `src/generated.rs`)
-    /// and `output_dir` is the directory for per-type files (e.g. `src/generated/`).
     pub fn generate_to_dir(
         &self,
         spec: &XdrSpec,
         module_file: &std::path::Path,
         output_dir: &std::path::Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let header = include_str!("../header.rs");
-        let (mut modules, definitions) = self.generate_modules(spec);
-
         // Ensure the output directory exists.
         std::fs::create_dir_all(output_dir)?;
+
+        self.generate_files(spec, module_file, output_dir, |path, contents| {
+            std::fs::write(path, contents)
+        })
+    }
+
+    /// Generate Rust code from the spec and hand each output file to `write`
+    /// as a path and its contents.
+    ///
+    /// `module_file` is the path to the module file (e.g. `src/generated.rs`)
+    /// and `output_dir` is the directory for per-type files (e.g. `src/generated/`).
+    pub(crate) fn generate_files(
+        &self,
+        spec: &XdrSpec,
+        module_file: &std::path::Path,
+        output_dir: &std::path::Path,
+        mut write: impl FnMut(&std::path::Path, &str) -> std::io::Result<()>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let header = include_str!("../header.rs");
+        let (mut modules, definitions) = self.generate_modules(spec);
 
         // Write each definition (or group of definitions) to its own file.
         for (module, defs) in modules.iter().zip(definitions) {
             let template = DefinitionTemplate { definitions: defs };
             let rendered = template.render()?;
             let file_path = output_dir.join(format!("{}.rs", module.mod_name));
-            std::fs::write(&file_path, &rendered)?;
+            write(&file_path, &rendered)?;
         }
 
         let type_variant_enum = self.generate_type_enum(spec);
         let type_enum_template = TypeEnumDefinitionTemplate { type_variant_enum };
         let rendered = type_enum_template.render()?;
-        std::fs::write(output_dir.join("type_enum.rs"), &rendered)?;
+        write(&output_dir.join("type_enum.rs"), &rendered)?;
         modules.push(ModuleEntry {
             mod_name: "type_enum".to_string(),
         });
@@ -77,7 +91,7 @@ impl RustGenerator {
             modules,
         };
         let rendered = mod_template.render()?;
-        std::fs::write(module_file, &rendered)?;
+        write(module_file, &rendered)?;
 
         Ok(())
     }
@@ -152,60 +166,6 @@ impl RustGenerator {
             .collect();
 
         TypeEnumOutput { types }
-    }
-
-    /// Generate output for the entire spec.
-    #[allow(dead_code)]
-    pub fn generate(&self, spec: &XdrSpec, header: &str) -> GeneratedTemplate {
-        let xdr_files_sha256: Vec<(String, String)> = spec
-            .files
-            .iter()
-            .map(|f| (f.name.clone(), f.sha256.clone()))
-            .collect();
-
-        let mut definitions: Vec<DefinitionOutput> = Vec::new();
-        let mut cfg_by_name: HashMap<String, Option<String>> = HashMap::new();
-
-        for def in spec.all_definitions() {
-            // Build cfg_by_name for type enum entries in the same pass.
-            if !matches!(def, Definition::Const(_)) {
-                let name = type_name(def.name());
-                let cfg = self.resolve_cfg(def);
-                match cfg_by_name.entry(name) {
-                    Entry::Vacant(e) => {
-                        e.insert(cfg);
-                    }
-                    Entry::Occupied(mut e) => {
-                        // Same name in multiple cfg branches (e.g. #ifdef/#else)
-                        // means the type is always present, so clear the cfg.
-                        e.insert(None);
-                    }
-                }
-            }
-
-            let output = self.generate_definition(def);
-            definitions.push(output);
-        }
-
-        let types: Vec<TypeEnumEntry> = spec
-            .type_names_parent_first()
-            .iter()
-            .map(|name| {
-                let rust_name = type_name(name);
-                let cfg = cfg_by_name.get(&rust_name).cloned().flatten();
-                TypeEnumEntry {
-                    name: rust_name,
-                    cfg,
-                }
-            })
-            .collect();
-
-        GeneratedTemplate {
-            xdr_files_sha256,
-            header: header.to_string(),
-            definitions,
-            type_variant_enum: TypeEnumOutput { types },
-        }
     }
 
     /// Resolve the cfg expression for a definition, rendered as a string.

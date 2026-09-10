@@ -2,7 +2,10 @@
 
 use std::collections::HashMap;
 
-use crate::ast::*;
+use crate::ast::{
+    CfgExpr, Const, Definition, Enum, Namespace, Size, Struct, StructMember, Type, Typedef, Union,
+    UnionArm, UnionCase, UnionCaseValue, UnionDiscriminant, XdrFile, XdrSpec,
+};
 use crate::lexer::{IntBase, LexError, Lexer, SpannedToken, Token};
 use heck::ToUpperCamelCase;
 use sha2::{Digest as _, Sha256};
@@ -21,6 +24,10 @@ use thiserror::Error;
 /// all whitespace, so they are stable regardless of feature ifdefs or
 /// formatting differences. This ensures compatibility with builds that may
 /// use the same base XDR definitions with different feature flags enabled.
+///
+/// # Errors
+///
+/// Returns [`ParseError`] if any input file fails to lex or parse.
 pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
     let mut spec = XdrSpec::default();
     let mut global_values = HashMap::new();
@@ -29,7 +36,7 @@ pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
         let stripped = strip_ifdef_blocks_and_whitespace(content);
         let hash = format!("{:x}", Sha256::digest(stripped.as_bytes()));
         spec.files.push(XdrFile {
-            name: name.to_string(),
+            name: (*name).to_string(),
             sha256: hash,
         });
 
@@ -54,6 +61,10 @@ pub fn parse_files(files: &[(&str, &str)]) -> Result<XdrSpec, ParseError> {
 /// Parse a single XDR source string into an AST.
 ///
 /// Convenience wrapper around `parse_files` for single-file use.
+///
+/// # Errors
+///
+/// Returns [`ParseError`] if the source fails to lex or parse.
 pub fn parse(source: &str) -> Result<XdrSpec, ParseError> {
     parse_files(&[("", source)])
 }
@@ -88,7 +99,7 @@ fn strip_ifdef_blocks_and_whitespace(content: &str) -> String {
     result
 }
 
-/// Set the file_index on a definition.
+/// Set the `file_index` on a definition.
 fn set_file_index(def: &mut Definition, index: usize) {
     match def {
         Definition::Struct(s) => s.file_index = index,
@@ -240,7 +251,7 @@ impl Parser {
     /// Pushes the initial condition onto `cfg_stack` and records it in
     /// `ifdef_seen_stack` so that `parse_ifdef_branch` and `parse_ifdef_exit`
     /// can manage `#else`/`#endif` later.
-    fn parse_ifdef_enter(&mut self) -> Result<(), ParseError> {
+    fn parse_ifdef_enter(&mut self) {
         let first_cfg = match self.peek().clone() {
             Token::IfDef(name) => {
                 self.advance();
@@ -250,7 +261,6 @@ impl Parser {
         };
         self.ifdef_seen_stack.push(first_cfg.clone());
         self.cfg_stack.push(first_cfg);
-        Ok(())
     }
 
     /// Handle an `#else` token inside an inline ifdef block.
@@ -267,7 +277,7 @@ impl Parser {
     }
 
     /// Handle an `#endif` token inside an inline ifdef block.
-    /// Pops the current branch's cfg and the seen_conditions entry.
+    /// Pops the current branch's cfg and the `seen_conditions` entry.
     fn parse_ifdef_exit(&mut self) -> Result<(), ParseError> {
         if self.ifdef_seen_stack.is_empty() {
             return Err(self.make_unexpected_directive_error());
@@ -278,7 +288,7 @@ impl Parser {
         Ok(())
     }
 
-    /// Compute the current cfg expression from the cfg_stack.
+    /// Compute the current cfg expression from the `cfg_stack`.
     fn current_cfg(&self) -> Option<CfgExpr> {
         match self.cfg_stack.len() {
             0 => None,
@@ -298,9 +308,9 @@ impl Parser {
     }
 
     fn parse_namespace(&mut self) -> Result<Namespace, ParseError> {
-        self.expect(Token::Namespace)?;
+        self.expect(&Token::Namespace)?;
         let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+        self.expect(&Token::LBrace)?;
 
         let mut definitions = Vec::new();
         let mut namespaces = Vec::new();
@@ -308,7 +318,7 @@ impl Parser {
             matches!(tok, Token::RBrace | Token::Eof)
         })?;
 
-        self.expect(Token::RBrace)?;
+        self.expect(&Token::RBrace)?;
 
         Ok(Namespace {
             name,
@@ -367,9 +377,9 @@ impl Parser {
     }
 
     fn parse_struct(&mut self) -> Result<Struct, ParseError> {
-        self.expect(Token::Struct)?;
+        self.expect(&Token::Struct)?;
         let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+        self.expect(&Token::LBrace)?;
 
         // Set root_parent for nested type name generation
         let prev_root = self.root_parent.take();
@@ -379,14 +389,14 @@ impl Parser {
         while *self.peek() != Token::RBrace {
             let member = self.parse_member()?;
             members.push(member);
-            self.expect(Token::Semi)?;
+            self.expect(&Token::Semi)?;
         }
 
         // Restore previous root_parent
         self.root_parent = prev_root;
 
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
+        self.expect(&Token::RBrace)?;
+        self.expect(&Token::Semi)?;
 
         // Extract source text (simplified - just use the name for now)
         let source = self.extract_definition_source();
@@ -403,9 +413,9 @@ impl Parser {
     }
 
     fn parse_enum(&mut self) -> Result<Enum, ParseError> {
-        self.expect(Token::Enum)?;
+        self.expect(&Token::Enum)?;
         let name = self.expect_ident()?;
-        self.expect(Token::LBrace)?;
+        self.expect(&Token::LBrace)?;
 
         let ifdef_depth_before = self.ifdef_seen_stack.len();
         let mut members: Vec<(String, i32, Option<CfgExpr>)> = Vec::new();
@@ -413,7 +423,7 @@ impl Parser {
             // Handle #ifdef/#else/#endif inside enum body
             match self.peek().clone() {
                 Token::IfDef(_) => {
-                    self.parse_ifdef_enter()?;
+                    self.parse_ifdef_enter();
                     continue;
                 }
                 Token::Else => {
@@ -438,7 +448,7 @@ impl Parser {
             }
 
             let member_name = self.expect_ident()?;
-            self.expect(Token::Eq)?;
+            self.expect(&Token::Eq)?;
 
             // Value can be integer or identifier (reference to another enum value)
             let value = match self.peek().clone() {
@@ -476,19 +486,19 @@ impl Parser {
             }
         }
 
-        self.expect(Token::RBrace)?;
+        self.expect(&Token::RBrace)?;
 
         if self.ifdef_seen_stack.len() != ifdef_depth_before {
             return Err(self.unexpected_token_error("#endif".to_string(), Token::RBrace));
         }
 
-        self.expect(Token::Semi)?;
+        self.expect(&Token::Semi)?;
 
         let source = self.extract_definition_source();
 
         // Add all members to global_values for cross-enum resolution
         for (name, value, _) in &members {
-            self.global_values.insert(name.clone(), *value as i64);
+            self.global_values.insert(name.clone(), i64::from(*value));
         }
 
         let mut e = Enum::new(name, members, source);
@@ -497,17 +507,17 @@ impl Parser {
     }
 
     fn parse_union(&mut self) -> Result<Union, ParseError> {
-        self.expect(Token::Union)?;
+        self.expect(&Token::Union)?;
         let name = self.expect_ident()?;
-        self.expect(Token::Switch)?;
-        self.expect(Token::LParen)?;
+        self.expect(&Token::Switch)?;
+        self.expect(&Token::LParen)?;
 
         // Parse discriminant
         let disc_type = self.parse_type()?;
         let disc_name = self.expect_ident()?;
 
-        self.expect(Token::RParen)?;
-        self.expect(Token::LBrace)?;
+        self.expect(&Token::RParen)?;
+        self.expect(&Token::LBrace)?;
 
         // Set root_parent for inline struct extraction
         let prev_root = self.root_parent.take();
@@ -518,8 +528,8 @@ impl Parser {
         // Restore previous root_parent
         self.root_parent = prev_root;
 
-        self.expect(Token::RBrace)?;
-        self.expect(Token::Semi)?;
+        self.expect(&Token::RBrace)?;
+        self.expect(&Token::Semi)?;
 
         let source = self.extract_definition_source();
 
@@ -539,7 +549,7 @@ impl Parser {
     }
 
     fn parse_typedef(&mut self) -> Result<Typedef, ParseError> {
-        self.expect(Token::Typedef)?;
+        self.expect(&Token::Typedef)?;
 
         let type_ = self.parse_type()?;
         let name = self.expect_ident()?;
@@ -547,7 +557,7 @@ impl Parser {
         // Handle array suffix on typedef name
         let type_ = self.parse_type_suffix(type_)?;
 
-        self.expect(Token::Semi)?;
+        self.expect(&Token::Semi)?;
 
         let source = self.extract_definition_source();
 
@@ -561,11 +571,11 @@ impl Parser {
     }
 
     fn parse_const(&mut self) -> Result<Const, ParseError> {
-        self.expect(Token::Const)?;
+        self.expect(&Token::Const)?;
         let name = self.expect_ident()?;
-        self.expect(Token::Eq)?;
+        self.expect(&Token::Eq)?;
         let (value, base) = self.expect_int_with_base()?;
-        self.expect(Token::Semi)?;
+        self.expect(&Token::Semi)?;
 
         let source = self.extract_definition_source();
 
@@ -611,7 +621,7 @@ impl Parser {
             // Handle #ifdef/#else/#endif inside union body
             match self.peek().clone() {
                 Token::IfDef(_) => {
-                    self.parse_ifdef_enter()?;
+                    self.parse_ifdef_enter();
                     continue;
                 }
                 Token::Else => {
@@ -663,12 +673,12 @@ impl Parser {
                             return Err(self.unexpected_token_error("case value".to_string(), other))
                         }
                     };
-                    self.expect(Token::Colon)?;
+                    self.expect(&Token::Colon)?;
                     cases.push(UnionCase { value });
                 }
                 Token::Default => {
                     self.advance();
-                    self.expect(Token::Colon)?;
+                    self.expect(&Token::Colon)?;
                     // Default has no cases
                     break;
                 }
@@ -679,7 +689,7 @@ impl Parser {
         // Parse the arm type and field name
         let (type_, arm_name) = if *self.peek() == Token::Void {
             self.advance();
-            self.expect(Token::Semi)?;
+            self.expect(&Token::Semi)?;
             (None, None)
         } else if *self.peek() == Token::Struct {
             // Inline struct in a union arm. XDR syntax:
@@ -712,7 +722,7 @@ impl Parser {
                 ),
                 ParsedType::Type(t) => self.parse_type_suffix(t)?,
             };
-            self.expect(Token::Semi)?;
+            self.expect(&Token::Semi)?;
 
             (Some(type_), Some(field_name))
         };
@@ -734,7 +744,7 @@ impl Parser {
         let source_start_byte = self.current_start_byte();
 
         self.advance(); // consume 'struct'
-        self.expect(Token::LBrace)?;
+        self.expect(&Token::LBrace)?;
 
         // --- Pass 1: lookahead to find the field name after the struct body ---
         let body_start_pos = self.pos;
@@ -751,7 +761,7 @@ impl Parser {
         let source_end_byte = self.prev_end_byte();
 
         let field_name = self.expect_ident()?;
-        self.expect(Token::Semi)?;
+        self.expect(&Token::Semi)?;
         let after_semi_pos = self.pos;
 
         // --- Pass 2: rewind and parse the struct body properly ---
@@ -770,9 +780,9 @@ impl Parser {
         while *self.peek() != Token::RBrace {
             let member = self.parse_member()?;
             members.push(member);
-            self.expect(Token::Semi)?;
+            self.expect(&Token::Semi)?;
         }
-        self.expect(Token::RBrace)?;
+        self.expect(&Token::RBrace)?;
 
         self.root_parent = prev_root;
 
@@ -862,15 +872,15 @@ impl Parser {
                 // Anonymous union inside struct
                 // union switch (type name) { ... }
                 self.advance();
-                self.expect(Token::Switch)?;
-                self.expect(Token::LParen)?;
+                self.expect(&Token::Switch)?;
+                self.expect(&Token::LParen)?;
                 let disc_type = self.parse_type()?;
                 let disc_name = self.expect_ident()?;
-                self.expect(Token::RParen)?;
-                self.expect(Token::LBrace)?;
+                self.expect(&Token::RParen)?;
+                self.expect(&Token::LBrace)?;
 
                 let arms = self.parse_union_body()?;
-                self.expect(Token::RBrace)?;
+                self.expect(&Token::RBrace)?;
 
                 Ok(ParsedType::AnonymousUnion {
                     discriminant: UnionDiscriminant {
@@ -904,13 +914,13 @@ impl Parser {
             Token::LBracket => {
                 self.advance();
                 let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
+                self.expect(&Token::RBracket)?;
 
                 // Special case: opaque name[size] or string name[size]
                 // means fixed opaque/string, not an array of opaque/string
                 match base {
-                    Type::OpaqueVar(None) => Ok(Type::OpaqueFixed(size)),
-                    Type::String(None) => Ok(Type::OpaqueFixed(size)), // string with fixed size is opaque
+                    // string with fixed size is opaque
+                    Type::OpaqueVar(None) | Type::String(None) => Ok(Type::OpaqueFixed(size)),
                     _ => Ok(Type::Array {
                         element_type: Box::new(base),
                         size,
@@ -924,7 +934,7 @@ impl Parser {
                 } else {
                     Some(self.parse_size()?)
                 };
-                self.expect(Token::RAngle)?;
+                self.expect(&Token::RAngle)?;
 
                 // Special case: opaque name<max> or string name<max>
                 // means variable opaque/string with max, not a var array
@@ -952,7 +962,7 @@ impl Parser {
                 // Fixed: opaque[size]
                 self.advance();
                 let size = self.parse_size()?;
-                self.expect(Token::RBracket)?;
+                self.expect(&Token::RBracket)?;
                 Ok(Type::OpaqueFixed(size))
             }
             Token::LAngle => {
@@ -963,7 +973,7 @@ impl Parser {
                 } else {
                     Some(self.parse_size()?)
                 };
-                self.expect(Token::RAngle)?;
+                self.expect(&Token::RAngle)?;
                 Ok(Type::OpaqueVar(max))
             }
             _ => {
@@ -982,7 +992,7 @@ impl Parser {
                 } else {
                     Some(self.parse_size()?)
                 };
-                self.expect(Token::RAngle)?;
+                self.expect(&Token::RAngle)?;
                 Ok(Type::String(max))
             }
             _ => Ok(Type::String(None)),
@@ -1008,23 +1018,21 @@ impl Parser {
     fn peek(&self) -> &Token {
         self.tokens
             .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof)
+            .map_or(&Token::Eof, |st| &st.token)
     }
 
     fn advance(&mut self) -> &Token {
         let token = self
             .tokens
             .get(self.pos)
-            .map(|st| &st.token)
-            .unwrap_or(&Token::Eof);
+            .map_or(&Token::Eof, |st| &st.token);
         self.pos += 1;
         token
     }
 
     /// Get the byte offset where the current token starts.
     fn current_start_byte(&self) -> usize {
-        self.tokens.get(self.pos).map(|st| st.start).unwrap_or(0)
+        self.tokens.get(self.pos).map_or(0, |st| st.start)
     }
 
     /// Get the byte offset where the previous token ends.
@@ -1032,8 +1040,7 @@ impl Parser {
         if self.pos > 0 {
             self.tokens
                 .get(self.pos - 1)
-                .map(|st| st.end)
-                .unwrap_or(self.source.len())
+                .map_or(self.source.len(), |st| st.end)
         } else {
             0
         }
@@ -1058,8 +1065,7 @@ impl Parser {
         let byte_offset = self
             .tokens
             .get(self.pos)
-            .map(|st| st.start)
-            .unwrap_or(self.source.len());
+            .map_or(self.source.len(), |st| st.start);
         self.position_from_byte_offset(byte_offset)
     }
 
@@ -1067,8 +1073,7 @@ impl Parser {
         let byte_offset = self
             .tokens
             .get(self.pos.saturating_sub(1))
-            .map(|st| st.start)
-            .unwrap_or(self.source.len());
+            .map_or(self.source.len(), |st| st.start);
         self.position_from_byte_offset(byte_offset)
     }
 
@@ -1122,9 +1127,9 @@ impl Parser {
         }
     }
 
-    fn expect(&mut self, expected: Token) -> Result<(), ParseError> {
+    fn expect(&mut self, expected: &Token) -> Result<(), ParseError> {
         let token = self.advance().clone();
-        if token == expected {
+        if token == *expected {
             Ok(())
         } else {
             Err(self.unexpected_token_error(format!("{expected:?}"), token))
@@ -1243,11 +1248,7 @@ impl Parser {
 
     /// Extract the source text for a definition using the tracked start position.
     fn extract_definition_source(&self) -> String {
-        let start_byte = self
-            .tokens
-            .get(self.def_start_pos)
-            .map(|st| st.start)
-            .unwrap_or(0);
+        let start_byte = self.tokens.get(self.def_start_pos).map_or(0, |st| st.start);
         let end_byte = self.prev_end_byte();
         self.source_slice(start_byte, end_byte)
     }

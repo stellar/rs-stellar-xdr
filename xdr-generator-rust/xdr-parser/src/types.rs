@@ -42,6 +42,7 @@ impl TypeInfo {
     }
 
     /// Resolve a size to a literal string, using const values for named sizes.
+    #[must_use]
     pub fn size_to_literal(&self, size: &Size) -> String {
         match size {
             Size::Literal(n) => n.to_string(),
@@ -77,13 +78,14 @@ impl TypeInfo {
     }
 
     /// Convenience: resolve typedef to builtin using a provided naming function.
-    /// This is the backward-compatible version that uses rust_type_name internally.
+    /// This is the backward-compatible version that uses `rust_type_name` internally.
+    #[must_use]
     pub fn resolve_typedef_to_builtin<'a>(&'a self, type_: &Type) -> Option<&'a Type> {
         // For backward compatibility, try lookup with the raw ident name first,
         // then fall back. The definitions map is keyed by the target-language name.
         if let Type::Ident(name) = type_ {
             // Try all definitions to find a match - the map is keyed by transformed name
-            for (_, def) in &self.definitions {
+            for def in self.definitions.values() {
                 if let Definition::Typedef(t) = def {
                     if t.name == *name && is_builtin_type(&t.type_) {
                         return Some(&t.type_);
@@ -98,6 +100,7 @@ impl TypeInfo {
     ///
     /// If the discriminant is an `Ident` referring to an enum, returns that enum.
     /// Useful for getting the member prefix to strip from union case names.
+    #[must_use]
     pub fn discriminant_enum(&self, discriminant_type: &Type) -> Option<&Enum> {
         if let Type::Ident(name) = discriminant_type {
             // Search by original XDR name since the map is keyed by target-language name
@@ -113,6 +116,7 @@ impl TypeInfo {
     }
 
     /// Check if `type_with_fields` has a cyclic reference to `target_type`.
+    #[must_use]
     pub fn is_cyclic(&self, type_with_fields: &str, target_type: &str) -> bool {
         self.is_cyclic_inner(type_with_fields, target_type, &mut HashSet::new())
     }
@@ -147,6 +151,7 @@ impl TypeInfo {
 // =============================================================================
 
 /// Check if a type is a builtin (maps directly to a primitive in any language).
+#[must_use]
 pub fn is_builtin_type(type_: &Type) -> bool {
     matches!(
         type_,
@@ -161,16 +166,19 @@ pub fn is_builtin_type(type_: &Type) -> bool {
 }
 
 /// Check if a type is a fixed-length opaque array.
+#[must_use]
 pub fn is_fixed_opaque(type_: &Type) -> bool {
     matches!(type_, Type::OpaqueFixed(_))
 }
 
 /// Check if a type is a fixed-length array (including fixed opaque).
+#[must_use]
 pub fn is_fixed_array(type_: &Type) -> bool {
     matches!(type_, Type::OpaqueFixed(_) | Type::Array { .. })
 }
 
 /// Check if a type is a variable-length array.
+#[must_use]
 pub fn is_var_array(type_: &Type) -> bool {
     matches!(
         type_,
@@ -208,8 +216,9 @@ fn base_type_name(type_: &Type, type_name_fn: &dyn Fn(&str) -> String) -> Option
     match type_ {
         Type::Ident(name) => Some(type_name_fn(name)),
         Type::Optional(inner) => base_type_name(inner, type_name_fn),
-        Type::Array { element_type, .. } => base_type_name(element_type, type_name_fn),
-        Type::VarArray { element_type, .. } => base_type_name(element_type, type_name_fn),
+        Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
+            base_type_name(element_type, type_name_fn)
+        }
         _ => None,
     }
 }

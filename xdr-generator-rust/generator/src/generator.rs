@@ -31,49 +31,36 @@ impl RustGenerator {
         Self { options, type_info }
     }
 
-    /// Render every generated file as a `(module name, contents)` pair, in
-    /// the order the module file lists them.
-    pub(crate) fn render_files(
-        &self,
-        spec: &XdrSpec,
-    ) -> Result<Vec<(String, String)>, askama::Error> {
-        let (modules, definitions) = self.generate_modules(spec);
-
-        let mut files = Vec::new();
-        for (module, defs) in modules.iter().zip(definitions) {
-            let template = DefinitionTemplate { definitions: defs };
-            files.push((module.mod_name.clone(), template.render()?));
-        }
-
-        let type_enum_template = TypeEnumDefinitionTemplate {
-            type_variant_enum: self.generate_type_enum(spec),
-        };
-        files.push(("type_enum".to_string(), type_enum_template.render()?));
-
-        Ok(files)
-    }
-
-    /// Generate Rust code from the spec and write each definition to its own
-    /// file inside `output_dir`, plus a module file that ties them together.
+    /// Generate Rust code from the spec and hand each output file to `write`
+    /// as a path and its contents.
     ///
     /// `module_file` is the path to the module file (e.g. `src/generated.rs`)
     /// and `output_dir` is the directory for per-type files (e.g. `src/generated/`).
-    pub fn generate_to_dir(
+    pub(crate) fn generate_files(
         &self,
         spec: &XdrSpec,
         module_file: &std::path::Path,
         output_dir: &std::path::Path,
+        mut write: impl FnMut(&std::path::Path, &str) -> std::io::Result<()>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let header = include_str!("../header.rs");
-        let files = self.render_files(spec)?;
-
-        // Ensure the output directory exists.
-        std::fs::create_dir_all(output_dir)?;
+        let (mut modules, definitions) = self.generate_modules(spec);
 
         // Write each definition (or group of definitions) to its own file.
-        for (mod_name, contents) in &files {
-            std::fs::write(output_dir.join(format!("{mod_name}.rs")), contents)?;
+        for (module, defs) in modules.iter().zip(definitions.into_iter()) {
+            let template = DefinitionTemplate { definitions: defs };
+            let rendered = template.render()?;
+            let file_path = output_dir.join(format!("{}.rs", module.mod_name));
+            write(&file_path, &rendered)?;
         }
+
+        let type_variant_enum = self.generate_type_enum(spec);
+        let type_enum_template = TypeEnumDefinitionTemplate { type_variant_enum };
+        let rendered = type_enum_template.render()?;
+        write(&output_dir.join("type_enum.rs"), &rendered)?;
+        modules.push(ModuleEntry {
+            mod_name: "type_enum".to_string(),
+        });
 
         // Write module file.
         let xdr_files_sha256: Vec<(String, String)> = spec
@@ -85,17 +72,28 @@ impl RustGenerator {
         let mod_template = ModTemplate {
             xdr_files_sha256,
             header: header.to_string(),
-            modules: files
-                .iter()
-                .map(|(mod_name, _)| ModuleEntry {
-                    mod_name: mod_name.clone(),
-                })
-                .collect(),
+            modules,
         };
         let rendered = mod_template.render()?;
-        std::fs::write(module_file, &rendered)?;
+        write(module_file, &rendered)?;
 
         Ok(())
+    }
+
+    /// Generate Rust code from the spec and write each definition to its own
+    /// file inside `output_dir`, plus a module file that ties them together.
+    pub fn generate_to_dir(
+        &self,
+        spec: &XdrSpec,
+        module_file: &std::path::Path,
+        output_dir: &std::path::Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // Ensure the output directory exists.
+        std::fs::create_dir_all(output_dir)?;
+
+        self.generate_files(spec, module_file, output_dir, |path, contents| {
+            std::fs::write(path, contents)
+        })
     }
 
     /// Generate module entries and grouped definitions for per-file output.

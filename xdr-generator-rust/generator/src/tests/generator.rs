@@ -11,12 +11,16 @@ fn generate_from_xdr(xdr: &str) -> String {
         no_display_fromstr: HashSet::new(),
     };
     let generator = RustGenerator::new(&spec, options);
-    let files = generator.render_files(&spec).unwrap();
-    files
-        .into_iter()
-        .map(|(_, contents)| contents)
-        .collect::<Vec<_>>()
-        .join("\n")
+    let mut output = String::new();
+    let module_file = std::path::Path::new("generated.rs");
+    let output_dir = std::path::Path::new("generated");
+    generator
+        .generate_files(&spec, module_file, output_dir, |_, contents| {
+            output.push_str(contents);
+            Ok(())
+        })
+        .unwrap();
+    output
 }
 
 fn assert_contains(output: &str, expected: &str) {

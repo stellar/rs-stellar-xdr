@@ -69,6 +69,13 @@
 //! 6. `hex` – Enables support for hex in string representations of some types.
 //! Automatically enabled when serde is enabled.
 //! 7. `schemars` – Enables support for JSON Schema generation. (Experimental)
+//! 8. `const` – Enables the `const` module, containing a form of every type
+//! that can be constructed and encoded to XDR in a const context. Types that
+//! own heap data have a borrowing counterpart in the module that wraps
+//! `&'static` slices instead; the rest are re-exports of the owned types.
+//! Every type in the module has `const_xdr_len` and `const_to_xdr` methods,
+//! so XDR can be encoded at compile time into a fixed-size array. Requires no
+//! additional dependencies and works without std or alloc. (Experimental)
 //!
 //! Features marked experimental may disappear at anytime, see breaking changes
 //! at anytime, or and may be minimal implementations instead of complete.

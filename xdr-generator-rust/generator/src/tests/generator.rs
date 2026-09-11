@@ -16,6 +16,47 @@ fn generate_from_xdr(xdr: &str) -> String {
     template.render().unwrap()
 }
 
+/// Generates into a temporary directory and returns the `const` module — the
+/// module file and every per-definition file under it, concatenated — since
+/// that is where the const forms live.
+fn generate_const_from_xdr(xdr: &str) -> String {
+    let spec = xdr_parser::parser::parse(xdr).unwrap();
+    let options = RustOptions {
+        custom_default_impl: HashSet::new(),
+        custom_str_impl: HashSet::new(),
+        no_display_fromstr: HashSet::new(),
+    };
+    let generator = RustGenerator::new(&spec, options);
+
+    let dir = std::env::temp_dir().join(format!(
+        "xdr-generator-test-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
+    ));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let out = dir.join("generated");
+    generator
+        .generate_to_dir(&spec, &dir.join("generated.rs"), &out)
+        .unwrap();
+
+    let mut files = vec![out.join("const.rs")];
+    let mut const_files: Vec<_> = std::fs::read_dir(out.join("const"))
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .collect();
+    const_files.sort();
+    files.append(&mut const_files);
+
+    let output = files
+        .iter()
+        .map(|f| std::fs::read_to_string(f).unwrap())
+        .collect::<Vec<_>>()
+        .join("\n");
+    std::fs::remove_dir_all(&dir).unwrap();
+    output
+}
+
 fn assert_contains(output: &str, expected: &str) {
     assert!(
         output.contains(expected),
@@ -219,9 +260,9 @@ pub const MAX_SIZE: u32 = 100;"#,
 #[test]
 fn test_const_form_for_both_ifdef_branches() {
     // Foo holds heap data only in the FEATURE_X branch. Both branches get a
-    // FooConst, each gated like its definition, so the name resolves under
+    // const form, each gated like its definition, so the name resolves under
     // every cfg; the heap-free branch mirrors the owned fields.
-    let output = generate_from_xdr(
+    let output = generate_const_from_xdr(
         r#"
         #ifdef FEATURE_X
         struct Foo { string s<10>; };
@@ -234,15 +275,17 @@ fn test_const_form_for_both_ifdef_branches() {
         &output,
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FooConst {
-    pub s: StringMConst<10>,
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct Foo {
+    pub s: StringM<10>,
 }"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FooConst {
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct Foo {
     pub y: i32,
 }"#,
     );
@@ -250,7 +293,7 @@ pub struct FooConst {
 
 #[test]
 fn test_const_form_for_both_ifdef_branches_typedef() {
-    let output = generate_from_xdr(
+    let output = generate_const_from_xdr(
         r#"
         #ifdef FEATURE_X
         typedef string Foo<10>;
@@ -263,19 +306,21 @@ fn test_const_form_for_both_ifdef_branches_typedef() {
         &output,
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FooConst(pub StringMConst<10>);"#,
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct Foo(pub StringM<10>);"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FooConst(pub [u8; 4]);"#,
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct Foo(pub [u8; 4]);"#,
     );
 }
 
 #[test]
 fn test_const_form_for_both_ifdef_branches_union() {
-    let output = generate_from_xdr(
+    let output = generate_const_from_xdr(
         r#"
         #ifdef FEATURE_X
         union Foo switch (int v) { case 0: string s<10>; };
@@ -288,18 +333,20 @@ fn test_const_form_for_both_ifdef_branches_union() {
         &output,
         r#"#[cfg(feature = "feature_x")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
-pub enum FooConst {
+pub enum Foo {
     #[cfg(feature = "feature_x")]
-    V0(StringMConst<10>),
+    V0(StringM<10>),
 }"#,
     );
     assert_contains(
         &output,
         r#"#[cfg(not(feature = "feature_x"))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
-pub enum FooConst {
+pub enum Foo {
     #[cfg(not(feature = "feature_x"))]
     V0(i32),
 }"#,
@@ -308,10 +355,10 @@ pub enum FooConst {
 
 #[test]
 fn test_const_form_when_only_a_cfg_gated_arm_borrows() {
-    // The union's only heap sits behind a cfg-gated arm. The Const form is
+    // The union's only heap sits behind a cfg-gated arm. The const form is
     // emitted unconditionally with the arm gated inside it, so the arm's
-    // payload is the borrowing StringMConst wherever the cfg turns it on.
-    let output = generate_from_xdr(
+    // payload is the borrowing StringM wherever the cfg turns it on.
+    let output = generate_const_from_xdr(
         r#"
         union Foo switch (int v) {
             case 0: int y;
@@ -323,10 +370,10 @@ fn test_const_form_when_only_a_cfg_gated_arm_borrows() {
     );
     assert_contains(
         &output,
-        r#"pub enum FooConst {
+        r#"pub enum Foo {
     V0(i32),
     #[cfg(feature = "feature_x")]
-    V1(StringMConst<10>),
+    V1(StringM<10>),
 }"#,
     );
 }
@@ -334,10 +381,10 @@ fn test_const_form_when_only_a_cfg_gated_arm_borrows() {
 #[test]
 fn test_cfg_gated_heap_gets_a_const_form() {
     // Exec borrows only via its cfg-gated arm, so types holding an Exec name
-    // ExecConst in that position under every cfg. Leaving the owned Exec there
-    // would not compile with the feature on: serializing it reaches a
-    // Vec-backed StringM from a const fn.
-    let output = generate_from_xdr(
+    // the const module's Exec in that position under every cfg. Leaving the
+    // owned Exec there would not compile with the feature on: serializing it
+    // reaches a Vec-backed StringM from a const fn.
+    let output = generate_const_from_xdr(
         r#"
         union Exec switch (int type)
         {
@@ -355,16 +402,18 @@ fn test_cfg_gated_heap_gets_a_const_form() {
     assert_contains(
         &output,
         r#"#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParentConst {
-    pub exec: ExecConst,
-    pub label: StringMConst<32>,
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct Parent {
+    pub exec: Exec,
+    pub label: StringM<32>,
 }"#,
     );
     assert_contains(
         &output,
         r#"#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OnlyExecConst {
-    pub exec: ExecConst,
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct OnlyExec {
+    pub exec: Exec,
     pub n: i32,
 }"#,
     );
@@ -372,12 +421,15 @@ pub struct OnlyExecConst {
 
 #[test]
 fn test_no_const_form_for_heap_free_types() {
-    // A type with no heap under any cfg gets no Const form at all, since there
-    // is nothing for it to borrow.
-    let output = generate_from_xdr(
+    // A type with no heap under any cfg gets no borrowing form of its own,
+    // since there is nothing for it to borrow. The const module re-exports the
+    // owned type under the same name instead, so the name still resolves
+    // there.
+    let output = generate_const_from_xdr(
         r#"
         struct Flat { int a; opaque b[4]; };
     "#,
     );
-    assert_not_contains(&output, "FlatConst");
+    assert_not_contains(&output, "pub struct Flat {");
+    assert_contains(&output, "pub use super::Flat;");
 }

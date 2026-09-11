@@ -15,11 +15,11 @@ use crate::naming::{
 use crate::options::RustOptions;
 use crate::output::{
     ConstDefinitionOutput, ConstDefinitionTemplate, ConstModEntry, ConstModItem, ConstModTemplate,
-    ConstNewtypeOutput, ConstOutput, ConstStructMemberOutput, ConstStructOutput, ConstToXdrTemplate,
-    ConstTypeOutput, ConstUnionArmOutput, ConstUnionOutput, ConstWriterMethodOutput,
-    ConstWriterOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
-    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
-    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
+    ConstNewtypeOutput, ConstOutput, ConstStructMemberOutput, ConstStructOutput,
+    ConstToXdrTemplate, ConstTypeOutput, ConstUnionArmOutput, ConstUnionOutput,
+    ConstWriterMethodOutput, ConstWriterOutput, DefinitionOutput, DefinitionTemplate, EnumOutput,
+    EnumStructMemberOutput, GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput,
+    StructOutput, TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
     TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
@@ -70,7 +70,8 @@ impl RustGenerator {
         // owned type carries const surface of its own.
         let mut const_methods_by_module: HashMap<String, Vec<ConstWriterMethodOutput>> =
             HashMap::new();
-        for m in crate::const_writer::build(spec, &self.type_info, &self.cfg_by_name(spec)).methods {
+        for m in crate::const_writer::build(spec, &self.type_info, &self.cfg_by_name(spec)).methods
+        {
             const_methods_by_module
                 .entry(m.module.clone())
                 .or_default()
@@ -213,7 +214,10 @@ impl RustGenerator {
             // A definition with neither a type of its own nor an encoding
             // contributes nothing to its file.
             if const_output.type_def.is_some() || !const_output.const_to_xdr.is_empty() {
-                grouped_const.entry(m.clone()).or_default().push(const_output);
+                grouped_const
+                    .entry(m.clone())
+                    .or_default()
+                    .push(const_output);
             }
             names
                 .entry(m)
@@ -510,7 +514,11 @@ impl RustGenerator {
         )
     }
 
-    fn generate_union(&self, u: &Union, cfg: Option<String>) -> (UnionOutput, ConstDefinitionOutput) {
+    fn generate_union(
+        &self,
+        u: &Union,
+        cfg: Option<String>,
+    ) -> (UnionOutput, ConstDefinitionOutput) {
         let name = type_name(&u.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
@@ -897,4 +905,3 @@ impl<'a> BorrowAnalysis<'a> {
         }
     }
 }
-

@@ -1,0 +1,75 @@
+{#- One definition module's file inside the `const` module. The whole module is
+    behind the `const` feature, so nothing here carries a feature gate of its
+    own; the only cfgs are the ones the `.x` files ask for. #}
+#[allow(unused_imports, clippy::wildcard_imports)]
+use super::*;
+{% for definition in definitions %}
+{%- if let Some(type_def) = definition.type_def %}
+{%- match type_def %}
+{%- when ConstTypeOutput::Struct(s) %}
+/// {{ s.name }} is a borrowing equivalent of [`{{ s.name }}`](super::super::{{ s.name }})
+/// over `'static` data, for const XDR encoding.
+{%- if let Some(cfg) = s.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct {{ s.name }} {
+{%- for m in s.members %}
+    pub {{ m.name }}: {{ m.type_ref }},
+{%- endfor %}
+}
+{%- when ConstTypeOutput::Union(u) %}
+/// {{ u.name }} is a borrowing equivalent of [`{{ u.name }}`](super::super::{{ u.name }})
+/// over `'static` data, for const XDR encoding.
+{%- if let Some(cfg) = u.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum {{ u.name }} {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+    #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+    {{ arm.case_name }},
+{%- else %}
+    {{ arm.case_name }}({{ arm.type_ref.as_ref().unwrap() }}),
+{%- endif %}
+{%- endfor %}
+}
+
+{% if let Some(cfg) = u.cfg -%}
+#[cfg({{ cfg }})]
+{% endif -%}
+impl {{ u.name }} {
+    #[must_use]
+    pub const fn discriminant(&self) -> {{ u.discriminant_type }} {
+        #[allow(clippy::match_same_arms)]
+        match self {
+{%- for arm in u.arms %}
+{%- if let Some(cfg) = arm.cfg %}
+            #[cfg({{ cfg }})]
+{%- endif %}
+{%- if arm.is_void %}
+            Self::{{ arm.case_name }} => {{ arm.case_value }},
+{%- else %}
+            Self::{{ arm.case_name }}(_) => {{ arm.case_value }},
+{%- endif %}
+{%- endfor %}
+        }
+    }
+}
+{%- when ConstTypeOutput::Newtype(t) %}
+/// {{ t.name }} is a borrowing equivalent of [`{{ t.name }}`](super::super::{{ t.name }})
+/// over `'static` data, for const XDR encoding.
+{%- if let Some(cfg) = t.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct {{ t.name }}(pub {{ t.type_ref }});
+{%- endmatch %}
+{% endif %}
+{{ definition.const_to_xdr }}
+{%- endfor %}
+{% include "const_writer_impl.rs.jinja" %}

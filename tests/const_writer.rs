@@ -2,14 +2,14 @@
 
 #![cfg(all(feature = "const", feature = "std"))]
 
-use stellar_xdr::{Limits, TransactionEnvelope, TransactionEnvelopeConst, WriteXdr};
+use stellar_xdr::{r#const, Limits, TransactionEnvelope, WriteXdr};
 
 mod common;
 use common::{tx_env_const, tx_env_owned};
 
 #[test]
 fn const_and_owned_encode_same() {
-    const R: TransactionEnvelopeConst = const { tx_env_const() };
+    const R: r#const::TransactionEnvelope = const { tx_env_const() };
     let o: TransactionEnvelope = tx_env_owned();
 
     let r_xdr: [u8; R.const_xdr_len()] = R.const_to_xdr();

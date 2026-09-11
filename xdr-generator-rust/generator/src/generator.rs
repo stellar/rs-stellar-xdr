@@ -14,10 +14,13 @@ use crate::naming::{
 };
 use crate::options::RustOptions;
 use crate::output::{
-    ConstOutput, ConstToXdrTemplate, ConstWriterMethodOutput, ConstWriterOutput, DefinitionOutput,
-    DefinitionTemplate, EnumOutput, EnumStructMemberOutput, GeneratedTemplate, ModTemplate,
-    ModuleEntry, StructMemberOutput, StructOutput, TypeEnumDefinitionTemplate, TypeEnumEntry,
-    TypeEnumOutput, TypedefAliasOutput, TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
+    ConstDefinitionOutput, ConstDefinitionTemplate, ConstModEntry, ConstModItem, ConstModTemplate,
+    ConstNewtypeOutput, ConstOutput, ConstStructMemberOutput, ConstStructOutput, ConstToXdrTemplate,
+    ConstTypeOutput, ConstUnionArmOutput, ConstUnionOutput, ConstWriterMethodOutput,
+    ConstWriterOutput, DefinitionOutput, DefinitionTemplate, EnumOutput, EnumStructMemberOutput,
+    GeneratedTemplate, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
+    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
+    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
 use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
 
@@ -26,8 +29,8 @@ pub struct RustGenerator {
     type_info: TypeInfo,
     /// Rust type names of generated types that directly or transitively
     /// contain heap-allocated data (`VecM`, `BytesM`, `StringM`, or `Box` for
-    /// cyclic references) under some cfg, and therefore have a borrowing
-    /// `Const` form generated for them.
+    /// cyclic references) under some cfg, and therefore have a borrowing form
+    /// of their own in the `const` module.
     const_required: HashSet<String>,
 }
 
@@ -39,24 +42,6 @@ impl RustGenerator {
             options,
             type_info,
             const_required,
-        }
-    }
-
-    /// How to emit the borrowing `Const` form of a definition.
-    ///
-    /// Every definition of a name that needs a `Const` form emits one, gated
-    /// by that definition's own cfg, so the name resolves under every cfg a
-    /// container can name it under. A branch that holds no heap data mirrors
-    /// the owned fields.
-    fn const_emit_for(&self, name: &str, cfg: Option<&str>) -> ConstEmit {
-        let emit_const = self.const_required.contains(name);
-        ConstEmit {
-            emit_const,
-            const_cfg: if emit_const {
-                cfg.map(ToString::to_string)
-            } else {
-                None
-            },
         }
     }
 
@@ -72,24 +57,20 @@ impl RustGenerator {
         output_dir: &std::path::Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let header = include_str!("../header.rs");
-        let (mut modules, definitions) = self.generate_modules(spec);
+        let const_header = include_str!("../const_header.rs");
+        let (mut modules, definitions, const_modules) = self.generate_modules(spec);
 
-        // Ensure the output directory exists.
+        // Ensure the output directories exist.
+        let const_dir = output_dir.join("const");
         std::fs::create_dir_all(output_dir)?;
+        std::fs::create_dir_all(&const_dir)?;
 
         // All const XDR encoding is emitted as methods on `ConstWriter`, each
-        // into the file of the type it serializes, so no generated type carries
-        // const-only surface of its own.
+        // into the `const` module's file for the type it serializes, so no
+        // owned type carries const surface of its own.
         let mut const_methods_by_module: HashMap<String, Vec<ConstWriterMethodOutput>> =
             HashMap::new();
-        for m in crate::const_writer::build(
-            spec,
-            &self.type_info,
-            &self.const_required,
-            &self.cfg_by_name(spec),
-        )
-        .methods
-        {
+        for m in crate::const_writer::build(spec, &self.type_info, &self.cfg_by_name(spec)).methods {
             const_methods_by_module
                 .entry(m.module.clone())
                 .or_default()
@@ -98,16 +79,33 @@ impl RustGenerator {
 
         // Write each definition (or group of definitions) to its own file.
         for (module, defs) in modules.iter().zip(definitions.into_iter()) {
-            let methods = const_methods_by_module
-                .remove(&module.mod_name)
-                .unwrap_or_default();
-            let template = DefinitionTemplate {
-                definitions: defs,
-                const_writer: ConstWriterOutput { methods },
-            };
+            let template = DefinitionTemplate { definitions: defs };
             let rendered = template.render()?;
             let file_path = output_dir.join(format!("{}.rs", module.mod_name));
             std::fs::write(&file_path, &rendered)?;
+        }
+
+        // Write the `const` module: a file per definition module that has const
+        // content, and a module file naming them and re-exporting the rest.
+        let mut const_entries: Vec<ConstModEntry> = Vec::new();
+        for const_module in const_modules {
+            let methods = const_methods_by_module
+                .remove(&const_module.mod_name)
+                .unwrap_or_default();
+            let has_file = !const_module.definitions.is_empty() || !methods.is_empty();
+            if has_file {
+                let template = ConstDefinitionTemplate {
+                    definitions: const_module.definitions,
+                    const_writer: ConstWriterOutput { methods },
+                };
+                let rendered = template.render()?;
+                let file_path = const_dir.join(format!("{}.rs", const_module.mod_name));
+                std::fs::write(&file_path, &rendered)?;
+            }
+            const_entries.push(ConstModEntry {
+                mod_name: has_file.then_some(const_module.mod_name),
+                items: const_module.items,
+            });
         }
 
         // Every method names the module of the type it serializes, and every
@@ -118,6 +116,13 @@ impl RustGenerator {
             "const writer methods name modules with no definition file: {:?}",
             const_methods_by_module.keys().collect::<Vec<_>>()
         );
+
+        let const_mod_template = ConstModTemplate {
+            header: const_header.to_string(),
+            entries: const_entries,
+        };
+        let rendered = const_mod_template.render()?;
+        std::fs::write(output_dir.join("const.rs"), &rendered)?;
 
         let type_variant_enum = self.generate_type_enum(spec);
         let type_enum_template = TypeEnumDefinitionTemplate { type_variant_enum };
@@ -169,13 +174,25 @@ impl RustGenerator {
         cfg_by_name
     }
 
-    /// Generate module entries and grouped definitions for per-file output.
+    /// Generate module entries and grouped definitions for per-file output,
+    /// for the owned types and for the `const` module alike.
     ///
     /// When the same type name appears in multiple `#ifdef`/`#else` branches,
     /// definitions are grouped into the same file.
-    fn generate_modules(&self, spec: &XdrSpec) -> (Vec<ModuleEntry>, Vec<Vec<DefinitionOutput>>) {
+    fn generate_modules(
+        &self,
+        spec: &XdrSpec,
+    ) -> (
+        Vec<ModuleEntry>,
+        Vec<Vec<DefinitionOutput>>,
+        Vec<ConstModuleOutput>,
+    ) {
         let mut order: Vec<String> = Vec::new();
         let mut grouped: HashMap<String, Vec<DefinitionOutput>> = HashMap::new();
+        let mut grouped_const: HashMap<String, Vec<ConstDefinitionOutput>> = HashMap::new();
+        // The names each module defines, in order, with the cfg of each
+        // definition of that name, to build the `const` module's re-exports.
+        let mut names: HashMap<String, Vec<(ConstName, Option<String>)>> = HashMap::new();
 
         for def in spec.all_definitions() {
             let m = match def {
@@ -183,27 +200,86 @@ impl RustGenerator {
                 _ => mod_name(def.name()),
             };
 
-            let output = self.generate_definition(def);
+            let (output, const_output) = self.generate_definition(def);
             match grouped.entry(m.clone()) {
                 Entry::Vacant(e) => {
-                    order.push(m);
+                    order.push(m.clone());
                     e.insert(vec![output]);
                 }
                 Entry::Occupied(mut e) => {
                     e.get_mut().push(output);
                 }
             }
+            // A definition with neither a type of its own nor an encoding
+            // contributes nothing to its file.
+            if const_output.type_def.is_some() || !const_output.const_to_xdr.is_empty() {
+                grouped_const.entry(m.clone()).or_default().push(const_output);
+            }
+            names
+                .entry(m)
+                .or_default()
+                .push((self.const_name_of(def), self.resolve_cfg(def)));
         }
 
         let mut modules = Vec::new();
         let mut definitions = Vec::new();
+        let mut const_modules = Vec::new();
         for m in order {
             let defs = grouped.remove(&m).unwrap();
-            modules.push(ModuleEntry { mod_name: m });
+            let const_defs = grouped_const.remove(&m).unwrap_or_default();
+            let items = Self::const_mod_items(&names.remove(&m).unwrap_or_default());
+            modules.push(ModuleEntry {
+                mod_name: m.clone(),
+            });
             definitions.push(defs);
+            const_modules.push(ConstModuleOutput {
+                mod_name: m,
+                definitions: const_defs,
+                items,
+            });
         }
 
-        (modules, definitions)
+        (modules, definitions, const_modules)
+    }
+
+    /// How a definition is named in the `const` module, and whether it needs a
+    /// name of its own there.
+    fn const_name_of(&self, def: &Definition) -> ConstName {
+        match def {
+            Definition::Const(c) => ConstName::Reexported(const_name(&c.name)),
+            _ => {
+                let name = type_name(def.name());
+                if self.const_required.contains(&name) {
+                    ConstName::Defined
+                } else {
+                    ConstName::Reexported(name)
+                }
+            }
+        }
+    }
+
+    /// The names a module contributes to the `const` module directly: the
+    /// types it defines that have no borrowing form there, and its XDR consts.
+    ///
+    /// A name defined in several `#ifdef` branches is present whatever the
+    /// configuration, so its alias carries no cfg.
+    fn const_mod_items(names: &[(ConstName, Option<String>)]) -> Vec<ConstModItem> {
+        let mut items: Vec<ConstModItem> = Vec::new();
+        for (name, cfg) in names {
+            let name = match name {
+                ConstName::Defined => continue,
+                ConstName::Reexported(n) => n,
+            };
+            if let Some(existing) = items.iter_mut().find(|i| &i.name == name) {
+                existing.cfg = None;
+            } else {
+                items.push(ConstModItem {
+                    name: name.clone(),
+                    cfg: cfg.clone(),
+                });
+            }
+        }
+        items
     }
 
     /// Generate the TypeEnumOutput for the type variant enum.
@@ -270,7 +346,7 @@ impl RustGenerator {
                 }
             }
 
-            let output = self.generate_definition(def);
+            let (output, _) = self.generate_definition(def);
             definitions.push(output);
         }
 
@@ -297,16 +373,12 @@ impl RustGenerator {
 
     /// Render the `const_xdr_len`/`const_to_xdr` wrapper for a definition.
     ///
-    /// The wrapper is implemented on the borrowing `Const` form where the type
-    /// owns heap data and on the type itself otherwise, matching the receiver
-    /// the type's `ConstWriter::write_type_*` method takes.
-    fn const_to_xdr(&self, name: &str, emit_const: bool, cfg: Option<&str>) -> String {
+    /// The wrapper is emitted inside the `const` module and implemented on the
+    /// type as that module names it, matching the receiver the type's
+    /// `ConstWriter::write_type_*` method takes.
+    fn const_to_xdr(&self, name: &str, cfg: Option<&str>) -> String {
         let template = ConstToXdrTemplate {
-            recv: if emit_const {
-                format!("{name}Const")
-            } else {
-                name.to_string()
-            },
+            recv: name.to_string(),
             cfg: cfg.map(ToString::to_string),
             write_fn: format!("write_type_{}", name.to_snake_case()),
         };
@@ -322,27 +394,47 @@ impl RustGenerator {
         def.cfg().map(|c| c.render())
     }
 
-    fn generate_definition(&self, def: &Definition) -> DefinitionOutput {
+    /// Generate a definition's owned output and its `const` module output.
+    fn generate_definition(&self, def: &Definition) -> (DefinitionOutput, ConstDefinitionOutput) {
         let cfg = self.resolve_cfg(def);
         match def {
-            Definition::Struct(s) => DefinitionOutput::Struct(self.generate_struct(s, cfg)),
-            Definition::Enum(e) => DefinitionOutput::Enum(self.generate_enum(e, cfg)),
-            Definition::Union(u) => DefinitionOutput::Union(self.generate_union(u, cfg)),
+            Definition::Struct(s) => {
+                let (o, c) = self.generate_struct(s, cfg);
+                (DefinitionOutput::Struct(o), c)
+            }
+            Definition::Enum(e) => {
+                let (o, c) = self.generate_enum(e, cfg);
+                (DefinitionOutput::Enum(o), c)
+            }
+            Definition::Union(u) => {
+                let (o, c) = self.generate_union(u, cfg);
+                (DefinitionOutput::Union(o), c)
+            }
             Definition::Typedef(t) => self.generate_typedef(t, cfg),
-            Definition::Const(c) => DefinitionOutput::Const(self.generate_const(c, cfg)),
+            Definition::Const(c) => (
+                DefinitionOutput::Const(self.generate_const(c, cfg)),
+                ConstDefinitionOutput {
+                    type_def: None,
+                    const_to_xdr: String::new(),
+                },
+            ),
         }
     }
 
-    fn generate_struct(&self, s: &Struct, cfg: Option<String>) -> StructOutput {
+    fn generate_struct(
+        &self,
+        s: &Struct,
+        cfg: Option<String>,
+    ) -> (StructOutput, ConstDefinitionOutput) {
         let name = type_name(&s.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
 
-        let members: Vec<StructMemberOutput> = s
+        let (members, const_members): (Vec<StructMemberOutput>, Vec<ConstStructMemberOutput>) = s
             .members
             .iter()
             .map(|m| self.generate_member(m, &name, custom_str))
-            .collect();
+            .unzip();
 
         let member_names: String = members
             .iter()
@@ -355,22 +447,32 @@ impl RustGenerator {
         } else {
             "Struct"
         };
-        let r = self.const_emit_for(&name, cfg.as_deref());
-        StructOutput {
-            const_to_xdr: self.const_to_xdr(&name, r.emit_const, cfg.as_deref()),
-            name,
-            source_comment: source_comment(&s.source, type_kind),
-            has_default: !custom_default,
-            is_custom_str: custom_str,
-            members,
-            member_names,
-            emit_const: r.emit_const,
-            const_cfg: r.const_cfg,
-            cfg,
-        }
+        let const_output = ConstDefinitionOutput {
+            type_def: self.const_required.contains(&name).then(|| {
+                ConstTypeOutput::Struct(ConstStructOutput {
+                    name: name.clone(),
+                    cfg: cfg.clone(),
+                    members: const_members,
+                })
+            }),
+            const_to_xdr: self.const_to_xdr(&name, cfg.as_deref()),
+        };
+
+        (
+            StructOutput {
+                name,
+                source_comment: source_comment(&s.source, type_kind),
+                has_default: !custom_default,
+                is_custom_str: custom_str,
+                members,
+                member_names,
+                cfg,
+            },
+            const_output,
+        )
     }
 
-    fn generate_enum(&self, e: &Enum, cfg: Option<String>) -> EnumOutput {
+    fn generate_enum(&self, e: &Enum, cfg: Option<String>) -> (EnumOutput, ConstDefinitionOutput) {
         let name = type_name(&e.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
@@ -388,19 +490,27 @@ impl RustGenerator {
             })
             .collect();
 
-        EnumOutput {
-            // An enum owns no heap data, so it never has a `Const` form.
-            const_to_xdr: self.const_to_xdr(&name, false, cfg.as_deref()),
-            name,
-            source_comment: source_comment(&e.source, "Enum"),
-            has_default: !custom_default,
-            is_custom_str: custom_str,
-            members,
-            cfg,
-        }
+        // An enum owns no heap data, so the `const` module aliases it rather
+        // than giving it a borrowing form.
+        let const_output = ConstDefinitionOutput {
+            type_def: None,
+            const_to_xdr: self.const_to_xdr(&name, cfg.as_deref()),
+        };
+
+        (
+            EnumOutput {
+                name,
+                source_comment: source_comment(&e.source, "Enum"),
+                has_default: !custom_default,
+                is_custom_str: custom_str,
+                members,
+                cfg,
+            },
+            const_output,
+        )
     }
 
-    fn generate_union(&self, u: &Union, cfg: Option<String>) -> UnionOutput {
+    fn generate_union(&self, u: &Union, cfg: Option<String>) -> (UnionOutput, ConstDefinitionOutput) {
         let name = type_name(&u.name);
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
@@ -422,7 +532,7 @@ impl RustGenerator {
             String::new()
         };
 
-        let arms: Vec<UnionArmOutput> = u
+        let (arms, const_arms): (Vec<UnionArmOutput>, Vec<ConstUnionArmOutput>) = u
             .arms
             .iter()
             .flat_map(|arm| {
@@ -435,7 +545,7 @@ impl RustGenerator {
                     custom_str,
                 )
             })
-            .collect();
+            .unzip();
 
         let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
         let default_arm_cfg = u
@@ -443,33 +553,55 @@ impl RustGenerator {
             .first()
             .and_then(|a| a.cfg.as_ref().map(|c| c.render()));
 
-        let r = self.const_emit_for(&name, cfg.as_deref());
+        let const_output = ConstDefinitionOutput {
+            type_def: self.const_required.contains(&name).then(|| {
+                ConstTypeOutput::Union(ConstUnionOutput {
+                    name: name.clone(),
+                    cfg: cfg.clone(),
+                    discriminant_type: discriminant_type.clone(),
+                    arms: const_arms,
+                })
+            }),
+            const_to_xdr: self.const_to_xdr(&name, cfg.as_deref()),
+        };
 
-        UnionOutput {
-            const_to_xdr: self.const_to_xdr(&name, r.emit_const, cfg.as_deref()),
-            name,
-            source_comment: source_comment(&u.source, type_kind),
-            has_default: !custom_default,
-            is_custom_str: custom_str,
-            discriminant_type,
-            arms,
-            emit_const: r.emit_const,
-            const_cfg: r.const_cfg,
-            cfg,
-            default_arm_cfg,
-        }
+        (
+            UnionOutput {
+                name,
+                source_comment: source_comment(&u.source, type_kind),
+                has_default: !custom_default,
+                is_custom_str: custom_str,
+                discriminant_type,
+                arms,
+                cfg,
+                default_arm_cfg,
+            },
+            const_output,
+        )
     }
 
-    fn generate_typedef(&self, t: &Typedef, cfg: Option<String>) -> DefinitionOutput {
+    fn generate_typedef(
+        &self,
+        t: &Typedef,
+        cfg: Option<String>,
+    ) -> (DefinitionOutput, ConstDefinitionOutput) {
         let name = type_name(&t.name);
 
         if is_builtin_type(&t.type_) {
-            return DefinitionOutput::TypedefAlias(TypedefAliasOutput {
-                name,
-                source_comment: source_comment(&t.source, "Typedef"),
-                type_ref: base_type_ref(&t.type_, None),
-                cfg,
-            });
+            // A transparent alias to a builtin is served by the builtin's own
+            // encoding, so it has none of its own.
+            return (
+                DefinitionOutput::TypedefAlias(TypedefAliasOutput {
+                    name,
+                    source_comment: source_comment(&t.source, "Typedef"),
+                    type_ref: base_type_ref(&t.type_, None),
+                    cfg,
+                }),
+                ConstDefinitionOutput {
+                    type_def: None,
+                    const_to_xdr: String::new(),
+                },
+            );
         }
 
         let custom_default = self.options.custom_default_impl.contains(&name);
@@ -479,13 +611,7 @@ impl RustGenerator {
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        let resolved = resolve_type(
-            &t.type_,
-            None,
-            &self.type_info,
-            custom_str,
-            &self.const_required,
-        );
+        let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str);
 
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
@@ -493,30 +619,38 @@ impl RustGenerator {
             _ => None,
         };
 
-        let r = self.const_emit_for(&name, cfg.as_deref());
+        let const_output = ConstDefinitionOutput {
+            type_def: self.const_required.contains(&name).then(|| {
+                ConstTypeOutput::Newtype(ConstNewtypeOutput {
+                    name: name.clone(),
+                    cfg: cfg.clone(),
+                    type_ref: resolved.const_type,
+                })
+            }),
+            const_to_xdr: self.const_to_xdr(&name, cfg.as_deref()),
+        };
 
-        DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
-            const_to_xdr: self.const_to_xdr(&name, r.emit_const, cfg.as_deref()),
-            name: name.clone(),
-            source_comment: source_comment(&t.source, "Typedef"),
-            has_default: !custom_default,
-            is_var_array: is_var_array_type,
-            is_fixed_opaque: is_fixed_opaque_type,
-            is_fixed_array: is_fixed_array_type,
-            is_custom_str: custom_str,
-            type_ref: resolved.type_ref,
-            turbofish_type: resolved.turbofish_type,
-            serde_as_type: resolved.serde_as_type,
-            element_type: resolved.element_type,
-            size,
-            custom_debug: is_fixed_opaque_type,
-            custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-            custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-            emit_const: r.emit_const,
-            const_cfg: r.const_cfg,
-            const_type: resolved.const_type,
-            cfg,
-        })
+        (
+            DefinitionOutput::TypedefNewtype(TypedefNewtypeOutput {
+                name,
+                source_comment: source_comment(&t.source, "Typedef"),
+                has_default: !custom_default,
+                is_var_array: is_var_array_type,
+                is_fixed_opaque: is_fixed_opaque_type,
+                is_fixed_array: is_fixed_array_type,
+                is_custom_str: custom_str,
+                type_ref: resolved.type_ref,
+                turbofish_type: resolved.turbofish_type,
+                serde_as_type: resolved.serde_as_type,
+                element_type: resolved.element_type,
+                size,
+                custom_debug: is_fixed_opaque_type,
+                custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+                custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+                cfg,
+            }),
+            const_output,
+        )
     }
 
     fn generate_const(&self, c: &Const, cfg: Option<String>) -> ConstOutput {
@@ -538,25 +672,24 @@ impl RustGenerator {
         m: &StructMember,
         parent: &str,
         custom_str: bool,
-    ) -> StructMemberOutput {
+    ) -> (StructMemberOutput, ConstStructMemberOutput) {
         let name = field_name(&m.name);
         let serde_rename = field_json_rename(&m.name);
-        let resolved = resolve_type(
-            &m.type_,
-            Some(parent),
-            &self.type_info,
-            custom_str,
-            &self.const_required,
-        );
+        let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
 
-        StructMemberOutput {
-            name,
-            type_ref: resolved.type_ref,
-            turbofish_type: resolved.turbofish_type,
-            serde_as_type: resolved.serde_as_type,
-            serde_rename,
-            const_type: resolved.const_type,
-        }
+        (
+            StructMemberOutput {
+                name: name.clone(),
+                type_ref: resolved.type_ref,
+                turbofish_type: resolved.turbofish_type,
+                serde_as_type: resolved.serde_as_type,
+                serde_rename,
+            },
+            ConstStructMemberOutput {
+                name,
+                type_ref: resolved.const_type,
+            },
+        )
     }
 
     fn generate_union_arm(
@@ -567,7 +700,7 @@ impl RustGenerator {
         discriminant_is_builtin: bool,
         discriminant_prefix: &str,
         custom_str: bool,
-    ) -> Vec<UnionArmOutput> {
+    ) -> Vec<(UnionArmOutput, ConstUnionArmOutput)> {
         arm.cases
             .iter()
             .map(|case| {
@@ -578,29 +711,51 @@ impl RustGenerator {
                     discriminant_prefix,
                 );
 
-                let resolved = arm.type_.as_ref().map(|t| {
-                    resolve_type(
-                        t,
-                        Some(parent),
-                        &self.type_info,
-                        custom_str,
-                        &self.const_required,
-                    )
-                });
+                let resolved = arm
+                    .type_
+                    .as_ref()
+                    .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str));
+                let cfg = arm.cfg.as_ref().map(|c| c.render());
 
-                UnionArmOutput {
-                    case_name,
-                    case_value: case_value_expr,
-                    is_void: arm.type_.is_none(),
-                    type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
-                    turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
-                    const_type: resolved.as_ref().map(|r| r.const_type.clone()),
-                    serde_as_type: resolved.and_then(|r| r.serde_as_type),
-                    cfg: arm.cfg.as_ref().map(|c| c.render()),
-                }
+                (
+                    UnionArmOutput {
+                        case_name: case_name.clone(),
+                        case_value: case_value_expr.clone(),
+                        is_void: arm.type_.is_none(),
+                        type_ref: resolved.as_ref().map(|r| r.type_ref.clone()),
+                        turbofish_type: resolved.as_ref().map(|r| r.turbofish_type.clone()),
+                        serde_as_type: resolved.as_ref().and_then(|r| r.serde_as_type.clone()),
+                        cfg: cfg.clone(),
+                    },
+                    ConstUnionArmOutput {
+                        case_name,
+                        case_value: case_value_expr,
+                        is_void: arm.type_.is_none(),
+                        type_ref: resolved.map(|r| r.const_type),
+                        cfg,
+                    },
+                )
             })
             .collect()
     }
+}
+
+/// One definition module's contribution to the `const` module.
+struct ConstModuleOutput {
+    mod_name: String,
+    /// The definitions with const content of their own, which go in the
+    /// module's file. Empty where the module contributes only names.
+    definitions: Vec<ConstDefinitionOutput>,
+    /// The names the module contributes to the `const` module directly.
+    items: Vec<ConstModItem>,
+}
+
+/// How a definition is named in the `const` module.
+enum ConstName {
+    /// The `const` module defines a borrowing form under the name itself.
+    Defined,
+    /// The `const` module re-exports the parent's definition under this name.
+    Reexported(String),
 }
 
 // =============================================================================
@@ -719,12 +874,3 @@ impl<'a> BorrowAnalysis<'a> {
     }
 }
 
-/// How a definition's borrowing `Const` form is emitted.
-///
-/// A `{name}Const` is emitted for every definition of a name that holds heap
-/// data under some cfg. A name that holds none under any cfg gets nothing: the
-/// owned type is already the whole value, and there is nothing to borrow.
-struct ConstEmit {
-    emit_const: bool,
-    const_cfg: Option<String>,
-}

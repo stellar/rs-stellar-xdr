@@ -57,7 +57,6 @@ self.{{ e.method }}({% call arg(e) %});
 
 {%- if !const_writer.methods.is_empty() %}
 
-#[cfg(feature = "const")]
 impl ConstWriter<'_> {
 {%- for m in const_writer.methods %}
 {% if let Some(cfg) = m.cfg %}

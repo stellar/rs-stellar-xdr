@@ -30,7 +30,7 @@
 //! operations: `while` loops instead of `for`, and direct calls to each
 //! concrete type's writer method instead of trait dispatch.
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 
 use heck::ToSnakeCase;
 use xdr_parser::ast::{Definition, Type, Union, UnionArm, XdrSpec};
@@ -51,12 +51,10 @@ use crate::types::{const_base_type, const_type, type_ref};
 pub(crate) fn build(
     spec: &XdrSpec,
     type_info: &TypeInfo,
-    const_required: &HashSet<String>,
     cfg_by_name: &HashMap<String, Option<String>>,
 ) -> ConstWriterOutput {
     let mut c = Collector {
         type_info,
-        const_required,
         cfg_by_name,
         wrappers: BTreeMap::new(),
         loop_depth: 0,
@@ -81,7 +79,6 @@ pub(crate) fn build(
 
 struct Collector<'a> {
     type_info: &'a TypeInfo,
-    const_required: &'a HashSet<String>,
     cfg_by_name: &'a HashMap<String, Option<String>>,
     /// Wrapper (`Option`/`VecM`) methods needed, keyed by method name.
     wrappers: BTreeMap<String, ConstWriterMethodOutput>,
@@ -216,21 +213,20 @@ impl Collector<'_> {
                 unimplemented!("const XDR serialization of float and double is not supported")
             }
             Type::OpaqueFixed(_) => call("write_fixed_opaque", ConstPass::Ref),
-            // The variable-length byte cases only ever occur inside a `Const`
-            // type, where the value is a borrowing
-            // `BytesMConst`/`StringMConst`,
-            // each of which exposes a const `as_slice`.
+            // The variable-length byte cases only ever occur inside a const
+            // type, where the value is the `const` module's borrowing `BytesM`
+            // or `StringM`, each of which exposes a const `as_slice`.
             Type::OpaqueVar(_) | Type::String(_) => call("write_var_opaque", ConstPass::Slice),
             Type::Ident(_) => {
                 if let Some(builtin) = self.type_info.resolve_typedef_to_builtin(type_) {
                     let builtin = builtin.clone();
                     return self.encode(&builtin, acc, is_ref, parent);
                 }
-                // Where the ident is cyclic with `parent`, its `Const` form is
+                // Where the ident is cyclic with `parent`, its const form is
                 // already a reference to the value, so it is passed along
                 // as-is rather than borrowed again; a `match` binding of one is
                 // a double reference that auto-deref resolves at the call.
-                let const_ty = const_type(type_, parent, self.type_info, self.const_required);
+                let const_ty = const_type(type_, parent, self.type_info);
                 let pass = if const_ty.starts_with('&') {
                     ConstPass::AsIs
                 } else {
@@ -251,7 +247,7 @@ impl Collector<'_> {
                 let name = self.need_vec(type_);
                 call(&name, ConstPass::Ref)
             }
-            // A fixed array is a plain `[T; N]` in both the owned and `Const`
+            // A fixed array is a plain `[T; N]` in both the owned and const
             // forms, so it is walked inline rather than given a method: there
             // is no wrapper type to name one after.
             Type::Array { element_type, size } => {
@@ -278,8 +274,8 @@ impl Collector<'_> {
         let Type::Optional(inner) = type_ else {
             unreachable!("need_option called with a non-optional type")
         };
-        let param = const_type(type_, parent, self.type_info, self.const_required);
-        // Where the option is cyclic the `Const` form holds a reference to the
+        let param = const_type(type_, parent, self.type_info);
+        // Where the option is cyclic the const form holds a reference to the
         // inner value rather than the value itself, which is a different Rust
         // type and so needs a method of its own. Such an option is a pair of
         // `Copy` words, so it is taken by value rather than by reference.
@@ -347,19 +343,19 @@ impl Collector<'_> {
             // Each wrapper is its own method, so its bindings start fresh.
             self.loop_depth = 0;
             let element_type = element_type.clone();
-            // `VecMConst` borrows its elements as one slice, so each element is
+            // `VecM` borrows its elements as one slice, so each element is
             // held by value and is never a cyclic reference.
             let elem = self.in_loop(|c| c.encode(&element_type, "s[i]", false, None));
             // The max length is a const parameter rather than a fixed size, so
             // one method serves every `VecM` of this element type whatever its
             // declared maximum.
-            let elem_ty = const_base_type(&element_type, self.type_info, self.const_required);
+            let elem_ty = const_base_type(&element_type, self.type_info);
             self.wrappers.insert(
                 name.clone(),
                 ConstWriterMethodOutput {
                     name: name.clone(),
                     generics: "<const MAX: u32>".to_string(),
-                    param_type: format!("&VecMConst<{elem_ty}, MAX>"),
+                    param_type: format!("&VecM<{elem_ty}, MAX>"),
                     cfg: self.wrapper_cfg(&element_type),
                     module,
                     subject: ConstSubject::Vec {
@@ -441,20 +437,13 @@ impl Collector<'_> {
             Definition::Union(u) => self.union_body(u, &name),
         };
 
-        // A type that owns heap data is serialized through its borrowing
-        // `Const`
-        // form, which is the only form const evaluation can hold; every other
-        // type is serialized directly.
-        let param_type = if self.const_required.contains(&name) {
-            format!("&{name}Const")
-        } else {
-            format!("&{name}")
-        };
-
         Some(ConstWriterMethodOutput {
             name: format!("write_type_{}", name.to_snake_case()),
             generics: String::new(),
-            param_type,
+            // The method is emitted inside the `const` module, so the plain
+            // name is that module's form of the type: the borrowing one where
+            // the type owns heap data, an alias to the owned type otherwise.
+            param_type: format!("&{name}"),
             cfg,
             module: mod_name(def.name()),
             subject: ConstSubject::Type(name),
@@ -481,17 +470,13 @@ impl Collector<'_> {
                 .unwrap_or_default()
         };
 
-        // Both the owned and `Const` forms expose a const `discriminant`, so the
+        // Both the owned and const forms expose a const `discriminant`, so the
         // body mirrors the owned type's `write_xdr`.
         let discriminant = self.encode(&u.discriminant.type_, "d", false, None);
 
-        // The match scrutinee is the `Const` form where the union owns heap
-        // data, since that is the type the parameter holds.
-        let scrutinee = if self.const_required.contains(name) {
-            format!("{name}Const")
-        } else {
-            name.to_string()
-        };
+        // As for the parameter type, the plain name is the `const` module's
+        // form of the union, which is the type the parameter holds.
+        let scrutinee = name.to_string();
 
         let arms = u
             .arms

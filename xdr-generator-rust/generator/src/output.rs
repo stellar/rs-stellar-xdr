@@ -18,6 +18,93 @@ pub struct ModTemplate {
     pub modules: Vec<ModuleEntry>,
 }
 
+/// The `const` module file: the header, and an entry per definition module.
+#[derive(Template)]
+#[template(path = "const_mod.rs.jinja", escape = "none")]
+pub struct ConstModTemplate {
+    pub header: String,
+    pub entries: Vec<ConstModEntry>,
+}
+
+/// What one definition module contributes to the `const` module.
+pub struct ConstModEntry {
+    /// The module's file, when it has const content of its own.
+    pub mod_name: Option<String>,
+    /// The names the module contributes to the `const` module directly, rather
+    /// than through its file.
+    pub items: Vec<ConstModItem>,
+}
+
+/// A name the `const` module takes from its parent unchanged: a type with no
+/// borrowing form, or an XDR const.
+///
+/// It is re-exported rather than aliased so that the name works in both
+/// namespaces: a `pub type` alias cannot be used to construct a tuple struct
+/// or name a unit variant.
+pub struct ConstModItem {
+    pub name: String,
+    pub cfg: Option<String>,
+}
+
+/// One definition module's file inside the `const` module.
+#[derive(Template)]
+#[template(path = "const_definition.rs.jinja", escape = "none")]
+pub struct ConstDefinitionTemplate {
+    pub definitions: Vec<ConstDefinitionOutput>,
+    /// The `ConstWriter` methods serializing the types defined in this file.
+    pub const_writer: ConstWriterOutput,
+}
+
+/// The const-module form of one definition.
+pub struct ConstDefinitionOutput {
+    /// The borrowing type the definition gets in the `const` module, where it
+    /// owns heap data. Where it does not, the `const` module aliases the owned
+    /// type instead and this is `None`.
+    pub type_def: Option<ConstTypeOutput>,
+    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block, empty
+    /// for a definition with no const encoding of its own.
+    pub const_to_xdr: String,
+}
+
+/// A borrowing type definition in the `const` module.
+pub enum ConstTypeOutput {
+    Struct(ConstStructOutput),
+    Union(ConstUnionOutput),
+    Newtype(ConstNewtypeOutput),
+}
+
+pub struct ConstStructOutput {
+    pub name: String,
+    pub cfg: Option<String>,
+    pub members: Vec<ConstStructMemberOutput>,
+}
+
+pub struct ConstStructMemberOutput {
+    pub name: String,
+    pub type_ref: String,
+}
+
+pub struct ConstUnionOutput {
+    pub name: String,
+    pub cfg: Option<String>,
+    pub discriminant_type: String,
+    pub arms: Vec<ConstUnionArmOutput>,
+}
+
+pub struct ConstUnionArmOutput {
+    pub case_name: String,
+    pub case_value: String,
+    pub is_void: bool,
+    pub type_ref: Option<String>,
+    pub cfg: Option<String>,
+}
+
+pub struct ConstNewtypeOutput {
+    pub name: String,
+    pub cfg: Option<String>,
+    pub type_ref: String,
+}
+
 #[derive(Template)]
 #[template(path = "type_enum_definition.rs.jinja", escape = "none")]
 pub struct TypeEnumDefinitionTemplate {
@@ -32,8 +119,6 @@ pub struct ModuleEntry {
 #[template(path = "definition.rs.jinja", escape = "none")]
 pub struct DefinitionTemplate {
     pub definitions: Vec<DefinitionOutput>,
-    /// The `ConstWriter` methods serializing the types defined in this file.
-    pub const_writer: ConstWriterOutput,
 }
 
 /// The `const_xdr_len` / `const_to_xdr` wrapper emitted on a type, which sets
@@ -41,7 +126,8 @@ pub struct DefinitionTemplate {
 #[derive(Template)]
 #[template(path = "const_to_xdr.rs.jinja", escape = "none")]
 pub struct ConstToXdrTemplate {
-    /// The receiver the wrapper is implemented on, e.g. `MemoConst`.
+    /// The receiver the wrapper is implemented on, e.g. `Memo`, naming the
+    /// type as the `const` module names it.
     pub recv: String,
     pub cfg: Option<String>,
     /// The `ConstWriter` method the wrapper calls.
@@ -58,7 +144,8 @@ pub struct ConstWriterMethodOutput {
     pub name: String,
     /// Generic parameters, e.g. `<const MAX: u32>` for the `VecM` methods.
     pub generics: String,
-    /// The type of the value parameter, e.g. `&TransactionConst`.
+    /// The type of the value parameter, e.g. `&Transaction`, naming the type
+    /// as the `const` module names it.
     pub param_type: String,
     pub cfg: Option<String>,
     /// The module the method is emitted into: the one holding the type it
@@ -97,8 +184,7 @@ pub enum ConstWriterBody {
     Enum,
     /// A union: its discriminant, then the payload of the selected arm.
     Union {
-        /// The type matched on: the `Const` form where the union owns heap
-        /// data.
+        /// The type matched on, named as the `const` module names it.
         scrutinee: String,
         discriminant: ConstEncode,
         arms: Vec<ConstUnionArm>,
@@ -144,10 +230,10 @@ pub enum ConstPass {
     Value,
     /// By reference.
     Ref,
-    /// As it is: the value is already a reference, the `Const` form of a
-    /// cyclic type.
+    /// As it is: the value is already a reference, the const form of a cyclic
+    /// type.
     AsIs,
-    /// As the byte slice a `BytesMConst`/`StringMConst` exposes.
+    /// As the byte slice the `const` module's `BytesM`/`StringM` exposes.
     Slice,
 }
 
@@ -167,14 +253,7 @@ pub struct StructOutput {
     pub is_custom_str: bool,
     pub members: Vec<StructMemberOutput>,
     pub member_names: String,
-    /// True when this definition borrows and gets a real `{name}Const`.
-    pub emit_const: bool,
-    /// The full cfg for the real `Const` struct, gating it to where it
-    /// borrows.
-    pub const_cfg: Option<String>,
     pub cfg: Option<String>,
-    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
-    pub const_to_xdr: String,
 }
 
 pub struct StructMemberOutput {
@@ -185,8 +264,6 @@ pub struct StructMemberOutput {
     /// The correct SEP-51 JSON key when the Rust field name was keyword-escaped
     /// (e.g. `type_` -> JSON `type`). `None` when the name was not escaped.
     pub serde_rename: Option<String>,
-    /// The member's type in the borrowing `Const` form of the parent type.
-    pub const_type: String,
 }
 
 pub struct EnumOutput {
@@ -196,8 +273,6 @@ pub struct EnumOutput {
     pub is_custom_str: bool,
     pub members: Vec<EnumStructMemberOutput>,
     pub cfg: Option<String>,
-    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
-    pub const_to_xdr: String,
 }
 
 pub struct EnumStructMemberOutput {
@@ -214,18 +289,10 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub arms: Vec<UnionArmOutput>,
-    /// True when a real `{name}Const` enum is emitted, i.e. some arm borrows.
-    pub emit_const: bool,
-    /// The full cfg for the real `Const` enum. When every borrowing arm is
-    /// behind a cfg, this is the union's cfg combined with the disjunction of
-    /// those arm cfgs, so the enum only exists where it is actually needed.
-    pub const_cfg: Option<String>,
     pub cfg: Option<String>,
     /// Cfg for the first arm, used to gate the Default impl when the
     /// default variant is behind a cfg.
     pub default_arm_cfg: Option<String>,
-    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
-    pub const_to_xdr: String,
 }
 
 pub struct UnionArmOutput {
@@ -235,9 +302,6 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
-    /// The arm's payload type in the borrowing `Const` form of the parent
-    /// type.
-    pub const_type: Option<String>,
     pub cfg: Option<String>,
 }
 
@@ -264,16 +328,7 @@ pub struct TypedefNewtypeOutput {
     pub custom_debug: bool,
     pub custom_display_fromstr: bool,
     pub custom_schemars: bool,
-    /// True when this definition borrows and gets a real `{name}Const`.
-    pub emit_const: bool,
-    /// The full cfg for the real `Const` newtype, gating it to where it
-    /// borrows.
-    pub const_cfg: Option<String>,
-    /// The inner type in the borrowing `Const` form of the newtype.
-    pub const_type: String,
     pub cfg: Option<String>,
-    /// The rendered `const_xdr_len`/`const_to_xdr` wrapper impl block.
-    pub const_to_xdr: String,
 }
 
 pub struct ConstOutput {

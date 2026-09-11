@@ -1,6 +1,5 @@
 {% if let Some(cfg) = cfg %}#[cfg({{ cfg }})]
 {% endif -%}
-#[cfg(feature = "const")]
 impl {{ recv }} {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
@@ -15,7 +14,8 @@ impl {{ recv }} {
     }
 
     /// Serialize this value as XDR into a fixed-size `[u8; N]` using only const
-    /// operations. This is the const counterpart to [`WriteXdr::to_xdr`].
+    /// operations. This is the const counterpart to
+    /// [`WriteXdr::to_xdr`](super::super::WriteXdr::to_xdr).
     ///
     /// `N` must equal [`Self::const_xdr_len`]. It is intended for callers, such
     /// as a proc-macro, that compute the length with `const_xdr_len` and pass

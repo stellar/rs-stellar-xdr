@@ -4,6 +4,7 @@ use super::*;
 /// LedgerHeaderHistoryEntry is a borrowing equivalent of [`LedgerHeaderHistoryEntry`](super::super::LedgerHeaderHistoryEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerHeaderHistoryEntry {
     pub hash: Hash,
     pub header: LedgerHeader,

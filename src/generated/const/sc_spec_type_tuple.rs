@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecTypeTuple is a borrowing equivalent of [`ScSpecTypeTuple`](super::super::ScSpecTypeTuple)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecTypeTuple {
     pub value_types: VecM<ScSpecTypeDef, 12>,
 }

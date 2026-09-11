@@ -4,6 +4,7 @@ use super::*;
 /// ManageDataOp is a borrowing equivalent of [`ManageDataOp`](super::super::ManageDataOp)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ManageDataOp {
     pub data_name: String64,
     pub data_value: Option<DataValue>,

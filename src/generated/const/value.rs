@@ -4,6 +4,7 @@ use super::*;
 /// Value is a borrowing equivalent of [`Value`](super::super::Value)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Value(pub BytesM);
 
 impl Value {

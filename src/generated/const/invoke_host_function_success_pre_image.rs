@@ -4,6 +4,7 @@ use super::*;
 /// InvokeHostFunctionSuccessPreImage is a borrowing equivalent of [`InvokeHostFunctionSuccessPreImage`](super::super::InvokeHostFunctionSuccessPreImage)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct InvokeHostFunctionSuccessPreImage {
     pub return_value: ScVal,
     pub events: VecM<ContractEvent>,

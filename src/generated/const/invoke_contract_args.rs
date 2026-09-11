@@ -4,6 +4,7 @@ use super::*;
 /// InvokeContractArgs is a borrowing equivalent of [`InvokeContractArgs`](super::super::InvokeContractArgs)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct InvokeContractArgs {
     pub contract_address: ScAddress,
     pub function_name: ScSymbol,

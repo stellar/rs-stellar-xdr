@@ -4,6 +4,7 @@ use super::*;
 /// SignedTimeSlicedSurveyStopCollectingMessage is a borrowing equivalent of [`SignedTimeSlicedSurveyStopCollectingMessage`](super::super::SignedTimeSlicedSurveyStopCollectingMessage)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SignedTimeSlicedSurveyStopCollectingMessage {
     pub signature: Signature,
     pub stop_collecting: TimeSlicedSurveyStopCollectingMessage,

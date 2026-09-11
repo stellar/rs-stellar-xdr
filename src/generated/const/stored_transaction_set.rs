@@ -4,6 +4,7 @@ use super::*;
 /// StoredTransactionSet is a borrowing equivalent of [`StoredTransactionSet`](super::super::StoredTransactionSet)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum StoredTransactionSet {
     V0(TransactionSet),

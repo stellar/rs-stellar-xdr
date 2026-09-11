@@ -4,6 +4,7 @@ use super::*;
 /// SetOptionsOp is a borrowing equivalent of [`SetOptionsOp`](super::super::SetOptionsOp)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
     pub clear_flags: Option<u32>,

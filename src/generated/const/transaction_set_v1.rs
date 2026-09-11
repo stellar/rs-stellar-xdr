@@ -4,6 +4,7 @@ use super::*;
 /// TransactionSetV1 is a borrowing equivalent of [`TransactionSetV1`](super::super::TransactionSetV1)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionSetV1 {
     pub previous_ledger_hash: Hash,
     pub phases: VecM<TransactionPhase>,

@@ -4,6 +4,7 @@ use super::*;
 /// PathPaymentStrictSendOp is a borrowing equivalent of [`PathPaymentStrictSendOp`](super::super::PathPaymentStrictSendOp)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
     pub send_amount: i64,

@@ -4,6 +4,7 @@ use super::*;
 /// StellarValueProposedValue is a borrowing equivalent of [`StellarValueProposedValue`](super::super::StellarValueProposedValue)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StellarValueProposedValue {
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,

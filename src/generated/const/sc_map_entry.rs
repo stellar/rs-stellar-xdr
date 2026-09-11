@@ -4,6 +4,7 @@ use super::*;
 /// ScMapEntry is a borrowing equivalent of [`ScMapEntry`](super::super::ScMapEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScMapEntry {
     pub key: ScVal,
     pub val: ScVal,

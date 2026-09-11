@@ -4,6 +4,7 @@ use super::*;
 /// ScSymbol is a borrowing equivalent of [`ScSymbol`](super::super::ScSymbol)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSymbol(pub StringM<SCSYMBOL_LIMIT>);
 
 impl ScSymbol {

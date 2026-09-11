@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecUdtErrorEnumV0 is a borrowing equivalent of [`ScSpecUdtErrorEnumV0`](super::super::ScSpecUdtErrorEnumV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecUdtErrorEnumV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub lib: StringM<80>,

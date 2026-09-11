@@ -4,6 +4,7 @@ use super::*;
 /// ClaimableBalanceEntry is a borrowing equivalent of [`ClaimableBalanceEntry`](super::super::ClaimableBalanceEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
     pub claimants: VecM<Claimant, 10>,

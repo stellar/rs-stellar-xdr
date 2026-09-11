@@ -4,6 +4,7 @@ use super::*;
 /// DecoratedSignature is a borrowing equivalent of [`DecoratedSignature`](super::super::DecoratedSignature)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct DecoratedSignature {
     pub hint: SignatureHint,
     pub signature: Signature,

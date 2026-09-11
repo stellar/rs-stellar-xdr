@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecUdtStructFieldV0 is a borrowing equivalent of [`ScSpecUdtStructFieldV0`](super::super::ScSpecUdtStructFieldV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecUdtStructFieldV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub name: StringM<30>,

@@ -4,6 +4,7 @@ use super::*;
 /// AuthenticatedMessageV0 is a borrowing equivalent of [`AuthenticatedMessageV0`](super::super::AuthenticatedMessageV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct AuthenticatedMessageV0 {
     pub sequence: u64,
     pub message: StellarMessage,

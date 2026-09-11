@@ -4,6 +4,7 @@ use super::*;
 /// ScMap is a borrowing equivalent of [`ScMap`](super::super::ScMap)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScMap(pub VecM<ScMapEntry>);
 
 impl ScMap {

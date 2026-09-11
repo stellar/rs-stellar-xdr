@@ -4,6 +4,7 @@ use super::*;
 /// LedgerCloseMetaV2 is a borrowing equivalent of [`LedgerCloseMetaV2`](super::super::LedgerCloseMetaV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerCloseMetaV2 {
     pub ext: LedgerCloseMetaExt,
     pub ledger_header: LedgerHeaderHistoryEntry,

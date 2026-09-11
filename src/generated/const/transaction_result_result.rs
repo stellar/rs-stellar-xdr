@@ -4,6 +4,7 @@ use super::*;
 /// TransactionResultResult is a borrowing equivalent of [`TransactionResultResult`](super::super::TransactionResultResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultResult {
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),

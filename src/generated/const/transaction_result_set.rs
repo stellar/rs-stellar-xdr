@@ -4,6 +4,7 @@ use super::*;
 /// TransactionResultSet is a borrowing equivalent of [`TransactionResultSet`](super::super::TransactionResultSet)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionResultSet {
     pub results: VecM<TransactionResultPair>,
 }

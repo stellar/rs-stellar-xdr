@@ -4,6 +4,7 @@ use super::*;
 /// SorobanResourcesExtV0 is a borrowing equivalent of [`SorobanResourcesExtV0`](super::super::SorobanResourcesExtV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanResourcesExtV0 {
     pub archived_soroban_entries: VecM<u32>,
 }

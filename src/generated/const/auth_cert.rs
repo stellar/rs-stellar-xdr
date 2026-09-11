@@ -4,6 +4,7 @@ use super::*;
 /// AuthCert is a borrowing equivalent of [`AuthCert`](super::super::AuthCert)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
     pub expiration: u64,

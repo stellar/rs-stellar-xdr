@@ -4,6 +4,7 @@ use super::*;
 /// PeerStats is a borrowing equivalent of [`PeerStats`](super::super::PeerStats)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PeerStats {
     pub id: NodeId,
     pub version_str: StringM<100>,

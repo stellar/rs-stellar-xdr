@@ -4,6 +4,7 @@ use super::*;
 /// ContractEventV0 is a borrowing equivalent of [`ContractEventV0`](super::super::ContractEventV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ContractEventV0 {
     pub topics: VecM<ScVal>,
     pub data: ScVal,

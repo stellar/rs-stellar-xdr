@@ -4,6 +4,7 @@ use super::*;
 /// ScpBallot is a borrowing equivalent of [`ScpBallot`](super::super::ScpBallot)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpBallot {
     pub counter: u32,
     pub value: Value,

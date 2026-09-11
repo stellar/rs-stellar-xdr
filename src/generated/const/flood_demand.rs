@@ -4,6 +4,7 @@ use super::*;
 /// FloodDemand is a borrowing equivalent of [`FloodDemand`](super::super::FloodDemand)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FloodDemand {
     pub tx_hashes: TxDemandVector,
 }

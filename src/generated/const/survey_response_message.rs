@@ -4,6 +4,7 @@ use super::*;
 /// SurveyResponseMessage is a borrowing equivalent of [`SurveyResponseMessage`](super::super::SurveyResponseMessage)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,

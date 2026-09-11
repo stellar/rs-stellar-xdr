@@ -4,6 +4,7 @@ use super::*;
 /// PathPaymentStrictReceiveResult is a borrowing equivalent of [`PathPaymentStrictReceiveResult`](super::super::PathPaymentStrictReceiveResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictReceiveResult {
     Success(PathPaymentStrictReceiveResultSuccess),

@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecUdtUnionCaseV0 is a borrowing equivalent of [`ScSpecUdtUnionCaseV0`](super::super::ScSpecUdtUnionCaseV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecUdtUnionCaseV0 {
     VoidV0(ScSpecUdtUnionCaseVoidV0),

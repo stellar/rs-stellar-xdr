@@ -4,6 +4,7 @@ use super::*;
 /// LedgerEntry is a borrowing equivalent of [`LedgerEntry`](super::super::LedgerEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerEntry {
     pub last_modified_ledger_seq: u32,
     pub data: LedgerEntryData,

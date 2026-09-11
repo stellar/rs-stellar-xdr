@@ -686,6 +686,7 @@ impl RustGenerator {
                 serde_rename,
             },
             ConstStructMemberOutput {
+                arbitrary_with: const_arbitrary_with(&resolved.const_type),
                 name,
                 type_ref: resolved.const_type,
             },
@@ -731,12 +732,35 @@ impl RustGenerator {
                         case_name,
                         case_value: case_value_expr,
                         is_void: arm.type_.is_none(),
+                        arbitrary_with: resolved
+                            .as_ref()
+                            .and_then(|r| const_arbitrary_with(&r.const_type)),
                         type_ref: resolved.map(|r| r.const_type),
                         cfg,
                     },
                 )
             })
             .collect()
+    }
+}
+
+/// The `#[arbitrary(with = ...)]` a const field needs, if any.
+///
+/// A const type stands in for an owned `Box` with a `&'static` reference, and
+/// there is no `Arbitrary` impl for a reference to give the derive. The
+/// helpers named here build one the way `Box` does, so the const type consumes
+/// the same input bytes as the owned type. Every other const field type has an
+/// `Arbitrary` impl the derive finds on its own.
+fn const_arbitrary_with(const_type: &str) -> Option<String> {
+    if let Some(t) = const_type.strip_prefix("&'static ") {
+        Some(format!("arbitrary_ref::<{t}>"))
+    } else if let Some(t) = const_type
+        .strip_prefix("Option<&'static ")
+        .and_then(|t| t.strip_suffix('>'))
+    {
+        Some(format!("arbitrary_option_ref::<{t}>"))
+    } else {
+        None
     }
 }
 

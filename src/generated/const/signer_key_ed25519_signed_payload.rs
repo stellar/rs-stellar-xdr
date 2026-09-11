@@ -4,6 +4,7 @@ use super::*;
 /// SignerKeyEd25519SignedPayload is a borrowing equivalent of [`SignerKeyEd25519SignedPayload`](super::super::SignerKeyEd25519SignedPayload)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
     pub payload: BytesM<64>,

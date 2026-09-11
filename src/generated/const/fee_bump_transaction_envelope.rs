@@ -4,6 +4,7 @@ use super::*;
 /// FeeBumpTransactionEnvelope is a borrowing equivalent of [`FeeBumpTransactionEnvelope`](super::super::FeeBumpTransactionEnvelope)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FeeBumpTransactionEnvelope {
     pub tx: FeeBumpTransaction,
     pub signatures: VecM<DecoratedSignature, 20>,

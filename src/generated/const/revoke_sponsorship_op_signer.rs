@@ -4,6 +4,7 @@ use super::*;
 /// RevokeSponsorshipOpSigner is a borrowing equivalent of [`RevokeSponsorshipOpSigner`](super::super::RevokeSponsorshipOpSigner)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct RevokeSponsorshipOpSigner {
     pub account_id: AccountId,
     pub signer_key: SignerKey,

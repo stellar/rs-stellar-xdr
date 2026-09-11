@@ -4,6 +4,7 @@ use super::*;
 /// ScpHistoryEntryV0 is a borrowing equivalent of [`ScpHistoryEntryV0`](super::super::ScpHistoryEntryV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpHistoryEntryV0 {
     pub quorum_sets: VecM<ScpQuorumSet>,
     pub ledger_messages: LedgerScpMessages,

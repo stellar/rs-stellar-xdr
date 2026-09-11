@@ -4,6 +4,7 @@ use super::*;
 /// ConfigSettingEntry is a borrowing equivalent of [`ConfigSettingEntry`](super::super::ConfigSettingEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ConfigSettingEntry {
     ContractMaxSizeBytes(u32),

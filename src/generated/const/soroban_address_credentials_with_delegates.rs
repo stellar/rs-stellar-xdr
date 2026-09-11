@@ -4,6 +4,7 @@ use super::*;
 /// SorobanAddressCredentialsWithDelegates is a borrowing equivalent of [`SorobanAddressCredentialsWithDelegates`](super::super::SorobanAddressCredentialsWithDelegates)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanAddressCredentialsWithDelegates {
     pub address_credentials: SorobanAddressCredentials,
     pub delegates: VecM<SorobanDelegateSignature>,

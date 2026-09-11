@@ -4,6 +4,7 @@ use super::*;
 /// LedgerCloseMeta is a borrowing equivalent of [`LedgerCloseMeta`](super::super::LedgerCloseMeta)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),

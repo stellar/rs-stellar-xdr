@@ -4,6 +4,7 @@ use super::*;
 /// FreezeBypassTxs is a borrowing equivalent of [`FreezeBypassTxs`](super::super::FreezeBypassTxs)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FreezeBypassTxs {
     pub tx_hashes: VecM<Hash>,
 }

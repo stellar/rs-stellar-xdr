@@ -4,6 +4,7 @@ use super::*;
 /// ContractCostParams is a borrowing equivalent of [`ContractCostParams`](super::super::ContractCostParams)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ContractCostParams(pub VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>);
 
 impl ContractCostParams {

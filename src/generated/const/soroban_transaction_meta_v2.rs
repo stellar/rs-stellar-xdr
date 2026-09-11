@@ -4,6 +4,7 @@ use super::*;
 /// SorobanTransactionMetaV2 is a borrowing equivalent of [`SorobanTransactionMetaV2`](super::super::SorobanTransactionMetaV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanTransactionMetaV2 {
     pub ext: SorobanTransactionMetaExt,
     pub return_value: Option<ScVal>,

@@ -4,6 +4,7 @@ use super::*;
 /// LedgerFootprint is a borrowing equivalent of [`LedgerFootprint`](super::super::LedgerFootprint)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerFootprint {
     pub read_only: VecM<LedgerKey>,
     pub read_write: VecM<LedgerKey>,

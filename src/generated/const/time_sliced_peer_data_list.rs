@@ -4,6 +4,7 @@ use super::*;
 /// TimeSlicedPeerDataList is a borrowing equivalent of [`TimeSlicedPeerDataList`](super::super::TimeSlicedPeerDataList)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TimeSlicedPeerDataList(pub VecM<TimeSlicedPeerData, 25>);
 
 impl TimeSlicedPeerDataList {

@@ -4,6 +4,7 @@ use super::*;
 /// TransactionResult is a borrowing equivalent of [`TransactionResult`](super::super::TransactionResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionResult {
     pub fee_charged: i64,
     pub result: TransactionResultResult,

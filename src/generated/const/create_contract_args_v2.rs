@@ -4,6 +4,7 @@ use super::*;
 /// CreateContractArgsV2 is a borrowing equivalent of [`CreateContractArgsV2`](super::super::CreateContractArgsV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct CreateContractArgsV2 {
     pub contract_id_preimage: ContractIdPreimage,
     pub executable: ContractExecutable,

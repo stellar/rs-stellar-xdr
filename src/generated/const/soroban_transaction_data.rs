@@ -4,6 +4,7 @@ use super::*;
 /// SorobanTransactionData is a borrowing equivalent of [`SorobanTransactionData`](super::super::SorobanTransactionData)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanTransactionData {
     pub ext: SorobanTransactionDataExt,
     pub resources: SorobanResources,

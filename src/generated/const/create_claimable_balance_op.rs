@@ -4,6 +4,7 @@ use super::*;
 /// CreateClaimableBalanceOp is a borrowing equivalent of [`CreateClaimableBalanceOp`](super::super::CreateClaimableBalanceOp)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
     pub amount: i64,

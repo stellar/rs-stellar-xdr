@@ -4,6 +4,7 @@ use super::*;
 /// SignedTimeSlicedSurveyResponseMessage is a borrowing equivalent of [`SignedTimeSlicedSurveyResponseMessage`](super::super::SignedTimeSlicedSurveyResponseMessage)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SignedTimeSlicedSurveyResponseMessage {
     pub response_signature: Signature,
     pub response: TimeSlicedSurveyResponseMessage,

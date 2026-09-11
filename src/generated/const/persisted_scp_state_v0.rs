@@ -4,6 +4,7 @@ use super::*;
 /// PersistedScpStateV0 is a borrowing equivalent of [`PersistedScpStateV0`](super::super::PersistedScpStateV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PersistedScpStateV0 {
     pub scp_envelopes: VecM<ScpEnvelope>,
     pub quorum_sets: VecM<ScpQuorumSet>,

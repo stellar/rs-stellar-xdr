@@ -4,6 +4,7 @@ use super::*;
 /// Signature is a borrowing equivalent of [`Signature`](super::super::Signature)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Signature(pub BytesM<64>);
 
 impl Signature {

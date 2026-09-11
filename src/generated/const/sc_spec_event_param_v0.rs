@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecEventParamV0 is a borrowing equivalent of [`ScSpecEventParamV0`](super::super::ScSpecEventParamV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecEventParamV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub name: StringM<30>,

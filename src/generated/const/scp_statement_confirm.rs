@@ -4,6 +4,7 @@ use super::*;
 /// ScpStatementConfirm is a borrowing equivalent of [`ScpStatementConfirm`](super::super::ScpStatementConfirm)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
     pub n_prepared: u32,

@@ -4,6 +4,7 @@ use super::*;
 /// TransactionPhase is a borrowing equivalent of [`TransactionPhase`](super::super::TransactionPhase)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionPhase {
     V0(VecM<TxSetComponent>),

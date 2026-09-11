@@ -4,6 +4,7 @@ use super::*;
 /// Claimant is a borrowing equivalent of [`Claimant`](super::super::Claimant)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),

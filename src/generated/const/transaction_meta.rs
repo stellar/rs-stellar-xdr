@@ -4,6 +4,7 @@ use super::*;
 /// TransactionMeta is a borrowing equivalent of [`TransactionMeta`](super::super::TransactionMeta)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionMeta {
     V0(VecM<OperationMeta>),

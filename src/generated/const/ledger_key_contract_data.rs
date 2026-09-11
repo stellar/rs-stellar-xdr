@@ -4,6 +4,7 @@ use super::*;
 /// LedgerKeyContractData is a borrowing equivalent of [`LedgerKeyContractData`](super::super::LedgerKeyContractData)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerKeyContractData {
     pub contract: ScAddress,
     pub key: ScVal,

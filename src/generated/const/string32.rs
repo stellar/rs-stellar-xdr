@@ -4,6 +4,7 @@ use super::*;
 /// String32 is a borrowing equivalent of [`String32`](super::super::String32)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct String32(pub StringM<32>);
 
 impl String32 {

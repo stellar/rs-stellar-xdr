@@ -4,6 +4,7 @@ use super::*;
 /// SorobanAuthorizedFunction is a borrowing equivalent of [`SorobanAuthorizedFunction`](super::super::SorobanAuthorizedFunction)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanAuthorizedFunction {
     ContractFn(InvokeContractArgs),

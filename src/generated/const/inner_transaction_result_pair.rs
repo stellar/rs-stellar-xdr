@@ -4,6 +4,7 @@ use super::*;
 /// InnerTransactionResultPair is a borrowing equivalent of [`InnerTransactionResultPair`](super::super::InnerTransactionResultPair)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct InnerTransactionResultPair {
     pub transaction_hash: Hash,
     pub result: InnerTransactionResult,

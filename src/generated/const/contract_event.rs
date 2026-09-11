@@ -4,6 +4,7 @@ use super::*;
 /// ContractEvent is a borrowing equivalent of [`ContractEvent`](super::super::ContractEvent)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ContractEvent {
     pub ext: ExtensionPoint,
     pub contract_id: Option<ContractId>,

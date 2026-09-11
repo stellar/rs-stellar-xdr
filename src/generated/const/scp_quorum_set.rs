@@ -4,6 +4,7 @@ use super::*;
 /// ScpQuorumSet is a borrowing equivalent of [`ScpQuorumSet`](super::super::ScpQuorumSet)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpQuorumSet {
     pub threshold: u32,
     pub validators: VecM<NodeId>,

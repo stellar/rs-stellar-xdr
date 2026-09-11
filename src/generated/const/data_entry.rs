@@ -4,6 +4,7 @@ use super::*;
 /// DataEntry is a borrowing equivalent of [`DataEntry`](super::super::DataEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct DataEntry {
     pub account_id: AccountId,
     pub data_name: String64,

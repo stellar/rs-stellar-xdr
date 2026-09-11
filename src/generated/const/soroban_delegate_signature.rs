@@ -4,6 +4,7 @@ use super::*;
 /// SorobanDelegateSignature is a borrowing equivalent of [`SorobanDelegateSignature`](super::super::SorobanDelegateSignature)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanDelegateSignature {
     pub address: ScAddress,
     pub signature: ScVal,

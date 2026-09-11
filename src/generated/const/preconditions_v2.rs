@@ -4,6 +4,7 @@ use super::*;
 /// PreconditionsV2 is a borrowing equivalent of [`PreconditionsV2`](super::super::PreconditionsV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PreconditionsV2 {
     pub time_bounds: Option<TimeBounds>,
     pub ledger_bounds: Option<LedgerBounds>,

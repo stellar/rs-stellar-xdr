@@ -4,6 +4,7 @@ use super::*;
 /// SorobanAddressCredentials is a borrowing equivalent of [`SorobanAddressCredentials`](super::super::SorobanAddressCredentials)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanAddressCredentials {
     pub address: ScAddress,
     pub nonce: i64,

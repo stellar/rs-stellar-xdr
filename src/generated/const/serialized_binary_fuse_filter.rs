@@ -4,6 +4,7 @@ use super::*;
 /// SerializedBinaryFuseFilter is a borrowing equivalent of [`SerializedBinaryFuseFilter`](super::super::SerializedBinaryFuseFilter)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SerializedBinaryFuseFilter {
     pub type_: BinaryFuseFilterType,
     pub input_hash_seed: ShortHashSeed,

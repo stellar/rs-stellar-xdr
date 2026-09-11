@@ -4,6 +4,7 @@ use super::*;
 /// TopologyResponseBodyV2 is a borrowing equivalent of [`TopologyResponseBodyV2`](super::super::TopologyResponseBodyV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TopologyResponseBodyV2 {
     pub inbound_peers: TimeSlicedPeerDataList,
     pub outbound_peers: TimeSlicedPeerDataList,

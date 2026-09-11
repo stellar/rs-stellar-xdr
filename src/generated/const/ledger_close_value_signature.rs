@@ -4,6 +4,7 @@ use super::*;
 /// LedgerCloseValueSignature is a borrowing equivalent of [`LedgerCloseValueSignature`](super::super::LedgerCloseValueSignature)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerCloseValueSignature {
     pub node_id: NodeId,
     pub signature: Signature,

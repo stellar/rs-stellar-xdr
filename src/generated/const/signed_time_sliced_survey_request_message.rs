@@ -4,6 +4,7 @@ use super::*;
 /// SignedTimeSlicedSurveyRequestMessage is a borrowing equivalent of [`SignedTimeSlicedSurveyRequestMessage`](super::super::SignedTimeSlicedSurveyRequestMessage)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SignedTimeSlicedSurveyRequestMessage {
     pub request_signature: Signature,
     pub request: TimeSlicedSurveyRequestMessage,

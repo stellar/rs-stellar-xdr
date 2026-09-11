@@ -4,6 +4,7 @@ use super::*;
 /// ScContractInstance is a borrowing equivalent of [`ScContractInstance`](super::super::ScContractInstance)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScContractInstance {
     pub executable: ContractExecutable,
     pub storage: Option<ScMap>,

@@ -4,6 +4,7 @@ use super::*;
 /// TimeSlicedPeerData is a borrowing equivalent of [`TimeSlicedPeerData`](super::super::TimeSlicedPeerData)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TimeSlicedPeerData {
     pub peer_stats: PeerStats,
     pub average_latency_ms: u32,

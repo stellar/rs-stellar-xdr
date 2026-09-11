@@ -4,6 +4,7 @@ use super::*;
 /// OperationMetaV2 is a borrowing equivalent of [`OperationMetaV2`](super::super::OperationMetaV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct OperationMetaV2 {
     pub ext: ExtensionPoint,
     pub changes: LedgerEntryChanges,

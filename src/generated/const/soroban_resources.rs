@@ -4,6 +4,7 @@ use super::*;
 /// SorobanResources is a borrowing equivalent of [`SorobanResources`](super::super::SorobanResources)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanResources {
     pub footprint: LedgerFootprint,
     pub instructions: u32,

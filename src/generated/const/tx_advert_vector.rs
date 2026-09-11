@@ -4,6 +4,7 @@ use super::*;
 /// TxAdvertVector is a borrowing equivalent of [`TxAdvertVector`](super::super::TxAdvertVector)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TxAdvertVector(pub VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 
 impl TxAdvertVector {

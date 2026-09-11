@@ -4,6 +4,7 @@ use super::*;
 /// TransactionSet is a borrowing equivalent of [`TransactionSet`](super::super::TransactionSet)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
     pub txs: VecM<TransactionEnvelope>,

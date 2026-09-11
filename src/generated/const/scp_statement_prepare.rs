@@ -4,6 +4,7 @@ use super::*;
 /// ScpStatementPrepare is a borrowing equivalent of [`ScpStatementPrepare`](super::super::ScpStatementPrepare)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpStatementPrepare {
     pub quorum_set_hash: Hash,
     pub ballot: ScpBallot,

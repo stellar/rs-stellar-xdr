@@ -4,6 +4,7 @@ use super::*;
 /// SorobanAuthorizationEntries is a borrowing equivalent of [`SorobanAuthorizationEntries`](super::super::SorobanAuthorizationEntries)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanAuthorizationEntries(pub VecM<SorobanAuthorizationEntry>);
 
 impl SorobanAuthorizationEntries {

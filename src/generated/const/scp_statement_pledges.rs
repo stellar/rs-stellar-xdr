@@ -4,6 +4,7 @@ use super::*;
 /// ScpStatementPledges is a borrowing equivalent of [`ScpStatementPledges`](super::super::ScpStatementPledges)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledges {
     Prepare(ScpStatementPrepare),

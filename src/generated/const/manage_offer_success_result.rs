@@ -4,6 +4,7 @@ use super::*;
 /// ManageOfferSuccessResult is a borrowing equivalent of [`ManageOfferSuccessResult`](super::super::ManageOfferSuccessResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ManageOfferSuccessResult {
     pub offers_claimed: VecM<ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,

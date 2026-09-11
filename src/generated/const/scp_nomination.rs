@@ -4,6 +4,7 @@ use super::*;
 /// ScpNomination is a borrowing equivalent of [`ScpNomination`](super::super::ScpNomination)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpNomination {
     pub quorum_set_hash: Hash,
     pub votes: VecM<Value>,

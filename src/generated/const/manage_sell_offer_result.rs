@@ -4,6 +4,7 @@ use super::*;
 /// ManageSellOfferResult is a borrowing equivalent of [`ManageSellOfferResult`](super::super::ManageSellOfferResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageSellOfferResult {
     Success(ManageOfferSuccessResult),

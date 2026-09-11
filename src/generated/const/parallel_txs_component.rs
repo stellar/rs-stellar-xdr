@@ -4,6 +4,7 @@ use super::*;
 /// ParallelTxsComponent is a borrowing equivalent of [`ParallelTxsComponent`](super::super::ParallelTxsComponent)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ParallelTxsComponent {
     pub base_fee: Option<i64>,
     pub execution_stages: VecM<ParallelTxExecutionStage>,

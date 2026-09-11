@@ -4,6 +4,7 @@ use super::*;
 /// Hello is a borrowing equivalent of [`Hello`](super::super::Hello)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Hello {
     pub ledger_version: u32,
     pub overlay_version: u32,

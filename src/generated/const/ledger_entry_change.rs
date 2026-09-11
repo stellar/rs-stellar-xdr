@@ -4,6 +4,7 @@ use super::*;
 /// LedgerEntryChange is a borrowing equivalent of [`LedgerEntryChange`](super::super::LedgerEntryChange)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChange {
     Created(LedgerEntry),

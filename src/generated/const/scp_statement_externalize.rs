@@ -4,6 +4,7 @@ use super::*;
 /// ScpStatementExternalize is a borrowing equivalent of [`ScpStatementExternalize`](super::super::ScpStatementExternalize)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
     pub n_h: u32,

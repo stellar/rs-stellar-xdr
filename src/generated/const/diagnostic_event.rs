@@ -4,6 +4,7 @@ use super::*;
 /// DiagnosticEvent is a borrowing equivalent of [`DiagnosticEvent`](super::super::DiagnosticEvent)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct DiagnosticEvent {
     pub in_successful_contract_call: bool,
     pub event: ContractEvent,

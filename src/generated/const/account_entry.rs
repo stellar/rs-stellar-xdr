@@ -4,6 +4,7 @@ use super::*;
 /// AccountEntry is a borrowing equivalent of [`AccountEntry`](super::super::AccountEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct AccountEntry {
     pub account_id: AccountId,
     pub balance: i64,

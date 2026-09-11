@@ -4,6 +4,7 @@ use super::*;
 /// EncryptedBody is a borrowing equivalent of [`EncryptedBody`](super::super::EncryptedBody)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct EncryptedBody(pub BytesM<64000>);
 
 impl EncryptedBody {

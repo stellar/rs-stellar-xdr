@@ -4,8 +4,11 @@ use super::*;
 /// ScSpecTypeMap is a borrowing equivalent of [`ScSpecTypeMap`](super::super::ScSpecTypeMap)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecTypeMap {
+    #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeDef>))]
     pub key_type: &'static ScSpecTypeDef,
+    #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeDef>))]
     pub value_type: &'static ScSpecTypeDef,
 }
 

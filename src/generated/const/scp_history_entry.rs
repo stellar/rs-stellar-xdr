@@ -4,6 +4,7 @@ use super::*;
 /// ScpHistoryEntry is a borrowing equivalent of [`ScpHistoryEntry`](super::super::ScpHistoryEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),

@@ -4,6 +4,7 @@ use super::*;
 /// AccountEntryExtensionV1Ext is a borrowing equivalent of [`AccountEntryExtensionV1Ext`](super::super::AccountEntryExtensionV1Ext)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1Ext {
     V0,

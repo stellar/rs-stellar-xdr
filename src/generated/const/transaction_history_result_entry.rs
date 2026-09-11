@@ -4,6 +4,7 @@ use super::*;
 /// TransactionHistoryResultEntry is a borrowing equivalent of [`TransactionHistoryResultEntry`](super::super::TransactionHistoryResultEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionHistoryResultEntry {
     pub ledger_seq: u32,
     pub tx_result_set: TransactionResultSet,

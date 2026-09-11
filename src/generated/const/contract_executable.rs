@@ -4,6 +4,7 @@ use super::*;
 /// ContractExecutable is a borrowing equivalent of [`ContractExecutable`](super::super::ContractExecutable)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractExecutable {
     Wasm(Hash),

@@ -13,8 +13,12 @@ use super::*;
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct {{ s.name }} {
 {%- for m in s.members %}
+{%- if let Some(with) = m.arbitrary_with %}
+    #[cfg_attr(feature = "arbitrary", arbitrary(with = {{ with }}))]
+{%- endif %}
     pub {{ m.name }}: {{ m.type_ref }},
 {%- endfor %}
 }
@@ -25,6 +29,7 @@ pub struct {{ s.name }} {
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum {{ u.name }} {
 {%- for arm in u.arms %}
@@ -33,6 +38,8 @@ pub enum {{ u.name }} {
 {%- endif %}
 {%- if arm.is_void %}
     {{ arm.case_name }},
+{%- else if let Some(with) = arm.arbitrary_with %}
+    {{ arm.case_name }}(#[cfg_attr(feature = "arbitrary", arbitrary(with = {{ with }}))] {{ arm.type_ref.as_ref().unwrap() }}),
 {%- else %}
     {{ arm.case_name }}({{ arm.type_ref.as_ref().unwrap() }}),
 {%- endif %}
@@ -67,6 +74,7 @@ impl {{ u.name }} {
 #[cfg({{ cfg }})]
 {%- endif %}
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct {{ t.name }}(pub {{ t.type_ref }});
 {%- endmatch %}
 {% endif %}

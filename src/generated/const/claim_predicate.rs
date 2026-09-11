@@ -4,12 +4,16 @@ use super::*;
 /// ClaimPredicate is a borrowing equivalent of [`ClaimPredicate`](super::super::ClaimPredicate)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicate {
     Unconditional,
     And(VecM<ClaimPredicate, 2>),
     Or(VecM<ClaimPredicate, 2>),
-    Not(Option<&'static ClaimPredicate>),
+    Not(
+        #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_option_ref::<ClaimPredicate>))]
+         Option<&'static ClaimPredicate>,
+    ),
     BeforeAbsoluteTime(i64),
     BeforeRelativeTime(i64),
 }

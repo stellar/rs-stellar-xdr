@@ -4,6 +4,7 @@ use super::*;
 /// StoredDebugTransactionSet is a borrowing equivalent of [`StoredDebugTransactionSet`](super::super::StoredDebugTransactionSet)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StoredDebugTransactionSet {
     pub tx_set: StoredTransactionSet,
     pub ledger_seq: u32,

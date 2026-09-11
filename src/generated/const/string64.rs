@@ -4,6 +4,7 @@ use super::*;
 /// String64 is a borrowing equivalent of [`String64`](super::super::String64)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct String64(pub StringM<64>);
 
 impl String64 {

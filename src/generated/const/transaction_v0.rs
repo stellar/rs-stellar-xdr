@@ -4,6 +4,7 @@ use super::*;
 /// TransactionV0 is a borrowing equivalent of [`TransactionV0`](super::super::TransactionV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
     pub fee: u32,

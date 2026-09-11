@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecFunctionInputV0 is a borrowing equivalent of [`ScSpecFunctionInputV0`](super::super::ScSpecFunctionInputV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecFunctionInputV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub name: StringM<30>,

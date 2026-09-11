@@ -4,6 +4,7 @@ use super::*;
 /// Signer is a borrowing equivalent of [`Signer`](super::super::Signer)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Signer {
     pub key: SignerKey,
     pub weight: u32,

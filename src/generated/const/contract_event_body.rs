@@ -4,6 +4,7 @@ use super::*;
 /// ContractEventBody is a borrowing equivalent of [`ContractEventBody`](super::super::ContractEventBody)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractEventBody {
     V0(ContractEventV0),

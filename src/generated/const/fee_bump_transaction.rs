@@ -4,6 +4,7 @@ use super::*;
 /// FeeBumpTransaction is a borrowing equivalent of [`FeeBumpTransaction`](super::super::FeeBumpTransaction)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
     pub fee: i64,

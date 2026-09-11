@@ -4,6 +4,7 @@ use super::*;
 /// SorobanTransactionMeta is a borrowing equivalent of [`SorobanTransactionMeta`](super::super::SorobanTransactionMeta)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanTransactionMeta {
     pub ext: SorobanTransactionMetaExt,
     pub events: VecM<ContractEvent>,

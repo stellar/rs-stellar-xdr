@@ -4,6 +4,7 @@ use super::*;
 /// TransactionMetaV2 is a borrowing equivalent of [`TransactionMetaV2`](super::super::TransactionMetaV2)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionMetaV2 {
     pub tx_changes_before: LedgerEntryChanges,
     pub operations: VecM<OperationMeta>,

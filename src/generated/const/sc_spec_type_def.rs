@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecTypeDef is a borrowing equivalent of [`ScSpecTypeDef`](super::super::ScSpecTypeDef)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecTypeDef {
     Val,
@@ -25,11 +26,26 @@ pub enum ScSpecTypeDef {
     Symbol,
     Address,
     MuxedAddress,
-    Option(&'static ScSpecTypeOption),
-    Result(&'static ScSpecTypeResult),
-    Vec(&'static ScSpecTypeVec),
-    Map(&'static ScSpecTypeMap),
-    Tuple(&'static ScSpecTypeTuple),
+    Option(
+        #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeOption>))]
+        &'static ScSpecTypeOption,
+    ),
+    Result(
+        #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeResult>))]
+        &'static ScSpecTypeResult,
+    ),
+    Vec(
+        #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeVec>))]
+        &'static ScSpecTypeVec,
+    ),
+    Map(
+        #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeMap>))]
+        &'static ScSpecTypeMap,
+    ),
+    Tuple(
+        #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeTuple>))]
+        &'static ScSpecTypeTuple,
+    ),
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdt),
 }

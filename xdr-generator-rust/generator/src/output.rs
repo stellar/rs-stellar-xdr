@@ -82,6 +82,7 @@ pub struct ConstStructOutput {
 pub struct ConstStructMemberOutput {
     pub name: String,
     pub type_ref: String,
+    pub arbitrary_with: Option<String>,
 }
 
 pub struct ConstUnionOutput {
@@ -96,6 +97,7 @@ pub struct ConstUnionArmOutput {
     pub case_value: String,
     pub is_void: bool,
     pub type_ref: Option<String>,
+    pub arbitrary_with: Option<String>,
     pub cfg: Option<String>,
 }
 

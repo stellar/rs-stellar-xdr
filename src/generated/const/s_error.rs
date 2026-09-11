@@ -4,6 +4,7 @@ use super::*;
 /// SError is a borrowing equivalent of [`SError`](super::super::SError)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SError {
     pub code: ErrorCode,
     pub msg: StringM<100>,

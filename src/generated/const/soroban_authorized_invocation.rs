@@ -4,6 +4,7 @@ use super::*;
 /// SorobanAuthorizedInvocation is a borrowing equivalent of [`SorobanAuthorizedInvocation`](super::super::SorobanAuthorizedInvocation)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SorobanAuthorizedInvocation {
     pub function: SorobanAuthorizedFunction,
     pub sub_invocations: VecM<SorobanAuthorizedInvocation>,

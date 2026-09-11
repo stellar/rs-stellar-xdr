@@ -16,6 +16,9 @@ use core::{ops::Deref, slice};
 
 use super::{pad_len, Error, ErrorLengthExceedsMax};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
+
 /// `padding` returns the zero bytes that pad an XDR value of the given length
 /// out to a multiple of 4. The padding is never more than 3 bytes, so it is a
 /// prefix of a single static.
@@ -660,6 +663,80 @@ impl<const MAX: u32> TryFrom<&'static str> for StringM<MAX> {
         Ok(Self::try_from_str(s)?)
     }
 }
+
+/// `Arbitrary` support for the const types, mirroring the owned types byte for
+/// byte.
+///
+/// Each impl below delegates to the `Arbitrary` impl of the owned field the
+/// const type replaces — `VecM` to `Vec<T>`, `BytesM` and `StringM` to
+/// `Vec<u8>`, a `&'static T` recursive reference to `Box<T>` — and then leaks
+/// the result to obtain the `'static` data the const types hold. Consuming the
+/// same bytes in the same order as the owned type is what makes a matched pair
+/// possible: driving [`arbitrary::Arbitrary`] for an owned type and for its
+/// const counterpart from the same input produces the same value in both
+/// forms, without any conversion between them.
+///
+/// Leaking is why this is behind the `arbitrary` feature, which exists for
+/// fuzzing and testing: every value built this way holds its memory for the
+/// life of the process. A bounded number of values, as in a test or a fuzz
+/// target that caps its iterations, is fine; an unbounded fuzzing run grows
+/// without limit.
+#[cfg(feature = "arbitrary")]
+mod arbitrary_impls {
+    use super::{BytesM, StringM, VecM};
+    use arbitrary::{Arbitrary, Result, Unstructured};
+
+    /// Builds an arbitrary `T` behind a `&'static` reference, mirroring
+    /// `Box<T>`, for the recursive references the const types hold in place of
+    /// a `Box`.
+    ///
+    /// Named in the generated types by `#[arbitrary(with = ...)]`.
+    ///
+    /// ### Errors
+    ///
+    /// If the underlying `T` cannot be built from the remaining input.
+    pub fn arbitrary_ref<'a, T: Arbitrary<'a> + 'static>(
+        u: &mut Unstructured<'a>,
+    ) -> Result<&'static T> {
+        Ok(Box::leak(Box::new(T::arbitrary(u)?)))
+    }
+
+    /// The [`arbitrary_ref`] equivalent for an optional recursive reference,
+    /// mirroring `Option<Box<T>>`.
+    ///
+    /// ### Errors
+    ///
+    /// If the underlying value cannot be built from the remaining input.
+    pub fn arbitrary_option_ref<'a, T: Arbitrary<'a> + 'static>(
+        u: &mut Unstructured<'a>,
+    ) -> Result<Option<&'static T>> {
+        Ok(match Option::<T>::arbitrary(u)? {
+            Some(v) => Some(Box::leak(Box::new(v))),
+            None => None,
+        })
+    }
+
+    impl<'a, T: Arbitrary<'a> + 'static, const MAX: u32> Arbitrary<'a> for VecM<T, MAX> {
+        fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+            Ok(Self(Vec::leak(Vec::<T>::arbitrary(u)?)))
+        }
+    }
+
+    impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
+        fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+            Ok(Self(Vec::leak(Vec::<u8>::arbitrary(u)?)))
+        }
+    }
+
+    impl<'a, const MAX: u32> Arbitrary<'a> for StringM<MAX> {
+        fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+            Ok(Self(Vec::leak(Vec::<u8>::arbitrary(u)?)))
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+pub use arbitrary_impls::{arbitrary_option_ref, arbitrary_ref};
 
 mod value;
 #[allow(unused_imports)]

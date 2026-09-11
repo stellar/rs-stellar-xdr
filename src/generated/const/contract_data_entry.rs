@@ -4,6 +4,7 @@ use super::*;
 /// ContractDataEntry is a borrowing equivalent of [`ContractDataEntry`](super::super::ContractDataEntry)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ContractDataEntry {
     pub ext: ExtensionPoint,
     pub contract: ScAddress,

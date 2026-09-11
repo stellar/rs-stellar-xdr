@@ -4,6 +4,7 @@ use super::*;
 /// InflationResult is a borrowing equivalent of [`InflationResult`](super::super::InflationResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum InflationResult {
     Success(VecM<InflationPayout>),

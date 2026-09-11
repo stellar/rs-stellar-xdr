@@ -4,6 +4,7 @@ use super::*;
 /// TransactionSignaturePayload is a borrowing equivalent of [`TransactionSignaturePayload`](super::super::TransactionSignaturePayload)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionSignaturePayload {
     pub network_id: Hash,
     pub tagged_transaction: TransactionSignaturePayloadTaggedTransaction,

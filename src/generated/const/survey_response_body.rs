@@ -4,6 +4,7 @@ use super::*;
 /// SurveyResponseBody is a borrowing equivalent of [`SurveyResponseBody`](super::super::SurveyResponseBody)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
     SurveyTopologyResponseV2(TopologyResponseBodyV2),

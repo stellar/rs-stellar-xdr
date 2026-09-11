@@ -4,6 +4,7 @@ use super::*;
 /// UpgradeEntryMeta is a borrowing equivalent of [`UpgradeEntryMeta`](super::super::UpgradeEntryMeta)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct UpgradeEntryMeta {
     pub upgrade: LedgerUpgrade,
     pub changes: LedgerEntryChanges,

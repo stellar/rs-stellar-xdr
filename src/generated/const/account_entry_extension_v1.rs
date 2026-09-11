@@ -4,6 +4,7 @@ use super::*;
 /// AccountEntryExtensionV1 is a borrowing equivalent of [`AccountEntryExtensionV1`](super::super::AccountEntryExtensionV1)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct AccountEntryExtensionV1 {
     pub liabilities: Liabilities,
     pub ext: AccountEntryExtensionV1Ext,

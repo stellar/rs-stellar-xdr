@@ -4,6 +4,7 @@ use super::*;
 /// ScpEnvelope is a borrowing equivalent of [`ScpEnvelope`](super::super::ScpEnvelope)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpEnvelope {
     pub statement: ScpStatement,
     pub signature: Signature,

@@ -4,6 +4,7 @@ use super::*;
 /// LedgerCloseMetaBatch is a borrowing equivalent of [`LedgerCloseMetaBatch`](super::super::LedgerCloseMetaBatch)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct LedgerCloseMetaBatch {
     pub start_sequence: u32,
     pub end_sequence: u32,

@@ -4,6 +4,7 @@ use super::*;
 /// TransactionResultMetaV1 is a borrowing equivalent of [`TransactionResultMetaV1`](super::super::TransactionResultMetaV1)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TransactionResultMetaV1 {
     pub ext: ExtensionPoint,
     pub result: TransactionResultPair,

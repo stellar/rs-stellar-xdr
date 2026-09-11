@@ -4,6 +4,7 @@ use super::*;
 /// GeneralizedTransactionSet is a borrowing equivalent of [`GeneralizedTransactionSet`](super::super::GeneralizedTransactionSet)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSet {
     V1(TransactionSetV1),

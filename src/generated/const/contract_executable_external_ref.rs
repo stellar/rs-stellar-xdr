@@ -4,6 +4,7 @@ use super::*;
 /// ContractExecutableExternalRef is a borrowing equivalent of [`ContractExecutableExternalRef`](super::super::ContractExecutableExternalRef)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ContractExecutableExternalRef {
     pub executable_owner: ScAddress,
     pub tag: ScString,

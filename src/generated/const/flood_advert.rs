@@ -4,6 +4,7 @@ use super::*;
 /// FloodAdvert is a borrowing equivalent of [`FloodAdvert`](super::super::FloodAdvert)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FloodAdvert {
     pub tx_hashes: TxAdvertVector,
 }

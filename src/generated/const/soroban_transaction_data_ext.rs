@@ -4,6 +4,7 @@ use super::*;
 /// SorobanTransactionDataExt is a borrowing equivalent of [`SorobanTransactionDataExt`](super::super::SorobanTransactionDataExt)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanTransactionDataExt {
     V0,

@@ -4,6 +4,7 @@ use super::*;
 /// ClaimantV0 is a borrowing equivalent of [`ClaimantV0`](super::super::ClaimantV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ClaimantV0 {
     pub destination: AccountId,
     pub predicate: ClaimPredicate,

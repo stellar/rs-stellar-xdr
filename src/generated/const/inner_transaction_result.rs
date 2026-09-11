@@ -4,6 +4,7 @@ use super::*;
 /// InnerTransactionResult is a borrowing equivalent of [`InnerTransactionResult`](super::super::InnerTransactionResult)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct InnerTransactionResult {
     pub fee_charged: i64,
     pub result: InnerTransactionResultResult,

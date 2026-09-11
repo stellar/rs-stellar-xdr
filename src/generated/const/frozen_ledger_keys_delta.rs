@@ -4,6 +4,7 @@ use super::*;
 /// FrozenLedgerKeysDelta is a borrowing equivalent of [`FrozenLedgerKeysDelta`](super::super::FrozenLedgerKeysDelta)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FrozenLedgerKeysDelta {
     pub keys_to_freeze: VecM<EncodedLedgerKey>,
     pub keys_to_unfreeze: VecM<EncodedLedgerKey>,

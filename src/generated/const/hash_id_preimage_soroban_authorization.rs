@@ -4,6 +4,7 @@ use super::*;
 /// HashIdPreimageSorobanAuthorization is a borrowing equivalent of [`HashIdPreimageSorobanAuthorization`](super::super::HashIdPreimageSorobanAuthorization)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct HashIdPreimageSorobanAuthorization {
     pub network_id: Hash,
     pub nonce: i64,

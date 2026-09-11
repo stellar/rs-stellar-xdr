@@ -4,7 +4,9 @@ use super::*;
 /// ScSpecTypeVec is a borrowing equivalent of [`ScSpecTypeVec`](super::super::ScSpecTypeVec)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecTypeVec {
+    #[cfg_attr(feature = "arbitrary", arbitrary(with = arbitrary_ref::<ScSpecTypeDef>))]
     pub element_type: &'static ScSpecTypeDef,
 }
 

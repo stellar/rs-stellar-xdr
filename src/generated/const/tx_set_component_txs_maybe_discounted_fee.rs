@@ -4,6 +4,7 @@ use super::*;
 /// TxSetComponentTxsMaybeDiscountedFee is a borrowing equivalent of [`TxSetComponentTxsMaybeDiscountedFee`](super::super::TxSetComponentTxsMaybeDiscountedFee)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
     pub base_fee: Option<i64>,
     pub txs: VecM<TransactionEnvelope>,

@@ -4,6 +4,7 @@ use super::*;
 /// PathPaymentStrictReceiveResultSuccess is a borrowing equivalent of [`PathPaymentStrictReceiveResultSuccess`](super::super::PathPaymentStrictReceiveResultSuccess)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PathPaymentStrictReceiveResultSuccess {
     pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,

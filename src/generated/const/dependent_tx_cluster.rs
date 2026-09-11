@@ -4,6 +4,7 @@ use super::*;
 /// DependentTxCluster is a borrowing equivalent of [`DependentTxCluster`](super::super::DependentTxCluster)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct DependentTxCluster(pub VecM<TransactionEnvelope>);
 
 impl DependentTxCluster {

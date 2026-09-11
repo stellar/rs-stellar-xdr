@@ -4,6 +4,7 @@ use super::*;
 /// ScpStatement is a borrowing equivalent of [`ScpStatement`](super::super::ScpStatement)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScpStatement {
     pub node_id: NodeId,
     pub slot_index: u64,

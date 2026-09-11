@@ -4,6 +4,7 @@ use super::*;
 /// ScVec is a borrowing equivalent of [`ScVec`](super::super::ScVec)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScVec(pub VecM<ScVal>);
 
 impl ScVec {

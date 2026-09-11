@@ -4,6 +4,7 @@ use super::*;
 /// ScSpecUdtUnionCaseVoidV0 is a borrowing equivalent of [`ScSpecUdtUnionCaseVoidV0`](super::super::ScSpecUdtUnionCaseVoidV0)
 /// over `'static` data, for const XDR encoding.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecUdtUnionCaseVoidV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub name: StringM<60>,

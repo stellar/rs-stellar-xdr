@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
-///     string name<60>;
+///     string name<SC_SPEC_TYPE_NAME_LIMIT>;
 ///     SCSpecUDTUnionCaseV0 cases<>;
 /// };
 /// ```
@@ -27,7 +27,7 @@ use super::*;
 pub struct ScSpecUdtUnionV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub lib: StringM<80>,
-    pub name: StringM<60>,
+    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
     pub cases: VecM<ScSpecUdtUnionCaseV0>,
 }
 
@@ -38,7 +38,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
             Ok(Self {
                 doc: StringM::<SC_SPEC_DOC_LIMIT>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
-                name: StringM::<60>::read_xdr(r)?,
+                name: StringM::<SC_SPEC_TYPE_NAME_LIMIT>::read_xdr(r)?,
                 cases: VecM::<ScSpecUdtUnionCaseV0>::read_xdr(r)?,
             })
         })

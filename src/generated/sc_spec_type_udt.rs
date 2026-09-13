@@ -6,7 +6,7 @@ use super::*;
 /// ```text
 /// struct SCSpecTypeUDT
 /// {
-///     string name<60>;
+///     string name<SC_SPEC_TYPE_NAME_LIMIT>;
 /// };
 /// ```
 ///
@@ -22,7 +22,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeUdt {
-    pub name: StringM<60>,
+    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
 }
 
 impl ReadXdr for ScSpecTypeUdt {
@@ -30,7 +30,7 @@ impl ReadXdr for ScSpecTypeUdt {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                name: StringM::<60>::read_xdr(r)?,
+                name: StringM::<SC_SPEC_TYPE_NAME_LIMIT>::read_xdr(r)?,
             })
         })
     }

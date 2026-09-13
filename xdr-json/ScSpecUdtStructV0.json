@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecUdtStructV0",
-  "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTStructFieldV0 fields<>; }; ```",
+  "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<SC_SPEC_TYPE_NAME_LIMIT>; SCSpecUDTStructFieldV0 fields<>; }; ```",
   "type": "object",
   "required": [
     "doc",
@@ -27,7 +27,7 @@
       "$ref": "#/definitions/StringM<80>"
     },
     "name": {
-      "$ref": "#/definitions/StringM<60>"
+      "$ref": "#/definitions/StringM<1024>"
     }
   },
   "unevaluatedProperties": false,
@@ -213,14 +213,14 @@
       }
     },
     "ScSpecTypeUdt": {
-      "description": "ScSpecTypeUdt is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDT { string name<60>; }; ```",
+      "description": "ScSpecTypeUdt is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDT { string name<SC_SPEC_TYPE_NAME_LIMIT>; }; ```",
       "type": "object",
       "required": [
         "name"
       ],
       "properties": {
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "$ref": "#/definitions/StringM<1024>"
         }
       }
     },
@@ -263,10 +263,6 @@
     "StringM<30>": {
       "type": "string",
       "maxLength": 30
-    },
-    "StringM<60>": {
-      "type": "string",
-      "maxLength": 60
     },
     "StringM<80>": {
       "type": "string",

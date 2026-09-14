@@ -33,7 +33,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use heck::ToSnakeCase;
-use xdr_parser::ast::{Definition, Type, Union, UnionArm, XdrSpec};
+use xdr_parser::ast::{CfgExpr, Definition, Type, Union, UnionArm, XdrSpec};
 use xdr_parser::types::{is_builtin_type, TypeInfo};
 
 use crate::naming::{case_value, field_name, mod_name, type_name};
@@ -411,7 +411,7 @@ impl Collector<'_> {
     /// transparent Rust aliases served by the underlying scalar's method).
     fn definition_method(&mut self, def: &Definition) -> Option<ConstWriterMethodOutput> {
         let name = type_name(def.name());
-        let cfg = def.cfg().map(|c| c.render());
+        let cfg = def.cfg().map(CfgExpr::render);
         // Each method is its own scope, so its bindings start fresh.
         self.loop_depth = 0;
 
@@ -458,8 +458,7 @@ impl Collector<'_> {
         let discriminant_is_builtin = is_builtin_type(&u.discriminant.type_)
             || matches!(&u.discriminant.type_, Type::Ident(n) if {
                 self.type_info.definitions.get(&type_name(n))
-                    .map(|d| matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_)))
-                    .unwrap_or(false)
+                    .is_some_and(|d| matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_)))
             });
         let prefix = if discriminant_is_builtin {
             String::new()
@@ -518,7 +517,7 @@ impl Collector<'_> {
                     prefix,
                 );
                 ConstUnionArm {
-                    cfg: arm.cfg.as_ref().map(|c| c.render()),
+                    cfg: arm.cfg.as_ref().map(CfgExpr::render),
                     case_name,
                     payload: arm
                         .type_

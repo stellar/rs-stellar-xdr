@@ -1,4 +1,3 @@
-use askama::Template;
 use std::collections::HashSet;
 
 use crate::generator::RustGenerator;
@@ -12,13 +11,21 @@ fn generate_from_xdr(xdr: &str) -> String {
         no_display_fromstr: HashSet::new(),
     };
     let generator = RustGenerator::new(&spec, options);
-    let template = generator.generate(&spec, "// header\n");
-    template.render().unwrap()
+    let mut output = String::new();
+    let module_file = std::path::Path::new("generated.rs");
+    let output_dir = std::path::Path::new("generated");
+    generator
+        .generate_files(&spec, module_file, output_dir, |_, contents| {
+            output.push_str(contents);
+            Ok(())
+        })
+        .unwrap();
+    output
 }
 
-/// Generates into a temporary directory and returns the `const` module — the
-/// module file and every per-definition file under it, concatenated — since
-/// that is where the const forms live.
+/// Generates and returns the `const` module — the module file and every
+/// per-definition file under it, concatenated — since that is where the const
+/// forms live.
 fn generate_const_from_xdr(xdr: &str) -> String {
     let spec = xdr_parser::parser::parse(xdr).unwrap();
     let options = RustOptions {
@@ -27,33 +34,21 @@ fn generate_const_from_xdr(xdr: &str) -> String {
         no_display_fromstr: HashSet::new(),
     };
     let generator = RustGenerator::new(&spec, options);
-
-    let dir = std::env::temp_dir().join(format!(
-        "xdr-generator-test-{}-{:?}",
-        std::process::id(),
-        std::thread::current().id()
-    ));
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).unwrap();
-    let out = dir.join("generated");
+    let mut output = String::new();
+    let module_file = std::path::Path::new("generated.rs");
+    let output_dir = std::path::Path::new("generated");
     generator
-        .generate_to_dir(&spec, &dir.join("generated.rs"), &out)
+        .generate_files(&spec, module_file, output_dir, |path, contents| {
+            // The const module is `generated/const.rs`, and the file of each
+            // definition module that has const content sits under
+            // `generated/const/`. Everything else is the owned form.
+            if path == output_dir.join("const.rs") || path.starts_with(output_dir.join("const")) {
+                output.push_str(contents);
+                output.push('\n');
+            }
+            Ok(())
+        })
         .unwrap();
-
-    let mut files = vec![out.join("const.rs")];
-    let mut const_files: Vec<_> = std::fs::read_dir(out.join("const"))
-        .unwrap()
-        .map(|e| e.unwrap().path())
-        .collect();
-    const_files.sort();
-    files.append(&mut const_files);
-
-    let output = files
-        .iter()
-        .map(|f| std::fs::read_to_string(f).unwrap())
-        .collect::<Vec<_>>()
-        .join("\n");
-    std::fs::remove_dir_all(&dir).unwrap();
     output
 }
 
@@ -74,11 +69,11 @@ fn assert_not_contains(output: &str, unexpected: &str) {
 #[test]
 fn test_ifdef_generates_cfg_on_struct() {
     let output = generate_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         struct Foo { int x; };
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -111,13 +106,13 @@ impl WriteXdr for Foo {"#,
 #[test]
 fn test_ifdef_else_generates_both_cfgs() {
     let output = generate_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         struct Foo { int x; };
         #else
         struct Bar { int y; };
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -156,13 +151,13 @@ pub struct Bar {"#,
 #[test]
 fn test_ifdef_same_name_both_branches() {
     let output = generate_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         struct Foo { int x; };
         #else
         struct Foo { int y; };
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -211,14 +206,14 @@ pub struct Foo {
 #[test]
 fn test_ifdef_inline_enum_member_cfg() {
     let output = generate_from_xdr(
-        r#"
+        r"
         enum Color {
             RED = 0,
             #ifdef FEATURE_X
             GREEN = 1
             #endif
         };
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -244,11 +239,11 @@ fn test_ifdef_inline_enum_member_cfg() {
 #[test]
 fn test_ifdef_generates_cfg_on_const() {
     let output = generate_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         const MAX_SIZE = 100;
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -263,13 +258,13 @@ fn test_const_form_for_both_ifdef_branches() {
     // const form, each gated like its definition, so the name resolves under
     // every cfg; the heap-free branch mirrors the owned fields.
     let output = generate_const_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         struct Foo { string s<10>; };
         #else
         struct Foo { int y; };
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -294,13 +289,13 @@ pub struct Foo {
 #[test]
 fn test_const_form_for_both_ifdef_branches_typedef() {
     let output = generate_const_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         typedef string Foo<10>;
         #else
         typedef opaque Foo[4];
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -321,13 +316,13 @@ pub struct Foo(pub [u8; 4]);"#,
 #[test]
 fn test_const_form_for_both_ifdef_branches_union() {
     let output = generate_const_from_xdr(
-        r#"
+        r"
         #ifdef FEATURE_X
         union Foo switch (int v) { case 0: string s<10>; };
         #else
         union Foo switch (int v) { case 0: int y; };
         #endif
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -359,14 +354,14 @@ fn test_const_form_when_only_a_cfg_gated_arm_borrows() {
     // emitted unconditionally with the arm gated inside it, so the arm's
     // payload is the borrowing StringM wherever the cfg turns it on.
     let output = generate_const_from_xdr(
-        r#"
+        r"
         union Foo switch (int v) {
             case 0: int y;
             #ifdef FEATURE_X
             case 1: string s<10>;
             #endif
         };
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -385,7 +380,7 @@ fn test_cfg_gated_heap_gets_a_const_form() {
     // owned Exec there would not compile with the feature on: serializing it
     // reaches a Vec-backed StringM from a const fn.
     let output = generate_const_from_xdr(
-        r#"
+        r"
         union Exec switch (int type)
         {
         case 0:
@@ -397,7 +392,7 @@ fn test_cfg_gated_heap_gets_a_const_form() {
         };
         struct OnlyExec { Exec exec; int n; };
         struct Parent { Exec exec; string label<32>; };
-    "#,
+    ",
     );
     assert_contains(
         &output,
@@ -426,9 +421,9 @@ fn test_no_const_form_for_heap_free_types() {
     // owned type under the same name instead, so the name still resolves
     // there.
     let output = generate_const_from_xdr(
-        r#"
+        r"
         struct Flat { int a; opaque b[4]; };
-    "#,
+    ",
     );
     assert_not_contains(&output, "pub struct Flat {");
     assert_contains(&output, "pub use super::Flat;");

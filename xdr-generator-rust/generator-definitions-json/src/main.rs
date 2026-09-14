@@ -86,20 +86,20 @@ fn filter_spec(spec: &mut XdrSpec, features: &HashSet<String>) {
 /// Filter a list of definitions: remove those whose cfg is false, filter
 /// sub-elements (union arms, enum members), and clear remaining cfg annotations.
 fn filter_definitions(defs: &mut Vec<Definition>, features: &HashSet<String>) {
-    defs.retain(|d| d.cfg().map_or(true, |cfg| cfg.evaluate(features)));
+    defs.retain(|d| d.cfg().is_none_or(|cfg| cfg.evaluate(features)));
 
     for def in defs.iter_mut() {
         match def {
             Definition::Union(u) => {
                 u.arms.retain_mut(|arm| {
-                    let keep = arm.cfg.as_ref().map_or(true, |cfg| cfg.evaluate(features));
+                    let keep = arm.cfg.as_ref().is_none_or(|cfg| cfg.evaluate(features));
                     arm.cfg = None;
                     keep
                 });
             }
             Definition::Enum(e) => {
                 e.members.retain_mut(|m| {
-                    let keep = m.cfg.as_ref().map_or(true, |cfg| cfg.evaluate(features));
+                    let keep = m.cfg.as_ref().is_none_or(|cfg| cfg.evaluate(features));
                     m.cfg = None;
                     keep
                 });

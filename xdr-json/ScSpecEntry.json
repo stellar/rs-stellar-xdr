@@ -119,7 +119,7 @@
       }
     },
     "ScSpecEventV0": {
-      "description": "ScSpecEventV0 is an XDR Struct defined as:\n\n```text struct SCSpecEventV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; SCSymbol name; SCSymbol prefixTopics<2>; SCSpecEventParamV0 params<>; SCSpecEventDataFormat dataFormat; }; ```",
+      "description": "ScSpecEventV0 is an XDR Struct defined as:\n\n```text struct SCSpecEventV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<SC_SPEC_TYPE_NAME_LIMIT>; SCSymbol prefixTopics<2>; SCSpecEventParamV0 params<>; SCSpecEventDataFormat dataFormat; }; ```",
       "type": "object",
       "required": [
         "data_format",
@@ -140,7 +140,7 @@
           "$ref": "#/definitions/StringM<80>"
         },
         "name": {
-          "$ref": "#/definitions/ScSymbol"
+          "$ref": "#/definitions/StringM<1024>"
         },
         "params": {
           "type": "array",
@@ -391,14 +391,14 @@
       }
     },
     "ScSpecTypeUdt": {
-      "description": "ScSpecTypeUdt is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDT { string name<60>; }; ```",
+      "description": "ScSpecTypeUdt is an XDR Struct defined as:\n\n```text struct SCSpecTypeUDT { string name<SC_SPEC_TYPE_NAME_LIMIT>; }; ```",
       "type": "object",
       "required": [
         "name"
       ],
       "properties": {
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "$ref": "#/definitions/StringM<1024>"
         }
       }
     },
@@ -437,7 +437,7 @@
       }
     },
     "ScSpecUdtEnumV0": {
-      "description": "ScSpecUdtEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTEnumCaseV0 cases<>; }; ```",
+      "description": "ScSpecUdtEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<SC_SPEC_TYPE_NAME_LIMIT>; SCSpecUDTEnumCaseV0 cases<>; }; ```",
       "type": "object",
       "required": [
         "cases",
@@ -460,7 +460,7 @@
           "$ref": "#/definitions/StringM<80>"
         },
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "$ref": "#/definitions/StringM<1024>"
         }
       }
     },
@@ -487,7 +487,7 @@
       }
     },
     "ScSpecUdtErrorEnumV0": {
-      "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTErrorEnumCaseV0 cases<>; }; ```",
+      "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<SC_SPEC_TYPE_NAME_LIMIT>; SCSpecUDTErrorEnumCaseV0 cases<>; }; ```",
       "type": "object",
       "required": [
         "cases",
@@ -510,7 +510,7 @@
           "$ref": "#/definitions/StringM<80>"
         },
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "$ref": "#/definitions/StringM<1024>"
         }
       }
     },
@@ -535,7 +535,7 @@
       }
     },
     "ScSpecUdtStructV0": {
-      "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTStructFieldV0 fields<>; }; ```",
+      "description": "ScSpecUdtStructV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTStructV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<SC_SPEC_TYPE_NAME_LIMIT>; SCSpecUDTStructFieldV0 fields<>; }; ```",
       "type": "object",
       "required": [
         "doc",
@@ -558,7 +558,7 @@
           "$ref": "#/definitions/StringM<80>"
         },
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "$ref": "#/definitions/StringM<1024>"
         }
       }
     },
@@ -630,7 +630,7 @@
       }
     },
     "ScSpecUdtUnionV0": {
-      "description": "ScSpecUdtUnionV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTUnionV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTUnionCaseV0 cases<>; }; ```",
+      "description": "ScSpecUdtUnionV0 is an XDR Struct defined as:\n\n```text struct SCSpecUDTUnionV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<SC_SPEC_TYPE_NAME_LIMIT>; SCSpecUDTUnionCaseV0 cases<>; }; ```",
       "type": "object",
       "required": [
         "cases",
@@ -653,7 +653,7 @@
           "$ref": "#/definitions/StringM<80>"
         },
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "$ref": "#/definitions/StringM<1024>"
         }
       }
     },

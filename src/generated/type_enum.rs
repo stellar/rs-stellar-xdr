@@ -198,6 +198,10 @@ pub enum TypeVariant {
     StellarValue,
     StellarValueExt,
     StellarValueProposedValue,
+    #[cfg(feature = "ms_close_time")]
+    StellarValueSignedMsValue,
+    #[cfg(feature = "ms_close_time")]
+    StellarValueProposedMsValue,
     LedgerHeaderFlags,
     LedgerHeaderExtensionV1,
     LedgerHeaderExtensionV1Ext,
@@ -463,6 +467,8 @@ pub enum TypeVariant {
     Int64,
     TimePoint,
     Duration,
+    #[cfg(feature = "ms_close_time")]
+    TimePointMilliseconds,
     ExtensionPoint,
     CryptoKeyType,
     PublicKeyType,
@@ -680,6 +686,10 @@ impl TypeVariant {
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
         TypeVariant::StellarValueProposedValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueSignedMsValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueProposedMsValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
         TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -945,6 +955,8 @@ impl TypeVariant {
         TypeVariant::Int64,
         TypeVariant::TimePoint,
         TypeVariant::Duration,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::TimePointMilliseconds,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -1168,6 +1180,10 @@ impl TypeVariant {
         "StellarValue",
         "StellarValueExt",
         "StellarValueProposedValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueSignedMsValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueProposedMsValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
         "LedgerHeaderExtensionV1Ext",
@@ -1433,6 +1449,8 @@ impl TypeVariant {
         "Int64",
         "TimePoint",
         "Duration",
+        #[cfg(feature = "ms_close_time")]
+        "TimePointMilliseconds",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -1664,6 +1682,10 @@ impl TypeVariant {
             Self::StellarValue => "StellarValue",
             Self::StellarValueExt => "StellarValueExt",
             Self::StellarValueProposedValue => "StellarValueProposedValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue => "StellarValueSignedMsValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue => "StellarValueProposedMsValue",
             Self::LedgerHeaderFlags => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1 => "LedgerHeaderExtensionV1",
             Self::LedgerHeaderExtensionV1Ext => "LedgerHeaderExtensionV1Ext",
@@ -1943,6 +1965,8 @@ impl TypeVariant {
             Self::Int64 => "Int64",
             Self::TimePoint => "TimePoint",
             Self::Duration => "Duration",
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds => "TimePointMilliseconds",
             Self::ExtensionPoint => "ExtensionPoint",
             Self::CryptoKeyType => "CryptoKeyType",
             Self::PublicKeyType => "PublicKeyType",
@@ -2228,6 +2252,14 @@ impl TypeVariant {
             Self::StellarValueExt => gen.into_root_schema_for::<StellarValueExt>(),
             Self::StellarValueProposedValue => {
                 gen.into_root_schema_for::<StellarValueProposedValue>()
+            }
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue => {
+                gen.into_root_schema_for::<StellarValueSignedMsValue>()
+            }
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue => {
+                gen.into_root_schema_for::<StellarValueProposedMsValue>()
             }
             Self::LedgerHeaderFlags => gen.into_root_schema_for::<LedgerHeaderFlags>(),
             Self::LedgerHeaderExtensionV1 => gen.into_root_schema_for::<LedgerHeaderExtensionV1>(),
@@ -2656,6 +2688,8 @@ impl TypeVariant {
             Self::Int64 => gen.into_root_schema_for::<Int64>(),
             Self::TimePoint => gen.into_root_schema_for::<TimePoint>(),
             Self::Duration => gen.into_root_schema_for::<Duration>(),
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds => gen.into_root_schema_for::<TimePointMilliseconds>(),
             Self::ExtensionPoint => gen.into_root_schema_for::<ExtensionPoint>(),
             Self::CryptoKeyType => gen.into_root_schema_for::<CryptoKeyType>(),
             Self::PublicKeyType => gen.into_root_schema_for::<PublicKeyType>(),
@@ -2907,6 +2941,10 @@ impl core::str::FromStr for TypeVariant {
             "StellarValue" => Ok(Self::StellarValue),
             "StellarValueExt" => Ok(Self::StellarValueExt),
             "StellarValueProposedValue" => Ok(Self::StellarValueProposedValue),
+            #[cfg(feature = "ms_close_time")]
+            "StellarValueSignedMsValue" => Ok(Self::StellarValueSignedMsValue),
+            #[cfg(feature = "ms_close_time")]
+            "StellarValueProposedMsValue" => Ok(Self::StellarValueProposedMsValue),
             "LedgerHeaderFlags" => Ok(Self::LedgerHeaderFlags),
             "LedgerHeaderExtensionV1" => Ok(Self::LedgerHeaderExtensionV1),
             "LedgerHeaderExtensionV1Ext" => Ok(Self::LedgerHeaderExtensionV1Ext),
@@ -3196,6 +3234,8 @@ impl core::str::FromStr for TypeVariant {
             "Int64" => Ok(Self::Int64),
             "TimePoint" => Ok(Self::TimePoint),
             "Duration" => Ok(Self::Duration),
+            #[cfg(feature = "ms_close_time")]
+            "TimePointMilliseconds" => Ok(Self::TimePointMilliseconds),
             "ExtensionPoint" => Ok(Self::ExtensionPoint),
             "CryptoKeyType" => Ok(Self::CryptoKeyType),
             "PublicKeyType" => Ok(Self::PublicKeyType),
@@ -3423,6 +3463,10 @@ pub enum Type {
     StellarValue(Box<StellarValue>),
     StellarValueExt(Box<StellarValueExt>),
     StellarValueProposedValue(Box<StellarValueProposedValue>),
+    #[cfg(feature = "ms_close_time")]
+    StellarValueSignedMsValue(Box<StellarValueSignedMsValue>),
+    #[cfg(feature = "ms_close_time")]
+    StellarValueProposedMsValue(Box<StellarValueProposedMsValue>),
     LedgerHeaderFlags(Box<LedgerHeaderFlags>),
     LedgerHeaderExtensionV1(Box<LedgerHeaderExtensionV1>),
     LedgerHeaderExtensionV1Ext(Box<LedgerHeaderExtensionV1Ext>),
@@ -3690,6 +3734,8 @@ pub enum Type {
     Int64(Box<Int64>),
     TimePoint(Box<TimePoint>),
     Duration(Box<Duration>),
+    #[cfg(feature = "ms_close_time")]
+    TimePointMilliseconds(Box<TimePointMilliseconds>),
     ExtensionPoint(Box<ExtensionPoint>),
     CryptoKeyType(Box<CryptoKeyType>),
     PublicKeyType(Box<PublicKeyType>),
@@ -3907,6 +3953,10 @@ impl Type {
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
         TypeVariant::StellarValueProposedValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueSignedMsValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueProposedMsValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
         TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -4172,6 +4222,8 @@ impl Type {
         TypeVariant::Int64,
         TypeVariant::TimePoint,
         TypeVariant::Duration,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::TimePointMilliseconds,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -4395,6 +4447,10 @@ impl Type {
         "StellarValue",
         "StellarValueExt",
         "StellarValueProposedValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueSignedMsValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueProposedMsValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
         "LedgerHeaderExtensionV1Ext",
@@ -4660,6 +4716,8 @@ impl Type {
         "Int64",
         "TimePoint",
         "Duration",
+        #[cfg(feature = "ms_close_time")]
+        "TimePointMilliseconds",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -5477,6 +5535,18 @@ impl Type {
             TypeVariant::StellarValueProposedValue => r.with_limited_depth(|r| {
                 Ok(Self::StellarValueProposedValue(Box::new(
                     StellarValueProposedValue::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueSignedMsValue(Box::new(
+                    StellarValueSignedMsValue::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueProposedMsValue(Box::new(
+                    StellarValueProposedMsValue::read_xdr(r)?,
                 )))
             }),
             TypeVariant::LedgerHeaderFlags => r.with_limited_depth(|r| {
@@ -6694,6 +6764,12 @@ impl Type {
             TypeVariant::Duration => {
                 r.with_limited_depth(|r| Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))))
             }
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => r.with_limited_depth(|r| {
+                Ok(Self::TimePointMilliseconds(Box::new(
+                    TimePointMilliseconds::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ExtensionPoint => r.with_limited_depth(|r| {
                 Ok(Self::ExtensionPoint(Box::new(ExtensionPoint::read_xdr(r)?)))
             }),
@@ -7619,6 +7695,16 @@ impl Type {
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, StellarValueProposedValue>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueSignedMsValue>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueSignedMsValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueProposedMsValue>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueProposedMsValue(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, LedgerHeaderFlags>::new(&mut r.inner, r.limits.clone())
@@ -8791,6 +8877,11 @@ impl Type {
                 ReadXdrIter::<_, Duration>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Box::new(
+                ReadXdrIter::<_, TimePointMilliseconds>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -9777,6 +9868,22 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueSignedMsValue>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::StellarValueSignedMsValue(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueProposedMsValue>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::StellarValueProposedMsValue(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(&mut r.inner, r.limits.clone())
@@ -11161,6 +11268,11 @@ impl Type {
                 ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Box::new(
+                ReadXdrIter::<_, Frame<TimePointMilliseconds>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t.0)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
@@ -12031,6 +12143,16 @@ impl Type {
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, StellarValueProposedValue>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueSignedMsValue>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueSignedMsValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueProposedMsValue>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueProposedMsValue(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, LedgerHeaderFlags>::new(dec, r.limits.clone())
@@ -13119,6 +13241,11 @@ impl Type {
                 ReadXdrIter::<_, Duration>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Box::new(
+                ReadXdrIter::<_, TimePointMilliseconds>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -13745,6 +13872,14 @@ impl Type {
                 Ok(Self::StellarValueExt(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Ok(Self::StellarValueSignedMsValue(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Ok(Self::StellarValueProposedMsValue(
                 Box::new(serde_json::from_reader(r)?),
             )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
@@ -14504,6 +14639,10 @@ impl Type {
             TypeVariant::Int64 => Ok(Self::Int64(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(serde_json::from_reader(r)?))),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ExtensionPoint => {
                 Ok(Self::ExtensionPoint(Box::new(serde_json::from_reader(r)?)))
             }
@@ -15154,6 +15293,14 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Ok(Self::StellarValueSignedMsValue(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Ok(Self::StellarValueProposedMsValue(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
@@ -16011,6 +16158,10 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
@@ -17060,6 +17211,18 @@ impl Type {
                 ignored.borrow_mut().push(path.to_string());
             })
             .map(|t| Self::StellarValueProposedValue(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueSignedMsValue(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueProposedMsValue(Box::new(t)))
             .map_err(Error::Json),
             TypeVariant::LedgerHeaderFlags => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
@@ -18430,6 +18593,12 @@ impl Type {
             })
             .map(|t| Self::Duration(Box::new(t)))
             .map_err(Error::Json),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimePointMilliseconds(Box::new(t)))
+            .map_err(Error::Json),
             TypeVariant::ExtensionPoint => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
@@ -19047,6 +19216,14 @@ impl Type {
             ))),
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
                 Box::new(StellarValueProposedValue::arbitrary(u)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Ok(Self::StellarValueSignedMsValue(
+                Box::new(StellarValueSignedMsValue::arbitrary(u)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Ok(Self::StellarValueProposedMsValue(
+                Box::new(StellarValueProposedMsValue::arbitrary(u)?),
             )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
                 LedgerHeaderFlags::arbitrary(u)?,
@@ -19847,6 +20024,10 @@ impl Type {
             TypeVariant::Int64 => Ok(Self::Int64(Box::new(Int64::arbitrary(u)?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::arbitrary(u)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::arbitrary(u)?))),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
+                TimePointMilliseconds::arbitrary(u)?,
+            ))),
             TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
                 ExtensionPoint::arbitrary(u)?,
             ))),
@@ -20150,6 +20331,14 @@ impl Type {
             TypeVariant::StellarValueExt => Self::StellarValueExt(Box::default()),
             TypeVariant::StellarValueProposedValue => {
                 Self::StellarValueProposedValue(Box::default())
+            }
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => {
+                Self::StellarValueSignedMsValue(Box::default())
+            }
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => {
+                Self::StellarValueProposedMsValue(Box::default())
             }
             TypeVariant::LedgerHeaderFlags => Self::LedgerHeaderFlags(Box::default()),
             TypeVariant::LedgerHeaderExtensionV1 => Self::LedgerHeaderExtensionV1(Box::default()),
@@ -20554,6 +20743,8 @@ impl Type {
             TypeVariant::Int64 => Self::Int64(Box::default()),
             TypeVariant::TimePoint => Self::TimePoint(Box::default()),
             TypeVariant::Duration => Self::Duration(Box::default()),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Self::TimePointMilliseconds(Box::default()),
             TypeVariant::ExtensionPoint => Self::ExtensionPoint(Box::default()),
             TypeVariant::CryptoKeyType => Self::CryptoKeyType(Box::default()),
             TypeVariant::PublicKeyType => Self::PublicKeyType(Box::default()),
@@ -20779,6 +20970,10 @@ impl Type {
             Self::StellarValue(ref v) => v.as_ref(),
             Self::StellarValueExt(ref v) => v.as_ref(),
             Self::StellarValueProposedValue(ref v) => v.as_ref(),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(ref v) => v.as_ref(),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(ref v) => v.as_ref(),
             Self::LedgerHeaderFlags(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1Ext(ref v) => v.as_ref(),
@@ -21044,6 +21239,8 @@ impl Type {
             Self::Int64(ref v) => v.as_ref(),
             Self::TimePoint(ref v) => v.as_ref(),
             Self::Duration(ref v) => v.as_ref(),
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(ref v) => v.as_ref(),
             Self::ExtensionPoint(ref v) => v.as_ref(),
             Self::CryptoKeyType(ref v) => v.as_ref(),
             Self::PublicKeyType(ref v) => v.as_ref(),
@@ -21271,6 +21468,10 @@ impl Type {
             Self::StellarValue(_) => "StellarValue",
             Self::StellarValueExt(_) => "StellarValueExt",
             Self::StellarValueProposedValue(_) => "StellarValueProposedValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(_) => "StellarValueSignedMsValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(_) => "StellarValueProposedMsValue",
             Self::LedgerHeaderFlags(_) => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1(_) => "LedgerHeaderExtensionV1",
             Self::LedgerHeaderExtensionV1Ext(_) => "LedgerHeaderExtensionV1Ext",
@@ -21558,6 +21759,8 @@ impl Type {
             Self::Int64(_) => "Int64",
             Self::TimePoint(_) => "TimePoint",
             Self::Duration(_) => "Duration",
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(_) => "TimePointMilliseconds",
             Self::ExtensionPoint(_) => "ExtensionPoint",
             Self::CryptoKeyType(_) => "CryptoKeyType",
             Self::PublicKeyType(_) => "PublicKeyType",
@@ -21803,6 +22006,10 @@ impl Type {
             Self::StellarValue(_) => TypeVariant::StellarValue,
             Self::StellarValueExt(_) => TypeVariant::StellarValueExt,
             Self::StellarValueProposedValue(_) => TypeVariant::StellarValueProposedValue,
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(_) => TypeVariant::StellarValueSignedMsValue,
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(_) => TypeVariant::StellarValueProposedMsValue,
             Self::LedgerHeaderFlags(_) => TypeVariant::LedgerHeaderFlags,
             Self::LedgerHeaderExtensionV1(_) => TypeVariant::LedgerHeaderExtensionV1,
             Self::LedgerHeaderExtensionV1Ext(_) => TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -22122,6 +22329,8 @@ impl Type {
             Self::Int64(_) => TypeVariant::Int64,
             Self::TimePoint(_) => TypeVariant::TimePoint,
             Self::Duration(_) => TypeVariant::Duration,
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(_) => TypeVariant::TimePointMilliseconds,
             Self::ExtensionPoint(_) => TypeVariant::ExtensionPoint,
             Self::CryptoKeyType(_) => TypeVariant::CryptoKeyType,
             Self::PublicKeyType(_) => TypeVariant::PublicKeyType,
@@ -22359,6 +22568,10 @@ impl WriteXdr for Type {
             Self::StellarValue(v) => v.write_xdr(w),
             Self::StellarValueExt(v) => v.write_xdr(w),
             Self::StellarValueProposedValue(v) => v.write_xdr(w),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(v) => v.write_xdr(w),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(v) => v.write_xdr(w),
             Self::LedgerHeaderFlags(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1Ext(v) => v.write_xdr(w),
@@ -22624,6 +22837,8 @@ impl WriteXdr for Type {
             Self::Int64(v) => v.write_xdr(w),
             Self::TimePoint(v) => v.write_xdr(w),
             Self::Duration(v) => v.write_xdr(w),
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(v) => v.write_xdr(w),
             Self::ExtensionPoint(v) => v.write_xdr(w),
             Self::CryptoKeyType(v) => v.write_xdr(w),
             Self::PublicKeyType(v) => v.write_xdr(w),

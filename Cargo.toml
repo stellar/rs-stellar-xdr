@@ -48,6 +48,8 @@ alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "dep:ethnum"]
 # Features from the XDR
 test_feature = []
 cap_0084_muxed_contract = []
+cap_0087_ml_dsa = []
+ms_close_time = []
 
 # Features available without any new dependencies.
 type_enum = []

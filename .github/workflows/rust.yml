@@ -152,12 +152,9 @@ jobs:
     - run: rustup install nightly
     - run: rustup default nightly
     - name: Run fuzz corpus
-      # Replay the committed corpus only (-runs=0), generating no new inputs.
-      # Const types hold `&'static` data, so their Arbitrary impls leak every
-      # value they build, as fuzz/README.md describes. Leak detection and the
-      # RSS limit are disabled so that replaying a growing corpus reports on
-      # the encoders rather than on the leaks inherent to building the values.
       env:
+        # Disable leak detection because the fuzzer tests the const impls that
+        # contain &'static data and so their Arbitrary impls explicitly leak.
         ASAN_OPTIONS: detect_leaks=0
       run: |
         cd fuzz

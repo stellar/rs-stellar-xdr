@@ -9,9 +9,6 @@ pub struct ResolvedType {
     pub turbofish_type: String,
     pub serde_as_type: Option<String>,
     pub element_type: String,
-    /// The Rust type used in the `const` module's form of the containing type,
-    /// e.g. `VecM<Operation, 100>` naming that module's `VecM` and `Operation`.
-    pub const_type: String,
 }
 
 /// Resolve all Rust type information for an XDR type in one call.
@@ -29,7 +26,6 @@ pub(crate) fn resolve_type(
         turbofish_type: m.turbofish_type(),
         serde_as_type: if custom_str { None } else { m.serde_as_type() },
         element_type: m.element_type(),
-        const_type: m.const_type(),
     }
 }
 

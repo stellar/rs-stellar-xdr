@@ -22,7 +22,7 @@ use crate::output::{
     TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
     TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
-use crate::types::{base_type_ref, resolve_type, size_to_u32_string, type_ref};
+use crate::types::{base_type_ref, const_type, resolve_type, size_to_u32_string, type_ref};
 
 pub struct RustGenerator {
     options: RustOptions,
@@ -592,7 +592,7 @@ impl RustGenerator {
                 ConstTypeOutput::Newtype(ConstNewtypeOutput {
                     name: name.clone(),
                     cfg: cfg.clone(),
-                    type_ref: resolved.const_type,
+                    type_ref: const_type(&t.type_, None, &self.type_info),
                 })
             }),
             const_to_xdr: Self::const_to_xdr(&name, cfg.as_deref()),
@@ -647,6 +647,7 @@ impl RustGenerator {
         let name = field_name(&m.name);
         let serde_rename = field_json_rename(&m.name);
         let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
+        let const_type = const_type(&m.type_, Some(parent), &self.type_info);
 
         (
             StructMemberOutput {
@@ -657,9 +658,9 @@ impl RustGenerator {
                 serde_rename,
             },
             ConstStructMemberOutput {
-                arbitrary_with: const_arbitrary_with(&resolved.const_type),
+                arbitrary_with: const_arbitrary_with(&const_type),
                 name,
-                type_ref: resolved.const_type,
+                type_ref: const_type,
             },
         )
     }
@@ -687,6 +688,10 @@ impl RustGenerator {
                     .type_
                     .as_ref()
                     .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str));
+                let const_type = arm
+                    .type_
+                    .as_ref()
+                    .map(|t| const_type(t, Some(parent), &self.type_info));
                 let cfg = arm.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render);
 
                 (
@@ -703,10 +708,8 @@ impl RustGenerator {
                         case_name,
                         case_value: case_value_expr,
                         is_void: arm.type_.is_none(),
-                        arbitrary_with: resolved
-                            .as_ref()
-                            .and_then(|r| const_arbitrary_with(&r.const_type)),
-                        type_ref: resolved.map(|r| r.const_type),
+                        arbitrary_with: const_type.as_deref().and_then(const_arbitrary_with),
+                        type_ref: const_type,
                         cfg,
                     },
                 )

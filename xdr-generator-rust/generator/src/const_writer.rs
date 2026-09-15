@@ -539,7 +539,7 @@ fn assert_hand_written(name: &str) {
         HAND_WRITTEN.contains(&name),
         "`{name}` wraps a builtin scalar, so it has no generated file to live \
          in, but `ConstWriter` does not define it. Write it by hand in \
-         xdr-generator-rust/generator/header.rs beside the other \
+         xdr-generator-rust/generator/const_header.rs beside the other \
          `write_option_`/`write_vec_` methods."
     );
 }

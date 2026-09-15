@@ -889,16 +889,6 @@ impl<T: WriteXdr> WriteXdr for Box<T> {
     }
 }
 
-// Gated on alloc because in no-alloc builds `Box<T>` is an alias for
-// `&'static T`, and this impl would overlap with the `Box<T>` impl above.
-#[cfg(feature = "alloc")]
-impl<T: WriteXdr> WriteXdr for &T {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
-        T::write_xdr(self, w)
-    }
-}
-
 impl ReadXdr for () {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self, Error> {

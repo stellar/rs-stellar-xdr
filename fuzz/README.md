@@ -11,13 +11,12 @@ value in both forms with no conversion between them.
 
 | Target | Type |
 | --- | --- |
-| `transaction-envelope` | `TransactionEnvelope` |
-| `ledger-close-meta` | `LedgerCloseMeta` |
+| `spec-entry` | `ScSpecEntry` |
 
 ## Running
 
 ```
-ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run transaction-envelope -- -rss_limit_mb=0
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run spec-entry -- -rss_limit_mb=0
 ```
 
 Both options are required rather than optional. Const types hold `&'static`

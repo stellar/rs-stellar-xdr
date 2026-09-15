@@ -1,15 +1,20 @@
-//! A significantly complex `TransactionEnvelope` structure that covers every
-//! shape the generator emits: nested structs, both union kinds with void,
-//! scalar, fixed-opaque and heap arms, a heap-free struct the `const` module
-//! aliases rather than replaces, a cyclic field where the const form borrows
-//! and the owned form boxes, `Option` in both states, `VecM` of borrowing and
-//! of heap-free values, an empty `VecM`, `StringM`, `BytesM`, and u32/u64/i64
-//! scalars.
+//! Significantly complex values, each in a const and an owned form that are
+//! identical.
 //!
-//! The const and owned values are identical.
+//! The `TransactionEnvelope` covers every shape the generator emits: nested
+//! structs, both union kinds with void, scalar, fixed-opaque and heap arms, a
+//! heap-free struct the `const` module aliases rather than replaces, a cyclic
+//! field where the const form borrows and the owned form boxes, `Option` in
+//! both states, `VecM` of borrowing and of heap-free values, an empty `VecM`,
+//! `StringM`, `BytesM`, and u32/u64/i64 scalars.
+//!
+//! The `ScSpecEntry` covers what the envelope cannot: a union whose recursive
+//! arms nest several levels deep, where each level is a `&'static` borrow in
+//! the const form and a `Box` in the owned one, reached through `VecM` elements
+//! as well as through struct fields.
 
-pub use const_value::tx_env_const;
-pub use owned_value::tx_env_owned;
+pub use const_value::{spec_entry_const, tx_env_const};
+pub use owned_value::{spec_entry_owned, tx_env_owned};
 
 /// The value as `const`, built from the `const` module's types.
 mod const_value {
@@ -138,6 +143,116 @@ mod const_value {
             ),
         })
     }
+
+    #[allow(clippy::too_many_lines)]
+    pub const fn spec_entry_const() -> ScSpecEntry {
+        ScSpecEntry::FunctionV0(ScSpecFunctionV0 {
+            doc: StringM::try_from_str_or_panic("transfers an amount between two addresses"),
+            name: ScSymbol(StringM::try_from_str_or_panic("transfer")),
+            inputs: VecM::try_from_slice_or_panic(
+                &const {
+                    [
+                        ScSpecFunctionInputV0 {
+                            doc: StringM::try_from_str_or_panic(""),
+                            name: StringM::try_from_str_or_panic("from"),
+                            type_: ScSpecTypeDef::Address,
+                        },
+                        ScSpecFunctionInputV0 {
+                            doc: StringM::try_from_str_or_panic("the asset, by name"),
+                            name: StringM::try_from_str_or_panic("asset"),
+                            type_: ScSpecTypeDef::Udt(ScSpecTypeUdt {
+                                name: StringM::try_from_str_or_panic("Asset"),
+                            }),
+                        },
+                        // option<vec<map<symbol, tuple<u32, bytesn<32>,
+                        // option<i128>>>>>, so the borrow nests through a
+                        // struct field, then a VecM element, then a field
+                        // again.
+                        ScSpecFunctionInputV0 {
+                            doc: StringM::try_from_str_or_panic(""),
+                            name: StringM::try_from_str_or_panic("routes"),
+                            type_: ScSpecTypeDef::Option(
+                                &const {
+                                    ScSpecTypeOption {
+                                        value_type: &const {
+                                            ScSpecTypeDef::Vec(
+                                                &const {
+                                                    ScSpecTypeVec {
+                                                        element_type: &const {
+                                                            ScSpecTypeDef::Map(
+                                                                &const {
+                                                                    ScSpecTypeMap {
+                                                                        key_type: &const {
+                                                                            ScSpecTypeDef::Symbol
+                                                                        },
+                                                                        value_type: &const {
+                                                                            ScSpecTypeDef::Tuple(
+                                                                                &const {
+                                                                                    ScSpecTypeTuple {
+                                                                                        value_types: VecM::try_from_slice_or_panic(
+                                                                                            &const {
+                                                                                                [
+                                                                                                    ScSpecTypeDef::U32,
+                                                                                                    ScSpecTypeDef::BytesN(ScSpecTypeBytesN { n: 32 }),
+                                                                                                    ScSpecTypeDef::Option(
+                                                                                                        &const {
+                                                                                                            ScSpecTypeOption {
+                                                                                                                value_type: &const { ScSpecTypeDef::I128 },
+                                                                                                            }
+                                                                                                        },
+                                                                                                    ),
+                                                                                                ]
+                                                                                            },
+                                                                                        ),
+                                                                                    }
+                                                                                },
+                                                                            )
+                                                                        },
+                                                                    }
+                                                                },
+                                                            )
+                                                        },
+                                                    }
+                                                },
+                                            )
+                                        },
+                                    }
+                                },
+                            ),
+                        },
+                        // An empty VecM inside a borrowed arm.
+                        ScSpecFunctionInputV0 {
+                            doc: StringM::try_from_str_or_panic(""),
+                            name: StringM::try_from_str_or_panic("extra"),
+                            type_: ScSpecTypeDef::Tuple(
+                                &const {
+                                    ScSpecTypeTuple {
+                                        value_types: VecM::try_from_slice_or_panic(&[]),
+                                    }
+                                },
+                            ),
+                        },
+                    ]
+                },
+            ),
+            outputs: VecM::try_from_slice_or_panic(
+                &const {
+                    [ScSpecTypeDef::Result(
+                        &const {
+                            ScSpecTypeResult {
+                                ok_type: &const { ScSpecTypeDef::Void },
+                                error_type: &const {
+                                    ScSpecTypeDef::Udt(ScSpecTypeUdt {
+                                        name: StringM::try_from_str_or_panic("TransferError"),
+                                    })
+                                },
+                            }
+                        },
+                    )]
+                },
+            ),
+        })
+    }
 }
 
 /// The same value owned, built from the generated types.
@@ -249,6 +364,71 @@ mod owned_value {
                     signature: Signature(b"sig-two".to_vec().try_into().unwrap()),
                 },
             ]
+            .try_into()
+            .unwrap(),
+        })
+    }
+
+    #[allow(clippy::too_many_lines)]
+    pub fn spec_entry_owned() -> ScSpecEntry {
+        ScSpecEntry::FunctionV0(ScSpecFunctionV0 {
+            doc: "transfers an amount between two addresses"
+                .try_into()
+                .unwrap(),
+            name: ScSymbol("transfer".try_into().unwrap()),
+            inputs: vec![
+                ScSpecFunctionInputV0 {
+                    doc: "".try_into().unwrap(),
+                    name: "from".try_into().unwrap(),
+                    type_: ScSpecTypeDef::Address,
+                },
+                ScSpecFunctionInputV0 {
+                    doc: "the asset, by name".try_into().unwrap(),
+                    name: "asset".try_into().unwrap(),
+                    type_: ScSpecTypeDef::Udt(ScSpecTypeUdt {
+                        name: "Asset".try_into().unwrap(),
+                    }),
+                },
+                ScSpecFunctionInputV0 {
+                    doc: "".try_into().unwrap(),
+                    name: "routes".try_into().unwrap(),
+                    type_: ScSpecTypeDef::Option(Box::new(ScSpecTypeOption {
+                        value_type: Box::new(ScSpecTypeDef::Vec(Box::new(ScSpecTypeVec {
+                            element_type: Box::new(ScSpecTypeDef::Map(Box::new(ScSpecTypeMap {
+                                key_type: Box::new(ScSpecTypeDef::Symbol),
+                                value_type: Box::new(ScSpecTypeDef::Tuple(Box::new(
+                                    ScSpecTypeTuple {
+                                        value_types: vec![
+                                            ScSpecTypeDef::U32,
+                                            ScSpecTypeDef::BytesN(ScSpecTypeBytesN { n: 32 }),
+                                            ScSpecTypeDef::Option(Box::new(ScSpecTypeOption {
+                                                value_type: Box::new(ScSpecTypeDef::I128),
+                                            })),
+                                        ]
+                                        .try_into()
+                                        .unwrap(),
+                                    },
+                                ))),
+                            }))),
+                        }))),
+                    })),
+                },
+                ScSpecFunctionInputV0 {
+                    doc: "".try_into().unwrap(),
+                    name: "extra".try_into().unwrap(),
+                    type_: ScSpecTypeDef::Tuple(Box::new(ScSpecTypeTuple {
+                        value_types: vec![].try_into().unwrap(),
+                    })),
+                },
+            ]
+            .try_into()
+            .unwrap(),
+            outputs: vec![ScSpecTypeDef::Result(Box::new(ScSpecTypeResult {
+                ok_type: Box::new(ScSpecTypeDef::Void),
+                error_type: Box::new(ScSpecTypeDef::Udt(ScSpecTypeUdt {
+                    name: "TransferError".try_into().unwrap(),
+                })),
+            }))]
             .try_into()
             .unwrap(),
         })

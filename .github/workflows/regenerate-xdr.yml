@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '0 6 * * *'   # daily 06:00 UTC; adjustable (e.g. weekly). Runs from `main`.
   workflow_dispatch:        # manual "Run workflow" button for use right after an upstream merge
+    inputs:
+      xdr_ref:
+        description: >-
+          stellar-xdr ref to regenerate against - a branch, tag, SHA, or
+          refs/pull/<n>/head for an unmerged PR. Blank (the default, and what
+          the daily schedule uses) tracks main. A non-blank ref regenerates
+          onto its own branch instead of the rolling one, so an unmerged
+          upstream never lands on the branch that tracks main.
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -20,20 +30,37 @@ jobs:
       - uses: stellar/actions/rust-cache@main   # same cache action the repo already uses
       - run: rustup update
 
-      # Fast-forward the xdr submodule to the latest commit on stellar/stellar-xdr@main.
+      # Move the xdr submodule to the commit being regenerated against: the tip of
+      # stellar/stellar-xdr@main by default, or `xdr_ref` when one was dispatched (which
+      # is how a protocol release regenerates against XDR that is still an open PR).
       # Read the previously pinned commit (from the committed xdr-version) first so we can
-      # tell whether upstream actually moved and skip the rest of the job if it did not.
-      - name: Update xdr submodule to latest upstream
+      # tell whether it actually moved and skip the rest of the job if it did not.
+      - name: Update xdr submodule to target commit
         id: xdr
+        env:
+          XDR_REF: ${{ inputs.xdr_ref }}
         run: |
+          set -euo pipefail
           before="$(cat xdr-version)"
-          git submodule update --remote xdr
+          if [ -n "$XDR_REF" ]; then
+            # A SHA is only fetchable directly when the server allows it, so fall back to
+            # fetching every branch and tag and resolving the ref locally.
+            if git -C xdr fetch --depth=1 origin "$XDR_REF"; then
+              target=FETCH_HEAD
+            else
+              git -C xdr fetch --tags origin "+refs/heads/*:refs/remotes/origin/*"
+              target="$XDR_REF"
+            fi
+            git -C xdr checkout --detach "$target"
+          else
+            git submodule update --remote xdr
+          fi
           after="$(git -C xdr rev-parse HEAD)"
           echo "before=$before"
           echo "after=$after"
           if [ "$before" = "$after" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No upstream change; nothing to regenerate."
+            echo "xdr-version already pins $after; nothing to regenerate."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "sha=$(git -C xdr rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
@@ -63,18 +90,28 @@ jobs:
           make xdr-json
           cargo test --all-features
 
-      # Commit the regenerated files (including the xdr submodule pointer) onto a rolling
-      # branch and open a PR if one isn't already open. Done with plain git + gh rather than
-      # a PR action because those rebase internally and can't merge submodule pointer changes.
+      # Commit the regenerated files (including the xdr submodule pointer) onto a branch and
+      # open a PR if one isn't already open. Done with plain git + gh rather than a PR action
+      # because those rebase internally and can't merge submodule pointer changes.
       - name: Open or update PR
         if: steps.xdr.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          XDR_REF: ${{ inputs.xdr_ref }}
           SHA: ${{ steps.xdr.outputs.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          BRANCH=auto/regenerate-xdr
+          # Tracking main: one rolling branch, force-pushed, permanently one open PR.
+          # Regenerating against an explicit ref: a branch named for the upstream commit,
+          # so re-running the same ref refreshes that branch and never disturbs the rolling
+          # one. It is also stable enough to pin — same name only ever means same upstream
+          # commit, where the rolling branch's head moves daily.
+          if [ -n "$XDR_REF" ]; then
+            BRANCH="auto/regenerate-xdr-$SHA"
+          else
+            BRANCH=auto/regenerate-xdr
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
@@ -84,12 +121,22 @@ jobs:
             echo "No tracked changes to commit; nothing to do."
             exit 0
           fi
-          git commit -m "Regenerate XDR from upstream stellar-xdr ($SHA)"
-          # Rolling branch: force-push so re-runs refresh the same PR as upstream advances.
+          SOURCE="upstream stellar-xdr"
+          DRAFT=""
+          if [ -n "$XDR_REF" ]; then
+            # Not on main yet, so the PR must not be mergeable on sight: open it as a draft
+            # and say what it is pinned to. It is re-pinned to the squash-merge commit once
+            # the upstream PR lands.
+            SOURCE="stellar-xdr \`$XDR_REF\`"
+            DRAFT=--draft
+          fi
+          git commit -m "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)"
+          # Force-push: for the rolling branch this refreshes the open PR as upstream
+          # advances; for a per-commit branch it just makes a re-run idempotent.
           git push --force origin "$BRANCH"
           body=$(printf '%s\n' \
-            "Automated regeneration of the Rust XDR bindings from the latest" \
-            "\`stellar/stellar-xdr@main\` (\`$SHA\`)." \
+            "Automated regeneration of the Rust XDR bindings from" \
+            "$SOURCE (\`$SHA\`)." \
             "" \
             "Generated by the \`Regenerate XDR\` workflow: $RUN_URL" \
             "" \
@@ -97,8 +144,16 @@ jobs:
             "\`cargo test --all-features\`. Any new feature gates were registered in" \
             "\`Cargo.toml\` and \`src/lib.rs\` automatically — please sanity-check.")
           if [ -z "$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')" ]; then
-            gh pr create -R "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
-              --title "Regenerate XDR from upstream stellar-xdr ($SHA)" --body "$body"
+            gh pr create -R "$GITHUB_REPOSITORY" --base main --head "$BRANCH" $DRAFT \
+              --title "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)" --body "$body"
           else
             echo "Existing PR for $BRANCH refreshed by force-push."
           fi
+          # Consumers pin the head SHA, so state it where a caller can read it back without
+          # re-deriving it from the branch (which moves).
+          {
+            echo "- branch: \`$BRANCH\`"
+            echo "- head: \`$(git rev-parse HEAD)\`"
+            echo "- xdr: \`$(git -C xdr rev-parse HEAD)\`"
+            echo "- pr: $(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+          } >> "$GITHUB_STEP_SUMMARY"

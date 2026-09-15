@@ -52,6 +52,7 @@ ms_close_time = []
 
 # Features available without any new dependencies.
 type_enum = []
+const = []
 
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]

@@ -26,7 +26,7 @@ macro_rules! assert_same_encoding {
         if let (Ok(owned), Ok(konst)) = (owned, konst) {
             let owned_xdr = owned.to_xdr(Limits::none()).unwrap();
 
-            let mut konst_xdr_len = konst.const_xdr_len();
+            let konst_xdr_len = konst.const_xdr_len();
             let mut konst_xdr = vec![0u8; konst.const_xdr_len()];
             let mut w = stellar_xdr::r#const::ConstWriter::new(&mut konst_xdr);
             w.$write(&konst);

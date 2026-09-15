@@ -9,9 +9,9 @@ on:
         description: >-
           stellar-xdr ref to regenerate against - a branch, tag, SHA, or
           refs/pull/<n>/head for an unmerged PR. Blank (the default, and what
-          the daily schedule uses) tracks main. A non-blank ref regenerates
-          onto a branch marked as pinned, so an unmerged upstream is never
-          mistaken for a main-tracking regeneration.
+          the daily schedule uses) tracks main on the usual rolling branch. A
+          non-blank ref regenerates onto its own branch instead, so an unmerged
+          upstream never lands on the branch that tracks main.
         required: false
         default: ''
 
@@ -19,10 +19,11 @@ permissions:
   contents: write
   pull-requests: write
 
-# Runs that target the same upstream mutate the same branch and the same set of PRs,
-# so let one finish before the next starts rather than have them race each other.
+# Runs of a kind share a branch, so let one finish before the next starts. All pinned
+# runs share one group: two spellings of the same commit (a PR ref and its SHA) resolve
+# to the same branch, and the group is fixed before a run can resolve anything.
 concurrency:
-  group: regenerate-xdr-${{ inputs.xdr_ref || 'main' }}
+  group: regenerate-xdr-${{ inputs.xdr_ref && 'pinned' || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -36,32 +37,33 @@ jobs:
       - uses: stellar/actions/rust-cache@main   # same cache action the repo already uses
       - run: rustup update
 
-      # Move the xdr submodule to the commit being regenerated against: the tip of
-      # stellar/stellar-xdr@main by default, or `xdr_ref` when one was dispatched (which
+      # Resolve what we are regenerating against to a commit BEFORE fetching it: the tip
+      # of stellar/stellar-xdr@main by default, or `xdr_ref` when one was dispatched (which
       # is how a protocol release regenerates against XDR that is still an open PR).
+      # Resolving first means everything below handles one shape, and a ref that moves
+      # mid-run cannot leave half the references pointing somewhere else.
       # Read the previously pinned commit (from the committed xdr-version) first so we can
       # tell whether it actually moved and skip the rest of the job if it did not.
       - name: Update xdr submodule to target commit
         id: xdr
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           XDR_REF: ${{ inputs.xdr_ref }}
         run: |
           set -euo pipefail
           before="$(cat xdr-version)"
-          if [ -n "$XDR_REF" ]; then
-            # A SHA is only fetchable directly when the server allows it, so fall back to
-            # fetching every branch and tag and resolving the ref locally.
-            if git -C xdr fetch --depth=1 origin "$XDR_REF"; then
-              target=FETCH_HEAD
-            else
-              git -C xdr fetch --tags origin "+refs/heads/*:refs/remotes/origin/*"
-              target="$XDR_REF"
-            fi
-            git -C xdr checkout --detach "$target"
+          REF="${XDR_REF:-refs/heads/main}"
+          if printf '%s' "$REF" | grep -Eq '^[0-9a-f]{40}$'; then
+            after="$REF"
           else
-            git submodule update --remote xdr
+            after="$(git -C xdr ls-remote origin "$REF" | awk 'NR == 1 { print $1 }')"
           fi
-          after="$(git -C xdr rev-parse HEAD)"
+          if [ -z "$after" ]; then
+            echo "::error::could not resolve '$REF' in $(git -C xdr remote get-url origin)"
+            exit 1
+          fi
+          git -C xdr fetch --depth=1 origin "$after"
+          git -C xdr checkout --detach "$after"
           echo "before=$before"
           echo "after=$after"
           if [ "$before" = "$after" ]; then
@@ -70,30 +72,39 @@ jobs:
             exit 0
           fi
           SHA="$(git -C xdr rev-parse --short HEAD)"
-          # Every run gets its own branch, named for the upstream commit it regenerates.
-          # `-main-` marks a run that tracked stellar-xdr@main; without it, the run was
-          # pinned to an explicit ref.
+          # Tracking main keeps one rolling branch, force-pushed, with one permanently open
+          # PR that refreshes as upstream advances rather than a new PR per run. A pinned
+          # ref gets its own branch named for the commit, published once, so an unmerged
+          # upstream never lands on the branch that tracks main and a downstream consumer
+          # can pin what it was handed.
           if [ -n "$XDR_REF" ]; then
             BRANCH="auto/regenerate-xdr-$SHA"
           else
-            BRANCH="auto/regenerate-xdr-main-$SHA"
+            BRANCH="auto/regenerate-xdr"
           fi
-          # A branch is only ever written once. Re-running the same upstream commit from a
-          # moved base would otherwise replace a tree something downstream may already have
-          # pinned, so stop before spending a build on it. To redo a regeneration, delete
-          # the branch first.
-          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          # A pinned branch is written once: re-running the same commit from a moved base
+          # would otherwise replace a tree something downstream may already have pinned, so
+          # stop before spending a build on it. To redo one, delete the branch first. A
+          # branch that exists with no PR in any state means an earlier run pushed and then
+          # failed to open one — open it rather than stranding the branch. A PR that was
+          # opened and closed stays closed.
+          if [ -n "$XDR_REF" ] && git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "$BRANCH is already published for $SHA; leaving it untouched."
-            {
-              echo "- branch: \`$BRANCH\` (already published, not rewritten)"
-              echo "- head: \`$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)\`"
-            } >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state all --limit 1 --json number --jq '.[0].number // empty')" ]; then
+              echo "$BRANCH is already published for $SHA; leaving it untouched."
+              {
+                echo "- branch: \`$BRANCH\` (already published, not rewritten)"
+                echo "- head: \`$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)\`"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "pr_only=true" >> "$GITHUB_OUTPUT"
+            echo "$BRANCH is published for $SHA but has no PR; opening one for it."
             exit 0
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
       # Generate the Rust source and the JSON definitions IR (no crate compile yet) and
       # record the new xdr-version. xdr-definitions-json must be regenerated here too:
@@ -119,28 +130,20 @@ jobs:
           make xdr-json
           cargo test --all-features
 
-      # Commit the regenerated files (including the xdr submodule pointer) onto a branch and
-      # open a PR if one isn't already open. Done with plain git + gh rather than a PR action
-      # because those rebase internally and can't merge submodule pointer changes.
+      # Commit the regenerated files (including the xdr submodule pointer) and open a PR
+      # if one isn't already open. Done with plain git + gh rather than a PR action because
+      # those rebase internally and can't merge submodule pointer changes.
       - name: Open or update PR
-        if: steps.xdr.outputs.changed == 'true'
+        if: steps.xdr.outputs.changed == 'true' || steps.xdr.outputs.pr_only == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           XDR_REF: ${{ inputs.xdr_ref }}
           SHA: ${{ steps.xdr.outputs.sha }}
           BRANCH: ${{ steps.xdr.outputs.branch }}
+          PR_ONLY: ${{ steps.xdr.outputs.pr_only }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
-          # -A so deletions are staged too (e.g. if upstream removes a generated type/file).
-          git add -A -- src/generated.rs src/generated xdr xdr-version xdr-json xdr-definitions-json Cargo.toml src/lib.rs
-          if git diff --cached --quiet; then
-            echo "No tracked changes to commit; nothing to do."
-            exit 0
-          fi
           SOURCE="upstream stellar-xdr"
           DRAFT=""
           if [ -n "$XDR_REF" ]; then
@@ -150,9 +153,27 @@ jobs:
             SOURCE="stellar-xdr \`$XDR_REF\`"
             DRAFT=--draft
           fi
-          git commit -m "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)"
-          # Plain push: the branch is new by construction, guarded above.
-          git push origin "$BRANCH"
+          TITLE="Regenerate XDR from $(printf '%s' "$SOURCE" | tr -d '`') ($SHA)"
+          # pr_only: the branch is already pushed and only its PR is missing.
+          if [ "${PR_ONLY:-}" != "true" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout -b "$BRANCH"
+            # -A so deletions are staged too (e.g. if upstream removes a generated type/file).
+            git add -A -- src/generated.rs src/generated xdr xdr-version xdr-json xdr-definitions-json Cargo.toml src/lib.rs
+            if git diff --cached --quiet; then
+              echo "No tracked changes to commit; nothing to do."
+              exit 0
+            fi
+            git commit -m "$TITLE"
+            # The rolling branch is force-pushed so its one open PR refreshes as upstream
+            # advances; a pinned branch is new by construction, guarded above.
+            if [ -n "$XDR_REF" ]; then
+              git push origin "$BRANCH"
+            else
+              git push --force origin "$BRANCH"
+            fi
+          fi
           body=$(printf '%s\n' \
             "Automated regeneration of the Rust XDR bindings from" \
             "$SOURCE (\`$SHA\`)." \
@@ -164,29 +185,15 @@ jobs:
             "\`Cargo.toml\` and \`src/lib.rs\` automatically — please sanity-check.")
           if [ -z "$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --limit 1 --json number --jq '.[0].number // empty')" ]; then
             gh pr create -R "$GITHUB_REPOSITORY" --base main --head "$BRANCH" $DRAFT \
-              --title "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)" --body "$body"
+              --title "$TITLE" --body "$body"
           else
             echo "PR for $BRANCH already open."
           fi
-          # One branch per run would otherwise leave a daily PR open forever. Close the
-          # main-tracking ones this run supersedes, pointing at the replacement. Pinned-ref
-          # PRs are left alone: they track different upstreams, not older versions of this
-          # one. The branches stay — deleting one breaks any pin already taken on it.
-          if [ -z "$XDR_REF" ]; then
-            NEW_URL="$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --limit 1 --json url --jq '.[0].url // empty')"
-            gh pr list -R "$GITHUB_REPOSITORY" --state open --limit 200 --json number,headRefName \
-              --jq '.[] | select(.headRefName | startswith("auto/regenerate-xdr-main-")) | select(.headRefName != env.BRANCH) | .number' \
-            | while read -r n; do
-                gh pr comment "$n" -R "$GITHUB_REPOSITORY" --body "Superseded by ${NEW_URL:-a newer regeneration}."
-                gh pr close "$n" -R "$GITHUB_REPOSITORY"
-              done
-          fi
-
           # Consumers pin the head SHA, so state it where a caller can read it back without
-          # re-deriving it from the branch name alone.
+          # re-deriving it from the branch, which for main-tracking runs moves.
           {
             echo "- branch: \`$BRANCH\`"
-            echo "- head: \`$(git rev-parse HEAD)\`"
+            echo "- head: \`$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)\`"
             echo "- xdr: \`$(git -C xdr rev-parse HEAD)\`"
             echo "- pr: $(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --limit 1 --json url --jq '.[0].url // empty')"
           } >> "$GITHUB_STEP_SUMMARY"

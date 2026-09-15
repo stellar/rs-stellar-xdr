@@ -6,7 +6,7 @@ use super::*;
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScSpecTypeUdt {
-    pub name: StringM<60>,
+    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
 }
 
 impl ScSpecTypeUdt {

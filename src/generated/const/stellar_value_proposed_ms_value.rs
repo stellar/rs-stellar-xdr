@@ -1,20 +1,21 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// ScSpecEventV0 is a borrowing equivalent of [`ScSpecEventV0`](super::super::ScSpecEventV0)
+/// StellarValueProposedMsValue is a borrowing equivalent of [`StellarValueProposedMsValue`](super::super::StellarValueProposedMsValue)
 /// over `'static` data, for const XDR encoding.
+#[cfg(feature = "ms_close_time")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-pub struct ScSpecEventV0 {
-    pub doc: StringM<SC_SPEC_DOC_LIMIT>,
-    pub lib: StringM<80>,
-    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
-    pub prefix_topics: VecM<ScSymbol, 2>,
-    pub params: VecM<ScSpecEventParamV0>,
-    pub data_format: ScSpecEventDataFormat,
+pub struct StellarValueProposedMsValue {
+    pub close_time_ms: TimePointMilliseconds,
+    pub tx_set_hash: Hash,
+    pub previous_ledger_hash: Hash,
+    pub previous_ledger_version: u32,
+    pub lc_value_signature: LedgerCloseValueSignature,
 }
 
-impl ScSpecEventV0 {
+#[cfg(feature = "ms_close_time")]
+impl StellarValueProposedMsValue {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -23,7 +24,7 @@ impl ScSpecEventV0 {
     pub const fn const_xdr_len(&self) -> usize {
         let mut empty: [u8; 0] = [];
         let mut w = ConstWriter::new(&mut empty);
-        w.write_type_sc_spec_event_v0(self);
+        w.write_type_stellar_value_proposed_ms_value(self);
         w.len()
     }
 
@@ -42,7 +43,7 @@ impl ScSpecEventV0 {
     pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
         let mut buf = [0u8; N];
         let mut w = ConstWriter::new(&mut buf);
-        w.write_type_sc_spec_event_v0(self);
+        w.write_type_stellar_value_proposed_ms_value(self);
         assert!(
             w.len() == N,
             "const_to_xdr: N does not equal the XDR-encoded length"
@@ -52,13 +53,16 @@ impl ScSpecEventV0 {
 }
 
 impl ConstWriter<'_> {
-    /// Serializes a [`ScSpecEventV0`], mirroring `<ScSpecEventV0 as WriteXdr>::write_xdr`.
-    pub const fn write_type_sc_spec_event_v0(&mut self, v: &ScSpecEventV0) {
-        self.write_var_opaque(v.doc.as_slice());
-        self.write_var_opaque(v.lib.as_slice());
-        self.write_var_opaque(v.name.as_slice());
-        self.write_type_vec_sc_symbol(&v.prefix_topics);
-        self.write_type_vec_sc_spec_event_param_v0(&v.params);
-        self.write_type_sc_spec_event_data_format(&v.data_format);
+    #[cfg(feature = "ms_close_time")]
+    /// Serializes a [`StellarValueProposedMsValue`], mirroring `<StellarValueProposedMsValue as WriteXdr>::write_xdr`.
+    pub const fn write_type_stellar_value_proposed_ms_value(
+        &mut self,
+        v: &StellarValueProposedMsValue,
+    ) {
+        self.write_type_time_point_milliseconds(&v.close_time_ms);
+        self.write_type_hash(&v.tx_set_hash);
+        self.write_type_hash(&v.previous_ledger_hash);
+        self.write_u32(v.previous_ledger_version);
+        self.write_type_ledger_close_value_signature(&v.lc_value_signature);
     }
 }

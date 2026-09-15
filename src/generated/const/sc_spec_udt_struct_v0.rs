@@ -8,7 +8,7 @@ use super::*;
 pub struct ScSpecUdtStructV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub lib: StringM<80>,
-    pub name: StringM<60>,
+    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
     pub fields: VecM<ScSpecUdtStructFieldV0>,
 }
 
